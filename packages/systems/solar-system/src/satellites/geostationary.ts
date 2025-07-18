@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -22,7 +22,7 @@ const GEOSTATIONARY_ECCENTRICITY = 0.0; // Must be exactly circular
 export function initializeGeostationarySat(parentId: string): void {
   const semiMajorAxisM = GEOSTATIONARY_SEMI_MAJOR_AXIS_KM * KM;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "geostationary-comsat",
     name: "Geostationary CommSat",
     seed: "geostationary_communications_satellite",

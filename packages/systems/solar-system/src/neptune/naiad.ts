@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -23,7 +23,7 @@ const NAIAD_ALBEDO = 0.07;
 export function initializeNaiad(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0).normalize();
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "naiad",
     name: "Naiad",
     seed: "naiad",

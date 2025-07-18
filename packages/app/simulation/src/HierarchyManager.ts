@@ -6,7 +6,7 @@ import {
 } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-types";
 import { physicsSystemAdapter, StateAccessor } from "@teskooano/core-state";
-import { celestialActions } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import { calculateGravitationalForce } from "@teskooano/core-physics";
 
 /**
@@ -148,7 +148,7 @@ export class HierarchyManager {
         allPhysicsStates,
       );
       if (newParent) {
-        celestialActions.updateCelestialObject(obj.id, {
+        celestial.updateObject(obj.id, {
           parentId: newParent.id,
           currentParentId: newParent.id,
         });
@@ -213,7 +213,7 @@ export class HierarchyManager {
           currentParentId: newParent.id,
         };
 
-        celestialActions.updateCelestialObject(obj.id, updatePayload);
+        celestial.updateObject(obj.id, updatePayload);
 
         // Dispatch a custom event to notify UI components about the hierarchy change
         document.dispatchEvent(
@@ -321,7 +321,7 @@ export class HierarchyManager {
     }
 
     // Switch the object to orbit the gravitationally dominant star
-    celestialActions.updateCelestialObject(obj.id, {
+    celestial.updateObject(obj.id, {
       parentId: dominantStar.id,
       currentParentId: dominantStar.id,
     });
@@ -528,13 +528,13 @@ export class HierarchyManager {
 
     // Update the parent object type if needed
     if (parent.type !== parentType) {
-      celestialActions.updateCelestialObject(parent.id, {
+      celestial.updateObject(parent.id, {
         type: parentType,
       });
     }
 
     // Update the child object to orbit the parent
-    celestialActions.updateCelestialObject(child.id, {
+    celestial.updateObject(child.id, {
       type: childType,
       parentId: parent.id,
       currentParentId: parent.id,

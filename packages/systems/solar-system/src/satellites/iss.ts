@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -24,7 +24,7 @@ export function initializeISS(parentId: string): void {
   const earthRadiusM = 6.371e6; // Mean Earth radius
   const semiMajorAxisM = earthRadiusM + altitudeM;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "iss",
     name: "International Space Station",
     seed: "iss_alpha_station",

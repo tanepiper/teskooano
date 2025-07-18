@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -20,7 +20,7 @@ const NEREID_SIDEREAL_ROTATION_PERIOD_S = 11.52 * 3600;
 export function initializeNereid(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0).normalize();
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "nereid",
     name: "Nereid",
     seed: "nereid_seed_360",

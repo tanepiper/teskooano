@@ -6,9 +6,9 @@
     "composite": true,
     "declaration": true,
     "paths": {
-      "@teskooano/data-types": ["../../data/types"],
-      "@teskooano/core-physics": ["../../physics"],
-      "@teskooano/core-math": ["../../math"]
+      "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/core-physics": ["../physics/src"],
+      "@teskooano/core-math": ["../math/src"]
     },
     "noEmit": false
   },
@@ -17,6 +17,12 @@
   "references": [
     {
       "path": "../../data/types"
+    },
+    {
+      "path": "../physics"
+    },
+    {
+      "path": "../math"
     }
   ]
 }

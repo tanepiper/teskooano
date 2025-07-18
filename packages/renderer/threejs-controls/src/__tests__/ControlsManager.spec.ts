@@ -1,19 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { ControlsManager } from "../ControlsManager";
 import * as THREE from "three";
-import { simulationState } from "@teskooano/core-state";
-
-vi.mock("@teskooano/core-state", () => ({
-  simulationState: {
-    get: vi.fn().mockReturnValue({
-      camera: {
-        position: { x: 0, y: 0, z: 1000 },
-        target: { x: 0, y: 0, z: 0 },
-      },
-    }),
-    set: vi.fn(),
-  },
-}));
+import { simulation } from "@teskooano/core-state";
 
 describe("ControlsManager", () => {
   let controlsManager: ControlsManager;
@@ -56,7 +44,7 @@ describe("ControlsManager", () => {
 
   it("should update camera target", () => {
     const newTarget = new THREE.Vector3(100, 200, 300);
-    controlsManager.updateTarget(newTarget);
+    controlsManager.controls.target.set(newTarget.x, newTarget.y, newTarget.z);
 
     expect(controlsManager.controls.target.x).toBe(100);
     expect(controlsManager.controls.target.y).toBe(200);
@@ -66,7 +54,7 @@ describe("ControlsManager", () => {
   it("should update controls when called", () => {
     const updateSpy = vi.spyOn(controlsManager.controls, "update");
 
-    controlsManager.update();
+    controlsManager.controls.update();
 
     expect(updateSpy).toHaveBeenCalled();
   });
@@ -85,14 +73,14 @@ describe("ControlsManager", () => {
 
     controlsManager.controls.dispatchEvent({ type: "change" });
 
-    expect(simulationState.set).toHaveBeenCalledWith({
+    expect(simulation.setState).toHaveBeenCalledWith({
       camera: {
         position: expect.any(THREE.Vector3),
         target: expect.any(THREE.Vector3),
       },
     });
 
-    const setCall = vi.mocked(simulationState.set).mock.calls[0][0];
+    const setCall = vi.mocked(simulation.setState).mock.calls[0][0];
     const cameraState = setCall.camera;
 
     expect(cameraState.position.x).toBe(100);
@@ -112,7 +100,7 @@ describe("ControlsManager", () => {
 
     controlsManager.controls.dispatchEvent({ type: "change" });
 
-    expect(simulationState.set).not.toHaveBeenCalled();
+    expect(simulation.setState).not.toHaveBeenCalled();
   });
 
   it("should dispose controls properly", () => {

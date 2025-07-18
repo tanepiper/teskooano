@@ -11,9 +11,9 @@ import {
 } from "@teskooano/data-types";
 
 import { Quaternion } from "three";
-import { celestialActions } from "./celestialActions";
+import { celestialManager } from "./managers/celestialManager";
+import { celestialStore } from "./stores/celestialStore";
 import { simulationStateService } from "./simulation";
-import { gameStateService } from "./stores";
 import type { SimulationState } from "./types";
 
 const createMinimalRealState = (
@@ -55,23 +55,23 @@ const createMockObject = (
 
 describe("Celestial Objects Store", () => {
   beforeEach(() => {
-    gameStateService.setAllCelestialObjects({});
+    celestialStore.setAllObjects({});
   });
 
   it("should add a celestial object", () => {
     const obj = createMockObject("planet1");
-    celestialActions.addCelestialObject(obj);
-    const state = gameStateService.getCelestialObjects();
+    celestialManager.addObject(obj);
+    const state = celestialStore.getObjects();
     expect(state["planet1"]).toEqual(obj);
     expect(Object.keys(state).length).toBe(1);
   });
 
   it("should update an existing celestial object", () => {
     const obj1 = createMockObject("star1", "Sol", CelestialType.STAR);
-    celestialActions.addCelestialObject(obj1);
+    celestialManager.addObject(obj1);
     const updatedFields = { name: "Updated Sol" };
-    celestialActions.updateCelestialObject(obj1.id, updatedFields);
-    const state = gameStateService.getCelestialObjects();
+    celestialManager.updateObject(obj1.id, updatedFields);
+    const state = celestialStore.getObjects();
     expect(state["star1"]).toEqual(expect.objectContaining(updatedFields));
     expect(state["star1"].name).toBe("Updated Sol");
   });
@@ -84,10 +84,10 @@ describe("Celestial Objects Store", () => {
       "planet1",
     );
     const obj2 = createMockObject("planet1");
-    celestialActions.addCelestialObject(obj1);
-    celestialActions.addCelestialObject(obj2);
-    celestialActions.removeCelestialObject("moon1");
-    const state = gameStateService.getCelestialObjects();
+    celestialManager.addObject(obj1);
+    celestialManager.addObject(obj2);
+    celestialManager.removeObject("moon1");
+    const state = celestialStore.getObjects();
     expect(state["moon1"]).toBeUndefined();
     expect(state["planet1"]).toEqual(obj2);
     expect(Object.keys(state).length).toBe(1);
@@ -123,7 +123,7 @@ describe("Simulation State Actions", () => {
       performanceProfile: "medium",
     });
 
-    gameStateService.setAllCelestialObjects({
+    celestialStore.setAllObjects({
       obj1: createMockObject("obj1"),
       obj2: createMockObject("obj2"),
     });
@@ -196,7 +196,7 @@ describe("Simulation Actions (Extended)", () => {
       },
       performanceProfile: "medium",
     });
-    gameStateService.setAllCelestialObjects({});
+    celestialStore.setAllObjects({});
   });
 
   describe("simulation general actions", () => {

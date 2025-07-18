@@ -8,8 +8,8 @@ import {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { beforeEach, describe, expect, it } from "vitest";
-import { celestialFactory } from "./factory";
-import { gameStateService } from "./stores";
+import { celestialManager } from "./managers/celestialManager";
+import { celestialStore } from "./stores/celestialStore";
 import { simulationStateService } from "./simulation";
 
 describe("Factory functions", () => {
@@ -29,8 +29,8 @@ describe("Factory functions", () => {
         fov: 60,
       },
     } as any);
-    gameStateService.setAllCelestialObjects({});
-    gameStateService.setAllCelestialHierarchy({});
+    celestialStore.setAllObjects({});
+    celestialStore.setHierarchy({});
   });
 
   describe("clearState", () => {
@@ -38,7 +38,7 @@ describe("Factory functions", () => {
       const objectPos = new OSVector3().setZero().toThreeJS();
       const objectVel = new OSVector3().setZero().toThreeJS();
 
-      gameStateService.setAllCelestialObjects({
+      celestialStore.setAllObjects({
         "test-1": {
           id: "test-1",
           name: "Test Object",
@@ -70,7 +70,7 @@ describe("Factory functions", () => {
           },
         } as any,
       });
-      gameStateService.setAllCelestialHierarchy({
+      celestialStore.setHierarchy({
         "parent-1": ["test-1"],
       });
       simulationStateService.setSimulationState({
@@ -82,25 +82,17 @@ describe("Factory functions", () => {
         focusedObjectId: "test-1",
       });
 
-      expect(Object.keys(gameStateService.getCelestialObjects()).length).toBe(
-        1,
-      );
-      expect(Object.keys(gameStateService.getCelestialHierarchy()).length).toBe(
-        1,
-      );
+      expect(Object.keys(celestialStore.getObjects()).length).toBe(1);
+      expect(Object.keys(celestialStore.getHierarchy()).length).toBe(1);
       expect(simulationStateService.getSimulationState().timeScale).toBe(2);
       expect(simulationStateService.getSimulationState().selectedObject).toBe(
         "test-1",
       );
 
-      celestialFactory.clearState();
+      celestialManager.clearState();
 
-      expect(Object.keys(gameStateService.getCelestialObjects()).length).toBe(
-        0,
-      );
-      expect(Object.keys(gameStateService.getCelestialHierarchy()).length).toBe(
-        0,
-      );
+      expect(Object.keys(celestialStore.getObjects()).length).toBe(0);
+      expect(Object.keys(celestialStore.getHierarchy()).length).toBe(0);
       expect(simulationStateService.getSimulationState().timeScale).toBe(1);
       expect(
         simulationStateService.getSimulationState().selectedObject,
@@ -136,7 +128,7 @@ describe("Factory functions", () => {
       ).toBe(500);
       expect(simulationStateService.getSimulationState().camera.fov).toBe(45);
 
-      celestialFactory.clearState({ resetCamera: true });
+      celestialManager.clearState({ resetCamera: true });
 
       expect(
         simulationStateService.getSimulationState().camera.position.x,
@@ -158,7 +150,7 @@ describe("Factory functions", () => {
         paused: true,
       });
 
-      celestialFactory.clearState({ resetTime: false });
+      celestialManager.clearState({ resetTime: false });
 
       expect(simulationStateService.getSimulationState().time).toBe(100);
       expect(simulationStateService.getSimulationState().timeScale).toBe(2);
@@ -172,7 +164,7 @@ describe("Factory functions", () => {
         focusedObjectId: "test-2",
       });
 
-      celestialFactory.clearState({ resetSelection: false });
+      celestialManager.clearState({ resetSelection: false });
 
       expect(simulationStateService.getSimulationState().selectedObject).toBe(
         "test-1",
@@ -189,7 +181,7 @@ describe("Factory functions", () => {
       const stateRealPos = new OSVector3().setZero().toThreeJS();
       const stateRealVel = new OSVector3().setZero().toThreeJS();
 
-      gameStateService.setAllCelestialObjects({
+      celestialStore.setAllObjects({
         "old-star": {
           id: "old-star",
           name: "Old Star",
@@ -244,15 +236,13 @@ describe("Factory functions", () => {
         },
       });
 
-      expect(Object.keys(gameStateService.getCelestialObjects()).length).toBe(
-        1,
-      );
-      expect(gameStateService.getCelestialObjects()["old-star"]).toBeDefined();
+      expect(Object.keys(celestialStore.getObjects()).length).toBe(1);
+      expect(celestialStore.getObjects()["old-star"]).toBeDefined();
       expect(
         simulationStateService.getSimulationState().camera.position.x,
       ).toBe(500);
 
-      const newStarId = celestialFactory.createSolarSystem({
+      const newStarId = celestialManager.createSolarSystem({
         id: "new-star",
         name: "New Star",
         type: CelestialType.STAR,
@@ -276,7 +266,7 @@ describe("Factory functions", () => {
         },
       });
 
-      const objects = gameStateService.getCelestialObjects();
+      const objects = celestialStore.getObjects();
       expect(Object.keys(objects).length).toBe(1);
       expect(objects["old-star"]).toBeUndefined();
       expect(objects[newStarId]).toBeDefined();

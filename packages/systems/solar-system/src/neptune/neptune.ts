@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   GasGiantClass,
@@ -32,7 +32,7 @@ export function initializeNeptunePlanet(parentId: string): string {
   const neptuneId = "neptune";
   const neptuneAxialTiltRad = NEPTUNE_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: neptuneId,
     name: "Neptune",
     seed: "neptune_seed_164",

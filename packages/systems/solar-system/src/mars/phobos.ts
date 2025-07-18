@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -28,7 +28,7 @@ const PHOBOS_TEMP_K = 233; // Wikipedia verified: ~233 K
  */
 export function initializePhobos(parentId: string): void {
   const phobosAxialTilt = new OSVector3(0, 1, 0);
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "phobos",
     name: "Phobos",
     type: CelestialType.MOON,

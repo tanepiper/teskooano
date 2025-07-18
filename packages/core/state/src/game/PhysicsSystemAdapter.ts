@@ -1,12 +1,19 @@
-import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
-import type { SimulationStepResult } from "@teskooano/core-physics"; // Assuming this path is correct or will be resolved by TS
-import { gameStateService } from "./stores";
+import {
+  CelestialStatus,
+  CelestialType,
+  type CelestialObject,
+} from "@teskooano/data-types";
+import type {
+  SimulationStepResult,
+  PhysicsStateReal,
+} from "@teskooano/core-physics";
+import { celestialStore } from "./stores/celestialStore";
+import { physicsStore } from "./stores/physicsStore";
 import type { OrbitalParameters } from "@teskooano/data-types";
 
 /**
  * @class PhysicsSystemAdapter
- * @description Acts as a bridge between the core game state (managed by GameStateService)
+ * @description Acts as a bridge between the core game state (managed by CelestialStore)
  * and the physics engine. It prepares data for the physics simulation and applies
  * the simulation results back to the game state.
  */
@@ -30,14 +37,14 @@ class PhysicsSystemAdapter {
    */
   public getPhysicsBodies(): PhysicsStateReal[] {
     const bodies: PhysicsStateReal[] = [];
-    Object.values(gameStateService.getCelestialObjects())
+    Object.values(celestialStore.getObjects())
       .filter(
-        (obj) =>
+        (obj: CelestialObject) =>
           obj.status !== CelestialStatus.DESTROYED &&
           obj.status !== CelestialStatus.ANNIHILATED && // Also exclude annihilated
           !obj.ignorePhysics,
       )
-      .forEach((obj) => {
+      .forEach((obj: CelestialObject) => {
         if (obj.physicsStateReal) {
           bodies.push(obj.physicsStateReal);
         } else {
@@ -50,10 +57,10 @@ class PhysicsSystemAdapter {
   }
 
   /**
-   * Returns a snapshot of the current celestial objects map from the GameStateService.
+   * Returns a snapshot of the current celestial objects map from the CelestialStore.
    */
   public getCelestialObjectsSnapshot(): Record<string, CelestialObject> {
-    return gameStateService.getCelestialObjects();
+    return celestialStore.getObjects();
   }
 
   /**
@@ -81,7 +88,7 @@ class PhysicsSystemAdapter {
    * @param result - The SimulationStepResult from the physics engine.
    */
   public updateStateFromResult(result: SimulationStepResult): void {
-    const currentCelestialObjects = gameStateService.getCelestialObjects();
+    const currentCelestialObjects = celestialStore.getObjects();
     const newCelestialObjectsMap: Record<string, CelestialObject> = {
       ...currentCelestialObjects,
     };
@@ -194,8 +201,8 @@ class PhysicsSystemAdapter {
       }
     });
 
-    gameStateService.setAllCelestialObjects(newCelestialObjectsMap);
-    gameStateService.updateAccelerationVectors(result.accelerations);
+    celestialStore.setAllObjects(newCelestialObjectsMap);
+    physicsStore.updateAccelerationVectors(result.accelerations);
   }
 }
 

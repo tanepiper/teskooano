@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -27,7 +27,7 @@ const LUNA_ALBEDO = 0.11; // Corrected to Bond albedo from NASA fact sheet
  */
 export function initializeLuna(parentId: string): void {
   const lunaAxialTiltRad = LUNA_AXIAL_TILT_DEG * DEG_TO_RAD;
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "luna",
     name: "Moon",
     type: CelestialType.MOON,

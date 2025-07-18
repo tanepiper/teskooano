@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   GasGiantClass,
@@ -32,7 +32,7 @@ export function initializeUranusPlanet(parentId: string): string {
   const uranusId = "uranus";
   const uranusAxialTiltRad = URANUS_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: uranusId,
     name: "Uranus",
     seed: "uranus_seed_84",

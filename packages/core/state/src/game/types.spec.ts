@@ -197,9 +197,9 @@ describe("SimulationConfiguration", () => {
           getConfigurationShortName({
             mode: "nbody",
             integrator: "euler",
-            algorithm: "direct",
+            algorithm: "tree-pm",
           }),
-        ).toBe("Dir-Eul");
+        ).toBe("TPM-Eul");
 
         expect(
           getConfigurationShortName({

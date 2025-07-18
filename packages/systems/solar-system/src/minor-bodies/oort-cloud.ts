@@ -1,5 +1,5 @@
 import { AU } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import { CelestialType, CelestialStatus } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 
@@ -12,7 +12,7 @@ const OORT_PARTICLE_COUNT = 50000;
  * Initializes the Oort Cloud using representative estimated data.
  */
 export function initializeOortCloud(parentId: string): void {
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "oort-cloud",
     name: "Oort Cloud",
     type: CelestialType.OORT_CLOUD,

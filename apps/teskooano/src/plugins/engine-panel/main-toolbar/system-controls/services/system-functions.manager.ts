@@ -2,9 +2,9 @@ import { simulationManager } from "@teskooano/app-simulation";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
-  celestialFactory,
+  celestial,
   StateAccessor,
-  gameState,
+  seedStore,
 } from "@teskooano/core-state";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
@@ -121,7 +121,7 @@ export class SystemFunctionsManager {
           });
 
           // Clear existing state before loading new data
-          celestialFactory.clearState({
+          celestial.clearState({
             resetCamera: false,
             resetTime: true,
             resetSelection: true,
@@ -134,14 +134,14 @@ export class SystemFunctionsManager {
           if (!star) throw new Error("Could not find a primary star.");
 
           // Load the new system into the state
-          celestialFactory.createSolarSystem(star);
+          celestial.createSolarSystem(star);
           hydratedObjects.forEach((obj) => {
             if (obj.id !== star.id) {
-              celestialFactory.addCelestial(obj);
+              celestial.addCelestial(obj);
             }
           });
 
-          gameState.updateSeed(parsedData.seed);
+          seedStore.updateSeed(parsedData.seed);
           simulationManager.resetSystem(true);
 
           observer.next({
@@ -221,7 +221,7 @@ export class SystemFunctionsManager {
     try {
       simulationManager.stopLoop();
 
-      celestialFactory.clearState({
+      celestial.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -348,7 +348,7 @@ export class SystemFunctionsManager {
    */
   public async createBlankSystem() {
     try {
-      celestialFactory.clearState({
+      celestial.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -356,8 +356,8 @@ export class SystemFunctionsManager {
       actions.resetTime();
 
       const star = generateStar(createSeededRandomSync(Date.now().toString()));
-      celestialFactory.createSolarSystem(star);
-      gameState.updateSeed("");
+      celestial.createSolarSystem(star);
+      seedStore.updateSeed("");
 
       simulationManager.resetSystem(true);
       return { success: true, symbol: "📄", message: "Blank system created." };
@@ -377,7 +377,7 @@ export class SystemFunctionsManager {
    */
   public async loadSolarSystem() {
     try {
-      celestialFactory.clearState({
+      celestial.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -385,7 +385,6 @@ export class SystemFunctionsManager {
       actions.resetTime();
 
       initializeSolarSystem();
-      gameState.updateSeed("sol");
 
       simulationManager.resetSystem(true);
       return { success: true, symbol: "☀️", message: "Solar system loaded." };

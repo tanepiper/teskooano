@@ -137,7 +137,7 @@ describe("OSVector3", () => {
 
     // Test with small numbers - should be stricter
     const v3 = new OSVector3(0.1, 0.2, 0.3);
-    const v4 = new OSVector3(0.100001, 0.200001, 0.300001);
+    const v4 = new OSVector3(0.1000001, 0.2000001, 0.3000001);
 
     expect(v3.equals(v4)).toBe(true);
   });

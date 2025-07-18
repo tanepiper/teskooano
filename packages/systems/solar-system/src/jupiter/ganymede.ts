@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -29,7 +29,7 @@ const GANYMEDE_TEMP_K = 110; // Wikipedia verified: mean 110 K
 export function initializeGanymede(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "ganymede",
     name: "Ganymede",
     seed: "ganymede_seed_7155",

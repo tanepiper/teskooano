@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -27,7 +27,7 @@ const PHOEBE_ALBEDO = 0.081;
 export function initializePhoebe(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "phoebe",
     name: "Phoebe",
     seed: "phoebe",

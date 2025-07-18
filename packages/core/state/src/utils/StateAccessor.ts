@@ -10,8 +10,10 @@ import {
   celestialHierarchy$,
   accelerationVectors$,
   currentSeed$,
-  gameState,
-  simulationState,
+  celestial,
+  seed,
+  physics,
+  simulation,
 } from "../game";
 import type { SimulationState } from "../game/types";
 import { renderableStore } from "../game/renderableStore";
@@ -44,14 +46,14 @@ export class StateAccessor {
   static getCelestialObjectsStream(): Observable<
     Record<string, CelestialObject>
   > {
-    return celestialObjects$.pipe(startWith(gameState.getCelestialObjects()));
+    return celestialObjects$.pipe(startWith(celestial.getObjects()));
   }
 
   /**
    * Gets the current celestial objects imperatively.
    */
   static getCurrentCelestialObjects(): Record<string, CelestialObject> {
-    return gameState.getCelestialObjects();
+    return celestial.getObjects();
   }
 
   // Simulation State
@@ -60,16 +62,14 @@ export class StateAccessor {
    * Preferred over direct import of simulationState$ when you need the current state immediately.
    */
   static getSimulationStateStream(): Observable<SimulationState> {
-    return simulationState$.pipe(
-      startWith(simulationState.getSimulationState()),
-    );
+    return simulationState$.pipe(startWith(simulation.getState()));
   }
 
   /**
    * Gets the current simulation state imperatively.
    */
   static getCurrentSimulationState(): SimulationState {
-    return simulationState.getSimulationState();
+    return simulation.getState();
   }
 
   // Celestial Hierarchy
@@ -77,16 +77,14 @@ export class StateAccessor {
    * Gets a reactive stream of celestial hierarchy with the current value as initial emission.
    */
   static getCelestialHierarchyStream(): Observable<Record<string, string[]>> {
-    return celestialHierarchy$.pipe(
-      startWith(gameState.getCelestialHierarchy()),
-    );
+    return celestialHierarchy$.pipe(startWith(celestial.getHierarchy()));
   }
 
   /**
    * Gets the current celestial hierarchy imperatively.
    */
   static getCurrentCelestialHierarchy(): Record<string, string[]> {
-    return gameState.getCelestialHierarchy();
+    return celestial.getHierarchy();
   }
 
   // Acceleration Vectors
@@ -95,7 +93,7 @@ export class StateAccessor {
    */
   static getAccelerationVectorsStream(): Observable<Record<string, OSVector3>> {
     return accelerationVectors$.pipe(
-      startWith(gameState.getAccelerationVectors()),
+      startWith(physics.getAccelerationVectors()),
     );
   }
 
@@ -103,7 +101,7 @@ export class StateAccessor {
    * Gets the current acceleration vectors imperatively.
    */
   static getCurrentAccelerationVectors(): Record<string, OSVector3> {
-    return gameState.getAccelerationVectors();
+    return physics.getAccelerationVectors();
   }
 
   // Current Seed
@@ -111,14 +109,14 @@ export class StateAccessor {
    * Gets a reactive stream of the current seed with the current value as initial emission.
    */
   static getCurrentSeedStream(): Observable<string> {
-    return currentSeed$.pipe(startWith(gameState.getCurrentSeed()));
+    return currentSeed$.pipe(startWith(seed.getCurrent()));
   }
 
   /**
    * Gets the current seed imperatively.
    */
   static getCurrentSeed(): string {
-    return gameState.getCurrentSeed();
+    return seed.getCurrent();
   }
 
   // Convenience methods for common patterns

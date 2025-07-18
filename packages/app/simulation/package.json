@@ -25,6 +25,9 @@
   "devDependencies": {
     "typescript": "5.8.3",
     "vitest": "3.2.4",
+    "@vitest/browser": "3.2.4",
+    "@playwright/test": "1.48.0",
+    "jsdom": "25.0.1",
     "eslint": "9.31.0",
     "vite": "7.0.4"
   }

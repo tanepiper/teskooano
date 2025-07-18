@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -31,7 +31,7 @@ const PALLAS_AXIAL_TILT_DEG = 84.0; // High obliquity
 export function initializePallas(parentId: string): void {
   const pallasAxialTiltRad = PALLAS_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "pallas",
     name: "Pallas",
     seed: "pallas",

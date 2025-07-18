@@ -1,0 +1,24 @@
+project:
+  name: "app-simulation"
+  description: "Simulation management for Teskooano"
+
+id: "app-simulation"
+
+tasks:
+  build:
+    command: "npm run build"
+    deps: ["^:build"]
+    outputs:
+      - "dist/**"
+    platform: "node"
+
+  test:
+    command: "npm run test"
+    deps: ["^:build"]
+    platform: "node"
+    env:
+      NODE_ENV: "test"
+
+  lint:
+    command: "npm run lint"
+    platform: "node"

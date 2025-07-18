@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -23,7 +23,7 @@ export function initializeJWST(parentId: string): void {
   const earthOrbitRadius = 1.0 * AU; // Earth's distance from Sun
   const jwstOrbitRadius = earthOrbitRadius + earthDistance;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "jwst",
     name: "James Webb Space Telescope",
     seed: "jwst_infrared_observatory",

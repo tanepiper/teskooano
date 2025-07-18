@@ -1,6 +1,8 @@
 type: library
 language: typescript
 
+id: core-state
+
 tasks:
   test:
     command: npm run test
@@ -10,3 +12,4 @@ tasks:
     inputs:
       - src/**/*.ts
       - src/**/*.tsx
+      - vitest.config.ts

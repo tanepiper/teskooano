@@ -1,8 +1,8 @@
 import {
   actions,
-  celestialFactory,
+  celestial,
   StateAccessor,
-  gameState,
+  seedStore,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -137,11 +137,11 @@ export class SystemGenerator {
 
     window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
 
-    gameState.updateSeed(inputSeed);
+    seedStore.updateSeed(inputSeed);
     const finalSeed = StateAccessor.getCurrentSeed();
 
     // Reset the application state before generating a new system.
-    celestialFactory.clearState({
+    celestial.clearState({
       resetCamera: false,
       resetTime: true,
       resetSelection: true,
@@ -167,15 +167,15 @@ export class SystemGenerator {
           if (celestialObject.type === CelestialType.STAR) {
             if (!isSystemInitialized) {
               // First star: initialize the system and clear state
-              celestialFactory.createSolarSystem(creationInput);
+              celestial.createSolarSystem(creationInput);
               isSystemInitialized = true;
             } else {
               // Subsequent stars: don't clear state, just add to existing system
-              celestialFactory.createSolarSystem(creationInput, false);
+              celestial.createSolarSystem(creationInput, false);
             }
           } else {
             // All other objects (planets, moons, etc.) use addCelestial
-            celestialFactory.addCelestial(creationInput);
+            celestial.addCelestial(creationInput);
           }
         }),
         catchError((error) => {

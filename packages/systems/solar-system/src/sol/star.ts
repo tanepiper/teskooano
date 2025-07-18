@@ -1,4 +1,4 @@
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   StellarType,
@@ -19,7 +19,7 @@ const SUN_LUMINOSITY = 1.0;
  * @returns The ID of the created star.
  */
 export function initializeSun(): string {
-  const sunId = factoryOperations.createSolarSystem({
+  const sunId = celestial.createSolarSystem({
     id: "sol",
     name: "Sun",
     type: CelestialType.STAR,

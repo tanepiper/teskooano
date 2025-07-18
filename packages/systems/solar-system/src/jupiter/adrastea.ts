@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -23,7 +23,7 @@ const ADRASTEA_ALBEDO = 0.05;
 export function initializeAdrastea(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "adrastea",
     name: "Adrastea",
     seed: "adrastea_seed_2024",

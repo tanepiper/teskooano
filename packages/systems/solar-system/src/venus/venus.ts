@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -32,7 +32,7 @@ export function initializeVenus(parentId: string): void {
   const venusId = "venus";
   const venusAxialTiltRad = VENUS_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: venusId,
     name: "Venus",
     seed: "venus",

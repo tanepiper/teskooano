@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { factoryOperations } from "@teskooano/core-state";
+import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -26,7 +26,7 @@ const DIONE_ALBEDO = 0.998;
 export function initializeDione(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  factoryOperations.addCelestial({
+  celestial.addCelestial({
     id: "dione",
     name: "Dione",
     seed: "dione",

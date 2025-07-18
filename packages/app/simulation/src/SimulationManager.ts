@@ -6,8 +6,8 @@ import {
   type SimulationStepResult,
 } from "@teskooano/core-physics";
 import {
-  celestialFactory,
-  simulationState,
+  simulation,
+  celestial,
   physicsSystemAdapter,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
@@ -95,7 +95,7 @@ export class SimulationManager {
 
     this.isRunning = true;
     this.lastTime = performance.now();
-    this.accumulatedTime = simulationState.getSimulationState().time; // Sync with current state time
+    this.accumulatedTime = simulation.getState().time; // Sync with current state time
 
     this.subscriptionManager.dispose(); // Clear any existing subscriptions
     this.subscriptionManager.subscribeToStateComposition(
@@ -155,13 +155,13 @@ export class SimulationManager {
       // Cap delta time to a minimum of 30 FPS to prevent physics instability on freezes or massive frame drops.
       const cappedDeltaTime = Math.min(deltaTime, 1 / 30);
 
-      if (!simulationState.getSimulationState().paused) {
-        const timeScale = simulationState.getSimulationState().timeScale;
+      if (!simulation.getState().paused) {
+        const timeScale = simulation.getState().timeScale;
         const scaledDeltaTime = cappedDeltaTime * timeScale;
         this.accumulatedTime += scaledDeltaTime;
 
-        simulationState.setSimulationState({
-          ...simulationState.getSimulationState(),
+        simulation.setState({
+          ...simulation.getState(),
           time: this.accumulatedTime,
         });
 
@@ -198,8 +198,7 @@ export class SimulationManager {
           bodyTypes,
           ignoreCollisions,
           parentIds,
-          simulationConfig:
-            simulationState.getSimulationState().simulationConfig, // Pass the correct config
+          simulationConfig: simulation.getState().simulationConfig, // Pass the correct config
           orbitalParameters:
             physicsSystemAdapter.getOrbitalParametersSnapshot(),
           currentTime_s: this.accumulatedTime,
@@ -221,9 +220,7 @@ export class SimulationManager {
 
         // After physics, check for hierarchy changes (orphans, escapes)
         // Skip hierarchy updates in ideal mode since stars are fixed and orbits are perfect
-        if (
-          simulationState.getSimulationState().simulationConfig.mode !== "ideal"
-        ) {
+        if (simulation.getState().simulationConfig.mode !== "ideal") {
           this.hierarchyManager.updateHierarchies();
         }
 
@@ -262,17 +259,17 @@ export class SimulationManager {
    */
   public resetSystem(skipStateClear: boolean = false): void {
     if (!skipStateClear) {
-      celestialFactory.clearState({
+      celestial.clearState({
         resetCamera: false, // Camera reset is usually handled by UI/camera manager
         resetTime: true,
         resetSelection: true,
       });
     } else {
       // Even if skipping full state clear, internal time and resetTime$ event might be relevant.
-      if (simulationState.getSimulationState().time !== 0) {
+      if (simulation.getState().time !== 0) {
         // If time is not already zero
-        simulationState.setSimulationState({
-          ...simulationState.getSimulationState(),
+        simulation.setState({
+          ...simulation.getState(),
           time: 0,
         });
       }
