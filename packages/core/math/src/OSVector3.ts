@@ -38,7 +38,7 @@ export class OSVector3 {
    * @param z - The new z component.
    * @returns This vector for chaining.
    */
-  set(x: number, y: number, z: number): this {
+  set(x: number, y: number, z: number): OSVector3 {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -50,7 +50,7 @@ export class OSVector3 {
    * @param v - The vector to copy from.
    * @returns This vector for chaining.
    */
-  copy(v: OSVector3): this {
+  copy(v: OSVector3): OSVector3 {
     this.x = v.x;
     this.y = v.y;
     this.z = v.z;
@@ -62,7 +62,7 @@ export class OSVector3 {
    * @param v - The vector to add.
    * @returns This vector for chaining.
    */
-  add(v: OSVector3): this {
+  add(v: OSVector3): OSVector3 {
     this.x += v.x;
     this.y += v.y;
     this.z += v.z;
@@ -74,7 +74,7 @@ export class OSVector3 {
    * @param v - The vector to subtract.
    * @returns This vector for chaining.
    */
-  sub(v: OSVector3): this {
+  sub(v: OSVector3): OSVector3 {
     this.x -= v.x;
     this.y -= v.y;
     this.z -= v.z;
@@ -86,7 +86,7 @@ export class OSVector3 {
    * @param scalar - The scalar value.
    * @returns This vector for chaining.
    */
-  multiplyScalar(scalar: number): this {
+  multiplyScalar(scalar: number): OSVector3 {
     this.x *= scalar;
     this.y *= scalar;
     this.z *= scalar;
@@ -98,7 +98,7 @@ export class OSVector3 {
    * @param scalar - The scalar value.
    * @returns This vector for chaining.
    */
-  divideScalar(scalar: number): this {
+  divideScalar(scalar: number): OSVector3 {
     if (scalar !== 0) {
       this.x /= scalar;
       this.y /= scalar;
@@ -131,7 +131,7 @@ export class OSVector3 {
    * If the length is zero, the vector remains unchanged.
    * @returns This vector for chaining.
    */
-  normalize(): this {
+  normalize(): OSVector3 {
     const len = this.length();
     if (len > EPSILON) {
       this.multiplyScalar(1 / len);
@@ -156,7 +156,7 @@ export class OSVector3 {
    * @param v - The other vector.
    * @returns This vector for chaining.
    */
-  cross(v: OSVector3): this {
+  cross(v: OSVector3): OSVector3 {
     const x = this.x,
       y = this.y,
       z = this.z;
@@ -211,7 +211,7 @@ export class OSVector3 {
    * @param alpha The interpolation factor, typically in the range [0, 1].
    * @returns This vector for chaining.
    */
-  lerp(v: OSVector3, alpha: number): this {
+  lerp(v: OSVector3, alpha: number): OSVector3 {
     this.x += (v.x - this.x) * alpha;
     this.y += (v.y - this.y) * alpha;
     this.z += (v.z - this.z) * alpha;
@@ -236,7 +236,7 @@ export class OSVector3 {
    * @param v The vector to project onto.
    * @returns This vector for chaining.
    */
-  projectOnVector(v: OSVector3): this {
+  projectOnVector(v: OSVector3): OSVector3 {
     const denominator = v.lengthSq();
     if (denominator === 0) {
       this.set(0, 0, 0);
@@ -251,7 +251,7 @@ export class OSVector3 {
    * @param normal The normal vector of the plane (must be a unit vector).
    * @returns This vector for chaining.
    */
-  reflect(normal: OSVector3): this {
+  reflect(normal: OSVector3): OSVector3 {
     // Uses the formula: v' = v - 2 * (v . n) * n
     const dotProduct = this.dot(normal);
     this.x -= 2 * dotProduct * normal.x;
@@ -292,7 +292,7 @@ export class OSVector3 {
    * @param q - The OSQuaternion to apply.
    * @returns This vector for chaining.
    */
-  applyQuaternion(q: OSQuaternion): this {
+  applyQuaternion(q: OSQuaternion): OSVector3 {
     const x = this.x,
       y = this.y,
       z = this.z;
@@ -321,7 +321,7 @@ export class OSVector3 {
    * @param scalar - The scalar to multiply the vector by.
    * @returns This vector for chaining.
    */
-  addScaledVector(v: OSVector3, scalar: number): this {
+  addScaledVector(v: OSVector3, scalar: number): OSVector3 {
     this.x += v.x * scalar;
     this.y += v.y * scalar;
     this.z += v.z * scalar;
@@ -334,7 +334,7 @@ export class OSVector3 {
    * @param scalar - The scalar to multiply the vector by.
    * @returns This vector for chaining.
    */
-  subScaledVector(v: OSVector3, scalar: number): this {
+  subScaledVector(v: OSVector3, scalar: number): OSVector3 {
     this.x -= v.x * scalar;
     this.y -= v.y * scalar;
     this.z -= v.z * scalar;
@@ -345,7 +345,7 @@ export class OSVector3 {
    * Negates this vector (multiplies by -1).
    * @returns This vector for chaining.
    */
-  negate(): this {
+  negate(): OSVector3 {
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
@@ -358,7 +358,7 @@ export class OSVector3 {
    * @param offset - The offset into the array. Defaults to 0.
    * @returns This vector for chaining.
    */
-  setFromArray(array: number[], offset: number = 0): this {
+  setFromArray(array: number[], offset: number = 0): OSVector3 {
     this.x = array[offset];
     this.y = array[offset + 1];
     this.z = array[offset + 2];
@@ -389,7 +389,7 @@ export class OSVector3 {
    * Sets this vector to zero.
    * @returns This vector for chaining.
    */
-  setZero(): this {
+  setZero(): OSVector3 {
     this.x = 0;
     this.y = 0;
     this.z = 0;

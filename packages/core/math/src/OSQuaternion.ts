@@ -43,7 +43,7 @@ export class OSQuaternion {
    * @param w - The new w component.
    * @returns This quaternion for chaining.
    */
-  set(x: number, y: number, z: number, w: number): this {
+  set(x: number, y: number, z: number, w: number): OSQuaternion {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -56,7 +56,7 @@ export class OSQuaternion {
    * @param q - The quaternion to copy from.
    * @returns This quaternion for chaining.
    */
-  copy(q: OSQuaternion): this {
+  copy(q: OSQuaternion): OSQuaternion {
     this.x = q.x;
     this.y = q.y;
     this.z = q.z;
@@ -93,7 +93,7 @@ export class OSQuaternion {
    * Normalizes this quaternion to have a length of 1.
    * @returns This quaternion for chaining.
    */
-  normalize(): this {
+  normalize(): OSQuaternion {
     const len = this.length();
     if (len > EPSILON) {
       const invLen = 1 / len;
@@ -116,7 +116,7 @@ export class OSQuaternion {
    * For a quaternion (x, y, z, w), the conjugate is (-x, -y, -z, w).
    * @returns This quaternion for chaining.
    */
-  conjugate(): this {
+  conjugate(): OSQuaternion {
     this.x *= -1;
     this.y *= -1;
     this.z *= -1;
@@ -129,7 +129,7 @@ export class OSQuaternion {
    * For a normalized quaternion, the inverse is simply the conjugate.
    * @returns This quaternion for chaining.
    */
-  invert(): this {
+  invert(): OSQuaternion {
     const lenSq = this.lengthSq();
     if (lenSq > EPSILON) {
       this.conjugate();
@@ -147,7 +147,7 @@ export class OSQuaternion {
    * @param q The quaternion to multiply by (on the right).
    * @returns This quaternion for chaining.
    */
-  multiply(q: OSQuaternion): this {
+  multiply(q: OSQuaternion): OSQuaternion {
     const ax = this.x,
       ay = this.y,
       az = this.z,
@@ -171,7 +171,7 @@ export class OSQuaternion {
    * @param t The interpolation factor (0.0 to 1.0).
    * @returns This quaternion for chaining.
    */
-  slerp(qb: OSQuaternion, t: number): this {
+  slerp(qb: OSQuaternion, t: number): OSQuaternion {
     if (t === 0) return this;
     if (t === 1) return this.copy(qb);
 
@@ -236,7 +236,7 @@ export class OSQuaternion {
    * @param angle - The angle of rotation in radians.
    * @returns This quaternion for chaining.
    */
-  setFromAxisAngle(axis: OSVector3, angle: number): this {
+  setFromAxisAngle(axis: OSVector3, angle: number): OSQuaternion {
     const halfAngle = angle / 2;
     const s = Math.sin(halfAngle);
 
@@ -254,7 +254,7 @@ export class OSQuaternion {
    * @param order The order of axis rotations. Only 'XYZ' is currently supported.
    * @returns This quaternion for chaining.
    */
-  setFromEuler(euler: OSVector3, order: "XYZ"): this {
+  setFromEuler(euler: OSVector3, order: "XYZ"): OSQuaternion {
     // http://www.mathworks.com/matlabcentral/fileexchange/
     // 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-rotation-vectors
     const x = euler.x * DEG_TO_RAD;

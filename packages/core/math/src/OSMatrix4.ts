@@ -33,7 +33,7 @@ export class OSMatrix4 {
     n42: number,
     n43: number,
     n44: number,
-  ): this {
+  ): OSMatrix4 {
     const te = this.elements;
     te[0] = n11;
     te[4] = n12;
@@ -57,7 +57,7 @@ export class OSMatrix4 {
   /**
    * Resets this matrix to the identity matrix.
    */
-  identity(): this {
+  identity(): OSMatrix4 {
     return this.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
   }
 
@@ -73,7 +73,7 @@ export class OSMatrix4 {
   /**
    * Copies the elements from another OSMatrix4.
    */
-  copy(m: OSMatrix4): this {
+  copy(m: OSMatrix4): OSMatrix4 {
     this.elements = [...m.elements];
     return this;
   }
@@ -81,7 +81,7 @@ export class OSMatrix4 {
   /**
    * Sets the rotation component of this matrix from a quaternion.
    */
-  makeRotationFromQuaternion(q: OSQuaternion): this {
+  makeRotationFromQuaternion(q: OSQuaternion): OSMatrix4 {
     const te = this.elements;
     const x = q.x,
       y = q.y,
@@ -127,7 +127,7 @@ export class OSMatrix4 {
   /**
    * Constructs a rotation matrix, looking from `eye` to `target` with configured `up` direction.
    */
-  lookAt(eye: OSVector3, target: OSVector3, up: OSVector3): this {
+  lookAt(eye: OSVector3, target: OSVector3, up: OSVector3): OSMatrix4 {
     const te = this.elements;
 
     let zx = eye.x - target.x;
@@ -172,7 +172,7 @@ export class OSMatrix4 {
   /**
    * Multiplies this matrix by another matrix.
    */
-  multiply(m: OSMatrix4): this {
+  multiply(m: OSMatrix4): OSMatrix4 {
     const ae = this.elements;
     const be = m.elements;
 
@@ -236,7 +236,7 @@ export class OSMatrix4 {
   /**
    * Transposes this matrix.
    */
-  transpose(): this {
+  transpose(): OSMatrix4 {
     const te = this.elements;
     let tmp;
     tmp = te[1];
@@ -317,7 +317,7 @@ export class OSMatrix4 {
   /**
    * Inverts this matrix.
    */
-  invert(): this {
+  invert(): OSMatrix4 {
     const te = this.elements,
       n11 = te[0],
       n21 = te[1],
@@ -492,7 +492,7 @@ export class OSMatrix4 {
     bottom: number,
     near: number,
     far: number,
-  ): this {
+  ): OSMatrix4 {
     const te = this.elements;
     const x = (2 * near) / (right - left);
     const y = (2 * near) / (top - bottom);
@@ -531,7 +531,7 @@ export class OSMatrix4 {
     bottom: number,
     near: number,
     far: number,
-  ): this {
+  ): OSMatrix4 {
     const te = this.elements;
     const w = 1.0 / (right - left);
     const h = 1.0 / (top - bottom);

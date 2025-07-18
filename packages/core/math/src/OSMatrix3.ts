@@ -41,7 +41,7 @@ export class OSMatrix3 {
     n31: number,
     n32: number,
     n33: number,
-  ): this {
+  ): OSMatrix3 {
     const te = this.elements;
     te[0] = n11;
     te[3] = n12;
@@ -59,7 +59,7 @@ export class OSMatrix3 {
    * Resets this matrix to the identity matrix.
    * @returns This matrix for chaining.
    */
-  identity(): this {
+  identity(): OSMatrix3 {
     return this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
   }
 
@@ -78,7 +78,7 @@ export class OSMatrix3 {
    * @param m - The matrix to copy from.
    * @returns This matrix for chaining.
    */
-  copy(m: OSMatrix3): this {
+  copy(m: OSMatrix3): OSMatrix3 {
     this.elements = [...m.elements];
     return this;
   }
@@ -88,7 +88,7 @@ export class OSMatrix3 {
    * @param s - The scalar value.
    * @returns This matrix for chaining.
    */
-  multiplyScalar(s: number): this {
+  multiplyScalar(s: number): OSMatrix3 {
     const te = this.elements;
     te[0] *= s;
     te[3] *= s;
@@ -125,7 +125,7 @@ export class OSMatrix3 {
    * Inverts this matrix.
    * @returns This matrix for chaining.
    */
-  invert(): this {
+  invert(): OSMatrix3 {
     const te = this.elements,
       n11 = te[0],
       n21 = te[1],
@@ -167,7 +167,7 @@ export class OSMatrix3 {
    * Transposes this matrix.
    * @returns This matrix for chaining.
    */
-  transpose(): this {
+  transpose(): OSMatrix3 {
     const te = this.elements;
     let tmp;
     tmp = te[1];
