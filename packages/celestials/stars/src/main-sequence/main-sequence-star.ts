@@ -89,7 +89,7 @@ export class MainSequenceStarRenderer<
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
-    return object.radius * 200;
+    return object.radius * 500;
   }
 
   /**
