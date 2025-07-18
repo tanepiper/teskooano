@@ -1,5 +1,5 @@
 import { BaseCelestialCard } from "./BaseCelestialCard.js";
-import { StateAccessor } from "@teskooano/core-state";
+import { StateAccessor, PhysicsStateProvider } from "@teskooano/core-state";
 import { CelestialObject, GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters.js";
 
@@ -39,7 +39,9 @@ export class GravitationalForcesCard extends BaseCelestialCard {
    * Renders gravitational influences in table format.
    */
   private renderGravitationalInfluences(celestial: CelestialObject): string {
-    if (!celestial.physicsStateReal) return "";
+    const celestialPhysicsState =
+      PhysicsStateProvider.getPhysicsState(celestial);
+    if (!celestialPhysicsState) return "";
 
     const allObjects = StateAccessor.getCurrentCelestialObjects();
     const influences: {
@@ -50,10 +52,13 @@ export class GravitationalForcesCard extends BaseCelestialCard {
     }[] = [];
 
     for (const other of Object.values(allObjects)) {
-      if (other.id === celestial.id || !other.physicsStateReal) continue;
+      if (other.id === celestial.id) continue;
 
-      const distance = celestial.physicsStateReal.position_m.distanceTo(
-        other.physicsStateReal.position_m,
+      const otherPhysicsState = PhysicsStateProvider.getPhysicsState(other);
+      if (!otherPhysicsState) continue;
+
+      const distance = celestialPhysicsState.position_m.distanceTo(
+        otherPhysicsState.position_m,
       );
       if (distance === 0) continue;
 

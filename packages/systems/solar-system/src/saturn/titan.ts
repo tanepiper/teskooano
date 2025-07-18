@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -28,7 +28,7 @@ const TITAN_TEMP_K = 93.7; // Wikipedia verified: 93.7 K (−179.5 °C)
 export function initializeTitan(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "titan",
     name: "Titan",
     seed: "titan_seed_15945",

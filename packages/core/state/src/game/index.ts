@@ -2,11 +2,17 @@ import { simulationStateService } from "./simulation";
 import { physicsSystemAdapter } from "./PhysicsSystemAdapter";
 import { renderableStore } from "./renderableStore";
 import { celestialManager } from "./managers/celestialManager";
-import { celestialStore } from "./stores/celestialStore";
-import { seedStore } from "./stores/seedStore";
-import { physicsStore } from "./stores/physicsStore";
+import { celestialStore as celestial } from "./stores/celestialStore";
+import { seedStore as seed } from "./stores/seedStore";
+import { physicsStore as physics } from "./stores/physicsStore";
+import { PhysicsStateCalculator } from "./services/PhysicsStateCalculator";
+import { PhysicsStateProvider } from "./services/PhysicsStateProvider";
 import { ClearStateOptions } from "./types";
-import type { CelestialObject, DeviceTier } from "@teskooano/data-types";
+import type {
+  CelestialObject,
+  CelestialSpecificPropertiesUnion,
+  DeviceTier,
+} from "@teskooano/data-types";
 import type { OSVector3 } from "@teskooano/core-math";
 
 // Export the service instances directly
@@ -15,123 +21,62 @@ export {
   renderableStore,
   physicsSystemAdapter,
   celestialManager,
-  celestialStore,
-  seedStore,
-  physicsStore,
+  celestial,
+  seed,
+  physics,
+  simulationStateService as simulation,
+  PhysicsStateCalculator,
+  PhysicsStateProvider,
 };
 
 // Export observables directly
-export const currentSeed$ = seedStore.currentSeed$;
-export const celestialObjects$ = celestialStore.objects$;
-export const celestialHierarchy$ = celestialStore.hierarchy$;
-export const accelerationVectors$ = physicsStore.accelerationVectors$;
+export const currentSeed$ = seed.currentSeed$;
+export const celestialObjects$ = celestial.objects$;
+export const celestialHierarchy$ = celestial.hierarchy$;
+export const accelerationVectors$ = physics.accelerationVectors$;
 export const simulationState$ = simulationStateService.simulationState$;
-
-// Create a functional API for celestial operations
-export const celestial = {
-  // Object operations
-  addObject: (object: CelestialObject) => celestialManager.addObject(object),
-  updateObject: (id: string, updates: Partial<CelestialObject>) =>
-    celestialManager.updateObject(id, updates),
-  removeObject: (id: string) => celestialManager.removeObject(id),
-  markDestroyed: (id: string) => celestialManager.markDestroyed(id),
-
-  // Orbit operations
-  updateOrbit: (id: string, parameters: any) =>
-    celestialManager.updateOrbit(id, parameters),
-
-  // System operations
-  createSolarSystem: (data: CelestialObject, clearStateFirst?: boolean) =>
-    celestialManager.createSolarSystem(data, clearStateFirst),
-  addObjects: (objects: CelestialObject[]) =>
-    celestialManager.addObjects(objects),
-  addCelestial: (object: CelestialObject) =>
-    celestialManager.addCelestial(object),
-  clearState: (options?: ClearStateOptions) =>
-    celestialManager.clearState(options),
-
-  // Data access
-  getObjects: () => celestialStore.getObjects(),
-  getObject: (id: string) => celestialStore.getObject(id),
-  getHierarchy: () => celestialStore.getHierarchy(),
-  getChildren: (parentId: string) => celestialStore.getChildren(parentId),
-  getParent: (childId: string) => celestialStore.getParent(childId),
-};
-
-// Create a functional API for seed operations
-export const seed = {
-  getCurrent: () => seedStore.getCurrentSeed(),
-  update: (newSeed: string) => seedStore.updateSeed(newSeed),
-};
-
-// Create a functional API for physics operations
-export const physics = {
-  getAccelerationVectors: () => physicsStore.getAccelerationVectors(),
-  updateAccelerationVectors: (vectors: Map<string, OSVector3>) =>
-    physicsStore.updateAccelerationVectors(vectors),
-  setAccelerationVector: (id: string, vector: OSVector3) =>
-    physicsStore.setAccelerationVector(id, vector),
-  removeAccelerationVector: (id: string) =>
-    physicsStore.removeAccelerationVector(id),
-  clearAccelerationVectors: () => physicsStore.clearAccelerationVectors(),
-};
-
-// Create a functional API for simulation state operations
-export const simulation = {
-  getState: () => simulationStateService.getSimulationState(),
-  setState: (state: any) => simulationStateService.setSimulationState(state),
-
-  // Time control
-  setTimeScale: (scale: number) => simulationStateService.setTimeScale(scale),
-  togglePause: () => simulationStateService.togglePause(),
-  resetTime: () => simulationStateService.resetTime(),
-  stepTime: (dt?: number) => simulationStateService.stepTime(dt),
-
-  // Object selection and focus
-  selectObject: (objectId: string | null) =>
-    simulationStateService.selectObject(objectId),
-  setFocusedObject: (objectId: string | null) =>
-    simulationStateService.setFocusedObject(objectId),
-
-  // Camera control
-  updateCamera: (position: OSVector3, target: OSVector3) =>
-    simulationStateService.updateCamera(position, target),
-
-  // Performance and visual settings
-  setPerformanceProfile: (profile: DeviceTier) =>
-    simulationStateService.setPerformanceProfile(profile),
-  setTrailLengthMultiplier: (multiplier: number) =>
-    simulationStateService.setTrailLengthMultiplier(multiplier),
-};
 
 // Legacy actions object for backward compatibility
 export const actions = {
   // Simulation actions
-  setTimeScale: simulation.setTimeScale,
-  togglePause: simulation.togglePause,
-  resetTime: simulation.resetTime,
-  stepTime: simulation.stepTime,
-  selectObject: simulation.selectObject,
-  setFocusedObject: simulation.setFocusedObject,
-  updateCamera: simulation.updateCamera,
-  setPerformanceProfile: simulation.setPerformanceProfile,
-  setTrailLengthMultiplier: simulation.setTrailLengthMultiplier,
+  setTimeScale: simulationStateService.setTimeScale.bind(
+    simulationStateService,
+  ),
+  togglePause: simulationStateService.togglePause.bind(simulationStateService),
+  resetTime: simulationStateService.resetTime.bind(simulationStateService),
+  stepTime: simulationStateService.stepTime.bind(simulationStateService),
+  selectObject: simulationStateService.selectObject.bind(
+    simulationStateService,
+  ),
+  setFocusedObject: simulationStateService.setFocusedObject.bind(
+    simulationStateService,
+  ),
+  updateCamera: simulationStateService.updateCamera.bind(
+    simulationStateService,
+  ),
+  setPerformanceProfile: simulationStateService.setPerformanceProfile.bind(
+    simulationStateService,
+  ),
+  setTrailLengthMultiplier:
+    simulationStateService.setTrailLengthMultiplier.bind(
+      simulationStateService,
+    ),
 
   // Celestial actions
-  addCelestialObject: celestial.addObject,
-  updateCelestialObject: celestial.updateObject,
-  updateOrbitalParameters: celestial.updateOrbit,
-  markObjectDestroyed: celestial.markDestroyed,
-  removeCelestialObject: celestial.removeObject,
+  addCelestialObject: celestialManager.addObject.bind(celestialManager),
+  updateCelestialObject: celestialManager.updateObject.bind(celestialManager),
+  updateOrbitalParameters: celestialManager.updateOrbit.bind(celestialManager),
+  markObjectDestroyed: celestialManager.markDestroyed.bind(celestialManager),
+  removeCelestialObject: celestialManager.removeObject.bind(celestialManager),
 
   // Factory actions
-  clearState: celestial.clearState,
-  createSolarSystem: celestial.createSolarSystem,
-  addCelestial: celestial.addCelestial,
+  clearState: celestialManager.clearState.bind(celestialManager),
+  createSolarSystem: celestialManager.createSolarSystem.bind(celestialManager),
+  addCelestial: celestialManager.addCelestial.bind(celestialManager),
 
   // Game state actions
-  updateAccelerationVectors: physics.updateAccelerationVectors,
-  updateSeed: seed.update,
+  updateAccelerationVectors: physics.updateAccelerationVectors.bind(physics),
+  updateSeed: seed.updateSeed.bind(seed),
 };
 
 export type { ClearStateOptions };

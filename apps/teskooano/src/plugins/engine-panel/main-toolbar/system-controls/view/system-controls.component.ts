@@ -1,4 +1,4 @@
-import { StateAccessor, currentSeed$, seedStore } from "@teskooano/core-state";
+import { StateAccessor, currentSeed$, seed } from "@teskooano/core-state";
 import type { CelestialObject } from "@teskooano/data-types";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { BehaviorSubject, combineLatest, fromEvent, Subscription } from "rxjs";
@@ -281,7 +281,7 @@ export class SystemControls extends HTMLElement {
         }
         return "";
       }),
-      tap((seed) => seedStore.updateSeed(seed)),
+      tap((newSeed) => seed.updateSeed(newSeed)),
     );
     this.subscriptions.add(seedInputEvent$.subscribe());
 

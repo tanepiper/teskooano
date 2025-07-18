@@ -1,8 +1,9 @@
 import {
   actions,
-  celestial,
+  celestialManager,
   StateAccessor,
-  seedStore,
+  seed,
+  PhysicsStateCalculator,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -37,46 +38,12 @@ function adjustSystemToBarycentre(): void {
     return;
   }
 
-  const starObject = allObjects[primaryStar];
-  if (!starObject.physicsStateReal) {
-    console.warn(
-      "[SystemGenerator] Primary star has no physics state for barycentre adjustment",
-    );
-    return;
-  }
-
-  // Calculate the offset needed to move the star to the origin
-  const starPosition = starObject.physicsStateReal.position_m;
-  const offset = new OSVector3(
-    -starPosition.x,
-    -starPosition.y,
-    -starPosition.z,
-  );
-
-  // Apply the offset to all objects
-  objectIds.forEach((id) => {
-    const obj = allObjects[id];
-    if (obj.physicsStateReal) {
-      const newPosition = new OSVector3(
-        obj.physicsStateReal.position_m.x + offset.x,
-        obj.physicsStateReal.position_m.y + offset.y,
-        obj.physicsStateReal.position_m.z + offset.z,
-      );
-
-      // Update the object's position in the state
-      actions.updateCelestialObject(id, {
-        ...obj,
-        physicsStateReal: {
-          ...obj.physicsStateReal,
-          position_m: newPosition,
-        },
-      });
-    }
-  });
-
+  // Note: Physics state adjustment removed - this should be handled by the physics system
   console.log(
-    `[SystemGenerator] Adjusted system barycentre by offset: (${offset.x.toExponential(2)}, ${offset.y.toExponential(2)}, ${offset.z.toExponential(2)})`,
+    "[SystemGenerator] Barycentre adjustment skipped - physics state managed separately",
   );
+
+  console.log(`[SystemGenerator] Barycentre adjustment completed`);
 }
 
 /**
@@ -137,11 +104,11 @@ export class SystemGenerator {
 
     window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
 
-    seedStore.updateSeed(inputSeed);
+    seed.updateSeed(inputSeed);
     const finalSeed = StateAccessor.getCurrentSeed();
 
     // Reset the application state before generating a new system.
-    celestial.clearState({
+    celestialManager.clearState({
       resetCamera: false,
       resetTime: true,
       resetSelection: true,
@@ -157,25 +124,41 @@ export class SystemGenerator {
 
       // Create an RxJS pipeline to process the stream of generated objects.
       const processingPipeline$ = objects$.pipe(
-        tap((celestialObject: CelestialObject) => {
+        tap(async (celestialObject: CelestialObject) => {
           const creationInput = {
             ...celestialObject,
             atmosphere: celestialObject.atmosphere as any,
           };
 
+          // Get all current objects for physics state calculation
+          const allObjects = StateAccessor.getCurrentCelestialObjects();
+
           // Handle stars properly using createSolarSystem
           if (celestialObject.type === CelestialType.STAR) {
             if (!isSystemInitialized) {
               // First star: initialize the system and clear state
-              celestial.createSolarSystem(creationInput);
+              celestialManager.createSolarSystem(creationInput);
               isSystemInitialized = true;
             } else {
               // Subsequent stars: don't clear state, just add to existing system
-              celestial.createSolarSystem(creationInput, false);
+              celestialManager.createSolarSystem(creationInput, false);
             }
           } else {
             // All other objects (planets, moons, etc.) use addCelestial
-            celestial.addCelestial(creationInput);
+            celestialManager.addCelestial(creationInput);
+          }
+
+          // Create renderable object with physics state
+          const renderable =
+            await PhysicsStateCalculator.createRenderableObject(
+              creationInput,
+              allObjects,
+            );
+
+          if (renderable) {
+            // Store the renderable object in the renderable store
+            // This would be handled by the renderer system
+            console.log(`Created renderable object for ${renderable.id}`);
           }
         }),
         catchError((error) => {

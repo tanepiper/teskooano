@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   GasGiantClass,
@@ -33,7 +33,7 @@ export function initializeJupiterPlanet(parentId: string): string {
   const jupiterId = "jupiter";
   const jupiterAxialTiltRad = JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: jupiterId,
     name: "Jupiter",
     seed: "jupiter",

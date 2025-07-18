@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -42,7 +42,7 @@ export function initializeEris(parentId: string): void {
   const erisId = "eris";
   const erisAxialTiltRad = ERIS_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: erisId,
     name: "Eris",
     seed: "eris",
@@ -120,7 +120,7 @@ export function initializeEris(parentId: string): void {
 
   // Add Dysnomia moon
   const dysnomiaAxialTilt = new OSVector3(0, 1, 0);
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "dysnomia",
     name: "Dysnomia",
     seed: "dysnomia",

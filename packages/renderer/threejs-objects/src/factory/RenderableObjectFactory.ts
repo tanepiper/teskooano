@@ -8,6 +8,7 @@ import {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "../utils/coordinateUtils";
+import { PhysicsStateProvider } from "@teskooano/core-state";
 
 /**
  * A factory responsible for creating and updating `RenderableCelestialObject` instances.
@@ -112,10 +113,20 @@ export class RenderableObjectFactory {
     obj: CelestialObject,
     lightSourceId: string | undefined,
     simulationTime: number,
-  ): RenderableCelestialObject {
+  ): RenderableCelestialObject | null {
     const realRadius = obj.realRadius_m ?? 0;
 
+    // Get physics state from the provider
+    const physicsState = PhysicsStateProvider.getPhysicsState(obj);
+    if (!physicsState) {
+      console.warn(
+        `[RenderableObjectFactory] Could not calculate physics state for ${obj.id}`,
+      );
+      return null;
+    }
+
     const target = {
+      ...obj, // Spread all properties from the original object
       celestialObjectId: obj.id,
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
@@ -126,31 +137,19 @@ export class RenderableObjectFactory {
       isSelected: false,
       isFocused: false,
       uniforms: {},
-      name: obj.name,
-      type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
       radius: scaleSize(realRadius, obj.type),
       mass: (obj.realMass_kg ?? 0) * SCALE.MASS,
-      properties: obj.properties,
-      orbit: obj.orbit,
-      parentId: obj.parentId,
       primaryLightSourceId: lightSourceId,
-      realRadius_m: realRadius,
       axialTilt: obj.orbit.axialTilt ?? 0,
-      status: obj.status,
-      temperature: obj.temperature,
-      albedo: obj.albedo ?? 0.3,
+      physicsStateReal: physicsState, // Add the calculated physics state
     };
 
-    physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
-    if (obj.physicsStateReal.velocity_mps) {
+    physicsToThreeJSPosition(target.position, physicsState.position_m);
+    if (physicsState.velocity_mps) {
       // Keep velocity scaled for scene consistency (camera predictions, etc.)
-      physicsToThreeJSPosition(
-        target.velocity,
-        obj.physicsStateReal.velocity_mps,
-      );
+      physicsToThreeJSPosition(target.velocity, physicsState.velocity_mps);
       // Store raw velocity magnitude for display purposes
-      target.velocityMagnitude_mps = obj.physicsStateReal.velocity_mps.length();
+      target.velocityMagnitude_mps = physicsState.velocity_mps.length();
     } else {
       // Use set(0, 0, 0) for zero velocity
       target.velocity.set(0, 0, 0);
@@ -183,9 +182,11 @@ export class RenderableObjectFactory {
     if (!parentId) return null;
 
     const parent = objects[parentId];
-    if (!parent?.physicsStateReal?.position_m) return null;
+    const parentPhysicsState = PhysicsStateProvider.getPhysicsState(parent);
+    if (!parentPhysicsState?.position_m) return null;
 
     const target = {
+      ...obj, // Spread all properties from the original object
       celestialObjectId: obj.id,
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
@@ -196,35 +197,22 @@ export class RenderableObjectFactory {
       isSelected: false,
       isFocused: false,
       uniforms: {},
-      name: obj.name,
-      type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
       radius: 0,
       mass: 0,
-      properties: obj.properties,
-      orbit: undefined,
-      parentId: obj.parentId,
       primaryLightSourceId: lightSourceId,
-      realRadius_m: 0,
       axialTilt: parent.orbit.axialTilt ?? 0,
-      status: obj.status,
-      temperature: obj.temperature,
-      albedo: parent.albedo ?? 0,
+      physicsStateReal: parentPhysicsState, // Use parent's physics state
     };
 
-    physicsToThreeJSPosition(
-      target.position,
-      parent.physicsStateReal.position_m,
-    );
-    if (parent.physicsStateReal.velocity_mps) {
+    physicsToThreeJSPosition(target.position, parentPhysicsState.position_m);
+    if (parentPhysicsState.velocity_mps) {
       // Keep velocity scaled for scene consistency (camera predictions, etc.)
       physicsToThreeJSPosition(
         target.velocity,
-        parent.physicsStateReal.velocity_mps,
+        parentPhysicsState.velocity_mps,
       );
       // Store raw velocity magnitude for display purposes
-      target.velocityMagnitude_mps =
-        parent.physicsStateReal.velocity_mps.length();
+      target.velocityMagnitude_mps = parentPhysicsState.velocity_mps.length();
     } else {
       // Use set(0, 0, 0) for zero velocity
       target.velocity.set(0, 0, 0);
@@ -254,12 +242,6 @@ export class RenderableObjectFactory {
 
     for (const id in objects) {
       const obj = objects[id];
-      if (
-        !obj.physicsStateReal?.position_m &&
-        obj.type !== CelestialType.RING_SYSTEM
-      ) {
-        continue;
-      }
 
       let renderableObject: RenderableCelestialObject | null = null;
       const lightSourceId = lightSourceMap[id];

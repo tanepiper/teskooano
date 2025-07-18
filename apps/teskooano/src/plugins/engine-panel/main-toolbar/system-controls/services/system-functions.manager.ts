@@ -2,9 +2,9 @@ import { simulationManager } from "@teskooano/app-simulation";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
-  celestial,
+  celestialManager,
   StateAccessor,
-  seedStore,
+  seed,
 } from "@teskooano/core-state";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
@@ -91,37 +91,11 @@ export class SystemFunctionsManager {
             throw new Error("Invalid file format.");
           }
 
-          // Re-hydrate plain objects into class instances (e.g., OSVector3)
-          const hydratedObjects = parsedData.objects.map((obj) => {
-            if (obj.physicsStateReal) {
-              if (
-                obj.physicsStateReal.position_m &&
-                !(obj.physicsStateReal.position_m instanceof OSVector3)
-              ) {
-                const pos = obj.physicsStateReal.position_m as any;
-                obj.physicsStateReal.position_m = new OSVector3(
-                  pos.x,
-                  pos.y,
-                  pos.z,
-                );
-              }
-              if (
-                obj.physicsStateReal.velocity_mps &&
-                !(obj.physicsStateReal.velocity_mps instanceof OSVector3)
-              ) {
-                const vel = obj.physicsStateReal.velocity_mps as any;
-                obj.physicsStateReal.velocity_mps = new OSVector3(
-                  vel.x,
-                  vel.y,
-                  vel.z,
-                );
-              }
-            }
-            return obj;
-          });
+          // Use objects as-is - physics state will be calculated when added to simulation
+          const hydratedObjects = parsedData.objects;
 
           // Clear existing state before loading new data
-          celestial.clearState({
+          celestialManager.clearState({
             resetCamera: false,
             resetTime: true,
             resetSelection: true,
@@ -134,14 +108,14 @@ export class SystemFunctionsManager {
           if (!star) throw new Error("Could not find a primary star.");
 
           // Load the new system into the state
-          celestial.createSolarSystem(star);
+          celestialManager.createSolarSystem(star);
           hydratedObjects.forEach((obj) => {
             if (obj.id !== star.id) {
-              celestial.addCelestial(obj);
+              celestialManager.addCelestial(obj);
             }
           });
 
-          seedStore.updateSeed(parsedData.seed);
+          seed.updateSeed(parsedData.seed);
           simulationManager.resetSystem(true);
 
           observer.next({
@@ -221,7 +195,7 @@ export class SystemFunctionsManager {
     try {
       simulationManager.stopLoop();
 
-      celestial.clearState({
+      celestialManager.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -348,7 +322,7 @@ export class SystemFunctionsManager {
    */
   public async createBlankSystem() {
     try {
-      celestial.clearState({
+      celestialManager.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -356,8 +330,8 @@ export class SystemFunctionsManager {
       actions.resetTime();
 
       const star = generateStar(createSeededRandomSync(Date.now().toString()));
-      celestial.createSolarSystem(star);
-      seedStore.updateSeed("");
+      celestialManager.createSolarSystem(star);
+      seed.updateSeed("");
 
       simulationManager.resetSystem(true);
       return { success: true, symbol: "📄", message: "Blank system created." };
@@ -377,7 +351,7 @@ export class SystemFunctionsManager {
    */
   public async loadSolarSystem() {
     try {
-      celestial.clearState({
+      celestialManager.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,

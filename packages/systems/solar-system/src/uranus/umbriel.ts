@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -18,7 +18,7 @@ const UMBRIEL_REAL_RADIUS_M = 584.7 * KM;
 export function initializeUmbriel(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0).normalize();
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "umbriel",
     name: "Umbriel",
     seed: "umbriel_seed_4144",

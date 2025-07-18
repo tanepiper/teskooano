@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { initializeSolarSystem } from "./index";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -12,12 +12,12 @@ import {
 describe("Solar System Initialization", () => {
   beforeEach(() => {
     // Clear any existing state before each test
-    celestial.clearState();
+    celestialManager.clearState();
   });
 
   afterEach(() => {
     // Clean up after each test
-    celestial.clearState();
+    celestialManager.clearState();
   });
 
   describe("initializeSolarSystem", () => {
@@ -26,7 +26,7 @@ describe("Solar System Initialization", () => {
       initializeSolarSystem();
 
       // Get all created objects
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
       const objectIds = Object.keys(objects);
 
       // Should have created multiple celestial objects
@@ -76,7 +76,7 @@ describe("Solar System Initialization", () => {
 
     it("should create objects with valid physical properties", () => {
       initializeSolarSystem();
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
 
       Object.values(objects).forEach((obj) => {
         // All objects should have valid mass
@@ -113,7 +113,7 @@ describe("Solar System Initialization", () => {
 
     it("should create objects with proper hierarchy relationships", () => {
       initializeSolarSystem();
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
 
       // Check that all non-sun objects have the sun as parent
       Object.values(objects).forEach((obj) => {
@@ -138,7 +138,7 @@ describe("Solar System Initialization", () => {
 
     it("should create comets with valid properties", () => {
       initializeSolarSystem();
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
 
       // Check for comets
       const comets = Object.values(objects).filter(
@@ -159,7 +159,7 @@ describe("Solar System Initialization", () => {
 
     it("should create planets with appropriate surface properties", () => {
       initializeSolarSystem();
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
 
       const planets = Object.values(objects).filter(
         (obj) =>
@@ -182,7 +182,7 @@ describe("Solar System Initialization", () => {
 
     it("should create the sun with correct stellar properties", () => {
       initializeSolarSystem();
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
       const sun = objects["sun"];
 
       expect(sun.properties).toBeDefined();
@@ -196,12 +196,12 @@ describe("Solar System Initialization", () => {
     it("should handle multiple initializations gracefully", () => {
       // First initialization
       initializeSolarSystem();
-      const firstObjects = celestial.getObjects();
+      const firstObjects = celestialManager.getObjects();
       const firstCount = Object.keys(firstObjects).length;
 
       // Second initialization (should clear and recreate)
       initializeSolarSystem();
-      const secondObjects = celestial.getObjects();
+      const secondObjects = celestialManager.getObjects();
       const secondCount = Object.keys(secondObjects).length;
 
       // Should have the same number of objects

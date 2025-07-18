@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -77,7 +77,7 @@ export function initializeVoyager1(): void {
     ],
   } as SatelliteProperties;
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "voyager-1",
     name: "Voyager 1",
     seed: "voyager_1_golden_record",

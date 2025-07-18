@@ -9,6 +9,7 @@ import type {
 } from "@teskooano/core-physics";
 import { celestialStore } from "./stores/celestialStore";
 import { physicsStore } from "./stores/physicsStore";
+import { PhysicsStateProvider } from "./services/PhysicsStateProvider";
 import type { OrbitalParameters } from "@teskooano/data-types";
 
 /**
@@ -37,7 +38,9 @@ class PhysicsSystemAdapter {
    */
   public getPhysicsBodies(): PhysicsStateReal[] {
     const bodies: PhysicsStateReal[] = [];
-    Object.values(celestialStore.getObjects())
+    const allObjects = celestialStore.getObjects();
+
+    Object.values(allObjects)
       .filter(
         (obj: CelestialObject) =>
           obj.status !== CelestialStatus.DESTROYED &&
@@ -45,11 +48,12 @@ class PhysicsSystemAdapter {
           !obj.ignorePhysics,
       )
       .forEach((obj: CelestialObject) => {
-        if (obj.physicsStateReal) {
-          bodies.push(obj.physicsStateReal);
+        const physicsState = PhysicsStateProvider.getPhysicsState(obj);
+        if (physicsState) {
+          bodies.push(physicsState);
         } else {
           console.warn(
-            `[PhysicsSystemAdapter] Object ${obj.id} is active for physics but missing physicsStateReal, skipping in simulation.`,
+            `[PhysicsSystemAdapter] Object ${obj.id} is active for physics but could not calculate physics state, skipping in simulation.`,
           );
         }
       });
@@ -93,14 +97,13 @@ class PhysicsSystemAdapter {
       ...currentCelestialObjects,
     };
 
+    // Update the physics state cache with the new states
     result.states.forEach((updatedState) => {
       const id = String(updatedState.id);
       const existingObject = newCelestialObjectsMap[id];
       if (existingObject) {
-        newCelestialObjectsMap[id] = {
-          ...existingObject,
-          physicsStateReal: updatedState,
-        };
+        // Update the physics state cache with the simulation results
+        PhysicsStateProvider.updateCacheWithSimulationResult(id, updatedState);
       } else {
         console.warn(
           `[PhysicsSystemAdapter] Received updated state for object ID: ${id}, which was not found in the current celestial objects map. This might happen if the object was created and destroyed in the same tick or if getPhysicsBodies was not perfectly synced.`,

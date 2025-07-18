@@ -52,7 +52,9 @@ export class CelestialManager {
    * Adds a celestial object to the store and updates hierarchy.
    * Dispatches events for UI updates.
    */
-  public addObject(object: CelestialObject): void {
+  public addObject<
+    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
+  >(object: CelestialObject<T>): void {
     try {
       celestialStore.setObject(object.id, object);
 
@@ -79,7 +81,9 @@ export class CelestialManager {
   /**
    * Updates properties of an existing celestial object.
    */
-  public updateObject(id: string, updates: Partial<CelestialObject>): void {
+  public updateObject<
+    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
+  >(id: string, updates: Partial<CelestialObject<T>>): void {
     const object = celestialStore.getObject(id);
     if (object) {
       const updatedObject = { ...object, ...updates };
@@ -162,10 +166,9 @@ export class CelestialManager {
   /**
    * Creates a solar system with a primary star.
    */
-  public createSolarSystem(
-    data: CelestialObject,
-    clearStateFirst = true,
-  ): string {
+  public createSolarSystem<
+    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
+  >(data: CelestialObject<T>, clearStateFirst = true): string {
     if (data.type !== CelestialType.STAR) {
       console.error(
         `[CelestialManager] createSolarSystem called with non-star type: ${data.type}`,
@@ -199,7 +202,9 @@ export class CelestialManager {
   /**
    * Adds multiple celestial objects with dependency-aware sorting.
    */
-  public addObjects(data: CelestialObject[]): void {
+  public addObjects<
+    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
+  >(data: CelestialObject<T>[]): void {
     const sortedData = this.sortByDependency(data);
 
     for (const objectData of sortedData) {
@@ -219,7 +224,9 @@ export class CelestialManager {
   /**
    * Adds a single celestial object with proper physics state calculation.
    */
-  public addCelestial(data: CelestialObject): void {
+  public addCelestial<
+    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
+  >(data: CelestialObject<T>): void {
     const processedObject = this.processCelestialData(data);
     if (processedObject) {
       this.addObject(processedObject);
@@ -247,16 +254,6 @@ export class CelestialManager {
       specialSpectralClass: inputStarProps?.specialSpectralClass,
     };
 
-    const physicsState: PhysicsStateReal = {
-      id: data.id,
-      mass_kg: data.realMass_kg,
-      position_m:
-        data.physicsStateReal?.position_m?.clone() ?? new OSVector3().setZero(),
-      velocity_mps:
-        data.physicsStateReal?.velocity_mps?.clone() ??
-        new OSVector3().setZero(),
-    };
-
     return {
       ...data,
       status: CelestialStatus.ACTIVE,
@@ -267,20 +264,15 @@ export class CelestialManager {
         : undefined,
       properties: processedProperties,
       seed: data.seed ?? `${Math.floor(Date.now() % 1000000)}`,
-      physicsStateReal: physicsState,
       parentId: data.parentId,
     };
   }
 
-  private processCelestialData(data: CelestialObject): CelestialObject | null {
+  private processCelestialData<
+    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
+  >(data: CelestialObject<T>): CelestialObject<T> | null {
     // Validate basic requirements
     if (!this.validateCelestialData(data)) {
-      return null;
-    }
-
-    // Calculate physics state based on object type
-    const physicsState = this.calculatePhysicsState(data);
-    if (!physicsState) {
       return null;
     }
 
@@ -293,7 +285,6 @@ export class CelestialManager {
         ? data.atmosphere
         : undefined,
       seed: data.seed ?? `${Math.floor(Date.now() % 1000000)}`,
-      physicsStateReal: physicsState,
       parentId: data.parentId,
     };
   }
@@ -323,142 +314,6 @@ export class CelestialManager {
       CelestialType.GAS_GIANT,
       CelestialType.SATELLITE,
     ].includes(type);
-  }
-
-  private calculatePhysicsState(
-    data: CelestialObject,
-  ): PhysicsStateReal | undefined {
-    const objects = celestialStore.getObjects();
-    const parent = data.parentId ? objects[data.parentId] : undefined;
-
-    // Handle special object types
-    if (this.isSpecialObject(data.type)) {
-      return this.calculateSpecialObjectPhysics(data, parent);
-    }
-
-    // Handle root stars
-    if (data.type === CelestialType.STAR && !data.parentId) {
-      return {
-        id: data.id,
-        mass_kg: data.realMass_kg,
-        position_m: new OSVector3().setZero(),
-        velocity_mps: new OSVector3().setZero(),
-      };
-    }
-
-    // Handle rogue planets/satellites
-    if (this.isRogueObject(data)) {
-      return this.calculateRogueObjectPhysics(data);
-    }
-
-    // Handle normal orbital objects
-    return this.calculateOrbitalPhysics(data, parent);
-  }
-
-  private isSpecialObject(type: CelestialType): boolean {
-    return [
-      CelestialType.RING_SYSTEM,
-      CelestialType.OORT_CLOUD,
-      CelestialType.ASTEROID_FIELD,
-    ].includes(type);
-  }
-
-  private calculateSpecialObjectPhysics(
-    data: CelestialObject,
-    parent: CelestialObject | undefined,
-  ): PhysicsStateReal | undefined {
-    if (!parent?.physicsStateReal) {
-      console.error(
-        `[CelestialManager] Parent not found or missing physics state for ${data.id}`,
-      );
-      return undefined;
-    }
-
-    return {
-      id: data.id,
-      mass_kg: 0,
-      position_m: parent.physicsStateReal.position_m.clone(),
-      velocity_mps: parent.physicsStateReal.velocity_mps.clone(),
-    };
-  }
-
-  private isRogueObject(data: CelestialObject): boolean {
-    return (
-      (data.type === CelestialType.PLANET ||
-        data.type === CelestialType.GAS_GIANT ||
-        data.type === CelestialType.SATELLITE) &&
-      !data.parentId &&
-      data.orbit &&
-      data.orbit.realSemiMajorAxis_m === 0 &&
-      data.orbit.eccentricity === 0 &&
-      data.orbit.period_s === 0
-    );
-  }
-
-  private calculateRogueObjectPhysics(data: CelestialObject): PhysicsStateReal {
-    const random = createSeededRandomSync(
-      `rogue-${data.id}-${data.seed ?? "default"}`,
-    );
-    const baseDistance = data.orbit?.meanAnomaly || random() * 100 + 50;
-    const minRogueDistanceAU = 50;
-    const safeDistanceAU = Math.max(baseDistance, minRogueDistanceAU);
-    const AU_TO_METERS = 1.496e11;
-
-    return {
-      id: data.id,
-      mass_kg: data.realMass_kg,
-      position_m: new OSVector3().setFromArray([
-        safeDistanceAU * AU_TO_METERS,
-        (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
-        (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
-      ]),
-      velocity_mps: new OSVector3().setFromArray([
-        (random() - 0.5) * 500,
-        (random() - 0.5) * 500,
-        (random() - 0.5) * 500,
-      ]),
-    };
-  }
-
-  private calculateOrbitalPhysics(
-    data: CelestialObject,
-    parent: CelestialObject | undefined,
-  ): PhysicsStateReal | undefined {
-    if (!data.orbit || !parent?.physicsStateReal) {
-      console.error(
-        `[CelestialManager] Missing orbit or parent physics state for ${data.id}`,
-      );
-      return undefined;
-    }
-
-    try {
-      const initialRelativePos = calculateOrbitalPosition(
-        parent.physicsStateReal,
-        data.orbit,
-        0,
-      );
-      const initialWorldVel = calculateOrbitalVelocity(
-        parent.physicsStateReal,
-        data.orbit,
-        0,
-      );
-      const initialWorldPos = initialRelativePos
-        .clone()
-        .add(parent.physicsStateReal.position_m);
-
-      return {
-        id: data.id,
-        mass_kg: data.realMass_kg,
-        position_m: initialWorldPos,
-        velocity_mps: initialWorldVel,
-      };
-    } catch (error) {
-      console.error(
-        `[CelestialManager] Error calculating orbital physics for ${data.id}:`,
-        error,
-      );
-      return undefined;
-    }
   }
 
   private sortByDependency(objects: CelestialObject[]): CelestialObject[] {

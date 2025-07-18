@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -31,7 +31,7 @@ export function initializeEarthPlanet(parentId: string): string {
   const earthId = "earth";
   const earthAxialTiltRad = EARTH_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  celestial.addCelestial({
+  celestialManager.addCelestial<PlanetProperties>({
     id: earthId,
     name: "Earth",
     seed: "earth",

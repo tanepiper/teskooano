@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -23,7 +23,7 @@ export function initializeAsteroidBelt(parentId: string): void {
   const position = new OSVector3(BELT_CENTER_AU * AU, 0, 0);
   const velocity = new OSVector3(0, 0, 0);
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "asteroid-belt-main",
     name: "Main Asteroid Belt",
     type: CelestialType.ASTEROID_FIELD,

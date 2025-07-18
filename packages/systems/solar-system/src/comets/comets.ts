@@ -1,4 +1,4 @@
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 
 // Import individual comet definitions
@@ -25,7 +25,7 @@ export const initializeComets = (parentId: string) => {
       return;
     }
 
-    celestial.addCelestial({
+    celestialManager.addCelestial({
       ...comet,
       status: CelestialStatus.ACTIVE,
       parentId: parentId,

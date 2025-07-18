@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -27,7 +27,7 @@ const DEIMOS_TEMP_K = 233; // Estimated temperature similar to Phobos: ~233 K (-
  */
 export function initializeDeimos(parentId: string): void {
   const deimosAxialTilt = new OSVector3(0, 1, 0);
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "deimos",
     name: "Deimos",
     type: CelestialType.MOON,

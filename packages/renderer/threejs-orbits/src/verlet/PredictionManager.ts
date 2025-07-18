@@ -11,8 +11,9 @@ import {
 import { type SimulationParameters } from "@teskooano/core-physics";
 import {
   StateAccessor,
-  simulation,
+  simulationStateService,
   physicsSystemAdapter,
+  PhysicsStateProvider,
 } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
@@ -211,7 +212,9 @@ export class PredictionManager {
     const fullObjectsMap = StateAccessor.getCurrentCelestialObjects();
     const targetObject = fullObjectsMap[objectId];
 
-    if (!targetObject?.physicsStateReal) {
+    const targetPhysicsState =
+      PhysicsStateProvider.getPhysicsState(targetObject);
+    if (!targetPhysicsState) {
       this.removePrediction(objectId);
       return false;
     }
@@ -251,7 +254,7 @@ export class PredictionManager {
     }
 
     const allCurrentPhysicsStates = Object.values(fullObjectsMap)
-      .map((co) => co.physicsStateReal)
+      .map((co) => PhysicsStateProvider.getPhysicsState(co))
       .filter((state): state is PhysicsStateReal => !!state);
 
     // --- Create SimulationParameters for the worker ---
@@ -268,7 +271,8 @@ export class PredictionManager {
           !obj.ignorePhysics,
       )
       .forEach((obj: CelestialObject) => {
-        if (obj.physicsStateReal) {
+        const physicsState = PhysicsStateProvider.getPhysicsState(obj);
+        if (physicsState) {
           radii.set(obj.id, obj.realRadius_m);
           isStar.set(obj.id, obj.type === CelestialType.STAR);
           bodyTypes.set(obj.id, obj.type);
@@ -281,9 +285,10 @@ export class PredictionManager {
       isStar,
       bodyTypes,
       parentIds,
-      simulationConfig: simulation.getState().simulationConfig,
+      simulationConfig:
+        simulationStateService.getSimulationState().simulationConfig,
       orbitalParameters: physicsSystemAdapter.getOrbitalParametersSnapshot(),
-      currentTime_s: simulation.getState().time,
+      currentTime_s: simulationStateService.getSimulationState().time,
     };
     // ------------------------------------------------
 
@@ -485,7 +490,10 @@ export class PredictionManager {
       const renderableObject =
         StateAccessor.getCurrentRenderableObjects()[objectId];
       const threeJsObject = this.objectManager.getObject(objectId);
-      const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;
+      const physicsState = coreObject
+        ? PhysicsStateProvider.getPhysicsState(coreObject)
+        : null;
+      const velocity = physicsState?.velocity_mps.length() || 0;
 
       labelLayer.setActivePredictionObject(
         renderableObject,

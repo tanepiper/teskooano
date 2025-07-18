@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { initializeEarth } from "./index";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -11,19 +11,19 @@ import {
 describe("Earth System Initialization", () => {
   beforeEach(() => {
     // Clear any existing state before each test
-    celestial.clearState();
+    celestialManager.clearState();
   });
 
   afterEach(() => {
     // Clean up after each test
-    celestial.clearState();
+    celestialManager.clearState();
   });
 
   describe("initializeEarth", () => {
     it("should create Earth and Luna with correct properties", () => {
       // Create a mock sun first
       const sunId = "sun";
-      celestial.addCelestial({
+      celestialManager.addCelestial({
         id: sunId,
         name: "Sun",
         type: CelestialType.STAR,
@@ -59,7 +59,7 @@ describe("Earth System Initialization", () => {
       const earthId = initializeEarth(sunId);
 
       // Get all objects
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
 
       // Check Earth
       const earth = objects[earthId];
@@ -122,7 +122,7 @@ describe("Earth System Initialization", () => {
     it("should create Earth with correct atmospheric properties", () => {
       // Create a mock sun first
       const sunId = "sun";
-      celestial.addCelestial({
+      celestialManager.addCelestial({
         id: sunId,
         name: "Sun",
         type: CelestialType.STAR,
@@ -158,7 +158,7 @@ describe("Earth System Initialization", () => {
       initializeEarth(sunId);
 
       // Get Earth
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
       const earth = objects["earth"];
 
       // Check Earth's atmospheric properties
@@ -174,7 +174,7 @@ describe("Earth System Initialization", () => {
     it("should create Earth with correct surface properties", () => {
       // Create a mock sun first
       const sunId = "sun";
-      celestial.addCelestial({
+      celestialManager.addCelestial({
         id: sunId,
         name: "Sun",
         type: CelestialType.STAR,
@@ -210,7 +210,7 @@ describe("Earth System Initialization", () => {
       initializeEarth(sunId);
 
       // Get Earth
-      const objects = celestial.getObjects();
+      const objects = celestialManager.getObjects();
       const earth = objects["earth"];
 
       // Check Earth's surface properties

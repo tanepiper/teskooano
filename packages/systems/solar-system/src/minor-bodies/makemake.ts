@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -43,7 +43,7 @@ export function initializeMakemake(parentId: string): void {
   const makemakeId = "makemake";
   const makemakeAxialTiltRad = MAKEMAKE_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: makemakeId,
     name: "Makemake",
     seed: "makemake",
@@ -117,7 +117,7 @@ export function initializeMakemake(parentId: string): void {
 
   // Add MK2 moon
   const mk2AxialTilt = new OSVector3(0, 1, 0);
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "mk2",
     name: "MK2",
     seed: "mk2",

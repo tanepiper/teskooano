@@ -14,6 +14,7 @@ import {
   seed,
   physics,
   simulation,
+  simulationStateService,
 } from "../game";
 import type { SimulationState } from "../game/types";
 import { renderableStore } from "../game/renderableStore";
@@ -62,14 +63,16 @@ export class StateAccessor {
    * Preferred over direct import of simulationState$ when you need the current state immediately.
    */
   static getSimulationStateStream(): Observable<SimulationState> {
-    return simulationState$.pipe(startWith(simulation.getState()));
+    return simulationState$.pipe(
+      startWith(simulationStateService.getSimulationState()),
+    );
   }
 
   /**
    * Gets the current simulation state imperatively.
    */
   static getCurrentSimulationState(): SimulationState {
-    return simulation.getState();
+    return simulationStateService.getSimulationState();
   }
 
   // Celestial Hierarchy
@@ -109,14 +112,14 @@ export class StateAccessor {
    * Gets a reactive stream of the current seed with the current value as initial emission.
    */
   static getCurrentSeedStream(): Observable<string> {
-    return currentSeed$.pipe(startWith(seed.getCurrent()));
+    return currentSeed$.pipe(startWith(seed.getCurrentSeed()));
   }
 
   /**
    * Gets the current seed imperatively.
    */
   static getCurrentSeed(): string {
-    return seed.getCurrent();
+    return seed.getCurrentSeed();
   }
 
   // Convenience methods for common patterns

@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestial } from "@teskooano/core-state";
+import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -26,7 +26,7 @@ const HIMALIA_ALBEDO = 0.04;
 export function initializeHimalia(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  celestial.addCelestial({
+  celestialManager.addCelestial({
     id: "himalia",
     name: "Himalia",
     seed: "himalia_seed_1904",

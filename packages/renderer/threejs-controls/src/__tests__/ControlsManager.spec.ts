@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { ControlsManager } from "../ControlsManager";
 import * as THREE from "three";
-import { simulation } from "@teskooano/core-state";
+import { simulationStateService } from "@teskooano/core-state";
 
 describe("ControlsManager", () => {
   let controlsManager: ControlsManager;
@@ -73,14 +73,15 @@ describe("ControlsManager", () => {
 
     controlsManager.controls.dispatchEvent({ type: "change" });
 
-    expect(simulation.setState).toHaveBeenCalledWith({
+    expect(simulationStateService.setSimulationState).toHaveBeenCalledWith({
       camera: {
         position: expect.any(THREE.Vector3),
         target: expect.any(THREE.Vector3),
       },
     });
 
-    const setCall = vi.mocked(simulation.setState).mock.calls[0][0];
+    const setCall = vi.mocked(simulationStateService.setSimulationState).mock
+      .calls[0][0];
     const cameraState = setCall.camera;
 
     expect(cameraState.position.x).toBe(100);
@@ -100,7 +101,7 @@ describe("ControlsManager", () => {
 
     controlsManager.controls.dispatchEvent({ type: "change" });
 
-    expect(simulation.setState).not.toHaveBeenCalled();
+    expect(simulationStateService.setSimulationState).not.toHaveBeenCalled();
   });
 
   it("should dispose controls properly", () => {
