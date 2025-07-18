@@ -2,50 +2,34 @@
    Responsive Styles & Media Queries
    ========================================================================== */
 
-/* --- Larger Screens (Example: > 1200px) --- */
-@media only screen and (min-width: 1200px) {
-  /* Optionally increase base font size or tweak layout */
-  /* :root { --font-size-base: var(--font-size-3); } */
-}
-
-/* --- Medium Screens (Example: Tablets, ~769px - 1024px) --- */
 @media only screen and (max-width: 1024px) {
   #toolbar {
-    gap: var(--spacing-sm); /* Less gap */
-    flex-wrap: nowrap; /* Prevent wrapping on tablets - use horizontal scroll instead */
-    height: var(--toolbar-height); /* Fixed height for tablets */
-    min-height: var(--toolbar-height); /* Ensure min height */
-    padding: var(--spacing-sm) var(--spacing-md); /* Adjust padding */
-    overflow-x: auto; /* Enable horizontal scrolling */
-    -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
+    gap: var(--spacing-sm);
+    flex-wrap: nowrap;
+    height: var(--toolbar-height);
+    min-height: var(--toolbar-height);
+    padding: var(--spacing-sm) var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   #toolbar > * {
-    flex-shrink: 0; /* Prevent shrinking to allow horizontal scroll */
+    flex-shrink: 0;
     flex-basis: auto;
     min-width: 0;
   }
 
-  /* Make toolbar buttons slightly smaller */
   #toolbar button {
     padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-small);
   }
 
-  /* Hide toolbar scrollbar on tablets */
   #toolbar::-webkit-scrollbar {
     display: none;
   }
 
-  /* Example: Hide text on specific buttons */
-  #toolbar #github-button span:not([slot="icon"]),
-  #toolbar #settings-button span:not([slot="icon"]) {
-    /* display: none; */ /* Keep this if still needed */
-  }
-
-  /* Adjust composite panel layout responsiveness if needed */
   .composite-engine-panel.layout-internal-portrait .ui-container {
-    max-height: 50%; /* Allow more height on tablet */
+    max-height: 50%;
     min-height: 180px;
   }
   .composite-engine-panel.layout-internal-landscape
@@ -66,61 +50,46 @@
   }
 }
 
-/* --- Small Screens (Example: Mobile, < 768px) --- */
 @media only screen and (max-width: 768px) {
-  :root {
-    /* Reduce base font size slightly on mobile */
-    /* --font-size-base: var(--font-size-1); */
-  }
-
   #toolbar {
-    padding: var(--spacing-sm); /* Tighter padding */
+    padding: var(--spacing-sm);
     gap: var(--spacing-sm);
   }
 
   .app-logo,
   #app-logo {
-    max-height: 26px; /* Smaller logo */
+    max-height: 26px;
   }
 
-  /* Further compact toolbar buttons */
   #toolbar button {
     padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-small);
-    /* Maybe hide text on most buttons */
   }
 
-  /* Example: Hide text on almost all buttons */
-  #toolbar button:not(#add-view-button) span:not([slot="icon"]) {
-    /* display: none; */ /* Keep this if still needed */
-  }
-
-  /* Adjust composite panel for mobile */
   .composite-engine-panel.layout-internal-portrait .ui-container {
-    flex-direction: column; /* Stack UI sections vertically */
-    max-height: 60%; /* More height allowed */
+    flex-direction: column;
+    max-height: 60%;
     min-height: 150px;
   }
   .composite-engine-panel.layout-internal-portrait
     .ui-container
     > .left-ui-container {
-    flex-basis: auto; /* Height based on content */
+    flex-basis: auto;
     width: 100%;
     border-right: none;
     border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
-    min-height: 80px; /* Adjust min-height */
+    min-height: 80px;
   }
   .composite-engine-panel.layout-internal-portrait
     .ui-container
     > .right-ui-container {
-    flex-basis: auto; /* Height based on content */
+    flex-basis: auto;
     width: 100%;
-    flex-grow: 1; /* Take remaining space */
-    min-height: 100px; /* Adjust min-height */
+    flex-grow: 1;
+    min-height: 100px;
   }
 }
 
-/* --- Extra Small Screens (Example: Small Mobile, < 480px) --- */
 @media only screen and (max-width: 480px) {
   #toolbar {
     padding: var(--spacing-xs) var(--spacing-sm);
@@ -133,11 +102,6 @@
   }
 
   #toolbar button {
-    padding: var(--space-1); /* Even smaller padding */
-    /* Hide all text? */
-  }
-  /* Example: Hide text on add button too */
-  #toolbar #add-view-button span:not([slot="icon"]) {
-    /* display: none; */ /* Keep this if still needed */
+    padding: var(--space-1);
   }
 }
