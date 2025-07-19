@@ -99,7 +99,6 @@ export function generateMoonsObservable(
 
       moonSubscriber.complete();
     } catch (error) {
-      console.error(`Error generating moons for ${planetObject.name}:`, error);
       moonSubscriber.error(error);
     }
   });

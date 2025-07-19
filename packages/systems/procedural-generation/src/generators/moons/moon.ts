@@ -1,26 +1,27 @@
-import { OSVector3 } from "@teskooano/core-math";
-import {
-  calculateOrbitalPosition,
-  calculateOrbitalVelocity,
-} from "@teskooano/core-physics";
-import type {
-  CelestialObject,
-  OrbitalParameters,
-  PlanetProperties,
-  ProceduralSurfaceProperties,
-} from "@teskooano/data-types";
-import {
-  CelestialStatus,
-  CelestialType,
-  PlanetType,
-  SurfaceType,
-  PhysicsStateReal,
-} from "@teskooano/data-types";
-import * as CONST from "../../constants";
-import * as UTIL from "../../utils";
-import { createProceduralSurfaceProperties } from "../../properties";
-import { calculatePlanetOrbitAndInitialState } from "../planets/planet-orbit";
+import type { CelestialObject } from "@teskooano/data-types";
+import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import { generateCelestialName } from "../names/celestial-name";
+import {
+  determineMoonFormation,
+  calculateHillRadius,
+  calculateRocheLimit,
+} from "./moon-formation";
+import {
+  generateRealisticMoonMass,
+  generateMoonDensity,
+  calculateMoonRadius,
+  generateMoonRotation,
+  generateMoonAxialTilt,
+} from "./moon-physics";
+import {
+  calculateNextMoonDistance,
+  calculateMoonOrbitalPeriod,
+  generateMoonOrbit,
+} from "./moon-orbit";
+import {
+  determineMoonType,
+  createMoonPlanetProperties,
+} from "./moon-properties";
 
 /**
  * Generates scientifically accurate moon data based on real moon formation models
@@ -63,7 +64,7 @@ export function generateMoon(
 
   // Calculate density based on formation mechanism
   const moonDensity = generateMoonDensity(random, formationMechanism);
-  const moonRadius = UTIL.calculateRadius(moonMass, moonDensity);
+  const moonRadius = calculateMoonRadius(moonMass, moonDensity);
 
   // Calculate orbital distance with realistic spacing (Bode-like law for moons)
   const moonDistance_radii = calculateNextMoonDistance(
@@ -94,7 +95,7 @@ export function generateMoon(
     };
   }
 
-  const moonOrbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
+  const moonOrbitalPeriod_s = calculateMoonOrbitalPeriod(
     parentPlanetMass,
     moonSemiMajorAxis_m,
     moonMass,
@@ -113,9 +114,6 @@ export function generateMoon(
 
   // Validate orbital parameters
   if (parentPlanetMass <= 0 || !Number.isFinite(parentPlanetMass)) {
-    console.warn(
-      `[generateMoon] Invalid parent planet mass (${parentPlanetMass}) for ${moonId}. Skipping moon.`,
-    );
     return {
       moonData: null,
       nextLastMoonDistance_radii: lastMoonDistance_radii,
@@ -126,9 +124,6 @@ export function generateMoon(
     orbitalParams.realSemiMajorAxis_m <= 0 ||
     !Number.isFinite(orbitalParams.realSemiMajorAxis_m)
   ) {
-    console.warn(
-      `[generateMoon] Invalid semi-major axis (${orbitalParams.realSemiMajorAxis_m}) for ${moonId}. Skipping moon.`,
-    );
     return {
       moonData: null,
       nextLastMoonDistance_radii: lastMoonDistance_radii,
@@ -140,9 +135,6 @@ export function generateMoon(
     orbitalParams.eccentricity >= 1 ||
     !Number.isFinite(orbitalParams.eccentricity)
   ) {
-    console.warn(
-      `[generateMoon] Invalid eccentricity (${orbitalParams.eccentricity}) for ${moonId}. Skipping moon.`,
-    );
     return {
       moonData: null,
       nextLastMoonDistance_radii: lastMoonDistance_radii,
@@ -152,18 +144,16 @@ export function generateMoon(
   // Check Roche limit - moon must be outside the fluid Roche limit
   const parentPlanetDensity =
     parentPlanetMass / ((4 / 3) * Math.PI * Math.pow(parentPlanetRadius, 3));
-  const rocheLimit =
-    2.44 *
-    parentPlanetRadius *
-    Math.pow(parentPlanetDensity / moonDensity, 1 / 3);
+  const rocheLimit = calculateRocheLimit(
+    parentPlanetRadius,
+    parentPlanetDensity,
+    moonDensity,
+  );
   const moonPeriapsis =
     orbitalParams.realSemiMajorAxis_m * (1 - orbitalParams.eccentricity);
 
   if (moonPeriapsis <= rocheLimit * 1.2) {
     // 20% safety margin
-    console.warn(
-      `[generateMoon] Orbit periapsis (${moonPeriapsis} m) too close to Roche limit (${rocheLimit} m) for ${moonId}. Skipping moon.`,
-    );
     return {
       moonData: null,
       nextLastMoonDistance_radii: lastMoonDistance_radii,
@@ -176,43 +166,13 @@ export function generateMoon(
     formationMechanism,
     parentPlanetData,
   );
-  const moonSurfaceType = determineMoonSurface(
+
+  const moonSpecificProperties = createMoonPlanetProperties(
+    random,
     moonPlanetType,
     formationMechanism,
+    parentPlanetData,
   );
-
-  let detailedSurface: ProceduralSurfaceProperties;
-  switch (moonPlanetType) {
-    case PlanetType.BARREN:
-    case PlanetType.ROCKY:
-    case PlanetType.TERRESTRIAL:
-    case PlanetType.ICE:
-    case PlanetType.DESERT:
-    case PlanetType.LAVA:
-      detailedSurface = createProceduralSurfaceProperties(
-        random,
-        moonPlanetType,
-      );
-      break;
-    default:
-      detailedSurface = createProceduralSurfaceProperties(
-        random,
-        PlanetType.ROCKY,
-      );
-  }
-
-  const moonSpecificProperties: PlanetProperties = {
-    type: CelestialType.PLANET,
-    classType: moonPlanetType,
-    isMoon: true,
-    composition: determineMoonComposition(
-      random,
-      moonPlanetType,
-      formationMechanism,
-    ),
-    surface: detailedSurface as any,
-    atmosphere: undefined, // Most moons lack significant atmospheres
-  };
 
   const moonSeed = `${systemSeed}-${moonId}`;
 
@@ -225,9 +185,7 @@ export function generateMoon(
   );
 
   // Generate axial tilt (generally small for moons)
-  const tilt_deg = random() * 10; // Most moons have low obliquity
-  const tilt_rad = tilt_deg * (Math.PI / 180);
-  const tiltAxis = new OSVector3(0, Math.cos(tilt_rad), Math.sin(tilt_rad));
+  const tiltAxis = generateMoonAxialTilt(random);
 
   const moonData: CelestialObject = {
     id: moonId,
@@ -248,295 +206,4 @@ export function generateMoon(
   };
 
   return { moonData, nextLastMoonDistance_radii: moonDistance_radii };
-}
-
-/**
- * Determine moon formation mechanism based on planet mass and realistic probabilities
- */
-function determineMoonFormation(
-  random: () => number,
-  planetMass: number,
-): "co-accretion" | "capture" | "impact" {
-  const earthMass = 5.972e24;
-  const planetMassRatio = planetMass / earthMass;
-
-  // Larger planets more likely to have co-accreted moons
-  if (planetMassRatio > 10) {
-    // Gas giants
-    if (random() < 0.8) return "co-accretion";
-    else return "capture";
-  } else if (planetMassRatio > 0.5) {
-    // Large terrestrial planets
-    if (random() < 0.4) return "co-accretion";
-    else if (random() < 0.7) return "impact";
-    else return "capture";
-  } else {
-    // Small planets
-    if (random() < 0.6) return "capture";
-    else if (random() < 0.8) return "impact";
-    else return "co-accretion";
-  }
-}
-
-/**
- * Generate realistic moon mass based on formation mechanism
- */
-function generateRealisticMoonMass(
-  random: () => number,
-  planetMass: number,
-  formation: string,
-): number {
-  const earthMass = 5.972e24;
-
-  switch (formation) {
-    case "co-accretion":
-      // Co-accreted moons: 0.001% - 0.1% of planet mass (like Galilean moons)
-      return planetMass * (0.00001 + random() * 0.001);
-
-    case "impact":
-      // Impact-formed moons: larger, like Earth's Moon (1.2% of Earth's mass)
-      return planetMass * (0.005 + random() * 0.02);
-
-    case "capture":
-      // Captured objects: highly variable, generally smaller
-      return planetMass * (0.000001 + random() * 0.0001);
-
-    default:
-      return planetMass * (0.00001 + random() * 0.001);
-  }
-}
-
-/**
- * Generate moon density based on formation mechanism
- */
-function generateMoonDensity(random: () => number, formation: string): number {
-  switch (formation) {
-    case "co-accretion":
-      // Similar to parent planet, moderate density
-      return 2000 + random() * 2500; // 2.0 - 4.5 g/cm³
-
-    case "impact":
-      // Iron-depleted, rocky (like Earth's Moon: 3.34 g/cm³)
-      return 3000 + random() * 1000; // 3.0 - 4.0 g/cm³
-
-    case "capture":
-      // Variable density, often low (asteroids/comets)
-      return 1000 + random() * 3000; // 1.0 - 4.0 g/cm³
-
-    default:
-      return 2000 + random() * 2000;
-  }
-}
-
-/**
- * Calculate next moon orbital distance using realistic spacing
- */
-function calculateNextMoonDistance(
-  random: () => number,
-  lastDistance: number,
-  formation: string,
-  planetRadius: number,
-  planetMass: number,
-): number {
-  // Minimum distance: 5 planetary radii (much more conservative)
-  const minDistance = Math.max(5, lastDistance);
-
-  let spacingFactor: number;
-
-  switch (formation) {
-    case "co-accretion":
-      // Regular spacing like Galilean moons (factor of ~1.8-2.2)
-      spacingFactor = 1.8 + random() * 0.4;
-      break;
-
-    case "impact":
-      // Impact moons often single, large spacing
-      spacingFactor = 2.5 + random() * 2.0;
-      break;
-
-    case "capture":
-      // Irregular spacing for captured objects
-      spacingFactor = 2.0 + random() * 3.0;
-      break;
-
-    default:
-      spacingFactor = 2.0 + random() * 2.0;
-  }
-
-  return minDistance * spacingFactor;
-}
-
-/**
- * Calculate Hill radius for orbital stability check
- */
-function calculateHillRadius(
-  orbitRadius: number,
-  planetMass: number,
-  starMass: number,
-): number {
-  return orbitRadius * Math.pow(planetMass / (3 * starMass), 1 / 3);
-}
-
-/**
- * Generate moon orbital parameters based on formation mechanism.
- *
- * This function creates realistic moon orbits by:
- * 1. Inheriting the parent planet's orbital plane (inclination and longitude of ascending node)
- * 2. Adding small relative inclinations based on formation mechanism
- * 3. Randomizing the starting position in orbit (meanAnomaly) - this is correct physics
- *
- * Note: The randomized meanAnomaly means moons start at different points in their orbits,
- * which may appear as "random directions" but is actually proper orbital mechanics.
- * All moons still orbit in roughly the same plane as their parent planet.
- */
-function generateMoonOrbit(
-  random: () => number,
-  semiMajorAxis: number,
-  period: number,
-  formation: string,
-  parentOrbit?: OrbitalParameters,
-): OrbitalParameters {
-  let eccentricity: number;
-  let relativeInclination: number;
-
-  switch (formation) {
-    case "co-accretion":
-      // Regular, circular orbits (like Galilean moons)
-      eccentricity = random() * 0.01; // Very circular
-      relativeInclination = (random() - 0.5) * 0.05; // Nearly coplanar (+/- 1.4 degrees)
-      break;
-
-    case "impact":
-      // Moderate eccentricity, coplanar
-      eccentricity = random() * 0.1;
-      relativeInclination = (random() - 0.5) * 0.1; // +/- 2.8 degrees
-      break;
-
-    case "capture":
-      // Highly eccentric, inclined orbits
-      eccentricity = 0.1 + random() * 0.4; // Higher eccentricity
-      relativeInclination = (random() - 0.5) * 0.5; // Can be highly inclined (+/- 14 degrees)
-      break;
-
-    default:
-      eccentricity = random() * 0.05;
-      relativeInclination = (random() - 0.5) * 0.1;
-  }
-
-  // Combine parent's inclination with a small relative inclination.
-  // This keeps the moon orbiting roughly in the same plane as the planet.
-  const finalInclination =
-    (parentOrbit?.inclination ?? 0) + relativeInclination;
-
-  // Align the direction of the tilt with the parent's orbit.
-  const longitudeOfAscendingNode = parentOrbit
-    ? parentOrbit.longitudeOfAscendingNode
-    : random() * 2 * Math.PI;
-
-  return {
-    realSemiMajorAxis_m: semiMajorAxis,
-    eccentricity: eccentricity,
-    inclination: finalInclination,
-    longitudeOfAscendingNode: longitudeOfAscendingNode,
-    argumentOfPeriapsis: random() * 2 * Math.PI,
-    meanAnomaly: random() * 2 * Math.PI,
-    period_s: period,
-  };
-}
-
-/**
- * Determine moon type based on formation and parent planet
- */
-function determineMoonType(
-  random: () => number,
-  formation: string,
-  parentPlanet: CelestialObject,
-): PlanetType {
-  const parentProps = parentPlanet.properties as PlanetProperties;
-
-  switch (formation) {
-    case "co-accretion":
-      // Similar to parent planet material
-      if (parentProps?.classType === PlanetType.TERRESTRIAL) {
-        return PlanetType.ROCKY;
-      } else {
-        return PlanetType.ICE; // Moons of gas giants are often icy
-      }
-
-    case "impact":
-      // Impact moons are typically rocky/barren
-      return PlanetType.BARREN;
-
-    case "capture":
-      // Captured objects vary widely
-      const types = [PlanetType.BARREN, PlanetType.ROCKY, PlanetType.ICE];
-      return types[Math.floor(random() * types.length)];
-
-    default:
-      return PlanetType.ROCKY;
-  }
-}
-
-/**
- * Determine moon surface type
- */
-function determineMoonSurface(
-  moonType: PlanetType,
-  formation: string,
-): SurfaceType {
-  if (moonType === PlanetType.ICE) {
-    return SurfaceType.ICE_FLATS;
-  }
-
-  switch (formation) {
-    case "impact":
-      return SurfaceType.CRATERED; // Heavy bombardment
-    case "capture":
-      return SurfaceType.CRATERED; // Asteroid-like
-    default:
-      return SurfaceType.FLAT; // Processed surface
-  }
-}
-
-/**
- * Determine moon composition
- */
-function determineMoonComposition(
-  random: () => number,
-  moonType: PlanetType,
-  formation: string,
-): string[] {
-  if (moonType === PlanetType.ICE) {
-    return CONST.ICE_COMPOSITION;
-  }
-
-  switch (formation) {
-    case "impact":
-      return ["silicates", "iron", "magnesium"]; // Iron-depleted
-    case "capture":
-      return ["carbon", "silicates", "water ice"]; // Asteroid-like
-    default:
-      return UTIL.getRandomItem(CONST.ROCKY_COMPOSITION, random).split(",");
-  }
-}
-
-/**
- * Generate realistic moon rotation period (many moons are tidally locked)
- */
-function generateMoonRotation(
-  random: () => number,
-  orbitalPeriod: number,
-  moonDistance: number,
-  planetRadius: number,
-): number {
-  // Close moons are likely tidally locked
-  const tidal_locking_threshold = planetRadius * 15;
-
-  if (moonDistance < tidal_locking_threshold) {
-    // Tidally locked: rotation period = orbital period
-    return orbitalPeriod * (0.95 + random() * 0.1); // Some variation
-  } else {
-    // Non-tidally locked: independent rotation
-    return 50000 + random() * 500000; // 14 hours to 6 days
-  }
 }

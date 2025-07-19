@@ -1,6 +1,7 @@
+id: procedural-generation
+
 tasks:
   test:
-    command: vitest
-    args: run
+    command: npm run test
     options:
       runInCI: true

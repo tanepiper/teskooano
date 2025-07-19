@@ -1,20 +1,14 @@
-import { OSVector3 } from "@teskooano/core-math";
-import type {
-  CelestialObject,
-  CometProperties,
-  OrbitalParameters,
-  PhysicsStateReal,
-} from "@teskooano/data-types";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   CometClass,
-  METERS_TO_SCENE_UNITS,
+  type CometProperties,
+  type OrbitalParameters,
+  type StarProperties,
 } from "@teskooano/data-types";
-import {
-  calculateOrbitalPosition,
-  calculateOrbitalVelocity,
-} from "@teskooano/core-physics";
+import { OSVector3 } from "@teskooano/core-math";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import { generateCelestialName } from "../names/celestial-name";
@@ -51,9 +45,6 @@ export function generateComet(
 
     if (maxSemiMajorAxisAU < 10) {
       // If the maximum semi-major axis is too small for a meaningful comet orbit, skip
-      console.warn(
-        `[generateComet] Cannot create a realistic comet orbit within system boundary at distance ${distanceAU} AU. Skipping.`,
-      );
       return null;
     }
 
@@ -63,9 +54,6 @@ export function generateComet(
 
   // Validate final distance is within system boundary
   if (distanceAU > CONST.SYSTEM_MAX_DISTANCE_AU) {
-    console.warn(
-      `[generateComet] Comet distance ${distanceAU} AU exceeds system boundary. Skipping.`,
-    );
     return null;
   }
 
@@ -73,9 +61,6 @@ export function generateComet(
   const starMass_kg = parentStar.realMass_kg;
 
   if (starMass_kg <= 0 || !Number.isFinite(starMass_kg)) {
-    console.warn(
-      `[generateComet] Invalid parent star mass (${starMass_kg}). Skipping comet generation.`,
-    );
     return null;
   }
 
@@ -96,50 +81,16 @@ export function generateComet(
     classType: CometClass.ACTIVE,
     composition: CONST.ICE_COMPOSITION,
     activity: 0.5 + random() * 0.5, // Active comets
-    visualComaRadius:
-      nucleusRadius_m * (50 + random() * 50) * METERS_TO_SCENE_UNITS,
+    visualComaRadius: nucleusRadius_m * (50 + random() * 50), // Scale factor for visual representation
     visualComaColor: "#C8DCFF",
     visualComaOpacity: 0.5,
-    visualMaxTailLength:
-      orbit.realSemiMajorAxis_m * 0.1 * METERS_TO_SCENE_UNITS, // Tail can be 10% of SMA
+    visualMaxTailLength: orbit.realSemiMajorAxis_m * 0.1, // Tail can be 10% of SMA
     visualTailColor: "#DCE6FF",
     visualTailOpacity: 0.6,
   };
 
-  const parentPhysicsState: PhysicsStateReal = {
-    id: starId,
-    mass_kg: starMass_kg,
-    position_m:
-      parentStar.physicsStateReal?.position_m ?? new OSVector3(0, 0, 0),
-    velocity_mps:
-      parentStar.physicsStateReal?.velocity_mps ?? new OSVector3(0, 0, 0),
-  };
-
-  let initialPosition: OSVector3;
-  let initialVelocity: OSVector3;
-
-  try {
-    // Start at a random point in the orbit
-    const trueAnomaly = random() * 2 * Math.PI;
-    initialPosition = calculateOrbitalPosition(
-      parentPhysicsState,
-      orbit,
-      trueAnomaly,
-    );
-    initialVelocity = calculateOrbitalVelocity(
-      parentPhysicsState,
-      orbit,
-      trueAnomaly,
-    );
-  } catch (error) {
-    console.warn(
-      `[generateComet] Error calculating initial state for ${cometId}, using default position.`,
-      error,
-    );
-    const perihelion_m = orbit.realSemiMajorAxis_m * (1 - orbit.eccentricity);
-    initialPosition = new OSVector3(perihelion_m, 0, 0);
-    initialVelocity = new OSVector3(0, 0, 0);
-  }
+  // Calculate realistic temperature based on the parent star's properties
+  const cometTemperature = calculateCometTemperature(distanceAU, parentStar);
 
   const comet: CelestialObject = {
     id: cometId,
@@ -149,17 +100,11 @@ export function generateComet(
     parentId: starId,
     realMass_kg: mass_kg,
     realRadius_m: nucleusRadius_m,
-    temperature: 200, // Effective temp, will vary wildly based on distance
+    temperature: cometTemperature,
     orbit: orbit,
     properties: cometProperties,
     ignorePhysics: false,
     ignoreCollisions: false,
-    physicsStateReal: {
-      id: cometId,
-      mass_kg: mass_kg,
-      position_m: initialPosition,
-      velocity_mps: initialVelocity,
-    },
   };
 
   return comet;
@@ -194,24 +139,84 @@ function generateCometOrbit(
   }
 
   // Use the provided distance as the semi-major axis for long-period comets
-  const semiMajorAxis_m = distanceAU * CONST.AU_TO_METERS;
-
   const period_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
-    semiMajorAxis_m,
+    distanceAU * CONST.AU_TO_METERS,
     cometMass_kg,
   );
 
   // High inclination, can be retrograde
-  const inclination = (random() - 0.5) * Math.PI; // +/- 90 degrees
+  const inclinationDeg = (random() - 0.5) * 180; // +/- 90 degrees
 
-  return {
-    realSemiMajorAxis_m: semiMajorAxis_m,
+  // Generate axial tilt (comets don't have meaningful axial tilt)
+  const axialTiltDeg = 0;
+
+  return createOrbitalElements({
+    semiMajorAxisAU: distanceAU,
     eccentricity: eccentricity,
-    inclination: inclination,
-    longitudeOfAscendingNode: random() * 2 * Math.PI,
-    argumentOfPeriapsis: random() * 2 * Math.PI,
-    meanAnomaly: random() * 2 * Math.PI, // Start at random point in orbit
+    inclinationDeg: inclinationDeg,
+    longitudeOfAscendingNodeDeg: random() * 360,
+    argumentOfPeriapsisDeg: random() * 360,
+    meanAnomalyDeg: random() * 360, // Start at random point in orbit
     period_s: period_s,
-  };
+    siderealRotationPeriod_s: period_s, // Comets don't have meaningful rotation
+    axialTiltDeg: axialTiltDeg,
+  });
+}
+
+/**
+ * Calculates comet temperature based on distance from star
+ */
+function calculateCometTemperature(
+  distanceAU: number,
+  parentStar: CelestialObject,
+): number {
+  // Use the star's actual luminosity from its properties if available
+  let starLuminosity: number;
+
+  if (
+    parentStar.properties &&
+    parentStar.properties.type === CelestialType.STAR
+  ) {
+    const starProps = parentStar.properties as StarProperties;
+    if (starProps.luminosity && starProps.luminosity > 0) {
+      starLuminosity = starProps.luminosity * CONST.SOLAR_LUMINOSITY;
+    } else {
+      // Fallback to mass-based calculation if luminosity is missing or invalid
+      const massRatio = Math.max(
+        0.01,
+        parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
+      );
+      starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
+    }
+  } else {
+    // Fallback to mass-based calculation if star properties aren't available
+    const massRatio = Math.max(
+      0.01,
+      parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
+    );
+    starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
+  }
+
+  // Ensure we have a valid luminosity
+  if (!Number.isFinite(starLuminosity) || starLuminosity <= 0) {
+    starLuminosity = CONST.SOLAR_LUMINOSITY; // Default to solar luminosity
+  }
+
+  // Calculate equilibrium temperature at distance
+  const distanceM = distanceAU * CONST.AU_TO_METERS;
+
+  // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
+  const temperature = Math.pow(
+    starLuminosity /
+      (16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceM * distanceM),
+    0.25,
+  );
+
+  // Ensure we have a valid temperature
+  if (!Number.isFinite(temperature) || temperature <= 0) {
+    return 200; // Default temperature for comets
+  }
+
+  return Math.max(2.7, temperature); // Not colder than cosmic background
 }

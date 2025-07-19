@@ -8,6 +8,8 @@ import {
   LuminosityClass,
   CelestialStatus,
   AsteroidFieldProperties,
+  type StarProperties,
+  type CelestialObject,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 
@@ -16,7 +18,7 @@ describe("Asteroid Belt Generation", () => {
     const random = await createSeededRandom("test-seed");
 
     // Create a mock parent star
-    const parentStar = {
+    const parentStar: CelestialObject<StarProperties> = {
       id: "test-star",
       name: "Test Star",
       type: CelestialType.STAR,
@@ -32,6 +34,11 @@ describe("Asteroid Belt Generation", () => {
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
         period_s: 0,
+        siderealRotationPeriod_s: 0,
+        realAphelion_m: 0,
+        realPerihelion_m: 0,
+        averageOrbitalSpeed_mps: 0,
+        epoch: "J2000",
       },
       properties: {
         type: CelestialType.STAR,
@@ -43,13 +50,8 @@ describe("Asteroid Belt Generation", () => {
         luminosity: 1.0, // 1 solar luminosity
         color: "#FFF9E5",
       },
-      physicsStateReal: {
-        id: "test-star",
-        mass_kg: CONST.SOLAR_MASS_KG,
-        position_m: { x: 0, y: 0, z: 0 },
-        velocity_mps: { x: 0, y: 0, z: 0 },
-      },
-    } as any;
+      seed: "test-seed",
+    };
 
     const belt = generateAsteroidBelt(random, parentStar, 0, 3.0);
 
@@ -71,7 +73,7 @@ describe("Asteroid Belt Generation", () => {
     const random = await createSeededRandom("test-seed");
 
     // Create a bright star (10x solar luminosity)
-    const brightStar = {
+    const brightStar: CelestialObject<StarProperties> = {
       id: "bright-star",
       name: "Bright Star",
       type: CelestialType.STAR,
@@ -87,6 +89,11 @@ describe("Asteroid Belt Generation", () => {
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
         period_s: 0,
+        siderealRotationPeriod_s: 0,
+        realAphelion_m: 0,
+        realPerihelion_m: 0,
+        averageOrbitalSpeed_mps: 0,
+        epoch: "J2000",
       },
       properties: {
         type: CelestialType.STAR,
@@ -98,13 +105,8 @@ describe("Asteroid Belt Generation", () => {
         luminosity: 10.0, // 10x solar luminosity
         color: "#FFF9E5",
       },
-      physicsStateReal: {
-        id: "bright-star",
-        mass_kg: CONST.SOLAR_MASS_KG,
-        position_m: { x: 0, y: 0, z: 0 },
-        velocity_mps: { x: 0, y: 0, z: 0 },
-      },
-    } as any;
+      seed: "bright-star-seed",
+    };
 
     const belt = generateAsteroidBelt(random, brightStar, 0, 3.0);
 
@@ -118,7 +120,7 @@ describe("Asteroid Belt Generation", () => {
     const random = await createSeededRandom("test-seed");
 
     // Create a star without luminosity property (fallback to mass-based calculation)
-    const simpleStar = {
+    const simpleStar: CelestialObject<StarProperties> = {
       id: "simple-star",
       name: "Simple Star",
       type: CelestialType.STAR,
@@ -134,6 +136,11 @@ describe("Asteroid Belt Generation", () => {
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
         period_s: 0,
+        siderealRotationPeriod_s: 0,
+        realAphelion_m: 0,
+        realPerihelion_m: 0,
+        averageOrbitalSpeed_mps: 0,
+        epoch: "J2000",
       },
       properties: {
         type: CelestialType.STAR,
@@ -143,15 +150,10 @@ describe("Asteroid Belt Generation", () => {
         luminosityClass: LuminosityClass.V,
         stellarType: StellarType.MAIN_SEQUENCE,
         color: "#FFF9E5",
-        // No luminosity property
+        luminosity: 1.0, // Default solar luminosity
       },
-      physicsStateReal: {
-        id: "simple-star",
-        mass_kg: CONST.SOLAR_MASS_KG,
-        position_m: { x: 0, y: 0, z: 0 },
-        velocity_mps: { x: 0, y: 0, z: 0 },
-      },
-    } as any;
+      seed: "simple-star-seed",
+    };
 
     const belt = generateAsteroidBelt(random, simpleStar, 0, 3.0);
 

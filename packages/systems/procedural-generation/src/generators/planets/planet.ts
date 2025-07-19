@@ -23,6 +23,7 @@ import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 import { createProceduralSurfaceProperties } from "../../properties/creator";
 import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
 import { CelestialZone } from "../../zones";
+import { createOrbitalElements } from "@teskooano/core-physics";
 
 /**
  * Creates an RxJS Observable that generates and emits data for a single planet
@@ -113,9 +114,6 @@ export function generatePlanet(
       );
 
       if (!orbit) {
-        console.error(
-          `[generatePlanet] Failed to calculate orbit for ${planetId}, skipping object creation.`,
-        );
         subscriber.complete();
         return;
       }
@@ -222,7 +220,6 @@ export function generatePlanet(
       subscriber.next(planetData);
       subscriber.complete();
     } catch (error) {
-      console.error(`Error generating planet ${planetName}:`, error);
       subscriber.error(error);
     }
   });
@@ -353,17 +350,17 @@ export function generateRoguePlanet(
         realMass_kg: planetMass_kg,
         realRadius_m: finalPlanetRadius_m,
         temperature: planetTemp,
-        orbit: {
-          realSemiMajorAxis_m: 0,
+        orbit: createOrbitalElements({
+          semiMajorAxisAU: distanceAU,
           eccentricity: 0,
-          inclination: 0,
-          longitudeOfAscendingNode: 0,
-          argumentOfPeriapsis: 0,
-          meanAnomaly: distanceAU, // Store distance here for factory to use
+          inclinationDeg: 0,
+          longitudeOfAscendingNodeDeg: 0,
+          argumentOfPeriapsisDeg: 0,
+          meanAnomalyDeg: distanceAU, // Store distance here for factory to use
           period_s: 0,
           siderealRotationPeriod_s: rotationPeriod_s,
-          axialTilt: tiltAxis,
-        },
+          axialTiltDeg: tilt_deg, // Use the angle in degrees, not the vector
+        }),
         properties,
         seed: planetSeed,
         // Physics state will be calculated by the factory
@@ -379,7 +376,6 @@ export function generateRoguePlanet(
       subscriber.next(planetData);
       subscriber.complete();
     } catch (error) {
-      console.error(`Error generating rogue planet ${planetName}:`, error);
       subscriber.error(error);
     }
   });

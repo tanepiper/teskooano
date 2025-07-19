@@ -21,7 +21,6 @@ export function generateOortCloud(
   parentStar: CelestialObject,
 ): CelestialObject | null {
   if (!parentStar || parentStar.type !== CelestialType.STAR) {
-    console.error("[generateOortCloud] Invalid parent star provided.");
     return null;
   }
 

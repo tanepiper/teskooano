@@ -16,6 +16,7 @@ import * as UTIL from "../../utils";
 import {
   calculateOrbitalPosition,
   calculateOrbitalVelocity,
+  createOrbitalElements,
 } from "@teskooano/core-physics";
 import { isValidAsteroidBeltDistance } from "./utils";
 
@@ -50,97 +51,51 @@ export function generateAsteroidBelt(
     return null;
   }
 
-  const beltName = generateAsteroidBeltName(index, bodyDistanceAU);
-  const beltId = `asteroidbelt-${parentStar.id}-${beltName
-    .toLowerCase()
-    .replace(/\s+/g, "-")}`;
+  const starId = parentStar.id;
+  const starMass_kg = parentStar.realMass_kg;
 
-  // Determine belt composition based on distance and temperature
-  const beltComposition = determineBeltComposition(bodyDistanceAU, random);
-  const beltType = beltComposition.primaryType;
+  if (starMass_kg <= 0 || !Number.isFinite(starMass_kg)) {
+    console.warn(
+      `[generateAsteroidBelt] Invalid parent star mass (${starMass_kg}). Skipping belt generation.`,
+    );
+    return null;
+  }
+
+  const beltName = generateAsteroidBeltName(index, bodyDistanceAU);
+  const beltId = `belt-${starId}-${beltName.toLowerCase().replace(/\s+/g, "-")}`;
 
   // Calculate realistic belt dimensions
   const beltDimensions = calculateBeltDimensions(bodyDistanceAU, random);
 
-  // Calculate realistic particle count based on belt mass and size
+  // Calculate realistic belt mass
+  const beltMass_kg = calculateBeltMass(beltDimensions, bodyDistanceAU, random);
+
+  // Calculate realistic particle count
   const particleCount = calculateRealisticParticleCount(
     beltDimensions,
     bodyDistanceAU,
     random,
   );
 
-  // Calculate realistic belt mass based on volume and density
-  const beltMass_kg = calculateBeltMass(beltDimensions, bodyDistanceAU, random);
+  // Determine belt composition based on distance
+  const composition = determineBeltComposition(bodyDistanceAU, random);
 
+  // Generate orbital parameters
+  const beltOrbit = generateBeltOrbit(bodyDistanceAU, starMass_kg, random);
+
+  // Create belt properties
   const beltProperties: AsteroidFieldProperties = {
     type: CelestialType.ASTEROID_FIELD,
     innerRadiusAU: beltDimensions.innerRadius,
     outerRadiusAU: beltDimensions.outerRadius,
     heightAU: beltDimensions.height,
     count: particleCount,
-    color: UTIL.getRandomItem(CONST.RING_COLORS[beltType], random).replace(
-      "c0",
-      "ff",
-    ),
-    composition: beltComposition.materials,
+    color: UTIL.getRandomItem(
+      CONST.RING_COLORS[composition.primaryType],
+      random,
+    ).replace("c0", "ff"),
+    composition: composition.materials,
   };
-
-  // Generate realistic orbital parameters with proper eccentricity distribution
-  const beltOrbit = generateBeltOrbit(
-    bodyDistanceAU,
-    parentStar.realMass_kg,
-    random,
-  );
-
-  if (parentStar.realMass_kg <= 0 || !Number.isFinite(parentStar.realMass_kg)) {
-    console.warn(
-      `[generateAsteroidBelt] Invalid parent star mass (${parentStar.realMass_kg}) for ${beltId}. Skipping belt.`,
-    );
-    return null;
-  }
-
-  if (
-    beltOrbit.realSemiMajorAxis_m <= 0 ||
-    !Number.isFinite(beltOrbit.realSemiMajorAxis_m)
-  ) {
-    console.warn(
-      `[generateAsteroidBelt] Invalid semi-major axis for ${beltId}. Skipping belt.`,
-    );
-    return null;
-  }
-
-  if (
-    beltOrbit.eccentricity < 0 ||
-    beltOrbit.eccentricity >= 1 ||
-    !Number.isFinite(beltOrbit.eccentricity)
-  ) {
-    console.warn(
-      `[generateAsteroidBelt] Invalid eccentricity for ${beltId}. Skipping belt.`,
-    );
-    return null;
-  }
-
-  const starPhysicsState: PhysicsStateReal = {
-    id: parentStar.id,
-    mass_kg: parentStar.realMass_kg,
-    position_m: parentStar.physicsStateReal.position_m.clone(),
-    velocity_mps: parentStar.physicsStateReal.velocity_mps.clone(),
-  };
-
-  let initialPosition: OSVector3;
-  let initialVelocity: OSVector3;
-
-  try {
-    initialPosition = calculateOrbitalPosition(starPhysicsState, beltOrbit, 0);
-    initialVelocity = calculateOrbitalVelocity(starPhysicsState, beltOrbit, 0);
-  } catch (error) {
-    console.warn(
-      `[generateAsteroidBelt] Error calculating initial state for ${beltId}, using default position.`,
-      error,
-    );
-    initialPosition = parentStar.physicsStateReal.position_m.clone();
-    initialVelocity = parentStar.physicsStateReal.velocity_mps.clone();
-  }
 
   // Calculate realistic temperature based on the parent star's properties
   const beltTemperature = calculateBeltTemperature(bodyDistanceAU, parentStar);
@@ -158,12 +113,6 @@ export function generateAsteroidBelt(
     properties: beltProperties,
     ignorePhysics: true, // Belt itself doesn't move, but its mass affects other objects
     ignoreCollisions: true,
-    physicsStateReal: {
-      id: beltId,
-      mass_kg: beltMass_kg,
-      position_m: initialPosition,
-      velocity_mps: initialVelocity,
-    },
   };
 
   return belt;
@@ -287,10 +236,9 @@ function generateBeltOrbit(
   starMass_kg: number,
   random: () => number,
 ): OrbitalParameters {
-  const semiMajorAxis_m = distanceAU * CONST.AU_TO_METERS;
   const period_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
-    semiMajorAxis_m,
+    distanceAU * CONST.AU_TO_METERS,
     0,
   );
 
@@ -299,17 +247,22 @@ function generateBeltOrbit(
   const eccentricity = 0.05 + random() * 0.2; // 0.05 to 0.25
 
   // Inclination spread: Main belt has ~5-10° spread
-  const inclination = (random() - 0.5) * 0.2; // ±6° spread
+  const inclinationDeg = (random() - 0.5) * 12; // ±6° spread
 
-  return {
-    realSemiMajorAxis_m: semiMajorAxis_m,
+  // Generate axial tilt (asteroid belts don't have meaningful axial tilt)
+  const axialTiltDeg = 0;
+
+  return createOrbitalElements({
+    semiMajorAxisAU: distanceAU,
     eccentricity: eccentricity,
-    inclination: inclination,
-    longitudeOfAscendingNode: random() * 2 * Math.PI,
-    argumentOfPeriapsis: random() * 2 * Math.PI,
-    meanAnomaly: random() * 2 * Math.PI,
+    inclinationDeg: inclinationDeg,
+    longitudeOfAscendingNodeDeg: random() * 360,
+    argumentOfPeriapsisDeg: random() * 360,
+    meanAnomalyDeg: random() * 360,
     period_s: period_s,
-  };
+    siderealRotationPeriod_s: period_s, // Asteroid belts don't rotate
+    axialTiltDeg: axialTiltDeg,
+  });
 }
 
 /**

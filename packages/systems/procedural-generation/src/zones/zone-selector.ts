@@ -27,9 +27,6 @@ export class ZoneSelector {
   ): CelestialZone[] {
     // Ensure we have at least some zones to work with
     if (!adjustedZones || adjustedZones.length === 0) {
-      console.warn(
-        "[ZoneSelector] No adjusted zones available, using default zones",
-      );
       return createDefaultZones();
     }
 

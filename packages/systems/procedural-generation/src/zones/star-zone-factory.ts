@@ -57,9 +57,6 @@ export class StarZoneFactory {
 
     // Final safety check - if no zones were created, use default G-type star zones
     if (zones.length === 0) {
-      console.warn(
-        `[StarZoneFactory] No zones created for star type: ${stellarType}, spectral class: ${spectralClass}, using default zones`,
-      );
       zones.push(...this.createDefaultGTypeZones(baseScaling));
     }
 
@@ -201,9 +198,6 @@ export class StarZoneFactory {
     } else if (spectralClass.startsWith("B") || spectralClass.startsWith("O")) {
       return this.createOBTypeZones(baseScaling);
     } else {
-      console.warn(
-        `[StarZoneFactory] Unrecognized spectral class: ${spectralClass}, using default G-type zones`,
-      );
       return this.createGTypeZones(baseScaling);
     }
   }
@@ -454,9 +448,6 @@ export class StarZoneFactory {
   ): CelestialZone {
     const templateZone = enhancedCelestialZones.find((z) => z.name === name);
     if (!templateZone) {
-      console.warn(
-        `[StarZoneFactory] Template zone not found: ${name}, creating default zone`,
-      );
       return this.createDefaultZone(
         name,
         category,
@@ -485,9 +476,6 @@ export class StarZoneFactory {
   ): CelestialZone {
     const templateZone = enhancedCelestialZones.find((z) => z.name === name);
     if (!templateZone) {
-      console.warn(
-        `[StarZoneFactory] Template zone not found for black hole: ${name}, creating default zone`,
-      );
       return this.createDefaultZone(
         name,
         category,

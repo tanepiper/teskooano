@@ -56,17 +56,14 @@ export function determinePlanetTypeAndBaseProperties(
       .filter(Boolean);
 
     if (allowedTypes.length > 0) {
-      // Use weighted selection instead of equal probability
-      celestialClass = selectWeightedPlanetType(allowedTypes, random);
-
-      // Check if gas giants are allowed in this zone
+      // Check if gas giants are allowed in this zone AND we should consider them
       if (
         zone.allowedGasGiantClasses &&
         zone.allowedGasGiantClasses.length > 0
       ) {
-        const gasGiantChance = zone.formationProbability || 0.3;
-        if (random() < gasGiantChance * 0.5) {
-          // 50% of formation probability for gas giants
+        const gasGiantChance = zone.formationProbability || 0.5; // Use formation probability directly
+        if (random() < gasGiantChance) {
+          // Chance for gas giants when they're allowed in the zone
           isGasGiant = true;
           const allowedGGClasses = zone.allowedGasGiantClasses
             .map(
@@ -77,8 +74,18 @@ export function determinePlanetTypeAndBaseProperties(
 
           if (allowedGGClasses.length > 0) {
             celestialClass = UTIL.getRandomItem(allowedGGClasses, random);
+          } else {
+            // Fallback to planet if gas giant classes are invalid
+            celestialClass = selectWeightedPlanetType(allowedTypes, random);
+            isGasGiant = false;
           }
+        } else {
+          // Use planet types as specified in zone constraints
+          celestialClass = selectWeightedPlanetType(allowedTypes, random);
         }
+      } else {
+        // No gas giants allowed, use planet types as specified
+        celestialClass = selectWeightedPlanetType(allowedTypes, random);
       }
     } else {
       // Fallback to temperature-based selection if zone types are invalid

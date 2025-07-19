@@ -1,6 +1,7 @@
 import {
   calculateOrbitalPosition,
   calculateOrbitalVelocity,
+  createOrbitalElements,
 } from "@teskooano/core-physics";
 import type {
   OrbitalParameters,
@@ -74,9 +75,8 @@ function validateOrbitalVelocity(
  * @param starMass_kg Mass of the parent star in kilograms.
  * @param planetMass_kg Mass of the planet in kilograms.
  * @param bodyDistanceAU The target semi-major axis for the orbit in AU.
- * @param parentStarState The physics state of the parent star.
  * @param planetId The unique ID of the planet.
- * @returns An object containing realistic OrbitalParameters and initial PhysicsStateReal.
+ * @returns An object containing realistic OrbitalParameters.
  */
 export function calculatePlanetOrbitAndInitialState(
   random: () => number,
@@ -87,14 +87,12 @@ export function calculatePlanetOrbitAndInitialState(
 ): {
   orbit: OrbitalParameters;
 } {
-  const semiMajorAxis_m = bodyDistanceAU * CONST.AU_TO_METERS;
-
   // Allow all distances - even those at the interstellar fringe!
   // These distant objects can be fascinating rogue planets, captured objects, or primordial bodies
 
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
-    semiMajorAxis_m,
+    bodyDistanceAU * CONST.AU_TO_METERS,
     planetMass_kg,
   );
 
@@ -145,22 +143,38 @@ export function calculatePlanetOrbitAndInitialState(
 
   // Generate realistic inclination - most planets are nearly coplanar
   // Use Gaussian distribution centered on 0° with standard deviation of ~2-3°
-  const inclination = generateRealisticInclination(random);
+  const inclinationRad = generateRealisticInclination(random);
+  const inclinationDeg = inclinationRad * (180 / Math.PI);
 
   // Other orbital angles are uniformly distributed
-  const longitudeOfAscendingNode = random() * 2 * Math.PI;
-  const argumentOfPeriapsis = random() * 2 * Math.PI;
-  const meanAnomaly = random() * 2 * Math.PI;
+  const longitudeOfAscendingNodeDeg = random() * 360;
+  const argumentOfPeriapsisDeg = random() * 360;
+  const meanAnomalyDeg = random() * 360;
 
-  let orbit: OrbitalParameters = {
-    realSemiMajorAxis_m: semiMajorAxis_m,
+  // Calculate sidereal rotation period (tidally locked for close planets)
+  let siderealRotationPeriod_s: number;
+  if (bodyDistanceAU < 0.1) {
+    // Very close planets are likely tidally locked
+    siderealRotationPeriod_s = orbitalPeriod_s;
+  } else {
+    // Distant planets have independent rotation
+    siderealRotationPeriod_s = 50000 + random() * 500000; // 14 hours to 6 days
+  }
+
+  // Generate axial tilt (most planets have moderate tilt)
+  const axialTiltDeg = random() * 90; // 0-90 degrees
+
+  const orbit = createOrbitalElements({
+    semiMajorAxisAU: bodyDistanceAU,
     eccentricity: eccentricity,
-    inclination: inclination,
-    longitudeOfAscendingNode: longitudeOfAscendingNode,
-    argumentOfPeriapsis: argumentOfPeriapsis,
-    meanAnomaly: meanAnomaly,
+    inclinationDeg: inclinationDeg,
+    longitudeOfAscendingNodeDeg: longitudeOfAscendingNodeDeg,
+    argumentOfPeriapsisDeg: argumentOfPeriapsisDeg,
+    meanAnomalyDeg: meanAnomalyDeg,
     period_s: orbitalPeriod_s,
-  };
+    siderealRotationPeriod_s: siderealRotationPeriod_s,
+    axialTiltDeg: axialTiltDeg,
+  });
 
   return { orbit };
 }
