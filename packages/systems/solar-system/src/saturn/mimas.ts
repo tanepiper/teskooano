@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -9,8 +8,8 @@ import {
 } from "@teskooano/data-types";
 
 const MIMAS_MASS_KG = 3.75e19;
-const MIMAS_RADIUS_M = 198.2 * KM;
-const MIMAS_SMA_M = 185539 * KM;
+const MIMAS_RADIUS_KM = 198.2;
+const MIMAS_SMA_KM = 185539;
 const MIMAS_ECC = 0.0196;
 const MIMAS_INC_DEG = 1.566;
 const MIMAS_LAN_DEG = 123.5;
@@ -30,20 +29,20 @@ export const mimas: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: MIMAS_MASS_KG,
-  realRadius_m: MIMAS_RADIUS_M,
+  realRadius_m: kmToM(MIMAS_RADIUS_KM),
   temperature: 63,
   albedo: MIMAS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: MIMAS_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: MIMAS_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: MIMAS_ECC,
-    inclination: MIMAS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: MIMAS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: MIMAS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: MIMAS_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: MIMAS_INC_DEG,
+    longitudeOfAscendingNodeDeg: MIMAS_LAN_DEG,
+    argumentOfPeriapsisDeg: MIMAS_AOP_DEG,
+    meanAnomalyDeg: MIMAS_MA_DEG,
     period_s: MIMAS_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: MIMAS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

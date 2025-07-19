@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,8 +8,8 @@ import {
 } from "@teskooano/data-types";
 
 const IAPETUS_MASS_KG = 1.806e21;
-const IAPETUS_RADIUS_M = 734.5 * KM;
-const IAPETUS_SMA_M = 3560820 * KM;
+const IAPETUS_RADIUS_KM = 734.5;
+const IAPETUS_SMA_KM = 3560820;
 const IAPETUS_ECC = 0.0283;
 const IAPETUS_INC_DEG = 15.47;
 const IAPETUS_LAN_DEG = 81.1;
@@ -30,20 +29,20 @@ export const iapetus: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: IAPETUS_MASS_KG,
-  realRadius_m: IAPETUS_RADIUS_M,
+  realRadius_m: kmToM(IAPETUS_RADIUS_KM),
   temperature: 110,
   albedo: IAPETUS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: IAPETUS_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: IAPETUS_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: IAPETUS_ECC,
-    inclination: IAPETUS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: IAPETUS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: IAPETUS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: IAPETUS_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: IAPETUS_INC_DEG,
+    longitudeOfAscendingNodeDeg: IAPETUS_LAN_DEG,
+    argumentOfPeriapsisDeg: IAPETUS_AOP_DEG,
+    meanAnomalyDeg: IAPETUS_MA_DEG,
     period_s: IAPETUS_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: IAPETUS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

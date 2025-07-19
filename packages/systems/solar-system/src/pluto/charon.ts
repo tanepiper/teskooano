@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -10,8 +9,8 @@ import {
 } from "@teskooano/data-types";
 
 const CHARON_MASS_KG = 1.586e21;
-const CHARON_RADIUS_M = 606 * KM;
-const CHARON_SMA_M = 19591.4 * KM;
+const CHARON_RADIUS_KM = 606;
+const CHARON_SMA_KM = 19591.4;
 const CHARON_ECC = 0.00005;
 const CHARON_INC_DEG = 0.001;
 const CHARON_SIDEREAL_PERIOD_S = 551855.0;
@@ -29,24 +28,20 @@ export const charon: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "pluto", // Will be replaced during initialization
   realMass_kg: CHARON_MASS_KG,
-  realRadius_m: CHARON_RADIUS_M,
+  realRadius_m: kmToM(CHARON_RADIUS_KM),
   temperature: 53,
   albedo: CHARON_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: CHARON_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: CHARON_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: CHARON_ECC,
-    inclination: CHARON_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 223.0 * DEG_TO_RAD,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
+    inclinationDeg: CHARON_INC_DEG,
+    longitudeOfAscendingNodeDeg: 223.0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
     period_s: CHARON_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: CHARON_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(CHARON_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(CHARON_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: CHARON_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

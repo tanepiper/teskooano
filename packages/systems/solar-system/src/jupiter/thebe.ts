@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -9,11 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const THEBE_MASS_KG = 4.3e17;
-const THEBE_RADIUS_M = 49300;
-const THEBE_SMA_M = 222000 * KM;
-const THEBE_ECC = 0.0175;
-const THEBE_INC_DEG = 1.076;
-const THEBE_SIDEREAL_PERIOD_S = 58275;
+const THEBE_RADIUS_KM = 49.3;
 const THEBE_ALBEDO = 0.047;
 
 /**
@@ -27,20 +22,20 @@ export const thebe: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: THEBE_MASS_KG,
-  realRadius_m: THEBE_RADIUS_M,
+  realRadius_m: kmToM(THEBE_RADIUS_KM),
   temperature: 120, // Generic temperature
   albedo: THEBE_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: THEBE_SMA_M,
-    eccentricity: THEBE_ECC,
-    inclination: THEBE_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: THEBE_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: THEBE_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 222000 / 149597870.7, // 222,000 km converted to AU
+    eccentricity: 0.0175,
+    inclinationDeg: 1.076,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
+    period_s: 58275,
+    siderealRotationPeriod_s: 58275, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

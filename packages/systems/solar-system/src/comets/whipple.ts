@@ -1,23 +1,15 @@
-import { CONVERSION } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   METERS_TO_SCENE_UNITS,
   SCALE,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
 
 // Whipple Comet constants
-export const WHIPPLE_NUCLEUS_RADIUS_M = 2.0 * CONVERSION.KM_TO_M; // Estimate
+export const WHIPPLE_NUCLEUS_RADIUS_KM = 2.0; // Estimate
 export const WHIPPLE_MASS_KG = 1e13; // Estimate
 export const WHIPPLE_ALBEDO = 0.04;
 export const WHIPPLE_TEMP_K = 100;
-export const WHIPPLE_SMA_M = 5.718e11; // 3.821 AU
-export const WHIPPLE_ECC = 0.351;
-export const WHIPPLE_INC_RAD = 0.178; // 10.2 deg
-export const WHIPPLE_LAN_RAD = 0.318; // 18.2 deg
-export const WHIPPLE_AOP_RAD = 3.285; // 188.4 deg
-export const WHIPPLE_MA_RAD = 0;
-export const WHIPPLE_PERIOD_S = 2.356e8; // 7.47 years
 export const WHIPPLE_ACTIVITY = 0.4;
 export const WHIPPLE_COMA_RADIUS = 35000 * METERS_TO_SCENE_UNITS * 0.5;
 export const WHIPPLE_COMA_COLOR = "#E0FFFF";
@@ -41,21 +33,21 @@ export const whipple: CelestialObject<CometProperties> = {
   type: CelestialType.COMET,
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
-  realRadius_m: WHIPPLE_NUCLEUS_RADIUS_M,
+  realRadius_m: kmToM(WHIPPLE_NUCLEUS_RADIUS_KM),
   realMass_kg: WHIPPLE_MASS_KG,
   albedo: WHIPPLE_ALBEDO,
   temperature: WHIPPLE_TEMP_K,
-  orbit: {
-    realSemiMajorAxis_m: WHIPPLE_SMA_M,
-    eccentricity: WHIPPLE_ECC,
-    inclination: WHIPPLE_INC_RAD,
-    longitudeOfAscendingNode: WHIPPLE_LAN_RAD,
-    argumentOfPeriapsis: WHIPPLE_AOP_RAD,
-    meanAnomaly: WHIPPLE_MA_RAD,
-    period_s: WHIPPLE_PERIOD_S,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 3.821, // 3.821 AU
+    eccentricity: 0.351,
+    inclinationDeg: 10.2,
+    longitudeOfAscendingNodeDeg: 18.2,
+    argumentOfPeriapsisDeg: 188.4,
+    meanAnomalyDeg: 0,
+    period_s: 2.356e8, // 7.47 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0, // Comets don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,

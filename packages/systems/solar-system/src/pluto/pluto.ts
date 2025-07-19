@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -9,7 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const PLUTO_MASS_KG = 1.303e22;
-const PLUTO_RADIUS_M = 1188.3 * KM; // Mean radius
+const PLUTO_RADIUS_KM = 1188.3; // Mean radius
 const PLUTO_TEMP_K = 44; // Mean surface temperature
 const PLUTO_ALBEDO = 0.52; // Bond albedo
 const PLUTO_SMA_AU = 39.482;
@@ -33,24 +32,20 @@ export const pluto: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: PLUTO_MASS_KG,
-  realRadius_m: PLUTO_RADIUS_M,
+  realRadius_m: kmToM(PLUTO_RADIUS_KM),
   temperature: PLUTO_TEMP_K,
   albedo: PLUTO_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: PLUTO_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: PLUTO_SMA_AU,
     eccentricity: PLUTO_ECC,
-    inclination: PLUTO_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: PLUTO_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: PLUTO_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: PLUTO_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: PLUTO_INC_DEG,
+    longitudeOfAscendingNodeDeg: PLUTO_LAN_DEG,
+    argumentOfPeriapsisDeg: PLUTO_AOP_DEG,
+    meanAnomalyDeg: PLUTO_MA_DEG,
     period_s: PLUTO_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(PLUTO_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(PLUTO_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: PLUTO_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.PLANET,
     isMoon: false,

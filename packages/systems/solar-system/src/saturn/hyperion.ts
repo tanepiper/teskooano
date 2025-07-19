@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -10,8 +9,8 @@ import {
 } from "@teskooano/data-types";
 
 const HYPERION_MASS_KG = 5.58e18;
-const HYPERION_RADIUS_M = 135 * KM;
-const HYPERION_SMA_M = 1481109 * KM;
+const HYPERION_RADIUS_KM = 135;
+const HYPERION_SMA_KM = 1481109;
 const HYPERION_ECC = 0.123;
 const HYPERION_INC_DEG = 0.648;
 const HYPERION_LAN_DEG = 161.4;
@@ -31,20 +30,20 @@ export const hyperion: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: HYPERION_MASS_KG,
-  realRadius_m: HYPERION_RADIUS_M,
+  realRadius_m: kmToM(HYPERION_RADIUS_KM),
   temperature: 94,
   albedo: HYPERION_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: HYPERION_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: HYPERION_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: HYPERION_ECC,
-    inclination: HYPERION_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: HYPERION_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: HYPERION_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: HYPERION_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: HYPERION_INC_DEG,
+    longitudeOfAscendingNodeDeg: HYPERION_LAN_DEG,
+    argumentOfPeriapsisDeg: HYPERION_AOP_DEG,
+    meanAnomalyDeg: HYPERION_MA_DEG,
     period_s: HYPERION_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: HYPERION_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ICE,

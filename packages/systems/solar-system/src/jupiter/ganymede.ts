@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,14 +9,7 @@ import {
 
 // Verified Wikipedia data for Ganymede - largest moon in Solar System
 const GANYMEDE_MASS_KG = 1.4819e23; // Wikipedia verified
-const GANYMEDE_RADIUS_M = 2634.1 * KM; // Wikipedia verified: 2634.1±0.3 km
-const GANYMEDE_SMA_M = 1070400 * KM; // Wikipedia verified: 1,070,400 km semi-major axis
-const GANYMEDE_ECC = 0.0013; // Wikipedia verified
-const GANYMEDE_INC_DEG = 0.2; // Wikipedia verified: 0.20° to Jupiter's equator
-const GANYMEDE_LAN_DEG = 63.552; // Current value
-const GANYMEDE_AOP_DEG = 192.417; // Current value
-const GANYMEDE_MA_DEG = 317.54; // Current value
-const GANYMEDE_SIDEREAL_PERIOD_S = 7.15455296 * 24 * 3600; // Wikipedia: 7.15455296 days (synchronous)
+const GANYMEDE_RADIUS_KM = 2634.1; // Wikipedia verified: 2634.1±0.3 km
 const GANYMEDE_ALBEDO = 0.43; // Wikipedia verified: 0.43±0.02
 const GANYMEDE_TEMP_K = 110; // Wikipedia verified: mean 110 K
 
@@ -32,20 +24,20 @@ export const ganymede: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: GANYMEDE_MASS_KG,
-  realRadius_m: GANYMEDE_RADIUS_M,
+  realRadius_m: kmToM(GANYMEDE_RADIUS_KM),
   temperature: GANYMEDE_TEMP_K,
   albedo: GANYMEDE_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: GANYMEDE_SMA_M,
-    eccentricity: GANYMEDE_ECC,
-    inclination: GANYMEDE_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: GANYMEDE_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: GANYMEDE_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: GANYMEDE_MA_DEG * DEG_TO_RAD,
-    period_s: GANYMEDE_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: GANYMEDE_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 1070400 / 149597870.7, // 1,070,400 km converted to AU
+    eccentricity: 0.0013,
+    inclinationDeg: 0.2, // To Jupiter's equator
+    longitudeOfAscendingNodeDeg: 63.552,
+    argumentOfPeriapsisDeg: 192.417,
+    meanAnomalyDeg: 317.54,
+    period_s: 7.15455296 * 24 * 3600, // 7.15455296 days (synchronous)
+    siderealRotationPeriod_s: 7.15455296 * 24 * 3600, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

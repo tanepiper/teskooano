@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -11,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const HAUMEA_MASS_KG = 4.006e21;
-const HAUMEA_RADIUS_M = 816 * KM;
+const HAUMEA_RADIUS_KM = 816;
 const HAUMEA_TEMP_K = 32;
 const HAUMEA_ALBEDO = 0.84;
 const HAUMEA_SMA_AU = 43.12;
@@ -25,8 +24,8 @@ const HAUMEA_SIDEREAL_ROTATION_PERIOD_S = 3.915 * 3600;
 const HAUMEA_AXIAL_TILT_DEG = 0.0;
 
 const HIIAKA_MASS_KG = 1.79e19;
-const HIIAKA_RADIUS_M = 155 * KM;
-const HIIAKA_SMA_M = 49500 * KM;
+const HIIAKA_RADIUS_KM = 155;
+const HIIAKA_SMA_KM = 49500;
 const HIIAKA_ECC = 0.0513;
 const HIIAKA_INC_DEG = 126.356;
 const HIIAKA_LAN_DEG = 205.0;
@@ -36,8 +35,8 @@ const HIIAKA_SIDEREAL_PERIOD_S = 49.12 * 24 * 3600;
 const HIIAKA_ALBEDO = 0.08;
 
 const NAMAKA_MASS_KG = 1.79e18;
-const NAMAKA_RADIUS_M = 85 * KM;
-const NAMAKA_SMA_M = 25657 * KM;
+const NAMAKA_RADIUS_KM = 85;
+const NAMAKA_SMA_KM = 25657;
 const NAMAKA_ECC = 0.249;
 const NAMAKA_INC_DEG = 113.0;
 const NAMAKA_LAN_DEG = 187.0;
@@ -57,24 +56,20 @@ export const haumea: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: HAUMEA_MASS_KG,
-  realRadius_m: HAUMEA_RADIUS_M,
+  realRadius_m: kmToM(HAUMEA_RADIUS_KM),
   temperature: HAUMEA_TEMP_K,
   albedo: HAUMEA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: HAUMEA_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: HAUMEA_SMA_AU,
     eccentricity: HAUMEA_ECC,
-    inclination: HAUMEA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: HAUMEA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: HAUMEA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: HAUMEA_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: HAUMEA_INC_DEG,
+    longitudeOfAscendingNodeDeg: HAUMEA_LAN_DEG,
+    argumentOfPeriapsisDeg: HAUMEA_AOP_DEG,
+    meanAnomalyDeg: HAUMEA_MA_DEG,
     period_s: HAUMEA_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: HAUMEA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(HAUMEA_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(HAUMEA_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: HAUMEA_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.DWARF_PLANET,
     classType: PlanetType.BARREN,
@@ -89,8 +84,8 @@ export const haumea: CelestialObject<PlanetProperties> = {
     shapeModel: "triaxial",
     rings: [
       {
-        innerRadius: 2287 * KM,
-        outerRadius: 2322 * KM,
+        innerRadius: kmToM(2287),
+        outerRadius: kmToM(2322),
         density: 0.5,
         opacity: 0.5,
         color: "#C0C0C0",
@@ -141,20 +136,20 @@ export const hiiaka: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "haumea", // Will be replaced during initialization
   realMass_kg: HIIAKA_MASS_KG,
-  realRadius_m: HIIAKA_RADIUS_M,
+  realRadius_m: kmToM(HIIAKA_RADIUS_KM),
   temperature: 32,
   albedo: HIIAKA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: HIIAKA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: HIIAKA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: HIIAKA_ECC,
-    inclination: HIIAKA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: HIIAKA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: HIIAKA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: HIIAKA_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: HIIAKA_INC_DEG,
+    longitudeOfAscendingNodeDeg: HIIAKA_LAN_DEG,
+    argumentOfPeriapsisDeg: HIIAKA_AOP_DEG,
+    meanAnomalyDeg: HIIAKA_MA_DEG,
     period_s: HIIAKA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: HIIAKA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,
@@ -207,20 +202,20 @@ export const namaka: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "haumea", // Will be replaced during initialization
   realMass_kg: NAMAKA_MASS_KG,
-  realRadius_m: NAMAKA_RADIUS_M,
+  realRadius_m: kmToM(NAMAKA_RADIUS_KM),
   temperature: 32,
   albedo: NAMAKA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: NAMAKA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: NAMAKA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: NAMAKA_ECC,
-    inclination: NAMAKA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: NAMAKA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: NAMAKA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: NAMAKA_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: NAMAKA_INC_DEG,
+    longitudeOfAscendingNodeDeg: NAMAKA_LAN_DEG,
+    argumentOfPeriapsisDeg: NAMAKA_AOP_DEG,
+    meanAnomalyDeg: NAMAKA_MA_DEG,
     period_s: NAMAKA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: NAMAKA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

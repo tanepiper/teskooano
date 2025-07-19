@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -10,15 +9,7 @@ import {
 } from "@teskooano/data-types";
 
 const LUNA_MASS_KG = 7.342e22; // Verified correct from NASA fact sheet
-const LUNA_RADIUS_M = 1737.4 * KM; // Verified correct (mean radius)
-const LUNA_SMA_M = 384399 * KM; // Verified correct from NASA fact sheet (384,399 km)
-const LUNA_ECC = 0.0549; // Verified correct
-const LUNA_INC_DEG = 5.145; // Verified correct to ecliptic
-const LUNA_LAN_DEG = 125.08; // Current value - variable due to precession
-const LUNA_AOP_DEG = 318.15; // Current value - variable due to precession
-const LUNA_MA_DEG = 115.36; // Current value - variable
-const LUNA_SIDEREAL_PERIOD_S = 2.36059e6; // 27.321661 days - verified correct
-const LUNA_AXIAL_TILT_DEG = 6.687; // Verified correct - obliquity to orbit
+const LUNA_RADIUS_KM = 1737.4; // Verified correct (mean radius)
 const LUNA_ALBEDO = 0.11; // Corrected to Bond albedo from NASA fact sheet
 
 /**
@@ -32,24 +23,20 @@ export const luna: CelestialObject<PlanetProperties> = {
   seed: "luna",
   parentId: "earth", // Will be replaced during initialization
   realMass_kg: LUNA_MASS_KG,
-  realRadius_m: LUNA_RADIUS_M,
+  realRadius_m: kmToM(LUNA_RADIUS_KM),
   temperature: 250, // Mean temperature (verified from NASA - range 95-390K equator)
   albedo: LUNA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: LUNA_SMA_M,
-    eccentricity: LUNA_ECC,
-    inclination: LUNA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: LUNA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: LUNA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: LUNA_MA_DEG * DEG_TO_RAD,
-    period_s: LUNA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: LUNA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(LUNA_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(LUNA_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 384399 / 149597870.7, // 384,399 km converted to AU
+    eccentricity: 0.0549,
+    inclinationDeg: 5.145, // To ecliptic
+    longitudeOfAscendingNodeDeg: 125.08, // Current value - variable due to precession
+    argumentOfPeriapsisDeg: 318.15, // Current value - variable due to precession
+    meanAnomalyDeg: 115.36, // Current value - variable
+    period_s: 2.36059e6, // 27.321661 days - verified correct
+    siderealRotationPeriod_s: 2.36059e6, // Synchronous rotation
+    axialTiltDeg: 6.687, // Verified correct - obliquity to orbit
+  }),
   properties: {
     type: CelestialType.MOON,
     isMoon: true,

@@ -1,45 +1,52 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
-  CelestialObject,
 } from "@teskooano/data-types";
+import { createOrbitalElements } from "@teskooano/core-physics";
 
-// Geostationary satellite physical constants (exact physics)
-const GEOSAT_MASS_KG = 5_500; // ~5.5 tons (typical large communications satellite)
-const GEOSTATIONARY_SEMI_MAJOR_AXIS_KM = 42_164; // From physics: r = ∛(μT²/4π²)
+// Geostationary satellite orbital parameters (exact physics)
+const GEOSTATIONARY_SEMI_MAJOR_AXIS_KM = 42164; // From physics: r = ∛(μT²/4π²)
+const GEOSTATIONARY_SEMI_MAJOR_AXIS_M = GEOSTATIONARY_SEMI_MAJOR_AXIS_KM * 1000;
 const SIDEREAL_DAY_SECONDS = 86164.09054; // Exact sidereal day from physics
 const EARTH_AXIAL_TILT_DEG = 23.4392811; // Must match Earth's axial tilt exactly
 const GEOSTATIONARY_ECCENTRICITY = 0.0; // Must be exactly circular
 
-/**
- * Geostationary satellite configuration object for modular solar system initialization.
- */
+// Calculate orbital velocity directly for Earth satellite
+// v = sqrt(GM/r) where GM = 3.986e14 m³/s² for Earth
+const EARTH_GM = 3.986e14; // m³/s²
+const GEOSTATIONARY_ORBITAL_VELOCITY_MS = Math.sqrt(
+  EARTH_GM / GEOSTATIONARY_SEMI_MAJOR_AXIS_M,
+); // ~3070 m/s
+
 export const geostationarySat: CelestialObject<SatelliteProperties> = {
   id: "geostationary-comsat",
   name: "Geostationary CommSat",
-  seed: "geostationary_communications_satellite",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
-  parentId: "earth", // Will be replaced during initialization
-  realMass_kg: GEOSAT_MASS_KG,
+  parentId: "earth",
+
+  // Physical properties
+  realMass_kg: 5500, // ~5.5 tons (typical large communications satellite)
   realRadius_m: 10.0, // Larger communications satellite
   temperature: 280, // Stable operating temperature
   albedo: 0.6, // Higher reflectivity (large solar arrays)
-  orbit: {
-    realSemiMajorAxis_m: GEOSTATIONARY_SEMI_MAJOR_AXIS_KM * KM, // 42,164 km from Earth's center (physics-derived)
+
+  // Orbital elements (Earth-relative)
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: GEOSTATIONARY_SEMI_MAJOR_AXIS_KM / 149597870.7,
     eccentricity: GEOSTATIONARY_ECCENTRICITY, // Exactly 0 (circular)
-    inclination: EARTH_AXIAL_TILT_DEG * DEG_TO_RAD, // KEY FIX: Match Earth's axial tilt
-    longitudeOfAscendingNode: 0.0 * DEG_TO_RAD, // Above 0° longitude
-    argumentOfPeriapsis: 0.0 * DEG_TO_RAD, // Undefined for circular orbit, but set to 0
-    meanAnomaly: 0,
+    inclinationDeg: EARTH_AXIAL_TILT_DEG, // KEY FIX: Match Earth's axial tilt
+    longitudeOfAscendingNodeDeg: 0.0, // Above 0° longitude
+    argumentOfPeriapsisDeg: 0.0, // Undefined for circular orbit, but set to 0
+    meanAnomalyDeg: 0,
     // CRITICAL: Must exactly match Earth's sidereal rotation period
     period_s: SIDEREAL_DAY_SECONDS, // 86164.09054 s (exact sidereal day)
     siderealRotationPeriod_s: SIDEREAL_DAY_SECONDS,
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Standard axial orientation
-  },
+    axialTiltDeg: 0,
+  }),
+
   properties: {
     type: CelestialType.SATELLITE,
     modelPath: "./models/satellite/satellite.glb",

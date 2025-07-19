@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,14 +9,7 @@ import {
 
 // Verified Wikipedia data for Io
 const IO_MASS_KG = 8.9319e22; // Wikipedia verified
-const IO_RADIUS_M = 1821.6 * KM; // Mean radius from Wikipedia: 1821.6±0.5 km
-const IO_SMA_M = 421800 * KM; // Wikipedia verified: 421,800 km
-const IO_ECC = 0.0041; // Wikipedia verified
-const IO_INC_DEG = 0.05; // Wikipedia verified: 0.050° to Jupiter's equator
-const IO_LAN_DEG = 43.977; // Current value
-const IO_AOP_DEG = 84.129; // Current value
-const IO_MA_DEG = 342.021; // Current value
-const IO_SIDEREAL_PERIOD_S = 1.769137786 * 24 * 3600; // Wikipedia: 1.769137786 days (synchronous)
+const IO_RADIUS_KM = 1821.6; // Mean radius from Wikipedia: 1821.6±0.5 km
 const IO_ALBEDO = 0.63; // Wikipedia verified
 const IO_TEMP_K = 110; // Wikipedia verified: mean 110 K
 
@@ -32,20 +24,20 @@ export const io: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: IO_MASS_KG,
-  realRadius_m: IO_RADIUS_M,
+  realRadius_m: kmToM(IO_RADIUS_KM),
   temperature: IO_TEMP_K,
   albedo: IO_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: IO_SMA_M,
-    eccentricity: IO_ECC,
-    inclination: IO_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: IO_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: IO_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: IO_MA_DEG * DEG_TO_RAD,
-    period_s: IO_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: IO_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 421800 / 149597870.7, // 421,800 km converted to AU
+    eccentricity: 0.0041,
+    inclinationDeg: 0.05, // To Jupiter's equator
+    longitudeOfAscendingNodeDeg: 43.977,
+    argumentOfPeriapsisDeg: 84.129,
+    meanAnomalyDeg: 342.021,
+    period_s: 1.769137786 * 24 * 3600, // 1.769137786 days (synchronous)
+    siderealRotationPeriod_s: 1.769137786 * 24 * 3600, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

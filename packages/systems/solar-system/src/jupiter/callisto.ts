@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -10,14 +9,7 @@ import {
 
 // Verified Wikipedia data for Callisto - most heavily cratered moon in Solar System
 const CALLISTO_MASS_KG = 1.075938e23; // Wikipedia verified: (1.075938±0.000137)×10²³ kg
-const CALLISTO_RADIUS_M = 2410.3 * KM; // Wikipedia verified: 2410.3±1.5 km (mean radius)
-const CALLISTO_SMA_M = 1882700 * KM; // Wikipedia verified: 1,882,700 km semi-major axis
-const CALLISTO_ECC = 0.0074; // Wikipedia verified
-const CALLISTO_INC_DEG = 0.192; // Wikipedia verified: 0.192° to local Laplace plane
-const CALLISTO_LAN_DEG = 298.848; // Current value
-const CALLISTO_AOP_DEG = 52.643; // Current value
-const CALLISTO_MA_DEG = 181.408; // Current value
-const CALLISTO_SIDEREAL_PERIOD_S = 16.6890184 * 24 * 3600; // Wikipedia: 16.6890184 days (synchronous)
+const CALLISTO_RADIUS_KM = 2410.3; // Wikipedia verified: 2410.3±1.5 km (mean radius)
 const CALLISTO_ALBEDO = 0.22; // Wikipedia verified: 0.22 geometric albedo
 const CALLISTO_TEMP_K = 134; // Wikipedia verified: mean 134±11 K
 
@@ -32,20 +24,20 @@ export const callisto: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: CALLISTO_MASS_KG,
-  realRadius_m: CALLISTO_RADIUS_M,
+  realRadius_m: kmToM(CALLISTO_RADIUS_KM),
   temperature: CALLISTO_TEMP_K,
   albedo: CALLISTO_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: CALLISTO_SMA_M,
-    eccentricity: CALLISTO_ECC,
-    inclination: CALLISTO_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: CALLISTO_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: CALLISTO_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: CALLISTO_MA_DEG * DEG_TO_RAD,
-    period_s: CALLISTO_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: CALLISTO_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 1882700 / 149597870.7, // 1,882,700 km converted to AU
+    eccentricity: 0.0074,
+    inclinationDeg: 0.192, // To local Laplace plane
+    longitudeOfAscendingNodeDeg: 298.848,
+    argumentOfPeriapsisDeg: 52.643,
+    meanAnomalyDeg: 181.408,
+    period_s: 16.6890184 * 24 * 3600, // 16.6890184 days (synchronous)
+    siderealRotationPeriod_s: 16.6890184 * 24 * 3600, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

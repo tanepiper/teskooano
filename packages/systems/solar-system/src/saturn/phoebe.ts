@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,8 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const PHOEBE_MASS_KG = 8.28e18;
-const PHOEBE_RADIUS_M = 106.5 * KM;
-const PHOEBE_SMA_M = 12947780 * KM;
+// Radius and semi-major axis are now handled directly in km and converted with kmToM where needed.
 const PHOEBE_ECC = 0.158;
 const PHOEBE_INC_DEG = 173.04; // Retrograde orbit
 const PHOEBE_LAN_DEG = 229.3;
@@ -31,20 +29,20 @@ export const phoebe: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: PHOEBE_MASS_KG,
-  realRadius_m: PHOEBE_RADIUS_M,
+  realRadius_m: kmToM(106.5),
   temperature: 75,
   albedo: PHOEBE_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: PHOEBE_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 12947780 / 149597870.7, // Convert km to AU
     eccentricity: PHOEBE_ECC,
-    inclination: PHOEBE_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: PHOEBE_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: PHOEBE_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: PHOEBE_MA_DEG * DEG_TO_RAD,
-    period_s: PHOEBE_ORBITAL_PERIOD_S,
+    inclinationDeg: PHOEBE_INC_DEG,
+    longitudeOfAscendingNodeDeg: PHOEBE_LAN_DEG,
+    argumentOfPeriapsisDeg: PHOEBE_AOP_DEG,
+    meanAnomalyDeg: PHOEBE_MA_DEG,
+    period_s: PHOEBE_ORBITAL_PERIOD_S, // Negative for retrograde
     siderealRotationPeriod_s: PHOEBE_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

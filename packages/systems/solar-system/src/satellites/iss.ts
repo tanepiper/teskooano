@@ -1,57 +1,67 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
-  CelestialObject,
 } from "@teskooano/data-types";
+import {
+  createOrbitalElements,
+  calculateOrbitalVelocity,
+} from "@teskooano/core-physics";
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 
-// ISS physical constants (current as of 2024)
-const ISS_MASS_KG = 420_000; // ~420 tons
-const ISS_ALTITUDE_KM = 415; // Current average altitude
-const ISS_INCLINATION_DEG = 51.64;
-const ISS_PERIOD_MINUTES = 92.88;
-const ISS_ECCENTRICITY = 0.0003;
+// ISS orbital parameters
+const ISS_ALTITUDE_KM = 415;
+const EARTH_RADIUS_KM = 6371;
+const ISS_ORBITAL_RADIUS_KM = EARTH_RADIUS_KM + ISS_ALTITUDE_KM;
+const ISS_ORBITAL_RADIUS_M = ISS_ORBITAL_RADIUS_KM * 1000;
+const ISS_PERIOD_MINUTES = 90;
+const ISS_PERIOD_SECONDS = ISS_PERIOD_MINUTES * 60;
+const ISS_ECCENTRICITY = 0.001;
+const ISS_INCLINATION_DEG = 51.6;
 
-/**
- * ISS configuration object for modular solar system initialization.
- */
+// Calculate orbital velocity directly for Earth satellite
+// v = sqrt(GM/r) where GM = 3.986e14 m³/s² for Earth
+const EARTH_GM = 3.986e14; // m³/s²
+const ISS_ORBITAL_VELOCITY_MS = Math.sqrt(EARTH_GM / ISS_ORBITAL_RADIUS_M); // ~7660 m/s
+
 export const iss: CelestialObject<SatelliteProperties> = {
   id: "iss",
   name: "International Space Station",
-  seed: "iss_alpha_station",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
-  parentId: "earth", // Will be replaced during initialization
-  realMass_kg: ISS_MASS_KG,
-  realRadius_m: 50, // Approximate radius for visualization (ISS is ~109m wide)
-  temperature: 291, // ~18°C internal temperature
-  albedo: 0.7, // Highly reflective solar panels
-  orbit: {
-    realSemiMajorAxis_m: 6.371e6 + ISS_ALTITUDE_KM * KM, // Earth radius + altitude
+  parentId: "earth",
+
+  // Physical properties
+  realMass_kg: 419725, // ~420 metric tons
+  realRadius_m: 109, // Maximum dimension
+  temperature: 288, // ~15°C stable temperature
+  albedo: 0.3, // Dark surfaces with some reflective components
+  // Orbital elements (Earth-relative)
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: ISS_ORBITAL_RADIUS_KM / 149597870.7,
     eccentricity: ISS_ECCENTRICITY,
-    inclination: ISS_INCLINATION_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 173.0 * DEG_TO_RAD, // Current RAAN
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: ISS_PERIOD_MINUTES * 60,
-    siderealRotationPeriod_s: ISS_PERIOD_MINUTES * 60, // Tidally locked orientation
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    inclinationDeg: ISS_INCLINATION_DEG,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
+    period_s: ISS_PERIOD_SECONDS,
+    siderealRotationPeriod_s: ISS_PERIOD_SECONDS, // Tidal locked to Earth
+    axialTiltDeg: 0,
+  }),
+
   properties: {
     type: CelestialType.SATELLITE,
-    modelPath: "./models/satellite/iss.glb", // Changed from absolute to relative path
-    modelScale: 2.0,
+    modelPath: "models/satellite/iss.glb", // Fixed path format
+    modelScale: 1, // Reduced from 0.7 to 0.4 for better size
     missionType: "scientific",
     operationalStatus: "active",
-    launchDate: "1998-11-20", // First module (Zarya)
+    launchDate: "1998-11-20",
     components: [
-      "Pressurized modules",
+      "2.4m primary mirror",
+      "Scientific instruments",
       "Solar arrays",
-      "Truss structure",
-      "Docking ports",
-      "Robotic arms",
+      "Communication systems",
     ],
   },
 };

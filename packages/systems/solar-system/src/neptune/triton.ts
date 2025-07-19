@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -8,12 +7,22 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const TRITON_SMA_M = 354759 * KM;
-const TRITON_SIDEREAL_ROTATION_PERIOD_S = -5.877 * 24 * 3600;
+const TRITON_RADIUS_KM = 1353.4;
+const TRITON_SMA_KM = 354759;
+const TRITON_ECC = 0.000016;
+const TRITON_INC_DEG = 156.885;
+const TRITON_LAN_DEG = 249.7;
+const TRITON_AOP_DEG = 275.1;
+const TRITON_MA_DEG = 296.6;
+const TRITON_SIDEREAL_ROTATION_PERIOD_S = -5.877 * 24 * 3600; // Retrograde rotation
+const NEPTUNE_MASS_KG = 1.024e26; // Neptune's mass for orbital period calculation
 
-/**
- * Triton configuration object for modular solar system initialization.
- */
+// Calculate orbital period using Kepler's third law
+const TRITON_ORBITAL_PERIOD_S =
+  2 *
+  Math.PI *
+  Math.sqrt(Math.pow(TRITON_SMA_KM * 1000, 3) / (6.6743e-11 * NEPTUNE_MASS_KG));
+
 export const triton: CelestialObject<PlanetProperties> = {
   id: "triton",
   name: "Triton",
@@ -22,20 +31,20 @@ export const triton: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "neptune", // Will be replaced during initialization
   realMass_kg: 2.139e22,
-  realRadius_m: 1353.4 * KM,
+  realRadius_m: kmToM(TRITON_RADIUS_KM),
   temperature: 38,
   albedo: 0.76,
-  orbit: {
-    realSemiMajorAxis_m: TRITON_SMA_M,
-    eccentricity: 0.000016,
-    inclination: 156.885 * DEG_TO_RAD,
-    longitudeOfAscendingNode: 249.7 * DEG_TO_RAD,
-    argumentOfPeriapsis: 275.1 * DEG_TO_RAD,
-    meanAnomaly: 296.6 * DEG_TO_RAD,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: TRITON_SMA_KM / 149597870.7,
+    eccentricity: TRITON_ECC,
+    inclinationDeg: TRITON_INC_DEG,
+    longitudeOfAscendingNodeDeg: TRITON_LAN_DEG,
+    argumentOfPeriapsisDeg: TRITON_AOP_DEG,
+    meanAnomalyDeg: TRITON_MA_DEG,
+    period_s: TRITON_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: TRITON_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-    period_s: Math.abs(TRITON_SIDEREAL_ROTATION_PERIOD_S),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

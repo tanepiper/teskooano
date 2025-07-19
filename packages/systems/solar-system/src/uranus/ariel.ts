@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,7 +8,7 @@ import {
   CelestialObject,
 } from "@teskooano/data-types";
 
-const ARIEL_REAL_RADIUS_M = 578.9 * KM;
+const ARIEL_REAL_RADIUS_KM = 578.9;
 
 /**
  * Ariel configuration object for modular solar system initialization.
@@ -22,18 +21,18 @@ export const ariel: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "uranus", // Will be replaced during initialization
   realMass_kg: 1.353e21,
-  realRadius_m: ARIEL_REAL_RADIUS_M,
-  orbit: {
-    realSemiMajorAxis_m: 191020 * KM,
+  realRadius_m: kmToM(ARIEL_REAL_RADIUS_KM),
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 191020 / 149597870.7, // 191,020 km converted to AU
     eccentricity: 0.0012,
-    inclination: 0.26 * DEG_TO_RAD,
-    longitudeOfAscendingNode: 169.5 * DEG_TO_RAD,
-    argumentOfPeriapsis: 83.4 * DEG_TO_RAD,
-    meanAnomaly: 310.4 * DEG_TO_RAD,
+    inclinationDeg: 0.26,
+    longitudeOfAscendingNodeDeg: 169.5,
+    argumentOfPeriapsisDeg: 83.4,
+    meanAnomalyDeg: 310.4,
     period_s: 2.178e5,
-    siderealRotationPeriod_s: 2.178e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    siderealRotationPeriod_s: 2.178e5, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   temperature: 60,
   albedo: 0.39,
   properties: {

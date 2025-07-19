@@ -78,18 +78,27 @@ Mercury is the innermost and smallest planet in our Solar System, orbiting close
 
 ```typescript
 const MERCURY_MASS_KG = 3.3011e23;
-const MERCURY_RADIUS_M = 2439700;
+const MERCURY_RADIUS_KM = 2439.7;
 const MERCURY_TEMP_K = 437;
 const MERCURY_ALBEDO = 0.142;
-const MERCURY_SMA_AU = 0.387098;
-const MERCURY_ECC = 0.20563;
-const MERCURY_INC_DEG = 7.005;
-const MERCURY_LAN_DEG = 48.331;
-const MERCURY_AOP_DEG = 29.124;
-const MERCURY_MA_DEG = 174.796;
-const MERCURY_ORBITAL_PERIOD_S = 7.599154e6;
-const MERCURY_ROTATION_PERIOD_S = 5.067014e6;
-const MERCURY_AXIAL_TILT_DEG = 0.034;
+```
+
+### Orbital Parameters
+
+Mercury now uses the enhanced orbital parameters system with automatic calculation of aphelion, perihelion, and orbital speed:
+
+```typescript
+const mercuryOrbit = createOrbitalElements({
+  semiMajorAxisAU: 0.387098, // Mercury's semi-major axis
+  eccentricity: 0.20563,
+  inclinationDeg: 7.00487,
+  longitudeOfAscendingNodeDeg: 48.33167,
+  argumentOfPeriapsisDeg: 29.12478,
+  meanAnomalyDeg: 174.79577,
+  period_s: 7.60052e6, // 87.969 Earth days
+  siderealRotationPeriod_s: 5.067e6, // 58.646 Earth days
+  axialTiltDeg: 0.034,
+});
 ```
 
 ### Celestial Object Properties

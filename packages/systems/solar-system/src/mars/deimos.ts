@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -10,14 +9,7 @@ import {
 
 // Verified Wikipedia/NASA data for Deimos
 const DEIMOS_MASS_KG = 1.5e15; // Wikipedia verified: 1.5×10¹⁵ kg
-const DEIMOS_RADIUS_M = 6.2 * KM; // Wikipedia verified: 6.2 km mean radius (12.6 km diameter)
-const DEIMOS_SMA_M = 23460 * KM; // Wikipedia verified: 23,460 km semi-major axis
-const DEIMOS_ECC = 0.00033; // Wikipedia verified
-const DEIMOS_INC_DEG = 0.93; // Wikipedia verified: 0.93° to Mars's equator
-const DEIMOS_LAN_DEG = 54.3; // Current value
-const DEIMOS_AOP_DEG = 0.0; // Current value
-const DEIMOS_MA_DEG = 205.0; // Current value
-const DEIMOS_SIDEREAL_PERIOD_S = 30.31 * 3600; // Wikipedia: 30.31 hours
+const DEIMOS_RADIUS_KM = 6.2; // Wikipedia verified: 6.2 km mean radius (12.6 km diameter)
 const DEIMOS_ALBEDO = 0.068; // Wikipedia verified
 const DEIMOS_TEMP_K = 233; // Estimated temperature similar to Phobos: ~233 K (-40°C)
 
@@ -32,20 +24,20 @@ export const deimos: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "mars", // Will be replaced during initialization
   realMass_kg: DEIMOS_MASS_KG,
-  realRadius_m: DEIMOS_RADIUS_M,
+  realRadius_m: kmToM(DEIMOS_RADIUS_KM),
   temperature: DEIMOS_TEMP_K,
   albedo: DEIMOS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: DEIMOS_SMA_M,
-    eccentricity: DEIMOS_ECC,
-    inclination: DEIMOS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: DEIMOS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: DEIMOS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: DEIMOS_MA_DEG * DEG_TO_RAD,
-    period_s: DEIMOS_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: DEIMOS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 23460 / 149597870.7, // 23,460 km converted to AU
+    eccentricity: 0.00033,
+    inclinationDeg: 0.93, // To Mars's equator
+    longitudeOfAscendingNodeDeg: 54.3,
+    argumentOfPeriapsisDeg: 0.0,
+    meanAnomalyDeg: 205.0,
+    period_s: 30.31 * 3600, // 30.31 hours (synchronous)
+    siderealRotationPeriod_s: 30.31 * 3600, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

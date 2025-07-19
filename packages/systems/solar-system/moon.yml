@@ -1,25 +1,27 @@
+id: "solar-system"
+
 tasks:
   test:
     command: vitest
     args: run
     options:
       runInCI: true
-  test:ui:
+  test-ui:
     command: vitest
     args: --ui
     options:
       runInCI: false
-  test:coverage:
+  test-coverage:
     command: vitest
     args: run --coverage
     options:
       runInCI: true
-  test:watch:
+  test-watch:
     command: vitest
     args:
     options:
       runInCI: false
-  test:browser:
+  test-browser:
     command: vitest
     args: run --browser
     options:

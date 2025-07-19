@@ -5,11 +5,10 @@ import {
   type StarProperties,
   CelestialObject,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 
 const SUN_MASS_KG = 1.9885e30;
-const SUN_RADIUS_M = 696340 * KM; // Solar radius
+const SUN_RADIUS_KM = 696340; // Solar radius
 const SUN_TEMP_K = 5778;
 const SUN_LUMINOSITY = 1.0;
 
@@ -25,20 +24,20 @@ export const sun: CelestialObject<StarProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: undefined, // Sun has no parent
   realMass_kg: SUN_MASS_KG,
-  realRadius_m: SUN_RADIUS_M,
+  realRadius_m: kmToM(SUN_RADIUS_KM),
   temperature: SUN_TEMP_K,
   albedo: 0.3,
-  orbit: {
-    realSemiMajorAxis_m: 0,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 0, // Sun is at the center of the system
     eccentricity: 0,
-    inclination: 0,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
+    inclinationDeg: 0,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
     period_s: 0,
     siderealRotationPeriod_s: 0,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.STAR,
     isMainStar: true,

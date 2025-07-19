@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialStatus,
   CelestialType,
@@ -9,11 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const ADRASTEA_MASS_KG = 2e15;
-const ADRASTEA_RADIUS_M = 8200;
-const ADRASTEA_SMA_M = 129000 * KM;
-const ADRASTEA_ECC = 0.0015;
-const ADRASTEA_INC_DEG = 0.03;
-const ADRASTEA_SIDEREAL_PERIOD_S = 25770;
+const ADRASTEA_RADIUS_KM = 8.2;
 const ADRASTEA_ALBEDO = 0.05;
 
 /**
@@ -27,20 +22,20 @@ export const adrastea: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: ADRASTEA_MASS_KG,
-  realRadius_m: ADRASTEA_RADIUS_M,
+  realRadius_m: kmToM(ADRASTEA_RADIUS_KM),
   temperature: 120, // Generic temperature
   albedo: ADRASTEA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: ADRASTEA_SMA_M,
-    eccentricity: ADRASTEA_ECC,
-    inclination: ADRASTEA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: ADRASTEA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: ADRASTEA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 129000 / 149597870.7, // 129,000 km converted to AU
+    eccentricity: 0.0015,
+    inclinationDeg: 0.03,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
+    period_s: 25770,
+    siderealRotationPeriod_s: 25770, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

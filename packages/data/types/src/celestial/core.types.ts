@@ -29,6 +29,17 @@ export interface OrbitalParameters {
   siderealRotationPeriod_s?: number;
   /** Optional: The tilt of the object's rotational axis relative to its orbital plane, represented as a normalized vector. */
   axialTilt?: OSVector3;
+
+  /** The farthest distance from the parent body (REAL METERS). */
+  realAphelion_m: number;
+  /** The closest distance from the parent body (REAL METERS). */
+  realPerihelion_m: number;
+  /** The average orbital speed (METERS PER SECOND). */
+  averageOrbitalSpeed_mps: number;
+  /** The epoch for these orbital elements (e.g., "J2000"). */
+  epoch: string;
+  /** Optional: The time of perihelion passage as an ISO date string. */
+  timeOfPerihelion?: string;
 }
 
 /**

@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -9,18 +8,9 @@ import {
 } from "@teskooano/data-types";
 
 const MARS_MASS_KG = 6.39e23;
-const MARS_RADIUS_M = 3389.5 * KM; // Mean radius
+const MARS_RADIUS_KM = 3389.5; // Mean radius
 const MARS_TEMP_K = 210; // Mean surface temperature
 const MARS_ALBEDO = 0.25; // Bond albedo
-const MARS_SMA_AU = 1.523679;
-const MARS_ECC = 0.093405;
-const MARS_INC_DEG = 1.85061;
-const MARS_LAN_DEG = 49.57854;
-const MARS_AOP_DEG = 286.4966;
-const MARS_MA_DEG = 18.6021;
-const MARS_ORBITAL_PERIOD_S = 5.935e7; // 686.98 Earth days
-const MARS_SIDEREAL_ROTATION_PERIOD_S = 8.864e4; // 24.6229 hours
-const MARS_AXIAL_TILT_DEG = 25.19;
 
 /**
  * Mars configuration object for modular solar system initialization.
@@ -33,24 +23,20 @@ export const mars: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: MARS_MASS_KG,
-  realRadius_m: MARS_RADIUS_M,
+  realRadius_m: kmToM(MARS_RADIUS_KM),
   temperature: MARS_TEMP_K,
   albedo: MARS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: MARS_SMA_AU * AU,
-    eccentricity: MARS_ECC,
-    inclination: MARS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: MARS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: MARS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: MARS_MA_DEG * DEG_TO_RAD,
-    period_s: MARS_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: MARS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(MARS_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(MARS_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 1.523679, // Mars's semi-major axis
+    eccentricity: 0.093405,
+    inclinationDeg: 1.85061,
+    longitudeOfAscendingNodeDeg: 49.57854,
+    argumentOfPeriapsisDeg: 286.4966,
+    meanAnomalyDeg: 18.6021,
+    period_s: 5.935e7, // 686.98 Earth days
+    siderealRotationPeriod_s: 8.864e4, // 24.6229 hours
+    axialTiltDeg: 25.19,
+  }),
   properties: {
     type: CelestialType.PLANET,
     classType: PlanetType.TERRESTRIAL,

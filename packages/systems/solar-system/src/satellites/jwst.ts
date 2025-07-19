@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -27,17 +26,17 @@ export const jwst: CelestialObject<SatelliteProperties> = {
   realRadius_m: 10, // Approximate radius for visualization (21m diameter sunshield)
   temperature: 300, // More realistic temperature for lighting calculations
   albedo: 0.3, // More realistic albedo for visibility
-  orbit: {
-    realSemiMajorAxis_m: 1.0 * AU + JWST_DISTANCE_AU * AU, // Earth's orbit + L2 distance
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 1.0 + JWST_DISTANCE_AU, // Earth's orbit + L2 distance
     eccentricity: JWST_ECCENTRICITY,
-    inclination: 0, // Same plane as Earth
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0, // Start at same position as Earth
+    inclinationDeg: 0, // Same plane as Earth
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0, // Start at same position as Earth
     period_s: JWST_ORBITAL_PERIOD_DAYS * 24 * 3600,
     siderealRotationPeriod_s: JWST_ORBITAL_PERIOD_DAYS * 24 * 3600,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.SATELLITE,
     modelPath: "models/satellite/jwst.glb", // Fixed path format

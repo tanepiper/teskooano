@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -41,17 +40,17 @@ export const voyager1: CelestialObject<SatelliteProperties> = {
   temperature: 300, // More realistic temperature for lighting calculations
   albedo: 0.3, // More realistic albedo for visibility
   // Rogue object orbital parameters (mostly zeros)
-  orbit: {
-    realSemiMajorAxis_m: 0, // Not orbiting anything
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 0, // Not orbiting anything
     eccentricity: 0,
-    inclination: 0,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: VOYAGER1_DISTANCE_AU, // Store distance for reference
+    inclinationDeg: 0,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: VOYAGER1_DISTANCE_AU, // Store distance for reference
     period_s: 0, // No orbital period
     siderealRotationPeriod_s: 24 * 3600, // Spacecraft rotation
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   // Critical: Ignore physics so Voyager 1 is not affected by gravitational forces
   ignorePhysics: false,
   ignoreCollisions: true,

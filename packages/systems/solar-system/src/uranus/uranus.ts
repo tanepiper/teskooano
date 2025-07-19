@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   GasGiantClass,
@@ -10,18 +9,9 @@ import {
 } from "@teskooano/data-types";
 
 const URANUS_MASS_KG = 8.681e25;
-const URANUS_RADIUS_M = 25362 * KM; // Mean radius
+const URANUS_RADIUS_KM = 25362; // Mean radius
 const URANUS_TEMP_K = 76;
 const URANUS_ALBEDO = 0.3; // Bond albedo
-const URANUS_SMA_AU = 19.19126;
-const URANUS_ECC = 0.04717;
-const URANUS_INC_DEG = 0.773;
-const URANUS_LAN_DEG = 74.006;
-const URANUS_AOP_DEG = 96.998857;
-const URANUS_MA_DEG = 142.2386;
-const URANUS_ORBITAL_PERIOD_S = 2651486832; // 84.0205 years = 30,688.5 days
-const URANUS_SIDEREAL_ROTATION_PERIOD_S = -62092.5104; // -0.718661 days (retrograde)
-const URANUS_AXIAL_TILT_DEG = 97.77;
 
 /**
  * Uranus configuration object for modular solar system initialization.
@@ -34,22 +24,18 @@ export const uranus: CelestialObject<GasGiantProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: URANUS_MASS_KG,
-  realRadius_m: URANUS_RADIUS_M,
-  orbit: {
-    realSemiMajorAxis_m: URANUS_SMA_AU * AU,
-    eccentricity: URANUS_ECC,
-    inclination: URANUS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: URANUS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: URANUS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: URANUS_MA_DEG * DEG_TO_RAD,
-    siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(URANUS_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(URANUS_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-    period_s: URANUS_ORBITAL_PERIOD_S,
-  },
+  realRadius_m: kmToM(URANUS_RADIUS_KM),
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 19.19126, // Uranus's semi-major axis
+    eccentricity: 0.04717,
+    inclinationDeg: 0.773,
+    longitudeOfAscendingNodeDeg: 74.006,
+    argumentOfPeriapsisDeg: 96.998857,
+    meanAnomalyDeg: 142.2386,
+    period_s: 2651486832, // 84.0205 years = 30,688.5 days
+    siderealRotationPeriod_s: -62092.5104, // -0.718661 days (retrograde)
+    axialTiltDeg: 97.77,
+  }),
   temperature: URANUS_TEMP_K,
   albedo: URANUS_ALBEDO,
   properties: {
@@ -63,8 +49,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
     emissiveIntensity: 0.05,
     rings: [
       {
-        innerRadius: URANUS_RADIUS_M * 1.64,
-        outerRadius: URANUS_RADIUS_M * 1.641,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.64,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.641,
         density: 0.1,
         opacity: 0.4,
         color: "#A0A0A0",
@@ -74,8 +60,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["dark dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 1.7,
-        outerRadius: URANUS_RADIUS_M * 1.701,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.7,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.701,
         density: 0.15,
         opacity: 0.5,
         color: "#989898",
@@ -85,8 +71,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["dark dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 1.74,
-        outerRadius: URANUS_RADIUS_M * 1.741,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.74,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.741,
         density: 0.15,
         opacity: 0.5,
         color: "#989898",
@@ -96,8 +82,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["dark dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 1.77,
-        outerRadius: URANUS_RADIUS_M * 1.771,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.77,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.771,
         density: 0.15,
         opacity: 0.5,
         color: "#989898",
@@ -107,8 +93,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["dark dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 1.8,
-        outerRadius: URANUS_RADIUS_M * 1.801,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.8,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.801,
         density: 0.15,
         opacity: 0.5,
         color: "#989898",
@@ -118,8 +104,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["dark dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 1.81,
-        outerRadius: URANUS_RADIUS_M * 1.811,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.81,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.811,
         density: 0.2,
         opacity: 0.6,
         color: "#B0B0B0",
@@ -129,8 +115,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["dark dust", "small ice particles"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 1.95,
-        outerRadius: URANUS_RADIUS_M * 1.96,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 1.95,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 1.96,
         density: 0.8,
         opacity: 0.8,
         color: "#C0C0C0",
@@ -140,8 +126,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["ice boulders", "dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 2.55,
-        outerRadius: URANUS_RADIUS_M * 3.8,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 2.55,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 3.8,
         density: 0.05,
         opacity: 0.1,
         color: "#87CEEB",
@@ -151,8 +137,8 @@ export const uranus: CelestialObject<GasGiantProperties> = {
         composition: ["blue dust"],
       },
       {
-        innerRadius: URANUS_RADIUS_M * 3.8,
-        outerRadius: URANUS_RADIUS_M * 3.86,
+        innerRadius: kmToM(URANUS_RADIUS_KM) * 3.8,
+        outerRadius: kmToM(URANUS_RADIUS_KM) * 3.86,
         density: 0.02,
         opacity: 0.05,
         color: "#D3D3D3",

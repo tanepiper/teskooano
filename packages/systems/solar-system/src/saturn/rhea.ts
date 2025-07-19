@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,8 +8,8 @@ import {
 } from "@teskooano/data-types";
 
 const RHEA_MASS_KG = 2.306e21;
-const RHEA_RADIUS_M = 763.8 * KM;
-const RHEA_SMA_M = 527108 * KM;
+const RHEA_RADIUS_KM = 763.8;
+const RHEA_SMA_KM = 527108;
 const RHEA_ECC = 0.001;
 const RHEA_INC_DEG = 0.345;
 const RHEA_LAN_DEG = 130.7;
@@ -30,20 +29,20 @@ export const rhea: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: RHEA_MASS_KG,
-  realRadius_m: RHEA_RADIUS_M,
+  realRadius_m: kmToM(RHEA_RADIUS_KM),
   temperature: 73,
   albedo: RHEA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: RHEA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: RHEA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: RHEA_ECC,
-    inclination: RHEA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: RHEA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: RHEA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: RHEA_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: RHEA_INC_DEG,
+    longitudeOfAscendingNodeDeg: RHEA_LAN_DEG,
+    argumentOfPeriapsisDeg: RHEA_AOP_DEG,
+    meanAnomalyDeg: RHEA_MA_DEG,
     period_s: RHEA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: RHEA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

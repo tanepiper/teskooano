@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -9,7 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const VESTA_MASS_KG = 2.59e20;
-const VESTA_RADIUS_M = 262.7 * KM;
+const VESTA_RADIUS_KM = 262.7;
 const VESTA_TEMP_K = 150;
 const VESTA_ALBEDO = 0.423;
 const VESTA_SMA_AU = 2.36;
@@ -33,24 +32,20 @@ export const vesta: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: VESTA_MASS_KG,
-  realRadius_m: VESTA_RADIUS_M,
+  realRadius_m: kmToM(VESTA_RADIUS_KM),
   temperature: VESTA_TEMP_K,
   albedo: VESTA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: VESTA_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: VESTA_SMA_AU,
     eccentricity: VESTA_ECC,
-    inclination: VESTA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: VESTA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: VESTA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: VESTA_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: VESTA_INC_DEG,
+    longitudeOfAscendingNodeDeg: VESTA_LAN_DEG,
+    argumentOfPeriapsisDeg: VESTA_AOP_DEG,
+    meanAnomalyDeg: VESTA_MA_DEG,
     period_s: VESTA_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: VESTA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(VESTA_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(VESTA_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: VESTA_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.DWARF_PLANET,
     classType: PlanetType.ROCKY,

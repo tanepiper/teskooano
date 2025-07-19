@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -9,11 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const METIS_MASS_KG = 3.6e16;
-const METIS_RADIUS_M = 21500;
-const METIS_SMA_M = 128000 * KM;
-const METIS_ECC = 0.0002;
-const METIS_INC_DEG = 0.06;
-const METIS_SIDEREAL_PERIOD_S = 25470;
+const METIS_RADIUS_KM = 21.5;
 const METIS_ALBEDO = 0.061;
 
 /**
@@ -27,20 +22,20 @@ export const metis: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: METIS_MASS_KG,
-  realRadius_m: METIS_RADIUS_M,
+  realRadius_m: kmToM(METIS_RADIUS_KM),
   temperature: 120, // Generic temperature
   albedo: METIS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: METIS_SMA_M,
-    eccentricity: METIS_ECC,
-    inclination: METIS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: METIS_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: METIS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 128000 / 149597870.7, // 128,000 km converted to AU
+    eccentricity: 0.0002,
+    inclinationDeg: 0.06,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
+    period_s: 25470,
+    siderealRotationPeriod_s: 25470, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

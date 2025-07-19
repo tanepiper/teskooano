@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -8,7 +7,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const NEREID_SMA_M = 5513800 * KM;
+const NEREID_SMA_KM = 5513800;
 const NEREID_ORBITAL_PERIOD_S = 3.114e7;
 const NEREID_SIDEREAL_ROTATION_PERIOD_S = 11.52 * 3600;
 
@@ -23,20 +22,20 @@ export const nereid: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "neptune", // Will be replaced during initialization
   realMass_kg: 3.1e19,
-  realRadius_m: 170 * KM,
+  realRadius_m: 170 * 1000, // Convert km to m
   temperature: 50,
   albedo: 0.14,
-  orbit: {
-    realSemiMajorAxis_m: NEREID_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: NEREID_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: 0.7507,
-    inclination: 7.232 * DEG_TO_RAD,
-    longitudeOfAscendingNode: 329.9 * DEG_TO_RAD,
-    argumentOfPeriapsis: 268.2 * DEG_TO_RAD,
-    meanAnomaly: 49.3 * DEG_TO_RAD,
+    inclinationDeg: 7.232,
+    longitudeOfAscendingNodeDeg: 329.9,
+    argumentOfPeriapsisDeg: 268.2,
+    meanAnomalyDeg: 49.3,
     period_s: NEREID_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: NEREID_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

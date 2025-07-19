@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -26,16 +25,18 @@ export const asteroidBelt: CelestialObject<AsteroidFieldProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: BELT_TOTAL_MASS_KG,
-  realRadius_m: BELT_OUTER_AU * AU,
-  orbit: {
-    realSemiMajorAxis_m: BELT_CENTER_AU * AU,
+  realRadius_m: BELT_OUTER_AU * 149597870.7, // Convert AU to meters
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: BELT_CENTER_AU,
     eccentricity: BELT_AVG_ECC,
-    inclination: BELT_AVG_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 80.0 * DEG_TO_RAD,
-    argumentOfPeriapsis: 73.0 * DEG_TO_RAD,
-    meanAnomaly: 0.0 * DEG_TO_RAD,
+    inclinationDeg: BELT_AVG_INC_DEG,
+    longitudeOfAscendingNodeDeg: 80.0,
+    argumentOfPeriapsisDeg: 73.0,
+    meanAnomalyDeg: 0.0,
     period_s: Math.sqrt(Math.pow(BELT_CENTER_AU, 3)) * 3.15576e7,
-  },
+    siderealRotationPeriod_s: 0, // Asteroid belt doesn't rotate
+    axialTiltDeg: 0,
+  }),
   temperature: 165,
   albedo: 0.12, // Typical asteroid belt albedo (similar to dark asteroids)
   ignorePhysics: false,

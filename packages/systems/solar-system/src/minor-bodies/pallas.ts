@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -9,7 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const PALLAS_MASS_KG = 2.11e20;
-const PALLAS_RADIUS_M = 256 * KM;
+const PALLAS_RADIUS_KM = 256;
 const PALLAS_TEMP_K = 160;
 const PALLAS_ALBEDO = 0.155;
 const PALLAS_SMA_AU = 2.77;
@@ -33,24 +32,20 @@ export const pallas: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: PALLAS_MASS_KG,
-  realRadius_m: PALLAS_RADIUS_M,
+  realRadius_m: kmToM(PALLAS_RADIUS_KM),
   temperature: PALLAS_TEMP_K,
   albedo: PALLAS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: PALLAS_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: PALLAS_SMA_AU,
     eccentricity: PALLAS_ECC,
-    inclination: PALLAS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: PALLAS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: PALLAS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: PALLAS_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: PALLAS_INC_DEG,
+    longitudeOfAscendingNodeDeg: PALLAS_LAN_DEG,
+    argumentOfPeriapsisDeg: PALLAS_AOP_DEG,
+    meanAnomalyDeg: PALLAS_MA_DEG,
     period_s: PALLAS_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: PALLAS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(PALLAS_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(PALLAS_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: PALLAS_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.DWARF_PLANET,
     classType: PlanetType.ROCKY,

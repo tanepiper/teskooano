@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -10,8 +9,8 @@ import {
 
 // Verified Wikipedia/NASA data for Titan - largest moon of Saturn with thick atmosphere
 const TITAN_MASS_KG = 1.34518e23; // Wikipedia verified: (1.34518±0.00003)×10²³ kg
-const TITAN_RADIUS_M = 2574.73 * KM; // Wikipedia verified: 2574.73±0.09 km (mean radius)
-const TITAN_SMA_M = 1221870 * KM; // Wikipedia verified: 1,221,870 km semi-major axis
+const TITAN_RADIUS_KM = 2574.73; // Wikipedia verified: 2574.73±0.09 km (mean radius)
+const TITAN_SMA_KM = 1221870; // Wikipedia verified: 1,221,870 km semi-major axis
 const TITAN_ECC = 0.0288; // Wikipedia verified
 const TITAN_INC_DEG = 0.34854; // Wikipedia verified: 0.34854° to Saturn's equator
 const TITAN_LAN_DEG = 189.64; // Current value
@@ -32,20 +31,20 @@ export const titan: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: TITAN_MASS_KG,
-  realRadius_m: TITAN_RADIUS_M,
+  realRadius_m: kmToM(TITAN_RADIUS_KM),
   temperature: TITAN_TEMP_K,
   albedo: TITAN_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: TITAN_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: TITAN_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: TITAN_ECC,
-    inclination: TITAN_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: TITAN_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: TITAN_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: TITAN_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: TITAN_INC_DEG,
+    longitudeOfAscendingNodeDeg: TITAN_LAN_DEG,
+    argumentOfPeriapsisDeg: TITAN_AOP_DEG,
+    meanAnomalyDeg: TITAN_MA_DEG,
     period_s: TITAN_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: TITAN_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.TERRESTRIAL,

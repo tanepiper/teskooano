@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -9,7 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const CERES_MASS_KG = 9.393e20;
-const CERES_RADIUS_M = 473 * KM;
+const CERES_RADIUS_KM = 473;
 const CERES_TEMP_K = 167;
 const CERES_ALBEDO = 0.09;
 const CERES_SMA_AU = 2.766;
@@ -33,24 +32,20 @@ export const ceres: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: CERES_MASS_KG,
-  realRadius_m: CERES_RADIUS_M,
+  realRadius_m: kmToM(CERES_RADIUS_KM),
   temperature: CERES_TEMP_K,
   albedo: CERES_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: CERES_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: CERES_SMA_AU,
     eccentricity: CERES_ECC,
-    inclination: CERES_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: CERES_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: CERES_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: CERES_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: CERES_INC_DEG,
+    longitudeOfAscendingNodeDeg: CERES_LAN_DEG,
+    argumentOfPeriapsisDeg: CERES_AOP_DEG,
+    meanAnomalyDeg: CERES_MA_DEG,
     period_s: CERES_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: CERES_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(CERES_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(CERES_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: CERES_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.DWARF_PLANET,
     classType: PlanetType.ROCKY,

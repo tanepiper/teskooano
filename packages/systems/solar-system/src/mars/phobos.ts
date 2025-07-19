@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,14 +9,7 @@ import {
 
 // Verified Wikipedia data for Phobos
 const PHOBOS_MASS_KG = 1.072e16; // Wikipedia verified: 1.072×10¹⁶ kg
-const PHOBOS_RADIUS_M = 11.1 * KM; // Wikipedia verified: 11.1 km mean radius
-const PHOBOS_SMA_M = 9377.2 * KM; // Wikipedia verified: 9,377.2 km semi-major axis
-const PHOBOS_ECC = 0.0151; // Wikipedia verified
-const PHOBOS_INC_DEG = 1.093; // Wikipedia verified: 1.093° to Mars's equator
-const PHOBOS_LAN_DEG = 169.2; // Current value
-const PHOBOS_AOP_DEG = 216.3; // Current value
-const PHOBOS_MA_DEG = 189.7; // Current value
-const PHOBOS_SIDEREAL_PERIOD_S = 0.31891023 * 24 * 3600; // Wikipedia: 0.31891023 days
+const PHOBOS_RADIUS_KM = 11.1; // Wikipedia verified: 11.1 km mean radius
 const PHOBOS_ALBEDO = 0.071; // Wikipedia verified
 const PHOBOS_TEMP_K = 233; // Wikipedia verified: ~233 K
 
@@ -32,20 +24,20 @@ export const phobos: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "mars", // Will be replaced during initialization
   realMass_kg: PHOBOS_MASS_KG,
-  realRadius_m: PHOBOS_RADIUS_M,
+  realRadius_m: kmToM(PHOBOS_RADIUS_KM),
   temperature: PHOBOS_TEMP_K,
   albedo: PHOBOS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: PHOBOS_SMA_M,
-    eccentricity: PHOBOS_ECC,
-    inclination: PHOBOS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: PHOBOS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: PHOBOS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: PHOBOS_MA_DEG * DEG_TO_RAD,
-    period_s: PHOBOS_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: PHOBOS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 9377.2 / 149597870.7, // 9,377.2 km converted to AU
+    eccentricity: 0.0151,
+    inclinationDeg: 1.093, // To Mars's equator
+    longitudeOfAscendingNodeDeg: 169.2,
+    argumentOfPeriapsisDeg: 216.3,
+    meanAnomalyDeg: 189.7,
+    period_s: 0.31891023 * 24 * 3600, // 0.31891023 days (synchronous)
+    siderealRotationPeriod_s: 0.31891023 * 24 * 3600, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,7 +9,7 @@ import {
 
 const GALATEA_MASS_KG = 8.0e18;
 const GALATEA_RADIUS_M = 88000;
-const GALATEA_SMA_M = 61953 * KM;
+const GALATEA_SMA_KM = 61953;
 const GALATEA_ECC = 0.0002;
 const GALATEA_INC_DEG = 0.05;
 const GALATEA_SIDEREAL_PERIOD_S = 10.3 * 3600;
@@ -30,17 +29,17 @@ export const galatea: CelestialObject<PlanetProperties> = {
   realRadius_m: GALATEA_RADIUS_M,
   temperature: 60,
   albedo: GALATEA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: GALATEA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: GALATEA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: GALATEA_ECC,
-    inclination: GALATEA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
+    inclinationDeg: GALATEA_INC_DEG,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
     period_s: GALATEA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: GALATEA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

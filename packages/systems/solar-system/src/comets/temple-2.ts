@@ -1,23 +1,15 @@
-import { CONVERSION } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   METERS_TO_SCENE_UNITS,
   SCALE,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
 
 // Temple 2 Comet constants
-export const TEMPLE2_NUCLEUS_RADIUS_M = 2.0 * CONVERSION.KM_TO_M; // Estimate
+export const TEMPLE2_NUCLEUS_RADIUS_KM = 2.0; // Estimate
 export const TEMPLE2_MASS_KG = 1e13; // Estimate
 export const TEMPLE2_ALBEDO = 0.04;
 export const TEMPLE2_TEMP_K = 100;
-export const TEMPLE2_SMA_M = 4.525e11; // 3.024 AU
-export const TEMPLE2_ECC = 0.549;
-export const TEMPLE2_INC_RAD = 0.2094; // 12.5 deg
-export const TEMPLE2_LAN_RAD = 5.411; // 310.2 deg
-export const TEMPLE2_AOP_RAD = 2.082; // 119.3 deg
-export const TEMPLE2_MA_RAD = 0;
-export const TEMPLE2_PERIOD_S = 1.659e8; // 5.26 years
 export const TEMPLE2_ACTIVITY = 0.5;
 export const TEMPLE2_COMA_RADIUS = 40000 * METERS_TO_SCENE_UNITS * 0.5;
 export const TEMPLE2_COMA_COLOR = "#E6E6FA";
@@ -41,21 +33,21 @@ export const temple2: CelestialObject<CometProperties> = {
   type: CelestialType.COMET,
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
-  realRadius_m: TEMPLE2_NUCLEUS_RADIUS_M,
+  realRadius_m: kmToM(TEMPLE2_NUCLEUS_RADIUS_KM),
   realMass_kg: TEMPLE2_MASS_KG,
   albedo: TEMPLE2_ALBEDO,
   temperature: TEMPLE2_TEMP_K,
-  orbit: {
-    realSemiMajorAxis_m: TEMPLE2_SMA_M,
-    eccentricity: TEMPLE2_ECC,
-    inclination: TEMPLE2_INC_RAD,
-    longitudeOfAscendingNode: TEMPLE2_LAN_RAD,
-    argumentOfPeriapsis: TEMPLE2_AOP_RAD,
-    meanAnomaly: TEMPLE2_MA_RAD,
-    period_s: TEMPLE2_PERIOD_S,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 3.024, // 3.024 AU
+    eccentricity: 0.549,
+    inclinationDeg: 12.5,
+    longitudeOfAscendingNodeDeg: 310.2,
+    argumentOfPeriapsisDeg: 119.3,
+    meanAnomalyDeg: 0,
+    period_s: 1.659e8, // 5.26 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0, // Comets don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,

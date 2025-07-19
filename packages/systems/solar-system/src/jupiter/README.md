@@ -143,30 +143,70 @@ Jupiter has a faint ring system consisting of four main components:
 ```typescript
 // Jupiter constants
 const JUPITER_REAL_MASS_KG = 1.89819e27;
-const JUPITER_REAL_RADIUS_M = 69911000;
+const JUPITER_REAL_RADIUS_KM = 69911;
 const JUPITER_TEMP_K = 165;
 const JUPITER_ALBEDO = 0.538;
-const JUPITER_SMA_AU = 5.2044;
-const JUPITER_ECC = 0.0489;
-const JUPITER_AXIAL_TILT_DEG = 3.13;
-const JUPITER_SIDEREAL_ROTATION_PERIOD_S = 35730.0;
 
 // Galilean moon constants
 const IO_MASS_KG = 8.932e22;
-const IO_RADIUS_M = 1821600;
+const IO_RADIUS_KM = 1821.6;
 const IO_ORBITAL_PERIOD_S = 152853;
 
 const EUROPA_MASS_KG = 4.8e22;
-const EUROPA_RADIUS_M = 1560800;
+const EUROPA_RADIUS_KM = 1560.8;
 const EUROPA_ORBITAL_PERIOD_S = 306690;
 
 const GANYMEDE_MASS_KG = 1.482e23;
-const GANYMEDE_RADIUS_M = 2631200;
+const GANYMEDE_RADIUS_KM = 2634.1;
 const GANYMEDE_ORBITAL_PERIOD_S = 618360;
 
 const CALLISTO_MASS_KG = 1.076e23;
-const CALLISTO_RADIUS_M = 2410300;
+const CALLISTO_RADIUS_KM = 2410.3;
 const CALLISTO_ORBITAL_PERIOD_S = 1442400;
+```
+
+### Orbital Parameters
+
+The Jupiter system now uses the enhanced orbital parameters system with automatic calculation of aphelion, perihelion, and orbital speed:
+
+```typescript
+// Jupiter orbital elements
+const jupiterOrbit = createOrbitalElements({
+  semiMajorAxisAU: 5.202887, // Jupiter's semi-major axis
+  eccentricity: 0.048498,
+  inclinationDeg: 1.3053,
+  longitudeOfAscendingNodeDeg: 100.55615,
+  argumentOfPeriapsisDeg: 275.066,
+  meanAnomalyDeg: 34.404,
+  period_s: 3.743e8, // 11.86 Earth years
+  siderealRotationPeriod_s: 3.573e4, // 9.925 hours
+  axialTiltDeg: 3.13,
+});
+
+// Galilean moon examples
+const ioOrbit = createOrbitalElements({
+  semiMajorAxisAU: 421800 / 149597870.7, // 421,800 km converted to AU
+  eccentricity: 0.0041,
+  inclinationDeg: 0.05, // To Jupiter's equator
+  longitudeOfAscendingNodeDeg: 43.977,
+  argumentOfPeriapsisDeg: 84.129,
+  meanAnomalyDeg: 342.021,
+  period_s: 1.769137786 * 24 * 3600, // 1.769137786 days (synchronous)
+  siderealRotationPeriod_s: 1.769137786 * 24 * 3600, // Synchronous rotation
+  axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+});
+
+const europaOrbit = createOrbitalElements({
+  semiMajorAxisAU: 670900 / 149597870.7, // 670,900 km converted to AU
+  eccentricity: 0.009,
+  inclinationDeg: 0.47, // To Jupiter's equator
+  longitudeOfAscendingNodeDeg: 219.106,
+  argumentOfPeriapsisDeg: 88.97,
+  meanAnomalyDeg: 171.016,
+  period_s: 3.551181 * 24 * 3600, // 3.551181 days (synchronous)
+  siderealRotationPeriod_s: 3.551181 * 24 * 3600, // Synchronous rotation
+  axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+});
 ```
 
 ### Celestial Object Properties

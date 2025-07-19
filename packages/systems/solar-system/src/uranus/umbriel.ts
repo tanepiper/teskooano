@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,7 +8,7 @@ import {
   CelestialObject,
 } from "@teskooano/data-types";
 
-const UMBRIEL_REAL_RADIUS_M = 584.7 * KM;
+const UMBRIEL_REAL_RADIUS_KM = 584.7;
 
 /**
  * Umbriel configuration object for modular solar system initialization.
@@ -22,18 +21,18 @@ export const umbriel: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "uranus", // Will be replaced during initialization
   realMass_kg: 1.172e21,
-  realRadius_m: UMBRIEL_REAL_RADIUS_M,
-  orbit: {
-    realSemiMajorAxis_m: 266000 * KM,
+  realRadius_m: kmToM(UMBRIEL_REAL_RADIUS_KM),
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 266000 / 149597870.7, // 266,000 km converted to AU
     eccentricity: 0.0039,
-    inclination: 0.128 * DEG_TO_RAD,
-    longitudeOfAscendingNode: 169.5 * DEG_TO_RAD,
-    argumentOfPeriapsis: 304.1 * DEG_TO_RAD,
-    meanAnomaly: 198.8 * DEG_TO_RAD,
+    inclinationDeg: 0.128,
+    longitudeOfAscendingNodeDeg: 169.5,
+    argumentOfPeriapsisDeg: 304.1,
+    meanAnomalyDeg: 198.8,
     period_s: 3.582e5,
-    siderealRotationPeriod_s: 3.582e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    siderealRotationPeriod_s: 3.582e5, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   temperature: 75,
   albedo: 0.21,
   properties: {

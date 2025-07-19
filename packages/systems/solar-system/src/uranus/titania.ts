@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -9,7 +8,7 @@ import {
   CelestialObject,
 } from "@teskooano/data-types";
 
-const TITANIA_REAL_RADIUS_M = 788.4 * KM;
+const TITANIA_REAL_RADIUS_KM = 788.4;
 
 /**
  * Titania configuration object for modular solar system initialization.
@@ -22,18 +21,18 @@ export const titania: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "uranus", // Will be replaced during initialization
   realMass_kg: 3.527e21,
-  realRadius_m: TITANIA_REAL_RADIUS_M,
-  orbit: {
-    realSemiMajorAxis_m: 436300 * KM,
+  realRadius_m: kmToM(TITANIA_REAL_RADIUS_KM),
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 436300 / 149597870.7, // 436,300 km converted to AU
     eccentricity: 0.0011,
-    inclination: 0.34 * DEG_TO_RAD,
-    longitudeOfAscendingNode: 169.5 * DEG_TO_RAD,
-    argumentOfPeriapsis: 110.1 * DEG_TO_RAD,
-    meanAnomaly: 15.9 * DEG_TO_RAD,
+    inclinationDeg: 0.34,
+    longitudeOfAscendingNodeDeg: 169.5,
+    argumentOfPeriapsisDeg: 110.1,
+    meanAnomalyDeg: 15.9,
     period_s: 7.526e5,
-    siderealRotationPeriod_s: 7.526e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    siderealRotationPeriod_s: 7.526e5, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   temperature: 70,
   albedo: 0.27,
   properties: {

@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -9,7 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const MAKEMAKE_MASS_KG = 3.1e21;
-const MAKEMAKE_RADIUS_M = 715 * KM;
+const MAKEMAKE_RADIUS_KM = 715;
 const MAKEMAKE_TEMP_K = 30;
 const MAKEMAKE_ALBEDO = 0.82;
 const MAKEMAKE_SMA_AU = 45.43;
@@ -23,8 +22,8 @@ const MAKEMAKE_SIDEREAL_ROTATION_PERIOD_S = 22.83 * 3600;
 const MAKEMAKE_AXIAL_TILT_DEG = 0.0;
 
 const MK2_MASS_KG = 1.0e17;
-const MK2_RADIUS_M = 87.5 * KM;
-const MK2_SMA_M = 21000 * KM;
+const MK2_RADIUS_KM = 87.5;
+const MK2_SMA_KM = 21000;
 const MK2_ECC = 0.0;
 const MK2_INC_DEG = 0.0;
 const MK2_LAN_DEG = 0.0;
@@ -44,24 +43,20 @@ export const makemake: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: MAKEMAKE_MASS_KG,
-  realRadius_m: MAKEMAKE_RADIUS_M,
+  realRadius_m: kmToM(MAKEMAKE_RADIUS_KM),
   temperature: MAKEMAKE_TEMP_K,
   albedo: MAKEMAKE_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: MAKEMAKE_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: MAKEMAKE_SMA_AU,
     eccentricity: MAKEMAKE_ECC,
-    inclination: MAKEMAKE_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: MAKEMAKE_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: MAKEMAKE_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: MAKEMAKE_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: MAKEMAKE_INC_DEG,
+    longitudeOfAscendingNodeDeg: MAKEMAKE_LAN_DEG,
+    argumentOfPeriapsisDeg: MAKEMAKE_AOP_DEG,
+    meanAnomalyDeg: MAKEMAKE_MA_DEG,
     period_s: MAKEMAKE_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: MAKEMAKE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(MAKEMAKE_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(MAKEMAKE_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: MAKEMAKE_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.DWARF_PLANET,
     classType: PlanetType.BARREN,
@@ -115,20 +110,20 @@ export const mk2: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "makemake", // Will be replaced during initialization
   realMass_kg: MK2_MASS_KG,
-  realRadius_m: MK2_RADIUS_M,
+  realRadius_m: kmToM(MK2_RADIUS_KM),
   temperature: 30,
   albedo: MK2_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: MK2_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: MK2_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: MK2_ECC,
-    inclination: MK2_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: MK2_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: MK2_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: MK2_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: MK2_INC_DEG,
+    longitudeOfAscendingNodeDeg: MK2_LAN_DEG,
+    argumentOfPeriapsisDeg: MK2_AOP_DEG,
+    meanAnomalyDeg: MK2_MA_DEG,
     period_s: MK2_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: MK2_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,7 +9,7 @@ import {
 
 const DESPINA_MASS_KG = 2.1e18;
 const DESPINA_RADIUS_M = 78000; // 78 km
-const DESPINA_SMA_M = 52527 * KM;
+const DESPINA_SMA_KM = 52527;
 const DESPINA_ECC = 0.0001;
 const DESPINA_INC_DEG = 0.07;
 const DESPINA_SIDEREAL_PERIOD_S = 8.0 * 3600;
@@ -30,17 +29,17 @@ export const despina: CelestialObject<PlanetProperties> = {
   realRadius_m: DESPINA_RADIUS_M,
   temperature: 60,
   albedo: DESPINA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: DESPINA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: DESPINA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: DESPINA_ECC,
-    inclination: DESPINA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
+    inclinationDeg: DESPINA_INC_DEG,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
     period_s: DESPINA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: DESPINA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

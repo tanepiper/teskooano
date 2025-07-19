@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -10,8 +9,8 @@ import {
 } from "@teskooano/data-types";
 
 const ENCELADUS_MASS_KG = 1.08e20;
-const ENCELADUS_RADIUS_M = 252.1 * KM;
-const ENCELADUS_SMA_M = 238020 * KM;
+const ENCELADUS_RADIUS_KM = 252.1;
+const ENCELADUS_SMA_KM = 238020;
 const ENCELADUS_ECC = 0.0047;
 const ENCELADUS_INC_DEG = 0.019;
 const ENCELADUS_LAN_DEG = 169.8;
@@ -31,20 +30,20 @@ export const enceladus: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: ENCELADUS_MASS_KG,
-  realRadius_m: ENCELADUS_RADIUS_M,
+  realRadius_m: kmToM(ENCELADUS_RADIUS_KM),
   temperature: 75,
   albedo: ENCELADUS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: ENCELADUS_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: ENCELADUS_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: ENCELADUS_ECC,
-    inclination: ENCELADUS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: ENCELADUS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: ENCELADUS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: ENCELADUS_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: ENCELADUS_INC_DEG,
+    longitudeOfAscendingNodeDeg: ENCELADUS_LAN_DEG,
+    argumentOfPeriapsisDeg: ENCELADUS_AOP_DEG,
+    meanAnomalyDeg: ENCELADUS_MA_DEG,
     period_s: ENCELADUS_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: ENCELADUS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

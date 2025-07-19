@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,8 +8,8 @@ import {
 } from "@teskooano/data-types";
 
 const TETHYS_MASS_KG = 6.174e20;
-const TETHYS_RADIUS_M = 531.1 * KM;
-const TETHYS_SMA_M = 294619 * KM;
+const TETHYS_RADIUS_KM = 531.1;
+const TETHYS_SMA_KM = 294619;
 const TETHYS_ECC = 0.0001;
 const TETHYS_INC_DEG = 1.12;
 const TETHYS_LAN_DEG = 118.5;
@@ -30,20 +29,20 @@ export const tethys: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: TETHYS_MASS_KG,
-  realRadius_m: TETHYS_RADIUS_M,
+  realRadius_m: kmToM(TETHYS_RADIUS_KM),
   temperature: 86,
   albedo: TETHYS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: TETHYS_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: TETHYS_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: TETHYS_ECC,
-    inclination: TETHYS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: TETHYS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: TETHYS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: TETHYS_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: TETHYS_INC_DEG,
+    longitudeOfAscendingNodeDeg: TETHYS_LAN_DEG,
+    argumentOfPeriapsisDeg: TETHYS_AOP_DEG,
+    meanAnomalyDeg: TETHYS_MA_DEG,
     period_s: TETHYS_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: TETHYS_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

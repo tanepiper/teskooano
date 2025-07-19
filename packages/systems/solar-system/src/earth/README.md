@@ -94,23 +94,53 @@ Earth is the third planet from the Sun and the only known body in the universe t
 ```typescript
 // Earth constants
 const EARTH_MASS_KG = 5.97237e24;
-const EARTH_RADIUS_M = 6371000;
+const EARTH_RADIUS_KM = 6371.0;
 const EARTH_TEMP_K = 288;
 const EARTH_ALBEDO = 0.8;
-const EARTH_SMA_AU = 1.0;
-const EARTH_ECC = 0.01671;
-const EARTH_AXIAL_TILT_DEG = 23.43928;
-const EARTH_SIDEREAL_ROTATION_PERIOD_S = 86164.1;
 
 // Luna constants
 const LUNA_MASS_KG = 7.342e22;
-const LUNA_RADIUS_M = 1737400;
+const LUNA_RADIUS_KM = 1737.4;
 const LUNA_TEMP_K = 250;
 const LUNA_ALBEDO = 0.12;
-const LUNA_SMA_M = 384400000;
-const LUNA_ECC = 0.0549;
-const LUNA_AXIAL_TILT_DEG = 6.68;
-const LUNA_SIDEREAL_ROTATION_PERIOD_S = 2360580;
+```
+
+### Orbital Parameters
+
+The Earth system now uses the enhanced orbital parameters system with automatic calculation of aphelion, perihelion, and orbital speed:
+
+```typescript
+// Earth orbital elements (J2000 epoch)
+const earthOrbit = createOrbitalElements({
+  semiMajorAxisAU: 149598023 / 149597870.7, // 149,598,023 km converted to AU
+  eccentricity: 0.0167086,
+  inclinationDeg: 0.00005, // Relative to J2000 ecliptic
+  longitudeOfAscendingNodeDeg: -11.26064, // Relative to J2000 ecliptic
+  argumentOfPeriapsisDeg: 114.20783,
+  meanAnomalyDeg: 358.617,
+  period_s: 365.256363004 * 24 * 60 * 60,
+  siderealRotationPeriod_s: 86164.09054,
+  axialTiltDeg: 23.4392811,
+  // Additional parameters from Wikipedia
+  aphelionAU: 152097597 / 149597870.7, // 152,097,597 km converted to AU
+  perihelionAU: 147098450 / 149597870.7, // 147,098,450 km converted to AU
+  averageOrbitalSpeedKmps: 29.7827,
+  timeOfPerihelion: "2023-01-04",
+  epoch: "J2000",
+});
+
+// Luna orbital elements
+const lunaOrbit = createOrbitalElements({
+  semiMajorAxisAU: 384399 / 149597870.7, // 384,399 km converted to AU
+  eccentricity: 0.0549,
+  inclinationDeg: 5.145, // To ecliptic
+  longitudeOfAscendingNodeDeg: 125.08, // Current value - variable due to precession
+  argumentOfPeriapsisDeg: 318.15, // Current value - variable due to precession
+  meanAnomalyDeg: 115.36, // Current value - variable
+  period_s: 2.36059e6, // 27.321661 days
+  siderealRotationPeriod_s: 2.36059e6, // Synchronous rotation
+  axialTiltDeg: 6.687, // Obliquity to orbit
+});
 ```
 
 ### Celestial Object Properties

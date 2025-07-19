@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -10,18 +9,11 @@ import {
 } from "@teskooano/data-types";
 
 const EARTH_MASS_KG = 5.972168e24;
-const EARTH_RADIUS_M = 6371.0 * KM; // Mean radius
+const EARTH_RADIUS_KM = 6371.0; // Mean radius
 const EARTH_TEMP_K = 255; // Blackbody temperature
 const EARTH_ALBEDO = 0.294; // Bond albedo
-const EARTH_SMA_AU = 1.0;
-const EARTH_ECC = 0.0167086;
-const EARTH_INC_DEG = 0.00005;
-const EARTH_LAN_DEG = -11.26064;
-const EARTH_AOP_DEG = 114.20783;
-const EARTH_MA_DEG = 358.617;
-const EARTH_ORBITAL_PERIOD_S = 31558149.5; // 365.256363004 days
+const EARTH_ORBITAL_PERIOD_S = 365.256363004 * 24 * 60 * 60; // 365.256363004 days in seconds
 const EARTH_SIDEREAL_ROTATION_PERIOD_S = 86164.09054; // Exact sidereal day (physics-based)
-const EARTH_AXIAL_TILT_DEG = 23.4392811;
 
 /**
  * Earth configuration object for modular solar system initialization.
@@ -34,24 +26,27 @@ export const earth: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: EARTH_MASS_KG,
-  realRadius_m: EARTH_RADIUS_M,
+  realRadius_m: kmToM(EARTH_RADIUS_KM),
   temperature: EARTH_TEMP_K,
   albedo: EARTH_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: EARTH_SMA_AU * AU,
-    eccentricity: EARTH_ECC,
-    inclination: EARTH_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: EARTH_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: EARTH_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: EARTH_MA_DEG * DEG_TO_RAD,
+  orbit: createOrbitalElements({
+    // Earth's orbital elements (J2000 epoch)
+    semiMajorAxisAU: 149598023 / 149597870.7, // 149,598,023 km converted to AU
+    eccentricity: 0.0167086,
+    inclinationDeg: 0.00005, // Relative to J2000 ecliptic
+    longitudeOfAscendingNodeDeg: -11.26064, // Relative to J2000 ecliptic
+    argumentOfPeriapsisDeg: 114.20783,
+    meanAnomalyDeg: 358.617,
     period_s: EARTH_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: EARTH_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(EARTH_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(EARTH_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: 23.4392811,
+    // Additional parameters from Wikipedia
+    aphelionAU: 152097597 / 149597870.7, // 152,097,597 km converted to AU
+    perihelionAU: 147098450 / 149597870.7, // 147,098,450 km converted to AU
+    averageOrbitalSpeedKmps: 29.7827,
+    timeOfPerihelion: "2023-01-04", // Time of perihelion
+    epoch: "J2000",
+  }),
   properties: {
     type: CelestialType.PLANET,
     classType: PlanetType.TERRESTRIAL,

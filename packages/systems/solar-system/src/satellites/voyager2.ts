@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -29,7 +28,7 @@ const VOYAGER2_DEC_DEG = -59.0; // -59°
  *
  * Uses rogue object approach - no orbital mechanics, direct position/velocity.
  */
-export const voyager2 = {
+export const voyager2: CelestialObject<SatelliteProperties> = {
   id: "voyager-2",
   name: "Voyager 2",
   seed: "voyager_2_golden_record",
@@ -41,17 +40,17 @@ export const voyager2 = {
   temperature: 300, // More realistic temperature for lighting calculations
   albedo: 0.3, // More realistic albedo for visibility
   // Rogue object orbital parameters (mostly zeros)
-  orbit: {
-    realSemiMajorAxis_m: 0, // Not orbiting anything
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 0, // Not orbiting anything
     eccentricity: 0,
-    inclination: 0,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: VOYAGER2_DISTANCE_AU, // Store distance for reference
+    inclinationDeg: 0,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: VOYAGER2_DISTANCE_AU, // Store distance for reference
     period_s: 0, // No orbital period
     siderealRotationPeriod_s: 24 * 3600, // Spacecraft rotation
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   // Critical: Ignore physics so Voyager 2 is not affected by gravitational forces
   ignorePhysics: false,
   ignoreCollisions: true,

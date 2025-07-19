@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -9,14 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const HIMALIA_MASS_KG = 6.74e18;
-const HIMALIA_RADIUS_M = 85000;
-const HIMALIA_SMA_M = 11439000 * KM;
-const HIMALIA_ECC = 0.16;
-const HIMALIA_INC_DEG = 28.4;
-const HIMALIA_LAN_DEG = 64.2;
-const HIMALIA_AOP_DEG = 321.1;
-const HIMALIA_MA_DEG = 78.3;
-const HIMALIA_SIDEREAL_PERIOD_S = 249.909 * 24 * 3600;
+const HIMALIA_RADIUS_KM = 85;
 const HIMALIA_ALBEDO = 0.04;
 
 /**
@@ -30,20 +22,20 @@ export const himalia: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: HIMALIA_MASS_KG,
-  realRadius_m: HIMALIA_RADIUS_M,
+  realRadius_m: kmToM(HIMALIA_RADIUS_KM),
   temperature: 124, // Estimated
   albedo: HIMALIA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: HIMALIA_SMA_M,
-    eccentricity: HIMALIA_ECC,
-    inclination: HIMALIA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: HIMALIA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: HIMALIA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: HIMALIA_MA_DEG * DEG_TO_RAD,
-    period_s: HIMALIA_SIDEREAL_PERIOD_S,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 11439000 / 149597870.7, // 11,439,000 km converted to AU
+    eccentricity: 0.16,
+    inclinationDeg: 28.4,
+    longitudeOfAscendingNodeDeg: 64.2,
+    argumentOfPeriapsisDeg: 321.1,
+    meanAnomalyDeg: 78.3,
+    period_s: 249.909 * 24 * 3600,
     siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

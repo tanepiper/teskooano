@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -10,8 +9,8 @@ import {
 } from "@teskooano/data-types";
 
 const DIONE_MASS_KG = 1.095e21;
-const DIONE_RADIUS_M = 561.4 * KM;
-const DIONE_SMA_M = 377396 * KM;
+const DIONE_RADIUS_KM = 561.4;
+const DIONE_SMA_KM = 377396;
 const DIONE_ECC = 0.0022;
 const DIONE_INC_DEG = 0.019;
 const DIONE_LAN_DEG = 128.2;
@@ -31,20 +30,20 @@ export const dione: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
   realMass_kg: DIONE_MASS_KG,
-  realRadius_m: DIONE_RADIUS_M,
+  realRadius_m: kmToM(DIONE_RADIUS_KM),
   temperature: 87,
   albedo: DIONE_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: DIONE_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: DIONE_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: DIONE_ECC,
-    inclination: DIONE_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: DIONE_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: DIONE_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: DIONE_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: DIONE_INC_DEG,
+    longitudeOfAscendingNodeDeg: DIONE_LAN_DEG,
+    argumentOfPeriapsisDeg: DIONE_AOP_DEG,
+    meanAnomalyDeg: DIONE_MA_DEG,
     period_s: DIONE_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: DIONE_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

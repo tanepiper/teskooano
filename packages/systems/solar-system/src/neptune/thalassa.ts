@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,7 +9,7 @@ import {
 
 const THALASSA_MASS_KG = 4e17; // Estimate similar to Naiad
 const THALASSA_RADIUS_M = 40000; // 40 km
-const THALASSA_SMA_M = 50074 * KM;
+const THALASSA_SMA_KM = 50074;
 const THALASSA_ECC = 0.0002;
 const THALASSA_INC_DEG = 0.21;
 const THALASSA_SIDEREAL_PERIOD_S = 7.5 * 3600;
@@ -30,17 +29,17 @@ export const thalassa: CelestialObject<PlanetProperties> = {
   realRadius_m: THALASSA_RADIUS_M,
   temperature: 60,
   albedo: THALASSA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: THALASSA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: THALASSA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: THALASSA_ECC,
-    inclination: THALASSA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
+    inclinationDeg: THALASSA_INC_DEG,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
     period_s: THALASSA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: THALASSA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

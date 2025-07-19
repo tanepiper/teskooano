@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -9,7 +8,7 @@ import {
 } from "@teskooano/data-types";
 
 const ERIS_MASS_KG = 1.66e22;
-const ERIS_RADIUS_M = 1163 * KM;
+const ERIS_RADIUS_KM = 1163;
 const ERIS_TEMP_K = 30;
 const ERIS_ALBEDO = 0.96;
 const ERIS_SMA_AU = 67.668;
@@ -23,8 +22,8 @@ const ERIS_SIDEREAL_ROTATION_PERIOD_S = 25.9 * 3600;
 const ERIS_AXIAL_TILT_DEG = 0.0;
 
 const DYSNOMIA_MASS_KG = 3.5e18;
-const DYSNOMIA_RADIUS_M = 175 * KM;
-const DYSNOMIA_SMA_M = 37350 * KM;
+const DYSNOMIA_RADIUS_KM = 175;
+const DYSNOMIA_SMA_KM = 37350;
 const DYSNOMIA_ECC = 0.0062;
 const DYSNOMIA_INC_DEG = 142.0;
 const DYSNOMIA_LAN_DEG = 139.0;
@@ -44,24 +43,20 @@ export const eris: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: ERIS_MASS_KG,
-  realRadius_m: ERIS_RADIUS_M,
+  realRadius_m: kmToM(ERIS_RADIUS_KM),
   temperature: ERIS_TEMP_K,
   albedo: ERIS_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: ERIS_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: ERIS_SMA_AU,
     eccentricity: ERIS_ECC,
-    inclination: ERIS_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: ERIS_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: ERIS_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: ERIS_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: ERIS_INC_DEG,
+    longitudeOfAscendingNodeDeg: ERIS_LAN_DEG,
+    argumentOfPeriapsisDeg: ERIS_AOP_DEG,
+    meanAnomalyDeg: ERIS_MA_DEG,
     period_s: ERIS_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: ERIS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(ERIS_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(ERIS_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: ERIS_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.DWARF_PLANET,
     classType: PlanetType.BARREN,
@@ -119,20 +114,20 @@ export const dysnomia: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "eris", // Will be replaced during initialization
   realMass_kg: DYSNOMIA_MASS_KG,
-  realRadius_m: DYSNOMIA_RADIUS_M,
+  realRadius_m: kmToM(DYSNOMIA_RADIUS_KM),
   temperature: 30,
   albedo: DYSNOMIA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: DYSNOMIA_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: DYSNOMIA_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: DYSNOMIA_ECC,
-    inclination: DYSNOMIA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: DYSNOMIA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: DYSNOMIA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: DYSNOMIA_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: DYSNOMIA_INC_DEG,
+    longitudeOfAscendingNodeDeg: DYSNOMIA_LAN_DEG,
+    argumentOfPeriapsisDeg: DYSNOMIA_AOP_DEG,
+    meanAnomalyDeg: DYSNOMIA_MA_DEG,
     period_s: DYSNOMIA_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: DYSNOMIA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

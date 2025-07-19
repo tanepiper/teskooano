@@ -78,18 +78,27 @@ Venus is the second planet from the Sun and Earth's closest planetary neighbor. 
 
 ```typescript
 const VENUS_MASS_KG = 4.8675e24;
-const VENUS_RADIUS_M = 6051800;
+const VENUS_RADIUS_KM = 6051.8;
 const VENUS_TEMP_K = 737;
 const VENUS_ALBEDO = 0.77;
-const VENUS_SMA_AU = 0.723332;
-const VENUS_ECC = 0.0068;
-const VENUS_INC_DEG = 3.394;
-const VENUS_LAN_DEG = 76.68;
-const VENUS_AOP_DEG = 131.533;
-const VENUS_MA_DEG = 181.979;
-const VENUS_ORBITAL_PERIOD_S = 1.944e7;
-const VENUS_ROTATION_PERIOD_S = -2.0832e7; // Negative for retrograde
-const VENUS_AXIAL_TILT_DEG = 177.4;
+```
+
+### Orbital Parameters
+
+Venus now uses the enhanced orbital parameters system with automatic calculation of aphelion, perihelion, and orbital speed:
+
+```typescript
+const venusOrbit = createOrbitalElements({
+  semiMajorAxisAU: 0.723332, // Venus's semi-major axis
+  eccentricity: 0.006772,
+  inclinationDeg: 3.39458,
+  longitudeOfAscendingNodeDeg: 76.68,
+  argumentOfPeriapsisDeg: 54.884, // Argument of perihelion
+  meanAnomalyDeg: 50.115, // Mean anomaly
+  period_s: 1.94142e7, // 224.701 Earth days
+  siderealRotationPeriod_s: -20997153, // -243.0226 Earth days (retrograde)
+  axialTiltDeg: 177.36,
+});
 ```
 
 ### Celestial Object Properties

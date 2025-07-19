@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,14 +9,7 @@ import {
 
 // Verified Wikipedia/NASA data for Europa
 const EUROPA_MASS_KG = 4.799844e22; // Wikipedia verified: (4.799844±0.000013)×10²² kg
-const EUROPA_RADIUS_M = 1560.8 * KM; // Wikipedia verified: 1560.8±0.5 km
-const EUROPA_SMA_M = 670900 * KM; // Wikipedia verified: 670,900 km mean orbit radius
-const EUROPA_ECC = 0.009; // Wikipedia verified
-const EUROPA_INC_DEG = 0.47; // Wikipedia verified: 0.470° to Jupiter's equator
-const EUROPA_LAN_DEG = 219.106; // Current value
-const EUROPA_AOP_DEG = 88.97; // Current value
-const EUROPA_MA_DEG = 171.016; // Current value
-const EUROPA_SIDEREAL_PERIOD_S = 3.551181 * 24 * 3600; // Wikipedia: 3.551181 days (synchronous)
+const EUROPA_RADIUS_KM = 1560.8; // Wikipedia verified: 1560.8±0.5 km
 const EUROPA_ALBEDO = 0.67; // Wikipedia verified: 0.67 ± 0.03
 const EUROPA_TEMP_K = 102; // Wikipedia verified: mean 102 K
 
@@ -32,20 +24,20 @@ export const europa: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "jupiter", // Will be replaced during initialization
   realMass_kg: EUROPA_MASS_KG,
-  realRadius_m: EUROPA_RADIUS_M,
+  realRadius_m: kmToM(EUROPA_RADIUS_KM),
   temperature: EUROPA_TEMP_K,
   albedo: EUROPA_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: EUROPA_SMA_M,
-    eccentricity: EUROPA_ECC,
-    inclination: EUROPA_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: EUROPA_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: EUROPA_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: EUROPA_MA_DEG * DEG_TO_RAD,
-    period_s: EUROPA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: EUROPA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0),
-  },
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 670900 / 149597870.7, // 670,900 km converted to AU
+    eccentricity: 0.009,
+    inclinationDeg: 0.47, // To Jupiter's equator
+    longitudeOfAscendingNodeDeg: 219.106,
+    argumentOfPeriapsisDeg: 88.97,
+    meanAnomalyDeg: 171.016,
+    period_s: 3.551181 * 24 * 3600, // 3.551181 days (synchronous)
+    siderealRotationPeriod_s: 3.551181 * 24 * 3600, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.BARREN,

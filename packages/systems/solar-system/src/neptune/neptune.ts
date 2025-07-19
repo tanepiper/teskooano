@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -10,7 +9,7 @@ import {
 } from "@teskooano/data-types";
 
 const NEPTUNE_MASS_KG = 1.024e26;
-const NEPTUNE_REAL_RADIUS_M = 24622 * KM; // Equatorial radius
+const NEPTUNE_RADIUS_KM = 24622; // Equatorial radius
 const NEPTUNE_TEMP_K = 72; // Effective temperature
 const NEPTUNE_ALBEDO = 0.442; // Bond albedo
 const NEPTUNE_SMA_AU = 30.069923;
@@ -23,9 +22,6 @@ const NEPTUNE_ORBITAL_PERIOD_S = 5.2e9; // 164.8 Earth years
 const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 5.8e4; // 16.11 hours
 const NEPTUNE_AXIAL_TILT_DEG = 28.32;
 
-/**
- * Neptune configuration object for modular solar system initialization.
- */
 export const neptune: CelestialObject<GasGiantProperties> = {
   id: "neptune",
   name: "Neptune",
@@ -34,24 +30,20 @@ export const neptune: CelestialObject<GasGiantProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
   realMass_kg: NEPTUNE_MASS_KG,
-  realRadius_m: NEPTUNE_REAL_RADIUS_M,
+  realRadius_m: kmToM(NEPTUNE_RADIUS_KM),
   temperature: NEPTUNE_TEMP_K,
   albedo: NEPTUNE_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: NEPTUNE_SMA_AU * AU,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: NEPTUNE_SMA_AU,
     eccentricity: NEPTUNE_ECC,
-    inclination: NEPTUNE_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: NEPTUNE_LAN_DEG * DEG_TO_RAD,
-    argumentOfPeriapsis: NEPTUNE_AOP_DEG * DEG_TO_RAD,
-    meanAnomaly: NEPTUNE_MA_DEG * DEG_TO_RAD,
+    inclinationDeg: NEPTUNE_INC_DEG,
+    longitudeOfAscendingNodeDeg: NEPTUNE_LAN_DEG,
+    argumentOfPeriapsisDeg: NEPTUNE_AOP_DEG,
+    meanAnomalyDeg: NEPTUNE_MA_DEG,
     period_s: NEPTUNE_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(NEPTUNE_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(NEPTUNE_AXIAL_TILT_DEG * DEG_TO_RAD),
-    ).normalize(),
-  },
+    axialTiltDeg: NEPTUNE_AXIAL_TILT_DEG,
+  }),
   properties: {
     type: CelestialType.GAS_GIANT,
     classType: GasGiantClass.CLASS_III,
@@ -64,8 +56,8 @@ export const neptune: CelestialObject<GasGiantProperties> = {
     rings: [
       // Galle Ring (N42) - Broad faint ring
       {
-        innerRadius: NEPTUNE_REAL_RADIUS_M + 40900 * KM,
-        outerRadius: NEPTUNE_REAL_RADIUS_M + 42900 * KM,
+        innerRadius: kmToM(NEPTUNE_RADIUS_KM + 40900),
+        outerRadius: kmToM(NEPTUNE_RADIUS_KM + 42900),
         density: 0.1,
         opacity: 0.1, // Very faint
         color: "#4682B4",
@@ -76,8 +68,8 @@ export const neptune: CelestialObject<GasGiantProperties> = {
       },
       // Le Verrier Ring (N53) - Narrow ring
       {
-        innerRadius: NEPTUNE_REAL_RADIUS_M + 53180 * KM,
-        outerRadius: NEPTUNE_REAL_RADIUS_M + 53293 * KM,
+        innerRadius: kmToM(NEPTUNE_RADIUS_KM + 53180),
+        outerRadius: kmToM(NEPTUNE_RADIUS_KM + 53293),
         density: 0.6,
         opacity: 0.6,
         color: "#5F9EA0",
@@ -88,8 +80,8 @@ export const neptune: CelestialObject<GasGiantProperties> = {
       },
       // Lassell Ring - Faint sheet stretching from Le Verrier to Arago
       {
-        innerRadius: NEPTUNE_REAL_RADIUS_M + 53200 * KM,
-        outerRadius: NEPTUNE_REAL_RADIUS_M + 57200 * KM,
+        innerRadius: kmToM(NEPTUNE_RADIUS_KM + 53200),
+        outerRadius: kmToM(NEPTUNE_RADIUS_KM + 57200),
         density: 0.2,
         opacity: 0.15, // Faint
         color: "#6495ED",
@@ -100,8 +92,8 @@ export const neptune: CelestialObject<GasGiantProperties> = {
       },
       // Arago Ring - Very narrow
       {
-        innerRadius: NEPTUNE_REAL_RADIUS_M + 57200 * KM,
-        outerRadius: NEPTUNE_REAL_RADIUS_M + 57300 * KM,
+        innerRadius: kmToM(NEPTUNE_RADIUS_KM + 57200),
+        outerRadius: kmToM(NEPTUNE_RADIUS_KM + 57300),
         density: 0.3,
         opacity: 0.2,
         color: "#87CEEB",
@@ -112,8 +104,8 @@ export const neptune: CelestialObject<GasGiantProperties> = {
       },
       // Adams Ring (N63) - Five bright arcs
       {
-        innerRadius: NEPTUNE_REAL_RADIUS_M + 62930 * KM,
-        outerRadius: NEPTUNE_REAL_RADIUS_M + 62982 * KM,
+        innerRadius: kmToM(NEPTUNE_RADIUS_KM + 62930),
+        outerRadius: kmToM(NEPTUNE_RADIUS_KM + 62982),
         density: 0.8,
         opacity: 0.9, // Brightest
         color: "#B0C4DE",

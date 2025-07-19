@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -9,7 +8,7 @@ import {
   CelestialObject,
 } from "@teskooano/data-types";
 
-const MIRANDA_REAL_RADIUS_M = 235.8 * KM;
+const MIRANDA_REAL_RADIUS_KM = 235.8;
 
 /**
  * Miranda configuration object for modular solar system initialization.
@@ -22,18 +21,18 @@ export const miranda: CelestialObject<PlanetProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "uranus", // Will be replaced during initialization
   realMass_kg: 6.59e19,
-  realRadius_m: MIRANDA_REAL_RADIUS_M,
-  orbit: {
-    realSemiMajorAxis_m: 129390 * KM,
+  realRadius_m: kmToM(MIRANDA_REAL_RADIUS_KM),
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 129390 / 149597870.7, // 129,390 km converted to AU
     eccentricity: 0.0013,
-    inclination: 4.232 * DEG_TO_RAD,
-    longitudeOfAscendingNode: 169.5 * DEG_TO_RAD,
-    argumentOfPeriapsis: 289.7 * DEG_TO_RAD,
-    meanAnomaly: 182.4 * DEG_TO_RAD,
+    inclinationDeg: 4.232,
+    longitudeOfAscendingNodeDeg: 169.5,
+    argumentOfPeriapsisDeg: 289.7,
+    meanAnomalyDeg: 182.4,
     period_s: 1.22e5,
-    siderealRotationPeriod_s: 1.22e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    siderealRotationPeriod_s: 1.22e5, // Synchronous rotation
+    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+  }),
   temperature: 60,
   albedo: 0.32,
   properties: {

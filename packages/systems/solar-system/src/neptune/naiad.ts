@@ -1,5 +1,4 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -10,7 +9,7 @@ import {
 
 const NAIAD_MASS_KG = 4e17; // Estimate
 const NAIAD_RADIUS_M = 33000; // 33 km
-const NAIAD_SMA_M = 48224 * KM;
+const NAIAD_SMA_KM = 48224;
 const NAIAD_ECC = 0.0047;
 const NAIAD_INC_DEG = 4.75;
 const NAIAD_SIDEREAL_PERIOD_S = 7.057 * 3600; // hours to seconds
@@ -30,17 +29,17 @@ export const naiad: CelestialObject<PlanetProperties> = {
   realRadius_m: NAIAD_RADIUS_M,
   temperature: 60,
   albedo: NAIAD_ALBEDO,
-  orbit: {
-    realSemiMajorAxis_m: NAIAD_SMA_M,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: NAIAD_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: NAIAD_ECC,
-    inclination: NAIAD_INC_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
+    inclinationDeg: NAIAD_INC_DEG,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
     period_s: NAIAD_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: NAIAD_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    axialTiltDeg: 0,
+  }),
   properties: {
     type: CelestialType.MOON,
     classType: PlanetType.ROCKY,

@@ -1,44 +1,54 @@
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
-  CelestialObject,
 } from "@teskooano/data-types";
+import { createOrbitalElements } from "@teskooano/core-physics";
 
-// Hubble Space Telescope physical constants (current as of 2024)
-const HUBBLE_MASS_KG = 11_110; // 11.1 tons
-const HUBBLE_ALTITUDE_KM = 539; // Current average altitude (537-541 km range)
-const HUBBLE_INCLINATION_DEG = 28.47;
+// Hubble Space Telescope orbital parameters
+const HUBBLE_ALTITUDE_KM = 539;
+const EARTH_RADIUS_KM = 6371;
+const HUBBLE_ORBITAL_RADIUS_KM = EARTH_RADIUS_KM + HUBBLE_ALTITUDE_KM;
+const HUBBLE_ORBITAL_RADIUS_M = HUBBLE_ORBITAL_RADIUS_KM * 1000;
 const HUBBLE_PERIOD_MINUTES = 95.42;
+const HUBBLE_PERIOD_SECONDS = HUBBLE_PERIOD_MINUTES * 60;
 const HUBBLE_ECCENTRICITY = 0.0001;
+const HUBBLE_INCLINATION_DEG = 28.47;
 
-/**
- * Hubble configuration object for modular solar system initialization.
- */
+// Calculate orbital velocity directly for Earth satellite
+// v = sqrt(GM/r) where GM = 3.986e14 m³/s² for Earth
+const EARTH_GM = 3.986e14; // m³/s²
+const HUBBLE_ORBITAL_VELOCITY_MS = Math.sqrt(
+  EARTH_GM / HUBBLE_ORBITAL_RADIUS_M,
+); // ~7550 m/s
+
 export const hubble: CelestialObject<SatelliteProperties> = {
   id: "hubble",
   name: "Hubble Space Telescope",
-  seed: "hst_great_observatory",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
-  parentId: "earth", // Will be replaced during initialization
-  realMass_kg: HUBBLE_MASS_KG,
+  parentId: "earth",
+
+  // Physical properties
+  realMass_kg: 11110, // 11.1 tons
   realRadius_m: 7, // Approximate radius for visualization (13.2m x 4.2m dimensions)
   temperature: 288, // ~15°C stable temperature
   albedo: 0.3, // Dark surfaces with some reflective components
-  orbit: {
-    realSemiMajorAxis_m: 6.371e6 + HUBBLE_ALTITUDE_KM * KM, // Earth radius + altitude
+
+  // Orbital elements (Earth-relative)
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: HUBBLE_ORBITAL_RADIUS_KM / 149597870.7,
     eccentricity: HUBBLE_ECCENTRICITY,
-    inclination: HUBBLE_INCLINATION_DEG * DEG_TO_RAD,
-    longitudeOfAscendingNode: 85.0 * DEG_TO_RAD,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: HUBBLE_PERIOD_MINUTES * 60,
-    siderealRotationPeriod_s: HUBBLE_PERIOD_MINUTES * 60,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-  },
+    inclinationDeg: HUBBLE_INCLINATION_DEG,
+    longitudeOfAscendingNodeDeg: 85.0,
+    argumentOfPeriapsisDeg: 0,
+    meanAnomalyDeg: 0,
+    period_s: HUBBLE_PERIOD_SECONDS,
+    siderealRotationPeriod_s: HUBBLE_PERIOD_SECONDS, // Tidal locked to Earth
+    axialTiltDeg: 0,
+  }),
+
   properties: {
     type: CelestialType.SATELLITE,
     modelPath: "models/satellite/hubble.glb", // Fixed path format
