@@ -1,30 +1,38 @@
-import { initializeJupiterPlanet } from "./jupiter";
-import { initializeIo } from "./io";
-import { initializeEuropa } from "./europa";
-import { initializeGanymede } from "./ganymede";
-import { initializeCallisto } from "./callisto";
-import { initializeMetis } from "./metis";
-import { initializeAdrastea } from "./adrastea";
-import { initializeAmalthea } from "./amalthea";
-import { initializeThebe } from "./thebe";
-import { initializeHimalia } from "./himalia";
+import { jupiter } from "./jupiter";
+import { io } from "./io";
+import { europa } from "./europa";
+import { ganymede } from "./ganymede";
+import { callisto } from "./callisto";
+import { metis } from "./metis";
+import { adrastea } from "./adrastea";
+import { amalthea } from "./amalthea";
+import { thebe } from "./thebe";
+import { himalia } from "./himalia";
 
 /**
- * Initializes the complete Jupiter system: the planet and its moons.
+ * Jupiter system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const jupiterSystemBodies = [
+  jupiter,
+  // Inner moons
+  metis,
+  adrastea,
+  amalthea,
+  thebe,
+  himalia,
+  // Galilean moons
+  io,
+  europa,
+  ganymede,
+  callisto,
+];
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the jupiterSystemBodies array instead.
  */
 export function initializeJupiter(parentId: string): void {
-  const jupiterId = initializeJupiterPlanet(parentId);
-
-  // Inner moons
-  initializeMetis(jupiterId);
-  initializeAdrastea(jupiterId);
-  initializeAmalthea(jupiterId);
-  initializeThebe(jupiterId);
-  initializeHimalia(jupiterId);
-
-  // Galilean moons
-  initializeIo(jupiterId);
-  initializeEuropa(jupiterId);
-  initializeGanymede(jupiterId);
-  initializeCallisto(jupiterId);
+  // This function is now deprecated - use the modular approach instead
+  // The jupiterSystemBodies array should be used with the main solar system initialization
 }

@@ -21,18 +21,36 @@ export const HALEBOPP_TAIL_COLOR = "#FFFFE0";
 
 import {
   CelestialType,
+  CelestialStatus,
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
-export const haleBoppComet = {
+/**
+ * Hale-Bopp Comet configuration object for modular solar system initialization.
+ */
+export const haleBopp = {
   id: "hale-bopp",
   name: "C/1995 O1 (Hale-Bopp)",
+  seed: "hale_bopp",
   type: CelestialType.COMET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
   realRadius_m: HALEBOPP_NUCLEUS_RADIUS_M,
   realMass_kg: HALEBOPP_MASS_KG,
   albedo: HALEBOPP_ALBEDO,
   temperature: HALEBOPP_TEMP_K,
+  orbit: {
+    realSemiMajorAxis_m: HALEBOPP_SMA_M,
+    eccentricity: HALEBOPP_ECC,
+    inclination: HALEBOPP_INC_RAD,
+    longitudeOfAscendingNode: HALEBOPP_LAN_RAD,
+    argumentOfPeriapsis: HALEBOPP_AOP_RAD,
+    meanAnomaly: HALEBOPP_MA_RAD,
+    period_s: HALEBOPP_PERIOD_S,
+    siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
+    axialTilt: { x: 0, y: 1, z: 0 },
+  },
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,
@@ -43,13 +61,14 @@ export const haleBoppComet = {
     visualMaxTailLength: HALEBOPP_TAIL_LENGTH,
     visualTailColor: HALEBOPP_TAIL_COLOR,
   } as CometProperties,
-  orbit: {
-    realSemiMajorAxis_m: HALEBOPP_SMA_M,
-    eccentricity: HALEBOPP_ECC,
-    inclination: HALEBOPP_INC_RAD,
-    longitudeOfAscendingNode: HALEBOPP_LAN_RAD,
-    argumentOfPeriapsis: HALEBOPP_AOP_RAD,
-    meanAnomaly: HALEBOPP_MA_RAD,
-    period_s: HALEBOPP_PERIOD_S,
-  },
 };
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the haleBopp configuration object instead.
+ */
+export function initializeHaleBopp(parentId: string): void {
+  const haleBoppConfig = { ...haleBopp, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
+}

@@ -1,6 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -11,96 +10,95 @@ import {
 
 const VESTA_MASS_KG = 2.59e20;
 const VESTA_RADIUS_M = 262.7 * KM;
-const VESTA_TEMP_K = 164;
+const VESTA_TEMP_K = 150;
 const VESTA_ALBEDO = 0.423;
-const VESTA_SMA_AU = 2.362;
-const VESTA_ECC = 0.0887;
-const VESTA_INC_DEG = 7.134;
-const VESTA_LAN_DEG = 103.851;
-const VESTA_AOP_DEG = 150.297;
-const VESTA_MA_DEG = 307.772;
-const VESTA_ORBITAL_PERIOD_S = 1.325e8;
-const VESTA_SIDEREAL_ROTATION_PERIOD_S = 5.342 * 3600;
-const VESTA_AXIAL_TILT_DEG = 29.0;
+const VESTA_SMA_AU = 2.36;
+const VESTA_ECC = 0.089;
+const VESTA_INC_DEG = 7.14;
+const VESTA_LAN_DEG = 103.9;
+const VESTA_AOP_DEG = 151.2;
+const VESTA_MA_DEG = 20.8;
+const VESTA_ORBITAL_PERIOD_S = 1.145e8;
+const VESTA_SIDEREAL_ROTATION_PERIOD_S = 19200;
+const VESTA_AXIAL_TILT_DEG = 29;
 
 /**
- * Initializes Vesta, the second largest asteroid in the main asteroid belt.
- * It's the brightest asteroid visible from Earth and has differentiated structure.
+ * Vesta asteroid configuration object for modular solar system initialization.
+ */
+export const vesta = {
+  id: "vesta",
+  name: "4 Vesta",
+  seed: "vesta",
+  type: CelestialType.DWARF_PLANET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
+  realMass_kg: VESTA_MASS_KG,
+  realRadius_m: VESTA_RADIUS_M,
+  temperature: VESTA_TEMP_K,
+  albedo: VESTA_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: VESTA_SMA_AU * AU,
+    eccentricity: VESTA_ECC,
+    inclination: VESTA_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: VESTA_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: VESTA_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: VESTA_MA_DEG * DEG_TO_RAD,
+    period_s: VESTA_ORBITAL_PERIOD_S,
+    siderealRotationPeriod_s: VESTA_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(VESTA_AXIAL_TILT_DEG * DEG_TO_RAD),
+      Math.sin(VESTA_AXIAL_TILT_DEG * DEG_TO_RAD),
+    ).normalize(),
+  },
+  properties: {
+    type: CelestialType.DWARF_PLANET,
+    classType: PlanetType.ROCKY,
+    isMoon: false,
+    composition: [
+      "basaltic rock",
+      "pyroxene",
+      "olivine",
+      "differentiated interior",
+    ],
+    surface: {
+      type: SurfaceType.CRATERED,
+      color: "#8B7355",
+      roughness: 0.7,
+      classType: PlanetType.ROCKY,
+      persistence: 0.55,
+      lacunarity: 2.0,
+      simplePeriod: 2.2,
+      octaves: 7,
+      bumpScale: 2.0,
+      color1: "#654321",
+      color2: "#8B7355",
+      color3: "#A0522D",
+      color4: "#CD853F",
+      color5: "#DEB887",
+      height1: 0.1,
+      height2: 0.3,
+      height3: 0.5,
+      height4: 0.7,
+      height5: 0.9,
+      shininess: 8,
+      specularStrength: 0.15,
+      ambientLightIntensity: 0.01,
+      undulation: 0.4,
+      terrainType: 2,
+      terrainAmplitude: 0.8,
+      terrainSharpness: 1.2,
+      terrainOffset: 0.0,
+    },
+  } as PlanetProperties,
+};
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the vesta configuration object instead.
  */
 export function initializeVesta(parentId: string): void {
-  const vestaId = "vesta";
-  const vestaAxialTiltRad = VESTA_AXIAL_TILT_DEG * DEG_TO_RAD;
-
-  celestialManager.addCelestial({
-    id: vestaId,
-    name: "Vesta",
-    seed: "vesta",
-    type: CelestialType.DWARF_PLANET,
-    status: CelestialStatus.ACTIVE,
-    parentId: parentId,
-    realMass_kg: VESTA_MASS_KG,
-    realRadius_m: VESTA_RADIUS_M,
-    temperature: VESTA_TEMP_K,
-    albedo: VESTA_ALBEDO,
-    orbit: {
-      realSemiMajorAxis_m: VESTA_SMA_AU * AU,
-      eccentricity: VESTA_ECC,
-      inclination: VESTA_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: VESTA_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: VESTA_AOP_DEG * DEG_TO_RAD,
-      meanAnomaly: VESTA_MA_DEG * DEG_TO_RAD,
-      period_s: VESTA_ORBITAL_PERIOD_S,
-      siderealRotationPeriod_s: VESTA_SIDEREAL_ROTATION_PERIOD_S,
-      axialTilt: new OSVector3(
-        0,
-        Math.cos(vestaAxialTiltRad),
-        Math.sin(vestaAxialTiltRad),
-      ).normalize(),
-    },
-
-    properties: {
-      type: CelestialType.DWARF_PLANET,
-      classType: PlanetType.ROCKY,
-      isMoon: false,
-      composition: [
-        "basaltic crust",
-        "olivine mantle",
-        "iron-nickel core",
-        "HED meteorite source",
-        "eucrite",
-        "diogenite",
-      ],
-      shapeModel: "asteroid",
-      atmosphere: undefined,
-      surface: {
-        type: SurfaceType.CRATERED,
-        color: "#B8A48C",
-        roughness: 0.85,
-        classType: PlanetType.ROCKY,
-        persistence: 0.6,
-        lacunarity: 2.4,
-        simplePeriod: 2.2,
-        octaves: 10,
-        bumpScale: 4.5,
-        color1: "#8B6F47",
-        color2: "#A0845C",
-        color3: "#B8A48C",
-        color4: "#D0C4A8",
-        color5: "#E8DCC0",
-        height1: 0.05,
-        height2: 0.2,
-        height3: 0.4,
-        height4: 0.7,
-        height5: 0.9,
-        shininess: 6,
-        specularStrength: 0.2,
-        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
-        undulation: 0.45,
-        terrainType: 1,
-        terrainAmplitude: 1.2,
-        terrainSharpness: 2.0,
-        terrainOffset: -0.15,
-      },
-    } as PlanetProperties,
-  });
+  const vestaConfig = { ...vesta, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
 }

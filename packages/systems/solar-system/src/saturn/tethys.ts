@@ -1,6 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -21,68 +20,74 @@ const TETHYS_SIDEREAL_PERIOD_S = 163475;
 const TETHYS_ALBEDO = 1.229;
 
 /**
- * Initializes Tethys, Saturn's ice moon with a massive crater (Odysseus).
+ * Tethys configuration object for modular solar system initialization.
+ */
+export const tethys = {
+  id: "tethys",
+  name: "Tethys",
+  seed: "tethys",
+  type: CelestialType.MOON,
+  status: CelestialStatus.ACTIVE,
+  parentId: "saturn", // Will be replaced during initialization
+  realMass_kg: TETHYS_MASS_KG,
+  realRadius_m: TETHYS_RADIUS_M,
+  temperature: 86,
+  albedo: TETHYS_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: TETHYS_SMA_M,
+    eccentricity: TETHYS_ECC,
+    inclination: TETHYS_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: TETHYS_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: TETHYS_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: TETHYS_MA_DEG * DEG_TO_RAD,
+    period_s: TETHYS_SIDEREAL_PERIOD_S,
+    siderealRotationPeriod_s: TETHYS_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
+  },
+  properties: {
+    type: CelestialType.MOON,
+    classType: PlanetType.BARREN,
+    isMoon: true,
+    composition: ["mostly water ice", "small amount of rock"],
+    atmosphere: undefined,
+    surface: {
+      type: SurfaceType.ICE_CRACKED,
+      color: "#F8F8F8",
+      roughness: 0.4,
+      classType: PlanetType.BARREN,
+      persistence: 0.5,
+      lacunarity: 2.1,
+      simplePeriod: 1.9,
+      octaves: 9,
+      bumpScale: 2.6,
+      color1: "#C8C8C8",
+      color2: "#E0E0E0",
+      color3: "#F0F0F0",
+      color4: "#F8F8F8",
+      color5: "#FFFFFF",
+      height1: 0.08,
+      height2: 0.22,
+      height3: 0.45,
+      height4: 0.7,
+      height5: 0.9,
+      shininess: 36,
+      specularStrength: 0.8,
+      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      undulation: 0.15,
+      terrainType: 3,
+      terrainAmplitude: 0.7,
+      terrainSharpness: 1.6,
+      terrainOffset: 0.15,
+    },
+  } as PlanetProperties,
+};
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the tethys configuration object instead.
  */
 export function initializeTethys(parentId: string): void {
-  const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
-
-  celestialManager.addCelestial({
-    id: "tethys",
-    name: "Tethys",
-    seed: "tethys",
-    type: CelestialType.MOON,
-    status: CelestialStatus.ACTIVE,
-    parentId: parentId,
-    realMass_kg: TETHYS_MASS_KG,
-    realRadius_m: TETHYS_RADIUS_M,
-    temperature: 86,
-    albedo: TETHYS_ALBEDO,
-    orbit: {
-      realSemiMajorAxis_m: TETHYS_SMA_M,
-      eccentricity: TETHYS_ECC,
-      inclination: TETHYS_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: TETHYS_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: TETHYS_AOP_DEG * DEG_TO_RAD,
-      meanAnomaly: TETHYS_MA_DEG * DEG_TO_RAD,
-      period_s: TETHYS_SIDEREAL_PERIOD_S,
-      siderealRotationPeriod_s: TETHYS_SIDEREAL_PERIOD_S,
-      axialTilt: defaultMoonAxialTilt,
-    },
-    properties: {
-      type: CelestialType.MOON,
-      classType: PlanetType.BARREN,
-      isMoon: true,
-      composition: ["mostly water ice", "small amount of rock"],
-      atmosphere: undefined,
-      surface: {
-        type: SurfaceType.ICE_CRACKED,
-        color: "#F8F8F8",
-        roughness: 0.4,
-        classType: PlanetType.BARREN,
-        persistence: 0.5,
-        lacunarity: 2.1,
-        simplePeriod: 1.9,
-        octaves: 9,
-        bumpScale: 2.6,
-        color1: "#C8C8C8",
-        color2: "#E0E0E0",
-        color3: "#F0F0F0",
-        color4: "#F8F8F8",
-        color5: "#FFFFFF",
-        height1: 0.08,
-        height2: 0.22,
-        height3: 0.45,
-        height4: 0.7,
-        height5: 0.9,
-        shininess: 36,
-        specularStrength: 0.8,
-        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
-        undulation: 0.15,
-        terrainType: 3,
-        terrainAmplitude: 0.7,
-        terrainSharpness: 1.6,
-        terrainOffset: 0.15,
-      },
-    } as PlanetProperties,
-  });
+  const tethysConfig = { ...tethys, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
 }

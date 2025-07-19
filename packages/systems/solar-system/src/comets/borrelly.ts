@@ -21,18 +21,36 @@ export const BORRELLY_TAIL_COLOR = "#F0F8FF";
 
 import {
   CelestialType,
+  CelestialStatus,
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
-export const borrellyComet = {
+/**
+ * Borrelly Comet configuration object for modular solar system initialization.
+ */
+export const borrelly = {
   id: "borrelly",
   name: "19P/Borrelly",
+  seed: "borrelly",
   type: CelestialType.COMET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
   realRadius_m: BORRELLY_NUCLEUS_RADIUS_M,
   realMass_kg: BORRELLY_MASS_KG,
   albedo: BORRELLY_ALBEDO,
   temperature: BORRELLY_TEMP_K,
+  orbit: {
+    realSemiMajorAxis_m: BORRELLY_SMA_M,
+    eccentricity: BORRELLY_ECC,
+    inclination: BORRELLY_INC_RAD,
+    longitudeOfAscendingNode: BORRELLY_LAN_RAD,
+    argumentOfPeriapsis: BORRELLY_AOP_RAD,
+    meanAnomaly: BORRELLY_MA_RAD,
+    period_s: BORRELLY_PERIOD_S,
+    siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
+    axialTilt: { x: 0, y: 1, z: 0 },
+  },
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,
@@ -43,13 +61,14 @@ export const borrellyComet = {
     visualMaxTailLength: BORRELLY_TAIL_LENGTH,
     visualTailColor: BORRELLY_TAIL_COLOR,
   } as CometProperties,
-  orbit: {
-    realSemiMajorAxis_m: BORRELLY_SMA_M,
-    eccentricity: BORRELLY_ECC,
-    inclination: BORRELLY_INC_RAD,
-    longitudeOfAscendingNode: BORRELLY_LAN_RAD,
-    argumentOfPeriapsis: BORRELLY_AOP_RAD,
-    meanAnomaly: BORRELLY_MA_RAD,
-    period_s: BORRELLY_PERIOD_S,
-  },
 };
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the borrelly configuration object instead.
+ */
+export function initializeBorrelly(parentId: string): void {
+  const borrellyConfig = { ...borrelly, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
+}

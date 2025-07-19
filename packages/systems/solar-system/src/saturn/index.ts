@@ -1,32 +1,37 @@
-import { initializeSaturnPlanet } from "./saturn";
-import { initializeTitan } from "./titan";
-import { initializeEnceladus } from "./enceladus";
-import { initializeRhea } from "./rhea";
-import { initializeIapetus } from "./iapetus";
-import { initializeDione } from "./dione";
-import { initializeTethys } from "./tethys";
-import { initializeMimas } from "./mimas";
-import { initializeHyperion } from "./hyperion";
-import { initializePhoebe } from "./phoebe";
+import { saturn } from "./saturn";
+import { titan } from "./titan";
+import { enceladus } from "./enceladus";
+import { rhea } from "./rhea";
+import { dione } from "./dione";
+import { tethys } from "./tethys";
+import { mimas } from "./mimas";
+import { hyperion } from "./hyperion";
+import { iapetus } from "./iapetus";
+import { phoebe } from "./phoebe";
 
 /**
- * Initializes the complete Saturn system: the planet and its major moons.
+ * Saturn system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
  */
-export function initializeSaturn(parentId: string): void {
-  const saturnId = initializeSaturnPlanet(parentId);
+export const saturnSystemBodies = [
+  saturn,
+  titan,
+  enceladus,
+  rhea,
+  dione,
+  tethys,
+  mimas,
+  hyperion,
+  iapetus,
+  phoebe,
+];
 
-  // Major inner moons
-  initializeMimas(saturnId);
-  initializeEnceladus(saturnId);
-  initializeTethys(saturnId);
-  initializeDione(saturnId);
-  initializeRhea(saturnId);
-
-  // Major outer moons
-  initializeTitan(saturnId);
-  initializeHyperion(saturnId);
-  initializeIapetus(saturnId);
-
-  // Irregular captured moon
-  initializePhoebe(saturnId);
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the saturnSystemBodies array instead.
+ */
+export function initializeSaturn(parentId: string): string {
+  // This function is now deprecated - use the modular approach instead
+  // The saturnSystemBodies array should be used with the main solar system initialization
+  return saturn.id;
 }

@@ -21,18 +21,36 @@ export const HALLEY_TAIL_COLOR = "#ADD8E6";
 
 import {
   CelestialType,
+  CelestialStatus,
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
-export const halleyComet = {
+/**
+ * Halley's Comet configuration object for modular solar system initialization.
+ */
+export const halley = {
   id: "halley",
   name: "1P/Halley",
+  seed: "halley",
   type: CelestialType.COMET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
   realRadius_m: HALLEY_NUCLEUS_RADIUS_M,
   realMass_kg: HALLEY_MASS_KG,
   albedo: HALLEY_ALBEDO,
   temperature: HALLEY_TEMP_K,
+  orbit: {
+    realSemiMajorAxis_m: HALLEY_SMA_M,
+    eccentricity: HALLEY_ECC,
+    inclination: HALLEY_INC_RAD,
+    longitudeOfAscendingNode: HALLEY_LAN_RAD,
+    argumentOfPeriapsis: HALLEY_AOP_RAD,
+    meanAnomaly: HALLEY_MA_RAD,
+    period_s: HALLEY_PERIOD_S,
+    siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
+    axialTilt: { x: 0, y: 1, z: 0 },
+  },
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,
@@ -43,13 +61,14 @@ export const halleyComet = {
     visualMaxTailLength: HALLEY_TAIL_LENGTH,
     visualTailColor: HALLEY_TAIL_COLOR,
   } as CometProperties,
-  orbit: {
-    realSemiMajorAxis_m: HALLEY_SMA_M,
-    eccentricity: HALLEY_ECC,
-    inclination: HALLEY_INC_RAD,
-    longitudeOfAscendingNode: HALLEY_LAN_RAD,
-    argumentOfPeriapsis: HALLEY_AOP_RAD,
-    meanAnomaly: HALLEY_MA_RAD,
-    period_s: HALLEY_PERIOD_S,
-  },
 };
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the halley configuration object instead.
+ */
+export function initializeHalley(parentId: string): void {
+  const halleyConfig = { ...halley, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
+}

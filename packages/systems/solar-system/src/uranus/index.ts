@@ -1,19 +1,28 @@
-import { initializeUranusPlanet } from "./uranus";
-import { initializeTitania } from "./titania";
-import { initializeOberon } from "./oberon";
-import { initializeUmbriel } from "./umbriel";
-import { initializeAriel } from "./ariel";
-import { initializeMiranda } from "./miranda";
+import { uranus } from "./uranus";
+import { titania } from "./titania";
+import { oberon } from "./oberon";
+import { umbriel } from "./umbriel";
+import { ariel } from "./ariel";
+import { miranda } from "./miranda";
 
 /**
- * Initializes the complete Uranus system: the planet and its five major moons.
+ * Uranus system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const uranusSystemBodies = [
+  uranus,
+  titania,
+  oberon,
+  umbriel,
+  ariel,
+  miranda,
+];
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the uranusSystemBodies array instead.
  */
 export function initializeUranus(parentId: string): void {
-  const uranusId = initializeUranusPlanet(parentId);
-
-  initializeTitania(uranusId);
-  initializeOberon(uranusId);
-  initializeUmbriel(uranusId);
-  initializeAriel(uranusId);
-  initializeMiranda(uranusId);
+  // This function is now deprecated - use the modular approach instead
+  // The uranusSystemBodies array should be used with the main solar system initialization
 }

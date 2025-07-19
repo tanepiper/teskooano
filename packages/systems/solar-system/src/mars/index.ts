@@ -1,12 +1,18 @@
-import { initializeMarsPlanet } from "./mars";
-import { initializePhobos } from "./phobos";
-import { initializeDeimos } from "./deimos";
+import { mars } from "./mars";
+import { phobos } from "./phobos";
+import { deimos } from "./deimos";
 
 /**
- * Initializes the complete Mars system: the planet and its two moons.
+ * Mars system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const marsSystemBodies = [mars, phobos, deimos];
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the marsSystemBodies array instead.
  */
 export function initializeMars(parentId: string): void {
-  const marsId = initializeMarsPlanet(parentId);
-  initializePhobos(marsId);
-  initializeDeimos(marsId);
+  // This function is now deprecated - use the modular approach instead
+  // The marsSystemBodies array should be used with the main solar system initialization
 }

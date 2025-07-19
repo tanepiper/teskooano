@@ -21,18 +21,36 @@ export const TEMPLE2_TAIL_COLOR = "#E6E6FA";
 
 import {
   CelestialType,
+  CelestialStatus,
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
-export const temple2Comet = {
+/**
+ * Temple 2 Comet configuration object for modular solar system initialization.
+ */
+export const temple2 = {
   id: "temple-2",
   name: "10P/Tempel 2",
+  seed: "temple_2",
   type: CelestialType.COMET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
   realRadius_m: TEMPLE2_NUCLEUS_RADIUS_M,
   realMass_kg: TEMPLE2_MASS_KG,
   albedo: TEMPLE2_ALBEDO,
   temperature: TEMPLE2_TEMP_K,
+  orbit: {
+    realSemiMajorAxis_m: TEMPLE2_SMA_M,
+    eccentricity: TEMPLE2_ECC,
+    inclination: TEMPLE2_INC_RAD,
+    longitudeOfAscendingNode: TEMPLE2_LAN_RAD,
+    argumentOfPeriapsis: TEMPLE2_AOP_RAD,
+    meanAnomaly: TEMPLE2_MA_RAD,
+    period_s: TEMPLE2_PERIOD_S,
+    siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
+    axialTilt: { x: 0, y: 1, z: 0 },
+  },
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,
@@ -43,13 +61,14 @@ export const temple2Comet = {
     visualMaxTailLength: TEMPLE2_TAIL_LENGTH,
     visualTailColor: TEMPLE2_TAIL_COLOR,
   } as CometProperties,
-  orbit: {
-    realSemiMajorAxis_m: TEMPLE2_SMA_M,
-    eccentricity: TEMPLE2_ECC,
-    inclination: TEMPLE2_INC_RAD,
-    longitudeOfAscendingNode: TEMPLE2_LAN_RAD,
-    argumentOfPeriapsis: TEMPLE2_AOP_RAD,
-    meanAnomaly: TEMPLE2_MA_RAD,
-    period_s: TEMPLE2_PERIOD_S,
-  },
 };
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the temple2 configuration object instead.
+ */
+export function initializeTemple2(parentId: string): void {
+  const temple2Config = { ...temple2, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
+}

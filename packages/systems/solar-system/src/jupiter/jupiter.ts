@@ -1,127 +1,110 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
+  CelestialStatus,
   CelestialType,
   GasGiantClass,
   RockyType,
-  CelestialStatus,
   type GasGiantProperties,
-  type RingProperties,
 } from "@teskooano/data-types";
 
-const JUPITER_REAL_MASS_KG = 1.89819e27;
-const JUPITER_REAL_RADIUS_M = 69911 * KM; // Mean radius
-const JUPITER_EQUATORIAL_RADIUS_M = 71492 * KM; // Equatorial radius for ring calculations
-const JUPITER_TEMP_K = 165;
-const JUPITER_ALBEDO = 0.538;
-const JUPITER_SMA_AU = 5.2038; // Corrected to match astronomical data
-const JUPITER_ECC = 0.0489;
-const JUPITER_INC_DEG = 1.303; // Corrected to match astronomical data
-const JUPITER_LAN_DEG = 100.464;
-const JUPITER_AOP_DEG = 273.867; // Corrected to match astronomical data
-const JUPITER_MA_DEG = 20.02; // Corrected to match astronomical data
-const JUPITER_ORBITAL_PERIOD_S = 374335776; // 11.862 years in seconds
-const JUPITER_SIDEREAL_ROTATION_PERIOD_S = 35730.0; // 9.925 hours (already correct)
+const JUPITER_MASS_KG = 1.898e27;
+const JUPITER_REAL_RADIUS_M = 69911 * KM; // Equatorial radius
+const JUPITER_TEMP_K = 165; // Effective temperature
+const JUPITER_ALBEDO = 0.503; // Bond albedo
+const JUPITER_SMA_AU = 5.202887;
+const JUPITER_ECC = 0.048498;
+const JUPITER_INC_DEG = 1.3053;
+const JUPITER_LAN_DEG = 100.55615;
+const JUPITER_AOP_DEG = 275.066;
+const JUPITER_MA_DEG = 34.404;
+const JUPITER_ORBITAL_PERIOD_S = 3.743e8; // 11.86 Earth years
+const JUPITER_SIDEREAL_ROTATION_PERIOD_S = 3.573e4; // 9.925 hours
 const JUPITER_AXIAL_TILT_DEG = 3.13;
 
 /**
- * Initializes Jupiter planet with accurate orbital and physical data.
- * @returns The Jupiter planet ID for moon initialization.
+ * Jupiter configuration object for modular solar system initialization.
  */
-export function initializeJupiterPlanet(parentId: string): string {
-  const jupiterId = "jupiter";
-  const jupiterAxialTiltRad = JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD;
-
-  celestialManager.addCelestial({
-    id: jupiterId,
-    name: "Jupiter",
-    seed: "jupiter",
+export const jupiter = {
+  id: "jupiter",
+  name: "Jupiter",
+  seed: "jupiter",
+  type: CelestialType.GAS_GIANT,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
+  realMass_kg: JUPITER_MASS_KG,
+  realRadius_m: JUPITER_REAL_RADIUS_M,
+  temperature: JUPITER_TEMP_K,
+  albedo: JUPITER_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: JUPITER_SMA_AU * AU,
+    eccentricity: JUPITER_ECC,
+    inclination: JUPITER_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: JUPITER_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: JUPITER_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: JUPITER_MA_DEG * DEG_TO_RAD,
+    period_s: JUPITER_ORBITAL_PERIOD_S,
+    siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD),
+      Math.sin(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD),
+    ).normalize(),
+  },
+  properties: {
     type: CelestialType.GAS_GIANT,
-    status: CelestialStatus.ACTIVE,
-    parentId: parentId,
-    realMass_kg: JUPITER_REAL_MASS_KG,
-    realRadius_m: JUPITER_REAL_RADIUS_M,
-    temperature: JUPITER_TEMP_K,
-    albedo: JUPITER_ALBEDO,
+    classType: GasGiantClass.CLASS_I,
+    atmosphereColor: "#DAA520",
+    cloudColor: "#F5DEB3",
+    cloudSpeed: 100,
+    stormSpeed: 60,
+    emissiveColor: "#DAA52020",
+    emissiveIntensity: 0.05,
+    rings: [
+      // Halo Ring (innermost, very faint)
+      {
+        innerRadius: JUPITER_REAL_RADIUS_M + 92000 * KM,
+        outerRadius: JUPITER_REAL_RADIUS_M + 122500 * KM,
+        density: 0.001,
+        opacity: 0.005,
+        color: "#8B7355",
+        type: RockyType.DUST,
+        texture: "textures/ring_dust_subtle.png",
+        rotationRate: 0.001,
+        composition: ["fine dust"],
+      },
+      // Main Ring (brightest)
+      {
+        innerRadius: JUPITER_REAL_RADIUS_M + 122500 * KM,
+        outerRadius: JUPITER_REAL_RADIUS_M + 129000 * KM,
+        density: 0.3,
+        opacity: 0.4,
+        color: "#DAA520",
+        type: RockyType.ICE_DUST,
+        texture: "textures/ring_main.png",
+        rotationRate: 0.0008,
+        composition: ["ice particles", "dust"],
+      },
+      // Gossamer Ring (outer, very faint)
+      {
+        innerRadius: JUPITER_REAL_RADIUS_M + 129000 * KM,
+        outerRadius: JUPITER_REAL_RADIUS_M + 226000 * KM,
+        density: 0.0001,
+        opacity: 0.001,
+        color: "#A0522D",
+        type: RockyType.DUST,
+        texture: "textures/ring_dust_subtle.png",
+        rotationRate: 0.0005,
+        composition: ["micrometer dust"],
+      },
+    ],
+  } as GasGiantProperties,
+};
 
-    orbit: {
-      realSemiMajorAxis_m: JUPITER_SMA_AU * AU,
-      eccentricity: JUPITER_ECC,
-      inclination: JUPITER_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: JUPITER_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: (JUPITER_AOP_DEG - JUPITER_LAN_DEG) * DEG_TO_RAD, // 273.867° - 100.464° = 173.403°
-      meanAnomaly: JUPITER_MA_DEG * DEG_TO_RAD,
-      period_s: JUPITER_ORBITAL_PERIOD_S,
-      siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
-      axialTilt: new OSVector3(
-        0,
-        Math.cos(jupiterAxialTiltRad),
-        Math.sin(jupiterAxialTiltRad),
-      ).normalize(),
-    },
-
-    properties: {
-      type: CelestialType.GAS_GIANT,
-      classType: GasGiantClass.CLASS_I,
-      atmosphereColor: "#D2B48C",
-      cloudColor: "#FFFFFF",
-      cloudSpeed: 120,
-      stormSpeed: 80,
-      emissiveColor: "#D2B48C1A",
-      emissiveIntensity: 0.1,
-      rings: [
-        {
-          // Halo Ring (innermost, extends vertically above/below ring plane)
-          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 21500 * KM, // ~92,000 km from Jupiter's center
-          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 51000 * KM, // ~122,500 km from Jupiter's center
-          density: 0.005,
-          opacity: 0.1,
-          color: "#904826",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust_faint.png",
-          rotationRate: 0.003, // Faster rotation for inner ring
-          composition: ["submicron dust"],
-        } as RingProperties,
-        {
-          // Main Ring (brightest part of Jupiter's ring system)
-          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 51000 * KM, // ~122,500 km from Jupiter's center
-          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 57500 * KM, // ~129,000 km from Jupiter's center
-          density: 0.02,
-          opacity: 0.15,
-          color: "#c49f8e",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust.png",
-          rotationRate: 0.002, // Based on Keplerian mechanics
-          composition: ["dust", "micron-sized particles"],
-        } as RingProperties,
-        {
-          // Amalthea Gossamer Ring (extends to Amalthea's orbit)
-          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 57500 * KM, // ~129,000 km from Jupiter's center
-          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 110000 * KM, // ~181,300 km from Jupiter's center
-          density: 0.001,
-          opacity: 0.05,
-          color: "#c49f8e",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust_very_faint.png",
-          rotationRate: 0.0015,
-          composition: ["fine dust from Amalthea"],
-        } as RingProperties,
-        {
-          // Thebe Gossamer Ring (extends to Thebe's orbit)
-          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 110000 * KM, // ~181,300 km from Jupiter's center
-          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 150800 * KM, // ~222,000 km from Jupiter's center
-          density: 0.0005,
-          opacity: 0.1,
-          color: "#c49f8e",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust_very_faint.png",
-          rotationRate: 0.001,
-          composition: ["very fine dust from Thebe"],
-        } as RingProperties,
-      ],
-    } as GasGiantProperties,
-  });
-
-  return jupiterId;
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the jupiter configuration object instead.
+ */
+export function initializeJupiter(parentId: string): string {
+  return jupiter.id;
 }

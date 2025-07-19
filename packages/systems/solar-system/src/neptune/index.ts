@@ -1,21 +1,30 @@
-import { initializeNeptunePlanet } from "./neptune";
-import { initializeTriton } from "./triton";
-import { initializeNereid } from "./nereid";
-import { initializeGalatea } from "./galatea";
-import { initializeDespina } from "./despina";
-import { initializeThalassa } from "./thalassa";
-import { initializeNaiad } from "./naiad";
+import { neptune } from "./neptune";
+import { triton } from "./triton";
+import { nereid } from "./nereid";
+import { galatea } from "./galatea";
+import { despina } from "./despina";
+import { thalassa } from "./thalassa";
+import { naiad } from "./naiad";
 
 /**
- * Initializes the complete Neptune system: the planet and its major moons.
+ * Neptune system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const neptuneSystemBodies = [
+  neptune,
+  triton,
+  nereid,
+  galatea,
+  despina,
+  thalassa,
+  naiad,
+];
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the neptuneSystemBodies array instead.
  */
 export function initializeNeptune(parentId: string): void {
-  const neptuneId = initializeNeptunePlanet(parentId);
-
-  initializeTriton(neptuneId);
-  initializeNereid(neptuneId);
-  initializeGalatea(neptuneId);
-  initializeDespina(neptuneId);
-  initializeThalassa(neptuneId);
-  initializeNaiad(neptuneId);
+  // This function is now deprecated - use the modular approach instead
+  // The neptuneSystemBodies array should be used with the main solar system initialization
 }

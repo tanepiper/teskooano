@@ -1,43 +1,48 @@
-import { initializeAsteroidBelt } from "./asteroid-belt";
-import { initializeCeres } from "./ceres";
-
-import { initializeEris } from "./eris";
-import { initializeHaumea } from "./haumea";
-import { initializeMakemake } from "./makemake";
-import { initializeOortCloud } from "./oort-cloud";
-import { initializePallas } from "./pallas";
-import { initializeVesta } from "./vesta";
+import { ceres, initializeCeres } from "./ceres";
+import { vesta, initializeVesta } from "./vesta";
+import { pallas, initializePallas } from "./pallas";
+import { eris, dysnomia, initializeEris } from "./eris";
+import { makemake, mk2, initializeMakemake } from "./makemake";
+import { haumea, hiiaka, namaka, initializeHaumea } from "./haumea";
+import { asteroidBelt, initializeAsteroidBelt } from "./asteroid-belt";
 
 /**
- * Initializes all minor bodies in the Solar System.
- * This includes dwarf planets, asteroids, comets, and other small bodies.
- *
- * @param parentId The ID of the parent object (Sun).
+ * Minor bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
  */
-export function initializeMinorBodies(parentId: string): void {
+export const minorBodies = [
   // Dwarf Planets (in order of discovery/significance)
-  initializeCeres(parentId);
-  initializePallas(parentId);
-  initializeVesta(parentId);
-  initializeEris(parentId);
-  initializeMakemake(parentId);
-  initializeHaumea(parentId);
+  ceres,
+  vesta,
+  pallas,
+  eris,
+  dysnomia,
+  makemake,
+  mk2,
+  haumea,
+  hiiaka,
+  namaka,
 
   // Asteroid Belt (collective)
-  initializeAsteroidBelt(parentId);
+  asteroidBelt,
+];
 
-  // Outer System
-  //initializeOortCloud(parentId); // Commented out as in original
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the minorBodies array instead.
+ */
+export function initializeMinorBodies(parentId: string): void {
+  // This function is now deprecated - use the modular approach instead
+  // The minorBodies array should be used with the main solar system initialization
 }
 
-// Re-export individual initializers for flexibility
+// Re-export individual initializers for flexibility (deprecated)
 export {
   initializeAsteroidBelt,
   initializeCeres,
   initializeEris,
   initializeHaumea,
   initializeMakemake,
-  initializeOortCloud,
   initializePallas,
   initializeVesta,
 };

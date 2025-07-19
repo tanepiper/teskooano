@@ -1,6 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -24,86 +23,86 @@ const EARTH_SIDEREAL_ROTATION_PERIOD_S = 86164.09054; // Exact sidereal day (phy
 const EARTH_AXIAL_TILT_DEG = 23.4392811;
 
 /**
- * Initializes Earth using accurate data.
- * @returns The ID of the Earth object.
+ * Earth configuration object for modular solar system initialization.
+ */
+export const earth = {
+  id: "earth",
+  name: "Earth",
+  seed: "earth",
+  type: CelestialType.PLANET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
+  realMass_kg: EARTH_MASS_KG,
+  realRadius_m: EARTH_RADIUS_M,
+  temperature: EARTH_TEMP_K,
+  albedo: EARTH_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: EARTH_SMA_AU * AU,
+    eccentricity: EARTH_ECC,
+    inclination: EARTH_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: EARTH_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: EARTH_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: EARTH_MA_DEG * DEG_TO_RAD,
+    period_s: EARTH_ORBITAL_PERIOD_S,
+    siderealRotationPeriod_s: EARTH_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(EARTH_AXIAL_TILT_DEG * DEG_TO_RAD),
+      Math.sin(EARTH_AXIAL_TILT_DEG * DEG_TO_RAD),
+    ).normalize(),
+  },
+  properties: {
+    type: CelestialType.PLANET,
+    classType: PlanetType.TERRESTRIAL,
+    isMoon: false,
+    composition: [
+      "silicates",
+      "iron core",
+      "liquid water",
+      "nitrogen-oxygen atmosphere",
+    ],
+    atmosphere: {
+      glowColor: "#87CEEB",
+      intensity: 0.6,
+      power: 1.2,
+      thickness: 0.25,
+    },
+    surface: {
+      type: SurfaceType.VARIED,
+      color: "#15e267",
+      roughness: 0.12,
+      classType: PlanetType.TERRESTRIAL,
+      persistence: 0.54,
+      lacunarity: 2.2,
+      simplePeriod: 18,
+      octaves: 9,
+      bumpScale: 2.7,
+      color1: "#1E3A5F",
+      color2: "#3F7CAC",
+      color3: "#8FBC8F",
+      color4: "#9ACD32",
+      color5: "#FFFAFA",
+      height1: 0,
+      height2: 0.09,
+      height3: 0.26,
+      height4: 0.4,
+      height5: 0.67,
+      shininess: 8.5,
+      specularStrength: 0.32,
+      ambientLightIntensity: 0.01, // Minimal ambient for dark space
+      undulation: 0.8,
+      terrainType: 3,
+      terrainAmplitude: 0.8,
+      terrainSharpness: 1.7,
+      terrainOffset: -0.5,
+    },
+  } as PlanetProperties,
+};
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the earth configuration object instead.
  */
 export function initializeEarthPlanet(parentId: string): string {
-  const earthId = "earth";
-  const earthAxialTiltRad = EARTH_AXIAL_TILT_DEG * DEG_TO_RAD;
-
-  celestialManager.addCelestial<PlanetProperties>({
-    id: earthId,
-    name: "Earth",
-    seed: "earth",
-    type: CelestialType.PLANET,
-    status: CelestialStatus.ACTIVE,
-    parentId: parentId,
-    realMass_kg: EARTH_MASS_KG,
-    realRadius_m: EARTH_RADIUS_M,
-    temperature: EARTH_TEMP_K,
-    albedo: EARTH_ALBEDO,
-    orbit: {
-      realSemiMajorAxis_m: EARTH_SMA_AU * AU,
-      eccentricity: EARTH_ECC,
-      inclination: EARTH_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: EARTH_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: EARTH_AOP_DEG * DEG_TO_RAD,
-      meanAnomaly: EARTH_MA_DEG * DEG_TO_RAD,
-      period_s: EARTH_ORBITAL_PERIOD_S,
-      siderealRotationPeriod_s: EARTH_SIDEREAL_ROTATION_PERIOD_S,
-      axialTilt: new OSVector3(
-        0,
-        Math.cos(earthAxialTiltRad),
-        Math.sin(earthAxialTiltRad),
-      ).normalize(),
-    },
-    properties: {
-      type: CelestialType.PLANET,
-      classType: PlanetType.TERRESTRIAL,
-      isMoon: false,
-      composition: [
-        "silicates",
-        "iron core",
-        "liquid water",
-        "nitrogen-oxygen atmosphere",
-      ],
-      atmosphere: {
-        glowColor: "#87CEEB",
-        intensity: 0.6,
-        power: 1.2,
-        thickness: 0.25,
-      },
-      surface: {
-        type: SurfaceType.VARIED,
-        color: "#15e267",
-        roughness: 0.12,
-        classType: PlanetType.TERRESTRIAL,
-        persistence: 0.54,
-        lacunarity: 2.2,
-        simplePeriod: 18,
-        octaves: 9,
-        bumpScale: 2.7,
-        color1: "#1E3A5F",
-        color2: "#3F7CAC",
-        color3: "#8FBC8F",
-        color4: "#9ACD32",
-        color5: "#FFFAFA",
-        height1: 0,
-        height2: 0.09,
-        height3: 0.26,
-        height4: 0.4,
-        height5: 0.67,
-        shininess: 8.5,
-        specularStrength: 0.32,
-        ambientLightIntensity: 0.01, // Minimal ambient for dark space
-        undulation: 0.8,
-        terrainType: 3,
-        terrainAmplitude: 0.8,
-        terrainSharpness: 1.7,
-        terrainOffset: -0.5,
-      },
-    } as PlanetProperties,
-  });
-
-  return earthId;
+  return earth.id;
 }

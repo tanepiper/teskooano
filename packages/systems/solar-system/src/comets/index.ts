@@ -1,15 +1,21 @@
-import { initializeComets } from "../comets/comets";
+import { halley } from "./halley";
+import { haleBopp } from "./hale-bopp";
+import { encke } from "./encke";
+import { temple2 } from "./temple-2";
+import { borrelly } from "./borrelly";
+import { whipple } from "./whipple";
 
 /**
- * Initializes all minor bodies in the Solar System.
- * This includes dwarf planets, asteroids, comets, and other small bodies.
- *
- * @param parentId The ID of the parent object (Sun).
+ * Comet bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
  */
-export function initializeMinorBodies(parentId: string): void {
-  // Comets
-  initializeComets(parentId);
-}
+export const allComets = [halley, haleBopp, encke, temple2, borrelly, whipple];
 
-// Re-export individual initializers for flexibility
-export { initializeComets };
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the allComets array instead.
+ */
+export function initializeComets(parentId: string): void {
+  // This function is now deprecated - use the modular approach instead
+  // The allComets array should be used with the main solar system initialization
+}

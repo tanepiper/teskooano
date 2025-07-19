@@ -18,6 +18,7 @@ import {
 import { renderableStore } from "../renderableStore";
 import { celestialStore } from "../stores/celestialStore";
 import { ClearStateOptions } from "../types";
+import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 
 /**
  * Type guard to check if an object is of type PlanetAtmosphereProperties.
@@ -207,18 +208,70 @@ export class CelestialManager {
   >(data: CelestialObject<T>[]): void {
     const sortedData = this.sortByDependency(data);
 
+    // Build the complete objects map first
+    const allObjects = celestialStore.getObjects();
+    const newObjectsMap: Record<string, CelestialObject> = { ...allObjects };
+    const hierarchy = celestialStore.getHierarchy();
+    const newHierarchy: Record<string, string[]> = { ...hierarchy };
+
+    // Add all objects to the map without triggering store updates
     for (const objectData of sortedData) {
-      this.addObject(objectData);
+      newObjectsMap[objectData.id] = objectData;
+
+      // Update hierarchy
+      if (objectData.parentId) {
+        if (!newHierarchy[objectData.parentId]) {
+          newHierarchy[objectData.parentId] = [];
+        }
+        newHierarchy[objectData.parentId].push(objectData.id);
+      } else if (objectData.type === CelestialType.STAR) {
+        // Root stars get their own hierarchy entry
+        if (!newHierarchy[objectData.id]) {
+          newHierarchy[objectData.id] = [];
+        }
+      }
     }
 
-    const totalObjects = Object.keys(celestialStore.getObjects()).length;
+    // Update both stores at once to trigger only one renderer update
+    celestialStore.setAllObjects(newObjectsMap);
+    celestialStore.setHierarchy(newHierarchy);
+
+    // Clear the physics state cache to force recalculation with complete object set
+    PhysicsStateProvider.clearCache();
+
+    // Pre-calculate physics states for all objects now that they're all in the store
+    this.precalculatePhysicsStates();
+
+    const totalObjects = Object.keys(newObjectsMap).length;
     const systemId = sortedData.find((d) => d.type === CelestialType.STAR)?.id;
 
+    // Dispatch event after physics states are calculated to prevent race conditions
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
         detail: { count: totalObjects, systemId },
       }),
     );
+  }
+
+  /**
+   * Pre-calculates physics states for all objects in the store.
+   * This ensures that all parent-child relationships are established before physics calculation.
+   */
+  private precalculatePhysicsStates(): void {
+    const allObjects = celestialStore.getObjects();
+
+    // Calculate physics states in dependency order
+    const sortedIds = this.sortByDependency(Object.values(allObjects)).map(
+      (obj) => obj.id,
+    );
+
+    for (const objectId of sortedIds) {
+      const object = allObjects[objectId];
+      if (object) {
+        // This will calculate and cache the physics state
+        PhysicsStateProvider.getPhysicsState(object);
+      }
+    }
   }
 
   /**

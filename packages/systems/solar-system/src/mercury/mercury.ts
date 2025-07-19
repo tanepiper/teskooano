@@ -1,99 +1,97 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
+  CelestialStatus,
   CelestialType,
   PlanetType,
   SurfaceType,
-  CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const MERCURY_MASS_KG = 3.3011e23;
+const MERCURY_MASS_KG = 3.285e23;
 const MERCURY_RADIUS_M = 2439.7 * KM; // Mean radius
-const MERCURY_TEMP_K = 437; // Blackbody temperature (Wikipedia)
-const MERCURY_ALBEDO = 0.142;
+const MERCURY_TEMP_K = 440; // Mean surface temperature
+const MERCURY_ALBEDO = 0.088; // Bond albedo
 const MERCURY_SMA_AU = 0.387098;
 const MERCURY_ECC = 0.20563;
-const MERCURY_INC_DEG = 7.005;
-const MERCURY_LAN_DEG = 48.331;
-const MERCURY_AOP_DEG = 29.124; // Argument of perihelion (corrected from Wikipedia)
-const MERCURY_MA_DEG = 174.796; // Mean anomaly (corrected from Wikipedia)
-const MERCURY_ORBITAL_PERIOD_S = 7.599154e6; // 87.9691 Earth days (sidereal year)
-const MERCURY_ROTATION_PERIOD_S = 5.067014e6; // 58.646 Earth days (sidereal day)
+const MERCURY_INC_DEG = 7.00487;
+const MERCURY_LAN_DEG = 48.33167;
+const MERCURY_AOP_DEG = 29.12478;
+const MERCURY_MA_DEG = 174.79577;
+const MERCURY_ORBITAL_PERIOD_S = 7.60052e6; // 87.969 Earth days
+const MERCURY_SIDEREAL_ROTATION_PERIOD_S = 5.067e6; // 58.646 Earth days
 const MERCURY_AXIAL_TILT_DEG = 0.034;
 
 /**
- * Initializes Mercury using accurate data.
+ * Mercury configuration object for modular solar system initialization.
  */
-export function initializeMercury(parentId: string): void {
-  const mercuryId = "mercury";
-  const mercuryAxialTiltRad = MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD;
-
-  celestialManager.addCelestial({
-    id: mercuryId,
-    name: "Mercury",
-    seed: "mercury",
+export const mercury = {
+  id: "mercury",
+  name: "Mercury",
+  seed: "mercury",
+  type: CelestialType.PLANET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
+  realMass_kg: MERCURY_MASS_KG,
+  realRadius_m: MERCURY_RADIUS_M,
+  temperature: MERCURY_TEMP_K,
+  albedo: MERCURY_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: MERCURY_SMA_AU * AU,
+    eccentricity: MERCURY_ECC,
+    inclination: MERCURY_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: MERCURY_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: MERCURY_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD,
+    period_s: MERCURY_ORBITAL_PERIOD_S,
+    siderealRotationPeriod_s: MERCURY_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD),
+      Math.sin(MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD),
+    ).normalize(),
+  },
+  properties: {
     type: CelestialType.PLANET,
-    status: CelestialStatus.ACTIVE,
-    parentId: parentId,
-    realMass_kg: MERCURY_MASS_KG,
-    realRadius_m: MERCURY_RADIUS_M,
-    temperature: MERCURY_TEMP_K,
-    albedo: MERCURY_ALBEDO,
-
-    orbit: {
-      realSemiMajorAxis_m: MERCURY_SMA_AU * AU,
-      eccentricity: MERCURY_ECC,
-      inclination: MERCURY_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: MERCURY_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: MERCURY_AOP_DEG * DEG_TO_RAD,
-      meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD,
-      period_s: MERCURY_ORBITAL_PERIOD_S,
-      siderealRotationPeriod_s: MERCURY_ROTATION_PERIOD_S,
-      axialTilt: new OSVector3(
-        0,
-        Math.cos(mercuryAxialTiltRad),
-        Math.sin(mercuryAxialTiltRad),
-      ).normalize(),
+    classType: PlanetType.ROCKY,
+    isMoon: false,
+    composition: ["silicates", "iron core", "thin exosphere", "no atmosphere"],
+    surface: {
+      type: SurfaceType.VARIED,
+      color: "#8B7355",
+      roughness: 0.9,
+      classType: PlanetType.ROCKY,
+      persistence: 0.6,
+      lacunarity: 2.0,
+      simplePeriod: 2.5,
+      octaves: 8,
+      bumpScale: 3.5,
+      color1: "#654321",
+      color2: "#8B7355",
+      color3: "#A0522D",
+      color4: "#CD853F",
+      color5: "#DEB887",
+      height1: 0.1,
+      height2: 0.3,
+      height3: 0.5,
+      height4: 0.7,
+      height5: 0.9,
+      shininess: 12,
+      specularStrength: 0.2,
+      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      undulation: 0.4,
+      terrainType: 2,
+      terrainAmplitude: 0.9,
+      terrainSharpness: 1.3,
+      terrainOffset: 0.0,
     },
+  } as PlanetProperties,
+};
 
-    properties: {
-      type: CelestialType.PLANET,
-      classType: PlanetType.BARREN,
-      isMoon: false,
-      composition: ["iron core", "silicate mantle", "thin exosphere"],
-      surface: {
-        // Base surface properties
-        type: SurfaceType.CRATERED,
-        color: "#8C7853", // Brownish-gray
-        roughness: 0.85,
-        classType: PlanetType.BARREN,
-        // Mercury-like barren procedural properties
-        persistence: 0.5,
-        lacunarity: 2.2,
-        simplePeriod: 2.0,
-        octaves: 10,
-        bumpScale: 2.5,
-        color1: "#6D6D6D", // Darker gray base
-        color2: "#c0b6a2", // Brownish-gray (Mercury-like)
-        color3: "#A9A9A9", // Light gray
-        color4: "#dfd3c3", // Tan highlights
-        color5: "#E1E1E1", // Brightest peaks
-        height1: 0.08,
-        height2: 0.18,
-        height3: 0.35,
-        height4: 0.68,
-        height5: 0.92,
-        shininess: 16,
-        specularStrength: 0.45,
-        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
-        undulation: 0.15,
-        terrainType: 2,
-        terrainAmplitude: 0.7,
-        terrainSharpness: 1.6,
-        terrainOffset: -0.1,
-      },
-    } as PlanetProperties,
-  });
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the mercury configuration object instead.
+ */
+export function initializeMercury(parentId: string): string {
+  return mercury.id;
 }

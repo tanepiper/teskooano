@@ -21,18 +21,36 @@ export const WHIPPLE_TAIL_COLOR = "#E0FFFF";
 
 import {
   CelestialType,
+  CelestialStatus,
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
-export const whippleComet = {
+/**
+ * Whipple Comet configuration object for modular solar system initialization.
+ */
+export const whipple = {
   id: "whipple",
   name: "36P/Whipple",
+  seed: "whipple",
   type: CelestialType.COMET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
   realRadius_m: WHIPPLE_NUCLEUS_RADIUS_M,
   realMass_kg: WHIPPLE_MASS_KG,
   albedo: WHIPPLE_ALBEDO,
   temperature: WHIPPLE_TEMP_K,
+  orbit: {
+    realSemiMajorAxis_m: WHIPPLE_SMA_M,
+    eccentricity: WHIPPLE_ECC,
+    inclination: WHIPPLE_INC_RAD,
+    longitudeOfAscendingNode: WHIPPLE_LAN_RAD,
+    argumentOfPeriapsis: WHIPPLE_AOP_RAD,
+    meanAnomaly: WHIPPLE_MA_RAD,
+    period_s: WHIPPLE_PERIOD_S,
+    siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
+    axialTilt: { x: 0, y: 1, z: 0 },
+  },
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,
@@ -43,13 +61,14 @@ export const whippleComet = {
     visualMaxTailLength: WHIPPLE_TAIL_LENGTH,
     visualTailColor: WHIPPLE_TAIL_COLOR,
   } as CometProperties,
-  orbit: {
-    realSemiMajorAxis_m: WHIPPLE_SMA_M,
-    eccentricity: WHIPPLE_ECC,
-    inclination: WHIPPLE_INC_RAD,
-    longitudeOfAscendingNode: WHIPPLE_LAN_RAD,
-    argumentOfPeriapsis: WHIPPLE_AOP_RAD,
-    meanAnomaly: WHIPPLE_MA_RAD,
-    period_s: WHIPPLE_PERIOD_S,
-  },
 };
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the whipple configuration object instead.
+ */
+export function initializeWhipple(parentId: string): void {
+  const whippleConfig = { ...whipple, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
+}

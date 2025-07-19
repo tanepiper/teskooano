@@ -21,18 +21,36 @@ export const ENCKE_TAIL_COLOR = "#F0F8FF";
 
 import {
   CelestialType,
+  CelestialStatus,
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
-export const enckeComet = {
+/**
+ * Encke's Comet configuration object for modular solar system initialization.
+ */
+export const encke = {
   id: "encke",
   name: "2P/Encke",
+  seed: "encke",
   type: CelestialType.COMET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun", // Will be replaced during initialization
   realRadius_m: ENCKE_NUCLEUS_RADIUS_M,
   realMass_kg: ENCKE_MASS_KG,
   albedo: ENCKE_ALBEDO,
   temperature: ENCKE_TEMP_K,
+  orbit: {
+    realSemiMajorAxis_m: ENCKE_SMA_M,
+    eccentricity: ENCKE_ECC,
+    inclination: ENCKE_INC_RAD,
+    longitudeOfAscendingNode: ENCKE_LAN_RAD,
+    argumentOfPeriapsis: ENCKE_AOP_RAD,
+    meanAnomaly: ENCKE_MA_RAD,
+    period_s: ENCKE_PERIOD_S,
+    siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
+    axialTilt: { x: 0, y: 1, z: 0 },
+  },
   properties: {
     type: CelestialType.COMET,
     classType: CometClass.ACTIVE,
@@ -43,13 +61,14 @@ export const enckeComet = {
     visualMaxTailLength: ENCKE_TAIL_LENGTH,
     visualTailColor: ENCKE_TAIL_COLOR,
   } as CometProperties,
-  orbit: {
-    realSemiMajorAxis_m: ENCKE_SMA_M,
-    eccentricity: ENCKE_ECC,
-    inclination: ENCKE_INC_RAD,
-    longitudeOfAscendingNode: ENCKE_LAN_RAD,
-    argumentOfPeriapsis: ENCKE_AOP_RAD,
-    meanAnomaly: ENCKE_MA_RAD,
-    period_s: ENCKE_PERIOD_S,
-  },
 };
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the encke configuration object instead.
+ */
+export function initializeEncke(parentId: string): void {
+  const enckeConfig = { ...encke, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
+}

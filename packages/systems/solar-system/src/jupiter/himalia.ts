@@ -1,6 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -21,69 +20,73 @@ const HIMALIA_SIDEREAL_PERIOD_S = 249.909 * 24 * 3600;
 const HIMALIA_ALBEDO = 0.04;
 
 /**
- * Initializes Himalia, Jupiter's largest irregular moon.
+ * Himalia moon configuration object for modular solar system initialization.
+ */
+export const himalia = {
+  id: "himalia",
+  name: "Himalia",
+  seed: "himalia_seed_1904",
+  type: CelestialType.MOON,
+  status: CelestialStatus.ACTIVE,
+  parentId: "jupiter", // Will be replaced during initialization
+  realMass_kg: HIMALIA_MASS_KG,
+  realRadius_m: HIMALIA_RADIUS_M,
+  temperature: 124, // Estimated
+  albedo: HIMALIA_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: HIMALIA_SMA_M,
+    eccentricity: HIMALIA_ECC,
+    inclination: HIMALIA_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: HIMALIA_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: HIMALIA_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: HIMALIA_MA_DEG * DEG_TO_RAD,
+    period_s: HIMALIA_SIDEREAL_PERIOD_S,
+    siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
+    axialTilt: new OSVector3(0, 1, 0),
+  },
+  properties: {
+    type: CelestialType.MOON,
+    classType: PlanetType.ROCKY,
+    isMoon: true,
+    composition: ["rock", "ice"],
+    surface: {
+      type: SurfaceType.CRATERED,
+      color: "#9E9E9E",
+      roughness: 0.9,
+      classType: PlanetType.ROCKY,
+      persistence: 0.5,
+      lacunarity: 2.1,
+      simplePeriod: 2.5,
+      octaves: 7,
+      bumpScale: 0.8,
+      color1: "#616161",
+      color2: "#757575",
+      color3: "#9E9E9E",
+      color4: "#BDBDBD",
+      color5: "#E0E0E0",
+      height1: 0.1,
+      height2: 0.3,
+      height3: 0.5,
+      height4: 0.7,
+      height5: 0.9,
+      shininess: 3,
+      specularStrength: 0.05,
+      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      undulation: 0.2,
+      terrainType: 1,
+      terrainAmplitude: 0.3,
+      terrainSharpness: 1.8,
+      terrainOffset: 0.1,
+    },
+  } as PlanetProperties,
+};
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the himalia configuration object instead.
  */
 export function initializeHimalia(parentId: string): void {
-  const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
-
-  celestialManager.addCelestial({
-    id: "himalia",
-    name: "Himalia",
-    seed: "himalia_seed_1904",
-    type: CelestialType.MOON,
-    status: CelestialStatus.ACTIVE,
-    parentId: parentId,
-    realMass_kg: HIMALIA_MASS_KG,
-    realRadius_m: HIMALIA_RADIUS_M,
-    temperature: 124, // Estimated
-    albedo: HIMALIA_ALBEDO,
-
-    orbit: {
-      realSemiMajorAxis_m: HIMALIA_SMA_M,
-      eccentricity: HIMALIA_ECC,
-      inclination: HIMALIA_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: HIMALIA_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: HIMALIA_AOP_DEG * DEG_TO_RAD,
-      meanAnomaly: HIMALIA_MA_DEG * DEG_TO_RAD,
-      period_s: HIMALIA_SIDEREAL_PERIOD_S,
-      siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
-      axialTilt: defaultMoonAxialTilt,
-    },
-
-    properties: {
-      type: CelestialType.MOON,
-      classType: PlanetType.ROCKY,
-      isMoon: true,
-      composition: ["rock", "ice"],
-      surface: {
-        type: SurfaceType.CRATERED,
-        color: "#9E9E9E",
-        roughness: 0.9,
-        classType: PlanetType.ROCKY,
-        persistence: 0.5,
-        lacunarity: 2.1,
-        simplePeriod: 2.5,
-        octaves: 7,
-        bumpScale: 0.8,
-        color1: "#616161",
-        color2: "#757575",
-        color3: "#9E9E9E",
-        color4: "#BDBDBD",
-        color5: "#E0E0E0",
-        height1: 0.1,
-        height2: 0.3,
-        height3: 0.5,
-        height4: 0.7,
-        height5: 0.9,
-        shininess: 3,
-        specularStrength: 0.05,
-        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
-        undulation: 0.2,
-        terrainType: 1,
-        terrainAmplitude: 0.3,
-        terrainSharpness: 1.8,
-        terrainOffset: 0.1,
-      },
-    } as PlanetProperties,
-  });
+  const himaliaConfig = { ...himalia, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
 }

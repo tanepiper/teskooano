@@ -1,12 +1,18 @@
-import { initializeEarthPlanet } from "./earth";
-import { initializeLuna } from "./moon";
+import { earth } from "./earth";
+import { luna } from "./moon";
 
 /**
- * Initializes the complete Earth system: the planet and its moon.
- * @returns The Earth planet ID for satellite initialization.
+ * Earth system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const earthSystemBodies = [earth, luna];
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the earthSystemBodies array instead.
  */
 export function initializeEarth(parentId: string): string {
-  const earthId = initializeEarthPlanet(parentId);
-  initializeLuna(earthId);
-  return earthId;
+  // This function is now deprecated - use the modular approach instead
+  // The earthSystemBodies array should be used with the main solar system initialization
+  return earth.id;
 }

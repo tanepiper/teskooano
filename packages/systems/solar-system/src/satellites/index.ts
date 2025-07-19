@@ -1,32 +1,49 @@
-import { initializeISS } from "./iss";
-import { initializeHubble } from "./hubble";
-import { initializeGPS } from "./gps";
-import { initializeJWST } from "./jwst";
-import { initializeVoyager1 } from "./voyager1";
-import { initializeVoyager2 } from "./voyager2";
-import { initializeGeostationarySat } from "./geostationary";
+import { iss } from "./iss";
+import { hubble } from "./hubble";
+import { gps } from "./gps";
+import { jwst } from "./jwst";
+import { voyager1 } from "./voyager1";
+import { voyager2 } from "./voyager2";
+import { geostationarySat } from "./geostationary";
 
 /**
- * Initialize all satellites in the solar system
- * @param sunId - ID of the Sun (for deep space satellites)
- * @param earthId - ID of Earth (for Earth-orbiting satellites)
+ * Earth-orbiting satellites that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const earthOrbitingSatellites = [iss, hubble, gps, geostationarySat];
+
+/**
+ * Deep space satellites that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const deepSpaceSatellites = [jwst];
+
+/**
+ * Rogue satellites (no parent) that can be initialized in any order.
+ * These are objects in interstellar space not orbiting any body.
+ */
+export const rogueSatellites = [voyager1, voyager2];
+
+/**
+ * All satellites that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
+ */
+export const allSatellites = [
+  ...earthOrbitingSatellites,
+  ...deepSpaceSatellites,
+  ...rogueSatellites,
+];
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the satellite arrays instead.
  */
 export function initializeSatellites(sunId: string, earthId: string): void {
-  // Earth-orbiting satellites
-  initializeISS(earthId);
-  initializeHubble(earthId);
-  initializeGPS(earthId);
-  initializeGeostationarySat(earthId); // New geostationary satellite
-
-  // Deep space satellites orbiting the Sun
-  initializeJWST(sunId);
-
-  // Rogue satellites (interstellar space - no parent)
-  initializeVoyager1(); // No parentId - rogue object
-  initializeVoyager2(); // No parentId - rogue object
+  // This function is now deprecated - use the modular approach instead
+  // The satellite arrays should be used with the main solar system initialization
 }
 
-// Also export individual functions for specific use cases
+// Also export individual functions for specific use cases (deprecated)
 export {
   initializeISS,
   initializeHubble,
@@ -34,4 +51,5 @@ export {
   initializeGPS,
   initializeVoyager1,
   initializeVoyager2,
+  initializeGeostationarySat,
 };

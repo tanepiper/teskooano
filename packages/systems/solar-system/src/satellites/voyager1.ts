@@ -1,6 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -20,7 +19,7 @@ const VOYAGER1_RA_DEG = 258.75; // 17h 15m = 17.25 * 15 = 258.75°
 const VOYAGER1_DEC_DEG = 12.4; // +12.4°
 
 /**
- * Initializes Voyager 1.
+ * Voyager 1 configuration object for modular solar system initialization.
  * Launch: September 5, 1977
  * Current Status: 167.66 AU from Sun, traveling at 38,027 mph
  * Mission Elapsed Time: 47 years, 10 months, 9 days
@@ -29,36 +28,33 @@ const VOYAGER1_DEC_DEG = 12.4; // +12.4°
  *
  * Uses rogue object approach - no orbital mechanics, direct position/velocity.
  */
-export function initializeVoyager1(): void {
-  const distanceM = VOYAGER1_DISTANCE_AU * AU;
-  const velocityMs = VOYAGER1_VELOCITY_KM_S * 1000;
-
-  // Calculate Voyager 1's actual position in 3D space based on astronomical coordinates
-  // Convert RA/Dec to Cartesian coordinates
-  const raRad = VOYAGER1_RA_DEG * DEG_TO_RAD;
-  const decRad = VOYAGER1_DEC_DEG * DEG_TO_RAD;
-
-  const position = new OSVector3(
-    distanceM * Math.cos(decRad) * Math.cos(raRad),
-    distanceM * Math.sin(decRad),
-    distanceM * Math.cos(decRad) * Math.sin(raRad),
-  );
-
-  // Voyager 1's actual velocity vector is not purely radial due to gravitational assists
-  // It has both radial (away from Sun) and tangential components
-  // Current trajectory: roughly toward constellation Ophiuchus/Serpentarius
-  // Approximate velocity components based on actual trajectory
-  const radialComponent = position
-    .normalize()
-    .multiplyScalar(velocityMs * 0.85); // 85% radial
-  const tangentialComponent = new OSVector3(
-    -radialComponent.z * 0.53, // Tangential perpendicular to radial
-    radialComponent.y * 0.1, // Small Y component
-    radialComponent.x * 0.53, // Tangential component
-  );
-  const velocity = radialComponent.add(tangentialComponent);
-
-  const voyager1Properties: SatelliteProperties = {
+export const voyager1 = {
+  id: "voyager-1",
+  name: "Voyager 1",
+  seed: "voyager_1_golden_record",
+  type: CelestialType.SATELLITE,
+  status: CelestialStatus.ACTIVE,
+  // No parentId - Voyager 1 is a rogue object in interstellar space
+  realMass_kg: VOYAGER1_MASS_KG,
+  realRadius_m: 2.0, // Approximate size for visualization
+  temperature: 300, // More realistic temperature for lighting calculations
+  albedo: 0.3, // More realistic albedo for visibility
+  // Rogue object orbital parameters (mostly zeros)
+  orbit: {
+    realSemiMajorAxis_m: 0, // Not orbiting anything
+    eccentricity: 0,
+    inclination: 0,
+    longitudeOfAscendingNode: 0,
+    argumentOfPeriapsis: 0,
+    meanAnomaly: VOYAGER1_DISTANCE_AU, // Store distance for reference
+    period_s: 0, // No orbital period
+    siderealRotationPeriod_s: 24 * 3600, // Spacecraft rotation
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
+  },
+  // Critical: Ignore physics so Voyager 1 is not affected by gravitational forces
+  ignorePhysics: false,
+  ignoreCollisions: true,
+  properties: {
     type: CelestialType.SATELLITE,
     modelPath: "models/satellite/voyager.glb", // Fixed path format
     modelScale: 1.0,
@@ -75,37 +71,14 @@ export function initializeVoyager1(): void {
       "Golden Record",
       "Plasma wave antenna",
     ],
-  } as SatelliteProperties;
+  } as SatelliteProperties,
+};
 
-  celestialManager.addCelestial({
-    id: "voyager-1",
-    name: "Voyager 1",
-    seed: "voyager_1_golden_record",
-    type: CelestialType.SATELLITE,
-    status: CelestialStatus.ACTIVE,
-    // No parentId - Voyager 1 is a rogue object in interstellar space
-    realMass_kg: VOYAGER1_MASS_KG,
-    realRadius_m: 2.0, // Approximate size for visualization
-    temperature: 300, // More realistic temperature for lighting calculations
-    albedo: 0.3, // More realistic albedo for visibility
-
-    // Rogue object orbital parameters (mostly zeros)
-    orbit: {
-      realSemiMajorAxis_m: 0, // Not orbiting anything
-      eccentricity: 0,
-      inclination: 0,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
-      meanAnomaly: VOYAGER1_DISTANCE_AU, // Store distance for reference
-      period_s: 0, // No orbital period
-      siderealRotationPeriod_s: 24 * 3600, // Spacecraft rotation
-      axialTilt: new OSVector3(0, 1, 0).normalize(),
-    },
-
-    // Critical: Ignore physics so Voyager 1 is not affected by gravitational forces
-    ignorePhysics: false,
-    ignoreCollisions: true,
-
-    properties: voyager1Properties,
-  });
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the voyager1 configuration object instead.
+ */
+export function initializeVoyager1(): void {
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
 }

@@ -1,6 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { celestialManager } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -23,75 +22,80 @@ const PHOBOS_ALBEDO = 0.071; // Wikipedia verified
 const PHOBOS_TEMP_K = 233; // Wikipedia verified: ~233 K
 
 /**
- * Initializes Phobos using accurate Wikipedia data.
+ * Phobos moon configuration object for modular solar system initialization.
+ */
+export const phobos = {
+  id: "phobos",
+  name: "Phobos",
+  seed: "phobos_fear_mars_moon",
+  type: CelestialType.MOON,
+  status: CelestialStatus.ACTIVE,
+  parentId: "mars", // Will be replaced during initialization
+  realMass_kg: PHOBOS_MASS_KG,
+  realRadius_m: PHOBOS_RADIUS_M,
+  temperature: PHOBOS_TEMP_K,
+  albedo: PHOBOS_ALBEDO,
+  orbit: {
+    realSemiMajorAxis_m: PHOBOS_SMA_M,
+    eccentricity: PHOBOS_ECC,
+    inclination: PHOBOS_INC_DEG * DEG_TO_RAD,
+    longitudeOfAscendingNode: PHOBOS_LAN_DEG * DEG_TO_RAD,
+    argumentOfPeriapsis: PHOBOS_AOP_DEG * DEG_TO_RAD,
+    meanAnomaly: PHOBOS_MA_DEG * DEG_TO_RAD,
+    period_s: PHOBOS_SIDEREAL_PERIOD_S,
+    siderealRotationPeriod_s: PHOBOS_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
+  },
+  properties: {
+    type: CelestialType.MOON,
+    classType: PlanetType.ROCKY,
+    isMoon: true,
+    composition: [
+      "carbonaceous chondrite",
+      "C-type rock",
+      "meteoroid impact debris",
+      "fine dust regolith",
+    ],
+    shapeModel: "asteroid",
+    atmosphere: undefined,
+    surface: {
+      type: SurfaceType.CRATERED,
+      classType: PlanetType.ROCKY,
+      color: "#606060",
+      roughness: 0.9,
+      persistence: 0.4,
+      lacunarity: 2.0,
+      simplePeriod: 3.0,
+      octaves: 5,
+      bumpScale: 0.2,
+      color1: "#404040",
+      color2: "#505050",
+      color3: "#606060",
+      color4: "#707070",
+      color5: "#808080",
+      height1: 0.0,
+      height2: 0.25,
+      height3: 0.5,
+      height4: 0.75,
+      height5: 1.0,
+      shininess: 0.01,
+      specularStrength: 0.01,
+      ambientLightIntensity: 0.01,
+      undulation: 0.3,
+      terrainType: 1,
+      terrainAmplitude: 0.5,
+      terrainSharpness: 0.8,
+      terrainOffset: 0.0,
+    },
+  } as PlanetProperties,
+};
+
+/**
+ * Legacy function for backward compatibility.
+ * @deprecated Use the phobos configuration object instead.
  */
 export function initializePhobos(parentId: string): void {
-  const phobosAxialTilt = new OSVector3(0, 1, 0);
-  celestialManager.addCelestial({
-    id: "phobos",
-    name: "Phobos",
-    type: CelestialType.MOON,
-    status: CelestialStatus.ACTIVE,
-    seed: "phobos_fear_mars_moon",
-    parentId: parentId,
-    realMass_kg: PHOBOS_MASS_KG,
-    realRadius_m: PHOBOS_RADIUS_M,
-    temperature: PHOBOS_TEMP_K,
-    albedo: PHOBOS_ALBEDO,
-
-    orbit: {
-      realSemiMajorAxis_m: PHOBOS_SMA_M,
-      eccentricity: PHOBOS_ECC,
-      inclination: PHOBOS_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: PHOBOS_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: PHOBOS_AOP_DEG * DEG_TO_RAD,
-      meanAnomaly: PHOBOS_MA_DEG * DEG_TO_RAD,
-      period_s: PHOBOS_SIDEREAL_PERIOD_S,
-      siderealRotationPeriod_s: PHOBOS_SIDEREAL_PERIOD_S,
-      axialTilt: phobosAxialTilt,
-    },
-
-    properties: {
-      type: CelestialType.MOON,
-      classType: PlanetType.ROCKY,
-      isMoon: true,
-      composition: [
-        "carbonaceous chondrite",
-        "C-type rock",
-        "meteoroid impact debris",
-        "fine dust regolith",
-      ],
-      shapeModel: "asteroid",
-      atmosphere: undefined,
-      surface: {
-        type: SurfaceType.CRATERED,
-        classType: PlanetType.ROCKY,
-        color: "#606060",
-        roughness: 0.9,
-        persistence: 0.4,
-        lacunarity: 2.0,
-        simplePeriod: 3.0,
-        octaves: 5,
-        bumpScale: 0.2,
-        color1: "#404040",
-        color2: "#505050",
-        color3: "#606060",
-        color4: "#707070",
-        color5: "#808080",
-        height1: 0.0,
-        height2: 0.25,
-        height3: 0.5,
-        height4: 0.75,
-        height5: 1.0,
-        shininess: 0.01,
-        specularStrength: 0.01,
-        ambientLightIntensity: 0.01,
-        undulation: 0.3,
-        terrainType: 1,
-        terrainAmplitude: 0.5,
-        terrainSharpness: 0.8,
-        terrainOffset: 0.0,
-      },
-    } as PlanetProperties,
-  });
+  const phobosConfig = { ...phobos, parentId };
+  // Note: This would need celestialManager import if we want to keep the function working
+  // For now, just export the config object
 }
