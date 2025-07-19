@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { initializeEarth } from "./index";
-import { celestialManager } from "@teskooano/core-state";
+import { earthSystemBodies } from "./index";
+import { sun } from "../sol/star";
+import { celestialManager, celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -8,7 +9,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-describe("Earth System Initialization", () => {
+describe("Earth System Objects", () => {
   beforeEach(() => {
     // Clear any existing state before each test
     celestialManager.clearState();
@@ -19,58 +20,28 @@ describe("Earth System Initialization", () => {
     celestialManager.clearState();
   });
 
-  describe("initializeEarth", () => {
-    it("should create Earth and Luna with correct properties", () => {
-      // Create a mock sun first
-      const sunId = "sun";
-      celestialManager.addCelestial({
-        id: sunId,
-        name: "Sun",
-        type: CelestialType.STAR,
-        status: CelestialStatus.ACTIVE,
-        realMass_kg: 1.989e30,
-        realRadius_m: 696340000,
-        temperature: 5778,
-        albedo: 0.3,
-        orbit: {
-          realSemiMajorAxis_m: 0,
-          eccentricity: 0,
-          inclination: 0,
-          longitudeOfAscendingNode: 0,
-          argumentOfPeriapsis: 0,
-          meanAnomaly: 0,
-          period_s: 0,
-        },
-          id: sunId,
-          mass_kg: 1.989e30,
-          position_m: { x: 0, y: 0, z: 0 } as any,
-          velocity_mps: { x: 0, y: 0, z: 0 } as any,
-        },
-        properties: {
-          type: CelestialType.STAR,
-          isMainStar: true,
-          spectralClass: "G2V",
-          luminosity: 1.0,
-          color: "#FFFFE0",
-        },
-      });
+  describe("Earth and Luna Configuration Objects", () => {
+    it("should have correct Earth and Luna objects in earthSystemBodies", () => {
+      // Check that we have both Earth and Luna
+      expect(earthSystemBodies).toHaveLength(2);
 
-      // Initialize Earth system
-      const earthId = initializeEarth(sunId);
+      const earthObject = earthSystemBodies.find((obj) => obj.id === "earth");
+      const lunaObject = earthSystemBodies.find((obj) => obj.id === "luna");
 
-      // Get all objects
-      const objects = celestialManager.getObjects();
+      expect(earthObject).toBeDefined();
+      expect(lunaObject).toBeDefined();
+    });
 
-      // Check Earth
-      const earth = objects[earthId];
-      expect(earth).toBeDefined();
+    it("should have Earth with correct properties", () => {
+      const earth = earthSystemBodies.find((obj) => obj.id === "earth")!;
+
       expect(earth.name).toBe("Earth");
       expect(earth.type).toBe(CelestialType.PLANET);
       expect(earth.status).toBe(CelestialStatus.ACTIVE);
-      expect(earth.parentId).toBe(sunId);
+      expect(earth.parentId).toBe("sun");
 
       // Check Earth's physical properties
-      expect(earth.realMass_kg).toBeCloseTo(5.972e24, 1); // Should be close to Earth's mass
+      expect(earth.realMass_kg).toBe(5.972168e24); // Exact Earth mass from data file
       expect(earth.realRadius_m).toBeCloseTo(6371000, 0); // Should be close to Earth's radius
       expect(earth.temperature).toBeGreaterThan(0);
       expect(earth.albedo).toBeGreaterThan(0);
@@ -87,26 +58,28 @@ describe("Earth System Initialization", () => {
       const earthProps = earth.properties as PlanetProperties;
       expect(earthProps.type).toBe(CelestialType.PLANET);
       expect(earthProps.isMoon).toBe(false);
+      expect(earthProps.classType).toBe(PlanetType.TERRESTRIAL);
       expect(earthProps.composition).toContain("liquid water");
       expect(earthProps.composition).toContain("nitrogen-oxygen atmosphere");
+    });
 
-      // Check Luna
-      const luna = objects["luna"];
-      expect(luna).toBeDefined();
+    it("should have Luna with correct properties", () => {
+      const luna = earthSystemBodies.find((obj) => obj.id === "luna")!;
+
       expect(luna.name).toBe("Moon");
       expect(luna.type).toBe(CelestialType.MOON);
       expect(luna.status).toBe(CelestialStatus.ACTIVE);
-      expect(luna.parentId).toBe(earthId);
+      expect(luna.parentId).toBe("earth");
 
       // Check Luna's physical properties
-      expect(luna.realMass_kg).toBeCloseTo(7.342e22, 1); // Should be close to Moon's mass
-      expect(luna.realRadius_m).toBeCloseTo(1737400, 0); // Should be close to Moon's radius
+      expect(luna.realMass_kg).toBe(7.342e22); // Exact Luna mass from data file
+      expect(luna.realRadius_m).toBe(1737.4 * 1000); // Exact Luna radius from data file
       expect(luna.temperature).toBeGreaterThan(0);
       expect(luna.albedo).toBeGreaterThan(0);
       expect(luna.albedo).toBeLessThanOrEqual(1);
 
       // Check Luna's orbital properties
-      expect(luna.orbit.realSemiMajorAxis_m).toBeCloseTo(384400000, 0); // ~384,400 km
+      expect(luna.orbit.realSemiMajorAxis_m).toBe(384399 * 1000); // Exact Luna SMA from data file
       expect(luna.orbit.eccentricity).toBeGreaterThanOrEqual(0);
       expect(luna.orbit.eccentricity).toBeLessThan(1);
       expect(luna.orbit.period_s).toBeGreaterThan(0);
@@ -119,47 +92,8 @@ describe("Earth System Initialization", () => {
       expect(lunaProps.classType).toBe(PlanetType.ROCKY);
     });
 
-    it("should create Earth with correct atmospheric properties", () => {
-      // Create a mock sun first
-      const sunId = "sun";
-      celestialManager.addCelestial({
-        id: sunId,
-        name: "Sun",
-        type: CelestialType.STAR,
-        status: CelestialStatus.ACTIVE,
-        realMass_kg: 1.989e30,
-        realRadius_m: 696340000,
-        temperature: 5778,
-        albedo: 0.3,
-        orbit: {
-          realSemiMajorAxis_m: 0,
-          eccentricity: 0,
-          inclination: 0,
-          longitudeOfAscendingNode: 0,
-          argumentOfPeriapsis: 0,
-          meanAnomaly: 0,
-          period_s: 0,
-        },
-          id: sunId,
-          mass_kg: 1.989e30,
-          position_m: { x: 0, y: 0, z: 0 } as any,
-          velocity_mps: { x: 0, y: 0, z: 0 } as any,
-        },
-        properties: {
-          type: CelestialType.STAR,
-          isMainStar: true,
-          spectralClass: "G2V",
-          luminosity: 1.0,
-          color: "#FFFFE0",
-        },
-      });
-
-      // Initialize Earth system
-      initializeEarth(sunId);
-
-      // Get Earth
-      const objects = celestialManager.getObjects();
-      const earth = objects["earth"];
+    it("should have Earth with correct atmospheric properties", () => {
+      const earth = earthSystemBodies.find((obj) => obj.id === "earth")!;
 
       // Check Earth's atmospheric properties
       expect(earth.properties).toBeDefined();
@@ -171,47 +105,8 @@ describe("Earth System Initialization", () => {
       expect(earthProps.atmosphere?.thickness).toBe(0.25);
     });
 
-    it("should create Earth with correct surface properties", () => {
-      // Create a mock sun first
-      const sunId = "sun";
-      celestialManager.addCelestial({
-        id: sunId,
-        name: "Sun",
-        type: CelestialType.STAR,
-        status: CelestialStatus.ACTIVE,
-        realMass_kg: 1.989e30,
-        realRadius_m: 696340000,
-        temperature: 5778,
-        albedo: 0.3,
-        orbit: {
-          realSemiMajorAxis_m: 0,
-          eccentricity: 0,
-          inclination: 0,
-          longitudeOfAscendingNode: 0,
-          argumentOfPeriapsis: 0,
-          meanAnomaly: 0,
-          period_s: 0,
-        },
-          id: sunId,
-          mass_kg: 1.989e30,
-          position_m: { x: 0, y: 0, z: 0 } as any,
-          velocity_mps: { x: 0, y: 0, z: 0 } as any,
-        },
-        properties: {
-          type: CelestialType.STAR,
-          isMainStar: true,
-          spectralClass: "G2V",
-          luminosity: 1.0,
-          color: "#FFFFE0",
-        },
-      });
-
-      // Initialize Earth system
-      initializeEarth(sunId);
-
-      // Get Earth
-      const objects = celestialManager.getObjects();
-      const earth = objects["earth"];
+    it("should have Earth with correct surface properties", () => {
+      const earth = earthSystemBodies.find((obj) => obj.id === "earth")!;
 
       // Check Earth's surface properties
       expect(earth.properties).toBeDefined();
@@ -229,6 +124,33 @@ describe("Earth System Initialization", () => {
         expect(earthProps.surface.persistence).toBeGreaterThan(0);
         expect(earthProps.surface.persistence).toBeLessThan(1);
       }
+    });
+
+    it("should be able to add Earth system to celestial manager", () => {
+      // Add sun first using the existing sun object
+      celestialManager.addObjects([sun]);
+
+      // Add Earth system
+      celestialManager.addObjects(earthSystemBodies);
+
+      // Get all objects
+      const objects = celestial.getObjects();
+
+      // Check Earth
+      const earth = objects["earth"];
+      expect(earth).toBeDefined();
+      expect(earth.name).toBe("Earth");
+      expect(earth.type).toBe(CelestialType.PLANET);
+      expect(earth.status).toBe(CelestialStatus.ACTIVE);
+      expect(earth.parentId).toBe("sun");
+
+      // Check Luna
+      const luna = objects["luna"];
+      expect(luna).toBeDefined();
+      expect(luna.name).toBe("Moon");
+      expect(luna.type).toBe(CelestialType.MOON);
+      expect(luna.status).toBe(CelestialStatus.ACTIVE);
+      expect(luna.parentId).toBe("earth");
     });
   });
 });

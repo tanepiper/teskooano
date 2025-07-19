@@ -4,8 +4,8 @@ import {
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const RHEA_MASS_KG = 2.306e21;
@@ -22,7 +22,7 @@ const RHEA_ALBEDO = 0.949;
 /**
  * Rhea configuration object for modular solar system initialization.
  */
-export const rhea = {
+export const rhea: CelestialObject<PlanetProperties> = {
   id: "rhea",
   name: "Rhea",
   seed: "rhea",
@@ -56,10 +56,7 @@ export const rhea = {
       thickness: 0.005,
     },
     surface: {
-      type: SurfaceType.ICE_FLATS,
-      color: "#EAEAEA",
       roughness: 0.7,
-      classType: PlanetType.BARREN,
       persistence: 0.52,
       lacunarity: 2.2,
       simplePeriod: 2.5,
@@ -84,15 +81,5 @@ export const rhea = {
       terrainSharpness: 1.5,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the rhea configuration object instead.
- */
-export function initializeRhea(parentId: string): void {
-  const rheaConfig = { ...rhea, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

@@ -3,7 +3,6 @@ import {
   celestialManager,
   StateAccessor,
   seed,
-  PhysicsStateCalculator,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -148,18 +147,8 @@ export class SystemGenerator {
             celestialManager.addCelestial(creationInput);
           }
 
-          // Create renderable object with physics state
-          const renderable =
-            await PhysicsStateCalculator.createRenderableObject(
-              creationInput,
-              allObjects,
-            );
-
-          if (renderable) {
-            // Store the renderable object in the renderable store
-            // This would be handled by the renderer system
-            console.log(`Created renderable object for ${renderable.id}`);
-          }
+          // Note: Renderable objects are automatically created by the renderer system
+          // when celestial objects are added to the state via celestialManager
         }),
         catchError((error) => {
           console.error(

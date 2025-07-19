@@ -6,6 +6,7 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const HYPERION_MASS_KG = 5.58e18;
@@ -22,7 +23,7 @@ const HYPERION_ALBEDO = 0.3;
 /**
  * Hyperion configuration object for modular solar system initialization.
  */
-export const hyperion = {
+export const hyperion: CelestialObject<PlanetProperties> = {
   id: "hyperion",
   name: "Hyperion",
   seed: "hyperion",
@@ -51,10 +52,7 @@ export const hyperion = {
     composition: ["water ice", "rocky material"],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#BDB7AB",
       roughness: 0.9,
-      classType: PlanetType.ICE,
       persistence: 0.45,
       lacunarity: 2.5,
       simplePeriod: 1.5,
@@ -79,15 +77,5 @@ export const hyperion = {
       terrainSharpness: 2.0,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the hyperion configuration object instead.
- */
-export function initializeHyperion(parentId: string): void {
-  const hyperionConfig = { ...hyperion, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

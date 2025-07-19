@@ -6,6 +6,7 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const DIONE_MASS_KG = 1.095e21;
@@ -22,7 +23,7 @@ const DIONE_ALBEDO = 0.998;
 /**
  * Dione configuration object for modular solar system initialization.
  */
-export const dione = {
+export const dione: CelestialObject<PlanetProperties> = {
   id: "dione",
   name: "Dione",
   seed: "dione",
@@ -51,10 +52,7 @@ export const dione = {
     composition: ["water ice", "rocky core"],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.ICE_CRACKED,
-      color: "#E0E0E0",
       roughness: 0.5,
-      classType: PlanetType.BARREN,
       persistence: 0.55,
       lacunarity: 2.0,
       simplePeriod: 2.2,
@@ -79,15 +77,5 @@ export const dione = {
       terrainSharpness: 1.2,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the dione configuration object instead.
- */
-export function initializeDione(parentId: string): void {
-  const dioneConfig = { ...dione, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

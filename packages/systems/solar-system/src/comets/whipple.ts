@@ -1,5 +1,10 @@
 import { CONVERSION } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  METERS_TO_SCENE_UNITS,
+  SCALE,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Whipple Comet constants
 export const WHIPPLE_NUCLEUS_RADIUS_M = 2.0 * CONVERSION.KM_TO_M; // Estimate
@@ -29,7 +34,7 @@ import {
 /**
  * Whipple Comet configuration object for modular solar system initialization.
  */
-export const whipple = {
+export const whipple: CelestialObject<CometProperties> = {
   id: "whipple",
   name: "36P/Whipple",
   seed: "whipple",
@@ -49,7 +54,7 @@ export const whipple = {
     meanAnomaly: WHIPPLE_MA_RAD,
     period_s: WHIPPLE_PERIOD_S,
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: { x: 0, y: 1, z: 0 },
+    axialTilt: new OSVector3(0, 1, 0),
   },
   properties: {
     type: CelestialType.COMET,
@@ -60,15 +65,5 @@ export const whipple = {
     visualComaColor: WHIPPLE_COMA_COLOR,
     visualMaxTailLength: WHIPPLE_TAIL_LENGTH,
     visualTailColor: WHIPPLE_TAIL_COLOR,
-  } as CometProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the whipple configuration object instead.
- */
-export function initializeWhipple(parentId: string): void {
-  const whippleConfig = { ...whipple, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

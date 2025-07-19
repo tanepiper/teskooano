@@ -25,13 +25,3 @@ export const saturnSystemBodies = [
   iapetus,
   phoebe,
 ];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the saturnSystemBodies array instead.
- */
-export function initializeSaturn(parentId: string): string {
-  // This function is now deprecated - use the modular approach instead
-  // The saturnSystemBodies array should be used with the main solar system initialization
-  return saturn.id;
-}

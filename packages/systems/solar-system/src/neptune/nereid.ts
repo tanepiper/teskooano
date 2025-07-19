@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -15,7 +15,7 @@ const NEREID_SIDEREAL_ROTATION_PERIOD_S = 11.52 * 3600;
 /**
  * Nereid configuration object for modular solar system initialization.
  */
-export const nereid = {
+export const nereid: CelestialObject<PlanetProperties> = {
   id: "nereid",
   name: "Nereid",
   seed: "nereid_seed_360",
@@ -44,10 +44,7 @@ export const nereid = {
     composition: ["water ice", "rock?"],
     shapeModel: "asteroid",
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#A0A0A8", // Dark gray
       roughness: 0.7,
-      classType: PlanetType.BARREN,
       persistence: 0.55,
       lacunarity: 2.3,
       simplePeriod: 3.2,
@@ -72,15 +69,5 @@ export const nereid = {
       terrainSharpness: 1.8,
       terrainOffset: -0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the nereid configuration object instead.
- */
-export function initializeNereid(parentId: string): void {
-  const nereidConfig = { ...nereid, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

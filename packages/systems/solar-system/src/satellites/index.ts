@@ -33,23 +33,3 @@ export const allSatellites = [
   ...deepSpaceSatellites,
   ...rogueSatellites,
 ];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the satellite arrays instead.
- */
-export function initializeSatellites(sunId: string, earthId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The satellite arrays should be used with the main solar system initialization
-}
-
-// Also export individual functions for specific use cases (deprecated)
-export {
-  initializeISS,
-  initializeHubble,
-  initializeJWST,
-  initializeGPS,
-  initializeVoyager1,
-  initializeVoyager2,
-  initializeGeostationarySat,
-};

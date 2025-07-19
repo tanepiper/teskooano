@@ -5,6 +5,7 @@ dist/
 .moon/docker
 
 .DS_Store
+__screenshots__
 
 apps/homepage/site/.vitepress/cache
 

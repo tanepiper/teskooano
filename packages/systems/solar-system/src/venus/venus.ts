@@ -5,6 +5,7 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
+  CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -25,7 +26,7 @@ const VENUS_AXIAL_TILT_DEG = 177.36;
 /**
  * Venus configuration object for modular solar system initialization.
  */
-export const venus = {
+export const venus: CelestialObject<PlanetProperties> = {
   id: "venus",
   name: "Venus",
   seed: "venus",
@@ -68,12 +69,7 @@ export const venus = {
       thickness: 0.9,
     },
     surface: {
-      // Base surface properties
-      type: SurfaceType.VOLCANIC,
-      color: "#DAA520", // Goldenrod base (sulfurous)
       roughness: 0.7,
-      classType: PlanetType.ROCKY,
-      // Venus-like sulfurous/volcanic procedural properties
       persistence: 0.55,
       lacunarity: 2.0,
       simplePeriod: 1.8,
@@ -98,15 +94,5 @@ export const venus = {
       terrainSharpness: 1.1,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the venus configuration object instead.
- */
-export function initializeVenus(parentId: string): void {
-  const venusConfig = { ...venus, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

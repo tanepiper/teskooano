@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -36,7 +36,7 @@ const DYSNOMIA_ALBEDO = 0.15;
 /**
  * Eris dwarf planet configuration object for modular solar system initialization.
  */
-export const eris = {
+export const eris: CelestialObject<PlanetProperties> = {
   id: "eris",
   name: "Eris",
   seed: "eris",
@@ -80,10 +80,7 @@ export const eris = {
       thickness: 0.01,
     },
     surface: {
-      type: SurfaceType.ICE_FLATS,
-      color: "#F5F5FF",
       roughness: 0.15,
-      classType: PlanetType.BARREN,
       persistence: 0.48,
       lacunarity: 2.0,
       simplePeriod: 1.5,
@@ -108,13 +105,13 @@ export const eris = {
       terrainSharpness: 0.8,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
 
 /**
  * Dysnomia moon configuration object for modular solar system initialization.
  */
-export const dysnomia = {
+export const dysnomia: CelestialObject<PlanetProperties> = {
   id: "dysnomia",
   name: "Dysnomia",
   seed: "dysnomia",
@@ -149,10 +146,7 @@ export const dysnomia = {
       thickness: 0,
     },
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#606060",
       roughness: 0.9,
-      classType: PlanetType.BARREN,
       persistence: 0.5,
       lacunarity: 2.2,
       simplePeriod: 3.5,
@@ -177,16 +171,5 @@ export const dysnomia = {
       terrainSharpness: 1.5,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the eris and dysnomia configuration objects instead.
- */
-export function initializeEris(parentId: string): void {
-  const erisConfig = { ...eris, parentId };
-  const dysnomiaConfig = { ...dysnomia, parentId: eris.id };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config objects
-}

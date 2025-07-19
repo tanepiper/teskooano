@@ -3,9 +3,9 @@ import { KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const MIMAS_MASS_KG = 3.75e19;
@@ -22,7 +22,7 @@ const MIMAS_ALBEDO = 0.962;
 /**
  * Mimas configuration object for modular solar system initialization.
  */
-export const mimas = {
+export const mimas: CelestialObject<PlanetProperties> = {
   id: "mimas",
   name: "Mimas",
   seed: "mimas",
@@ -51,10 +51,7 @@ export const mimas = {
     composition: ["water ice", "rocky core"],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#E0E0E0",
       roughness: 0.8,
-      classType: PlanetType.BARREN,
       persistence: 0.6,
       lacunarity: 2.1,
       simplePeriod: 2.0,
@@ -79,15 +76,5 @@ export const mimas = {
       terrainSharpness: 1.8,
       terrainOffset: 0.2,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the mimas configuration object instead.
- */
-export function initializeMimas(parentId: string): void {
-  const mimasConfig = { ...mimas, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

@@ -6,6 +6,7 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const ENCELADUS_MASS_KG = 1.08e20;
@@ -22,7 +23,7 @@ const ENCELADUS_ALBEDO = 1.375;
 /**
  * Enceladus configuration object for modular solar system initialization.
  */
-export const enceladus = {
+export const enceladus: CelestialObject<PlanetProperties> = {
   id: "enceladus",
   name: "Enceladus",
   seed: "enceladus",
@@ -61,10 +62,7 @@ export const enceladus = {
       thickness: 0.02,
     },
     surface: {
-      type: SurfaceType.ICE_CRACKED,
-      color: "#F8F8FF",
       roughness: 0.3,
-      classType: PlanetType.BARREN,
       persistence: 0.45,
       lacunarity: 1.8,
       simplePeriod: 1.2,
@@ -89,15 +87,5 @@ export const enceladus = {
       terrainSharpness: 1.1,
       terrainOffset: 0.2,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the enceladus configuration object instead.
- */
-export function initializeEnceladus(parentId: string): void {
-  const enceladusConfig = { ...enceladus, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

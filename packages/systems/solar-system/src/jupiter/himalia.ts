@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -22,7 +22,7 @@ const HIMALIA_ALBEDO = 0.04;
 /**
  * Himalia moon configuration object for modular solar system initialization.
  */
-export const himalia = {
+export const himalia: CelestialObject<PlanetProperties> = {
   id: "himalia",
   name: "Himalia",
   seed: "himalia_seed_1904",
@@ -50,10 +50,7 @@ export const himalia = {
     isMoon: true,
     composition: ["rock", "ice"],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#9E9E9E",
       roughness: 0.9,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.1,
       simplePeriod: 2.5,
@@ -78,15 +75,5 @@ export const himalia = {
       terrainSharpness: 1.8,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the himalia configuration object instead.
- */
-export function initializeHimalia(parentId: string): void {
-  const himaliaConfig = { ...himalia, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

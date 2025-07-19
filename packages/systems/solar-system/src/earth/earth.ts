@@ -1,6 +1,7 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
@@ -25,7 +26,7 @@ const EARTH_AXIAL_TILT_DEG = 23.4392811;
 /**
  * Earth configuration object for modular solar system initialization.
  */
-export const earth = {
+export const earth: CelestialObject<PlanetProperties> = {
   id: "earth",
   name: "Earth",
   seed: "earth",
@@ -68,10 +69,7 @@ export const earth = {
       thickness: 0.25,
     },
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#15e267",
       roughness: 0.12,
-      classType: PlanetType.TERRESTRIAL,
       persistence: 0.54,
       lacunarity: 2.2,
       simplePeriod: 18,
@@ -96,13 +94,5 @@ export const earth = {
       terrainSharpness: 1.7,
       terrainOffset: -0.5,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the earth configuration object instead.
- */
-export function initializeEarthPlanet(parentId: string): string {
-  return earth.id;
-}

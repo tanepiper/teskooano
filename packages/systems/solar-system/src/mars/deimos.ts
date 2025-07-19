@@ -3,9 +3,9 @@ import { KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Verified Wikipedia/NASA data for Deimos
@@ -24,7 +24,7 @@ const DEIMOS_TEMP_K = 233; // Estimated temperature similar to Phobos: ~233 K (-
 /**
  * Deimos moon configuration object for modular solar system initialization.
  */
-export const deimos = {
+export const deimos: CelestialObject<PlanetProperties> = {
   id: "deimos",
   name: "Deimos",
   seed: "deimos_dread_mars_moon",
@@ -59,9 +59,6 @@ export const deimos = {
     shapeModel: "asteroid",
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      classType: PlanetType.ROCKY,
-      color: "#808080",
       roughness: 0.6,
       persistence: 0.45,
       lacunarity: 2.1,
@@ -87,15 +84,5 @@ export const deimos = {
       terrainSharpness: 0.6,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the deimos configuration object instead.
- */
-export function initializeDeimos(parentId: string): void {
-  const deimosConfig = { ...deimos, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

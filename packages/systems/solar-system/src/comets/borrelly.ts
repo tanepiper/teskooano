@@ -1,5 +1,11 @@
 import { CONVERSION } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  METERS_TO_SCENE_UNITS,
+  SCALE,
+  type CometProperties,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Borrelly Comet constants
 export const BORRELLY_NUCLEUS_RADIUS_M = 2.0 * CONVERSION.KM_TO_M; // Estimate
@@ -23,13 +29,12 @@ import {
   CelestialType,
   CelestialStatus,
   CometClass,
-  type CometProperties,
 } from "@teskooano/data-types";
 
 /**
  * Borrelly Comet configuration object for modular solar system initialization.
  */
-export const borrelly = {
+export const borrelly: CelestialObject<CometProperties> = {
   id: "borrelly",
   name: "19P/Borrelly",
   seed: "borrelly",
@@ -49,7 +54,7 @@ export const borrelly = {
     meanAnomaly: BORRELLY_MA_RAD,
     period_s: BORRELLY_PERIOD_S,
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: { x: 0, y: 1, z: 0 },
+    axialTilt: new OSVector3(0, 1, 0),
   },
   properties: {
     type: CelestialType.COMET,
@@ -60,7 +65,7 @@ export const borrelly = {
     visualComaColor: BORRELLY_COMA_COLOR,
     visualMaxTailLength: BORRELLY_TAIL_LENGTH,
     visualTailColor: BORRELLY_TAIL_COLOR,
-  } as CometProperties,
+  },
 };
 
 /**

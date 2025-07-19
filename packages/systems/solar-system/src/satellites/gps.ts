@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // GPS satellite physical constants
@@ -16,7 +17,7 @@ const GPS_ECCENTRICITY = 0.02;
 /**
  * GPS configuration object for modular solar system initialization.
  */
-export const gps = {
+export const gps: CelestialObject<SatelliteProperties> = {
   id: "gps-satellite",
   name: "GPS Satellite",
   seed: "gps_navstar_block3",
@@ -45,8 +46,6 @@ export const gps = {
     missionType: "navigation",
     operationalStatus: "active",
     launchDate: "2018-12-23", // Representative Block III launch
-    description:
-      "Global Positioning System satellite providing precise navigation signals worldwide",
     components: [
       "Atomic clocks",
       "Navigation payload",
@@ -54,15 +53,5 @@ export const gps = {
       "L-band antennas",
       "Search and rescue payload",
     ],
-  } as SatelliteProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the gps configuration object instead.
- */
-export function initializeGPS(parentId: string): void {
-  const gpsConfig = { ...gps, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

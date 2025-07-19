@@ -1,10 +1,7 @@
-import { initializePlutoDwarfPlanet } from "./pluto";
-import { initializeCharon } from "./charon";
+import { pluto } from "./pluto";
+import { charon } from "./charon";
 
 /**
- * Initializes the complete Pluto system: the dwarf planet and its largest moon.
+ * Pluto system configuration objects for modular solar system initialization.
  */
-export function initializePluto(parentId: string): void {
-  const plutoId = initializePlutoDwarfPlanet(parentId);
-  initializeCharon(plutoId);
-}
+export const plutoSystemBodies = [pluto, charon];

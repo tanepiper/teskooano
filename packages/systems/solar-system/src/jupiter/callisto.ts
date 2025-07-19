@@ -3,9 +3,9 @@ import { KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Verified Wikipedia data for Callisto - most heavily cratered moon in Solar System
@@ -24,7 +24,7 @@ const CALLISTO_TEMP_K = 134; // Wikipedia verified: mean 134±11 K
 /**
  * Callisto moon configuration object for modular solar system initialization.
  */
-export const callisto = {
+export const callisto: CelestialObject<PlanetProperties> = {
   id: "callisto",
   name: "Callisto",
   seed: "callisto_seed_16689",
@@ -64,10 +64,7 @@ export const callisto = {
       thickness: 0.01,
     },
     surface: {
-      type: SurfaceType.ICE_CRACKED,
-      color: "#707080",
       roughness: 0.8,
-      classType: PlanetType.BARREN,
       persistence: 0.6,
       lacunarity: 2.4,
       simplePeriod: 3.0,
@@ -92,15 +89,5 @@ export const callisto = {
       terrainSharpness: 2.0,
       terrainOffset: -0.15,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the callisto configuration object instead.
- */
-export function initializeCallisto(parentId: string): void {
-  const callistoConfig = { ...callisto, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

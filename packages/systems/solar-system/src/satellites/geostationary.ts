@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Geostationary satellite physical constants (exact physics)
@@ -16,7 +17,7 @@ const GEOSTATIONARY_ECCENTRICITY = 0.0; // Must be exactly circular
 /**
  * Geostationary satellite configuration object for modular solar system initialization.
  */
-export const geostationarySat = {
+export const geostationarySat: CelestialObject<SatelliteProperties> = {
   id: "geostationary-comsat",
   name: "Geostationary CommSat",
   seed: "geostationary_communications_satellite",
@@ -46,8 +47,6 @@ export const geostationarySat = {
     missionType: "communications",
     operationalStatus: "active",
     launchDate: "2020-05-15", // Representative modern comsat
-    description:
-      "Geostationary communications satellite. Period: 86164.09054s, radius: 42,164km, orbits in Earth's equatorial plane (inclination: 23.44°) to stay fixed above Earth's surface.",
     components: [
       "High-gain antennas",
       "Transponders",
@@ -56,15 +55,5 @@ export const geostationarySat = {
       "Ion thrusters",
       "Communications payload",
     ],
-  } as SatelliteProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the geostationarySat configuration object instead.
- */
-export function initializeGeostationarySat(parentId: string): void {
-  const geostationaryConfig = { ...geostationarySat, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

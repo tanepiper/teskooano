@@ -1,9 +1,9 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
@@ -24,7 +24,7 @@ const IO_TEMP_K = 110; // Wikipedia verified: mean 110 K
 /**
  * Io moon configuration object for modular solar system initialization.
  */
-export const io = {
+export const io: CelestialObject<PlanetProperties> = {
   id: "io",
   name: "Io",
   seed: "io_seed_1769",
@@ -63,10 +63,7 @@ export const io = {
       thickness: 0.05,
     },
     surface: {
-      type: SurfaceType.VOLCANIC,
-      color: "#FFFFA0",
       roughness: 0.6,
-      classType: PlanetType.ROCKY,
       persistence: 0.58,
       lacunarity: 1.9,
       simplePeriod: 1.7,
@@ -91,15 +88,5 @@ export const io = {
       terrainSharpness: 1.8,
       terrainOffset: 0.2,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the io configuration object instead.
- */
-export function initializeIo(parentId: string): void {
-  const ioConfig = { ...io, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

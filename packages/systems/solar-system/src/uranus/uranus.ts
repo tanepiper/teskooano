@@ -6,6 +6,7 @@ import {
   RockyType,
   CelestialStatus,
   type GasGiantProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const URANUS_MASS_KG = 8.681e25;
@@ -25,7 +26,7 @@ const URANUS_AXIAL_TILT_DEG = 97.77;
 /**
  * Uranus configuration object for modular solar system initialization.
  */
-export const uranus = {
+export const uranus: CelestialObject<GasGiantProperties> = {
   id: "uranus",
   name: "Uranus",
   seed: "uranus_seed_84",
@@ -161,13 +162,5 @@ export const uranus = {
         composition: ["faint dust"],
       },
     ],
-  } as GasGiantProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the uranus configuration object instead.
- */
-export function initializeUranusPlanet(parentId: string): string {
-  return uranus.id;
-}

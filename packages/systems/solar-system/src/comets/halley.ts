@@ -1,5 +1,10 @@
 import { CONVERSION } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  METERS_TO_SCENE_UNITS,
+  SCALE,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Halley's Comet (1P/Halley) constants
 export const HALLEY_NUCLEUS_RADIUS_M = 5.5 * CONVERSION.KM_TO_M;
@@ -29,7 +34,7 @@ import {
 /**
  * Halley's Comet configuration object for modular solar system initialization.
  */
-export const halley = {
+export const halley: CelestialObject<CometProperties> = {
   id: "halley",
   name: "1P/Halley",
   seed: "halley",
@@ -49,7 +54,7 @@ export const halley = {
     meanAnomaly: HALLEY_MA_RAD,
     period_s: HALLEY_PERIOD_S,
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: { x: 0, y: 1, z: 0 },
+    axialTilt: new OSVector3(0, 1, 0),
   },
   properties: {
     type: CelestialType.COMET,
@@ -60,15 +65,5 @@ export const halley = {
     visualComaColor: HALLEY_COMA_COLOR,
     visualMaxTailLength: HALLEY_TAIL_LENGTH,
     visualTailColor: HALLEY_TAIL_COLOR,
-  } as CometProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the halley configuration object instead.
- */
-export function initializeHalley(parentId: string): void {
-  const halleyConfig = { ...halley, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

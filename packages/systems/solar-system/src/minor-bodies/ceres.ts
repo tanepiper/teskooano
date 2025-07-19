@@ -3,9 +3,9 @@ import { AU, KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const CERES_MASS_KG = 9.393e20;
@@ -25,7 +25,7 @@ const CERES_AXIAL_TILT_DEG = 4.0;
 /**
  * Ceres dwarf planet configuration object for modular solar system initialization.
  */
-export const ceres = {
+export const ceres: CelestialObject<PlanetProperties> = {
   id: "ceres",
   name: "Ceres",
   seed: "ceres",
@@ -64,10 +64,7 @@ export const ceres = {
     ],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#8C7853",
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.52,
       lacunarity: 2.1,
       simplePeriod: 2.8,
@@ -92,15 +89,5 @@ export const ceres = {
       terrainSharpness: 1.4,
       terrainOffset: -0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the ceres configuration object instead.
- */
-export function initializeCeres(parentId: string): void {
-  const ceresConfig = { ...ceres, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

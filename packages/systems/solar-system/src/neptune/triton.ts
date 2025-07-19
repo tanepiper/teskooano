@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -14,7 +14,7 @@ const TRITON_SIDEREAL_ROTATION_PERIOD_S = -5.877 * 24 * 3600;
 /**
  * Triton configuration object for modular solar system initialization.
  */
-export const triton = {
+export const triton: CelestialObject<PlanetProperties> = {
   id: "triton",
   name: "Triton",
   seed: "triton_seed_5877",
@@ -42,10 +42,7 @@ export const triton = {
     isMoon: true,
     composition: ["nitrogen ice", "water ice", "methane ice", "rocky core"],
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#E0F0F0",
       roughness: 0.5,
-      classType: PlanetType.BARREN,
       persistence: 0.53,
       lacunarity: 2.14,
       simplePeriod: 0.87,
@@ -70,15 +67,5 @@ export const triton = {
       terrainSharpness: 1.3,
       terrainOffset: 0.25,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the triton configuration object instead.
- */
-export function initializeTriton(parentId: string): void {
-  const tritonConfig = { ...triton, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

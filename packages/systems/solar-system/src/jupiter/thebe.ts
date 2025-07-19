@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -19,7 +19,7 @@ const THEBE_ALBEDO = 0.047;
 /**
  * Thebe moon configuration object for modular solar system initialization.
  */
-export const thebe = {
+export const thebe: CelestialObject<PlanetProperties> = {
   id: "thebe",
   name: "Thebe",
   seed: "thebe_seed_2024",
@@ -47,10 +47,7 @@ export const thebe = {
     isMoon: true,
     composition: ["rocky materials", "ice"],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#888888",
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.0,
       simplePeriod: 2.0,
@@ -75,15 +72,5 @@ export const thebe = {
       terrainSharpness: 1.5,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the thebe configuration object instead.
- */
-export function initializeThebe(parentId: string): void {
-  const thebeConfig = { ...thebe, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

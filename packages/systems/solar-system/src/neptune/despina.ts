@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -19,7 +19,7 @@ const DESPINA_ALBEDO = 0.09;
 /**
  * Despina configuration object for modular solar system initialization.
  */
-export const despina = {
+export const despina: CelestialObject<PlanetProperties> = {
   id: "despina",
   name: "Despina",
   seed: "despina",
@@ -47,10 +47,7 @@ export const despina = {
     isMoon: true,
     composition: ["water ice", "rock"],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#909090",
       roughness: 0.85,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.1,
       simplePeriod: 3.0,
@@ -75,15 +72,5 @@ export const despina = {
       terrainSharpness: 1.4,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the despina configuration object instead.
- */
-export function initializeDespina(parentId: string): void {
-  const despinaConfig = { ...despina, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

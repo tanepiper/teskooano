@@ -1,10 +1,10 @@
-import { ceres, initializeCeres } from "./ceres";
-import { vesta, initializeVesta } from "./vesta";
-import { pallas, initializePallas } from "./pallas";
-import { eris, dysnomia, initializeEris } from "./eris";
-import { makemake, mk2, initializeMakemake } from "./makemake";
-import { haumea, hiiaka, namaka, initializeHaumea } from "./haumea";
-import { asteroidBelt, initializeAsteroidBelt } from "./asteroid-belt";
+import { ceres } from "./ceres";
+import { vesta } from "./vesta";
+import { pallas } from "./pallas";
+import { eris, dysnomia } from "./eris";
+import { makemake, mk2 } from "./makemake";
+import { haumea, hiiaka, namaka } from "./haumea";
+import { asteroidBelt } from "./asteroid-belt";
 
 /**
  * Minor bodies that can be initialized in any order.
@@ -26,23 +26,3 @@ export const minorBodies = [
   // Asteroid Belt (collective)
   asteroidBelt,
 ];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the minorBodies array instead.
- */
-export function initializeMinorBodies(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The minorBodies array should be used with the main solar system initialization
-}
-
-// Re-export individual initializers for flexibility (deprecated)
-export {
-  initializeAsteroidBelt,
-  initializeCeres,
-  initializeEris,
-  initializeHaumea,
-  initializeMakemake,
-  initializePallas,
-  initializeVesta,
-};

@@ -6,6 +6,7 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const ARIEL_REAL_RADIUS_M = 578.9 * KM;
@@ -13,7 +14,7 @@ const ARIEL_REAL_RADIUS_M = 578.9 * KM;
 /**
  * Ariel configuration object for modular solar system initialization.
  */
-export const ariel = {
+export const ariel: CelestialObject<PlanetProperties> = {
   id: "ariel",
   name: "Ariel",
   seed: "ariel_seed_2520",
@@ -41,22 +42,17 @@ export const ariel = {
     isMoon: true,
     composition: ["water ice", "rock", "possible ammonia"],
     surface: {
-      // Base surface properties
-      type: SurfaceType.VARIED,
-      color: "#E8E8F0", // Light ice
       roughness: 0.4,
-      classType: PlanetType.BARREN,
-      // Ariel bright fractured procedural properties
       persistence: 0.5,
       lacunarity: 2.0,
       simplePeriod: 1.8,
       octaves: 8,
       bumpScale: 2.2,
-      color1: "#B0C4DE", // Light steel blue
-      color2: "#D0D8E0", // Light gray
-      color3: "#E8E8F0", // Very light
-      color4: "#F0F0F8", // Almost white
-      color5: "#F8F8FF", // Ghost white
+      color1: "#B0C4DE",
+      color2: "#D0D8E0",
+      color3: "#E8E8F0",
+      color4: "#F0F0F8",
+      color5: "#F8F8FF",
       height1: 0.12,
       height2: 0.3,
       height3: 0.5,
@@ -64,22 +60,12 @@ export const ariel = {
       height5: 0.9,
       shininess: 22,
       specularStrength: 0.5,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.35,
       terrainType: 3,
       terrainAmplitude: 0.8,
       terrainSharpness: 1.4,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the ariel configuration object instead.
- */
-export function initializeAriel(parentId: string): void {
-  const arielConfig = { ...ariel, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

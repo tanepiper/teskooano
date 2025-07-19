@@ -3,9 +3,9 @@ import { KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Verified Wikipedia/NASA data for Titan - largest moon of Saturn with thick atmosphere
@@ -24,7 +24,7 @@ const TITAN_TEMP_K = 93.7; // Wikipedia verified: 93.7 K (−179.5 °C)
 /**
  * Titan configuration object for modular solar system initialization.
  */
-export const titan = {
+export const titan: CelestialObject<PlanetProperties> = {
   id: "titan",
   name: "Titan",
   seed: "titan_seed_15945",
@@ -65,10 +65,7 @@ export const titan = {
       thickness: 0.3,
     },
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#CD853F",
       roughness: 0.6,
-      classType: PlanetType.TERRESTRIAL,
       persistence: 0.7,
       lacunarity: 2.0,
       simplePeriod: 4.0,
@@ -93,15 +90,5 @@ export const titan = {
       terrainSharpness: 1.5,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the titan configuration object instead.
- */
-export function initializeTitan(parentId: string): void {
-  const titanConfig = { ...titan, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

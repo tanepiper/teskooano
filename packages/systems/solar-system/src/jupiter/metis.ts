@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -19,7 +19,7 @@ const METIS_ALBEDO = 0.061;
 /**
  * Metis moon configuration object for modular solar system initialization.
  */
-export const metis = {
+export const metis: CelestialObject<PlanetProperties> = {
   id: "metis",
   name: "Metis",
   seed: "metis_seed_2024",
@@ -47,10 +47,7 @@ export const metis = {
     isMoon: true,
     composition: ["rocky materials", "ice"],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#888888",
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.0,
       simplePeriod: 2.0,
@@ -75,15 +72,5 @@ export const metis = {
       terrainSharpness: 1.5,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the metis configuration object instead.
- */
-export function initializeMetis(parentId: string): void {
-  const metisConfig = { ...metis, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

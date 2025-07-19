@@ -1,6 +1,7 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   GasGiantClass,
@@ -25,7 +26,7 @@ const JUPITER_AXIAL_TILT_DEG = 3.13;
 /**
  * Jupiter configuration object for modular solar system initialization.
  */
-export const jupiter = {
+export const jupiter: CelestialObject<GasGiantProperties> = {
   id: "jupiter",
   name: "Jupiter",
   seed: "jupiter",
@@ -98,13 +99,5 @@ export const jupiter = {
         composition: ["micrometer dust"],
       },
     ],
-  } as GasGiantProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the jupiter configuration object instead.
- */
-export function initializeJupiter(parentId: string): string {
-  return jupiter.id;
-}

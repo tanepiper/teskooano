@@ -1,9 +1,9 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
@@ -24,7 +24,7 @@ const PHOBOS_TEMP_K = 233; // Wikipedia verified: ~233 K
 /**
  * Phobos moon configuration object for modular solar system initialization.
  */
-export const phobos = {
+export const phobos: CelestialObject<PlanetProperties> = {
   id: "phobos",
   name: "Phobos",
   seed: "phobos_fear_mars_moon",
@@ -59,9 +59,6 @@ export const phobos = {
     shapeModel: "asteroid",
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      classType: PlanetType.ROCKY,
-      color: "#606060",
       roughness: 0.9,
       persistence: 0.4,
       lacunarity: 2.0,
@@ -87,15 +84,5 @@ export const phobos = {
       terrainSharpness: 0.8,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the phobos configuration object instead.
- */
-export function initializePhobos(parentId: string): void {
-  const phobosConfig = { ...phobos, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

@@ -239,9 +239,6 @@ export class CelestialManager {
     // Clear the physics state cache to force recalculation with complete object set
     PhysicsStateProvider.clearCache();
 
-    // Pre-calculate physics states for all objects now that they're all in the store
-    this.precalculatePhysicsStates();
-
     const totalObjects = Object.keys(newObjectsMap).length;
     const systemId = sortedData.find((d) => d.type === CelestialType.STAR)?.id;
 

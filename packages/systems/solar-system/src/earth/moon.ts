@@ -1,6 +1,7 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
@@ -23,7 +24,7 @@ const LUNA_ALBEDO = 0.11; // Corrected to Bond albedo from NASA fact sheet
 /**
  * Luna (Moon) configuration object for modular solar system initialization.
  */
-export const luna = {
+export const luna: CelestialObject<PlanetProperties> = {
   id: "luna",
   name: "Moon",
   type: CelestialType.MOON,
@@ -55,9 +56,6 @@ export const luna = {
     classType: PlanetType.ROCKY,
     composition: ["silicates", "anorthosite crust", "possible small core"],
     surface: {
-      type: SurfaceType.VARIED,
-      classType: PlanetType.ROCKY,
-      color: "#BEBEBE",
       roughness: 0.75,
       persistence: 0.5,
       lacunarity: 2.1,
@@ -83,15 +81,5 @@ export const luna = {
       terrainSharpness: 0.7,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the luna configuration object instead.
- */
-export function initializeLuna(parentId: string): void {
-  const lunaConfig = { ...luna, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

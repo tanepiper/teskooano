@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -25,7 +25,7 @@ const MARS_AXIAL_TILT_DEG = 25.19;
 /**
  * Mars configuration object for modular solar system initialization.
  */
-export const mars = {
+export const mars: CelestialObject<PlanetProperties> = {
   id: "mars",
   name: "Mars",
   seed: "mars",
@@ -68,10 +68,7 @@ export const mars = {
       thickness: 0.15,
     },
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#CD5C5C",
       roughness: 0.8,
-      classType: PlanetType.TERRESTRIAL,
       persistence: 0.65,
       lacunarity: 2.1,
       simplePeriod: 3.2,
@@ -96,13 +93,5 @@ export const mars = {
       terrainSharpness: 1.4,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the mars configuration object instead.
- */
-export function initializeMars(parentId: string): string {
-  return mars.id;
-}

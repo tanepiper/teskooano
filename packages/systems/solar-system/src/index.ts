@@ -5,14 +5,13 @@ import { marsSystemBodies } from "./mars";
 import { mercury } from "./mercury/mercury";
 import { minorBodies } from "./minor-bodies";
 import { neptuneSystemBodies } from "./neptune";
-import { pluto } from "./pluto/pluto";
+import { plutoSystemBodies } from "./pluto";
 import { saturnSystemBodies } from "./saturn";
 import { sun } from "./sol";
 import { uranusSystemBodies } from "./uranus";
 import { venus } from "./venus/venus";
 import { allSatellites } from "./satellites";
 import { allComets } from "./comets";
-import { type CelestialObject } from "@teskooano/data-types";
 
 /**
  * Solar system bodies that can be initialized in any order.
@@ -28,7 +27,7 @@ const solarSystemBodies = [
   ...saturnSystemBodies,
   ...uranusSystemBodies,
   ...neptuneSystemBodies,
-  pluto,
+  ...plutoSystemBodies,
   ...allSatellites,
   ...allComets,
   ...minorBodies,

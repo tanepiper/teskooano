@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   type AsteroidFieldProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const BELT_CENTER_AU = 2.7;
@@ -18,7 +19,7 @@ const BELT_ASTEROID_COUNT = 50000;
 /**
  * Main asteroid belt configuration object for modular solar system initialization.
  */
-export const asteroidBelt = {
+export const asteroidBelt: CelestialObject<AsteroidFieldProperties> = {
   id: "asteroid-belt-main",
   name: "Main Asteroid Belt",
   type: CelestialType.ASTEROID_FIELD,
@@ -36,6 +37,7 @@ export const asteroidBelt = {
     period_s: Math.sqrt(Math.pow(BELT_CENTER_AU, 3)) * 3.15576e7,
   },
   temperature: 165,
+  albedo: 0.12, // Typical asteroid belt albedo (similar to dark asteroids)
   ignorePhysics: false,
   ignoreCollisions: true,
   properties: {
@@ -46,15 +48,5 @@ export const asteroidBelt = {
     count: BELT_ASTEROID_COUNT,
     color: "#b4afac",
     composition: ["silicates", "carbonaceous", "metallic", "icy fragments"],
-  } as AsteroidFieldProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the asteroidBelt configuration object instead.
- */
-export function initializeAsteroidBelt(parentId: string): void {
-  const asteroidBeltConfig = { ...asteroidBelt, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

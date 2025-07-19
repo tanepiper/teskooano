@@ -1,11 +1,11 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
+  PlanetProperties,
   PlanetType,
-  SurfaceType,
-  type PlanetProperties,
 } from "@teskooano/data-types";
 
 const MERCURY_MASS_KG = 3.285e23;
@@ -25,7 +25,7 @@ const MERCURY_AXIAL_TILT_DEG = 0.034;
 /**
  * Mercury configuration object for modular solar system initialization.
  */
-export const mercury = {
+export const mercury: CelestialObject<PlanetProperties> = {
   id: "mercury",
   name: "Mercury",
   seed: "mercury",
@@ -57,10 +57,7 @@ export const mercury = {
     isMoon: false,
     composition: ["silicates", "iron core", "thin exosphere", "no atmosphere"],
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#8B7355",
       roughness: 0.9,
-      classType: PlanetType.ROCKY,
       persistence: 0.6,
       lacunarity: 2.0,
       simplePeriod: 2.5,
@@ -85,13 +82,5 @@ export const mercury = {
       terrainSharpness: 1.3,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the mercury configuration object instead.
- */
-export function initializeMercury(parentId: string): string {
-  return mercury.id;
-}

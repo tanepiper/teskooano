@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // ISS physical constants (current as of 2024)
@@ -16,7 +17,7 @@ const ISS_ECCENTRICITY = 0.0003;
 /**
  * ISS configuration object for modular solar system initialization.
  */
-export const iss = {
+export const iss: CelestialObject<SatelliteProperties> = {
   id: "iss",
   name: "International Space Station",
   seed: "iss_alpha_station",
@@ -45,8 +46,6 @@ export const iss = {
     missionType: "scientific",
     operationalStatus: "active",
     launchDate: "1998-11-20", // First module (Zarya)
-    description:
-      "International collaborative space station serving as humanity's permanent outpost in low Earth orbit",
     components: [
       "Pressurized modules",
       "Solar arrays",
@@ -54,15 +53,5 @@ export const iss = {
       "Docking ports",
       "Robotic arms",
     ],
-  } as SatelliteProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the iss configuration object instead.
- */
-export function initializeISS(parentId: string): void {
-  const issConfig = { ...iss, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

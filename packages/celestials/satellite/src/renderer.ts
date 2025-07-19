@@ -44,7 +44,8 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
   private fallbackMesh?: THREE.Mesh;
   private modelBoundingBox = new THREE.Box3();
   private modelCenter = new THREE.Vector3();
-  private currentObject?: RenderableCelestialObject; // Store current object reference
+  private currentObject?: RenderableCelestialObject;
+  private _cachedLODLevels?: LODLevel[]; // Store current object reference
 
   constructor() {
     super();
@@ -63,13 +64,19 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
+    // If we already have LOD levels cached, return them
+    if (this._cachedLODLevels) {
+      return this._cachedLODLevels;
+    }
+
     this.currentObject = object; // Store the current object
     const properties = object.properties as SatelliteProperties;
     if (!properties?.modelPath) {
       console.warn(
         `[SatelliteRenderer] No modelPath provided for ${object.celestialObjectId}`,
       );
-      return this.createFallbackLOD(object);
+      this._cachedLODLevels = this.createFallbackLOD(object);
+      return this._cachedLODLevels;
     }
 
     // Create the main group that will hold either the model or fallback
@@ -90,11 +97,6 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       this.createBillboard(object);
     }
 
-    // Create medium detail model if not created yet
-    if (!this.mediumDetailModel) {
-      this.createMediumDetailModel(object);
-    }
-
     // Ensure we have valid objects for all LOD levels
     const levels: LODLevel[] = [
       {
@@ -102,14 +104,6 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
         object: this.satelliteGroup,
       },
     ];
-
-    // Only add medium detail level if it was successfully created
-    if (this.mediumDetailModel) {
-      levels.push({
-        distance: 500, // Switch to medium detail at 500m distance
-        object: this.mediumDetailModel,
-      });
-    }
 
     // Only add billboard level if it was successfully created
     if (this.billboard) {
@@ -119,6 +113,8 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       });
     }
 
+    // Cache the LOD levels to prevent recreation
+    this._cachedLODLevels = levels;
     return levels;
   }
 

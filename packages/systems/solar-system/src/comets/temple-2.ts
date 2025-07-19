@@ -1,5 +1,10 @@
 import { CONVERSION } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  METERS_TO_SCENE_UNITS,
+  SCALE,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Temple 2 Comet constants
 export const TEMPLE2_NUCLEUS_RADIUS_M = 2.0 * CONVERSION.KM_TO_M; // Estimate
@@ -29,7 +34,7 @@ import {
 /**
  * Temple 2 Comet configuration object for modular solar system initialization.
  */
-export const temple2 = {
+export const temple2: CelestialObject<CometProperties> = {
   id: "temple-2",
   name: "10P/Tempel 2",
   seed: "temple_2",
@@ -49,7 +54,7 @@ export const temple2 = {
     meanAnomaly: TEMPLE2_MA_RAD,
     period_s: TEMPLE2_PERIOD_S,
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: { x: 0, y: 1, z: 0 },
+    axialTilt: new OSVector3(0, 1, 0),
   },
   properties: {
     type: CelestialType.COMET,
@@ -60,15 +65,5 @@ export const temple2 = {
     visualComaColor: TEMPLE2_COMA_COLOR,
     visualMaxTailLength: TEMPLE2_TAIL_LENGTH,
     visualTailColor: TEMPLE2_TAIL_COLOR,
-  } as CometProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the temple2 configuration object instead.
- */
-export function initializeTemple2(parentId: string): void {
-  const temple2Config = { ...temple2, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

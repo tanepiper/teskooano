@@ -6,6 +6,7 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const OBERON_REAL_RADIUS_M = 761.4 * KM;
@@ -13,7 +14,7 @@ const OBERON_REAL_RADIUS_M = 761.4 * KM;
 /**
  * Oberon configuration object for modular solar system initialization.
  */
-export const oberon = {
+export const oberon: CelestialObject<PlanetProperties> = {
   id: "oberon",
   name: "Oberon",
   seed: "oberon_seed_1346",
@@ -41,12 +42,7 @@ export const oberon = {
     isMoon: true,
     composition: ["water ice", "rock", "dark carbonaceous material"],
     surface: {
-      // Base surface properties
-      type: SurfaceType.CRATERED,
-      color: "#9898A0", // Dark gray
       roughness: 0.8,
-      classType: PlanetType.BARREN,
-      // Oberon dark surface procedural properties
       persistence: 0.55,
       lacunarity: 2.2,
       simplePeriod: 2.8,
@@ -71,15 +67,5 @@ export const oberon = {
       terrainSharpness: 1.6,
       terrainOffset: -0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the oberon configuration object instead.
- */
-export function initializeOberon(parentId: string): void {
-  const oberonConfig = { ...oberon, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

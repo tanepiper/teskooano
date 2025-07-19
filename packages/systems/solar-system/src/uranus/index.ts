@@ -17,12 +17,3 @@ export const uranusSystemBodies = [
   ariel,
   miranda,
 ];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the uranusSystemBodies array instead.
- */
-export function initializeUranus(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The uranusSystemBodies array should be used with the main solar system initialization
-}

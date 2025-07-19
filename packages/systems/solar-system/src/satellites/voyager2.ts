@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Voyager 2 physical constants (real-time data as of latest update)
@@ -61,8 +62,6 @@ export const voyager2 = {
     missionType: "scientific",
     operationalStatus: "active",
     launchDate: "1977-08-20",
-    description:
-      "NASA's Voyager 2 - the only spacecraft to visit all four outer planets. Currently 139.7 AU from Sun (13 billion miles), traveling at 34,390 mph. Mission elapsed time: 47 years, 1 month. One-way light time: 19:20:00. Carries the Golden Record with sounds and images of Earth for potential extraterrestrial discovery.",
     components: [
       "High-gain antenna (3.7m dish)",
       "Magnetometer boom",
@@ -71,7 +70,7 @@ export const voyager2 = {
       "Golden Record",
       "Plasma wave antenna",
     ],
-  } as SatelliteProperties,
+  },
 };
 
 /**

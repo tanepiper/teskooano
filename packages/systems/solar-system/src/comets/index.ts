@@ -10,12 +10,3 @@ import { whipple } from "./whipple";
  * Each object should have a parentId that references an existing body.
  */
 export const allComets = [halley, haleBopp, encke, temple2, borrelly, whipple];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the allComets array instead.
- */
-export function initializeComets(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The allComets array should be used with the main solar system initialization
-}

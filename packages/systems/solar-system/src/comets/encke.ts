@@ -1,5 +1,10 @@
 import { CONVERSION } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  METERS_TO_SCENE_UNITS,
+  SCALE,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Encke's Comet (2P/Encke) constants
 export const ENCKE_NUCLEUS_RADIUS_M = 2.4 * CONVERSION.KM_TO_M;
@@ -29,7 +34,7 @@ import {
 /**
  * Encke's Comet configuration object for modular solar system initialization.
  */
-export const encke = {
+export const encke: CelestialObject<CometProperties> = {
   id: "encke",
   name: "2P/Encke",
   seed: "encke",
@@ -49,7 +54,7 @@ export const encke = {
     meanAnomaly: ENCKE_MA_RAD,
     period_s: ENCKE_PERIOD_S,
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: { x: 0, y: 1, z: 0 },
+    axialTilt: new OSVector3(0, 1, 0),
   },
   properties: {
     type: CelestialType.COMET,
@@ -60,7 +65,7 @@ export const encke = {
     visualComaColor: ENCKE_COMA_COLOR,
     visualMaxTailLength: ENCKE_TAIL_LENGTH,
     visualTailColor: ENCKE_TAIL_COLOR,
-  } as CometProperties,
+  },
 };
 
 /**

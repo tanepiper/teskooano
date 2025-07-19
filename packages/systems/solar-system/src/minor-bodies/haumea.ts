@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   PlanetType,
   RockyType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
   type RingProperties,
@@ -49,7 +49,7 @@ const NAMAKA_ALBEDO = 0.06;
 /**
  * Haumea dwarf planet configuration object for modular solar system initialization.
  */
-export const haumea = {
+export const haumea: CelestialObject<PlanetProperties> = {
   id: "haumea",
   name: "Haumea",
   seed: "haumea",
@@ -102,10 +102,7 @@ export const haumea = {
     ],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.ICE_FLATS,
-      color: "#F0F8FF",
       roughness: 0.1,
-      classType: PlanetType.BARREN,
       persistence: 0.4,
       lacunarity: 2.0,
       simplePeriod: 1.2,
@@ -130,13 +127,13 @@ export const haumea = {
       terrainSharpness: 0.6,
       terrainOffset: 0.02,
     },
-  } as PlanetProperties,
+  },
 };
 
 /**
  * Hi'iaka moon configuration object for modular solar system initialization.
  */
-export const hiiaka = {
+export const hiiaka: CelestialObject<PlanetProperties> = {
   id: "hiiaka",
   name: "Hi'iaka",
   seed: "hiiaka",
@@ -171,10 +168,7 @@ export const hiiaka = {
     shapeModel: "asteroid",
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#404040",
       roughness: 0.9,
-      classType: PlanetType.BARREN,
       persistence: 0.55,
       lacunarity: 2.2,
       simplePeriod: 3.8,
@@ -199,13 +193,13 @@ export const hiiaka = {
       terrainSharpness: 1.6,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
 
 /**
  * Namaka moon configuration object for modular solar system initialization.
  */
-export const namaka = {
+export const namaka: CelestialObject<PlanetProperties> = {
   id: "namaka",
   name: "Namaka",
   seed: "namaka",
@@ -240,10 +234,7 @@ export const namaka = {
       thickness: 0,
     },
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#383838",
       roughness: 0.95,
-      classType: PlanetType.BARREN,
       persistence: 0.58,
       lacunarity: 2.4,
       simplePeriod: 4.2,
@@ -268,17 +259,5 @@ export const namaka = {
       terrainSharpness: 1.8,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the haumea, hiiaka, and namaka configuration objects instead.
- */
-export function initializeHaumea(parentId: string): void {
-  const haumeaConfig = { ...haumea, parentId };
-  const hiiakaConfig = { ...hiiaka, parentId: haumea.id };
-  const namakaConfig = { ...namaka, parentId: haumea.id };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config objects
-}

@@ -3,8 +3,8 @@ import { KM } from "@teskooano/core-physics";
 import {
   CelestialStatus,
   CelestialType,
+  CelestialObject,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -19,7 +19,7 @@ const ADRASTEA_ALBEDO = 0.05;
 /**
  * Adrastea moon configuration object for modular solar system initialization.
  */
-export const adrastea = {
+export const adrastea: CelestialObject<PlanetProperties> = {
   id: "adrastea",
   name: "Adrastea",
   seed: "adrastea_seed_2024",
@@ -47,10 +47,7 @@ export const adrastea = {
     isMoon: true,
     composition: ["rocky materials", "ice"],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#888888",
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.0,
       simplePeriod: 2.0,
@@ -75,15 +72,5 @@ export const adrastea = {
       terrainSharpness: 1.5,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the adrastea configuration object instead.
- */
-export function initializeAdrastea(parentId: string): void {
-  const adrasteaConfig = { ...adrastea, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

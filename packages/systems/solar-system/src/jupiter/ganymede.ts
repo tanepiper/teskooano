@@ -1,9 +1,9 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
@@ -24,7 +24,7 @@ const GANYMEDE_TEMP_K = 110; // Wikipedia verified: mean 110 K
 /**
  * Ganymede moon configuration object for modular solar system initialization.
  */
-export const ganymede = {
+export const ganymede: CelestialObject<PlanetProperties> = {
   id: "ganymede",
   name: "Ganymede",
   seed: "ganymede_seed_7155",
@@ -63,10 +63,7 @@ export const ganymede = {
       thickness: 0.005,
     },
     surface: {
-      type: SurfaceType.ICE_FLATS,
-      color: "#D0D8E0",
       roughness: 0.4,
-      classType: PlanetType.BARREN,
       persistence: 0.5,
       lacunarity: 2.0,
       simplePeriod: 2.5,
@@ -91,15 +88,5 @@ export const ganymede = {
       terrainSharpness: 1.2,
       terrainOffset: 0.05,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the ganymede configuration object instead.
- */
-export function initializeGanymede(parentId: string): void {
-  const ganymedeConfig = { ...ganymede, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

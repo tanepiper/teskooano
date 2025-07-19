@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Voyager 1 physical constants (real-time data as of latest update)
@@ -28,7 +29,7 @@ const VOYAGER1_DEC_DEG = 12.4; // +12.4°
  *
  * Uses rogue object approach - no orbital mechanics, direct position/velocity.
  */
-export const voyager1 = {
+export const voyager1: CelestialObject<SatelliteProperties> = {
   id: "voyager-1",
   name: "Voyager 1",
   seed: "voyager_1_golden_record",
@@ -61,8 +62,6 @@ export const voyager1 = {
     missionType: "scientific",
     operationalStatus: "active",
     launchDate: "1977-09-05",
-    description:
-      "NASA's Voyager 1 - the most distant human-made object and first to enter interstellar space. Currently 167.66 AU from Sun (15.5 billion miles), traveling at 38,027 mph. Mission elapsed time: 47 years, 10 months. One-way light time: 23:08:44. Carries the Golden Record with sounds and images of Earth for potential extraterrestrial discovery.",
     components: [
       "High-gain antenna (3.7m dish)",
       "Magnetometer boom",
@@ -71,14 +70,5 @@ export const voyager1 = {
       "Golden Record",
       "Plasma wave antenna",
     ],
-  } as SatelliteProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the voyager1 configuration object instead.
- */
-export function initializeVoyager1(): void {
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

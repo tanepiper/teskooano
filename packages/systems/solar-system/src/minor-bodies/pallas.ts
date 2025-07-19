@@ -3,9 +3,9 @@ import { AU, KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const PALLAS_MASS_KG = 2.11e20;
@@ -25,7 +25,7 @@ const PALLAS_AXIAL_TILT_DEG = 84;
 /**
  * Pallas asteroid configuration object for modular solar system initialization.
  */
-export const pallas = {
+export const pallas: CelestialObject<PlanetProperties> = {
   id: "pallas",
   name: "2 Pallas",
   seed: "pallas",
@@ -62,10 +62,7 @@ export const pallas = {
       "organic compounds",
     ],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#696969",
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.6,
       lacunarity: 2.2,
       simplePeriod: 2.8,
@@ -90,15 +87,5 @@ export const pallas = {
       terrainSharpness: 1.5,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the pallas configuration object instead.
- */
-export function initializePallas(parentId: string): void {
-  const pallasConfig = { ...pallas, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

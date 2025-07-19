@@ -1,5 +1,10 @@
 import { CONVERSION } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  METERS_TO_SCENE_UNITS,
+  SCALE,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Hale-Bopp Comet (C/1995 O1) constants
 export const HALEBOPP_NUCLEUS_RADIUS_M = 30 * CONVERSION.KM_TO_M;
@@ -29,7 +34,7 @@ import {
 /**
  * Hale-Bopp Comet configuration object for modular solar system initialization.
  */
-export const haleBopp = {
+export const haleBopp: CelestialObject<CometProperties> = {
   id: "hale-bopp",
   name: "C/1995 O1 (Hale-Bopp)",
   seed: "hale_bopp",
@@ -49,7 +54,7 @@ export const haleBopp = {
     meanAnomaly: HALEBOPP_MA_RAD,
     period_s: HALEBOPP_PERIOD_S,
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
-    axialTilt: { x: 0, y: 1, z: 0 },
+    axialTilt: new OSVector3(0, 1, 0),
   },
   properties: {
     type: CelestialType.COMET,
@@ -60,15 +65,5 @@ export const haleBopp = {
     visualComaColor: HALEBOPP_COMA_COLOR,
     visualMaxTailLength: HALEBOPP_TAIL_LENGTH,
     visualTailColor: HALEBOPP_TAIL_COLOR,
-  } as CometProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the haleBopp configuration object instead.
- */
-export function initializeHaleBopp(parentId: string): void {
-  const haleBoppConfig = { ...haleBopp, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

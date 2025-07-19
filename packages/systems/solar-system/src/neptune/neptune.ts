@@ -125,11 +125,3 @@ export const neptune: CelestialObject<GasGiantProperties> = {
     ],
   },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the neptune configuration object instead.
- */
-export function initializeNeptune(parentId: string): string {
-  return neptune.id;
-}

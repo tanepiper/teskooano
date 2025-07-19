@@ -4,8 +4,8 @@ import {
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const TETHYS_MASS_KG = 6.174e20;
@@ -22,7 +22,7 @@ const TETHYS_ALBEDO = 1.229;
 /**
  * Tethys configuration object for modular solar system initialization.
  */
-export const tethys = {
+export const tethys: CelestialObject<PlanetProperties> = {
   id: "tethys",
   name: "Tethys",
   seed: "tethys",
@@ -51,10 +51,7 @@ export const tethys = {
     composition: ["mostly water ice", "small amount of rock"],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.ICE_CRACKED,
-      color: "#F8F8F8",
       roughness: 0.4,
-      classType: PlanetType.BARREN,
       persistence: 0.5,
       lacunarity: 2.1,
       simplePeriod: 1.9,
@@ -79,15 +76,5 @@ export const tethys = {
       terrainSharpness: 1.6,
       terrainOffset: 0.15,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the tethys configuration object instead.
- */
-export function initializeTethys(parentId: string): void {
-  const tethysConfig = { ...tethys, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

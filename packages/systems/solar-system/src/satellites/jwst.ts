@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // James Webb Space Telescope physical constants
@@ -15,7 +16,7 @@ const JWST_ECCENTRICITY = 0.0;
 /**
  * JWST configuration object for modular solar system initialization.
  */
-export const jwst = {
+export const jwst: CelestialObject<SatelliteProperties> = {
   id: "jwst",
   name: "James Webb Space Telescope",
   seed: "jwst_infrared_observatory",
@@ -44,8 +45,6 @@ export const jwst = {
     missionType: "scientific",
     operationalStatus: "active",
     launchDate: "2021-12-25",
-    description:
-      "NASA/ESA/CSA infrared space telescope at L2 Lagrange point, studying the early universe and exoplanets",
     components: [
       "6.5m segmented primary mirror",
       "Five-layer sunshield",
@@ -59,15 +58,5 @@ export const jwst = {
       roughness: 0.1, // Very smooth for reflective surfaces
       envMapIntensity: 1.5, // Strong environment reflections
     },
-  } as SatelliteProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the jwst configuration object instead.
- */
-export function initializeJWST(parentId: string): void {
-  const jwstConfig = { ...jwst, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

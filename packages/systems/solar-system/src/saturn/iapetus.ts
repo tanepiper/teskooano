@@ -4,8 +4,8 @@ import {
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const IAPETUS_MASS_KG = 1.806e21;
@@ -22,7 +22,7 @@ const IAPETUS_ALBEDO = 0.04;
 /**
  * Iapetus configuration object for modular solar system initialization.
  */
-export const iapetus = {
+export const iapetus: CelestialObject<PlanetProperties> = {
   id: "iapetus",
   name: "Iapetus",
   seed: "iapetus",
@@ -51,10 +51,7 @@ export const iapetus = {
     composition: ["water ice", "rock", "carbonaceous material on one side"],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#A0A0A0",
       roughness: 0.7,
-      classType: PlanetType.BARREN,
       persistence: 0.48,
       lacunarity: 2.3,
       simplePeriod: 1.8,
@@ -79,15 +76,5 @@ export const iapetus = {
       terrainSharpness: 1.4,
       terrainOffset: -0.05,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the iapetus configuration object instead.
- */
-export function initializeIapetus(parentId: string): void {
-  const iapetusConfig = { ...iapetus, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

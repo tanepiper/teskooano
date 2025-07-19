@@ -1,9 +1,9 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
@@ -24,7 +24,7 @@ const EUROPA_TEMP_K = 102; // Wikipedia verified: mean 102 K
 /**
  * Europa moon configuration object for modular solar system initialization.
  */
-export const europa = {
+export const europa: CelestialObject<PlanetProperties> = {
   id: "europa",
   name: "Europa",
   seed: "europa_seed_3551",
@@ -63,10 +63,7 @@ export const europa = {
       thickness: 0.01,
     },
     surface: {
-      type: SurfaceType.ICE_CRACKED,
-      color: "#F0F4F8",
       roughness: 0.3,
-      classType: PlanetType.BARREN,
       persistence: 0.53,
       lacunarity: 2.15,
       simplePeriod: 0.86,
@@ -91,15 +88,5 @@ export const europa = {
       terrainSharpness: 1.3,
       terrainOffset: 0.25,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the europa configuration object instead.
- */
-export function initializeEuropa(parentId: string): void {
-  const europaConfig = { ...europa, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

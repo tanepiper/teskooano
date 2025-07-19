@@ -1,10 +1,10 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -25,7 +25,7 @@ const PLUTO_AXIAL_TILT_DEG = 122.53;
 /**
  * Pluto configuration object for modular solar system initialization.
  */
-export const pluto = {
+export const pluto: CelestialObject<PlanetProperties> = {
   id: "pluto",
   name: "Pluto",
   seed: "pluto",
@@ -53,7 +53,6 @@ export const pluto = {
   },
   properties: {
     type: CelestialType.PLANET,
-    classType: PlanetType.ICE,
     isMoon: false,
     composition: [
       "nitrogen ice",
@@ -62,10 +61,7 @@ export const pluto = {
       "rocky core",
     ],
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#E6E6FA",
       roughness: 0.7,
-      classType: PlanetType.ICE,
       persistence: 0.7,
       lacunarity: 2.0,
       simplePeriod: 4.0,
@@ -90,13 +86,5 @@ export const pluto = {
       terrainSharpness: 1.2,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the pluto configuration object instead.
- */
-export function initializePluto(parentId: string): string {
-  return pluto.id;
-}

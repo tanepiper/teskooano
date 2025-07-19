@@ -4,8 +4,8 @@ import {
   CelestialType,
   CelestialStatus,
   PlanetType,
-  SurfaceType,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const PHOEBE_MASS_KG = 8.28e18;
@@ -23,7 +23,7 @@ const PHOEBE_ALBEDO = 0.081;
 /**
  * Phoebe configuration object for modular solar system initialization.
  */
-export const phoebe = {
+export const phoebe: CelestialObject<PlanetProperties> = {
   id: "phoebe",
   name: "Phoebe",
   seed: "phoebe",
@@ -52,10 +52,7 @@ export const phoebe = {
     composition: ["water ice", "rock", "carbonaceous material"],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.VARIED,
-      color: "#76645b",
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.2,
       simplePeriod: 1.9,
@@ -80,15 +77,5 @@ export const phoebe = {
       terrainSharpness: 1.5,
       terrainOffset: -0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the phoebe configuration object instead.
- */
-export function initializePhoebe(parentId: string): void {
-  const phoebeConfig = { ...phoebe, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

@@ -7,6 +7,7 @@ import {
   CelestialStatus,
   type GasGiantProperties,
   type RingProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const SATURN_MASS_KG = 5.6834e26;
@@ -27,7 +28,7 @@ const SATURN_AXIAL_TILT_DEG = 26.73;
 /**
  * Saturn configuration object for modular solar system initialization.
  */
-export const saturn = {
+export const saturn: CelestialObject<GasGiantProperties> = {
   id: "saturn",
   name: "Saturn",
   seed: "saturn",
@@ -160,13 +161,5 @@ export const saturn = {
         composition: ["ice crystals", "dust"],
       } as RingProperties,
     ],
-  } as GasGiantProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the saturn configuration object instead.
- */
-export function initializeSaturnPlanet(parentId: string): string {
-  return saturn.id;
-}

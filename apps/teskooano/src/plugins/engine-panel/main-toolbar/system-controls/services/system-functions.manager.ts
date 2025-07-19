@@ -360,7 +360,6 @@ export class SystemFunctionsManager {
 
       initializeSolarSystem();
 
-      simulationManager.resetSystem(true);
       return { success: true, symbol: "☀️", message: "Solar system loaded." };
     } catch (error) {
       console.error("[SystemFunctions] Error loading solar system:", error);

@@ -3,6 +3,7 @@ import {
   StellarType,
   CelestialStatus,
   type StarProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
@@ -16,7 +17,7 @@ const SUN_LUMINOSITY = 1.0;
  * Sun configuration object for modular solar system initialization.
  * Data primarily sourced from NASA Planetary Fact Sheet & JPL Horizons.
  */
-export const sun = {
+export const sun: CelestialObject<StarProperties> = {
   id: "sun",
   name: "Sun",
   seed: "sun_seed_string_111",
@@ -45,15 +46,5 @@ export const sun = {
     luminosity: SUN_LUMINOSITY,
     color: "#FFFFE0",
     stellarType: StellarType.MAIN_SEQUENCE,
-  } as StarProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the sun configuration object instead.
- */
-export function initializeSun(): string {
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-  return sun.id;
-}

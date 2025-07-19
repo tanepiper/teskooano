@@ -1,9 +1,9 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
@@ -36,7 +36,7 @@ const MK2_ALBEDO = 0.04;
 /**
  * Makemake dwarf planet configuration object for modular solar system initialization.
  */
-export const makemake = {
+export const makemake: CelestialObject<PlanetProperties> = {
   id: "makemake",
   name: "Makemake",
   seed: "makemake",
@@ -76,10 +76,7 @@ export const makemake = {
     ],
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.ICE_FLATS,
-      color: "#FFE8E8",
       roughness: 0.2,
-      classType: PlanetType.BARREN,
       persistence: 0.45,
       lacunarity: 2.1,
       simplePeriod: 1.8,
@@ -104,13 +101,13 @@ export const makemake = {
       terrainSharpness: 0.7,
       terrainOffset: 0.05,
     },
-  } as PlanetProperties,
+  },
 };
 
 /**
  * MK2 moon configuration object for modular solar system initialization.
  */
-export const mk2 = {
+export const mk2: CelestialObject<PlanetProperties> = {
   id: "mk2",
   name: "MK2",
   seed: "mk2",
@@ -140,10 +137,7 @@ export const mk2 = {
     shapeModel: "asteroid",
     atmosphere: undefined,
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#303030",
       roughness: 0.95,
-      classType: PlanetType.BARREN,
       persistence: 0.6,
       lacunarity: 2.3,
       simplePeriod: 4.0,
@@ -168,16 +162,5 @@ export const mk2 = {
       terrainSharpness: 1.8,
       terrainOffset: 0.0,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the makemake and mk2 configuration objects instead.
- */
-export function initializeMakemake(parentId: string): void {
-  const makemakeConfig = { ...makemake, parentId };
-  const mk2Config = { ...mk2, parentId: makemake.id };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config objects
-}

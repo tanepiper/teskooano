@@ -3,9 +3,9 @@ import { KM } from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
-  SurfaceType,
   CelestialStatus,
   type PlanetProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 const AMALTHEA_MASS_KG = 2.08e18;
@@ -19,7 +19,7 @@ const AMALTHEA_ALBEDO = 0.09;
 /**
  * Amalthea moon configuration object for modular solar system initialization.
  */
-export const amalthea = {
+export const amalthea: CelestialObject<PlanetProperties> = {
   id: "amalthea",
   name: "Amalthea",
   seed: "amalthea_seed_2024",
@@ -47,10 +47,7 @@ export const amalthea = {
     isMoon: true,
     composition: ["rocky materials", "ice"],
     surface: {
-      type: SurfaceType.CRATERED,
-      color: "#B47878", // Reddish hue
       roughness: 0.8,
-      classType: PlanetType.ROCKY,
       persistence: 0.5,
       lacunarity: 2.0,
       simplePeriod: 2.0,
@@ -75,15 +72,5 @@ export const amalthea = {
       terrainSharpness: 1.5,
       terrainOffset: 0.1,
     },
-  } as PlanetProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the amalthea configuration object instead.
- */
-export function initializeAmalthea(parentId: string): void {
-  const amaltheaConfig = { ...amalthea, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}

@@ -4,6 +4,7 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
+  CelestialObject,
 } from "@teskooano/data-types";
 
 // Hubble Space Telescope physical constants (current as of 2024)
@@ -16,7 +17,7 @@ const HUBBLE_ECCENTRICITY = 0.0001;
 /**
  * Hubble configuration object for modular solar system initialization.
  */
-export const hubble = {
+export const hubble: CelestialObject<SatelliteProperties> = {
   id: "hubble",
   name: "Hubble Space Telescope",
   seed: "hst_great_observatory",
@@ -45,8 +46,6 @@ export const hubble = {
     missionType: "scientific",
     operationalStatus: "active",
     launchDate: "1990-04-24",
-    description:
-      "NASA/ESA space telescope providing unprecedented views of the universe in visible, UV, and near-infrared light",
     components: [
       "2.4m primary mirror",
       "Scientific instruments",
@@ -54,15 +53,5 @@ export const hubble = {
       "Fine guidance sensors",
       "Pointing system",
     ],
-  } as SatelliteProperties,
+  },
 };
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the hubble configuration object instead.
- */
-export function initializeHubble(parentId: string): void {
-  const hubbleConfig = { ...hubble, parentId };
-  // Note: This would need celestialManager import if we want to keep the function working
-  // For now, just export the config object
-}
