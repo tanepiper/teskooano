@@ -97,9 +97,6 @@ export class SystemGenerator {
             atmosphere: celestialObject.atmosphere as any,
           };
 
-          // Get all current objects for physics state calculation
-          const allObjects = StateAccessor.getCurrentCelestialObjects();
-
           // Handle stars properly using createSolarSystem
           if (celestialObject.type === CelestialType.STAR) {
             if (!isSystemInitialized) {

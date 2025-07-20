@@ -10,6 +10,7 @@ import {
   CelestialType,
   CustomEvents,
   METERS_TO_SCENE_UNITS,
+  AU_METERS,
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
@@ -20,6 +21,46 @@ import {
   handleFollowRequest,
 } from "./focus-interactions.js";
 import * as THREE from "three";
+
+/**
+ * Calculates the distance from a point to the surface of a celestial object.
+ * For solid bodies (planets, moons, etc.), this subtracts the object's radius.
+ * For stars and other gaseous bodies, this returns the distance to the center.
+ * @param fromPosition The position to measure from (in scene units)
+ * @param toPosition The position of the celestial object's center (in scene units)
+ * @param objectRadius The radius of the celestial object in meters
+ * @param objectType The type of celestial object
+ * @returns The distance to the surface (or center for stars) in scene units
+ */
+function calculateSurfaceDistance(
+  fromPosition: THREE.Vector3,
+  toPosition: THREE.Vector3,
+  objectRadius: number,
+  objectType: CelestialType,
+): number {
+  const centerDistance = fromPosition.distanceTo(toPosition);
+
+  // For all solid bodies, subtract the radius to get surface distance
+  // This includes planets, moons, satellites, comets, etc.
+  const solidBodyTypes = [
+    CelestialType.PLANET,
+    CelestialType.DWARF_PLANET,
+    CelestialType.MOON,
+    CelestialType.SATELLITE,
+    CelestialType.COMET,
+    CelestialType.ASTEROID_FIELD,
+    CelestialType.OORT_CLOUD,
+  ];
+
+  if (solidBodyTypes.includes(objectType) && objectRadius > 0) {
+    // Convert radius from meters to scene units
+    const radiusInSceneUnits = objectRadius * METERS_TO_SCENE_UNITS;
+    return Math.max(0, centerDistance - radiusInSceneUnits);
+  }
+
+  // For stars and gas giants (no solid surface), use center distance
+  return centerDistance;
+}
 
 /**
  * Controller for the CelestialHierarchy view.
@@ -590,18 +631,41 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
           const parentSceneObject = renderer.objectManager.getObject(parentId);
           if (parentSceneObject) {
             parentSceneObject.getWorldPosition(parentWorldPosition);
+            const parentObj = allObjects[parentId];
+
+            // For satellites, use parent's radius to get distance from parent's surface
+            // For other objects, use their own radius
+            const radiusToUse =
+              celestialObj.type === CelestialType.SATELLITE
+                ? parentObj.realRadius_m || 0
+                : celestialObj.realRadius_m || 0;
+
             distanceMeters =
-              worldPosition.distanceTo(parentWorldPosition) *
-              SCENE_UNITS_TO_METERS;
+              calculateSurfaceDistance(
+                worldPosition,
+                parentWorldPosition,
+                radiusToUse,
+                celestialObj.type,
+              ) * SCENE_UNITS_TO_METERS;
           } else {
             // Parent not found in scene, use distance from origin
             distanceMeters =
-              worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+              calculateSurfaceDistance(
+                worldPosition,
+                origin,
+                celestialObj.realRadius_m || 0,
+                celestialObj.type,
+              ) * SCENE_UNITS_TO_METERS;
           }
         } else {
           // No parent or root object, use distance from origin
           distanceMeters =
-            worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+            calculateSurfaceDistance(
+              worldPosition,
+              origin,
+              celestialObj.realRadius_m || 0,
+              celestialObj.type,
+            ) * SCENE_UNITS_TO_METERS;
         }
       } else {
         // Object not in scene (e.g., destroyed), try to use orbital parameters
@@ -692,16 +756,39 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
           const parentSceneObject = renderer.objectManager.getObject(parentId);
           if (parentSceneObject) {
             parentSceneObject.getWorldPosition(parentWorldPosition);
+            const parentObj = allObjects[parentId];
+
+            // For satellites, use parent's radius to get distance from parent's surface
+            // For other objects, use their own radius
+            const radiusToUse =
+              celestialObj.type === CelestialType.SATELLITE
+                ? parentObj.realRadius_m || 0
+                : celestialObj.realRadius_m || 0;
+
             distanceMeters =
-              worldPosition.distanceTo(parentWorldPosition) *
-              SCENE_UNITS_TO_METERS;
+              calculateSurfaceDistance(
+                worldPosition,
+                parentWorldPosition,
+                radiusToUse,
+                celestialObj.type,
+              ) * SCENE_UNITS_TO_METERS;
           } else {
             distanceMeters =
-              worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+              calculateSurfaceDistance(
+                worldPosition,
+                origin,
+                celestialObj.realRadius_m || 0,
+                celestialObj.type,
+              ) * SCENE_UNITS_TO_METERS;
           }
         } else {
           distanceMeters =
-            worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+            calculateSurfaceDistance(
+              worldPosition,
+              origin,
+              celestialObj.realRadius_m || 0,
+              celestialObj.type,
+            ) * SCENE_UNITS_TO_METERS;
         }
       } else if (celestialObj.orbit?.realSemiMajorAxis_m) {
         distanceMeters = celestialObj.orbit.realSemiMajorAxis_m;

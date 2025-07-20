@@ -68,7 +68,7 @@ const DynamicCameraSettings = {
     [CelestialType.GAS_GIANT]: 0.001,
     [CelestialType.DWARF_PLANET]: 0.001,
     [CelestialType.MOON]: 0.001,
-    [CelestialType.COMET]: 0.0001,
+    [CelestialType.COMET]: 0.0000001, // Comets can use very low near plane for close viewing (like satellites)
     [CelestialType.SATELLITE]: 0.0000001, // Satellites can use very low near plane for close viewing
     [CelestialType.OORT_CLOUD]: 0.0001,
     [CelestialType.ASTEROID_FIELD]: 0.0001,
@@ -81,7 +81,7 @@ const DynamicCameraSettings = {
     [CelestialType.GAS_GIANT]: 0.1,
     [CelestialType.DWARF_PLANET]: 0.01,
     [CelestialType.MOON]: 0.01,
-    [CelestialType.COMET]: 0.0001,
+    [CelestialType.COMET]: 0.000001, // Comets can use very low min distance (like satellites)
     [CelestialType.SATELLITE]: 0.000001, // Satellites can use very low min distance
     [CelestialType.OORT_CLOUD]: 0.0001,
     [CelestialType.ASTEROID_FIELD]: 0.0001,
