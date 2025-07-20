@@ -34,7 +34,7 @@ describe("Enhanced SimulationStateService", () => {
     it("should set valid nbody mode configuration", () => {
       const config: SimulationConfiguration = {
         mode: "nbody",
-        algorithm: "direct",
+        algorithm: "barnes-hut",
         integrator: "rk4",
       };
 
@@ -139,7 +139,7 @@ describe("Enhanced SimulationStateService", () => {
     });
 
     it("should change algorithm in nbody mode", () => {
-      const algorithms: AlgorithmType[] = ["direct", "fmm", "p3m"];
+      const algorithms: AlgorithmType[] = ["barnes-hut", "fmm", "p3m"];
 
       algorithms.forEach((algorithm) => {
         service.setNBodyAlgorithm(algorithm);
@@ -153,7 +153,7 @@ describe("Enhanced SimulationStateService", () => {
     it("should throw error when not in nbody mode", () => {
       service.setSimulationConfiguration({ mode: "ideal" });
 
-      expect(() => service.setNBodyAlgorithm("direct")).toThrow(
+      expect(() => service.setNBodyAlgorithm("barnes-hut")).toThrow(
         /Cannot set N-Body algorithm when not in N-Body mode/,
       );
     });
@@ -239,7 +239,7 @@ describe("Enhanced SimulationStateService", () => {
     it("should return live configuration that updates", () => {
       service.setSimulationConfiguration({
         mode: "nbody",
-        algorithm: "direct",
+        algorithm: "barnes-hut",
         integrator: "euler",
       });
 

@@ -1,8 +1,8 @@
 import {
   actions,
   celestialManager,
-  StateAccessor,
   seed,
+  StateAccessor,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -12,38 +12,6 @@ import {
 import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
 import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
-import { OSVector3 } from "@teskooano/core-math";
-
-/**
- * Adjusts the entire system so that at least one star is positioned very close to the barycentre (origin).
- * This is a simple coordinate system adjustment that doesn't change any orbital mechanics, velocities, or relative positions.
- */
-function adjustSystemToBarycentre(): void {
-  const allObjects = StateAccessor.getCurrentCelestialObjects();
-  const objectIds = Object.keys(allObjects);
-
-  if (objectIds.length === 0) return;
-
-  // Find the primary star (first star without a parent)
-  const primaryStar = objectIds.find((id) => {
-    const obj = allObjects[id];
-    return obj.type === CelestialType.STAR && !obj.parentId;
-  });
-
-  if (!primaryStar) {
-    console.warn(
-      "[SystemGenerator] No primary star found for barycentre adjustment",
-    );
-    return;
-  }
-
-  // Note: Physics state adjustment removed - this should be handled by the physics system
-  console.log(
-    "[SystemGenerator] Barycentre adjustment skipped - physics state managed separately",
-  );
-
-  console.log(`[SystemGenerator] Barycentre adjustment completed`);
-}
 
 /**
  * A service dedicated to the complex process of procedurally generating a
@@ -158,9 +126,6 @@ export class SystemGenerator {
           return throwError(() => error);
         }),
         finalize(() => {
-          // Adjust the system so that at least one star is very close to the barycentre
-          adjustSystemToBarycentre();
-
           actions.resetTime();
           SystemGenerator.dispatchSimulationTimeReset();
           window.dispatchEvent(

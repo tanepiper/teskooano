@@ -212,6 +212,12 @@ export class PredictionManager {
     const fullObjectsMap = StateAccessor.getCurrentCelestialObjects();
     const targetObject = fullObjectsMap[objectId];
 
+    // Check if the target object exists
+    if (!targetObject) {
+      this.removePrediction(objectId);
+      return false;
+    }
+
     const targetPhysicsState =
       PhysicsStateProvider.getPhysicsState(targetObject);
     if (!targetPhysicsState) {

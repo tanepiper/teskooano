@@ -47,6 +47,10 @@ export function generateOortCloud(
     argumentOfPeriapsis: 0,
     meanAnomaly: 0,
     period_s: 0,
+    realAphelion_m: 0,
+    realPerihelion_m: 0,
+    averageOrbitalSpeed_mps: 0,
+    epoch: "J2000",
   };
 
   const oortCloud: CelestialObject = {
@@ -62,12 +66,6 @@ export function generateOortCloud(
     properties: oortProperties,
     ignorePhysics: true,
     ignoreCollisions: true,
-    physicsStateReal: {
-      id: oortCloudId,
-      mass_kg: 0,
-      position_m: new OSVector3(0, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
-    },
   };
   return oortCloud;
 }

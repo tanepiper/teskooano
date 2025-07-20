@@ -18,8 +18,13 @@ export class PhysicsStateProvider {
    * Gets the physics state for a celestial object, calculating it if necessary.
    */
   public static getPhysicsState<T extends CelestialSpecificPropertiesUnion>(
-    object: CelestialObject<T>,
+    object: CelestialObject<T> | undefined,
   ): PhysicsStateReal | null {
+    // Check if object exists
+    if (!object) {
+      return null;
+    }
+
     // Check cache first
     if (this.cache.has(object.id)) {
       return this.cache.get(object.id)!;

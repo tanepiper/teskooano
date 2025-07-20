@@ -17,18 +17,19 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
-    "@teskooano/data-types": "file:../../data/types",
-    "@teskooano/core-physics": "file:../../physics",
     "@teskooano/core-math": "file:../../math",
+    "@teskooano/core-physics": "file:../../physics",
+    "@teskooano/data-types": "file:../../data/types",
     "rxjs": "7.8.2",
     "three": "0.178.0"
   },
   "devDependencies": {
-    "typescript": "5.8.3",
-    "vitest": "3.2.4",
+    "@playwright/test": "1.54.1",
     "@vitest/ui": "3.2.4",
-    "@playwright/test": "1.48.0",
-    "jsdom": "25.0.1",
-    "eslint": "9.31.0"
+    "eslint": "9.31.0",
+    "jsdom": "26.1.0",
+    "typescript": "5.8.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "3.2.4"
   }
 }

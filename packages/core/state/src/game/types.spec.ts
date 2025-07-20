@@ -132,9 +132,9 @@ describe("SimulationConfiguration", () => {
           getConfigurationDisplayName({
             mode: "nbody",
             integrator: "euler",
-            algorithm: "direct",
+            algorithm: "barnes-hut",
           }),
-        ).toBe("N-Body (Direct + Euler)");
+        ).toBe("N-Body (Barnes-Hut + Euler)");
 
         expect(
           getConfigurationDisplayName({

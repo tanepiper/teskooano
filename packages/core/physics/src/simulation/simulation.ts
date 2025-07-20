@@ -418,20 +418,8 @@ export const updateSimulation = (
         break;
     }
 
-    // If using Euler/Symplectic integrators with direct algorithm, and this is a primary star (a star with no parent),
-    // force its velocity to zero and keep its position fixed.
-    // This overrides any motion calculated by the integrator for such stars in these modes.
-    if (
-      (integrator === "euler" || integrator === "symplectic") &&
-      algorithm === "direct" &&
-      isStar.get(body.id) && // It's a star
-      (!parentIds || !parentIds.has(body.id)) // And it has no parent
-    ) {
-      integratedState.velocity_mps = new OSVector3(0, 0, 0); // Force velocity to zero
-      // Ensure its position does not change from its state *before* this integration step.
-      // 'body' is the state from the beginning of this 'updateSimulation' call (the input to the .map()).
-      integratedState.position_m = body.position_m.clone();
-    }
+    // Note: Removed special handling for primary stars to allow natural motion
+    // Stars will now move according to the physics simulation, which is more realistic
 
     return integratedState;
   });

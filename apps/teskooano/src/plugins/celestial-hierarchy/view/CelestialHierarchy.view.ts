@@ -1,4 +1,8 @@
-import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import {
+  GroupPanelPartInitParameters,
+  IContentRenderer,
+  DockviewPanelApi,
+} from "dockview-core";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import { CelestialHierarchyController } from "../controller/CelestialHierarchy.controller.js";
 import "../components/celestial-row/CelestialRow.component.js";
@@ -16,6 +20,8 @@ export class CelestialHierarchy
   implements IContentRenderer
 {
   private controller!: CelestialHierarchyController;
+  private connectedWindowElement: HTMLElement | null = null;
+  private panelApi: DockviewPanelApi | null = null;
 
   /**
    * Creates an instance of the CelestialHierarchy view.
@@ -34,6 +40,8 @@ export class CelestialHierarchy
     ) as HTMLUListElement;
     const resetButton = this.shadowRoot!.getElementById("reset-view")!;
     const clearButton = this.shadowRoot!.getElementById("clear-focus")!;
+    this.connectedWindowElement =
+      this.shadowRoot!.getElementById("connected-window");
 
     if (
       !treeListContainer ||
@@ -81,6 +89,9 @@ export class CelestialHierarchy
    * @param parameters The initialization parameters from Dockview.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
+    // Store the panel API for updating the title
+    this.panelApi = parameters.api;
+
     const parent = (parameters.params as any)
       ?.parentInstance as CompositeEnginePanel;
 
@@ -90,11 +101,89 @@ export class CelestialHierarchy
       parent.engineCameraManager
     ) {
       this.controller?.setParentPanel(parent);
+
+      // Update the connected window display and panel title
+      this.updateConnectedWindowDisplay(parent);
     } else {
       console.error(
         `[CelestialHierarchy] Initialization did not provide a valid CompositeEnginePanel with an engineCameraManager.`,
         parameters.params,
       );
+      this.updateConnectedWindowDisplay(null);
+    }
+  }
+
+  /**
+   * Updates the connected window display in the header and the panel title.
+   * @param parent The parent CompositeEnginePanel, or null if not connected.
+   */
+  private updateConnectedWindowDisplay(
+    parent: CompositeEnginePanel | null,
+  ): void {
+    if (!this.connectedWindowElement) return;
+
+    if (parent) {
+      // Try to get the panel title from the parent's API
+      const parentTitle =
+        (parent as any)._api?.title ||
+        (parent as any)._params?.params?.title ||
+        parent.id ||
+        "Unknown Teskooano Window";
+
+      console.log("[CelestialHierarchy] Parent title found:", parentTitle);
+      console.log("[CelestialHierarchy] Parent API:", (parent as any)._api);
+      console.log(
+        "[CelestialHierarchy] Parent params:",
+        (parent as any)._params,
+      );
+
+      this.connectedWindowElement.textContent = `For: ${parentTitle}`;
+      this.connectedWindowElement.style.color =
+        "var(--color-text-secondary, #aaa)";
+
+      // Update the panel's title to include the connected window
+      if (this.panelApi) {
+        const newTitle = `Celestial Hierarchy (${parentTitle})`;
+        (parent as any)._api.updateParameters({ title: newTitle });
+
+        // For floating panels, use updateParameters instead of setTitle
+        try {
+          this.panelApi.updateParameters({ title: newTitle });
+          console.log(
+            "[CelestialHierarchy] updateParameters called successfully",
+          );
+
+          // Check if the title was actually set
+          setTimeout(() => {
+            const currentTitle = this.panelApi?.title;
+            console.log(
+              "[CelestialHierarchy] Current panel title after updateParameters:",
+              currentTitle,
+            );
+          }, 100);
+        } catch (error) {
+          console.error("[CelestialHierarchy] Error updating title:", error);
+        }
+      } else {
+        console.warn(
+          "[CelestialHierarchy] No panel API available to set title",
+        );
+      }
+    } else {
+      this.connectedWindowElement.textContent =
+        "Not connected to any Teskooano window";
+      this.connectedWindowElement.style.color =
+        "var(--color-text-disabled, #888)";
+
+      // Reset the panel title to default
+      if (this.panelApi) {
+        console.log("[CelestialHierarchy] Resetting panel title to default");
+        this.panelApi.updateParameters({ title: "Celestial Hierarchy" });
+      } else {
+        console.warn(
+          "[CelestialHierarchy] No panel API available to reset title",
+        );
+      }
     }
   }
 

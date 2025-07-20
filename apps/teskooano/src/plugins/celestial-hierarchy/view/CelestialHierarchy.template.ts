@@ -13,6 +13,28 @@ template.innerHTML = `
       font-size: 0.9em;
       fill: #fff;
     }
+
+    .panel-header {
+      padding: 12px 16px;
+      background-color: var(--color-surface-2, rgba(255, 255, 255, 0.05));
+      border-bottom: 1px solid var(--color-border, #4a4a6a);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: var(--color-text-primary, #fff);
+    }
+
+    .connected-window {
+      margin: 4px 0 0 0;
+      font-size: 0.85em;
+      color: var(--color-text-secondary, #aaa);
+      font-style: italic;
+    }
+
     .control-section {
       margin-bottom: 15px;
       padding-bottom: 10px;
@@ -159,6 +181,10 @@ template.innerHTML = `
     }
 
   </style>
+
+  <div class="panel-header">
+    <p class="connected-window" id="connected-window">Not connected</p>
+  </div>
 
   <div class="control-section">
     <div class="button-row">

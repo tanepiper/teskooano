@@ -1,16 +1,12 @@
 import { defineConfig } from "vitest/config";
 import { resolve } from "path";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+  plugins: [tsconfigPaths()],
   test: {
-    environment: "jsdom",
+    environment: "node",
     exclude: ["node_modules/**", "dist/**"],
-    browser: {
-      enabled: true,
-      provider: "playwright",
-      name: "chromium",
-      headless: true,
-    },
   },
   resolve: {
     alias: {
@@ -24,5 +20,12 @@ export default defineConfig({
       ),
       "@teskooano/core-math": resolve(__dirname, "../../math/src/index.ts"),
     },
+  },
+  optimizeDeps: {
+    include: [
+      "@teskooano/core-math",
+      "@teskooano/core-physics",
+      "@teskooano/data-types",
+    ],
   },
 });

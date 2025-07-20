@@ -1,8 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import * as THREE from "three";
 import { MainSequenceStarRenderer } from "./main-sequence-star";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  StarProperties,
+  OrbitalParameters,
+  PhysicsStateReal,
+} from "@teskooano/data-types";
+import {
+  CelestialType,
+  CelestialStatus,
+  SpectralClass,
+} from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 
 describe("MainSequenceStarRenderer", () => {
@@ -11,15 +20,47 @@ describe("MainSequenceStarRenderer", () => {
 
   beforeEach(() => {
     renderer = new MainSequenceStarRenderer();
+
+    const starProperties: StarProperties = {
+      type: CelestialType.STAR,
+      color: "#ffcc00",
+      spectralClass: SpectralClass.G,
+      luminosity: 1.0,
+      isMainStar: true,
+    };
+
+    const orbit: OrbitalParameters = {
+      realSemiMajorAxis_m: 0,
+      realAphelion_m: 0,
+      realPerihelion_m: 0,
+      eccentricity: 0,
+      inclination: 0,
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
+      meanAnomaly: 0,
+      period_s: 0,
+      averageOrbitalSpeed_mps: 0,
+      epoch: "J2000",
+    };
+
+    const physicsState: PhysicsStateReal = {
+      id: "star-1",
+      mass_kg: 2e30,
+      position_m: new OSVector3(0, 0, 0),
+      velocity_mps: new OSVector3(0, 0, 0),
+    };
+
     mockStar = {
       celestialObjectId: "star-1",
       id: "star-1",
       name: "Test Star",
       type: CelestialType.STAR,
-      status: "active",
+      status: CelestialStatus.ACTIVE,
       radius: 10,
       mass: 1.0,
       position: new THREE.Vector3(0, 0, 0),
+      velocity: new THREE.Vector3(0, 0, 0),
+      velocityMagnitude_mps: 0,
       rotation: new THREE.Quaternion(),
       seed: "test-seed",
       realRadius_m: 1000000,
@@ -28,29 +69,14 @@ describe("MainSequenceStarRenderer", () => {
       albedo: 0.3,
       axialTilt: new OSVector3(0, 0, 0),
       uniforms: {},
-      properties: {
-        type: CelestialType.STAR,
-        color: "#ffcc00",
-        spectralClass: "G",
-        luminosity: 1.0,
-        isMainStar: true,
-      },
-      orbit: {
-        realSemiMajorAxis_m: 0,
-        eccentricity: 0,
-        inclination: 0,
-        longitudeOfAscendingNode: 0,
-        argumentOfPeriapsis: 0,
-        meanAnomaly: 0,
-        period_s: 0,
-      },
-      physicsStateReal: {
-        id: "star-1",
-        mass_kg: 2e30,
-        position_m: new OSVector3(0, 0, 0),
-        velocity_mps: new OSVector3(0, 0, 0),
-      },
-    } as RenderableCelestialObject;
+      properties: starProperties,
+      orbit,
+      physicsStateReal: physicsState,
+      isVisible: true,
+      isTargetable: true,
+      isSelected: false,
+      isFocused: false,
+    } as RenderableCelestialObject<StarProperties>;
   });
 
   it("should create LOD levels with star and corona meshes", () => {

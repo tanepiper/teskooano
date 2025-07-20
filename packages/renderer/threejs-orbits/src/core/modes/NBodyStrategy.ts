@@ -110,6 +110,14 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
     }
 
     if (this.highlightedObjectId) {
+      // Check if the highlighted object still exists
+      if (!objects[this.highlightedObjectId]) {
+        // Object no longer exists, clear the highlight
+        this.highlightedObjectId = null;
+        this.predictionManager.highlightPrediction(null);
+        return;
+      }
+
       this.predictionManager.updatePrediction(this.highlightedObjectId, {
         forceRecalculate: shouldUpdatePredictions,
         timeScale: visualSettings.timeScale,
@@ -203,6 +211,15 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
     this.trailManager.setHighlightedObject(objectId, color);
 
     if (objectId) {
+      // Validate that the object exists before trying to highlight it
+      const allObjects = StateAccessor.getCurrentCelestialObjects();
+      if (!allObjects[objectId]) {
+        // Object doesn't exist, clear the highlight
+        this.highlightedObjectId = null;
+        this.predictionManager.highlightPrediction(null);
+        return;
+      }
+
       const visualSettings = {
         timeScale: 1,
         predictionSteps: 1000,

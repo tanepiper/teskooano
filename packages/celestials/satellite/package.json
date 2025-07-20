@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.54.1",
-    "@types/node": "24.0.13",
+    "@types/node": "24.0.15",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
     "eslint": "9.31.0",

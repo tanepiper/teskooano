@@ -30,14 +30,63 @@ export class PhysicsStateCalculator {
       return this.calculateSpecialObjectPhysics(data, allObjects);
     }
 
-    // Handle root stars
+    // Handle root stars - use orbital parameters to determine if it's a multi-star system
     if (data.type === CelestialType.STAR && !data.parentId) {
-      return {
-        id: data.id,
-        mass_kg: data.realMass_kg,
-        position_m: new OSVector3().setZero(),
-        velocity_mps: new OSVector3().setZero(),
-      };
+      // If the star has valid orbital parameters (non-zero period), it's part of a multi-star system
+      // and should orbit around the barycenter
+      if (data.orbit && data.orbit.period_s > 0) {
+        // Calculate total mass of all stars in the system for barycenter
+        const totalStarMass = Object.values(allObjects)
+          .filter((obj) => obj.type === CelestialType.STAR)
+          .reduce((sum, star) => sum + star.realMass_kg, 0);
+
+        const barycentricState: PhysicsStateReal = {
+          id: "barycenter",
+          mass_kg: totalStarMass,
+          position_m: new OSVector3().setZero(),
+          velocity_mps: new OSVector3().setZero(),
+        };
+
+        try {
+          const initialPos = calculateOrbitalPosition(
+            barycentricState,
+            data.orbit,
+            0,
+          );
+          const initialVel = calculateOrbitalVelocity(
+            barycentricState,
+            data.orbit,
+            0,
+          );
+
+          return {
+            id: data.id,
+            mass_kg: data.realMass_kg,
+            position_m: initialPos,
+            velocity_mps: initialVel,
+          };
+        } catch (error) {
+          console.error(
+            `[PhysicsStateCalculator] Error calculating primary star orbit for ${data.id}:`,
+            error,
+          );
+          // Fallback to zero if calculation fails
+          return {
+            id: data.id,
+            mass_kg: data.realMass_kg,
+            position_m: new OSVector3().setZero(),
+            velocity_mps: new OSVector3().setZero(),
+          };
+        }
+      } else {
+        // Single star system: no orbital parameters, so zero velocity
+        return {
+          id: data.id,
+          mass_kg: data.realMass_kg,
+          position_m: new OSVector3().setZero(),
+          velocity_mps: new OSVector3().setZero(),
+        };
+      }
     }
 
     // Handle rogue planets/satellites

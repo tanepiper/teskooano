@@ -258,12 +258,6 @@ describe("Factory functions", () => {
           meanAnomaly: 0,
         } as any,
         temperature: 5778,
-        physicsStateReal: {
-          id: "new-star",
-          mass_kg: 1.989e30,
-          position_m: stateRealPos as any,
-          velocity_mps: stateRealVel as any,
-        },
       });
 
       const objects = celestialStore.getObjects();

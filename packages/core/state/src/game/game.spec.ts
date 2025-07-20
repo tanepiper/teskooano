@@ -40,7 +40,6 @@ const createMockObject = (
   realMass_kg: 1e22,
   orbit: {} as OrbitalParameters,
   temperature: 273,
-  physicsStateReal: createMinimalRealState(id, 1e22),
   parentId,
   status: CelestialStatus.ACTIVE,
   properties: {
@@ -48,7 +47,6 @@ const createMockObject = (
     isMoon: false,
     composition: ["silicate", "iron"],
   },
-  rotation: new Quaternion(),
   // celestialBodyType: type, // Removed, not a root property
   // properties field would contain more specific type info if needed
 });
