@@ -3,7 +3,7 @@ import {
   type ModalResult,
   type OverlayOptions,
 } from "../types/index";
-import { ModalComponent } from "../../../components/modal";
+import { ModalPanel } from "../../../components/modal";
 
 /**
  * Manages modal-like overlays within a Dockview container.
@@ -39,7 +39,7 @@ export class OverlayManager {
       return Promise.resolve("dismissed");
     }
 
-    const modal = new ModalComponent();
+    const modal = new ModalPanel();
     this._overlayContainer.appendChild(modal);
 
     const promise = modal.show({
@@ -70,7 +70,7 @@ export class OverlayManager {
   public hideOverlay(id: string, result: ModalResult): void {
     const overlay = this._activeOverlays.get(id);
     if (overlay) {
-      (overlay.element as ModalComponent).close(result);
+      (overlay.element as ModalPanel).close(result);
     }
   }
 

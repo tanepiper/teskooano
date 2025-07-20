@@ -57,7 +57,11 @@ export class ApplicationInitializer {
         dockviewController,
       });
 
-      // Step 5: Initialize application managers
+      // Step 5: Register panel components (must happen before managers that use panels)
+      console.debug("[Init] Registering panel components...");
+      PanelRegistry.registerPanelComponents(pluginManager, dockviewController);
+
+      // Step 6: Initialize application managers
       console.debug("[Init] Initializing application managers...");
       const { modalManager } = await ManagerInitializer.initializeManagers(
         pluginManager,
@@ -65,10 +69,6 @@ export class ApplicationInitializer {
         toolbarElement,
         dockviewController,
       );
-
-      // Step 6: Register panel components
-      console.debug("[Init] Registering panel components...");
-      PanelRegistry.registerPanelComponents(pluginManager, dockviewController);
 
       // Step 7: Create initial panels
       console.debug("[Init] Creating initial panels...");

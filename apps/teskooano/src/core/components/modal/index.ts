@@ -1,31 +1,53 @@
-import { createComponentPlugin } from "@teskooano/ui-plugin";
-import { TeskooanoModal } from "./Modal";
-import { TeskooanoModalManager } from "./ModalManager";
+import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
+import { DockViewModalManager } from "./DockViewModalManager";
+import { ModalPanel } from "./view/modal-panel.component";
 
-export * from "./Modal";
-export * from "./ModalManager";
-export { ModalComponent } from "./view";
+// Export DockView-based modal system
+export {
+  DockViewModalManager,
+  type DockViewModalOptions,
+} from "./DockViewModalManager";
+export {
+  ModalPanel,
+  type ModalPanelOptions,
+  type ModalResult,
+} from "./view/modal-panel.component";
+export * from "./view/modal-panel.template";
+export * from "./controller/modal-panel.controller";
 
 /**
  * Plugin definition for the core Modal system.
+ * Provides DockView-based modal dialogs as floating panels.
  */
-export const plugin = createComponentPlugin({
+export const plugin: TeskooanoPlugin = {
   id: "teskooano-modal",
   name: "Teskooano Modal",
   description:
-    "Provides the teskooano-modal custom element and the ModalManager service.",
+    "Provides modal dialog components using DockView floating panels.",
 
   components: [
     {
-      tagName: "teskooano-modal",
-      componentClass: TeskooanoModal,
+      tagName: "teskooano-modal-panel",
+      componentClass: ModalPanel,
+    },
+  ],
+
+  panels: [
+    {
+      componentName: "teskooano-modal-panel",
+      panelClass: ModalPanel,
+      defaultTitle: "Modal",
     },
   ],
 
   managerClasses: [
     {
-      id: "modal-manager",
-      managerClass: TeskooanoModalManager,
+      id: "dockview-modal-manager",
+      managerClass: DockViewModalManager,
     },
   ],
-});
+
+  functions: [],
+  toolbarRegistrations: [],
+  toolbarWidgets: [],
+};

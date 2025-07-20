@@ -43,7 +43,6 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
   private loadingFailed = false;
   private fallbackMesh?: THREE.Mesh;
   private modelBoundingBox = new THREE.Box3();
-  private modelCenter = new THREE.Vector3();
   private currentObject?: RenderableCelestialObject;
   private _cachedLODLevels?: LODLevel[]; // Store current object reference
 
@@ -136,7 +135,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     if (!loadingPromise) {
       // Start new loading process
       this.isLoading = true;
-      loadingPromise = this.loadGLTFModel(modelPath);
+      loadingPromise = this.loadGLTFModel(modelPath, object);
       SatelliteRenderer.loadingPromises.set(modelPath, loadingPromise);
     }
 
@@ -181,23 +180,21 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     this.createMediumDetailModel(this.currentObject!);
   }
 
-  private async loadGLTFModel(modelPath: string): Promise<THREE.Group> {
+  private async loadGLTFModel(
+    modelPath: string,
+    object: RenderableCelestialObject,
+  ): Promise<THREE.Group> {
     return new Promise((resolve, reject) => {
       this.loader.load(
         modelPath,
         (gltf) => {
           const model = gltf.scene;
-
-          // Calculate bounding box for reference (but don't move the model)
-          this.modelBoundingBox.setFromObject(model);
-          this.modelCenter.copy(
-            this.modelBoundingBox.getCenter(new THREE.Vector3()),
+          model.scale.set(1, 1, 1);
+          const properties = object.properties as SatelliteProperties;
+          model.scale.setScalar(
+            this.calculateSatelliteScale(object, properties),
           );
 
-          // Don't move the model - just use the bounding box for size calculations
-          // The model should stay at its original position
-
-          // Traverse and enhance all meshes
           model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               // Compute vertex normals for proper lighting calculations
@@ -300,96 +297,8 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     // Apply any custom model scale from properties FIRST
     const modelScale = properties.modelScale ?? 1.0;
 
-    // Calculate visibility scale based on satellite size
-    // Larger satellites need less scaling, smaller satellites need more
-    const visibilityScale = this.calculateVisibilityScale(
-      realSizeM,
-      properties,
-    );
-
-    // Final scale: modelScale has the most direct effect, then visibility adjustments
-    const finalScale = sceneUnits * modelScale * visibilityScale;
-
-    console.debug(
-      `[SatelliteRenderer] Scaling ${object.celestialObjectId}: ` +
-        `realSize=${realSizeM.toFixed(1)}m, ` +
-        `sceneUnits=${sceneUnits.toFixed(6)}, ` +
-        `modelScale=${modelScale}, ` +
-        `visibilityScale=${visibilityScale.toFixed(1)}, ` +
-        `finalScale=${finalScale.toFixed(3)}`,
-    );
-
+    const finalScale = sceneUnits * modelScale;
     return finalScale;
-  }
-
-  /**
-   * Calculates an appropriate visibility scale based on the satellite's real-world size
-   * This ensures satellites are visible but not disproportionately large
-   */
-  private calculateVisibilityScale(
-    realSizeM: number,
-    properties: SatelliteProperties,
-  ): number {
-    // Base visibility scale - reduced to give more control to modelScale
-    const baseVisibilityScale = 0.5; // Reduced from 1.0 to 0.5
-
-    // Adjust based on real-world size
-    // Larger satellites (like ISS) need less scaling
-    // Smaller satellites (like cubesats) need more scaling
-    let sizeAdjustment = 1.0;
-
-    if (realSizeM > 100) {
-      // Very large satellites (ISS, etc.) - significant reduction
-      sizeAdjustment = 0.3;
-    } else if (realSizeM > 50) {
-      // Large satellites (large space stations) - reduce scaling
-      sizeAdjustment = 0.5;
-    } else if (realSizeM > 20) {
-      // Medium-large satellites (Hubble, etc.) - moderate reduction
-      sizeAdjustment = 0.7;
-    } else if (realSizeM > 10) {
-      // Medium satellites - slight reduction
-      sizeAdjustment = 0.8;
-    } else if (realSizeM > 1) {
-      // Small satellites - increase scaling
-      sizeAdjustment = 2.0;
-    } else {
-      // Very small satellites (cubesats, etc.) - significant scaling
-      sizeAdjustment = 5.0;
-    }
-
-    // Apply mission-specific adjustments
-    const missionAdjustment = this.getMissionTypeAdjustment(
-      properties.missionType,
-    );
-
-    return baseVisibilityScale * sizeAdjustment * missionAdjustment;
-  }
-
-  /**
-   * Gets mission-specific scaling adjustments
-   */
-  private getMissionTypeAdjustment(missionType?: string): number {
-    if (!missionType) return 1.0;
-
-    switch (missionType.toLowerCase()) {
-      case "communications":
-      case "gps":
-      case "navigation":
-        return 1.2; // Slightly larger for visibility
-      case "research":
-      case "observation":
-      case "telescope":
-        return 1.0; // Standard size
-      case "space_station":
-      case "station":
-        return 0.8; // Large stations should be slightly smaller
-      case "probe":
-      case "lander":
-        return 1.5; // Probes should be more visible
-      default:
-        return 1.0;
-    }
   }
 
   private createBillboard(object: RenderableCelestialObject): void {

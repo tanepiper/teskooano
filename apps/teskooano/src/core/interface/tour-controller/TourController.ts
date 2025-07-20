@@ -3,6 +3,7 @@ import "driver.js/dist/driver.css";
 import { type TourStep, type TourFactory } from "./types";
 import { PluginExecutionContext } from "@teskooano/ui-plugin";
 import type { ModalResult } from "../../controllers/dockview/types/index";
+import type { DockViewModalManager } from "../../components/modal/DockViewModalManager";
 
 /**
  * Manages and orchestrates interactive application tours using driver.js.
@@ -104,25 +105,65 @@ export class TourController {
       return;
     }
 
+    // Wait for the engine panel to be created before showing the modal
+    // This prevents conflicts between panel creation processes
+    await this.waitForEnginePanel();
+    this.showTourModal();
+  }
+
+  /**
+   * Waits for the engine panel to be fully created and initialized.
+   */
+  private async waitForEnginePanel(): Promise<void> {
+    return new Promise((resolve) => {
+      const checkForEnginePanel = () => {
+        // Check if there's an engine panel in the DockView by looking for the known ID pattern
+        const hasEnginePanel = this._context.dockviewController?.api?.getPanel(
+          "composite_engine_view_1",
+        );
+
+        if (hasEnginePanel) {
+          // Give a bit more time for the panel to fully initialize
+          setTimeout(resolve, 200);
+        } else {
+          // Check again in 100ms
+          setTimeout(checkForEnginePanel, 100);
+        }
+      };
+
+      checkForEnginePanel();
+    });
+  }
+
+  /**
+   * Shows the tour modal after a delay to avoid conflicts with panel creation.
+   */
+  private async showTourModal(): Promise<void> {
     try {
-      const content = document.createElement("div");
-      content.innerHTML = `<p>Would you like to take a quick tour of the interface?</p>
+      // Get the DockView modal manager from the plugin manager
+      const modalManager =
+        this._context.pluginManager.getManagerInstance<DockViewModalManager>(
+          "dockview-modal-manager",
+        );
+
+      if (!modalManager) {
+        console.error("TourController: Could not get DockView modal manager");
+        return;
+      }
+
+      const content = `<p>Would you like to take a quick tour of the interface?</p>
                        <p><small>You can restart the tour later from the help menu.</small></p>`;
 
-      const result: ModalResult =
-        await this._context.dockviewController.showOverlay(
-          "tour-prompt-modal",
-          content,
-          {
-            title: "Welcome to Teskooano!",
-            confirmText: "Start Tour",
-            closeText: "Maybe Later",
-            secondaryText: "Don't Show Again",
-            hideSecondaryButton: false,
-            width: 400,
-            height: 220,
-          },
-        );
+      const result: ModalResult = await modalManager.show({
+        title: "Welcome to Teskooano!",
+        content,
+        confirmText: "Start Tour",
+        closeText: "Maybe Later",
+        secondaryText: "Don't Show Again",
+        hideSecondaryButton: false,
+        width: 480,
+        height: 280,
+      });
 
       if (result === "confirm") {
         this.startTour();

@@ -27,13 +27,14 @@ export class ManagerInitializer {
         targetElement: toolbarElement,
       });
 
-      // Initialize and configure modal manager (critical)
-      console.debug("[ManagerInit] Initializing modal manager...");
-      const modalManager =
-        pluginManagerInstance.getManagerInstance<any>("modal-manager");
+      // Initialize and configure DockView modal manager (critical)
+      console.debug("[ManagerInit] Initializing DockView modal manager...");
+      const modalManager = pluginManagerInstance.getManagerInstance<any>(
+        "dockview-modal-manager",
+      );
       if (!modalManager) {
         throw new Error(
-          "Failed to get ModalManager instance from plugin manager.",
+          "Failed to get DockViewModalManager instance from plugin manager.",
         );
       }
 
@@ -41,7 +42,7 @@ export class ManagerInitializer {
         modalManager.initialize(dockviewController);
       } else {
         throw new Error(
-          "ModalManager instance does not have an initialize method.",
+          "DockViewModalManager instance does not have an initialize method.",
         );
       }
 

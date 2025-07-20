@@ -36,6 +36,10 @@ export async function generateSystem(
           throw new Error("System generation failed to produce any stars.");
         }
 
+        // For multi-star systems, the barycenter should be at the origin
+        // The main star will orbit around the barycenter with proper velocity
+        // This is handled by the binary orbit setup - no additional changes needed
+
         // Emit all stars first
         let celestialCount = 0;
         stars.forEach((star) => {

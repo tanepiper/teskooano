@@ -11,11 +11,15 @@
 export { TeskooanoButton } from "./components/button/Button";
 export { ButtonTooltipManager } from "./components/button/ButtonTooltipManager";
 export { TeskooanoCard } from "./components/card/Card";
-export { TeskooanoModal } from "./components/modal/Modal";
+
+// Modal components (legacy and new)
+export { ModalPanel } from "./components/modal/view/modal-panel.component";
 export {
-  TeskooanoModalManager,
-  type ModalOptions,
-} from "./components/modal/ModalManager";
+  DockViewModalManager,
+  type DockViewModalOptions,
+} from "./components/modal/DockViewModalManager";
+export type { ModalResult } from "./components/modal/view/modal-panel.component";
+
 export { TeskooanoOutputDisplay } from "./components/output/OutputDisplay";
 export { TeskooanoLabeledValue } from "./components/output/LabeledValue";
 export { TeskooanoSelect } from "./components/select/Select";
@@ -36,7 +40,7 @@ export type {
   ComponentWithStaticConfig,
   ComponentConstructorWithStaticConfig,
   RegisteredComponentInfo,
-  ModalResult,
+  ModalResult as DockViewModalResult,
   PanelInitParameters,
 } from "./controllers/dockview/types/index";
 

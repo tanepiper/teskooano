@@ -1,20 +1,87 @@
-# Core Modal System (`<teskooano-modal>` & `ModalManager`)
+# Core Modal System
 
-This system provides a modal dialog component (`<teskooano-modal>`) and a service (`TeskooanoModalManager`) for controlling modal visibility and content programmatically. The primary and intended way to create modals is through the `ModalManager`.
+This system provides modal dialog components and managers for both overlay-based and DockView-based modals. The **DockView-based system is the recommended approach** as it provides better integration with the application's panel system.
 
-## `TeskooanoModalManager`
+## DockView Modal System (Recommended)
 
-The `ModalManager` is a service that integrates with the application's `DockviewController` to display modals as managed overlays. This is the recommended way to create all modal dialogs.
+The `DockViewModalManager` creates modals as floating DockView panels, providing better integration with the application's layout system.
 
 ### Usage
 
-First, get the manager instance from the central plugin manager, then call the `.show()` method.
+```typescript
+import { pluginManager } from "@teskooano/ui-plugin";
+import { DockViewModalManager } from "path/to/core/components/modal";
+
+// Get the DockView modal manager instance
+const modalManager = pluginManager.getManagerInstance<DockViewModalManager>(
+  "dockview-modal-manager",
+);
+
+// Show a confirmation modal
+async function showConfirmation() {
+  const result = await modalManager.show({
+    title: "Confirm Deletion",
+    content:
+      "<p>Are you sure you want to delete this item? This action cannot be undone.</p>",
+    confirmText: "Delete",
+    closeText: "Cancel",
+    hideSecondaryButton: true,
+    width: 400,
+    height: 200,
+  });
+
+  if (result === "confirm") {
+    console.log("Item deleted!");
+  } else {
+    console.log("Deletion cancelled.");
+  }
+}
+
+// Show a modal with custom positioning
+async function showCustomPositionedModal() {
+  const result = await modalManager.show({
+    title: "Custom Modal",
+    content: "<p>This modal appears at a specific position.</p>",
+    position: {
+      top: 100,
+      left: 200,
+      width: 500,
+      height: 300,
+    },
+  });
+}
+```
+
+### `DockViewModalManager.show()` Options
+
+The `show` method accepts a `DockViewModalOptions` object with the following properties:
+
+- `title: string`: The text displayed in the modal's header.
+- `content: string | HTMLElement`: The content for the modal body. Can be an HTML string or a DOM element.
+- `id?: string`: (Optional) A unique ID for the modal panel.
+- `width?: number`: (Optional) Width of the modal in pixels (default: 450).
+- `height?: number`: (Optional) Height of the modal in pixels (default: 300).
+- `position?: { top: number; left: number; width: number; height: number }`: (Optional) Custom position for the floating panel.
+- `confirmText?: string`: (Optional) Text for the primary confirmation button.
+- `closeText?: string`: (Optional) Text for the close/cancel button.
+- `secondaryText?: string`: (Optional) Text for the secondary action button.
+- `hideCloseButton?: boolean`: (Optional) Set to true to hide the close button.
+- `hideConfirmButton?: boolean`: (Optional) Set to true to hide the confirm button.
+- `hideSecondaryButton?: boolean`: (Optional) Set to true to hide the secondary button (it is hidden by default).
+
+The `show` method returns a `Promise<ModalResult>`, which resolves to one of the following strings when the modal is closed: `'confirm'`, `'close'`, `'secondary'`, or `'dismissed'`.
+
+## Legacy Overlay Modal System
+
+The `TeskooanoModalManager` creates modals as overlays using the Dockview overlay system. This system is maintained for backward compatibility.
+
+### Usage
 
 ```typescript
 import { pluginManager } from "@teskooano/ui-plugin";
-import { TeskooanoModalManager } from "path/to/core/components/modal"; // Adjust import path
+import { TeskooanoModalManager } from "path/to/core/components/modal";
 
-// Get the manager instance from the plugin system
+// Get the legacy modal manager instance
 const modalManager =
   pluginManager.getManagerInstance<TeskooanoModalManager>("modal-manager");
 
@@ -35,39 +102,30 @@ async function showConfirmation() {
     console.log("Deletion cancelled.");
   }
 }
-
-// Show a modal with a custom element
-async function showCustomContentModal() {
-  const myCustomElement = document.createElement("my-custom-form");
-  // ... configure myCustomElement ...
-
-  await modalManager.show({
-    title: "Custom Form",
-    content: myCustomElement,
-    hideConfirmButton: true,
-    closeText: "Done",
-  });
-}
 ```
 
-### `ModalManager.show()` Options
+## Components
 
-The `show` method accepts an `ModalOptions` object with the following properties:
+### `<teskooano-modal-panel>` (DockView-based)
 
-- `title: string`: The text displayed in the modal's header.
-- `content: string | HTMLElement`: The content for the modal body. Can be an HTML string or a DOM element.
-- `id?: string`: (Optional) A unique ID for the modal overlay.
-- `width?: number`: (Optional) Width of the modal in pixels (default: 450).
-- `height?: number`: (Optional) Height of the modal in pixels (default: 250).
-- `confirmText?: string`: (Optional) Text for the primary confirmation button.
-- `closeText?: string`: (Optional) Text for the close/cancel button.
-- `secondaryText?: string`: (Optional) Text for the secondary action button.
-- `hideCloseButton?: boolean`: (Optional) Set to true to hide the close button.
-- `hideConfirmButton?: boolean`: (Optional) Set to true to hide the confirm button.
-- `hideSecondaryButton?: boolean`: (Optional) Set to true to hide the secondary button (it is hidden by default).
+The `<teskooano-modal-panel>` custom element is the component rendered by the `DockViewModalManager`. It implements DockView's `IContentRenderer` interface and is designed to work as a floating panel.
 
-The `show` method returns a `Promise<ModalResult>`, which resolves to one of the following strings when the modal is closed: `'confirm'`, `'close'`, `'secondary'`, or `'dismissed'`.
+### `<teskooano-modal>` (Legacy Overlay-based)
 
-## `<teskooano-modal>` (Implementation Detail)
+The `<teskooano-modal>` custom element is the component rendered by the `TeskooanoModalManager`. It is designed to work as an overlay and is maintained for backward compatibility.
 
-The `<teskooano-modal>` custom element is the component rendered by the `ModalManager`. It is not intended for direct declarative use in HTML. Its attributes (`title`, `confirm-text`, etc.) are set programmatically by the manager.
+## Migration Guide
+
+To migrate from the legacy overlay system to the new DockView system:
+
+1. **Update imports**: Change from `TeskooanoModalManager` to `DockViewModalManager`
+2. **Update manager ID**: Change from `"modal-manager"` to `"dockview-modal-manager"`
+3. **Add positioning options**: Consider adding `width`, `height`, or `position` options for better control
+4. **Test behavior**: The new system integrates better with DockView's panel management
+
+The new system provides:
+
+- Better integration with DockView's panel system
+- Improved positioning and sizing control
+- Consistent behavior with other floating panels
+- Better keyboard navigation support
