@@ -39,26 +39,36 @@ export type Integrator = (
 /**
  * The simulation mode determines the type of physics calculation used.
  */
-export type SimulationMode = "ideal" | "nbody";
+export enum SimulationMode {
+  IDEAL = "ideal", // Keplerian/ideal orbital mechanics
+  NBODY = "nbody", // Full N-body physics simulation
+}
 
 /**
  * The numerical integration method used for N-Body simulations.
  */
-export type IntegratorType =
-  | "euler"
-  | "symplectic"
-  | "verlet"
-  | "rk4"
-  | "adaptive"
-  | "yoshida4"
-  | "forest-ruth"
-  | "pefrl"
-  | "leapfrog";
+export enum IntegratorType {
+  EULER = "euler", // Simple Euler integration
+  SYMPLECTIC = "symplectic", // Symplectic Euler (energy preserving)
+  VERLET = "verlet", // Velocity Verlet (stable, reversible)
+  RK4 = "rk4", // Runge-Kutta 4th order (high accuracy)
+  ADAPTIVE = "adaptive", // Adaptive step size (auto-optimizing)
+  YOSHIDA4 = "yoshida4", // 4th-order symplectic (Yoshida method)
+  FOREST_RUTH = "forest-ruth", // 4th-order symplectic (Forest-Ruth method)
+  PEFRL = "pefrl", // Optimized 4th-order symplectic (PEFRL)
+  LEAPFROG = "leapfrog", // Classic 2nd-order symplectic
+}
 
 /**
  * The force calculation algorithm used for N-Body simulations.
  */
-export type AlgorithmType = "direct" | "barnes-hut" | "fmm" | "p3m" | "tree-pm";
+export enum AlgorithmType {
+  DIRECT = "direct", // Direct N² calculation (for small systems)
+  BARNES_HUT = "barnes-hut", // O(N log N) - tree-based approximation
+  FMM = "fmm", // O(N) - Fast Multipole Method
+  P3M = "p3m", // O(N log N) - Particle-Mesh hybrid
+  TREE_PM = "tree-pm", // O(N log N) - Tree-PM hybrid (recommended)
+}
 
 /**
  * Configuration for the simulation physics system.

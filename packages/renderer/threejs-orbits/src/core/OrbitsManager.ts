@@ -103,13 +103,6 @@ export class OrbitsManager extends StateSubscriptionMixin {
       );
       this.setVisualizationMode(newMode, objectManager, renderableObjects$);
     });
-
-    // Set initial mode based on current settings
-    const initialSettings = this.stateAdapter.$visualSettings.getValue();
-    const initialMode = this.determineVisualizationMode(
-      initialSettings.simulationConfig,
-    );
-    this.setVisualizationMode(initialMode, objectManager, renderableObjects$);
   }
 
   /**
@@ -121,6 +114,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
   private determineVisualizationMode(
     config: SimulationConfiguration,
   ): OrbitDisplayMode {
+    console.log("determineVisualizationMode", config);
     if (config.mode === "ideal") {
       return OrbitDisplayMode.Ideal;
     } else {

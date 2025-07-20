@@ -1,3 +1,9 @@
+import {
+  IntegratorType,
+  AlgorithmType,
+  SimulationMode,
+} from "@teskooano/data-types";
+
 /**
  * Formats a time value in seconds into a human-readable string.
  * It uses units like years (y), days (d), hours (h), minutes (m), and seconds (s),
@@ -79,41 +85,65 @@ export function getConfigurationShortName(config?: {
 }): string {
   if (!config) return "-";
 
-  if (config.mode === "ideal") {
+  if (config.mode === SimulationMode.IDEAL) {
     return "Ideal";
   }
 
-  const algorithmShort =
-    config.algorithm === "barnes-hut"
-      ? "BH"
-      : config.algorithm === "fmm"
-        ? "FMM"
-        : config.algorithm === "p3m"
-          ? "P3M"
-          : config.algorithm === "tree-pm"
-            ? "TPM"
-            : "Dir";
+  let algorithmShort: string;
+  switch (config.algorithm) {
+    case AlgorithmType.BARNES_HUT:
+      algorithmShort = "BH";
+      break;
+    case AlgorithmType.FMM:
+      algorithmShort = "FMM";
+      break;
+    case AlgorithmType.P3M:
+      algorithmShort = "P3M";
+      break;
+    case AlgorithmType.TREE_PM:
+      algorithmShort = "TPM";
+      break;
+    case AlgorithmType.DIRECT:
+      algorithmShort = "Dir";
+      break;
+    default:
+      algorithmShort = "Dir";
+      break;
+  }
 
-  const integratorShort =
-    config.integrator === "euler"
-      ? "Eul"
-      : config.integrator === "symplectic"
-        ? "Sym"
-        : config.integrator === "verlet"
-          ? "Ver"
-          : config.integrator === "rk4"
-            ? "RK4"
-            : config.integrator === "adaptive"
-              ? "Adp"
-              : config.integrator === "yoshida4"
-                ? "Y4"
-                : config.integrator === "forest-ruth"
-                  ? "FR"
-                  : config.integrator === "pefrl"
-                    ? "PEFRL"
-                    : config.integrator === "leapfrog"
-                      ? "LF"
-                      : "?";
+  let integratorShort: string;
+  switch (config.integrator) {
+    case IntegratorType.EULER:
+      integratorShort = "Eul";
+      break;
+    case IntegratorType.SYMPLECTIC:
+      integratorShort = "Sym";
+      break;
+    case IntegratorType.VERLET:
+      integratorShort = "Ver";
+      break;
+    case IntegratorType.RK4:
+      integratorShort = "RK4";
+      break;
+    case IntegratorType.ADAPTIVE:
+      integratorShort = "Adp";
+      break;
+    case IntegratorType.YOSHIDA4:
+      integratorShort = "Y4";
+      break;
+    case IntegratorType.FOREST_RUTH:
+      integratorShort = "FR";
+      break;
+    case IntegratorType.PEFRL:
+      integratorShort = "PEFRL";
+      break;
+    case IntegratorType.LEAPFROG:
+      integratorShort = "LF";
+      break;
+    default:
+      integratorShort = "?";
+      break;
+  }
 
   return `${algorithmShort}-${integratorShort}`;
 }
@@ -131,43 +161,65 @@ export function getConfigurationDisplayName(config?: {
 }): string {
   if (!config) return "Unknown";
 
-  if (config.mode === "ideal") {
+  if (config.mode === SimulationMode.IDEAL) {
     return "Ideal Orrery";
   }
 
-  const algorithmName =
-    config.algorithm === "barnes-hut"
-      ? "Barnes-Hut"
-      : config.algorithm === "fmm"
-        ? "Fast Multipole"
-        : config.algorithm === "p3m"
-          ? "Particle-Mesh"
-          : config.algorithm === "tree-pm"
-            ? "Tree-PM"
-            : config.algorithm === "direct"
-              ? "Direct"
-              : "Unknown";
+  let algorithmName: string;
+  switch (config.algorithm) {
+    case AlgorithmType.BARNES_HUT:
+      algorithmName = "Barnes-Hut";
+      break;
+    case AlgorithmType.FMM:
+      algorithmName = "Fast Multipole";
+      break;
+    case AlgorithmType.P3M:
+      algorithmName = "Particle-Mesh";
+      break;
+    case AlgorithmType.TREE_PM:
+      algorithmName = "Tree-PM";
+      break;
+    case AlgorithmType.DIRECT:
+      algorithmName = "Direct";
+      break;
+    default:
+      algorithmName = "Unknown";
+      break;
+  }
 
-  const integratorName =
-    config.integrator === "euler"
-      ? "Euler"
-      : config.integrator === "symplectic"
-        ? "Symplectic"
-        : config.integrator === "verlet"
-          ? "Verlet"
-          : config.integrator === "rk4"
-            ? "RK4"
-            : config.integrator === "adaptive"
-              ? "Adaptive RK"
-              : config.integrator === "yoshida4"
-                ? "Yoshida 4th"
-                : config.integrator === "forest-ruth"
-                  ? "Forest-Ruth"
-                  : config.integrator === "pefrl"
-                    ? "PEFRL"
-                    : config.integrator === "leapfrog"
-                      ? "Leapfrog"
-                      : "Unknown";
+  let integratorName: string;
+  switch (config.integrator) {
+    case IntegratorType.EULER:
+      integratorName = "Euler";
+      break;
+    case IntegratorType.SYMPLECTIC:
+      integratorName = "Symplectic";
+      break;
+    case IntegratorType.VERLET:
+      integratorName = "Verlet";
+      break;
+    case IntegratorType.RK4:
+      integratorName = "RK4";
+      break;
+    case IntegratorType.ADAPTIVE:
+      integratorName = "Adaptive RK";
+      break;
+    case IntegratorType.YOSHIDA4:
+      integratorName = "Yoshida 4th";
+      break;
+    case IntegratorType.FOREST_RUTH:
+      integratorName = "Forest-Ruth";
+      break;
+    case IntegratorType.PEFRL:
+      integratorName = "PEFRL";
+      break;
+    case IntegratorType.LEAPFROG:
+      integratorName = "Leapfrog";
+      break;
+    default:
+      integratorName = "Unknown";
+      break;
+  }
 
   return `N-Body (${algorithmName} + ${integratorName})`;
 }

@@ -1,10 +1,10 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
+  AlgorithmType,
   CelestialObject,
-  CelestialSpecificPropertiesUnion,
-  CelestialType,
   DeviceTier,
-  OrbitalParameters,
+  IntegratorType,
+  SimulationMode,
 } from "@teskooano/data-types";
 
 /**
@@ -20,34 +20,6 @@ export interface CameraState {
 }
 
 /**
- * The simulation mode determines the type of physics calculation used.
- */
-export type SimulationMode = "ideal" | "nbody";
-
-/**
- * The numerical integration method used for N-Body simulations.
- */
-export type IntegratorType =
-  | "euler" // Simple Euler integration
-  | "symplectic" // Symplectic Euler (energy preserving)
-  | "verlet" // Velocity Verlet (stable, reversible)
-  | "rk4" // Runge-Kutta 4th order (high accuracy)
-  | "adaptive" // Adaptive step size (auto-optimizing)
-  | "yoshida4" // 4th-order symplectic (Yoshida method)
-  | "forest-ruth" // 4th-order symplectic (Forest-Ruth method)
-  | "pefrl" // Optimized 4th-order symplectic (PEFRL)
-  | "leapfrog"; // Classic 2nd-order symplectic
-
-/**
- * The force calculation algorithm used for N-Body simulations.
- */
-export type AlgorithmType =
-  | "barnes-hut" // O(N log N) - tree-based approximation
-  | "fmm" // O(N) - Fast Multipole Method
-  | "p3m" // O(N log N) - Particle-Mesh hybrid
-  | "tree-pm"; // O(N log N) - Tree-PM hybrid (recommended)
-
-/**
  * Configuration for the simulation physics system.
  * Supports both ideal (Keplerian) and N-body physics modes.
  */
@@ -61,12 +33,12 @@ export interface SimulationConfiguration {
  * Validates if a simulation configuration is valid.
  */
 export function isValidConfiguration(config: SimulationConfiguration): boolean {
-  if (config.mode === "ideal") {
+  if (config.mode === SimulationMode.IDEAL) {
     // Ideal mode doesn't need integrator or algorithm
     return config.integrator === undefined && config.algorithm === undefined;
   }
 
-  if (config.mode === "nbody") {
+  if (config.mode === SimulationMode.NBODY) {
     // N-Body mode requires both integrator and algorithm
     return config.integrator !== undefined && config.algorithm !== undefined;
   }
@@ -79,9 +51,9 @@ export function isValidConfiguration(config: SimulationConfiguration): boolean {
  */
 export function getDefaultConfiguration(): SimulationConfiguration {
   return {
-    mode: "nbody",
-    integrator: "pefrl",
-    algorithm: "tree-pm",
+    mode: SimulationMode.NBODY,
+    integrator: IntegratorType.PEFRL,
+    algorithm: AlgorithmType.TREE_PM,
   };
 }
 
@@ -91,7 +63,7 @@ export function getDefaultConfiguration(): SimulationConfiguration {
 export function getConfigurationDisplayName(
   config: SimulationConfiguration,
 ): string {
-  if (config.mode === "ideal") {
+  if (config.mode === SimulationMode.IDEAL) {
     return "Ideal Orrery";
   }
 
@@ -114,18 +86,25 @@ export function getConfigurationDisplayName(
 export function getConfigurationShortName(
   config: SimulationConfiguration,
 ): string {
-  if (config.mode === "ideal") {
+  if (config.mode === SimulationMode.IDEAL) {
     return "Ideal";
   }
 
-  const algorithmShort =
-    config.algorithm === "barnes-hut"
-      ? "BH"
-      : config.algorithm === "fmm"
-        ? "FMM"
-        : config.algorithm === "p3m"
-          ? "P3M"
-          : "TPM"; // tree-pm is the default
+  let algorithmShort: string;
+  switch (config.algorithm) {
+    case AlgorithmType.BARNES_HUT:
+      algorithmShort = "BH";
+      break;
+    case AlgorithmType.FMM:
+      algorithmShort = "FMM";
+      break;
+    case AlgorithmType.P3M:
+      algorithmShort = "P3M";
+      break;
+    default:
+      algorithmShort = "TPM"; // tree-pm is the default
+      break;
+  }
 
   const integratorShort = config.integrator
     ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3)

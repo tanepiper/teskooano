@@ -1,8 +1,5 @@
-import {
-  AlgorithmType,
-  IntegratorType,
-  SimulationMode,
-} from "@teskooano/core-state";
+import { AlgorithmType, IntegratorType } from "@teskooano/data-types";
+import { SimulationMode } from "@teskooano/data-types";
 
 const template = document.createElement("template");
 
@@ -10,27 +7,27 @@ const SIMULATION_MODE_OPTIONS: {
   value: SimulationMode;
   label: string;
 }[] = [
-  { value: "nbody", label: "N-Body (Full Physics)" },
-  { value: "ideal", label: "Ideal (Keplerian)" },
+  { value: SimulationMode.NBODY, label: "N-Body (Full Physics)" },
+  { value: SimulationMode.IDEAL, label: "Ideal (Keplerian)" },
 ];
 
 const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [
-  { value: "barnes-hut", label: "Barnes-Hut" },
-  { value: "fmm", label: "Fast Multipole (FMM)" },
-  { value: "p3m", label: "Particle-Mesh (P3M)" },
-  { value: "tree-pm", label: "Tree-Particle-Mesh" },
+  { value: AlgorithmType.BARNES_HUT, label: "Barnes-Hut" },
+  { value: AlgorithmType.FMM, label: "Fast Multipole (FMM)" },
+  { value: AlgorithmType.P3M, label: "Particle-Mesh (P3M)" },
+  { value: AlgorithmType.TREE_PM, label: "Tree-Particle-Mesh" },
 ];
 
 const INTEGRATOR_OPTIONS: { value: IntegratorType; label: string }[] = [
-  { value: "euler", label: "Euler" },
-  { value: "symplectic", label: "Symplectic Euler" },
-  { value: "verlet", label: "Velocity Verlet" },
-  { value: "rk4", label: "Runge-Kutta 4 (RK4)" },
-  { value: "adaptive", label: "Adaptive RK45" },
-  { value: "yoshida4", label: "Yoshida 4th Order" },
-  { value: "forest-ruth", label: "Forest-Ruth 4th" },
-  { value: "pefrl", label: "PEFRL 4th Order" },
-  { value: "leapfrog", label: "Leapfrog" },
+  { value: IntegratorType.EULER, label: "Euler" },
+  { value: IntegratorType.SYMPLECTIC, label: "Symplectic Euler" },
+  { value: IntegratorType.VERLET, label: "Velocity Verlet" },
+  { value: IntegratorType.RK4, label: "Runge-Kutta 4 (RK4)" },
+  { value: IntegratorType.ADAPTIVE, label: "Adaptive RK45" },
+  { value: IntegratorType.YOSHIDA4, label: "Yoshida 4th Order" },
+  { value: IntegratorType.FOREST_RUTH, label: "Forest-Ruth 4th" },
+  { value: IntegratorType.PEFRL, label: "PEFRL 4th Order" },
+  { value: IntegratorType.LEAPFROG, label: "Leapfrog" },
 ];
 
 // Full list of algorithms and integrators for the UI
