@@ -123,10 +123,14 @@ describe("Zone Types", () => {
       const config: StellarSystemConfiguration = {
         type: StellarSystemType.SINGLE_STAR,
         stars: 1,
+        systemName: "Test Star",
+        description: "A funny description of the system",
       };
 
       expect(config.type).toBe(StellarSystemType.SINGLE_STAR);
       expect(config.stars).toBe(1);
+      expect(config.systemName).toBe("Test Star");
+      expect(config.description).toBe("A funny description of the system");
     });
 
     it("should allow creation of binary system configuration", () => {
@@ -135,12 +139,16 @@ describe("Zone Types", () => {
         stars: 2,
         separationAU: [0.5, 2.0],
         supportsCircumbinaryPlanets: true,
+        systemName: "Binary System",
+        description: "A dramatic binary system description",
       };
 
       expect(config.type).toBe(StellarSystemType.BINARY_CLOSE);
       expect(config.stars).toBe(2);
       expect(config.separationAU).toEqual([0.5, 2.0]);
       expect(config.supportsCircumbinaryPlanets).toBe(true);
+      expect(config.systemName).toBe("Binary System");
+      expect(config.description).toBe("A dramatic binary system description");
     });
 
     it("should allow creation of complex multiple star configuration", () => {
@@ -149,11 +157,15 @@ describe("Zone Types", () => {
         stars: 5,
         separationAU: [0.5, 2.0, 10.0, 50.0],
         supportsCircumbinaryPlanets: false,
+        systemName: "Complex System",
+        description: "A chaotic multiple star system",
       };
 
       expect(config.type).toBe(StellarSystemType.MULTIPLE_COMPLEX);
       expect(config.stars).toBe(5);
       expect(config.separationAU).toHaveLength(4);
+      expect(config.systemName).toBe("Complex System");
+      expect(config.description).toBe("A chaotic multiple star system");
     });
   });
 });

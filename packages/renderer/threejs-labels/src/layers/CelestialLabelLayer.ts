@@ -5,6 +5,7 @@ import {
   type RenderableCelestialObject,
   CelestialType,
   AU_METERS,
+  SCALE,
 } from "@teskooano/data-types";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import {
@@ -169,7 +170,11 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       const renderableObject = allObjects[objectId];
       if (renderableObject) {
         label.position.copy(
-          this.calculateLabelPosition(renderableObject, ownObject),
+          this.calculateLabelPosition(
+            renderableObject,
+            ownObject,
+            objectManager,
+          ),
         );
       }
 
@@ -414,8 +419,42 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   private calculateLabelPosition(
     object: RenderableCelestialObject,
     parentMesh: THREE.Object3D,
+    objectManager?: ObjectManager,
   ): THREE.Vector3 {
     const visualRadius = object.radius || 1;
+
+    // Special handling for particle systems (asteroid fields and oort clouds)
+    // that should be positioned at their inner radius, not at origin
+    if (
+      object.type === CelestialType.ASTEROID_FIELD ||
+      object.type === CelestialType.OORT_CLOUD
+    ) {
+      if (object.properties) {
+        const props = object.properties as any;
+        if (props.innerRadiusAU !== undefined) {
+          // Convert inner radius from AU to scene units
+          const innerRadiusSceneUnits =
+            props.innerRadiusAU * SCALE.RENDER_SCALE_AU;
+
+          // Get the parent star's position (asteroid fields orbit the star)
+          const parentStarPosition = new THREE.Vector3();
+          if (object.parentId && objectManager) {
+            // Get parent object from the object manager
+            const parentObject = objectManager.getObject(object.parentId);
+            if (parentObject) {
+              parentObject.getWorldPosition(parentStarPosition);
+            }
+          }
+
+          // Position label at the inner radius edge relative to the parent star
+          const labelPosition = parentStarPosition
+            .clone()
+            .add(new THREE.Vector3(innerRadiusSceneUnits, 0, 0));
+          // Add offset above the belt for visibility
+          return labelPosition.add(new THREE.Vector3(0, visualRadius * 1.5, 0));
+        }
+      }
+    }
 
     // Get the world position of the celestial object
     const worldPosition = new THREE.Vector3();

@@ -125,23 +125,23 @@ function calculateRealisticMoonCount(
 
   switch (classType) {
     case CelestialType.GAS_GIANT:
-      // Gas giants can have many moons like Jupiter (95) and Saturn (146)
+      // Gas giants can have many moons, but let's be more conservative
       if (planetMassRatio > 300) {
-        // Saturn-class (95+ Earth masses)
+        // Saturn-class (95+ Earth masses) - reduced from 20-140 to 5-15
         baseMoonCount = 5;
-        variation = 30; // 20-140 moons
+        variation = 10; // 0-15 moons
       } else if (planetMassRatio > 250) {
-        // Jupiter-class (318 Earth masses)
-        baseMoonCount = 5;
-        variation = 20; // 20-100 moons
+        // Jupiter-class (318 Earth masses) - reduced from 20-100 to 3-12
+        baseMoonCount = 3;
+        variation = 9; // 0-12 moons
       } else if (planetMassRatio > 50) {
-        // Neptune-class (17 Earth masses)
+        // Neptune-class (17 Earth masses) - reduced from 0-25 to 0-8
         baseMoonCount = 0;
-        variation = 10; // 0-25 moons
+        variation = 8; // 0-8 moons
       } else {
-        // Smaller gas giants
+        // Smaller gas giants - reduced from 0-13 to 0-5
         baseMoonCount = 0;
-        variation = 8; // 0-13 moons
+        variation = 5; // 0-5 moons
       }
       break;
 
@@ -165,7 +165,7 @@ function calculateRealisticMoonCount(
     default:
       // Default case for other planet types
       baseMoonCount = 0;
-      variation = 5;
+      variation = 3; // Reduced from 5 to 3
   }
 
   // Distance factor - closer planets lose moons to stellar tides

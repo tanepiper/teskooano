@@ -147,6 +147,10 @@ export interface StellarSystemConfiguration {
   separationAU?: number[];
   /** Whether the system supports circumbinary planets */
   supportsCircumbinaryPlanets?: boolean;
+  /** The name of the system, typically based on the main star */
+  systemName?: string;
+  /** A funny or surprising description of the system */
+  description?: string;
 }
 
 /**

@@ -6,6 +6,7 @@ import type {
   CameraManagerState,
 } from "@teskooano/renderer-threejs-controls";
 import type { CompositeEnginePanel } from "../../panels/composite-panel/CompositeEnginePanel";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Manages camera operations specifically for a CompositeEnginePanel instance.
@@ -94,9 +95,13 @@ export class EngineCameraManager {
       this._cameraManager &&
       (this._cameraManager as any).renderer?.controlsManager
     ) {
+      // Convert THREE.Vector3 to OSVector3 for the controls manager
+      const cameraPositionOS = OSVector3.fromThreeJS(cameraPosition);
+      const targetPositionOS = OSVector3.fromThreeJS(targetPosition);
+
       (this._cameraManager as any).renderer.controlsManager.moveToPosition(
-        cameraPosition,
-        targetPosition,
+        cameraPositionOS,
+        targetPositionOS,
         true,
         { focusedObjectId: null },
       );
@@ -164,8 +169,8 @@ export class EngineCameraManager {
     const errorState: CameraManagerState = {
       focusedObjectId: null,
       fov: 0,
-      currentPosition: new THREE.Vector3(),
-      currentTarget: new THREE.Vector3(),
+      currentPosition: new OSVector3(),
+      currentTarget: new OSVector3(),
     };
     return new BehaviorSubject<CameraManagerState>(errorState);
   }

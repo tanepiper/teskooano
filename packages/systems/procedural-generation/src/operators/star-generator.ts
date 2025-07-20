@@ -3,6 +3,7 @@ import type { StellarSystemConfiguration } from "../zones/types";
 import { generateStar } from "../generators/stars/star";
 import { CelestialZoneManager } from "../zones";
 import { generateStellarSystem } from "./star-system-generator";
+import { SYSTEM_DESCRIPTIONS } from "../generators/names/descriptions";
 
 /**
  * Generates sophisticated stellar systems with realistic orbital mechanics and hierarchical structures.
@@ -24,6 +25,22 @@ export function generateStars(random: () => number): {
 
   // Generate the stellar system based on configuration
   const stars = generateStellarSystem(random, primaryStar, systemConfig);
+
+  // Set isMainStar property based on the hierarchy established in generateStellarSystem
+  stars.forEach((star, index) => {
+    const starProps = star.properties as any;
+    if (starProps) {
+      starProps.isMainStar = index === 0; // First star (most massive) is main star
+    }
+  });
+
+  // Set the system name based on the main star (first star after sorting by mass)
+  const mainStar = stars[0];
+  systemConfig.systemName = mainStar.name;
+
+  // Randomly select a funny description for the system
+  const descriptionIndex = Math.floor(random() * SYSTEM_DESCRIPTIONS.length);
+  systemConfig.description = SYSTEM_DESCRIPTIONS[descriptionIndex];
 
   return { stars, systemConfig };
 }

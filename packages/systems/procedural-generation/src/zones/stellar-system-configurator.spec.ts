@@ -20,6 +20,8 @@ describe("StellarSystemConfigurator", () => {
 
       expect(config.type).toBe(StellarSystemType.BINARY_CLOSE);
       expect(config.stars).toBe(2);
+      expect(config.systemName).toBe("Binary System");
+      expect(config.description).toBe("A dramatic binary system");
     });
 
     it("should return SINGLE_STAR for medium-low random values", () => {
@@ -30,6 +32,8 @@ describe("StellarSystemConfigurator", () => {
 
       expect(config.type).toBe(StellarSystemType.SINGLE_STAR);
       expect(config.stars).toBe(1);
+      expect(config.systemName).toBe("Single Star System");
+      expect(config.description).toBe("A lonely single star");
     });
 
     it("should return BINARY_WIDE for medium-high random values", () => {
@@ -40,6 +44,8 @@ describe("StellarSystemConfigurator", () => {
 
       expect(config.type).toBe(StellarSystemType.BINARY_WIDE);
       expect(config.stars).toBe(2);
+      expect(config.systemName).toBe("Wide Binary System");
+      expect(config.description).toBe("A wide binary system");
     });
 
     it("should return TRIPLE_HIERARCHICAL for high random values", () => {
@@ -50,6 +56,8 @@ describe("StellarSystemConfigurator", () => {
 
       expect(config.type).toBe(StellarSystemType.TRIPLE_HIERARCHICAL);
       expect(config.stars).toBe(3);
+      expect(config.systemName).toBe("Triple System");
+      expect(config.description).toBe("A complex triple system");
     });
 
     it("should return MULTIPLE_COMPLEX for very high random values", () => {
@@ -60,7 +68,9 @@ describe("StellarSystemConfigurator", () => {
 
       expect(config.type).toBe(StellarSystemType.MULTIPLE_COMPLEX);
       expect(config.stars).toBeGreaterThanOrEqual(4);
-      expect(config.stars).toBeLessThanOrEqual(7);
+      expect(config.stars).toBeLessThanOrEqual(6);
+      expect(config.systemName).toBe("Complex System");
+      expect(config.description).toBe("A chaotic multiple star system");
     });
 
     it("should handle edge case at 0.6", () => {

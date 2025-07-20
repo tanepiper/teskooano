@@ -76,7 +76,7 @@ const DynamicCameraSettings = {
 
   // Min distance values for orbit controls
   MIN_DISTANCES: {
-    [CelestialType.STAR]: 10, // Stars need slightly higher min distance
+    [CelestialType.STAR]: 0.1, // Stars need slightly higher min distance
     [CelestialType.PLANET]: 0.01, // Planets also need higher min distance
     [CelestialType.GAS_GIANT]: 0.1,
     [CelestialType.DWARF_PLANET]: 0.01,
