@@ -396,7 +396,6 @@ export class CompositeEnginePanel
       this._engineContainer,
       {
         showAuMarkers: viewState.showAuMarkers,
-        labelConfig: {}, // Provide a default or pass from viewState if available
       },
     );
 

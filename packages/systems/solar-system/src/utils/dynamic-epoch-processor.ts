@@ -28,10 +28,6 @@ export class DynamicEpochProcessor {
    * This is the main entry point for dynamic epoch processing.
    */
   processObjects<T>(objects: CelestialObject<T>[]): CelestialObject<T>[] {
-    console.log(
-      `🔄 Processing ${objects.length} objects to current epoch: ${this.todayEpoch}`,
-    );
-
     const processedObjects = objects.map((object) =>
       this.processObject(object),
     );
@@ -46,7 +42,6 @@ export class DynamicEpochProcessor {
   private processObject<T>(object: CelestialObject<T>): CelestialObject<T> {
     // Skip objects without orbital elements (like the Sun)
     if (!object.orbit) {
-      console.log(`⏭️  ${object.name}: Skipped (no orbital elements)`);
       return object;
     }
 
@@ -54,9 +49,6 @@ export class DynamicEpochProcessor {
 
     // Skip if already at current epoch
     if (originalEpoch === this.todayEpoch) {
-      console.log(
-        `✅ ${object.name}: Already at current epoch (${this.todayEpoch})`,
-      );
       return object;
     }
 
@@ -75,25 +67,6 @@ export class DynamicEpochProcessor {
     // Calculate the actual current position and updated orbital elements
     const { position, velocity, updatedOrbitalElements } =
       calculateCurrentPositionFromEpoch(object.orbit, this.todayEpoch);
-
-    // Log the position change for debugging
-    console.log(
-      `📍 ${object.name}: Current position calculated from ${originalEpoch} epoch data`,
-    );
-    console.log(`   Reference epoch: ${originalEpoch} (preserved)`);
-    console.log(
-      `   Original mean anomaly: ${object.orbit.meanAnomaly.toFixed(3)} rad`,
-    );
-    console.log(
-      `   Updated mean anomaly: ${updatedOrbitalElements.meanAnomaly.toFixed(3)} rad`,
-    );
-    console.log(
-      `   Current position: (${position.x.toFixed(0)}, ${position.y.toFixed(0)}, ${position.z.toFixed(0)}) m`,
-    );
-    console.log(
-      `   Velocity: (${velocity.x.toFixed(0)}, ${velocity.y.toFixed(0)}, ${velocity.z.toFixed(0)}) m/s`,
-    );
-    console.log(`   Time difference: ${yearsDifference.toFixed(1)} years`);
 
     return {
       ...object,
@@ -162,39 +135,17 @@ export class DynamicEpochProcessor {
   private logProcessingSummary(): void {
     const stats = this.getProcessingStats();
 
-    console.log("\n📊 Dynamic Epoch Processing Summary");
-    console.log("==================================");
-    console.log(`📅 Current Date: ${stats.todayEpoch}`);
-    console.log(`🔢 Total Objects: ${stats.totalObjects}`);
-    console.log(
-      `📈 Average Years Difference: ${stats.averageYearsDifference.toFixed(1)} years`,
-    );
-    console.log(
-      `📊 Maximum Years Difference: ${stats.maxYearsDifference.toFixed(1)} years`,
-    );
-
-    console.log("\n📋 Epoch Distribution:");
     Object.entries(stats.epochTypes)
       .sort(([, a], [, b]) => b - a)
       .forEach(([epoch, count]) => {
         const percentage = ((count / stats.totalObjects) * 100).toFixed(1);
-        console.log(`  ${epoch}: ${count} objects (${percentage}%)`);
       });
 
     if (stats.objectsWithLargeDifferences.length > 0) {
-      console.log("\n⚠️  Objects with Large Time Differences (>25 years):");
-      stats.objectsWithLargeDifferences
-        .sort(
-          (a, b) => Math.abs(b.yearsDifference) - Math.abs(a.yearsDifference),
-        )
-        .forEach((obj) => {
-          console.log(
-            `  - ${obj.name}: ${obj.yearsDifference.toFixed(1)} years (${obj.originalEpoch} → ${stats.todayEpoch})`,
-          );
-        });
+      stats.objectsWithLargeDifferences.sort(
+        (a, b) => Math.abs(b.yearsDifference) - Math.abs(a.yearsDifference),
+      );
     }
-
-    console.log("==================================\n");
   }
 
   /**

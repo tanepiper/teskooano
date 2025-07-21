@@ -23,6 +23,7 @@ export interface LabelVisibilityConfig {
   secondaryStar?: number;
   default?: number;
   satellite?: number;
+  ejectedSatellite?: number;
 }
 
 /**
@@ -86,7 +87,8 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       ejectedMoon: config.ejectedMoon ?? 150,
       secondaryStar: config.secondaryStar ?? 1000,
       default: config.default ?? 400,
-      satellite: config.satellite ?? 100,
+      satellite: config.satellite ?? 1,
+      ejectedSatellite: config.ejectedSatellite ?? 200000000,
     };
   }
 
@@ -256,10 +258,37 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         }
 
         case CelestialType.SATELLITE: {
-          visible = distanceToSelf < config.satellite;
+          const parentId = label.element.getAttribute("data-parent-id")!;
+          const allObjects = objectManager.getLatestRenderableObjects();
+          const parentData = allObjects[parentId];
+          const parentObject = objectManager.getObject(parentId);
+
+          if (parentObject && parentData) {
+            if (
+              [CelestialType.PLANET, CelestialType.GAS_GIANT].includes(
+                parentData.type,
+              )
+            ) {
+              // Rule: Visible if camera is close to the PARENT planet.
+              const parentCenterDistance = cameraPosition.distanceTo(
+                parentObject.position,
+              );
+              const parentRadiusInSceneUnits =
+                parentData.realRadius_m * (1 / AU_METERS);
+              const distanceToParent = Math.max(
+                0,
+                parentCenterDistance - parentRadiusInSceneUnits,
+              );
+              visible = distanceToParent < config.satellite;
+            } else if (parentData.type === CelestialType.STAR) {
+              // Rule: Ejected moon, visible if camera is close to the MOON itself.
+              visible = true;
+            }
+          } else {
+            visible = true;
+          }
           break;
         }
-
         case CelestialType.GAS_GIANT: {
           visible = distanceToSelf < config.gasGiant;
           break;
@@ -413,6 +442,9 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
       default: this.auToSceneUnits(this.visibilityConfig.default),
       satellite: this.auToSceneUnits(this.visibilityConfig.satellite),
+      ejectedSatellite: this.auToSceneUnits(
+        this.visibilityConfig.ejectedSatellite,
+      ),
     };
   }
 
