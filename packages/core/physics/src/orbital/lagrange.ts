@@ -4,7 +4,9 @@ import type {
   LagrangePoint,
   TwoBodySystem,
   LagrangeCalculationOptions,
+  OrbitalParameters,
 } from "@teskooano/data-types";
+import { LagrangePointType } from "@teskooano/data-types";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
 /**
@@ -476,6 +478,82 @@ export function calculateAllLagrangePoints(
   }
 
   return lagrangePoints;
+}
+
+/**
+ * Creates orbital elements for an object intended to be at a Lagrange point.
+ * This function calculates the necessary orbital parameters based on the properties
+ * of the two main bodies forming the Lagrange system.
+ *
+ * @param lagrangePointType The specific Lagrange point (L1-L5).
+ * @param primaryMass_kg Mass of the primary body (e.g., Sun for Sun-Earth L2) in kg.
+ * @param secondaryMass_kg Mass of the secondary body (e.g., Earth for Sun-Earth L2) in kg.
+ * @param parentToTargetSeparation_m Separation distance between the primary and secondary bodies in meters.
+ * @returns A Partial<OrbitalParameters> object with calculated semi-major axis, period, and velocity.
+ */
+export function createOrbitalElementsFromLagrangePoint(
+  lagrangePointType: LagrangePointType,
+  primaryMass_kg: number,
+  secondaryMass_kg: number,
+  parentToTargetSeparation_m: number,
+): Partial<OrbitalParameters> {
+  // Create dummy PhysicsStateReal objects for Lagrange point calculation.
+  // Only mass and relative positions are relevant for the point calculation itself.
+  const primaryDummyState: PhysicsStateReal = {
+    id: "dummyPrimary",
+    mass_kg: primaryMass_kg,
+    position_m: new OSVector3(0, 0, 0),
+    velocity_mps: new OSVector3(0, 0, 0),
+  };
+  const secondaryDummyState: PhysicsStateReal = {
+    id: "dummySecondary",
+    mass_kg: secondaryMass_kg,
+    position_m: new OSVector3(parentToTargetSeparation_m, 0, 0),
+    velocity_mps: new OSVector3(0, 0, 0),
+  };
+
+  const twoBodySystem = createTwoBodySystem(
+    primaryDummyState,
+    secondaryDummyState,
+  );
+  const lagrangePoints = calculateAllLagrangePoints(twoBodySystem);
+  const lPoint = lagrangePoints.find((lp) => lp.id === lagrangePointType);
+
+  if (!lPoint) {
+    throw new Error(
+      `Lagrange point '${lagrangePointType}' not found for the given system.`,
+    );
+  }
+
+  // For Lagrange points, semi-major axis is the distance from the primary of the two-body system
+  const realSemiMajorAxis_m = lPoint.distanceFromPrimary_m;
+
+  // Period for an object at a Lagrange point is effectively the orbital period of the secondary body
+  // around the primary, derived from Kepler's Third Law based on their total mass and separation.
+  const period_s =
+    2 *
+    Math.PI *
+    Math.sqrt(
+      Math.pow(twoBodySystem.separation_m, 3) /
+        (GRAVITATIONAL_CONSTANT * twoBodySystem.totalMass_kg),
+    );
+
+  // Velocity magnitude of the Lagrange point in the rotating frame
+  const averageOrbitalSpeed_mps = lPoint.velocity_mps?.length() ?? 0;
+
+  return {
+    realSemiMajorAxis_m: realSemiMajorAxis_m,
+    eccentricity: 0, // Lagrange points are not true elliptical orbits, set to nominal
+    inclination: 0, // Set to nominal
+    longitudeOfAscendingNode: 0, // Set to nominal
+    argumentOfPeriapsis: 0, // Set to nominal
+    meanAnomaly: 0, // Set to nominal
+    period_s: period_s,
+    realAphelion_m: realSemiMajorAxis_m, // Aphelion/Perihelion are same as semi-major for nominal circular-like path
+    realPerihelion_m: realSemiMajorAxis_m,
+    averageOrbitalSpeed_mps: averageOrbitalSpeed_mps,
+    lagrangePointType: lagrangePointType, // Store the type for reference
+  };
 }
 
 /**

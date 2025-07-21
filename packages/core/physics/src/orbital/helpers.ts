@@ -4,7 +4,11 @@ import type { OrbitalParameters } from "@teskooano/data-types";
 import { getCurrentEpoch, J2000_EPOCH } from "./epoch";
 import type { LagrangePointType } from "@teskooano/data-types";
 import type { PhysicsStateReal } from "@teskooano/data-types";
-import { calculateAllLagrangePoints, createTwoBodySystem } from "./lagrange";
+import {
+  calculateAllLagrangePoints,
+  createTwoBodySystem,
+  createOrbitalElementsFromLagrangePoint,
+} from "./lagrange";
 
 /**
  * Creates orbital elements from human-readable parameters.
@@ -41,12 +45,10 @@ export interface OrbitalElementsInput {
   epoch?: string;
   /** Optional: If the object is to be placed at a specific Lagrange point. */
   lagrangePointType?: LagrangePointType;
-  /** Optional: Mass of the primary body in the Lagrange system (required if lagrangePointType is set). */
-  parentMass_kg?: number;
-  /** Optional: Mass of the secondary body in the Lagrange system (required if lagrangePointType is set). */
-  targetMass_kg?: number;
-  /** Optional: Separation distance between the primary and secondary bodies in the Lagrange system (meters). */
-  parentToTargetSeparation_m?: number;
+  // Remove parentMass_kg, targetMass_kg, and parentToTargetSeparation_m here
+  // parentMass_kg?: number;
+  // targetMass_kg?: number;
+  // parentToTargetSeparation_m?: number;
 }
 
 /**
@@ -67,66 +69,19 @@ export function createOrbitalElements(
   let realAphelion_m: number;
   let realPerihelion_m: number;
 
+  // Simplified logic for Lagrange points in createOrbitalElements:
+  // If lagrangePointType is set, it means its position/velocity will be overridden later.
+  // For now, set nominal Keplerian values that allow the object to be initialized.
   if (input.lagrangePointType) {
-    if (
-      input.parentMass_kg === undefined ||
-      input.targetMass_kg === undefined ||
-      input.parentToTargetSeparation_m === undefined
-    ) {
-      throw new Error(
-        "For Lagrange orbits, parentMass_kg, targetMass_kg, and parentToTargetSeparation_m are required.",
-      );
-    }
+    semiMajorAxis_m = (input.semiMajorAxisAU ?? 1) * AU; // Default to 1 AU if not provided
+    period_s = input.period_s ?? 365.25 * 24 * 3600; // Default to Earth's period if not provided
 
-    // Create dummy PhysicsStateReal objects for Lagrange point calculation
-    // Only mass and relative positions are relevant for the point calculation itself
-    const primaryDummyState: PhysicsStateReal = {
-      id: "dummyPrimary",
-      mass_kg: input.parentMass_kg,
-      position_m: new OSVector3(0, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
-    };
-    const secondaryDummyState: PhysicsStateReal = {
-      id: "dummySecondary",
-      mass_kg: input.targetMass_kg,
-      position_m: new OSVector3(input.parentToTargetSeparation_m, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
-    };
-
-    const twoBodySystem = createTwoBodySystem(
-      primaryDummyState,
-      secondaryDummyState,
-    );
-    const lagrangePoints = calculateAllLagrangePoints(twoBodySystem);
-    const lPoint = lagrangePoints.find(
-      (lp) => lp.id === input.lagrangePointType,
-    );
-
-    if (!lPoint) {
-      throw new Error(`Lagrange point ${input.lagrangePointType} not found.`);
-    }
-
-    // For Lagrange points, semi-major axis is the distance from the primary of the two-body system
-    semiMajorAxis_m = lPoint.distanceFromPrimary_m;
-
-    // Period for an object at a Lagrange point is the orbital period of the secondary body
-    // around the primary, derived from Kepler's Third Law based on their total mass and separation.
-    period_s =
-      2 *
-      Math.PI *
-      Math.sqrt(
-        Math.pow(twoBodySystem.separation_m, 3) /
-          (GRAVITATIONAL_CONSTANT * twoBodySystem.totalMass_kg),
-      );
-
-    // For Lagrange points, set other orbital elements to nominal values
-    // as they don't describe a traditional Keplerian orbit.
     eccentricity = 0;
     inclinationDeg = 0;
     longitudeOfAscendingNodeDeg = 0;
     argumentOfPeriapsisDeg = 0;
     meanAnomalyDeg = 0; // Or some arbitrary phase
-    averageOrbitalSpeed_mps = lPoint.velocity_mps?.length() ?? 0; // Use calculated velocity magnitude
+    averageOrbitalSpeed_mps = (input.averageOrbitalSpeedKmps ?? 0) * 1000;
     realAphelion_m = semiMajorAxis_m;
     realPerihelion_m = semiMajorAxis_m;
   } else {

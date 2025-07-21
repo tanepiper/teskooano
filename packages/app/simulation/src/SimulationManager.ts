@@ -21,6 +21,7 @@ import {
 import { OSVector3 } from "@teskooano/core-math";
 import { Observable, Subject } from "rxjs";
 import { HierarchyManager } from "./HierarchyManager";
+import { processLagrangeObjects } from "./LagrangeProcessor";
 
 /**
  * Manages the overall simulation lifecycle, physics loop, state, and events.
@@ -170,8 +171,19 @@ export class SimulationManager {
         const allCelestialObjectsForParams =
           physicsSystemAdapter.getCelestialObjectsSnapshot(); // This is the CelestialObject record
 
-        // No longer need to convert to Map here for Lagrange processing
-        // Lagrange point calculation is now handled directly in createOrbitalElements
+        // Convert the record to a Map before passing to LagrangeProcessor
+        const celestialObjectsMap = new Map(
+          Object.entries(allCelestialObjectsForParams),
+        );
+
+        // Convert the array of PhysicsStateReal to a Map for LagrangeProcessor
+        const physicsStatesMap = new Map<string, PhysicsStateReal>();
+        activeBodiesArray.forEach((state) => {
+          physicsStatesMap.set(state.id, state);
+        });
+
+        // Process Lagrange-bound objects to update their initial physics states
+        processLagrangeObjects(celestialObjectsMap, physicsStatesMap);
 
         const radii = new Map<string | number, number>();
         const isStar = new Map<string | number, boolean>();
