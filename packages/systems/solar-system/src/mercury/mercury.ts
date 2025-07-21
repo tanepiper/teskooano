@@ -11,9 +11,9 @@ import {
   PlanetType,
 } from "@teskooano/data-types";
 
-const MERCURY_MASS_KG = 3.285e23;
+const MERCURY_MASS_KG = 3.3011e23;
 const MERCURY_RADIUS_KM = 2439.7; // Mean radius
-const MERCURY_TEMP_K = 440; // Mean surface temperature
+const MERCURY_TEMP_K = 437; // Blackbody temperature
 const MERCURY_ALBEDO = 0.088; // Bond albedo
 
 /**
@@ -33,10 +33,10 @@ export const mercury: CelestialObject<PlanetProperties> = {
   orbit: createOrbitalElements({
     semiMajorAxisAU: 0.387098, // Mercury's semi-major axis
     eccentricity: 0.20563,
-    inclinationDeg: 7.00487,
-    longitudeOfAscendingNodeDeg: 48.33167,
-    argumentOfPeriapsisDeg: 29.12478,
-    meanAnomalyDeg: 174.79577,
+    inclinationDeg: 7.005,
+    longitudeOfAscendingNodeDeg: 48.331,
+    argumentOfPeriapsisDeg: 29.124,
+    meanAnomalyDeg: 174.796,
     period_s: 7.60052e6, // 87.969 Earth days
     siderealRotationPeriod_s: 5.067e6, // 58.646 Earth days
     axialTiltDeg: 0.034,

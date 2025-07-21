@@ -42,16 +42,16 @@ export const whipple: CelestialObject<CometProperties> = {
   albedo: WHIPPLE_ALBEDO,
   temperature: WHIPPLE_TEMP_K,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 3.821, // 3.821 AU
-    eccentricity: 0.351,
-    inclinationDeg: 10.2,
-    longitudeOfAscendingNodeDeg: 18.2,
-    argumentOfPeriapsisDeg: 188.4,
-    meanAnomalyDeg: 0,
-    period_s: 2.356e8, // 7.47 years
+    semiMajorAxisAU: 4.165, // 4.165 AU (March 6, 2006 epoch)
+    eccentricity: 0.2583,
+    inclinationDeg: 9.9345,
+    longitudeOfAscendingNodeDeg: 18.2, // Keep existing value as not provided in reference
+    argumentOfPeriapsisDeg: 188.4, // Keep existing value as not provided in reference
+    meanAnomalyDeg: 0, // Keep existing value as not provided in reference
+    period_s: 268200000, // 8.501 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
-    epoch: J2000_EPOCH,
+    epoch: "JD 2453435.5",
   }),
   properties: {
     type: CelestialType.COMET,

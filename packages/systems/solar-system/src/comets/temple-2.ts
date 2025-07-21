@@ -10,9 +10,9 @@ import {
 } from "@teskooano/data-types";
 
 // Temple 2 Comet constants
-export const TEMPLE2_NUCLEUS_RADIUS_KM = 2.0; // Estimate
+export const TEMPLE2_NUCLEUS_RADIUS_KM = 10.6; // Wikipedia verified: 10.6 km
 export const TEMPLE2_MASS_KG = 1e13; // Estimate
-export const TEMPLE2_ALBEDO = 0.04;
+export const TEMPLE2_ALBEDO = 0.022; // Wikipedia verified
 export const TEMPLE2_TEMP_K = 100;
 export const TEMPLE2_ACTIVITY = 0.5;
 export const TEMPLE2_COMA_RADIUS = 40000 * METERS_TO_SCENE_UNITS * 0.5;
@@ -42,16 +42,16 @@ export const temple2: CelestialObject<CometProperties> = {
   albedo: TEMPLE2_ALBEDO,
   temperature: TEMPLE2_TEMP_K,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 3.024, // 3.024 AU
-    eccentricity: 0.549,
-    inclinationDeg: 12.5,
-    longitudeOfAscendingNodeDeg: 310.2,
-    argumentOfPeriapsisDeg: 119.3,
-    meanAnomalyDeg: 0,
-    period_s: 1.659e8, // 5.26 years
+    semiMajorAxisAU: 3.064, // 3.064 AU (JD 2460800.5 epoch)
+    eccentricity: 0.53738,
+    inclinationDeg: 12.027,
+    longitudeOfAscendingNodeDeg: 117.8,
+    argumentOfPeriapsisDeg: 195.5,
+    meanAnomalyDeg: 276.53,
+    period_s: 169123392, // 5.362 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
-    epoch: J2000_EPOCH,
+    epoch: "JD 2460800.5",
   }),
   properties: {
     type: CelestialType.COMET,

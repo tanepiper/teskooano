@@ -21,9 +21,9 @@ const PLUTO_INC_DEG = 17.16;
 const PLUTO_LAN_DEG = 110.299;
 const PLUTO_AOP_DEG = 113.834;
 const PLUTO_MA_DEG = 14.53;
-const PLUTO_ORBITAL_PERIOD_S = 7.82e9; // 248.09 Earth years
+const PLUTO_ORBITAL_PERIOD_S = 7.82e9; // 247.94 Earth years (7.82e9 seconds)
 const PLUTO_SIDEREAL_ROTATION_PERIOD_S = 5.514e5; // 6.387 Earth days
-const PLUTO_AXIAL_TILT_DEG = 122.53;
+const PLUTO_AXIAL_TILT_DEG = 119.51;
 
 /**
  * Pluto configuration object for modular solar system initialization.

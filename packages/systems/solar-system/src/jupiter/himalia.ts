@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  kmToM,
+  J2000_EPOCH,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -35,6 +39,7 @@ export const himalia: CelestialObject<PlanetProperties> = {
     period_s: 249.909 * 24 * 3600,
     siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.MOON,

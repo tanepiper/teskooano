@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  kmToM,
+  J2000_EPOCH,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -37,6 +41,7 @@ export const callisto: CelestialObject<PlanetProperties> = {
     period_s: 16.6890184 * 24 * 3600, // 16.6890184 days (synchronous)
     siderealRotationPeriod_s: 16.6890184 * 24 * 3600, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.MOON,

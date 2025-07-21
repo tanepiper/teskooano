@@ -8,10 +8,10 @@ import {
 } from "@teskooano/data-types";
 
 // Verified Wikipedia/NASA data for Deimos
-const DEIMOS_MASS_KG = 1.5e15; // Wikipedia verified: 1.5×10¹⁵ kg
-const DEIMOS_RADIUS_KM = 6.2; // Wikipedia verified: 6.2 km mean radius (12.6 km diameter)
+const DEIMOS_MASS_KG = 1.51e15; // Wikipedia verified: 1.51×10¹⁵ kg
+const DEIMOS_RADIUS_KM = 6.27; // Wikipedia verified: 6.27±0.07 km mean radius
 const DEIMOS_ALBEDO = 0.068; // Wikipedia verified
-const DEIMOS_TEMP_K = 233; // Estimated temperature similar to Phobos: ~233 K (-40°C)
+const DEIMOS_TEMP_K = 233; // Wikipedia verified: ≈233 K
 
 /**
  * Deimos moon configuration object for modular solar system initialization.
@@ -28,15 +28,16 @@ export const deimos: CelestialObject<PlanetProperties> = {
   temperature: DEIMOS_TEMP_K,
   albedo: DEIMOS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 23460 / 149597870.7, // 23,460 km converted to AU
+    semiMajorAxisAU: 23463.2 / 149597870.7, // 23,463.2 km converted to AU
     eccentricity: 0.00033,
     inclinationDeg: 0.93, // To Mars's equator
     longitudeOfAscendingNodeDeg: 54.3,
     argumentOfPeriapsisDeg: 0.0,
     meanAnomalyDeg: 205.0,
-    period_s: 30.31 * 3600, // 30.31 hours (synchronous)
-    siderealRotationPeriod_s: 30.31 * 3600, // Synchronous rotation
+    period_s: 30.312 * 3600, // 30.312 hours (synchronous)
+    siderealRotationPeriod_s: 30.312 * 3600, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: "JD 2456191.5",
   }),
   properties: {
     type: CelestialType.MOON,

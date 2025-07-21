@@ -51,7 +51,7 @@ export const encke: CelestialObject<CometProperties> = {
     period_s: 1.041e8, // 3.30 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
-    epoch: J2000_EPOCH,
+    epoch: "JD 2460202.5",
   }),
   properties: {
     type: CelestialType.COMET,

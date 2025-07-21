@@ -51,7 +51,7 @@ export const haleBopp: CelestialObject<CometProperties> = {
     period_s: 7.5725e10, // 2399 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
-    epoch: J2000_EPOCH,
+    epoch: "JD 2459837.5",
   }),
   properties: {
     type: CelestialType.COMET,

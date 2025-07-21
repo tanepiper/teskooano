@@ -42,13 +42,13 @@ export const halley: CelestialObject<CometProperties> = {
   albedo: HALLEY_ALBEDO,
   temperature: HALLEY_TEMP_K,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 17.737, // 17.737 AU
-    eccentricity: 0.96658,
-    inclinationDeg: 161.96,
-    longitudeOfAscendingNodeDeg: 59.396,
-    argumentOfPeriapsisDeg: 112.05,
-    meanAnomalyDeg: 0.07323,
-    period_s: 2.357e9, // 74.7 years
+    semiMajorAxisAU: 17.8, // 17.8 AU (J2000 epoch)
+    eccentricity: 0.967, // J2000 epoch
+    inclinationDeg: 162.3, // J2000 epoch
+    longitudeOfAscendingNodeDeg: 58.42, // J2000 epoch
+    argumentOfPeriapsisDeg: 111.33, // J2000 epoch
+    meanAnomalyDeg: 38.38, // J2000 epoch
+    period_s: 2.357e9, // 74.7 years (J2000 epoch)
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
     epoch: J2000_EPOCH,

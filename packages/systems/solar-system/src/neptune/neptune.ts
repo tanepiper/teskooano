@@ -12,16 +12,16 @@ import {
   type GasGiantProperties,
 } from "@teskooano/data-types";
 
-const NEPTUNE_MASS_KG = 1.024e26;
+const NEPTUNE_MASS_KG = 1.02409e26;
 const NEPTUNE_RADIUS_KM = 24622; // Equatorial radius
 const NEPTUNE_TEMP_K = 72; // Effective temperature
-const NEPTUNE_ALBEDO = 0.442; // Bond albedo
+const NEPTUNE_ALBEDO = 0.442; // Geometric albedo
 const NEPTUNE_SMA_AU = 30.069923;
-const NEPTUNE_ECC = 0.008606;
+const NEPTUNE_ECC = 0.008678;
 const NEPTUNE_INC_DEG = 1.77004;
-const NEPTUNE_LAN_DEG = 131.78423;
-const NEPTUNE_AOP_DEG = 273.249;
-const NEPTUNE_MA_DEG = 256.228;
+const NEPTUNE_LAN_DEG = 131.783;
+const NEPTUNE_AOP_DEG = 273.187;
+const NEPTUNE_MA_DEG = 259.883;
 const NEPTUNE_ORBITAL_PERIOD_S = 5.2e9; // 164.8 Earth years
 const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 5.8e4; // 16.11 hours
 const NEPTUNE_AXIAL_TILT_DEG = 28.32;

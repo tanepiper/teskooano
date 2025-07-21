@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  kmToM,
+  J2000_EPOCH,
+} from "@teskooano/core-physics";
 import {
   CelestialStatus,
   CelestialType,
@@ -35,6 +39,7 @@ export const adrastea: CelestialObject<PlanetProperties> = {
     period_s: 25770,
     siderealRotationPeriod_s: 25770, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.MOON,

@@ -11,9 +11,9 @@ import {
 } from "@teskooano/data-types";
 
 // Borrelly Comet constants
-export const BORRELLY_NUCLEUS_RADIUS_KM = 2.0; // Estimate
-export const BORRELLY_MASS_KG = 1e13; // Estimate
-export const BORRELLY_ALBEDO = 0.04;
+export const BORRELLY_NUCLEUS_RADIUS_KM = 2.4; // Wikipedia verified: 2.4 km mean radius
+export const BORRELLY_MASS_KG = 2e13; // Wikipedia verified: 2×10¹³ kg
+export const BORRELLY_ALBEDO = 0.03; // Wikipedia verified
 export const BORRELLY_TEMP_K = 100;
 export const BORRELLY_ACTIVITY = 0.6;
 export const BORRELLY_COMA_RADIUS = 45000 * METERS_TO_SCENE_UNITS * 0.5;
@@ -42,16 +42,16 @@ export const borrelly: CelestialObject<CometProperties> = {
   albedo: BORRELLY_ALBEDO,
   temperature: BORRELLY_TEMP_K,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 3.576, // 3.576 AU
-    eccentricity: 0.632,
-    inclinationDeg: 30.2,
+    semiMajorAxisAU: 3.61, // 3.61 AU
+    eccentricity: 0.6377,
+    inclinationDeg: 29.3,
     longitudeOfAscendingNodeDeg: 67.8,
     argumentOfPeriapsisDeg: 75.1,
     meanAnomalyDeg: 0,
-    period_s: 2.133e8, // 6.76 years
+    period_s: 216169560, // 6.85 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
-    epoch: J2000_EPOCH,
+    epoch: "JD 2459800.5",
   }),
   properties: {
     type: CelestialType.COMET,

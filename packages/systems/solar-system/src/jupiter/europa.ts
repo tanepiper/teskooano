@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  kmToM,
+  J2000_EPOCH,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialType,
@@ -37,6 +41,7 @@ export const europa: CelestialObject<PlanetProperties> = {
     period_s: 3.551181 * 24 * 3600, // 3.551181 days (synchronous)
     siderealRotationPeriod_s: 3.551181 * 24 * 3600, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.MOON,

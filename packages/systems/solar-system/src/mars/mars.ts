@@ -11,9 +11,9 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const MARS_MASS_KG = 6.39e23;
+const MARS_MASS_KG = 6.4171e23;
 const MARS_RADIUS_KM = 3389.5; // Mean radius
-const MARS_TEMP_K = 210; // Mean surface temperature
+const MARS_TEMP_K = 209; // Blackbody temperature
 const MARS_ALBEDO = 0.25; // Bond albedo
 
 /**
@@ -31,12 +31,12 @@ export const mars: CelestialObject<PlanetProperties> = {
   temperature: MARS_TEMP_K,
   albedo: MARS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 1.523679, // Mars's semi-major axis
-    eccentricity: 0.093405,
-    inclinationDeg: 1.85061,
+    semiMajorAxisAU: 1.52368055, // Mars's semi-major axis
+    eccentricity: 0.0934,
+    inclinationDeg: 1.85,
     longitudeOfAscendingNodeDeg: 49.57854,
-    argumentOfPeriapsisDeg: 286.4966,
-    meanAnomalyDeg: 18.6021,
+    argumentOfPeriapsisDeg: 286.5,
+    meanAnomalyDeg: 19.412,
     period_s: 5.935e7, // 686.98 Earth days
     siderealRotationPeriod_s: 8.864e4, // 24.6229 hours
     axialTiltDeg: 25.19,

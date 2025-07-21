@@ -8,14 +8,14 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 
-const CHARON_MASS_KG = 1.586e21;
+const CHARON_MASS_KG = 1.5897e21;
 const CHARON_RADIUS_KM = 606;
-const CHARON_SMA_KM = 19591.4;
-const CHARON_ECC = 0.00005;
-const CHARON_INC_DEG = 0.001;
+const CHARON_SMA_KM = 19595.764;
+const CHARON_ECC = 0.000161;
+const CHARON_INC_DEG = 0.08;
 const CHARON_SIDEREAL_PERIOD_S = 551855.0;
 const CHARON_ALBEDO = 0.38;
-const CHARON_AXIAL_TILT_DEG = 119.59; // Same as Pluto
+const CHARON_AXIAL_TILT_DEG = 119.591;
 
 /**
  * Charon configuration object for modular solar system initialization.
@@ -35,12 +35,13 @@ export const charon: CelestialObject<PlanetProperties> = {
     semiMajorAxisAU: CHARON_SMA_KM / 149597870.7, // Convert km to AU
     eccentricity: CHARON_ECC,
     inclinationDeg: CHARON_INC_DEG,
-    longitudeOfAscendingNodeDeg: 223.0,
+    longitudeOfAscendingNodeDeg: 223.046,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
     period_s: CHARON_SIDEREAL_PERIOD_S,
     siderealRotationPeriod_s: CHARON_SIDEREAL_PERIOD_S,
     axialTiltDeg: CHARON_AXIAL_TILT_DEG,
+    epoch: "JD 2452600.5",
   }),
   properties: {
     type: CelestialType.MOON,
