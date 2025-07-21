@@ -1,5 +1,5 @@
 import {
-  ASTRONOMICAL_EPOCHS,
+  J2000_EPOCH,
   createOrbitalElements,
   kmToM,
 } from "@teskooano/core-physics";
@@ -49,7 +49,7 @@ export const pluto: CelestialObject<PlanetProperties> = {
     period_s: PLUTO_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
     axialTiltDeg: PLUTO_AXIAL_TILT_DEG,
-    epoch: ASTRONOMICAL_EPOCHS.J2000,
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.PLANET,

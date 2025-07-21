@@ -1,5 +1,5 @@
 import {
-  ASTRONOMICAL_EPOCHS,
+  J2000_EPOCH,
   createOrbitalElements,
   kmToM,
 } from "@teskooano/core-physics";
@@ -51,7 +51,7 @@ export const borrelly: CelestialObject<CometProperties> = {
     period_s: 2.133e8, // 6.76 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
-    epoch: ASTRONOMICAL_EPOCHS.J2000,
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.COMET,

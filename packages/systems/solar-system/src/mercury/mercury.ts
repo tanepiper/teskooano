@@ -1,5 +1,5 @@
 import {
-  ASTRONOMICAL_EPOCHS,
+  J2000_EPOCH,
   createOrbitalElements,
   kmToM,
 } from "@teskooano/core-physics";
@@ -40,7 +40,7 @@ export const mercury: CelestialObject<PlanetProperties> = {
     period_s: 7.60052e6, // 87.969 Earth days
     siderealRotationPeriod_s: 5.067e6, // 58.646 Earth days
     axialTiltDeg: 0.034,
-    epoch: ASTRONOMICAL_EPOCHS.J2000,
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.PLANET,

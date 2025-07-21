@@ -1,5 +1,5 @@
 import {
-  ASTRONOMICAL_EPOCHS,
+  J2000_EPOCH,
   createOrbitalElements,
   kmToM,
 } from "@teskooano/core-physics";
@@ -40,7 +40,7 @@ export const mars: CelestialObject<PlanetProperties> = {
     period_s: 5.935e7, // 686.98 Earth days
     siderealRotationPeriod_s: 8.864e4, // 24.6229 hours
     axialTiltDeg: 25.19,
-    epoch: ASTRONOMICAL_EPOCHS.J2000,
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.PLANET,

@@ -1,5 +1,5 @@
 import {
-  ASTRONOMICAL_EPOCHS,
+  J2000_EPOCH,
   createOrbitalElements,
   kmToM,
 } from "@teskooano/core-physics";
@@ -52,7 +52,7 @@ export const saturn: CelestialObject<GasGiantProperties> = {
     period_s: SATURN_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
     axialTiltDeg: SATURN_AXIAL_TILT_DEG,
-    epoch: ASTRONOMICAL_EPOCHS.J2000,
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.GAS_GIANT,

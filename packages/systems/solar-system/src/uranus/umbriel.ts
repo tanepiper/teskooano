@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  J2000_EPOCH,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -32,6 +36,7 @@ export const umbriel: CelestialObject<PlanetProperties> = {
     period_s: 3.582e5,
     siderealRotationPeriod_s: 3.582e5, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   temperature: 75,
   albedo: 0.21,

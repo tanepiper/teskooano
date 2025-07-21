@@ -1,7 +1,7 @@
 import { OSVector3, utils } from "@teskooano/core-math";
 import { AU, KM } from "../units/constants";
 import type { OrbitalParameters } from "@teskooano/data-types";
-import { getCurrentEpoch } from "./epoch";
+import { getCurrentEpoch, J2000_EPOCH } from "./epoch";
 
 /**
  * Creates orbital elements from human-readable parameters.
@@ -70,7 +70,7 @@ export function createOrbitalElements(
     realAphelion_m: aphelion_m,
     realPerihelion_m: perihelion_m,
     averageOrbitalSpeed_mps: averageOrbitalSpeed_mps,
-    epoch: input.epoch ?? "J2000",
+    epoch: input.epoch ?? J2000_EPOCH,
     timeOfPerihelion: input.timeOfPerihelion,
   };
 }

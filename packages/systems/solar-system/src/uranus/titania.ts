@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  J2000_EPOCH,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   PlanetType,
@@ -32,6 +36,7 @@ export const titania: CelestialObject<PlanetProperties> = {
     period_s: 7.526e5,
     siderealRotationPeriod_s: 7.526e5, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   temperature: 70,
   albedo: 0.27,

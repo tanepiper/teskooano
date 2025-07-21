@@ -3,29 +3,16 @@ import type { OrbitalParameters } from "@teskooano/data-types";
 import { calculateKeplerianStateAtTime } from "./ideal";
 
 /**
- * Common astronomical epochs as Julian Day numbers.
- * These represent specific reference dates for orbital elements.
+ * J2000 epoch as the standard astronomical reference.
+ * This is the only hard-coded epoch we keep as it's the international standard.
  */
-export const ASTRONOMICAL_EPOCHS = {
-  J2000: "J2000", // January 1, 2000 12:00:00 UTC
-  J2025: "J2025", // January 1, 2025 12:00:00 UTC
-  CURRENT_2025: "2025-05-05", // May 5, 2025 (example current date)
-  EPOCH_2023: "2023-02-25", // February 25, 2023
-} as const;
-
-export type AstronomicalEpoch =
-  (typeof ASTRONOMICAL_EPOCHS)[keyof typeof ASTRONOMICAL_EPOCHS];
+export const J2000_EPOCH = "J2000";
 
 /**
- * Julian Day numbers for common epochs.
+ * Julian Day number for J2000 epoch.
  * Julian Day is a continuous count of days since January 1, 4713 BC.
  */
-export const JULIAN_DAYS = {
-  J2000: 2451545.0, // January 1, 2000 12:00:00 UTC
-  J2025: 2460673.5, // January 1, 2025 12:00:00 UTC
-  CURRENT_2025: 2460673.5, // May 5, 2025
-  EPOCH_2023: 2460000.5, // February 25, 2023
-} as const;
+export const J2000_JULIAN_DAY = 2451545.0; // January 1, 2000 12:00:00 UTC
 
 /**
  * Gets the current date as an epoch string (YYYY-MM-DD format).
@@ -40,6 +27,30 @@ export function getCurrentEpoch(): string {
 }
 
 /**
+ * Gets the current date and time as a precise epoch string (YYYY-MM-DDTHH:MM:SS format).
+ * This provides more accurate positioning for objects that move quickly (like satellites).
+ */
+export function getCurrentPreciseEpoch(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+  const second = String(now.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+}
+
+/**
+ * Gets the current Julian Day number with time precision.
+ * This is the most accurate way to represent the current moment.
+ */
+export function getCurrentJulianDay(): number {
+  const now = new Date();
+  return dateToJulianDay(now);
+}
+
+/**
  * Recommended current epoch for new orbital data.
  * This dynamically uses today's date for maximum accuracy.
  */
@@ -49,46 +60,107 @@ export const CURRENT_EPOCH = getCurrentEpoch();
  * Converts Julian Day to years since J2000 epoch.
  */
 export function julianDayToYearsSinceJ2000(julianDay: number): number {
-  return (julianDay - JULIAN_DAYS.J2000) / 365.25;
+  return (julianDay - J2000_JULIAN_DAY) / 365.25;
 }
 
 /**
  * Converts years since J2000 to Julian Day.
  */
 export function yearsSinceJ2000ToJulianDay(years: number): number {
-  return JULIAN_DAYS.J2000 + years * 365.25;
+  return J2000_JULIAN_DAY + years * 365.25;
+}
+
+/**
+ * Converts a date to Julian Day number.
+ * Uses the standard astronomical formula for Julian Day calculation.
+ */
+export function dateToJulianDay(date: Date): number {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const second = date.getSeconds();
+
+  // Astronomical Julian Day calculation
+  let jd =
+    367 * year -
+    Math.floor((7 * (year + Math.floor((month + 9) / 12))) / 4) +
+    Math.floor((275 * month) / 9) +
+    day +
+    1721013.5 +
+    hour / 24 +
+    minute / 1440 +
+    second / 86400;
+
+  return jd;
+}
+
+/**
+ * Parses a J-prefixed epoch (like J2000, J2100.5) to Julian Day.
+ * Uses the standard astronomical formula for J-epochs.
+ */
+export function parseJEpochToJulianDay(jEpoch: string): number {
+  const year = parseFloat(jEpoch.substring(1));
+
+  // Standard astronomical formula for J-epochs
+  // J2000 = 2451545.0, and each Julian year = 365.25 days
+  const yearsSinceJ2000 = year - 2000;
+  return J2000_JULIAN_DAY + yearsSinceJ2000 * 365.25;
 }
 
 /**
  * Gets the Julian Day number for a given epoch string.
- * Supports both date strings (YYYY-MM-DD) and epoch constants (J2000, etc.).
+ * Supports multiple epoch formats:
+ * - J2000 (standard astronomical epoch)
+ * - J-prefixed epochs (J2025, J2100.5, etc.)
+ * - Date strings (YYYY-MM-DD format)
+ * - Julian Day numbers (JD 2458900.5, 2458900.5, etc.)
  */
 export function getJulianDayForEpoch(epoch: string): number {
-  // Handle known epoch constants
-  if (epoch === ASTRONOMICAL_EPOCHS.J2000) return JULIAN_DAYS.J2000;
-  if (epoch === ASTRONOMICAL_EPOCHS.J2025) return JULIAN_DAYS.J2025;
-  if (epoch === ASTRONOMICAL_EPOCHS.EPOCH_2023) return JULIAN_DAYS.EPOCH_2023;
+  // Handle J2000 as the standard reference
+  if (epoch === J2000_EPOCH) {
+    return J2000_JULIAN_DAY;
+  }
+
+  // Handle J-prefixed epochs (J2025, J2100.5, etc.)
+  if (epoch.match(/^J\d{4}(\.\d+)?$/)) {
+    return parseJEpochToJulianDay(epoch);
+  }
+
+  // Handle Julian Day numbers with "JD" prefix (JD 2458900.5)
+  if (epoch.match(/^JD\s*(\d+\.?\d*)$/)) {
+    const jdMatch = epoch.match(/^JD\s*(\d+\.?\d*)$/);
+    if (jdMatch) {
+      return parseFloat(jdMatch[1]);
+    }
+  }
+
+  // Handle Julian Day numbers without prefix (2458900.5)
+  if (epoch.match(/^\d+\.?\d*$/)) {
+    const jdValue = parseFloat(epoch);
+    // Validate that it's a reasonable Julian Day number (between 0 and 3000000)
+    if (jdValue > 0 && jdValue < 3000000) {
+      return jdValue;
+    }
+  }
 
   // Handle date strings (YYYY-MM-DD format)
   if (epoch.match(/^\d{4}-\d{2}-\d{2}$/)) {
     const [year, month, day] = epoch.split("-").map(Number);
     const date = new Date(year, month - 1, day, 12, 0, 0, 0); // Noon UTC
-    const timeInMs = date.getTime();
-    const julianDay = timeInMs / 86400000 + 2440587.5;
-    return julianDay;
+    return dateToJulianDay(date);
   }
 
-  // Handle J-prefixed epochs like J2100
-  if (epoch.match(/^J\d{4}(\.\d+)?$/)) {
-    const year = parseFloat(epoch.substring(1));
-    // Calculate Julian Day for J-prefixed epochs
-    const t = (year - 2000) / 100;
-    return 2451545.0 + 36525 * t + 0.0009 * t * t;
+  // Handle precise date-time strings (YYYY-MM-DDTHH:MM:SS format)
+  if (epoch.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)) {
+    const date = new Date(epoch);
+    return dateToJulianDay(date);
   }
 
-  // Default to J2000 if unknown
+  // Default to J2000 if unknown format
   console.warn(`Unknown epoch format: ${epoch}, defaulting to J2000`);
-  return JULIAN_DAYS.J2000;
+  return J2000_JULIAN_DAY;
 }
 
 /**
@@ -215,6 +287,53 @@ export function calculateCurrentPositionFromEpoch(
 }
 
 /**
+ * Calculates the current position and velocity of an object using precise current time.
+ * This is more accurate for objects that move quickly (like satellites).
+ *
+ * @param orbitalElements - The orbital elements at their original epoch
+ * @returns The current position and velocity vectors, plus updated orbital elements
+ */
+export function calculateCurrentPositionPrecise(
+  orbitalElements: OrbitalParameters,
+): {
+  position: OSVector3;
+  velocity: OSVector3;
+  updatedOrbitalElements: OrbitalParameters;
+} {
+  const currentEpoch = orbitalElements.epoch;
+  const currentJulianDay = getCurrentJulianDay();
+  const epochJulianDay = getJulianDayForEpoch(currentEpoch);
+
+  // Calculate time difference in seconds
+  const daysDifference = currentJulianDay - epochJulianDay;
+  const secondsDifference = daysDifference * 24 * 3600;
+
+  // Calculate the position at the current precise time using the Keplerian solver
+  const { position, velocity } = calculateKeplerianStateAtTime(
+    orbitalElements,
+    secondsDifference,
+  );
+
+  // Update the mean anomaly to reflect the current position
+  const meanMotion = (2 * Math.PI) / orbitalElements.period_s; // radians per second
+  const updatedMeanAnomaly =
+    orbitalElements.meanAnomaly + meanMotion * secondsDifference;
+
+  const updatedOrbitalElements: OrbitalParameters = {
+    ...orbitalElements,
+    meanAnomaly: updatedMeanAnomaly % (2 * Math.PI), // Keep in [0, 2π]
+    // Preserve the original epoch - this is the reference data
+    epoch: orbitalElements.epoch,
+  };
+
+  return {
+    position,
+    velocity,
+    updatedOrbitalElements,
+  };
+}
+
+/**
  * Standardizes orbital elements to today's date.
  * This ensures all orbital data reflects current positions.
  */
@@ -244,9 +363,21 @@ export function standardizeToDate(
  * Validates that an epoch string is in a recognized format
  */
 export function isValidEpoch(epoch: string): boolean {
-  // Check if it's a known epoch constant
-  if (Object.values(ASTRONOMICAL_EPOCHS).includes(epoch as AstronomicalEpoch)) {
+  // Check if it's J2000
+  if (epoch === J2000_EPOCH) {
     return true;
+  }
+
+  // Check if it's a Julian Day number with "JD" prefix
+  if (epoch.match(/^JD\s*(\d+\.?\d*)$/)) {
+    const jdValue = parseFloat(epoch.replace(/^JD\s*/, ""));
+    return jdValue > 0 && jdValue < 3000000;
+  }
+
+  // Check if it's a Julian Day number without prefix
+  if (epoch.match(/^\d+\.?\d*$/)) {
+    const jdValue = parseFloat(epoch);
+    return jdValue > 0 && jdValue < 3000000;
   }
 
   // Check if it's a valid date string (YYYY-MM-DD)
@@ -258,6 +389,12 @@ export function isValidEpoch(epoch: string): boolean {
       date.getMonth() === month - 1 &&
       date.getDate() === day
     );
+  }
+
+  // Check if it's a valid precise date-time string (YYYY-MM-DDTHH:MM:SS)
+  if (epoch.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)) {
+    const date = new Date(epoch);
+    return !isNaN(date.getTime());
   }
 
   // Check if it's a J-prefixed epoch (J2000, J2100, etc.)
@@ -272,20 +409,33 @@ export function isValidEpoch(epoch: string): boolean {
  * Gets a human-readable description of an epoch
  */
 export function getEpochDescription(epoch: string): string {
-  switch (epoch) {
-    case ASTRONOMICAL_EPOCHS.J2000:
-      return "J2000 epoch (January 1, 2000 12:00:00 UTC)";
-    case ASTRONOMICAL_EPOCHS.J2025:
-      return "J2025 epoch (January 1, 2025 12:00:00 UTC)";
-    case ASTRONOMICAL_EPOCHS.EPOCH_2023:
-      return "February 25, 2023 epoch";
-    default:
-      if (epoch.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return `Date epoch (${epoch})`;
-      }
-      if (epoch.match(/^J\d{4}(\.\d+)?$/)) {
-        return `${epoch} epoch`;
-      }
-      return `Unknown epoch (${epoch})`;
+  if (epoch === J2000_EPOCH) {
+    return "J2000 epoch (January 1, 2000 12:00:00 UTC)";
   }
+
+  if (epoch.match(/^J\d{4}(\.\d+)?$/)) {
+    return `${epoch} epoch`;
+  }
+
+  if (epoch.match(/^JD\s*(\d+\.?\d*)$/)) {
+    const jdValue = epoch.replace(/^JD\s*/, "");
+    return `Julian Day epoch (JD ${jdValue})`;
+  }
+
+  if (epoch.match(/^\d+\.?\d*$/)) {
+    const jdValue = parseFloat(epoch);
+    if (jdValue > 0 && jdValue < 3000000) {
+      return `Julian Day epoch (${epoch})`;
+    }
+  }
+
+  if (epoch.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return `Date epoch (${epoch})`;
+  }
+
+  if (epoch.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)) {
+    return `Precise date-time epoch (${epoch})`;
+  }
+
+  return `Unknown epoch (${epoch})`;
 }

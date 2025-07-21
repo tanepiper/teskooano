@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  J2000_EPOCH,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -32,6 +36,7 @@ export const oberon: CelestialObject<PlanetProperties> = {
     period_s: 1.162e6,
     siderealRotationPeriod_s: 1.162e6, // Synchronous rotation
     axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    epoch: J2000_EPOCH,
   }),
   temperature: 75,
   albedo: 0.35,

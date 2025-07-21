@@ -7,6 +7,7 @@ import { vp113 } from "./vp113";
 import { eris, dysnomia } from "./eris";
 import { makemake, mk2 } from "./makemake";
 import { haumea, hiiaka, namaka } from "./haumea";
+import { sedna } from "./sedna"; // Import Sedna
 import { asteroidBelt } from "./asteroid-belt";
 
 /**
@@ -18,6 +19,7 @@ export const minorBodies = [
   ceres,
   vesta,
   pallas,
+  sedna, // Added Sedna
   ammonite, // 2023 KQ14 - recently discovered sednoid
   leleakuhonua, // 541132 Leleākūhonua (The Goblin) - extreme sednoid
   vp113, // 2012 VP113 (Biden) - early sednoid discovery

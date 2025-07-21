@@ -1,26 +1,38 @@
 import {
   getCurrentEpoch,
+  getCurrentPreciseEpoch,
+  getCurrentJulianDay,
   getJulianDayForEpoch,
   getEpochDifferenceYears,
   updateOrbitalElementsToEpoch,
   calculateCurrentPositionFromEpoch,
-  ASTRONOMICAL_EPOCHS,
+  calculateCurrentPositionPrecise,
+  J2000_EPOCH,
 } from "@teskooano/core-physics";
 import type { CelestialObject } from "@teskooano/data-types";
 
 /**
- * Processes celestial objects to calculate their current positions based on today's date.
- * This system intelligently handles different epoch types and converts them to current positions.
+ * Processes celestial objects to calculate their current positions based on the actual current time.
+ * This system intelligently handles different epoch types and converts them to current positions
+ * using precise time calculations for maximum accuracy.
  */
 export class DynamicEpochProcessor {
-  private todayEpoch: string;
+  private currentJulianDay: number;
+  private currentPreciseEpoch: string;
   private processedObjects: Map<
     string,
-    { originalEpoch: string; currentEpoch: string; yearsDifference: number }
+    {
+      originalEpoch: string;
+      currentEpoch: string;
+      yearsDifference: number;
+      timeDifferenceSeconds: number;
+      isPreciseCalculation: boolean;
+    }
   > = new Map();
 
   constructor() {
-    this.todayEpoch = getCurrentEpoch();
+    this.currentJulianDay = getCurrentJulianDay();
+    this.currentPreciseEpoch = getCurrentPreciseEpoch();
   }
 
   /**
@@ -38,6 +50,7 @@ export class DynamicEpochProcessor {
 
   /**
    * Processes a single celestial object to calculate its current position.
+   * Uses precise time calculations for maximum accuracy.
    */
   private processObject<T>(object: CelestialObject<T>): CelestialObject<T> {
     // Skip objects without orbital elements (like the Sun)
@@ -46,27 +59,24 @@ export class DynamicEpochProcessor {
     }
 
     const originalEpoch = object.orbit.epoch;
+    const epochJulianDay = getJulianDayForEpoch(originalEpoch);
 
-    // Skip if already at current epoch
-    if (originalEpoch === this.todayEpoch) {
-      return object;
-    }
-
-    const yearsDifference = getEpochDifferenceYears(
-      originalEpoch,
-      this.todayEpoch,
-    );
+    // Calculate time difference in seconds for precise positioning
+    const daysDifference = this.currentJulianDay - epochJulianDay;
+    const timeDifferenceSeconds = daysDifference * 24 * 3600;
 
     // Store processing information for logging
     this.processedObjects.set(object.name, {
       originalEpoch,
-      currentEpoch: this.todayEpoch,
-      yearsDifference,
+      currentEpoch: this.currentPreciseEpoch,
+      yearsDifference: daysDifference / 365.25,
+      timeDifferenceSeconds,
+      isPreciseCalculation: true,
     });
 
-    // Calculate the actual current position and updated orbital elements
+    // Use precise calculation for all objects to ensure maximum accuracy
     const { position, velocity, updatedOrbitalElements } =
-      calculateCurrentPositionFromEpoch(object.orbit, this.todayEpoch);
+      calculateCurrentPositionPrecise(object.orbit);
 
     return {
       ...object,
@@ -79,22 +89,26 @@ export class DynamicEpochProcessor {
    */
   getProcessingStats(): {
     totalObjects: number;
-    todayEpoch: string;
+    currentEpoch: string;
     epochTypes: Record<string, number>;
     averageYearsDifference: number;
     maxYearsDifference: number;
+    averageTimeDifferenceSeconds: number;
     objectsWithLargeDifferences: Array<{
       name: string;
       yearsDifference: number;
+      timeDifferenceSeconds: number;
       originalEpoch: string;
     }>;
   } {
     const epochTypes: Record<string, number> = {};
     let totalYearsDifference = 0;
+    let totalTimeDifferenceSeconds = 0;
     let maxYearsDifference = 0;
     const objectsWithLargeDifferences: Array<{
       name: string;
       yearsDifference: number;
+      timeDifferenceSeconds: number;
       originalEpoch: string;
     }> = [];
 
@@ -103,17 +117,19 @@ export class DynamicEpochProcessor {
       epochTypes[info.originalEpoch] =
         (epochTypes[info.originalEpoch] || 0) + 1;
 
-      // Track year differences
+      // Track time differences
       totalYearsDifference += Math.abs(info.yearsDifference);
+      totalTimeDifferenceSeconds += Math.abs(info.timeDifferenceSeconds);
       if (Math.abs(info.yearsDifference) > maxYearsDifference) {
         maxYearsDifference = Math.abs(info.yearsDifference);
       }
 
-      // Flag objects with large time differences
-      if (Math.abs(info.yearsDifference) > 25) {
+      // Flag objects with large time differences (more than 1 year)
+      if (Math.abs(info.yearsDifference) > 1) {
         objectsWithLargeDifferences.push({
           name,
           yearsDifference: info.yearsDifference,
+          timeDifferenceSeconds: info.timeDifferenceSeconds,
           originalEpoch: info.originalEpoch,
         });
       }
@@ -121,10 +137,12 @@ export class DynamicEpochProcessor {
 
     return {
       totalObjects: this.processedObjects.size,
-      todayEpoch: this.todayEpoch,
+      currentEpoch: this.currentPreciseEpoch,
       epochTypes,
       averageYearsDifference: totalYearsDifference / this.processedObjects.size,
       maxYearsDifference,
+      averageTimeDifferenceSeconds:
+        totalTimeDifferenceSeconds / this.processedObjects.size,
       objectsWithLargeDifferences,
     };
   }
@@ -155,7 +173,9 @@ export class DynamicEpochProcessor {
     originalEpoch: string;
     currentEpoch: string;
     yearsDifference: number;
+    timeDifferenceSeconds: number;
     julianDayDifference: number;
+    isPreciseCalculation: boolean;
   } | null {
     const info = this.processedObjects.get(objectName);
     if (!info) return null;
@@ -180,10 +200,10 @@ export class DynamicEpochProcessor {
     const issues: Array<{ objectName: string; issue: string }> = [];
 
     this.processedObjects.forEach((info, name) => {
-      if (info.currentEpoch !== this.todayEpoch) {
+      if (info.currentEpoch !== this.currentPreciseEpoch) {
         issues.push({
           objectName: name,
-          issue: `Not processed to current epoch. Expected: ${this.todayEpoch}, Got: ${info.currentEpoch}`,
+          issue: `Not processed to current epoch. Expected: ${this.currentPreciseEpoch}, Got: ${info.currentEpoch}`,
         });
       }
 
@@ -211,4 +231,38 @@ export function processSolarSystemToCurrentPositions<T>(
 ): CelestialObject<T>[] {
   const processor = new DynamicEpochProcessor();
   return processor.processObjects(objects);
+}
+
+/**
+ * Processes all solar system objects to their current positions using precise time calculations.
+ * This ensures maximum accuracy for all objects, especially satellites and fast-moving bodies.
+ *
+ * @param objects - Array of celestial objects to process
+ * @returns Array of objects with updated orbital elements reflecting current positions
+ */
+export function processSolarSystemToCurrentTime<T>(
+  objects: CelestialObject<T>[],
+): CelestialObject<T>[] {
+  const processor = new DynamicEpochProcessor();
+  const processedObjects = processor.processObjects(objects);
+
+  // Log the processing results for debugging
+  const stats = processor.getProcessingStats();
+  console.log(
+    `[DynamicEpochProcessor] Processed ${stats.totalObjects} objects to current time: ${stats.currentEpoch}`,
+  );
+  console.log(
+    `[DynamicEpochProcessor] Average time difference: ${(stats.averageTimeDifferenceSeconds / 3600).toFixed(2)} hours`,
+  );
+
+  if (stats.objectsWithLargeDifferences.length > 0) {
+    console.log(`[DynamicEpochProcessor] Objects with large time differences:`);
+    stats.objectsWithLargeDifferences.forEach((obj) => {
+      console.log(
+        `  - ${obj.name}: ${obj.yearsDifference.toFixed(2)} years (${(obj.timeDifferenceSeconds / 3600).toFixed(2)} hours)`,
+      );
+    });
+  }
+
+  return processedObjects;
 }

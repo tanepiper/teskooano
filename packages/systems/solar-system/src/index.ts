@@ -12,7 +12,7 @@ import { uranusSystemBodies } from "./uranus";
 import { venus } from "./venus/venus";
 import { allSatellites } from "./satellites";
 import { allComets } from "./comets";
-import { processSolarSystemToCurrentPositions } from "./utils/dynamic-epoch-processor";
+import { processSolarSystemToCurrentTime } from "./utils/dynamic-epoch-processor";
 
 /**
  * Solar system bodies that can be initialized in any order.
@@ -40,8 +40,8 @@ const solarSystemBodies = [
  * All orbital elements are dynamically calculated to today's current positions.
  */
 export function initializeSolarSystem() {
-  // Process all objects to calculate their current positions based on today's date
-  const currentPositionBodies = processSolarSystemToCurrentPositions(
+  // Process all objects to calculate their current positions based on the actual current time
+  const currentPositionBodies = processSolarSystemToCurrentTime(
     solarSystemBodies as any,
   );
 

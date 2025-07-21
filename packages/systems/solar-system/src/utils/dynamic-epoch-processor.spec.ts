@@ -1,17 +1,21 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   DynamicEpochProcessor,
-  processSolarSystemToCurrentPositions,
+  processSolarSystemToCurrentTime,
 } from "./dynamic-epoch-processor";
 import type { CelestialObject } from "@teskooano/data-types";
 
-const mockCelestialObject: CelestialObject = {
+// Mock celestial object for testing
+const mockCelestialObject: CelestialObject<any> = {
   id: "test-object",
   name: "Test Object",
   type: "PLANET" as any,
   status: "ACTIVE" as any,
-  realRadius_m: 6371000,
+  parentId: "sun",
   realMass_kg: 5.972e24,
+  realRadius_m: 6371000,
+  temperature: 255,
+  albedo: 0.3,
   orbit: {
     realSemiMajorAxis_m: 149597870700,
     eccentricity: 0.0167,
@@ -25,20 +29,20 @@ const mockCelestialObject: CelestialObject = {
     averageOrbitalSpeed_mps: 29780,
     epoch: "J2000",
   },
-  temperature: 288,
+  properties: {},
 };
 
 describe("DynamicEpochProcessor", () => {
   describe("processObjects", () => {
-    it("should process objects to current epoch", () => {
+    it("should process objects to current time", () => {
       const processor = new DynamicEpochProcessor();
       const objects = [mockCelestialObject];
 
       const result = processor.processObjects(objects);
 
       expect(result).toHaveLength(1);
-      expect(result[0].orbit.epoch).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(result[0].orbit.epoch).not.toBe("J2000");
+      expect(result[0].orbit.epoch).toBe("J2000"); // Preserves original epoch
+      expect(result[0].orbit.meanAnomaly).not.toBe(0); // Should be updated to current position
     });
 
     it("should handle multiple objects with different epochs", () => {
@@ -57,7 +61,9 @@ describe("DynamicEpochProcessor", () => {
       const result = processor.processObjects([object1, object2]);
 
       expect(result).toHaveLength(2);
-      expect(result[0].orbit.epoch).toBe(result[1].orbit.epoch); // Both should have same current epoch
+      // Both should have updated mean anomalies reflecting current positions
+      expect(result[0].orbit.meanAnomaly).not.toBe(0);
+      expect(result[1].orbit.meanAnomaly).not.toBe(0);
     });
   });
 
@@ -81,87 +87,34 @@ describe("DynamicEpochProcessor", () => {
       const stats = processor.getProcessingStats();
 
       expect(stats.totalObjects).toBe(2);
-      expect(stats.todayEpoch).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(stats.currentEpoch).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/,
+      );
       expect(stats.epochTypes).toHaveProperty("J2000", 1);
       expect(stats.epochTypes).toHaveProperty("2023-02-25", 1);
       expect(stats.averageYearsDifference).toBeGreaterThan(0);
+      expect(stats.averageTimeDifferenceSeconds).toBeGreaterThan(0);
     });
   });
 
-  describe("getObjectInfo", () => {
-    it("should provide detailed object information", () => {
-      const processor = new DynamicEpochProcessor();
-      const objects = [{ ...mockCelestialObject, name: "Test Object" }];
+  describe("processSolarSystemToCurrentTime", () => {
+    it("should process all objects to current time with logging", () => {
+      const objects = [mockCelestialObject];
 
-      processor.processObjects(objects);
-      const info = processor.getObjectInfo("Test Object");
+      // Mock console.log to capture logging output
+      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      expect(info).not.toBeNull();
-      expect(info?.originalEpoch).toBe("J2000");
-      expect(info?.currentEpoch).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(info?.yearsDifference).toBeGreaterThan(0);
-      expect(info?.julianDayDifference).toBeGreaterThan(0);
+      const result = processSolarSystemToCurrentTime(objects);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].orbit.meanAnomaly).not.toBe(0);
+
+      // Verify that logging occurred
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[DynamicEpochProcessor] Processed"),
+      );
+
+      consoleSpy.mockRestore();
     });
-
-    it("should return null for unknown objects", () => {
-      const processor = new DynamicEpochProcessor();
-      const info = processor.getObjectInfo("Unknown Object");
-      expect(info).toBeNull();
-    });
-  });
-
-  describe("validateProcessing", () => {
-    it("should validate successful processing", () => {
-      const processor = new DynamicEpochProcessor();
-      const objects = [{ ...mockCelestialObject, name: "Test Object" }];
-
-      processor.processObjects(objects);
-      const validation = processor.validateProcessing();
-
-      expect(validation.isValid).toBe(true);
-      expect(validation.issues).toHaveLength(0);
-    });
-
-    it("should detect large time differences", () => {
-      const oldObject = {
-        ...mockCelestialObject,
-        name: "Old Object",
-        orbit: { ...mockCelestialObject.orbit, epoch: "1900-01-01" },
-      };
-
-      const processor = new DynamicEpochProcessor();
-      processor.processObjects([oldObject]);
-      const validation = processor.validateProcessing();
-
-      expect(validation.isValid).toBe(false);
-      expect(
-        validation.issues.some((issue) =>
-          issue.issue.includes("large time difference"),
-        ),
-      ).toBe(true);
-    });
-  });
-});
-
-describe("processSolarSystemToCurrentPositions", () => {
-  it("should process objects using convenience function", () => {
-    const objects = [
-      {
-        ...mockCelestialObject,
-        name: "Object 1",
-        orbit: { ...mockCelestialObject.orbit, epoch: "J2000" },
-      },
-      {
-        ...mockCelestialObject,
-        name: "Object 2",
-        orbit: { ...mockCelestialObject.orbit, epoch: "2023-02-25" },
-      },
-    ];
-
-    const result = processSolarSystemToCurrentPositions(objects);
-
-    expect(result).toHaveLength(2);
-    expect(result[0].orbit.epoch).toBe(result[1].orbit.epoch);
-    expect(result[0].orbit.epoch).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

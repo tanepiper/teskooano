@@ -1,5 +1,5 @@
 import {
-  ASTRONOMICAL_EPOCHS,
+  J2000_EPOCH,
   createOrbitalElements,
   kmToM,
 } from "@teskooano/core-physics";
@@ -41,7 +41,7 @@ export const luna: CelestialObject<PlanetProperties> = {
     period_s: 2.36059e6, // 27.321661 days - verified correct (sidereal)
     siderealRotationPeriod_s: 2.36059e6, // Synchronous rotation
     axialTiltDeg: 6.687, // To orbit plane (J2000)
-    epoch: ASTRONOMICAL_EPOCHS.J2000,
+    epoch: J2000_EPOCH,
   }),
   properties: {
     type: CelestialType.MOON,
