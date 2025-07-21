@@ -144,7 +144,7 @@ export function calculateAverageOrbitalSpeedKmps(
   semiMajorAxisAU: number,
 ): number {
   const circumferenceAU = 2 * Math.PI * semiMajorAxisAU;
-  const circumferenceKm = circumferenceAU * 149597870.7; // AU to km
+  const circumferenceKm = (circumferenceAU * AU) / KM; // AU to km using AU constant
   const periodDays = period_s / (24 * 60 * 60);
   return circumferenceKm / (periodDays * 24 * 60 * 60);
 }

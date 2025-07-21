@@ -1,19 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const DESPINA_MASS_KG = 2.1e18;
-const DESPINA_RADIUS_M = 78000; // 78 km
-const DESPINA_SMA_KM = 52527;
-const DESPINA_ECC = 0.0001;
-const DESPINA_INC_DEG = 0.07;
-const DESPINA_SIDEREAL_PERIOD_S = 8.0 * 3600;
-const DESPINA_ALBEDO = 0.09;
 
 /**
  * Despina configuration object for modular solar system initialization.
@@ -25,19 +17,19 @@ export const despina: CelestialObject<PlanetProperties> = {
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
   parentId: "neptune", // Will be replaced during initialization
-  realMass_kg: DESPINA_MASS_KG,
-  realRadius_m: DESPINA_RADIUS_M,
+  realMass_kg: 2.1e18,
+  realRadius_m: 78000,
   temperature: 60,
-  albedo: DESPINA_ALBEDO,
+  albedo: 0.09,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: DESPINA_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: DESPINA_ECC,
-    inclinationDeg: DESPINA_INC_DEG,
+    semiMajorAxisAU: 0.00035,
+    eccentricity: 0.0001,
+    inclinationDeg: 0.07,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
-    period_s: DESPINA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: DESPINA_SIDEREAL_PERIOD_S,
+    period_s: 8.0 * 3600,
+    siderealRotationPeriod_s: 8.0 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {

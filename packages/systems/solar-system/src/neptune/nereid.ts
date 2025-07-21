@@ -1,15 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const NEREID_SMA_KM = 5513800;
-const NEREID_ORBITAL_PERIOD_S = 3.114e7;
-const NEREID_SIDEREAL_ROTATION_PERIOD_S = 11.52 * 3600;
 
 /**
  * Nereid configuration object for modular solar system initialization.
@@ -26,14 +22,14 @@ export const nereid: CelestialObject<PlanetProperties> = {
   temperature: 50,
   albedo: 0.14,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: NEREID_SMA_KM / 149597870.7, // Convert km to AU
+    semiMajorAxisAU: 0.00048,
     eccentricity: 0.7507,
     inclinationDeg: 7.232,
     longitudeOfAscendingNodeDeg: 329.9,
     argumentOfPeriapsisDeg: 268.2,
     meanAnomalyDeg: 49.3,
-    period_s: NEREID_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: NEREID_SIDEREAL_ROTATION_PERIOD_S,
+    period_s: 1.614e7,
+    siderealRotationPeriod_s: 11.52 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {

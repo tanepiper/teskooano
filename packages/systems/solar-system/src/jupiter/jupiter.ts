@@ -32,7 +32,7 @@ export const jupiter: CelestialObject<GasGiantProperties> = {
   temperature: JUPITER_TEMP_K,
   albedo: JUPITER_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 5.202887, // Jupiter's semi-major axis
+    semiMajorAxisAU: 5.202887,
     eccentricity: 0.048498,
     inclinationDeg: 1.3053,
     longitudeOfAscendingNodeDeg: 100.55615,

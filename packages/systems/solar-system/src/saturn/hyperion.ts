@@ -8,17 +8,6 @@ import {
   CelestialObject,
 } from "@teskooano/data-types";
 
-const HYPERION_MASS_KG = 5.58e18;
-const HYPERION_RADIUS_KM = 135;
-const HYPERION_SMA_KM = 1481109;
-const HYPERION_ECC = 0.123;
-const HYPERION_INC_DEG = 0.648;
-const HYPERION_LAN_DEG = 161.4;
-const HYPERION_AOP_DEG = 156.4;
-const HYPERION_MA_DEG = 199.3;
-const HYPERION_SIDEREAL_PERIOD_S = 1838531;
-const HYPERION_ALBEDO = 0.3;
-
 /**
  * Hyperion configuration object for modular solar system initialization.
  */
@@ -29,19 +18,19 @@ export const hyperion: CelestialObject<PlanetProperties> = {
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
-  realMass_kg: HYPERION_MASS_KG,
-  realRadius_m: kmToM(HYPERION_RADIUS_KM),
+  realMass_kg: 5.58e18,
+  realRadius_m: kmToM(135),
   temperature: 94,
-  albedo: HYPERION_ALBEDO,
+  albedo: 0.3,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: HYPERION_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: HYPERION_ECC,
-    inclinationDeg: HYPERION_INC_DEG,
-    longitudeOfAscendingNodeDeg: HYPERION_LAN_DEG,
-    argumentOfPeriapsisDeg: HYPERION_AOP_DEG,
-    meanAnomalyDeg: HYPERION_MA_DEG,
-    period_s: HYPERION_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: HYPERION_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.00237492,
+    eccentricity: 0.123,
+    inclinationDeg: 0.648,
+    longitudeOfAscendingNodeDeg: 161.4,
+    argumentOfPeriapsisDeg: 156.4,
+    meanAnomalyDeg: 199.3,
+    period_s: 1838531,
+    siderealRotationPeriod_s: 1838531,
     axialTiltDeg: 0,
   }),
   properties: {

@@ -1,36 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const ERIS_MASS_KG = 1.66e22;
-const ERIS_RADIUS_KM = 1163;
-const ERIS_TEMP_K = 30;
-const ERIS_ALBEDO = 0.96;
-const ERIS_SMA_AU = 67.668;
-const ERIS_ECC = 0.44177;
-const ERIS_INC_DEG = 44.187;
-const ERIS_LAN_DEG = 35.875;
-const ERIS_AOP_DEG = 151.431;
-const ERIS_MA_DEG = 197.634;
-const ERIS_ORBITAL_PERIOD_S = 2.045e10;
-const ERIS_SIDEREAL_ROTATION_PERIOD_S = 25.9 * 3600;
-const ERIS_AXIAL_TILT_DEG = 0.0;
-
-const DYSNOMIA_MASS_KG = 3.5e18;
-const DYSNOMIA_RADIUS_KM = 175;
-const DYSNOMIA_SMA_KM = 37350;
-const DYSNOMIA_ECC = 0.0062;
-const DYSNOMIA_INC_DEG = 142.0;
-const DYSNOMIA_LAN_DEG = 139.0;
-const DYSNOMIA_AOP_DEG = 194.0;
-const DYSNOMIA_MA_DEG = 265.0;
-const DYSNOMIA_SIDEREAL_PERIOD_S = 15.786 * 24 * 3600;
-const DYSNOMIA_ALBEDO = 0.15;
 
 /**
  * Eris dwarf planet configuration object for modular solar system initialization.
@@ -41,21 +16,21 @@ export const eris: CelestialObject<PlanetProperties> = {
   seed: "eris",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: ERIS_MASS_KG,
-  realRadius_m: kmToM(ERIS_RADIUS_KM),
-  temperature: ERIS_TEMP_K,
-  albedo: ERIS_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 1.66e22,
+  realRadius_m: kmToM(1163),
+  temperature: 30,
+  albedo: 0.96,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: ERIS_SMA_AU,
-    eccentricity: ERIS_ECC,
-    inclinationDeg: ERIS_INC_DEG,
-    longitudeOfAscendingNodeDeg: ERIS_LAN_DEG,
-    argumentOfPeriapsisDeg: ERIS_AOP_DEG,
-    meanAnomalyDeg: ERIS_MA_DEG,
-    period_s: ERIS_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: ERIS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: ERIS_AXIAL_TILT_DEG,
+    semiMajorAxisAU: 67.668,
+    eccentricity: 0.44177,
+    inclinationDeg: 44.187,
+    longitudeOfAscendingNodeDeg: 35.875,
+    argumentOfPeriapsisDeg: 151.431,
+    meanAnomalyDeg: 197.634,
+    period_s: 2.045e10,
+    siderealRotationPeriod_s: 25.9 * 3600,
+    axialTiltDeg: 0.0,
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,
@@ -112,20 +87,20 @@ export const dysnomia: CelestialObject<PlanetProperties> = {
   seed: "dysnomia",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "eris", // Will be replaced during initialization
-  realMass_kg: DYSNOMIA_MASS_KG,
-  realRadius_m: kmToM(DYSNOMIA_RADIUS_KM),
+  parentId: "eris",
+  realMass_kg: 3.5e18,
+  realRadius_m: kmToM(175),
   temperature: 30,
-  albedo: DYSNOMIA_ALBEDO,
+  albedo: 0.15,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: DYSNOMIA_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: DYSNOMIA_ECC,
-    inclinationDeg: DYSNOMIA_INC_DEG,
-    longitudeOfAscendingNodeDeg: DYSNOMIA_LAN_DEG,
-    argumentOfPeriapsisDeg: DYSNOMIA_AOP_DEG,
-    meanAnomalyDeg: DYSNOMIA_MA_DEG,
-    period_s: DYSNOMIA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: DYSNOMIA_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.00025,
+    eccentricity: 0.0062,
+    inclinationDeg: 142.0,
+    longitudeOfAscendingNodeDeg: 139.0,
+    argumentOfPeriapsisDeg: 194.0,
+    meanAnomalyDeg: 265.0,
+    period_s: 15.786 * 24 * 3600,
+    siderealRotationPeriod_s: 15.786 * 24 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {

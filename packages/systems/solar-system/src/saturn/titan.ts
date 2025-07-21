@@ -7,19 +7,6 @@ import {
   CelestialObject,
 } from "@teskooano/data-types";
 
-// Verified Wikipedia/NASA data for Titan - largest moon of Saturn with thick atmosphere
-const TITAN_MASS_KG = 1.34518e23; // Wikipedia verified: (1.34518±0.00003)×10²³ kg
-const TITAN_RADIUS_KM = 2574.73; // Wikipedia verified: 2574.73±0.09 km (mean radius)
-const TITAN_SMA_KM = 1221870; // Wikipedia verified: 1,221,870 km semi-major axis
-const TITAN_ECC = 0.0288; // Wikipedia verified
-const TITAN_INC_DEG = 0.34854; // Wikipedia verified: 0.34854° to Saturn's equator
-const TITAN_LAN_DEG = 189.64; // Current value
-const TITAN_AOP_DEG = 180.532; // Current value
-const TITAN_MA_DEG = 358.922; // Current value
-const TITAN_SIDEREAL_PERIOD_S = 15.945 * 24 * 3600; // Wikipedia: 15.945 days (synchronous)
-const TITAN_ALBEDO = 0.22; // Wikipedia verified: 0.22 geometric albedo
-const TITAN_TEMP_K = 93.7; // Wikipedia verified: 93.7 K (−179.5 °C)
-
 /**
  * Titan configuration object for modular solar system initialization.
  */
@@ -29,20 +16,20 @@ export const titan: CelestialObject<PlanetProperties> = {
   seed: "titan_seed_15945",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "saturn", // Will be replaced during initialization
-  realMass_kg: TITAN_MASS_KG,
-  realRadius_m: kmToM(TITAN_RADIUS_KM),
-  temperature: TITAN_TEMP_K,
-  albedo: TITAN_ALBEDO,
+  parentId: "saturn",
+  realMass_kg: 1.34518e23,
+  realRadius_m: kmToM(2574.73),
+  temperature: 93.7,
+  albedo: 0.22,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: TITAN_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: TITAN_ECC,
-    inclinationDeg: TITAN_INC_DEG,
-    longitudeOfAscendingNodeDeg: TITAN_LAN_DEG,
-    argumentOfPeriapsisDeg: TITAN_AOP_DEG,
-    meanAnomalyDeg: TITAN_MA_DEG,
-    period_s: TITAN_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: TITAN_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.0081652,
+    eccentricity: 0.0288,
+    inclinationDeg: 0.34854,
+    longitudeOfAscendingNodeDeg: 189.64,
+    argumentOfPeriapsisDeg: 180.532,
+    meanAnomalyDeg: 358.922,
+    period_s: 15.945 * 24 * 3600,
+    siderealRotationPeriod_s: 15.945 * 24 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {
@@ -82,7 +69,7 @@ export const titan: CelestialObject<PlanetProperties> = {
       height5: 0.9,
       shininess: 15,
       specularStrength: 0.3,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.25,
       terrainType: 3,
       terrainAmplitude: 0.8,

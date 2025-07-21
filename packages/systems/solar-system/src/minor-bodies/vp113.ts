@@ -4,25 +4,8 @@ import {
   PlanetType,
   CelestialStatus,
   type PlanetProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
-
-// Physical constants for 2012 VP113 (Biden)
-const VP113_DIAMETER_KM = 450; // Calculated diameter for albedo 0.15
-const VP113_RADIUS_KM = VP113_DIAMETER_KM / 2;
-const VP113_ALBEDO = 0.15; // Assumed geometric albedo for size calculation
-const VP113_ABSOLUTE_MAGNITUDE = 4.05;
-const VP113_ESTIMATED_DENSITY_KG_M3 = 1850; // kg/m³ (similar to other TNOs)
-
-// Orbital parameters from JPL Small-Body Database (epoch 2025-05-05)
-const VP113_SMA_AU = 262.3;
-const VP113_ECC = 0.6931;
-const VP113_INC_DEG = 24.0563;
-const VP113_LAN_DEG = 90.8;
-const VP113_AOP_DEG = 293.9;
-const VP113_MA_DEG = 24.05;
-const VP113_ORBITAL_PERIOD_S = 4246 * 365.25 * 24 * 3600; // 4,246 years in seconds
-const VP113_SIDEREAL_ROTATION_PERIOD_S = 24 * 3600; // Unknown, assume 24 hours
 
 /**
  * 2012 VP113 (Biden) - A sednoid with moderate orbital characteristics
@@ -57,25 +40,21 @@ export const vp113: CelestialObject<PlanetProperties> = {
   seed: "vp113-biden",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg:
-    (4 / 3) *
-    Math.PI *
-    Math.pow(kmToM(VP113_RADIUS_KM), 3) *
-    VP113_ESTIMATED_DENSITY_KG_M3,
-  realRadius_m: kmToM(VP113_RADIUS_KM),
-  temperature: 30, // Very cold at this distance
-  albedo: VP113_ALBEDO,
+  parentId: "sun",
+  realMass_kg: (4 / 3) * Math.PI * Math.pow(kmToM(450), 3) * 1850,
+  realRadius_m: kmToM(450),
+  temperature: 30,
+  albedo: 0.15,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: VP113_SMA_AU,
-    eccentricity: VP113_ECC,
-    inclinationDeg: VP113_INC_DEG,
-    longitudeOfAscendingNodeDeg: VP113_LAN_DEG,
-    argumentOfPeriapsisDeg: VP113_AOP_DEG,
-    meanAnomalyDeg: VP113_MA_DEG,
-    period_s: VP113_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: VP113_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: 0, // Unknown, assume 0
+    semiMajorAxisAU: 262.3,
+    eccentricity: 0.6931,
+    inclinationDeg: 24.0563,
+    longitudeOfAscendingNodeDeg: 90.8,
+    argumentOfPeriapsisDeg: 293.9,
+    meanAnomalyDeg: 24.05,
+    period_s: 4246 * 365.25 * 24 * 3600,
+    siderealRotationPeriod_s: 24 * 3600,
+    axialTiltDeg: 0,
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,
@@ -95,7 +74,7 @@ export const vp113: CelestialObject<PlanetProperties> = {
       simplePeriod: 3.0,
       octaves: 6,
       bumpScale: 2.0,
-      color1: "#4A2A1A", // Reddish brown tones
+      color1: "#4A2A1A",
       color2: "#5A3A2A",
       color3: "#6A4A3A",
       color4: "#7A5A4A",

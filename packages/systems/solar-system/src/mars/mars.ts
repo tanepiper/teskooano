@@ -1,20 +1,15 @@
 import {
-  J2000_EPOCH,
   createOrbitalElements,
+  J2000_EPOCH,
   kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const MARS_MASS_KG = 6.4171e23;
-const MARS_RADIUS_KM = 3389.5; // Mean radius
-const MARS_TEMP_K = 209; // Blackbody temperature
-const MARS_ALBEDO = 0.25; // Bond albedo
 
 /**
  * Mars configuration object for modular solar system initialization.
@@ -25,20 +20,20 @@ export const mars: CelestialObject<PlanetProperties> = {
   seed: "mars",
   type: CelestialType.PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: MARS_MASS_KG,
-  realRadius_m: kmToM(MARS_RADIUS_KM),
-  temperature: MARS_TEMP_K,
-  albedo: MARS_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 6.4171e23,
+  realRadius_m: kmToM(3389.5),
+  temperature: 209,
+  albedo: 0.25,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 1.52368055, // Mars's semi-major axis
+    semiMajorAxisAU: 1.52368055,
     eccentricity: 0.0934,
     inclinationDeg: 1.85,
     longitudeOfAscendingNodeDeg: 49.57854,
     argumentOfPeriapsisDeg: 286.5,
     meanAnomalyDeg: 19.412,
-    period_s: 5.935e7, // 686.98 Earth days
-    siderealRotationPeriod_s: 8.864e4, // 24.6229 hours
+    period_s: 5.935e7,
+    siderealRotationPeriod_s: 8.864e4,
     axialTiltDeg: 25.19,
     epoch: J2000_EPOCH,
   }),
@@ -77,7 +72,7 @@ export const mars: CelestialObject<PlanetProperties> = {
       height5: 0.9,
       shininess: 10,
       specularStrength: 0.25,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.6,
       terrainType: 3,
       terrainAmplitude: 0.8,

@@ -1,6 +1,6 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   PlanetType,
   RockyType,
@@ -8,42 +8,6 @@ import {
   type PlanetProperties,
   type RingProperties,
 } from "@teskooano/data-types";
-
-const HAUMEA_MASS_KG = 4.006e21;
-const HAUMEA_RADIUS_KM = 816;
-const HAUMEA_TEMP_K = 50;
-const HAUMEA_ALBEDO = 0.66;
-const HAUMEA_SMA_AU = 43.116;
-const HAUMEA_ECC = 0.19642;
-const HAUMEA_INC_DEG = 28.2137;
-const HAUMEA_LAN_DEG = 122.167;
-const HAUMEA_AOP_DEG = 239.041;
-const HAUMEA_MA_DEG = 218.205;
-const HAUMEA_ORBITAL_PERIOD_S = 283.12 * 365.25 * 24 * 3600;
-const HAUMEA_SIDEREAL_ROTATION_PERIOD_S = 3.915341 * 3600;
-const HAUMEA_AXIAL_TILT_DEG = 126.0;
-
-const HIIAKA_MASS_KG = 1.79e19;
-const HIIAKA_RADIUS_KM = 155;
-const HIIAKA_SMA_KM = 49500;
-const HIIAKA_ECC = 0.0513;
-const HIIAKA_INC_DEG = 126.356;
-const HIIAKA_LAN_DEG = 205.0;
-const HIIAKA_AOP_DEG = 130.0;
-const HIIAKA_MA_DEG = 280.0;
-const HIIAKA_SIDEREAL_PERIOD_S = 49.12 * 24 * 3600;
-const HIIAKA_ALBEDO = 0.08;
-
-const NAMAKA_MASS_KG = 1.79e18;
-const NAMAKA_RADIUS_KM = 85;
-const NAMAKA_SMA_KM = 25657;
-const NAMAKA_ECC = 0.249;
-const NAMAKA_INC_DEG = 113.0;
-const NAMAKA_LAN_DEG = 187.0;
-const NAMAKA_AOP_DEG = 310.0;
-const NAMAKA_MA_DEG = 140.0;
-const NAMAKA_SIDEREAL_PERIOD_S = 18.28 * 24 * 3600;
-const NAMAKA_ALBEDO = 0.06;
 
 /**
  * Haumea dwarf planet configuration object for modular solar system initialization.
@@ -54,21 +18,21 @@ export const haumea: CelestialObject<PlanetProperties> = {
   seed: "haumea",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: HAUMEA_MASS_KG,
-  realRadius_m: kmToM(HAUMEA_RADIUS_KM),
-  temperature: HAUMEA_TEMP_K,
-  albedo: HAUMEA_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 4.006e21,
+  realRadius_m: kmToM(816),
+  temperature: 50,
+  albedo: 0.66,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: HAUMEA_SMA_AU,
-    eccentricity: HAUMEA_ECC,
-    inclinationDeg: HAUMEA_INC_DEG,
-    longitudeOfAscendingNodeDeg: HAUMEA_LAN_DEG,
-    argumentOfPeriapsisDeg: HAUMEA_AOP_DEG,
-    meanAnomalyDeg: HAUMEA_MA_DEG,
-    period_s: HAUMEA_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: HAUMEA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: HAUMEA_AXIAL_TILT_DEG,
+    semiMajorAxisAU: 43.116,
+    eccentricity: 0.19642,
+    inclinationDeg: 28.2137,
+    longitudeOfAscendingNodeDeg: 122.167,
+    argumentOfPeriapsisDeg: 239.041,
+    meanAnomalyDeg: 218.205,
+    period_s: 283.12 * 365.25 * 24 * 3600,
+    siderealRotationPeriod_s: 3.915341 * 3600,
+    axialTiltDeg: 126.0,
     epoch: "JD 2459200.5",
   }),
   properties: {
@@ -99,30 +63,30 @@ export const haumea: CelestialObject<PlanetProperties> = {
     ],
     atmosphere: undefined,
     surface: {
-      roughness: 0.15, // Reduced for smoother icy surface
-      persistence: 0.35, // Reduced for less variation
-      lacunarity: 1.9, // Reduced for smoother features
-      simplePeriod: 1.1, // Reduced for smaller features
-      octaves: 5, // Reduced for smoother surface
-      bumpScale: 0.7, // Reduced for subtle surface features
-      color1: "#E8F0FF", // Light blue-white
-      color2: "#F0F4FF", // Bright blue-white
-      color3: "#F8F8FF", // Very light blue-white
-      color4: "#FCFCFF", // Almost white
-      color5: "#FFFFFF", // Pure white
-      height1: 0.15, // Lower base height
-      height2: 0.3, // Reduced variation
-      height3: 0.5, // Moderate variation
-      height4: 0.7, // Higher features
-      height5: 0.9, // Peak features
-      shininess: 70, // Increased for icy surface
-      specularStrength: 0.8, // Increased for icy surface
-      ambientLightIntensity: 0.015, // Slightly increased for visibility
-      undulation: 0.08, // Reduced for smoother surface
+      roughness: 0.15,
+      persistence: 0.35,
+      lacunarity: 1.9,
+      simplePeriod: 1.1,
+      octaves: 5,
+      bumpScale: 0.7,
+      color1: "#E8F0FF",
+      color2: "#F0F4FF",
+      color3: "#F8F8FF",
+      color4: "#FCFCFF",
+      color5: "#FFFFFF",
+      height1: 0.15,
+      height2: 0.3,
+      height3: 0.5,
+      height4: 0.7,
+      height5: 0.9,
+      shininess: 70,
+      specularStrength: 0.8,
+      ambientLightIntensity: 0.015,
+      undulation: 0.08,
       terrainType: 1,
-      terrainAmplitude: 0.12, // Reduced for smoother terrain
-      terrainSharpness: 0.5, // Reduced for smoother features
-      terrainOffset: 0.05, // Adjusted for bright base
+      terrainAmplitude: 0.12,
+      terrainSharpness: 0.5,
+      terrainOffset: 0.05,
     },
   },
 };
@@ -136,20 +100,20 @@ export const hiiaka: CelestialObject<PlanetProperties> = {
   seed: "hiiaka",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "haumea", // Will be replaced during initialization
-  realMass_kg: HIIAKA_MASS_KG,
-  realRadius_m: kmToM(HIIAKA_RADIUS_KM),
+  parentId: "haumea",
+  realMass_kg: 1.79e19,
+  realRadius_m: kmToM(155),
   temperature: 32,
-  albedo: HIIAKA_ALBEDO,
+  albedo: 0.08,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: HIIAKA_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: HIIAKA_ECC,
-    inclinationDeg: HIIAKA_INC_DEG,
-    longitudeOfAscendingNodeDeg: HIIAKA_LAN_DEG,
-    argumentOfPeriapsisDeg: HIIAKA_AOP_DEG,
-    meanAnomalyDeg: HIIAKA_MA_DEG,
-    period_s: HIIAKA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: HIIAKA_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.00033,
+    eccentricity: 0.0513,
+    inclinationDeg: 126.356,
+    longitudeOfAscendingNodeDeg: 205.0,
+    argumentOfPeriapsisDeg: 130.0,
+    meanAnomalyDeg: 280.0,
+    period_s: 49.12 * 24 * 3600,
+    siderealRotationPeriod_s: 49.12 * 24 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {
@@ -202,20 +166,20 @@ export const namaka: CelestialObject<PlanetProperties> = {
   seed: "namaka",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "haumea", // Will be replaced during initialization
-  realMass_kg: NAMAKA_MASS_KG,
-  realRadius_m: kmToM(NAMAKA_RADIUS_KM),
+  parentId: "haumea",
+  realMass_kg: 1.79e18,
+  realRadius_m: kmToM(85),
   temperature: 32,
-  albedo: NAMAKA_ALBEDO,
+  albedo: 0.06,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: NAMAKA_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: NAMAKA_ECC,
-    inclinationDeg: NAMAKA_INC_DEG,
-    longitudeOfAscendingNodeDeg: NAMAKA_LAN_DEG,
-    argumentOfPeriapsisDeg: NAMAKA_AOP_DEG,
-    meanAnomalyDeg: NAMAKA_MA_DEG,
-    period_s: NAMAKA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: NAMAKA_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.00017,
+    eccentricity: 0.249,
+    inclinationDeg: 113.0,
+    longitudeOfAscendingNodeDeg: 187.0,
+    argumentOfPeriapsisDeg: 310.0,
+    meanAnomalyDeg: 140.0,
+    period_s: 18.28 * 24 * 3600,
+    siderealRotationPeriod_s: 18.28 * 24 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {

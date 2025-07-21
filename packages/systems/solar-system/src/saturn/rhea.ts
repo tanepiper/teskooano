@@ -9,7 +9,6 @@ import {
 
 const RHEA_MASS_KG = 2.306e21;
 const RHEA_RADIUS_KM = 763.8;
-const RHEA_SMA_KM = 527108;
 const RHEA_ECC = 0.001;
 const RHEA_INC_DEG = 0.345;
 const RHEA_LAN_DEG = 130.7;
@@ -33,7 +32,7 @@ export const rhea: CelestialObject<PlanetProperties> = {
   temperature: 73,
   albedo: RHEA_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: RHEA_SMA_KM / 149597870.7, // Convert km to AU
+    semiMajorAxisAU: 0.003289,
     eccentricity: RHEA_ECC,
     inclinationDeg: RHEA_INC_DEG,
     longitudeOfAscendingNodeDeg: RHEA_LAN_DEG,

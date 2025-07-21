@@ -4,18 +4,12 @@ import {
   kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
   CelestialType,
   PlanetType,
   CelestialStatus,
+  type CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-// Verified Wikipedia data for Phobos
-const PHOBOS_MASS_KG = 1.06e16; // Wikipedia verified: 1.060×10¹⁶ kg
-const PHOBOS_RADIUS_KM = 11.08; // Wikipedia verified: 11.08±0.04 km mean radius
-const PHOBOS_ALBEDO = 0.071; // Wikipedia verified
-const PHOBOS_TEMP_K = 233; // Wikipedia verified: ≈233 K
 
 /**
  * Phobos moon configuration object for modular solar system initialization.
@@ -26,21 +20,21 @@ export const phobos: CelestialObject<PlanetProperties> = {
   seed: "phobos_fear_mars_moon",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "mars", // Will be replaced during initialization
-  realMass_kg: PHOBOS_MASS_KG,
-  realRadius_m: kmToM(PHOBOS_RADIUS_KM),
-  temperature: PHOBOS_TEMP_K,
-  albedo: PHOBOS_ALBEDO,
+  parentId: "mars",
+  realMass_kg: 1.06e16,
+  realRadius_m: kmToM(11.08),
+  temperature: 233,
+  albedo: 0.071,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 9376 / 149597870.7, // 9,376 km converted to AU
+    semiMajorAxisAU: 0.000062,
     eccentricity: 0.0151,
-    inclinationDeg: 1.093, // To Mars's equator
+    inclinationDeg: 1.093,
     longitudeOfAscendingNodeDeg: 169.2,
     argumentOfPeriapsisDeg: 216.3,
     meanAnomalyDeg: 189.7,
-    period_s: 0.31891023 * 24 * 3600, // 0.31891023 days (synchronous)
-    siderealRotationPeriod_s: 0.31891023 * 24 * 3600, // Synchronous rotation
-    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    period_s: 0.31891023 * 24 * 3600,
+    siderealRotationPeriod_s: 0.31891023 * 24 * 3600,
+    axialTiltDeg: 0,
     epoch: J2000_EPOCH,
   }),
   properties: {

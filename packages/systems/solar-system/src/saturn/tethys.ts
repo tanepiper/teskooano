@@ -9,7 +9,6 @@ import {
 
 const TETHYS_MASS_KG = 6.174e20;
 const TETHYS_RADIUS_KM = 531.1;
-const TETHYS_SMA_KM = 294619;
 const TETHYS_ECC = 0.0001;
 const TETHYS_INC_DEG = 1.12;
 const TETHYS_LAN_DEG = 118.5;
@@ -33,7 +32,7 @@ export const tethys: CelestialObject<PlanetProperties> = {
   temperature: 86,
   albedo: TETHYS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: TETHYS_SMA_KM / 149597870.7, // Convert km to AU
+    semiMajorAxisAU: 0.00196348,
     eccentricity: TETHYS_ECC,
     inclinationDeg: TETHYS_INC_DEG,
     longitudeOfAscendingNodeDeg: TETHYS_LAN_DEG,

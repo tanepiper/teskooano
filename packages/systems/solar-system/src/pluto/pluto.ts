@@ -4,26 +4,12 @@ import {
   kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const PLUTO_MASS_KG = 1.303e22;
-const PLUTO_RADIUS_KM = 1188.3; // Mean radius
-const PLUTO_TEMP_K = 44; // Mean surface temperature
-const PLUTO_ALBEDO = 0.52; // Bond albedo
-const PLUTO_SMA_AU = 39.482;
-const PLUTO_ECC = 0.2488;
-const PLUTO_INC_DEG = 17.16;
-const PLUTO_LAN_DEG = 110.299;
-const PLUTO_AOP_DEG = 113.834;
-const PLUTO_MA_DEG = 14.53;
-const PLUTO_ORBITAL_PERIOD_S = 7.82e9; // 247.94 Earth years (7.82e9 seconds)
-const PLUTO_SIDEREAL_ROTATION_PERIOD_S = 5.514e5; // 6.387 Earth days
-const PLUTO_AXIAL_TILT_DEG = 119.51;
 
 /**
  * Pluto configuration object for modular solar system initialization.
@@ -34,21 +20,21 @@ export const pluto: CelestialObject<PlanetProperties> = {
   seed: "pluto",
   type: CelestialType.PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: PLUTO_MASS_KG,
-  realRadius_m: kmToM(PLUTO_RADIUS_KM),
-  temperature: PLUTO_TEMP_K,
-  albedo: PLUTO_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 1.303e22,
+  realRadius_m: kmToM(1188.3),
+  temperature: 44,
+  albedo: 0.52,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: PLUTO_SMA_AU,
-    eccentricity: PLUTO_ECC,
-    inclinationDeg: PLUTO_INC_DEG,
-    longitudeOfAscendingNodeDeg: PLUTO_LAN_DEG,
-    argumentOfPeriapsisDeg: PLUTO_AOP_DEG,
-    meanAnomalyDeg: PLUTO_MA_DEG,
-    period_s: PLUTO_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: PLUTO_AXIAL_TILT_DEG,
+    semiMajorAxisAU: 39.482,
+    eccentricity: 0.2488,
+    inclinationDeg: 17.16,
+    longitudeOfAscendingNodeDeg: 110.299,
+    argumentOfPeriapsisDeg: 113.834,
+    meanAnomalyDeg: 14.53,
+    period_s: 7.82e9,
+    siderealRotationPeriod_s: 5.514e5,
+    axialTiltDeg: 119.51,
     epoch: J2000_EPOCH,
   }),
   properties: {
@@ -79,7 +65,7 @@ export const pluto: CelestialObject<PlanetProperties> = {
       height5: 0.9,
       shininess: 15,
       specularStrength: 0.3,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.3,
       terrainType: 2,
       terrainAmplitude: 0.6,

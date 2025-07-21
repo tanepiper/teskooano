@@ -1,25 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   PlanetType,
   CelestialStatus,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const VESTA_MASS_KG = 2.59e20;
-const VESTA_RADIUS_KM = 262.7;
-const VESTA_TEMP_K = 150;
-const VESTA_ALBEDO = 0.423;
-const VESTA_SMA_AU = 2.36;
-const VESTA_ECC = 0.089;
-const VESTA_INC_DEG = 7.14;
-const VESTA_LAN_DEG = 103.9;
-const VESTA_AOP_DEG = 151.2;
-const VESTA_MA_DEG = 20.8;
-const VESTA_ORBITAL_PERIOD_S = 1.145e8;
-const VESTA_SIDEREAL_ROTATION_PERIOD_S = 19200;
-const VESTA_AXIAL_TILT_DEG = 29;
 
 /**
  * Vesta asteroid configuration object for modular solar system initialization.
@@ -30,21 +16,21 @@ export const vesta: CelestialObject<PlanetProperties> = {
   seed: "vesta",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: VESTA_MASS_KG,
-  realRadius_m: kmToM(VESTA_RADIUS_KM),
-  temperature: VESTA_TEMP_K,
-  albedo: VESTA_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 2.59e20,
+  realRadius_m: kmToM(262.7),
+  temperature: 150,
+  albedo: 0.423,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: VESTA_SMA_AU,
-    eccentricity: VESTA_ECC,
-    inclinationDeg: VESTA_INC_DEG,
-    longitudeOfAscendingNodeDeg: VESTA_LAN_DEG,
-    argumentOfPeriapsisDeg: VESTA_AOP_DEG,
-    meanAnomalyDeg: VESTA_MA_DEG,
-    period_s: VESTA_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: VESTA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: VESTA_AXIAL_TILT_DEG,
+    semiMajorAxisAU: 2.36,
+    eccentricity: 0.089,
+    inclinationDeg: 7.14,
+    longitudeOfAscendingNodeDeg: 103.9,
+    argumentOfPeriapsisDeg: 151.2,
+    meanAnomalyDeg: 20.8,
+    period_s: 1.145e8,
+    siderealRotationPeriod_s: 19200,
+    axialTiltDeg: 29,
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,

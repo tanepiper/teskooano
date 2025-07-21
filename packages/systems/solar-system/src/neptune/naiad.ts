@@ -1,19 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const NAIAD_MASS_KG = 4e17; // Estimate
-const NAIAD_RADIUS_M = 33000; // 33 km
-const NAIAD_SMA_KM = 48224;
-const NAIAD_ECC = 0.0047;
-const NAIAD_INC_DEG = 4.75;
-const NAIAD_SIDEREAL_PERIOD_S = 7.057 * 3600; // hours to seconds
-const NAIAD_ALBEDO = 0.07;
 
 /**
  * Naiad configuration object for modular solar system initialization.
@@ -24,20 +16,20 @@ export const naiad: CelestialObject<PlanetProperties> = {
   seed: "naiad",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "neptune", // Will be replaced during initialization
-  realMass_kg: NAIAD_MASS_KG,
-  realRadius_m: NAIAD_RADIUS_M,
+  parentId: "neptune",
+  realMass_kg: 4e17,
+  realRadius_m: 33000,
   temperature: 60,
-  albedo: NAIAD_ALBEDO,
+  albedo: 0.07,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: NAIAD_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: NAIAD_ECC,
-    inclinationDeg: NAIAD_INC_DEG,
+    semiMajorAxisAU: 0.00032,
+    eccentricity: 0.0047,
+    inclinationDeg: 4.75,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
-    period_s: NAIAD_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: NAIAD_SIDEREAL_PERIOD_S,
+    period_s: 7.057 * 3600,
+    siderealRotationPeriod_s: 7.057 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {
@@ -64,7 +56,7 @@ export const naiad: CelestialObject<PlanetProperties> = {
       height5: 0.9,
       shininess: 4,
       specularStrength: 0.08,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.2,
       terrainType: 1,
       terrainAmplitude: 0.3,

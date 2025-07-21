@@ -1,21 +1,15 @@
 import {
   createOrbitalElements,
-  kmToM,
   J2000_EPOCH,
+  kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
   CelestialType,
   PlanetType,
   CelestialStatus,
+  type CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-// Verified Wikipedia/NASA data for Europa
-const EUROPA_MASS_KG = 4.799844e22; // Wikipedia verified: (4.799844±0.000013)×10²² kg
-const EUROPA_RADIUS_KM = 1560.8; // Wikipedia verified: 1560.8±0.5 km
-const EUROPA_ALBEDO = 0.67; // Wikipedia verified: 0.67 ± 0.03
-const EUROPA_TEMP_K = 102; // Wikipedia verified: mean 102 K
 
 /**
  * Europa moon configuration object for modular solar system initialization.
@@ -26,21 +20,21 @@ export const europa: CelestialObject<PlanetProperties> = {
   seed: "europa_seed_3551",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "jupiter", // Will be replaced during initialization
-  realMass_kg: EUROPA_MASS_KG,
-  realRadius_m: kmToM(EUROPA_RADIUS_KM),
-  temperature: EUROPA_TEMP_K,
-  albedo: EUROPA_ALBEDO,
+  parentId: "jupiter",
+  realMass_kg: 4.799844e22,
+  realRadius_m: kmToM(1560.8),
+  temperature: 102,
+  albedo: 0.67,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 670900 / 149597870.7, // 670,900 km converted to AU
+    semiMajorAxisAU: 0.00449,
     eccentricity: 0.009,
-    inclinationDeg: 0.47, // To Jupiter's equator
+    inclinationDeg: 0.47,
     longitudeOfAscendingNodeDeg: 219.106,
     argumentOfPeriapsisDeg: 88.97,
     meanAnomalyDeg: 171.016,
-    period_s: 3.551181 * 24 * 3600, // 3.551181 days (synchronous)
-    siderealRotationPeriod_s: 3.551181 * 24 * 3600, // Synchronous rotation
-    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    period_s: 3.551181 * 24 * 3600,
+    siderealRotationPeriod_s: 3.551181 * 24 * 3600,
+    axialTiltDeg: 0,
     epoch: J2000_EPOCH,
   }),
   properties: {
@@ -78,7 +72,7 @@ export const europa: CelestialObject<PlanetProperties> = {
       height5: 0.43,
       shininess: 24,
       specularStrength: 0.7,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.1,
       terrainType: 3,
       terrainAmplitude: 0.19,

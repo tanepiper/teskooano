@@ -1,19 +1,15 @@
 import {
   createOrbitalElements,
-  kmToM,
   J2000_EPOCH,
+  kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const METIS_MASS_KG = 3.6e16;
-const METIS_RADIUS_KM = 21.5;
-const METIS_ALBEDO = 0.061;
 
 /**
  * Metis moon configuration object for modular solar system initialization.
@@ -24,21 +20,21 @@ export const metis: CelestialObject<PlanetProperties> = {
   seed: "metis_seed_2024",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "jupiter", // Will be replaced during initialization
-  realMass_kg: METIS_MASS_KG,
-  realRadius_m: kmToM(METIS_RADIUS_KM),
-  temperature: 120, // Generic temperature
-  albedo: METIS_ALBEDO,
+  parentId: "jupiter",
+  realMass_kg: 3.6e16,
+  realRadius_m: kmToM(21.5),
+  temperature: 120,
+  albedo: 0.061,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 128000 / 149597870.7, // 128,000 km converted to AU
+    semiMajorAxisAU: 0.00085,
     eccentricity: 0.0002,
     inclinationDeg: 0.06,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
     period_s: 25470,
-    siderealRotationPeriod_s: 25470, // Synchronous rotation
-    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    siderealRotationPeriod_s: 25470,
+    axialTiltDeg: 0,
     epoch: J2000_EPOCH,
   }),
   properties: {

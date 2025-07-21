@@ -33,7 +33,7 @@ export const phoebe: CelestialObject<PlanetProperties> = {
   temperature: 75,
   albedo: PHOEBE_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 12947780 / 149597870.7, // Convert km to AU
+    semiMajorAxisAU: 0.00087039,
     eccentricity: PHOEBE_ECC,
     inclinationDeg: PHOEBE_INC_DEG,
     longitudeOfAscendingNodeDeg: PHOEBE_LAN_DEG,

@@ -1,4 +1,4 @@
-import { createOrbitalElements } from "@teskooano/core-physics";
+import { AU, createOrbitalElements } from "@teskooano/core-physics";
 import type { OrbitalParameters } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
 
@@ -123,7 +123,7 @@ export function generateMoonOrbit(
     longitudeOfAscendingNodeRad * (180 / Math.PI);
 
   // Convert semi-major axis from meters to AU for createOrbitalElements
-  const semiMajorAxisAU = semiMajorAxis / (149597870.7 * 1000); // Convert m to AU
+  const semiMajorAxisAU = semiMajorAxis / AU; // Convert m to AU
 
   // Generate axial tilt (moons often have low tilt due to tidal forces)
   const axialTiltDeg = random() * 30; // 0-30 degrees for most moons

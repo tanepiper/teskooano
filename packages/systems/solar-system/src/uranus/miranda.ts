@@ -23,7 +23,7 @@ export const miranda: CelestialObject<PlanetProperties> = {
   realMass_kg: 6.59e19,
   realRadius_m: kmToM(MIRANDA_REAL_RADIUS_KM),
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 129390 / 149597870.7, // 129,390 km converted to AU
+    semiMajorAxisAU: 0.00085919,
     eccentricity: 0.0013,
     inclinationDeg: 4.232,
     longitudeOfAscendingNodeDeg: 169.5,

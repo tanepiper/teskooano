@@ -23,7 +23,7 @@ export const ariel: CelestialObject<PlanetProperties> = {
   realMass_kg: 1.353e21,
   realRadius_m: kmToM(ARIEL_REAL_RADIUS_KM),
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 191020 / 149597870.7, // 191,020 km converted to AU
+    semiMajorAxisAU: 0.00129025,
     eccentricity: 0.0012,
     inclinationDeg: 0.26,
     longitudeOfAscendingNodeDeg: 169.5,

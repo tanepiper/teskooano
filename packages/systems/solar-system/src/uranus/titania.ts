@@ -27,7 +27,7 @@ export const titania: CelestialObject<PlanetProperties> = {
   realMass_kg: 3.527e21,
   realRadius_m: kmToM(TITANIA_REAL_RADIUS_KM),
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 436300 / 149597870.7, // 436,300 km converted to AU
+    semiMajorAxisAU: 0.00294609,
     eccentricity: 0.0011,
     inclinationDeg: 0.34,
     longitudeOfAscendingNodeDeg: 169.5,

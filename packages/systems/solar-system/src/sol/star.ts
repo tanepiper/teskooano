@@ -3,14 +3,9 @@ import {
   StellarType,
   CelestialStatus,
   type StarProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
-
-const SUN_MASS_KG = 1.9885e30;
-const SUN_RADIUS_KM = 696340; // Solar radius
-const SUN_TEMP_K = 5778;
-const SUN_LUMINOSITY = 1.0;
 
 /**
  * Sun configuration object for modular solar system initialization.
@@ -23,9 +18,9 @@ export const sun: CelestialObject<StarProperties> = {
   type: CelestialType.STAR,
   status: CelestialStatus.ACTIVE,
   parentId: undefined, // Sun has no parent
-  realMass_kg: SUN_MASS_KG,
-  realRadius_m: kmToM(SUN_RADIUS_KM),
-  temperature: SUN_TEMP_K,
+  realMass_kg: 1.9885e30,
+  realRadius_m: kmToM(696340),
+  temperature: 5778,
   albedo: 0.3,
   orbit: createOrbitalElements({
     semiMajorAxisAU: 0, // Sun is at the center of the system
@@ -42,7 +37,7 @@ export const sun: CelestialObject<StarProperties> = {
     type: CelestialType.STAR,
     isMainStar: true,
     spectralClass: "G2V",
-    luminosity: SUN_LUMINOSITY,
+    luminosity: 1.0,
     color: "#FFFFE0",
     stellarType: StellarType.MAIN_SEQUENCE,
   },

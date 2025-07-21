@@ -1,27 +1,13 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
-  PlanetType,
   CelestialStatus,
+  PlanetType,
   type PlanetProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
 
-// Physical constants for 2023 KQ14 (Ammonite)
-const AMMONITE_ESTIMATED_DIAMETER_KM = 300; // Mid-range estimate (220-380 km)
-const AMMONITE_ESTIMATED_DENSITY_KG_M3 = 1850; // kg/m³ (similar to Pluto)
-const AMMONITE_ALBEDO = 0.1; // Estimated based on typical TNO albedos
-const AMMONITE_ABSOLUTE_MAGNITUDE = 6.77;
-
 // Orbital parameters from JPL Small-Body Database (epoch 2025-05-05)
-const AMMONITE_SMA_AU = 252.0;
-const AMMONITE_ECC = 0.7385;
-const AMMONITE_INC_DEG = 10.98;
-const AMMONITE_LAN_DEG = 72.1;
-const AMMONITE_AOP_DEG = 198.74;
-const AMMONITE_MA_DEG = 356.56;
-const AMMONITE_ORBITAL_PERIOD_S = 3998 * 365.25 * 24 * 3600; // 3,998 years in seconds
-const AMMONITE_SIDEREAL_ROTATION_PERIOD_S = 24 * 3600; // Unknown, assume 24 hours
 
 /**
  * 2023 KQ14 (Ammonite) - A recently discovered sednoid
@@ -49,25 +35,21 @@ export const ammonite: CelestialObject<PlanetProperties> = {
   seed: "ammonite",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg:
-    (4 / 3) *
-    Math.PI *
-    Math.pow(kmToM(AMMONITE_ESTIMATED_DIAMETER_KM / 2), 3) *
-    AMMONITE_ESTIMATED_DENSITY_KG_M3,
-  realRadius_m: kmToM(AMMONITE_ESTIMATED_DIAMETER_KM / 2),
-  temperature: 30, // Very cold at this distance
-  albedo: AMMONITE_ALBEDO,
+  parentId: "sun",
+  realMass_kg: (4 / 3) * Math.PI * Math.pow(kmToM(150), 3) * 1850,
+  realRadius_m: kmToM(150),
+  temperature: 30,
+  albedo: 0.1,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: AMMONITE_SMA_AU,
-    eccentricity: AMMONITE_ECC,
-    inclinationDeg: AMMONITE_INC_DEG,
-    longitudeOfAscendingNodeDeg: AMMONITE_LAN_DEG,
-    argumentOfPeriapsisDeg: AMMONITE_AOP_DEG,
-    meanAnomalyDeg: AMMONITE_MA_DEG,
-    period_s: AMMONITE_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: AMMONITE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: 0, // Unknown, assume 0
+    semiMajorAxisAU: 252.0,
+    eccentricity: 0.7385,
+    inclinationDeg: 10.98,
+    longitudeOfAscendingNodeDeg: 72.1,
+    argumentOfPeriapsisDeg: 198.74,
+    meanAnomalyDeg: 356.56,
+    period_s: 3998 * 365.25 * 24 * 3600,
+    siderealRotationPeriod_s: 24 * 3600,
+    axialTiltDeg: 0,
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,

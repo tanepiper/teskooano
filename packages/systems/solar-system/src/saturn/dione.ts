@@ -5,19 +5,8 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
-
-const DIONE_MASS_KG = 1.095e21;
-const DIONE_RADIUS_KM = 561.4;
-const DIONE_SMA_KM = 377396;
-const DIONE_ECC = 0.0022;
-const DIONE_INC_DEG = 0.019;
-const DIONE_LAN_DEG = 128.2;
-const DIONE_AOP_DEG = 91.1;
-const DIONE_MA_DEG = 357.6;
-const DIONE_SIDEREAL_PERIOD_S = 236518;
-const DIONE_ALBEDO = 0.998;
 
 /**
  * Dione configuration object for modular solar system initialization.
@@ -29,19 +18,19 @@ export const dione: CelestialObject<PlanetProperties> = {
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
-  realMass_kg: DIONE_MASS_KG,
-  realRadius_m: kmToM(DIONE_RADIUS_KM),
+  realMass_kg: 1.095e21,
+  realRadius_m: kmToM(561.4),
   temperature: 87,
-  albedo: DIONE_ALBEDO,
+  albedo: 0.998,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: DIONE_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: DIONE_ECC,
-    inclinationDeg: DIONE_INC_DEG,
-    longitudeOfAscendingNodeDeg: DIONE_LAN_DEG,
-    argumentOfPeriapsisDeg: DIONE_AOP_DEG,
-    meanAnomalyDeg: DIONE_MA_DEG,
-    period_s: DIONE_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: DIONE_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.00266,
+    eccentricity: 0.0022,
+    inclinationDeg: 0.019,
+    longitudeOfAscendingNodeDeg: 128.2,
+    argumentOfPeriapsisDeg: 91.1,
+    meanAnomalyDeg: 357.6,
+    period_s: 236518,
+    siderealRotationPeriod_s: 236518,
     axialTiltDeg: 0,
   }),
   properties: {

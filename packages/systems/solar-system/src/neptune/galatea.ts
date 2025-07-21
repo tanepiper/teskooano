@@ -1,19 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const GALATEA_MASS_KG = 8.0e18;
-const GALATEA_RADIUS_M = 88000;
-const GALATEA_SMA_KM = 61953;
-const GALATEA_ECC = 0.0002;
-const GALATEA_INC_DEG = 0.05;
-const GALATEA_SIDEREAL_PERIOD_S = 10.3 * 3600;
-const GALATEA_ALBEDO = 0.08;
 
 /**
  * Galatea configuration object for modular solar system initialization.
@@ -25,19 +17,19 @@ export const galatea: CelestialObject<PlanetProperties> = {
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
   parentId: "neptune", // Will be replaced during initialization
-  realMass_kg: GALATEA_MASS_KG,
-  realRadius_m: GALATEA_RADIUS_M,
+  realMass_kg: 8.0e18,
+  realRadius_m: 88000,
   temperature: 60,
-  albedo: GALATEA_ALBEDO,
+  albedo: 0.08,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: GALATEA_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: GALATEA_ECC,
-    inclinationDeg: GALATEA_INC_DEG,
+    semiMajorAxisAU: 0.0004,
+    eccentricity: 0.0002,
+    inclinationDeg: 0.05,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
-    period_s: GALATEA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: GALATEA_SIDEREAL_PERIOD_S,
+    period_s: 10.3 * 3600,
+    siderealRotationPeriod_s: 10.3 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {

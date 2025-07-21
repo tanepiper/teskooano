@@ -27,7 +27,7 @@ export const oberon: CelestialObject<PlanetProperties> = {
   realMass_kg: 3.014e21,
   realRadius_m: kmToM(OBERON_REAL_RADIUS_KM),
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 583520 / 149597870.7, // 583,520 km converted to AU
+    semiMajorAxisAU: 0.00390017,
     eccentricity: 0.0014,
     inclinationDeg: 0.058,
     longitudeOfAscendingNodeDeg: 169.5,

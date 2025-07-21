@@ -4,22 +4,8 @@ import {
   PlanetType,
   CelestialStatus,
   type PlanetProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
-
-const PALLAS_MASS_KG = 2.11e20;
-const PALLAS_RADIUS_KM = 256;
-const PALLAS_TEMP_K = 160;
-const PALLAS_ALBEDO = 0.155;
-const PALLAS_SMA_AU = 2.77;
-const PALLAS_ECC = 0.231;
-const PALLAS_INC_DEG = 34.84;
-const PALLAS_LAN_DEG = 173.1;
-const PALLAS_AOP_DEG = 310.3;
-const PALLAS_MA_DEG = 113.7;
-const PALLAS_ORBITAL_PERIOD_S = 1.681e8;
-const PALLAS_SIDEREAL_ROTATION_PERIOD_S = 28080;
-const PALLAS_AXIAL_TILT_DEG = 84;
 
 /**
  * Pallas asteroid configuration object for modular solar system initialization.
@@ -30,21 +16,21 @@ export const pallas: CelestialObject<PlanetProperties> = {
   seed: "pallas",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: PALLAS_MASS_KG,
-  realRadius_m: kmToM(PALLAS_RADIUS_KM),
-  temperature: PALLAS_TEMP_K,
-  albedo: PALLAS_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 2.11e20,
+  realRadius_m: kmToM(256),
+  temperature: 160,
+  albedo: 0.155,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: PALLAS_SMA_AU,
-    eccentricity: PALLAS_ECC,
-    inclinationDeg: PALLAS_INC_DEG,
-    longitudeOfAscendingNodeDeg: PALLAS_LAN_DEG,
-    argumentOfPeriapsisDeg: PALLAS_AOP_DEG,
-    meanAnomalyDeg: PALLAS_MA_DEG,
-    period_s: PALLAS_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: PALLAS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: PALLAS_AXIAL_TILT_DEG,
+    semiMajorAxisAU: 2.77,
+    eccentricity: 0.231,
+    inclinationDeg: 34.84,
+    longitudeOfAscendingNodeDeg: 173.1,
+    argumentOfPeriapsisDeg: 310.3,
+    meanAnomalyDeg: 113.7,
+    period_s: 1.681e8,
+    siderealRotationPeriod_s: 28080,
+    axialTiltDeg: 84,
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,

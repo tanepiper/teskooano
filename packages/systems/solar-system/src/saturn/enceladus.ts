@@ -5,19 +5,8 @@ import {
   PlanetType,
   SurfaceType,
   type PlanetProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
-
-const ENCELADUS_MASS_KG = 1.08e20;
-const ENCELADUS_RADIUS_KM = 252.1;
-const ENCELADUS_SMA_KM = 238020;
-const ENCELADUS_ECC = 0.0047;
-const ENCELADUS_INC_DEG = 0.019;
-const ENCELADUS_LAN_DEG = 169.8;
-const ENCELADUS_AOP_DEG = 312.9;
-const ENCELADUS_MA_DEG = 258.0;
-const ENCELADUS_SIDEREAL_PERIOD_S = 118378;
-const ENCELADUS_ALBEDO = 1.375;
 
 /**
  * Enceladus configuration object for modular solar system initialization.
@@ -29,19 +18,19 @@ export const enceladus: CelestialObject<PlanetProperties> = {
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
   parentId: "saturn", // Will be replaced during initialization
-  realMass_kg: ENCELADUS_MASS_KG,
-  realRadius_m: kmToM(ENCELADUS_RADIUS_KM),
+  realMass_kg: 1.08e20,
+  realRadius_m: kmToM(252.1),
   temperature: 75,
-  albedo: ENCELADUS_ALBEDO,
+  albedo: 1.375,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: ENCELADUS_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: ENCELADUS_ECC,
-    inclinationDeg: ENCELADUS_INC_DEG,
-    longitudeOfAscendingNodeDeg: ENCELADUS_LAN_DEG,
-    argumentOfPeriapsisDeg: ENCELADUS_AOP_DEG,
-    meanAnomalyDeg: ENCELADUS_MA_DEG,
-    period_s: ENCELADUS_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: ENCELADUS_SIDEREAL_PERIOD_S,
+    semiMajorAxisAU: 0.001594,
+    eccentricity: 0.0047,
+    inclinationDeg: 0.019,
+    longitudeOfAscendingNodeDeg: 169.8,
+    argumentOfPeriapsisDeg: 312.9,
+    meanAnomalyDeg: 258.0,
+    period_s: 118378,
+    siderealRotationPeriod_s: 118378,
     axialTiltDeg: 0,
   }),
   properties: {

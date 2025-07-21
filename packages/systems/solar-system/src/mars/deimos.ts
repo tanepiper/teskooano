@@ -3,15 +3,9 @@ import {
   CelestialType,
   PlanetType,
   CelestialStatus,
+  type CelestialObject,
   type PlanetProperties,
-  CelestialObject,
 } from "@teskooano/data-types";
-
-// Verified Wikipedia/NASA data for Deimos
-const DEIMOS_MASS_KG = 1.51e15; // Wikipedia verified: 1.51×10¹⁵ kg
-const DEIMOS_RADIUS_KM = 6.27; // Wikipedia verified: 6.27±0.07 km mean radius
-const DEIMOS_ALBEDO = 0.068; // Wikipedia verified
-const DEIMOS_TEMP_K = 233; // Wikipedia verified: ≈233 K
 
 /**
  * Deimos moon configuration object for modular solar system initialization.
@@ -22,21 +16,21 @@ export const deimos: CelestialObject<PlanetProperties> = {
   seed: "deimos_dread_mars_moon",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "mars", // Will be replaced during initialization
-  realMass_kg: DEIMOS_MASS_KG,
-  realRadius_m: kmToM(DEIMOS_RADIUS_KM),
-  temperature: DEIMOS_TEMP_K,
-  albedo: DEIMOS_ALBEDO,
+  parentId: "mars",
+  realMass_kg: 1.51e15,
+  realRadius_m: kmToM(6.27),
+  temperature: 233,
+  albedo: 0.068,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 23463.2 / 149597870.7, // 23,463.2 km converted to AU
+    semiMajorAxisAU: 0.000156,
     eccentricity: 0.00033,
-    inclinationDeg: 0.93, // To Mars's equator
+    inclinationDeg: 0.93,
     longitudeOfAscendingNodeDeg: 54.3,
     argumentOfPeriapsisDeg: 0.0,
     meanAnomalyDeg: 205.0,
-    period_s: 30.312 * 3600, // 30.312 hours (synchronous)
-    siderealRotationPeriod_s: 30.312 * 3600, // Synchronous rotation
-    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    period_s: 30.312 * 3600,
+    siderealRotationPeriod_s: 30.312 * 3600,
+    axialTiltDeg: 0,
     epoch: "JD 2456191.5",
   }),
   properties: {

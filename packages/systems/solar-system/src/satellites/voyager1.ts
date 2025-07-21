@@ -3,60 +3,35 @@ import {
   CelestialType,
   CelestialStatus,
   SatelliteProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
 
-// Voyager 1 physical constants (real-time data as of latest update)
-const VOYAGER1_MASS_KG = 815; // ~815 kg (including fuel)
-const VOYAGER1_DISTANCE_AU = 167.66359913; // Current distance from Sun (real-time)
-const VOYAGER1_DISTANCE_EARTH_AU = 166.98170765; // Current distance from Earth
-const VOYAGER1_VELOCITY_KM_S = 17.0; // 38,026.77 mph = ~17.0 km/s relative to Sun
-const MISSION_ELAPSED_TIME_YEARS = 47.85; // ~47 years, 10 months since launch
-
-// Voyager 1's current position in space (constellation Ophiuchus)
-// Right Ascension: ~17h 15m, Declination: ~+12°
-const VOYAGER1_RA_DEG = 258.75; // 17h 15m = 17.25 * 15 = 258.75°
-const VOYAGER1_DEC_DEG = 12.4; // +12.4°
-
-/**
- * Voyager 1 configuration object for modular solar system initialization.
- * Launch: September 5, 1977
- * Current Status: 167.66 AU from Sun, traveling at 38,027 mph
- * Mission Elapsed Time: 47 years, 10 months, 9 days
- * The first human-made object to enter interstellar space, continuing its journey
- * through the cosmos carrying the Golden Record as a message to any extraterrestrial life.
- *
- * Uses rogue object approach - no orbital mechanics, direct position/velocity.
- */
 export const voyager1: CelestialObject<SatelliteProperties> = {
   id: "voyager-1",
   name: "Voyager 1",
   seed: "voyager_1_golden_record",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
-  // No parentId - Voyager 1 is a rogue object in interstellar space
-  realMass_kg: VOYAGER1_MASS_KG,
-  realRadius_m: 2.0, // Approximate size for visualization
-  temperature: 300, // More realistic temperature for lighting calculations
-  albedo: 0.3, // More realistic albedo for visibility
-  // Rogue object orbital parameters (mostly zeros)
+  realMass_kg: 815,
+  realRadius_m: 2.0,
+  temperature: 300,
+  albedo: 0.3,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0, // Not orbiting anything
+    semiMajorAxisAU: 0,
     eccentricity: 0,
     inclinationDeg: 0,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
-    meanAnomalyDeg: VOYAGER1_DISTANCE_AU, // Store distance for reference
-    period_s: 0, // No orbital period
-    siderealRotationPeriod_s: 24 * 3600, // Spacecraft rotation
+    meanAnomalyDeg: 0,
+    period_s: 0,
+    siderealRotationPeriod_s: 24 * 3600,
     axialTiltDeg: 0,
   }),
-  // Critical: Ignore physics so Voyager 1 is not affected by gravitational forces
   ignorePhysics: false,
   ignoreCollisions: true,
   properties: {
     type: CelestialType.SATELLITE,
-    modelPath: "models/satellite/voyager.glb", // Fixed path format
+    modelPath: "models/satellite/voyager.glb",
     modelScale: 1.0,
     missionType: "scientific",
     operationalStatus: "active",

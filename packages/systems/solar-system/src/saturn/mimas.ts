@@ -9,7 +9,6 @@ import {
 
 const MIMAS_MASS_KG = 3.75e19;
 const MIMAS_RADIUS_KM = 198.2;
-const MIMAS_SMA_KM = 185539;
 const MIMAS_ECC = 0.0196;
 const MIMAS_INC_DEG = 1.566;
 const MIMAS_LAN_DEG = 123.5;
@@ -33,7 +32,7 @@ export const mimas: CelestialObject<PlanetProperties> = {
   temperature: 63,
   albedo: MIMAS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: MIMAS_SMA_KM / 149597870.7, // Convert km to AU
+    semiMajorAxisAU: 0.000151388,
     eccentricity: MIMAS_ECC,
     inclinationDeg: MIMAS_INC_DEG,
     longitudeOfAscendingNodeDeg: MIMAS_LAN_DEG,

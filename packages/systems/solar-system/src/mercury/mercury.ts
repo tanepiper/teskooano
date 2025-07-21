@@ -1,20 +1,15 @@
 import {
-  J2000_EPOCH,
   createOrbitalElements,
+  J2000_EPOCH,
   kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetProperties,
   PlanetType,
 } from "@teskooano/data-types";
-
-const MERCURY_MASS_KG = 3.3011e23;
-const MERCURY_RADIUS_KM = 2439.7; // Mean radius
-const MERCURY_TEMP_K = 437; // Blackbody temperature
-const MERCURY_ALBEDO = 0.088; // Bond albedo
 
 /**
  * Mercury configuration object for modular solar system initialization.
@@ -25,20 +20,20 @@ export const mercury: CelestialObject<PlanetProperties> = {
   seed: "mercury",
   type: CelestialType.PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg: MERCURY_MASS_KG,
-  realRadius_m: kmToM(MERCURY_RADIUS_KM),
-  temperature: MERCURY_TEMP_K,
-  albedo: MERCURY_ALBEDO,
+  parentId: "sun",
+  realMass_kg: 3.3011e23,
+  realRadius_m: kmToM(2439.7),
+  temperature: 437,
+  albedo: 0.088,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.387098, // Mercury's semi-major axis
+    semiMajorAxisAU: 0.387098,
     eccentricity: 0.20563,
     inclinationDeg: 7.005,
     longitudeOfAscendingNodeDeg: 48.331,
     argumentOfPeriapsisDeg: 29.124,
     meanAnomalyDeg: 174.796,
-    period_s: 7.60052e6, // 87.969 Earth days
-    siderealRotationPeriod_s: 5.067e6, // 58.646 Earth days
+    period_s: 7.60052e6,
+    siderealRotationPeriod_s: 5.067e6,
     axialTiltDeg: 0.034,
     epoch: J2000_EPOCH,
   }),
@@ -66,7 +61,7 @@ export const mercury: CelestialObject<PlanetProperties> = {
       height5: 0.9,
       shininess: 12,
       specularStrength: 0.2,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.4,
       terrainType: 2,
       terrainAmplitude: 0.9,

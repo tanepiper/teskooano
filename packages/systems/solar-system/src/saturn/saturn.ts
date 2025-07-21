@@ -10,23 +10,8 @@ import {
   CelestialStatus,
   type GasGiantProperties,
   type RingProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
-
-const SATURN_MASS_KG = 5.6834e26;
-const SATURN_RADIUS_KM = 58232; // Mean radius
-const SATURN_EQUATORIAL_RADIUS_KM = 60268; // Equatorial radius for ring calculations
-const SATURN_TEMP_K = 134;
-const SATURN_ALBEDO = 0.342; // Bond albedo
-const SATURN_SMA_AU = 9.5826;
-const SATURN_ECC = 0.0565;
-const SATURN_INC_DEG = 2.485;
-const SATURN_LAN_DEG = 113.665;
-const SATURN_AOP_DEG = 339.392; // Corrected to match astronomical data
-const SATURN_MA_DEG = 317.02;
-const SATURN_ORBITAL_PERIOD_S = 929292480; // 10,755.70 days in seconds
-const SATURN_SIDEREAL_ROTATION_PERIOD_S = 38018; // 10h 33m 38s in seconds
-const SATURN_AXIAL_TILT_DEG = 26.73;
 
 /**
  * Saturn configuration object for modular solar system initialization.
@@ -38,20 +23,20 @@ export const saturn: CelestialObject<GasGiantProperties> = {
   type: CelestialType.GAS_GIANT,
   status: CelestialStatus.ACTIVE,
   parentId: "sun", // Will be replaced during initialization
-  realMass_kg: SATURN_MASS_KG,
-  realRadius_m: kmToM(SATURN_RADIUS_KM),
-  temperature: SATURN_TEMP_K,
-  albedo: SATURN_ALBEDO,
+  realMass_kg: 5.6834e26,
+  realRadius_m: kmToM(58232),
+  temperature: 134,
+  albedo: 0.342,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: SATURN_SMA_AU,
-    eccentricity: SATURN_ECC,
-    inclinationDeg: SATURN_INC_DEG,
-    longitudeOfAscendingNodeDeg: SATURN_LAN_DEG,
-    argumentOfPeriapsisDeg: SATURN_AOP_DEG,
-    meanAnomalyDeg: SATURN_MA_DEG,
-    period_s: SATURN_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: SATURN_AXIAL_TILT_DEG,
+    semiMajorAxisAU: 9.5826,
+    eccentricity: 0.0565,
+    inclinationDeg: 2.485,
+    longitudeOfAscendingNodeDeg: 113.665,
+    argumentOfPeriapsisDeg: 339.392,
+    meanAnomalyDeg: 317.02,
+    period_s: 929292480,
+    siderealRotationPeriod_s: 38018,
+    axialTiltDeg: 26.73,
     epoch: J2000_EPOCH,
   }),
   properties: {
@@ -66,8 +51,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
     rings: [
       // D Ring (innermost, very sparse)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 7000),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 14600),
+        innerRadius: kmToM(60268 + 7000),
+        outerRadius: kmToM(60268 + 14600),
         density: 0.001,
         opacity: 0.01,
         color: "#BDB7AB",
@@ -78,8 +63,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // C Ring (sparse, ice and dust)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 14600),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 32000),
+        innerRadius: kmToM(60268 + 14600),
+        outerRadius: kmToM(60268 + 32000),
         density: 0.05,
         opacity: 0.1,
         color: "#A9A190",
@@ -90,8 +75,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // B Ring (densest, bright ice particles)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 32000),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 51800),
+        innerRadius: kmToM(60268 + 32000),
+        outerRadius: kmToM(60268 + 51800),
         density: 0.9,
         opacity: 0.8,
         color: "#E0DDCF",
@@ -102,8 +87,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // Cassini Division (gap - represented as very sparse ring)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 51800),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 56200),
+        innerRadius: kmToM(60268 + 51800),
+        outerRadius: kmToM(60268 + 56200),
         density: 0.001,
         opacity: 0.02,
         color: "#555555",
@@ -114,8 +99,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // A Ring (bright, ice particles)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 56200),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 80000),
+        innerRadius: kmToM(60268 + 56200),
+        outerRadius: kmToM(60268 + 80000),
         density: 0.6,
         opacity: 0.6,
         color: "#DAD4C5",
@@ -126,8 +111,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // F Ring (narrow, dynamic)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 80200),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 80800),
+        innerRadius: kmToM(60268 + 80200),
+        outerRadius: kmToM(60268 + 80800),
         density: 0.1,
         opacity: 0.3,
         color: "#CCC5B8",
@@ -138,8 +123,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // G Ring (very sparse)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 166000),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 175000),
+        innerRadius: kmToM(60268 + 166000),
+        outerRadius: kmToM(60268 + 175000),
         density: 0.0001,
         opacity: 0.005,
         color: "#B8B0A2",
@@ -150,8 +135,8 @@ export const saturn: CelestialObject<GasGiantProperties> = {
       } as RingProperties,
       // E Ring (extremely sparse, extends very far)
       {
-        innerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 180000),
-        outerRadius: kmToM(SATURN_EQUATORIAL_RADIUS_KM + 480000),
+        innerRadius: kmToM(60268 + 180000),
+        outerRadius: kmToM(60268 + 480000),
         density: 0.00001,
         opacity: 0.001,
         color: "#95a0a8",

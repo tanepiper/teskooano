@@ -9,7 +9,6 @@ import {
 
 const IAPETUS_MASS_KG = 1.806e21;
 const IAPETUS_RADIUS_KM = 734.5;
-const IAPETUS_SMA_KM = 3560820;
 const IAPETUS_ECC = 0.0283;
 const IAPETUS_INC_DEG = 15.47;
 const IAPETUS_LAN_DEG = 81.1;
@@ -33,7 +32,7 @@ export const iapetus: CelestialObject<PlanetProperties> = {
   temperature: 110,
   albedo: IAPETUS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: IAPETUS_SMA_KM / 149597870.7, // Convert km to AU
+    semiMajorAxisAU: 0.00237492,
     eccentricity: IAPETUS_ECC,
     inclinationDeg: IAPETUS_INC_DEG,
     longitudeOfAscendingNodeDeg: IAPETUS_LAN_DEG,

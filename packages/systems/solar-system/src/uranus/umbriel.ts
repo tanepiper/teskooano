@@ -27,7 +27,7 @@ export const umbriel: CelestialObject<PlanetProperties> = {
   realMass_kg: 1.172e21,
   realRadius_m: kmToM(UMBRIEL_REAL_RADIUS_KM),
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 266000 / 149597870.7, // 266,000 km converted to AU
+    semiMajorAxisAU: 0.0017781,
     eccentricity: 0.0039,
     inclinationDeg: 0.128,
     longitudeOfAscendingNodeDeg: 169.5,

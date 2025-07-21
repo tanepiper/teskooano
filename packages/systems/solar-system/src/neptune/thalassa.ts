@@ -1,19 +1,11 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialType,
   CelestialStatus,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const THALASSA_MASS_KG = 4e17; // Estimate similar to Naiad
-const THALASSA_RADIUS_M = 40000; // 40 km
-const THALASSA_SMA_KM = 50074;
-const THALASSA_ECC = 0.0002;
-const THALASSA_INC_DEG = 0.21;
-const THALASSA_SIDEREAL_PERIOD_S = 7.5 * 3600;
-const THALASSA_ALBEDO = 0.07;
 
 /**
  * Thalassa configuration object for modular solar system initialization.
@@ -24,20 +16,20 @@ export const thalassa: CelestialObject<PlanetProperties> = {
   seed: "thalassa",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "neptune", // Will be replaced during initialization
-  realMass_kg: THALASSA_MASS_KG,
-  realRadius_m: THALASSA_RADIUS_M,
+  parentId: "neptune",
+  realMass_kg: 4e17,
+  realRadius_m: 40000,
   temperature: 60,
-  albedo: THALASSA_ALBEDO,
+  albedo: 0.07,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: THALASSA_SMA_KM / 149597870.7, // Convert km to AU
-    eccentricity: THALASSA_ECC,
-    inclinationDeg: THALASSA_INC_DEG,
+    semiMajorAxisAU: 0.00026,
+    eccentricity: 0.0002,
+    inclinationDeg: 0.21,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
-    period_s: THALASSA_SIDEREAL_PERIOD_S,
-    siderealRotationPeriod_s: THALASSA_SIDEREAL_PERIOD_S,
+    period_s: 7.5 * 3600,
+    siderealRotationPeriod_s: 7.5 * 3600,
     axialTiltDeg: 0,
   }),
   properties: {

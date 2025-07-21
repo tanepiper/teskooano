@@ -1,19 +1,15 @@
 import {
   createOrbitalElements,
-  kmToM,
   J2000_EPOCH,
+  kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
-  CelestialStatus,
   CelestialType,
   PlanetType,
+  CelestialStatus,
+  type CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const HIMALIA_MASS_KG = 6.74e18;
-const HIMALIA_RADIUS_KM = 85;
-const HIMALIA_ALBEDO = 0.04;
 
 /**
  * Himalia moon configuration object for modular solar system initialization.
@@ -24,21 +20,21 @@ export const himalia: CelestialObject<PlanetProperties> = {
   seed: "himalia_seed_1904",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "jupiter", // Will be replaced during initialization
-  realMass_kg: HIMALIA_MASS_KG,
-  realRadius_m: kmToM(HIMALIA_RADIUS_KM),
-  temperature: 124, // Estimated
-  albedo: HIMALIA_ALBEDO,
+  parentId: "jupiter",
+  realMass_kg: 6.74e18,
+  realRadius_m: kmToM(85),
+  temperature: 124,
+  albedo: 0.04,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 11439000 / 149597870.7, // 11,439,000 km converted to AU
+    semiMajorAxisAU: 0.0764,
     eccentricity: 0.16,
     inclinationDeg: 28.4,
     longitudeOfAscendingNodeDeg: 64.2,
     argumentOfPeriapsisDeg: 321.1,
     meanAnomalyDeg: 78.3,
     period_s: 249.909 * 24 * 3600,
-    siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
-    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    siderealRotationPeriod_s: 0.324 * 24 * 3600,
+    axialTiltDeg: 0,
     epoch: J2000_EPOCH,
   }),
   properties: {
@@ -65,7 +61,7 @@ export const himalia: CelestialObject<PlanetProperties> = {
       height5: 0.9,
       shininess: 3,
       specularStrength: 0.05,
-      ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
+      ambientLightIntensity: 0.01,
       undulation: 0.2,
       terrainType: 1,
       terrainAmplitude: 0.3,

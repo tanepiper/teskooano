@@ -1,19 +1,15 @@
 import {
   createOrbitalElements,
-  kmToM,
   J2000_EPOCH,
+  kmToM,
 } from "@teskooano/core-physics";
 import {
-  CelestialObject,
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
-
-const THEBE_MASS_KG = 4.3e17;
-const THEBE_RADIUS_KM = 49.3;
-const THEBE_ALBEDO = 0.047;
 
 /**
  * Thebe moon configuration object for modular solar system initialization.
@@ -24,21 +20,21 @@ export const thebe: CelestialObject<PlanetProperties> = {
   seed: "thebe_seed_2024",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "jupiter", // Will be replaced during initialization
-  realMass_kg: THEBE_MASS_KG,
-  realRadius_m: kmToM(THEBE_RADIUS_KM),
-  temperature: 120, // Generic temperature
-  albedo: THEBE_ALBEDO,
+  parentId: "jupiter",
+  realMass_kg: 4.3e17,
+  realRadius_m: kmToM(49.3),
+  temperature: 120,
+  albedo: 0.047,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 222000 / 149597870.7, // 222,000 km converted to AU
+    semiMajorAxisAU: 0.00149,
     eccentricity: 0.0175,
     inclinationDeg: 1.076,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
     period_s: 58275,
-    siderealRotationPeriod_s: 58275, // Synchronous rotation
-    axialTiltDeg: 0, // Moons don't have meaningful axial tilt
+    siderealRotationPeriod_s: 58275,
+    axialTiltDeg: 0,
     epoch: J2000_EPOCH,
   }),
   properties: {

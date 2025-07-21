@@ -4,24 +4,8 @@ import {
   PlanetType,
   CelestialStatus,
   type PlanetProperties,
-  CelestialObject,
+  type CelestialObject,
 } from "@teskooano/data-types";
-
-// Physical constants for 541132 Leleākūhonua (The Goblin)
-const LELEAKUHONUA_RADIUS_KM = 110; // Mean radius from occultation measurements
-const LELEAKUHONUA_ALBEDO = 0.21; // Geometric albedo from occultation measurements
-const LELEAKUHONUA_ABSOLUTE_MAGNITUDE = 5.57;
-const LELEAKUHONUA_ESTIMATED_DENSITY_KG_M3 = 1850; // kg/m³ (similar to other TNOs)
-
-// Orbital parameters from JPL Small-Body Database (epoch 2023-02-25)
-const LELEAKUHONUA_SMA_AU = 1090;
-const LELEAKUHONUA_ECC = 0.94039;
-const LELEAKUHONUA_INC_DEG = 11.671;
-const LELEAKUHONUA_LAN_DEG = 300.995;
-const LELEAKUHONUA_AOP_DEG = 117.974;
-const LELEAKUHONUA_MA_DEG = 359.445;
-const LELEAKUHONUA_ORBITAL_PERIOD_S = 35950 * 365.25 * 24 * 3600; // 35,950 years in seconds
-const LELEAKUHONUA_SIDEREAL_ROTATION_PERIOD_S = 24 * 3600; // Unknown, assume 24 hours
 
 /**
  * 541132 Leleākūhonua (The Goblin) - A sednoid with extremely wide orbit
@@ -54,25 +38,21 @@ export const leleakuhonua: CelestialObject<PlanetProperties> = {
   seed: "leleakuhonua",
   type: CelestialType.DWARF_PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
-  realMass_kg:
-    (4 / 3) *
-    Math.PI *
-    Math.pow(kmToM(LELEAKUHONUA_RADIUS_KM), 3) *
-    LELEAKUHONUA_ESTIMATED_DENSITY_KG_M3,
-  realRadius_m: kmToM(LELEAKUHONUA_RADIUS_KM),
-  temperature: 25, // Very cold at this distance
-  albedo: LELEAKUHONUA_ALBEDO,
+  parentId: "sun",
+  realMass_kg: (4 / 3) * Math.PI * Math.pow(kmToM(110), 3) * 1850,
+  realRadius_m: kmToM(110),
+  temperature: 25,
+  albedo: 0.21,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: LELEAKUHONUA_SMA_AU,
-    eccentricity: LELEAKUHONUA_ECC,
-    inclinationDeg: LELEAKUHONUA_INC_DEG,
-    longitudeOfAscendingNodeDeg: LELEAKUHONUA_LAN_DEG,
-    argumentOfPeriapsisDeg: LELEAKUHONUA_AOP_DEG,
-    meanAnomalyDeg: LELEAKUHONUA_MA_DEG,
-    period_s: LELEAKUHONUA_ORBITAL_PERIOD_S,
-    siderealRotationPeriod_s: LELEAKUHONUA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTiltDeg: 0, // Unknown, assume 0
+    semiMajorAxisAU: 1090,
+    eccentricity: 0.94039,
+    inclinationDeg: 11.671,
+    longitudeOfAscendingNodeDeg: 300.995,
+    argumentOfPeriapsisDeg: 117.974,
+    meanAnomalyDeg: 359.445,
+    period_s: 35950 * 365.25 * 24 * 3600,
+    siderealRotationPeriod_s: 24 * 3600,
+    axialTiltDeg: 0,
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,
