@@ -24,6 +24,8 @@ export interface LagrangePoint {
   id: "L1" | "L2" | "L3" | "L4" | "L5";
   /** Position of the Lagrange point in 3D space (meters) */
   position_m: OSVector3;
+  /** Velocity of the Lagrange point in the rotating frame (m/s) */
+  velocity_mps?: OSVector3;
   /** Distance from the smaller body (M2) in meters */
   distanceFromSecondary_m: number;
   /** Distance from the larger body (M1) in meters */
@@ -47,7 +49,9 @@ export interface TwoBodySystem {
   /** Distance between the two bodies (meters) */
   separation_m: number;
   /** Mass ratio μ = M2/(M1+M2) */
-  massRatio: number;
+  massRatio: number; // μ = M2/(M1+M2)
+  /** Total mass of the two-body system (kg) */
+  totalMass_kg: number;
 }
 
 /**

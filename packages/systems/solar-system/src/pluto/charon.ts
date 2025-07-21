@@ -1,4 +1,5 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics/src/units/constants";
 import {
   CelestialType,
   PlanetType,
@@ -23,7 +24,7 @@ export const charon: CelestialObject<PlanetProperties> = {
   temperature: 53,
   albedo: 0.38,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00001,
+    semiMajorAxisAU: 0.00013098772, // 19595.764 km converted to AU
     eccentricity: 0.00001,
     inclinationDeg: 0.08,
     longitudeOfAscendingNodeDeg: 223.046,

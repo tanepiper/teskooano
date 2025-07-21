@@ -35,6 +35,9 @@ export const pluto: CelestialObject<PlanetProperties> = {
     period_s: 7.82e9,
     siderealRotationPeriod_s: 5.514e5,
     axialTiltDeg: 119.51,
+    aphelionAU: 49.305,
+    perihelionAU: 29.658,
+    averageOrbitalSpeedKmps: 4.743,
     epoch: J2000_EPOCH,
   }),
   properties: {

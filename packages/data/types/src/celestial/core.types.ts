@@ -1,7 +1,11 @@
 import type * as THREE from "three";
 import type { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "../physics";
-import type { CelestialStatus, CelestialType } from "./enums";
+import type {
+  CelestialStatus,
+  CelestialType,
+  LagrangePointType,
+} from "./enums";
 import type {
   CelestialSpecificPropertiesUnion,
   PlanetAtmosphereProperties,
@@ -29,6 +33,8 @@ export interface OrbitalParameters {
   siderealRotationPeriod_s?: number;
   /** Optional: The tilt of the object's rotational axis relative to its orbital plane, represented as a normalized vector. */
   axialTilt?: OSVector3;
+  /** Optional: If the object is to be placed at a Lagrangian point (L1-L5). */
+  lagrangePointType?: LagrangePointType;
 
   /** The farthest distance from the parent body (REAL METERS). */
   realAphelion_m: number;
@@ -77,6 +83,8 @@ export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
 
   /** Optional: Reference to parent body ID */
   parentId?: string;
+  /** Optional: If the object is meant to be at a Lagrange point, the ID of the second body in the system for that Lagrange point calculation. */
+  lagrangePointTargetId?: string;
 
   /** Optional seed value used for procedural generation (textures, etc.). */
   seed?: string;

@@ -66,11 +66,11 @@ export const venus: CelestialObject<PlanetProperties> = {
       simplePeriod: 1.8,
       octaves: 8,
       bumpScale: 2.2,
-      color1: "#B8860B", // Dark goldenrod (sulfur deposits)
-      color2: "#DAA520", // Goldenrod (sulfurous rock)
-      color3: "#FFFF00", // Yellow (pure sulfur areas)
-      color4: "#fff52f", // Green yellow (sulfur compounds)
-      color5: "#F0E68C", // Khaki (sulfuric weathering)
+      color1: "#B8860B",
+      color2: "#DAA520",
+      color3: "#7B6619",
+      color4: "#BE7827",
+      color5: "#F0E68C",
       height1: 0.1,
       height2: 0.25,
       height3: 0.45,

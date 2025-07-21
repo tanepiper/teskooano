@@ -16,6 +16,7 @@ import {
   CelestialStatus,
   CelestialType,
   OrbitUpdatePayload,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import { Observable, Subject } from "rxjs";
@@ -165,9 +166,12 @@ export class SimulationManager {
           time: this.accumulatedTime,
         });
 
-        const activeBodiesReal = physicsSystemAdapter.getPhysicsBodies();
+        const activeBodiesArray = physicsSystemAdapter.getPhysicsBodies(); // This is the PhysicsStateReal array
         const allCelestialObjectsForParams =
-          physicsSystemAdapter.getCelestialObjectsSnapshot();
+          physicsSystemAdapter.getCelestialObjectsSnapshot(); // This is the CelestialObject record
+
+        // No longer need to convert to Map here for Lagrange processing
+        // Lagrange point calculation is now handled directly in createOrbitalElements
 
         const radii = new Map<string | number, number>();
         const isStar = new Map<string | number, boolean>();
@@ -204,7 +208,7 @@ export class SimulationManager {
         };
 
         const result: SimulationStepResult = updateSimulation(
-          activeBodiesReal,
+          activeBodiesArray,
           scaledDeltaTime,
           simParams,
         );

@@ -4,7 +4,12 @@ import {
   CelestialStatus,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import { createOrbitalElements } from "@teskooano/core-physics";
+import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
+
+const HUBBLE_TLE_LINE1 =
+  "1 20580U 90037B   25202.58856561  .00004350  00000-0  15814-3 0  9993";
+const HUBBLE_TLE_LINE2 =
+  "2 20580  28.4663 171.6779 0002194 111.0703 249.0126 15.25610022737941";
 
 export const hubble: CelestialObject<SatelliteProperties> = {
   id: "hubble",
@@ -18,17 +23,7 @@ export const hubble: CelestialObject<SatelliteProperties> = {
   temperature: 288,
   albedo: 0.3,
 
-  orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00027,
-    eccentricity: 0,
-    inclinationDeg: 28.47,
-    longitudeOfAscendingNodeDeg: 85.0,
-    argumentOfPeriapsisDeg: 0,
-    meanAnomalyDeg: 0,
-    period_s: 95.42 * 60,
-    siderealRotationPeriod_s: 95.42 * 60,
-    axialTiltDeg: 0,
-  }),
+  orbit: createOrbitalElementsFromTLE(HUBBLE_TLE_LINE1, HUBBLE_TLE_LINE2),
 
   properties: {
     type: CelestialType.SATELLITE,

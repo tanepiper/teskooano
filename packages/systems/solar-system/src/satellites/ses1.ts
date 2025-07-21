@@ -4,11 +4,19 @@ import {
   CelestialStatus,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import { createOrbitalElements } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  createOrbitalElementsFromTLE,
+} from "@teskooano/core-physics";
 
-export const geostationarySat: CelestialObject<SatelliteProperties> = {
-  id: "geostationary-comsat",
-  name: "Geostationary CommSat",
+const GEOSTATIONARY_TLE_LINE1 =
+  "1 36516U 10016A   25202.56989238 -.00000117  00000-0  00000-0 0  9990";
+const GEOSTATIONARY_TLE_LINE2 =
+  "2 36516   0.0515 278.7844 0002289 202.9903 281.9420  1.00271659 55715";
+
+export const ses1: CelestialObject<SatelliteProperties> = {
+  id: "ses-1",
+  name: "SES 1",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
   parentId: "earth",
@@ -18,17 +26,10 @@ export const geostationarySat: CelestialObject<SatelliteProperties> = {
   temperature: 280,
   albedo: 0.6,
 
-  orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00027,
-    eccentricity: 0,
-    inclinationDeg: 0,
-    longitudeOfAscendingNodeDeg: 0.0,
-    argumentOfPeriapsisDeg: 0.0,
-    meanAnomalyDeg: 0,
-    period_s: 86164.09054,
-    siderealRotationPeriod_s: 86164.09054,
-    axialTiltDeg: 0,
-  }),
+  orbit: createOrbitalElementsFromTLE(
+    GEOSTATIONARY_TLE_LINE1,
+    GEOSTATIONARY_TLE_LINE2,
+  ),
 
   properties: {
     type: CelestialType.SATELLITE,

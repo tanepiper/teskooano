@@ -270,6 +270,11 @@ export function calculateAllLagrangePoints(
     )
     .divideScalar(totalMass);
 
+  // Calculate angular velocity of the system
+  const omega = Math.sqrt(
+    (GRAVITATIONAL_CONSTANT * totalMass) / Math.pow(system.separation_m, 3),
+  );
+
   // Direction vector from primary to secondary
   const primaryToSecondary = new OSVector3()
     .copy(system.secondary.position_m)
@@ -291,9 +296,17 @@ export function calculateAllLagrangePoints(
       .copy(system.secondary.position_m)
       .sub(primaryToSecondary.clone().multiplyScalar(l1Distance));
 
+    const l1RelativeToBarycenter = l1Position.clone().sub(centerOfMass);
+    const l1Velocity = new OSVector3(
+      -omega * l1RelativeToBarycenter.z,
+      0,
+      omega * l1RelativeToBarycenter.x,
+    );
+
     lagrangePoints.push({
       id: "L1",
       position_m: l1Position,
+      velocity_mps: l1Velocity,
       distanceFromSecondary_m: l1Distance,
       distanceFromPrimary_m: system.separation_m - l1Distance,
       stability: analyzeLagrangeStability("L1", system.massRatio),
@@ -314,9 +327,17 @@ export function calculateAllLagrangePoints(
       .copy(system.secondary.position_m)
       .add(primaryToSecondary.clone().multiplyScalar(l2Distance));
 
+    const l2RelativeToBarycenter = l2Position.clone().sub(centerOfMass);
+    const l2Velocity = new OSVector3(
+      -omega * l2RelativeToBarycenter.z,
+      0,
+      omega * l2RelativeToBarycenter.x,
+    );
+
     lagrangePoints.push({
       id: "L2",
       position_m: l2Position,
+      velocity_mps: l2Velocity,
       distanceFromSecondary_m: l2Distance,
       distanceFromPrimary_m: system.separation_m + l2Distance,
       stability: analyzeLagrangeStability("L2", system.massRatio),
@@ -337,9 +358,17 @@ export function calculateAllLagrangePoints(
       .copy(system.primary.position_m)
       .sub(primaryToSecondary.clone().multiplyScalar(x3 * system.separation_m));
 
+    const l3RelativeToBarycenter = l3Position.clone().sub(centerOfMass);
+    const l3Velocity = new OSVector3(
+      -omega * l3RelativeToBarycenter.z,
+      0,
+      omega * l3RelativeToBarycenter.x,
+    );
+
     lagrangePoints.push({
       id: "L3",
       position_m: l3Position,
+      velocity_mps: l3Velocity,
       distanceFromSecondary_m: l3Distance,
       distanceFromPrimary_m: x3 * system.separation_m,
       stability: analyzeLagrangeStability("L3", system.massRatio),
@@ -363,6 +392,7 @@ export function calculateAllLagrangePoints(
       .sub(centerOfMass);
 
     // Create perpendicular vector for triangle formation
+    // This perpendicular vector is rotated 90 degrees around the Y-axis from centerToSecondary in the XZ plane
     const perpendicular = new OSVector3(
       -centerToSecondary.z,
       0,
@@ -379,6 +409,13 @@ export function calculateAllLagrangePoints(
           .multiplyScalar(centerToSecondary.length() * Math.sin(angle60Deg)),
       );
 
+    const l4RelativeToBarycenter = l4Position.clone().sub(centerOfMass);
+    const l4Velocity = new OSVector3(
+      -omega * l4RelativeToBarycenter.z,
+      0,
+      omega * l4RelativeToBarycenter.x,
+    );
+
     // L5 Point (60° behind)
     const l5Position = new OSVector3()
       .copy(centerOfMass)
@@ -388,6 +425,13 @@ export function calculateAllLagrangePoints(
           .clone()
           .multiplyScalar(centerToSecondary.length() * Math.sin(angle60Deg)),
       );
+
+    const l5RelativeToBarycenter = l5Position.clone().sub(centerOfMass);
+    const l5Velocity = new OSVector3(
+      -omega * l5RelativeToBarycenter.z,
+      0,
+      omega * l5RelativeToBarycenter.x,
+    );
 
     const l4DistanceFromSecondary = l4Position.distanceTo(
       system.secondary.position_m,
@@ -405,6 +449,7 @@ export function calculateAllLagrangePoints(
     lagrangePoints.push({
       id: "L4",
       position_m: l4Position,
+      velocity_mps: l4Velocity,
       distanceFromSecondary_m: l4DistanceFromSecondary,
       distanceFromPrimary_m: l4DistanceFromPrimary,
       stability: analyzeLagrangeStability("L4", system.massRatio),
@@ -417,6 +462,7 @@ export function calculateAllLagrangePoints(
     lagrangePoints.push({
       id: "L5",
       position_m: l5Position,
+      velocity_mps: l5Velocity,
       distanceFromSecondary_m: l5DistanceFromSecondary,
       distanceFromPrimary_m: l5DistanceFromPrimary,
       stability: analyzeLagrangeStability("L5", system.massRatio),
@@ -456,6 +502,7 @@ export function createTwoBodySystem(
     secondary,
     separation_m,
     massRatio,
+    totalMass_kg: totalMass,
   };
 }
 

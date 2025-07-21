@@ -1,4 +1,8 @@
-import { J2000_EPOCH, createOrbitalElements } from "@teskooano/core-physics";
+import {
+  J2000_EPOCH,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   GasGiantClass,
@@ -16,7 +20,7 @@ export const uranus: CelestialObject<GasGiantProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun",
   realMass_kg: 8.681e25,
-  realRadius_m: 25362,
+  realRadius_m: kmToM(25362),
   orbit: createOrbitalElements({
     semiMajorAxisAU: 19.19126,
     eccentricity: 0.04717,

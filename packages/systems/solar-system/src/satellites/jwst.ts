@@ -4,7 +4,9 @@ import {
   CelestialStatus,
   SatelliteProperties,
   type CelestialObject,
+  LagrangePointType,
 } from "@teskooano/data-types";
+import { SOLAR_MASS, EARTH_MASS, AU } from "@teskooano/core-physics";
 
 export const jwst: CelestialObject<SatelliteProperties> = {
   id: "jwst",
@@ -12,20 +14,19 @@ export const jwst: CelestialObject<SatelliteProperties> = {
   seed: "jwst_infrared_observatory",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
-  parentId: "earth",
+  parentId: "earth", // JWST orbits the Sun at the Earth-Sun L2 point
+  lagrangePointTargetId: "earth", // The second body in the Sun-Earth system for L2 calculation
   realMass_kg: 6_500,
   realRadius_m: 10,
   temperature: 300,
   albedo: 0.3,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00027,
-    eccentricity: 0.0,
-    inclinationDeg: 0,
-    longitudeOfAscendingNodeDeg: 0,
-    argumentOfPeriapsisDeg: 0,
-    meanAnomalyDeg: 0,
-    period_s: 365.25 * 24 * 3600,
-    siderealRotationPeriod_s: 365.25 * 24 * 3600,
+    lagrangePointType: LagrangePointType.L2,
+    parentMass_kg: SOLAR_MASS,
+    targetMass_kg: EARTH_MASS,
+    parentToTargetSeparation_m: AU / 10, // Earth's average distance from the Sun
+    // Other orbital parameters will be derived from the Lagrange point calculation
+    siderealRotationPeriod_s: 365.25 * 24 * 3600, // Roughly Earth's orbital period for rotation
     axialTiltDeg: 0,
     epoch: "J2000",
   }),

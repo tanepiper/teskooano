@@ -4,14 +4,22 @@ import {
   CelestialStatus,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import { createOrbitalElements } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  createOrbitalElementsFromTLE,
+} from "@teskooano/core-physics";
 
 // Calculate orbital velocity directly for Earth satellite
 // v = sqrt(GM/r) where GM = 3.986e14 m³/s² for Earth
 
-export const gps: CelestialObject<SatelliteProperties> = {
-  id: "gps-satellite",
-  name: "GPS Satellite",
+const NOAA_19_TLE_LINE1 =
+  "1 33591U 09005A   25202.60789824  .00000154  00000-0  10612-3 0  9993";
+const NOAA_19_TLE_LINE2 =
+  "2 33591  98.9954 267.5445 0012832 242.7448 117.2418 14.13391894847788";
+
+export const noaa19: CelestialObject<SatelliteProperties> = {
+  id: "noaa-19",
+  name: "NOAA 19",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
   parentId: "earth",
@@ -21,18 +29,7 @@ export const gps: CelestialObject<SatelliteProperties> = {
   temperature: 285,
   albedo: 0.5,
 
-  orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00027,
-    eccentricity: 0,
-    inclinationDeg: 55.0,
-    longitudeOfAscendingNodeDeg: 45.0,
-    argumentOfPeriapsisDeg: 30.0,
-    meanAnomalyDeg: 0,
-    period_s: 11.967 * 3600,
-    siderealRotationPeriod_s: 11.967 * 3600,
-    axialTiltDeg: 0,
-  }),
-
+  orbit: createOrbitalElementsFromTLE(NOAA_19_TLE_LINE1, NOAA_19_TLE_LINE2),
   properties: {
     type: CelestialType.SATELLITE,
     modelPath: "./models/satellite/satellite.glb",
