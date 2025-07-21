@@ -11,17 +11,17 @@ import {
 
 const HAUMEA_MASS_KG = 4.006e21;
 const HAUMEA_RADIUS_KM = 816;
-const HAUMEA_TEMP_K = 32;
-const HAUMEA_ALBEDO = 0.84;
-const HAUMEA_SMA_AU = 43.12;
-const HAUMEA_ECC = 0.189;
-const HAUMEA_INC_DEG = 28.19;
-const HAUMEA_LAN_DEG = 122.02;
-const HAUMEA_AOP_DEG = 238.84;
-const HAUMEA_MA_DEG = 218.21;
+const HAUMEA_TEMP_K = 50;
+const HAUMEA_ALBEDO = 0.66;
+const HAUMEA_SMA_AU = 43.116;
+const HAUMEA_ECC = 0.19642;
+const HAUMEA_INC_DEG = 28.2137;
+const HAUMEA_LAN_DEG = 122.167;
+const HAUMEA_AOP_DEG = 239.041;
+const HAUMEA_MA_DEG = 218.205;
 const HAUMEA_ORBITAL_PERIOD_S = 283.12 * 365.25 * 24 * 3600;
-const HAUMEA_SIDEREAL_ROTATION_PERIOD_S = 3.915 * 3600;
-const HAUMEA_AXIAL_TILT_DEG = 0.0;
+const HAUMEA_SIDEREAL_ROTATION_PERIOD_S = 3.915341 * 3600;
+const HAUMEA_AXIAL_TILT_DEG = 126.0;
 
 const HIIAKA_MASS_KG = 1.79e19;
 const HIIAKA_RADIUS_KM = 155;
@@ -69,6 +69,7 @@ export const haumea: CelestialObject<PlanetProperties> = {
     period_s: HAUMEA_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: HAUMEA_SIDEREAL_ROTATION_PERIOD_S,
     axialTiltDeg: HAUMEA_AXIAL_TILT_DEG,
+    epoch: "JD 2459200.5",
   }),
   properties: {
     type: CelestialType.DWARF_PLANET,
@@ -80,6 +81,7 @@ export const haumea: CelestialObject<PlanetProperties> = {
       "rocky core",
       "olivine",
       "pyroxene",
+      "organic compounds",
     ],
     shapeModel: "triaxial",
     rings: [
@@ -97,30 +99,30 @@ export const haumea: CelestialObject<PlanetProperties> = {
     ],
     atmosphere: undefined,
     surface: {
-      roughness: 0.1,
-      persistence: 0.4,
-      lacunarity: 2.0,
-      simplePeriod: 1.2,
-      octaves: 5,
-      bumpScale: 0.8,
-      color1: "#E0F0FF",
-      color2: "#E8F4FF",
-      color3: "#F0F8FF",
-      color4: "#F8FCFF",
-      color5: "#FFFFFF",
-      height1: 0.2,
-      height2: 0.4,
-      height3: 0.6,
-      height4: 0.8,
-      height5: 0.95,
-      shininess: 60,
-      specularStrength: 0.84,
-      ambientLightIntensity: 0.01,
-      undulation: 0.03,
+      roughness: 0.15, // Reduced for smoother icy surface
+      persistence: 0.35, // Reduced for less variation
+      lacunarity: 1.9, // Reduced for smoother features
+      simplePeriod: 1.1, // Reduced for smaller features
+      octaves: 5, // Reduced for smoother surface
+      bumpScale: 0.7, // Reduced for subtle surface features
+      color1: "#E8F0FF", // Light blue-white
+      color2: "#F0F4FF", // Bright blue-white
+      color3: "#F8F8FF", // Very light blue-white
+      color4: "#FCFCFF", // Almost white
+      color5: "#FFFFFF", // Pure white
+      height1: 0.15, // Lower base height
+      height2: 0.3, // Reduced variation
+      height3: 0.5, // Moderate variation
+      height4: 0.7, // Higher features
+      height5: 0.9, // Peak features
+      shininess: 70, // Increased for icy surface
+      specularStrength: 0.8, // Increased for icy surface
+      ambientLightIntensity: 0.015, // Slightly increased for visibility
+      undulation: 0.08, // Reduced for smoother surface
       terrainType: 1,
-      terrainAmplitude: 0.15,
-      terrainSharpness: 0.6,
-      terrainOffset: 0.02,
+      terrainAmplitude: 0.12, // Reduced for smoother terrain
+      terrainSharpness: 0.5, // Reduced for smoother features
+      terrainOffset: 0.05, // Adjusted for bright base
     },
   },
 };
