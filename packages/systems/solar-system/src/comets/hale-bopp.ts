@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   METERS_TO_SCENE_UNITS,
@@ -47,6 +51,7 @@ export const haleBopp: CelestialObject<CometProperties> = {
     period_s: 7.5725e10, // 2399 years
     siderealRotationPeriod_s: 0, // Comets don't have meaningful rotation periods
     axialTiltDeg: 0, // Comets don't have meaningful axial tilt
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   properties: {
     type: CelestialType.COMET,

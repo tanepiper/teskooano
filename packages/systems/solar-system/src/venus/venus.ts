@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialStatus,
   CelestialType,
@@ -37,6 +41,7 @@ export const venus: CelestialObject<PlanetProperties> = {
     period_s: 1.94142e7, // 224.701 Earth days
     siderealRotationPeriod_s: -20997153, // -243.0226 Earth days (retrograde)
     axialTiltDeg: 177.36,
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   properties: {
     type: CelestialType.PLANET,

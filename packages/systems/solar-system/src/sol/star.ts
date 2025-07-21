@@ -34,8 +34,8 @@ export const sun: CelestialObject<StarProperties> = {
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0,
-    period_s: 0,
-    siderealRotationPeriod_s: 0,
+    period_s: 0, // Zero period indicates stationary central body
+    siderealRotationPeriod_s: 25.05 * 24 * 3600, // Solar rotation period (~25 days)
     axialTiltDeg: 0,
   }),
   properties: {

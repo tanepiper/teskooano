@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -8,12 +12,13 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const LUNA_MASS_KG = 7.342e22; // Verified correct from NASA fact sheet
+const LUNA_MASS_KG = 7.346e22; // J2000 epoch value from NASA fact sheet
 const LUNA_RADIUS_KM = 1737.4; // Verified correct (mean radius)
-const LUNA_ALBEDO = 0.11; // Corrected to Bond albedo from NASA fact sheet
+const LUNA_ALBEDO = 0.136; // J2000 epoch Bond albedo from NASA fact sheet
 
 /**
  * Luna (Moon) configuration object for modular solar system initialization.
+ * Uses J2000 epoch orbital elements and physical properties.
  */
 export const luna: CelestialObject<PlanetProperties> = {
   id: "luna",
@@ -27,15 +32,16 @@ export const luna: CelestialObject<PlanetProperties> = {
   temperature: 250, // Mean temperature (verified from NASA - range 95-390K equator)
   albedo: LUNA_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 384399 / 149597870.7, // 384,399 km converted to AU
-    eccentricity: 0.0549,
-    inclinationDeg: 5.145, // To ecliptic
-    longitudeOfAscendingNodeDeg: 125.08, // Current value - variable due to precession
-    argumentOfPeriapsisDeg: 318.15, // Current value - variable due to precession
-    meanAnomalyDeg: 115.36, // Current value - variable
-    period_s: 2.36059e6, // 27.321661 days - verified correct
+    semiMajorAxisAU: 384399 / 149597870.7, // 384,399 km converted to AU (J2000)
+    eccentricity: 0.0549, // J2000 epoch value
+    inclinationDeg: 5.145, // To ecliptic (J2000)
+    longitudeOfAscendingNodeDeg: 125.08, // J2000 epoch value - regressing by one revolution in 18.61 years
+    argumentOfPeriapsisDeg: 318.15, // J2000 epoch value - progressing by one revolution in 8.85 years
+    meanAnomalyDeg: 115.36, // J2000 epoch value
+    period_s: 2.36059e6, // 27.321661 days - verified correct (sidereal)
     siderealRotationPeriod_s: 2.36059e6, // Synchronous rotation
-    axialTiltDeg: 6.687, // Verified correct - obliquity to orbit
+    axialTiltDeg: 6.687, // To orbit plane (J2000)
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   properties: {
     type: CelestialType.MOON,

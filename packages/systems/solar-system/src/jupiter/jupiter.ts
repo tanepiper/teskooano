@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -37,6 +41,7 @@ export const jupiter: CelestialObject<GasGiantProperties> = {
     period_s: 3.743e8, // 11.86 Earth years
     siderealRotationPeriod_s: 3.573e4, // 9.925 hours
     axialTiltDeg: 3.13,
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   properties: {
     type: CelestialType.GAS_GIANT,

@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -45,6 +49,7 @@ export const pluto: CelestialObject<PlanetProperties> = {
     period_s: PLUTO_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
     axialTiltDeg: PLUTO_AXIAL_TILT_DEG,
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   properties: {
     type: CelestialType.PLANET,

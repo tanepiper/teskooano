@@ -1,6 +1,9 @@
 import { ceres } from "./ceres";
 import { vesta } from "./vesta";
 import { pallas } from "./pallas";
+import { ammonite } from "./ammonite";
+import { leleakuhonua } from "./leleakuhonua";
+import { vp113 } from "./vp113";
 import { eris, dysnomia } from "./eris";
 import { makemake, mk2 } from "./makemake";
 import { haumea, hiiaka, namaka } from "./haumea";
@@ -15,6 +18,9 @@ export const minorBodies = [
   ceres,
   vesta,
   pallas,
+  ammonite, // 2023 KQ14 - recently discovered sednoid
+  leleakuhonua, // 541132 Leleākūhonua (The Goblin) - extreme sednoid
+  vp113, // 2012 VP113 (Biden) - early sednoid discovery
   eris,
   dysnomia,
   makemake,

@@ -4,3 +4,5 @@ export * from "./ideal";
 export * from "./lagrange";
 export * from "./lagrange-service";
 export * from "./helpers";
+export * from "./epoch";
+export * from "./tle";

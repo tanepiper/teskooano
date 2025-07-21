@@ -12,6 +12,7 @@ import { uranusSystemBodies } from "./uranus";
 import { venus } from "./venus/venus";
 import { allSatellites } from "./satellites";
 import { allComets } from "./comets";
+import { processSolarSystemToCurrentPositions } from "./utils/dynamic-epoch-processor";
 
 /**
  * Solar system bodies that can be initialized in any order.
@@ -36,8 +37,14 @@ const solarSystemBodies = [
 /**
  * Initializes the complete Solar System by calling creation functions
  * for the star, planets, asteroid belt, and Oort cloud.
+ * All orbital elements are dynamically calculated to today's current positions.
  */
 export function initializeSolarSystem() {
+  // Process all objects to calculate their current positions based on today's date
+  const currentPositionBodies = processSolarSystemToCurrentPositions(
+    solarSystemBodies as any,
+  );
+
   // Use addObjects to ensure proper dependency sorting
-  celestialManager.addObjects(solarSystemBodies as any);
+  celestialManager.addObjects(currentPositionBodies as any);
 }

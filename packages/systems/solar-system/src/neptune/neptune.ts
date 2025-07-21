@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -43,6 +47,7 @@ export const neptune: CelestialObject<GasGiantProperties> = {
     period_s: NEPTUNE_ORBITAL_PERIOD_S,
     siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
     axialTiltDeg: NEPTUNE_AXIAL_TILT_DEG,
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   properties: {
     type: CelestialType.GAS_GIANT,

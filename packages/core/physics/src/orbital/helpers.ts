@@ -1,6 +1,7 @@
 import { OSVector3, utils } from "@teskooano/core-math";
 import { AU, KM } from "../units/constants";
 import type { OrbitalParameters } from "@teskooano/data-types";
+import { getCurrentEpoch } from "./epoch";
 
 /**
  * Creates orbital elements from human-readable parameters.

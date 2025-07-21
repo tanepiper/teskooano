@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  ASTRONOMICAL_EPOCHS,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   GasGiantClass,
@@ -35,6 +39,7 @@ export const uranus: CelestialObject<GasGiantProperties> = {
     period_s: 2651486832, // 84.0205 years = 30,688.5 days
     siderealRotationPeriod_s: -62092.5104, // -0.718661 days (retrograde)
     axialTiltDeg: 97.77,
+    epoch: ASTRONOMICAL_EPOCHS.J2000,
   }),
   temperature: URANUS_TEMP_K,
   albedo: URANUS_ALBEDO,
