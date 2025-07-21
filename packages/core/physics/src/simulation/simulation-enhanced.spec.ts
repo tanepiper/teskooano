@@ -1,29 +1,35 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { OSVector3 } from "@teskooano/core-math";
-import { updateSimulationWithConfiguration } from "./simulation";
-import type { PhysicsStateReal } from "@teskooano/data-types";
+import {
+  PhysicsStateReal,
+  SimulationMode,
+  AlgorithmType,
+  IntegratorType,
+} from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
+import { updateSimulationWithConfiguration } from "./simulation";
 
 describe("Enhanced Simulation System", () => {
   const mockBody: PhysicsStateReal = {
     id: "test-body",
-    mass_kg: 1e20,
-    position_m: new OSVector3(0, 0, 0),
-    velocity_mps: new OSVector3(0, 0, 0),
+    mass_kg: 5.972e24,
+    position_m: new OSVector3(1.496e11, 0, 0),
+    velocity_mps: new OSVector3(0, 29780, 0),
   };
 
   const basicParams = {
-    radii: new Map([["test-body", 1000]]),
+    radii: new Map([["test-body", 6371000]]),
     isStar: new Map([["test-body", false]]),
     bodyTypes: new Map(),
-    parentIds: new Map(),
-    octreeSize: 1e12,
+    octreeSize: 5e13,
     barnesHutTheta: 0.7,
   };
 
   describe("updateSimulationWithConfiguration", () => {
     it("should handle ideal mode configuration", () => {
-      const config: SimulationConfiguration = { mode: "ideal" };
+      const config: SimulationConfiguration = {
+        mode: SimulationMode.IDEAL,
+      };
 
       const result = updateSimulationWithConfiguration([mockBody], 1.0, {
         ...basicParams,
@@ -35,14 +41,14 @@ describe("Enhanced Simulation System", () => {
 
       expect(result).toBeDefined();
       expect(result.states).toHaveLength(1);
-      expect(result.accelerations).toBeDefined();
+      expect(result.accelerations.size).toBeGreaterThanOrEqual(0);
     });
 
     it("should handle nbody mode configuration", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        integrator: "verlet",
-        algorithm: "barnes-hut",
+        mode: SimulationMode.NBODY,
+        integrator: IntegratorType.VERLET,
+        algorithm: AlgorithmType.BARNES_HUT,
       };
 
       const result = updateSimulationWithConfiguration([mockBody], 1.0, {
@@ -58,7 +64,11 @@ describe("Enhanced Simulation System", () => {
     it("should migrate legacy physics engine to new configuration", () => {
       const result = updateSimulationWithConfiguration([mockBody], 1.0, {
         ...basicParams,
-        legacyPhysicsEngine: "euler",
+        simulationConfig: {
+          mode: SimulationMode.NBODY,
+          integrator: IntegratorType.EULER,
+          algorithm: AlgorithmType.BARNES_HUT,
+        },
       });
 
       expect(result).toBeDefined();
@@ -66,11 +76,14 @@ describe("Enhanced Simulation System", () => {
     });
 
     it("should use default configuration when none provided", () => {
-      const result = updateSimulationWithConfiguration(
-        [mockBody],
-        1.0,
-        basicParams,
-      );
+      const result = updateSimulationWithConfiguration([mockBody], 1.0, {
+        ...basicParams,
+        simulationConfig: {
+          mode: SimulationMode.NBODY,
+          integrator: IntegratorType.VERLET,
+          algorithm: AlgorithmType.BARNES_HUT,
+        },
+      });
 
       expect(result).toBeDefined();
       expect(result.states).toHaveLength(1);
@@ -80,7 +93,7 @@ describe("Enhanced Simulation System", () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const invalidConfig = {
-        mode: "nbody",
+        mode: SimulationMode.NBODY,
         // Missing required integrator and algorithm
       } as SimulationConfiguration;
 
@@ -97,15 +110,14 @@ describe("Enhanced Simulation System", () => {
 
     it("should prioritize simulationConfig over legacy engine", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        integrator: "symplectic",
-        algorithm: "direct",
+        mode: SimulationMode.NBODY,
+        integrator: IntegratorType.SYMPLECTIC,
+        algorithm: AlgorithmType.BARNES_HUT,
       };
 
       const result = updateSimulationWithConfiguration([mockBody], 1.0, {
         ...basicParams,
         simulationConfig: config,
-        legacyPhysicsEngine: "euler", // Should be ignored
       });
 
       expect(result).toBeDefined();
@@ -114,18 +126,18 @@ describe("Enhanced Simulation System", () => {
 
     it("should translate all integrator types correctly", () => {
       const integrators = [
-        "euler",
-        "symplectic",
-        "verlet",
-        "rk4",
-        "adaptive",
+        IntegratorType.EULER,
+        IntegratorType.SYMPLECTIC,
+        IntegratorType.VERLET,
+        IntegratorType.RK4,
+        IntegratorType.ADAPTIVE,
       ] as const;
 
       integrators.forEach((integrator) => {
         const config: SimulationConfiguration = {
-          mode: "nbody",
+          mode: SimulationMode.NBODY,
           integrator,
-          algorithm: "barnes-hut",
+          algorithm: AlgorithmType.BARNES_HUT,
         };
 
         const result = updateSimulationWithConfiguration([mockBody], 1.0, {
@@ -139,12 +151,16 @@ describe("Enhanced Simulation System", () => {
     });
 
     it("should translate all algorithm types correctly", () => {
-      const algorithms = ["direct", "barnes-hut", "fmm", "p3m"] as const;
+      const algorithms = [
+        AlgorithmType.BARNES_HUT,
+        AlgorithmType.FMM,
+        AlgorithmType.P3M,
+      ] as const;
 
       algorithms.forEach((algorithm) => {
         const config: SimulationConfiguration = {
-          mode: "nbody",
-          integrator: "verlet",
+          mode: SimulationMode.NBODY,
+          integrator: IntegratorType.VERLET,
           algorithm,
         };
 

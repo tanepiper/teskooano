@@ -62,8 +62,9 @@ export class OrbitalValidationDebugger {
     eccentricityVector.copy(term1).sub(term2);
     const actualEccentricitySquared = eccentricityVector.lengthSq();
 
-    // Expected eccentricity squared from energy relation: e² = 2HL² + 1
-    const expectedEccentricitySquared = 2 * energy * angularMomentumSquared + 1;
+    // Expected eccentricity squared from energy relation: e² = 2HL²/μ² + 1
+    const expectedEccentricitySquared =
+      (2 * energy * angularMomentumSquared) / (mu * mu) + 1;
 
     const relativeError =
       Math.abs(actualEccentricitySquared - expectedEccentricitySquared) /

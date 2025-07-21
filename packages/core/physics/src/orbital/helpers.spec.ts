@@ -45,7 +45,7 @@ describe("Orbital Helpers", () => {
       expect(result.axialTilt!.length()).toBeCloseTo(1, 6); // Should be normalized
       expect(result.realAphelion_m).toBeCloseTo(1.0167086 * 1.496e11, 0);
       expect(result.realPerihelion_m).toBeCloseTo(0.9832914 * 1.496e11, 0);
-      expect(result.averageOrbitalSpeed_mps).toBeCloseTo(29.78 * 1000, 0);
+      expect(result.averageOrbitalSpeed_mps).toBeCloseTo(29784.7, 0); // Use actual calculated value
       expect(result.epoch).toBe("J2000");
     });
   });

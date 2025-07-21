@@ -62,7 +62,7 @@ export const convertVector = (
   const convertedArray = array.map((component) =>
     convert(component, fromFactor, toFactor),
   );
-  return vector.setFromArray(convertedArray);
+  return new OSVector3(convertedArray[0], convertedArray[1], convertedArray[2]);
 };
 
 /**
@@ -83,14 +83,12 @@ export const auToMeters = (au: number): number => {
  * Converts a velocity from m/s to AU/day
  */
 export const metersPerSecondToAUDay = (mps: number): number => {
-  const metersPerDay = mps * CONVERSION.S_TO_DAYS;
-  return metersPerDay * CONVERSION.M_TO_AU;
+  return convert(mps, 1, CONVERSION.M_S_TO_AU_DAY);
 };
 
 /**
  * Converts a velocity from AU/day to m/s
  */
 export const auDayToMetersPerSecond = (auDay: number): number => {
-  const metersPerDay = auDay * CONVERSION.AU_TO_M;
-  return metersPerDay * CONVERSION.DAYS_TO_S;
+  return convert(auDay, 1, CONVERSION.AU_DAY_TO_M_S);
 };

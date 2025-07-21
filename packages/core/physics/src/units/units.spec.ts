@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { OSVector3 } from "@teskooano/core-math";
 import {
   auDayToMetersPerSecond,
   auToMeters,
@@ -28,7 +29,7 @@ describe("Unit Conversion", () => {
 
   describe("convertVector", () => {
     it("converts vector components correctly", () => {
-      const vector = { x: 149597870700, y: 0, z: 0 };
+      const vector = new OSVector3(149597870700, 0, 0);
       const converted = convertVector(vector, CONVERSION.M_TO_AU, 1);
 
       expect(converted.x).toBeCloseTo(1);
@@ -37,7 +38,7 @@ describe("Unit Conversion", () => {
     });
 
     it("handles zero vectors", () => {
-      const vector = { x: 0, y: 0, z: 0 };
+      const vector = new OSVector3(0, 0, 0);
       const converted = convertVector(vector, CONVERSION.M_TO_AU, 1);
 
       expect(converted.x).toBe(0);
@@ -64,14 +65,14 @@ describe("Unit Conversion", () => {
 
   describe("metersPerSecondToAUDay", () => {
     it("converts m/s to AU/day correctly", () => {
-      expect(metersPerSecondToAUDay(1731.5)).toBeCloseTo(1);
+      expect(metersPerSecondToAUDay(1731.5)).toBeCloseTo(0.001, 3);
       expect(metersPerSecondToAUDay(0)).toBe(0);
     });
   });
 
   describe("auDayToMetersPerSecond", () => {
     it("converts AU/day to m/s correctly", () => {
-      expect(auDayToMetersPerSecond(1)).toBeCloseTo(1731.5);
+      expect(auDayToMetersPerSecond(1)).toBeCloseTo(1731456.8368, 0);
       expect(auDayToMetersPerSecond(0)).toBe(0);
     });
   });

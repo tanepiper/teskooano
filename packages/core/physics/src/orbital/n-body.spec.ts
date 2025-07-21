@@ -38,6 +38,10 @@ describe("Orbital Mechanics", () => {
         meanAnomaly: 0,
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
+        realAphelion_m: earthSemiMajorAxis,
+        realPerihelion_m: earthSemiMajorAxis,
+        averageOrbitalSpeed_mps: 29780,
+        epoch: "J2000",
       };
 
       const velocity = calculateOrbitalVelocity(mockSunState, orbitalParams, 0);
@@ -64,6 +68,10 @@ describe("Orbital Mechanics", () => {
         meanAnomaly: 0,
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
+        realAphelion_m: earthSemiMajorAxis,
+        realPerihelion_m: earthSemiMajorAxis,
+        averageOrbitalSpeed_mps: 29780,
+        epoch: "J2000",
       };
       const velocity = calculateOrbitalVelocity(masslessSun, orbitalParams, 0);
       expect(velocity.length()).toBe(0);
@@ -78,6 +86,10 @@ describe("Orbital Mechanics", () => {
         meanAnomaly: 0,
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
+        realAphelion_m: 0,
+        realPerihelion_m: 0,
+        averageOrbitalSpeed_mps: 0,
+        epoch: "J2000",
       };
       const velocity = calculateOrbitalVelocity(mockSunState, orbitalParams, 0);
       expect(velocity.length()).toBe(0);
@@ -94,6 +106,10 @@ describe("Orbital Mechanics", () => {
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
+        realAphelion_m: earthSemiMajorAxis,
+        realPerihelion_m: earthSemiMajorAxis,
+        averageOrbitalSpeed_mps: 29780,
+        epoch: "J2000",
       };
       const position = calculateOrbitalPosition(mockSunState, orbitalParams, 0);
 
@@ -111,6 +127,10 @@ describe("Orbital Mechanics", () => {
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
+        realAphelion_m: earthSemiMajorAxis,
+        realPerihelion_m: earthSemiMajorAxis,
+        averageOrbitalSpeed_mps: 29780,
+        epoch: "J2000",
       };
       const time = earthOrbitalPeriod / 4;
       const position = calculateOrbitalPosition(
@@ -136,6 +156,10 @@ describe("Orbital Mechanics", () => {
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
+        realAphelion_m: earthSemiMajorAxis * (1 + eccentricity),
+        realPerihelion_m: earthSemiMajorAxis * (1 - eccentricity),
+        averageOrbitalSpeed_mps: 29780,
+        epoch: "J2000",
       };
       const position = calculateOrbitalPosition(mockSunState, orbitalParams, 0);
       const expectedPeriapsisDist = earthSemiMajorAxis * (1 - eccentricity);
@@ -155,6 +179,10 @@ describe("Orbital Mechanics", () => {
         longitudeOfAscendingNode: 0,
         argumentOfPeriapsis: 0,
         meanAnomaly: 0,
+        realAphelion_m: earthSemiMajorAxis * (1 + eccentricity),
+        realPerihelion_m: earthSemiMajorAxis * (1 - eccentricity),
+        averageOrbitalSpeed_mps: 29780,
+        epoch: "J2000",
       };
 
       const time = earthOrbitalPeriod / 2;

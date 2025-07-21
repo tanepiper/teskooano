@@ -111,11 +111,11 @@ describe("Physics Integrators", () => {
         dt,
       );
 
-      expect(newState.position_m.x).toBe(1.5);
+      expect(newState.position_m.x).toBe(2); // 0.5 + (0.5-0) + 1*1² = 2
       expect(newState.position_m.y).toBe(0);
       expect(newState.position_m.z).toBe(0);
 
-      expect(newState.velocity_mps.x).toBe(1);
+      expect(newState.velocity_mps.x).toBe(1); // (2-0)/(2*1) = 1
       expect(newState.velocity_mps.y).toBe(0);
       expect(newState.velocity_mps.z).toBe(0);
     });

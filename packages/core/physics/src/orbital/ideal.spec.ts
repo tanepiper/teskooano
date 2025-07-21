@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  solveKeplerEquation,
   calculateKeplerianStateAtTime,
   calculateKeplerianPositionAtTrueAnomaly,
 } from "./ideal";
+import { solveKeplerEquation } from "./shared";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
 describe("Kepler Equation Solver", () => {
@@ -55,6 +55,10 @@ describe("Keplerian State Calculation", () => {
       meanAnomaly: 0,
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis,
+      realPerihelion_m: earthSemiMajorAxis,
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const { position } = calculateKeplerianStateAtTime(orbitalParameters, 0);
@@ -73,6 +77,10 @@ describe("Keplerian State Calculation", () => {
       meanAnomaly: 0,
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis,
+      realPerihelion_m: earthSemiMajorAxis,
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const quarterPeriod = earthOrbitalPeriod / 4;
@@ -97,6 +105,10 @@ describe("Keplerian State Calculation", () => {
       meanAnomaly: 0,
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis,
+      realPerihelion_m: earthSemiMajorAxis,
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const { velocity } = calculateKeplerianStateAtTime(orbitalParameters, 0);
@@ -120,6 +132,10 @@ describe("Keplerian State Calculation", () => {
       meanAnomaly: 0,
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis * (1 + eccentricity),
+      realPerihelion_m: earthSemiMajorAxis * (1 - eccentricity),
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const { position } = calculateKeplerianStateAtTime(orbitalParameters, 0);
@@ -140,6 +156,10 @@ describe("Keplerian State Calculation", () => {
       meanAnomaly: 0,
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis * (1 + eccentricity),
+      realPerihelion_m: earthSemiMajorAxis * (1 - eccentricity),
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const halfPeriod = earthOrbitalPeriod / 2;
@@ -164,6 +184,10 @@ describe("Keplerian State Calculation", () => {
       meanAnomaly: 0,
       longitudeOfAscendingNode: Math.PI / 2, // 90 degrees, to get y component
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis,
+      realPerihelion_m: earthSemiMajorAxis,
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const { position } = calculateKeplerianStateAtTime(orbitalParameters, 0);
@@ -190,6 +214,10 @@ describe("Keplerian Position at True Anomaly", () => {
       meanAnomaly: 0, // Not used for this function
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis * (1 + earthEccentricity),
+      realPerihelion_m: earthSemiMajorAxis * (1 - earthEccentricity),
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const position = calculateKeplerianPositionAtTrueAnomaly(
@@ -212,6 +240,10 @@ describe("Keplerian Position at True Anomaly", () => {
       meanAnomaly: 0, // Not used for this function
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
+      realAphelion_m: earthSemiMajorAxis * (1 + earthEccentricity),
+      realPerihelion_m: earthSemiMajorAxis * (1 - earthEccentricity),
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const position = calculateKeplerianPositionAtTrueAnomaly(
@@ -234,6 +266,10 @@ describe("Keplerian Position at True Anomaly", () => {
       meanAnomaly: 0, // Not used for this function
       longitudeOfAscendingNode: Math.PI / 2, // 90 degrees
       argumentOfPeriapsis: Math.PI / 2, // 90 degrees
+      realAphelion_m: earthSemiMajorAxis,
+      realPerihelion_m: earthSemiMajorAxis,
+      averageOrbitalSpeed_mps: 29780,
+      epoch: "J2000",
     };
 
     const position = calculateKeplerianPositionAtTrueAnomaly(

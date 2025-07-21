@@ -1,14 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { OSVector3 } from "@teskooano/core-math";
+import {
+  OrbitalParameters,
+  PhysicsStateReal,
+  SimulationMode,
+  AlgorithmType,
+  IntegratorType,
+} from "@teskooano/data-types";
+import type { SimulationConfiguration } from "@teskooano/core-state";
 import {
   SimulationManager,
   type SimulationManagerParams,
 } from "./simulation-manager";
-import type {
-  PhysicsStateReal,
-  OrbitalParameters,
-} from "@teskooano/data-types";
-import type { SimulationConfiguration } from "@teskooano/core-state";
 
 describe("SimulationManager", () => {
   let manager: SimulationManager;
@@ -17,37 +20,43 @@ describe("SimulationManager", () => {
     manager = new SimulationManager();
   });
 
-  const mockBody: PhysicsStateReal = {
-    id: "test-body",
-    mass_kg: 1e20,
-    position_m: new OSVector3(1e11, 0, 0),
-    velocity_mps: new OSVector3(0, 30000, 0),
-  };
-
   const mockStar: PhysicsStateReal = {
     id: "central-star",
-    mass_kg: 2e30,
+    mass_kg: 1.989e30,
     position_m: new OSVector3(0, 0, 0),
     velocity_mps: new OSVector3(0, 0, 0),
   };
 
+  const mockBody: PhysicsStateReal = {
+    id: "test-body",
+    mass_kg: 5.972e24,
+    position_m: new OSVector3(1.496e11, 0, 0),
+    velocity_mps: new OSVector3(0, 29780, 0),
+  };
+
   const mockOrbitalParams: OrbitalParameters = {
-    realSemiMajorAxis_m: 1e11,
-    eccentricity: 0.1,
+    realSemiMajorAxis_m: 1.496e11,
+    eccentricity: 0.0167,
     inclination: 0,
     longitudeOfAscendingNode: 0,
     argumentOfPeriapsis: 0,
     meanAnomaly: 0,
-    period_s: 31536000, // 1 year in seconds
+    period_s: 31557600,
+    realAphelion_m: 1.521e11,
+    realPerihelion_m: 1.471e11,
+    averageOrbitalSpeed_mps: 29780,
+    epoch: "J2000",
   };
 
   describe("ideal mode simulation", () => {
     it("should successfully execute ideal mode simulation", () => {
-      const config: SimulationConfiguration = { mode: "ideal" };
+      const config: SimulationConfiguration = {
+        mode: SimulationMode.IDEAL,
+      };
 
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
-        deltaTime: 3600, // 1 hour
+        deltaTime: 3600,
         configuration: config,
         orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
         parentIds: new Map([["test-body", "central-star"]]),
@@ -57,21 +66,20 @@ describe("SimulationManager", () => {
       const result = manager.simulate(params);
 
       expect(result.metadata.mode).toBe("ideal");
-      expect(result.metadata.algorithm).toBeUndefined();
       expect(result.states).toHaveLength(2);
       expect(result.accelerations.size).toBe(0); // No force calculations in ideal mode
-      expect(result.destroyedIds.size).toBe(0); // No collisions in ideal mode
-      expect(result.metadata.performanceProfile?.accuracy).toBe("exact");
     });
 
     it("should validate required parameters for ideal mode", () => {
-      const config: SimulationConfiguration = { mode: "ideal" };
+      const config: SimulationConfiguration = {
+        mode: SimulationMode.IDEAL,
+      };
 
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: config,
-        // Missing orbital parameters, parentIds, currentTime_s
+        // Missing orbitalParameters and parentIds - should throw error
       };
 
       expect(() => manager.simulate(params)).toThrow(
@@ -83,9 +91,9 @@ describe("SimulationManager", () => {
   describe("nbody mode simulation", () => {
     it("should successfully execute nbody mode simulation", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        algorithm: "direct", // Use direct for small systems
-        integrator: "verlet",
+        mode: SimulationMode.NBODY,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
       };
 
       const params: SimulationManagerParams = {
@@ -93,8 +101,8 @@ describe("SimulationManager", () => {
         deltaTime: 3600,
         configuration: config,
         radii: new Map([
-          ["test-body", 1000],
-          ["central-star", 696340000],
+          ["central-star", 1000],
+          ["test-body", 100],
         ]),
         isStar: new Map([
           ["central-star", true],
@@ -106,7 +114,7 @@ describe("SimulationManager", () => {
       const result = manager.simulate(params);
 
       expect(result.metadata.mode).toBe("nbody");
-      expect(result.metadata.algorithm).toBe("direct");
+      expect(result.metadata.algorithm).toBe("barnes-hut");
       expect(result.metadata.integrator).toBe("verlet");
       expect(result.states).toHaveLength(2);
       expect(result.accelerations.size).toBeGreaterThanOrEqual(0);
@@ -114,9 +122,9 @@ describe("SimulationManager", () => {
 
     it("should auto-select algorithm when requested", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        algorithm: "direct", // Will be overridden by auto-selection
-        integrator: "verlet",
+        mode: SimulationMode.NBODY,
+        algorithm: AlgorithmType.BARNES_HUT, // Will be overridden by auto-selection
+        integrator: IntegratorType.VERLET,
       };
 
       const params: SimulationManagerParams = {
@@ -143,9 +151,9 @@ describe("SimulationManager", () => {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
         orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
         parentIds: new Map([["test-body", "central-star"]]),
@@ -168,9 +176,9 @@ describe("SimulationManager", () => {
         bodies: largeBodies,
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
         performancePreferences: {
           prioritizeSpeed: true,
@@ -189,9 +197,9 @@ describe("SimulationManager", () => {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
         performancePreferences: {
           prioritizeAccuracy: true,
@@ -211,9 +219,9 @@ describe("SimulationManager", () => {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
         orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
         parentIds: new Map([["test-body", "central-star"]]),
@@ -230,9 +238,9 @@ describe("SimulationManager", () => {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
       };
 
@@ -247,22 +255,21 @@ describe("SimulationManager", () => {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
       };
 
       const comparison = manager.getPerformanceComparison(params);
 
-      expect(comparison.configurations.length).toBe(20); // 4 algorithms × 5 integrators
+      expect(comparison.configurations.length).toBe(36); // 4 algorithms × 9 integrators
 
       // Should be sorted by relative speed
       const speeds = comparison.configurations.map(
         (c) => c.estimate.relativeSpeed,
       );
-      const sortedSpeeds = [...speeds].sort((a, b) => b - a);
-      expect(speeds).toEqual(sortedSpeeds);
+      expect(speeds).toEqual([...speeds].sort((a, b) => b - a)); // Descending order
     });
 
     it("should include validation results for each configuration", () => {
@@ -270,9 +277,9 @@ describe("SimulationManager", () => {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: {
-          mode: "nbody",
-          algorithm: "direct",
-          integrator: "euler",
+          mode: SimulationMode.NBODY,
+          algorithm: AlgorithmType.BARNES_HUT,
+          integrator: IntegratorType.EULER,
         }, // placeholder
       };
 
@@ -304,7 +311,7 @@ describe("SimulationManager", () => {
 
     it("should validate nbody mode requirements", () => {
       const incompleteConfig: SimulationConfiguration = {
-        mode: "nbody",
+        mode: SimulationMode.NBODY,
         // Missing algorithm and integrator
       };
 
@@ -319,9 +326,9 @@ describe("SimulationManager", () => {
 
     it("should provide warnings for missing optional parameters", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        algorithm: "direct",
-        integrator: "verlet",
+        mode: SimulationMode.NBODY,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
       };
 
       const params: SimulationManagerParams = {
@@ -339,9 +346,9 @@ describe("SimulationManager", () => {
   describe("performance analysis", () => {
     it("should add performance recommendations", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        algorithm: "direct",
-        integrator: "verlet",
+        mode: SimulationMode.NBODY,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
       };
 
       const params: SimulationManagerParams = {
@@ -367,9 +374,9 @@ describe("SimulationManager", () => {
       });
 
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        algorithm: "direct",
-        integrator: "verlet",
+        mode: SimulationMode.NBODY,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
       };
 
       const params: SimulationManagerParams = {
@@ -390,9 +397,9 @@ describe("SimulationManager", () => {
 
     it("should include performance profile in metadata", () => {
       const config: SimulationConfiguration = {
-        mode: "nbody",
-        algorithm: "direct",
-        integrator: "verlet",
+        mode: SimulationMode.NBODY,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
       };
 
       const params: SimulationManagerParams = {

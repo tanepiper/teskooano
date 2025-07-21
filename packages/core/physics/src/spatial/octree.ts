@@ -225,6 +225,7 @@ const insertBody = (
       node.bodies.push(body);
     }
 
+    // Redistribute existing bodies to children
     originalBodies.forEach((existingBody) => {
       let redistributed = false;
       for (const child of node.children!) {
@@ -237,6 +238,35 @@ const insertBody = (
 
       if (!redistributed) {
         node.bodies.push(existingBody);
+      }
+    });
+
+    // Recalculate mass properties from children
+    node.totalMass_kg = 0;
+    node.centerOfMass_m = new OSVector3(0, 0, 0);
+
+    // Add mass from direct bodies
+    node.bodies.forEach((b) => {
+      updateMassProperties(node, b);
+    });
+
+    // Add mass from children
+    node.children.forEach((child) => {
+      if (child.totalMass_kg > 0) {
+        const weightedChildCM = child.centerOfMass_m
+          .clone()
+          .multiplyScalar(child.totalMass_kg);
+        const weightedNodeCM = node.centerOfMass_m
+          .clone()
+          .multiplyScalar(node.totalMass_kg);
+
+        const newTotalMass = node.totalMass_kg + child.totalMass_kg;
+        const newCenterOfMass = weightedNodeCM
+          .add(weightedChildCM)
+          .multiplyScalar(1 / newTotalMass);
+
+        node.totalMass_kg = newTotalMass;
+        node.centerOfMass_m = newCenterOfMass;
       }
     });
   } else {

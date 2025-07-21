@@ -2,6 +2,7 @@ import type {
   AlgorithmType,
   SimulationConfiguration,
 } from "@teskooano/core-state";
+import { SimulationMode, IntegratorType } from "@teskooano/data-types";
 
 /**
  * Algorithm performance characteristics and recommendations
@@ -38,7 +39,7 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
     maxBodies: 1000000,
     optimalRange: [5000, 500000],
     description: "Fast Multipole Method, best for very large systems",
-    memoryUsage: "high",
+    memoryUsage: "medium",
     accuracy: "high",
   },
   p3m: {
@@ -125,16 +126,8 @@ export class AlgorithmFactory {
       if (aInOptimal && !bInOptimal) return -1;
       if (!aInOptimal && bInOptimal) return 1;
 
-      // Secondary: Accuracy vs Speed preference
-      if (prioritizeAccuracy) {
-        const accuracyScore = { exact: 3, high: 2, medium: 1 };
-        const accuracyDiff =
-          accuracyScore[b.accuracy] - accuracyScore[a.accuracy];
-        if (accuracyDiff !== 0) return accuracyDiff;
-      }
-
+      // Secondary: Speed preference (O(N) algorithms first)
       if (prioritizeSpeed) {
-        // Lower complexity score is better for speed
         const complexityScore: Record<string, number> = {
           "O(N)": 1,
           "O(N log N)": 2,
@@ -145,7 +138,15 @@ export class AlgorithmFactory {
         if (complexityDiff !== 0) return complexityDiff;
       }
 
-      // Tertiary: Memory usage (lower is better)
+      // Tertiary: Accuracy preference
+      if (prioritizeAccuracy) {
+        const accuracyScore = { exact: 3, high: 2, medium: 1 };
+        const accuracyDiff =
+          accuracyScore[b.accuracy] - accuracyScore[a.accuracy];
+        if (accuracyDiff !== 0) return accuracyDiff;
+      }
+
+      // Quaternary: Memory usage (lower is better)
       const memoryScore = { low: 1, medium: 2, high: 3 };
       return memoryScore[a.memoryUsage] - memoryScore[b.memoryUsage];
     });
@@ -239,12 +240,14 @@ export class AlgorithmFactory {
       );
     }
 
-    // Performance warnings
-    if (algorithm === "barnes-hut" && bodyCount > 500) {
-      warnings.push("Barnes-Hut algorithm with >500 bodies will be very slow");
+    // Performance warnings - only for clearly suboptimal choices
+    if (algorithm === "barnes-hut" && bodyCount > 10000) {
+      warnings.push(
+        "Barnes-Hut algorithm with >10000 bodies will be very slow",
+      );
     }
-    if (algorithm === "fmm" && bodyCount < 2000) {
-      warnings.push("FMM overhead may not be worth it for <2000 bodies");
+    if (algorithm === "fmm" && bodyCount < 1000) {
+      warnings.push("FMM overhead may not be worth it for <1000 bodies");
     }
 
     return { isValid, warnings, recommendations };
@@ -269,24 +272,26 @@ export class AlgorithmFactory {
    */
   static createOptimalConfiguration(
     bodyCount: number,
-    mode: "ideal" | "nbody" = "nbody",
+    mode: SimulationMode = SimulationMode.NBODY,
     preferences?: {
       prioritizeAccuracy?: boolean;
       prioritizeSpeed?: boolean;
       maxMemoryUsage?: "low" | "medium" | "high";
     },
   ): SimulationConfiguration {
-    if (mode === "ideal") {
-      return { mode: "ideal" };
+    if (mode === SimulationMode.IDEAL) {
+      return { mode: SimulationMode.IDEAL };
     }
 
     const algorithm = this.selectOptimalAlgorithm(bodyCount, preferences);
 
     // Select optimal integrator based on accuracy requirements
-    const integrator = preferences?.prioritizeAccuracy ? "rk4" : "verlet";
+    const integrator: IntegratorType = preferences?.prioritizeAccuracy
+      ? IntegratorType.RK4
+      : IntegratorType.VERLET;
 
     return {
-      mode: "nbody",
+      mode: SimulationMode.NBODY,
       algorithm,
       integrator,
     };

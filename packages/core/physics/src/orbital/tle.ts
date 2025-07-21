@@ -71,7 +71,7 @@ export function parseTLE(line1: string, line2: string): TLEData {
   const argumentOfPerigee = parseFloat(line2.substring(34, 42));
   const meanAnomaly = parseFloat(line2.substring(43, 51));
   const meanMotion = parseFloat(line2.substring(52, 63));
-  const revolutionNumber = parseInt(line2.substring(63, 68));
+  const revolutionNumber = parseInt(line2.substring(63, 69)); // Take full field to end of line
 
   return {
     catalogNumber,
