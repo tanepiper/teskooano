@@ -1,46 +1,48 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import {
-  CelestialType,
-  CelestialStatus,
-  CometClass,
   CelestialObject,
+  CelestialStatus,
+  CelestialType,
+  CometOrbitType,
   type CometProperties,
 } from "@teskooano/data-types";
 
 /**
- * Encke's Comet configuration object for modular solar system initialization.
+ * Encke's Comet (2P/Encke)
+ *
+ * A short-period comet with the shortest orbital period of any known comet.
+ * It completes an orbit around the Sun every 3.3 years.
  */
-export const encke: CelestialObject<CometProperties> = {
+export const encke: CelestialObject = {
   id: "encke",
-  name: "2P/Encke",
-  seed: "encke",
+  name: "Encke's Comet",
   type: CelestialType.COMET,
   status: CelestialStatus.ACTIVE,
   parentId: "sun",
-  realRadius_m: kmToM(2.4),
-  realMass_kg: 2e13,
-  albedo: 0.047,
-  temperature: 100,
+  realMass_kg: 1.2e13, // ~12 billion tons
+  realRadius_m: 2500, // ~2.5 km nucleus radius
+  temperature: 250, // Warmer due to frequent perihelion passages
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 2.2187,
-    eccentricity: 0.8469,
-    inclinationDeg: 11.34,
-    longitudeOfAscendingNodeDeg: 334.33,
-    argumentOfPeriapsisDeg: 187.3,
-    meanAnomalyDeg: 0,
-    period_s: 1.041e8,
-    siderealRotationPeriod_s: 0,
-    axialTiltDeg: 0,
-    epoch: "JD 2460202.5",
+    semiMajorAxisAU: 2.22,
+    eccentricity: 0.847,
+    inclinationDeg: 11.78,
+    longitudeOfAscendingNodeDeg: 334.57,
+    argumentOfPeriapsisDeg: 186.54,
+    meanAnomalyDeg: 160.0,
+    period_s: 3.3 * 365.25 * 24 * 3600, // 3.3 years
+    siderealRotationPeriod_s: 11.1 * 3600, // 11.1 hours
+    axialTiltDeg: 0, // Tumbling object
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometClass.ACTIVE,
-    composition: ["carbon", "dust"],
-    activity: 0.4,
-    visualComaRadius: 50000 * 0.5,
-    visualComaColor: "#F0F8FF",
-    visualMaxTailLength: 0.1,
-    visualTailColor: "#F0F8FF",
-  },
+    classType: CometOrbitType.SHORT_PERIOD,
+    composition: ["water ice", "CO2", "dust"],
+    activity: 0.6, // Moderate activity
+    visualComaRadius: 50000, // 50 km coma radius
+    visualComaColor: "#98FB98",
+    visualComaOpacity: 0.6,
+    visualMaxTailLength: 2000000, // 2 million km tail
+    visualTailColor: "#F0E68C",
+    visualTailOpacity: 0.5,
+  } as CometProperties,
 };

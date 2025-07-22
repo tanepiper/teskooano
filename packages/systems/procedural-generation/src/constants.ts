@@ -9,7 +9,7 @@ export const SOLAR_LUMINOSITY = 3.828e26;
 export const STEFAN_BOLTZMANN = 5.670374e-8;
 
 // System boundary - maximum distance for any celestial object
-export const SYSTEM_MAX_DISTANCE_AU = 10000;
+export const SYSTEM_MAX_DISTANCE_AU = 1000;
 
 export const ROCKY_COMPOSITION = ["silicates", "iron", "nickel", "carbon"];
 export const ICE_COMPOSITION = [

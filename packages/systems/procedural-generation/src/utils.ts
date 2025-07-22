@@ -99,59 +99,47 @@ export function getSpectralClass(temperature: number): SpectralClass {
 }
 
 /**
- * Calculates the true luminosity of a star relative to the Sun, based on the
- * Stefan-Boltzmann law. This value is used for physics-based calculations
- * like determining celestial zones.
- *
+ * Calculates the stellar luminosity using the Stefan-Boltzmann law.
+ * L = 4πR²σT⁴
  * @param radius_m The star's radius in meters.
  * @param temperature_k The star's surface temperature in Kelvin.
- * @returns The calculated luminosity relative to the Sun (L☉), without any
- *   visual multipliers.
+ * @returns The luminosity in watts.
  */
 export function calculateStellarLuminosity(
   radius_m: number,
   temperature_k: number,
 ): number {
-  if (radius_m <= 0 || temperature_k <= 0) return 0;
-  const surfaceArea = 4 * Math.PI * radius_m ** 2;
-  const totalPowerWatts =
-    surfaceArea * CONST.STEFAN_BOLTZMANN * temperature_k ** 4;
-  return totalPowerWatts / CONST.SOLAR_LUMINOSITY;
+  if (radius_m <= 0 || temperature_k <= 0) {
+    console.warn(
+      `[calculateStellarLuminosity] Invalid input: radius=${radius_m}, temp=${temperature_k}. Returning 0.`,
+    );
+    return 0;
+  }
+  const surfaceArea = 4 * Math.PI * radius_m * radius_m;
+  const temperatureToFourth = Math.pow(temperature_k, 4);
+  return surfaceArea * CONST.STEFAN_BOLTZMANN * temperatureToFourth;
 }
 
 /**
- * Calculates a visually-enhanced luminosity of a star.
- * This includes an artificial multiplier to make brightness differences more
- * apparent in the renderer and should not be used for physics calculations.
- *
- * @param radius_m The star's radius in meters.
- * @param temperature_k The star's surface temperature in Kelvin.
- * @param luminosity_multiplier An artificial multiplier to enhance visual brightness.
- * @returns The calculated visual luminosity relative to the Sun (L☉).
- */
-export function calculateVisualLuminosity(
-  radius_m: number,
-  temperature_k: number,
-  luminosity_multiplier: number = 750,
-): number {
-  const stellarLuminosity = calculateStellarLuminosity(radius_m, temperature_k);
-  return stellarLuminosity * luminosity_multiplier;
-}
-
-/**
- * Gets a representative star color as a hex string based on its temperature.
+ * Gets the color of a star based on its temperature.
+ * Uses a simplified blackbody radiation approximation.
  * @param temperature The star's surface temperature in Kelvin.
- * @returns A hex color string (e.g., "#aaccff").
+ * @returns A hex color string representing the star's color.
  */
 export function getStarColor(temperature: number): string {
-  if (temperature >= 25000) return "#aaccff";
-  if (temperature >= 10000) return "#cadfff";
-  if (temperature >= 7500) return "#fbf8ff";
-  if (temperature >= 6000) return "#fff4f3";
-  if (temperature >= 5200) return "#fffadc";
-  if (temperature >= 3700) return "#ffddb4";
-  if (temperature >= 2400) return "#ffbd6f";
-  return "#ffae57";
+  if (temperature <= 0) {
+    return "#ffffff"; // Default to white for invalid temperatures
+  }
+
+  // Simplified blackbody radiation color approximation
+  if (temperature >= 40000) return "#9bb0ff"; // O-type: blue-white
+  if (temperature >= 20000) return "#aabfff"; // B-type: blue-white
+  if (temperature >= 9500) return "#cad7ff"; // A-type: white
+  if (temperature >= 7000) return "#faf0ff"; // F-type: yellow-white
+  if (temperature >= 5200) return "#fff4ea"; // G-type: yellow
+  if (temperature >= 3700) return "#ffd2a1"; // K-type: orange
+  if (temperature >= 2400) return "#ff8c69"; // M-type: red
+  return "#ff6b35"; // Very cool stars: deep red
 }
 
 /**
@@ -178,63 +166,6 @@ export function isOrbitWithinSystemBoundary(
   const aphelionAU = semiMajorAxisAU * (1 + eccentricity);
 
   return aphelionAU <= maxDistanceAU;
-}
-
-function hexToRgb(hex: string): [number, number, number] | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16),
-      ]
-    : null;
-}
-
-/**
- * @internal
- * Converts an RGB color array to a hex string.
- */
-function rgbToHex(r: number, g: number, b: number): string {
-  return (
-    "#" +
-    ((1 << 24) + (r << 16) + (g << 8) + b)
-      .toString(16)
-      .slice(1)
-      .padStart(6, "0")
-  );
-}
-
-/**
- * Blends two hex colors together by a given factor.
- * @param colorAHex The first color as a hex string.
- * @param colorBHex The second color as a hex string.
- * @param factor The blend factor (0-1). 0 returns colorA, 1 returns colorB.
- * @returns The resulting blended hex color string.
- */
-export function mixColors(
-  colorAHex: string,
-  colorBHex: string,
-  factor: number,
-): string {
-  const colorA = hexToRgb(colorAHex);
-  const colorB = hexToRgb(colorBHex);
-
-  if (!colorA || !colorB) {
-    console.warn(
-      "[mixColors] Failed to parse one or both hex colors:",
-      colorAHex,
-      colorBHex,
-    );
-    return colorAHex;
-  }
-
-  const clampedFactor = Math.max(0, Math.min(1, factor));
-  const r = Math.round(colorA[0] + (colorB[0] - colorA[0]) * clampedFactor);
-  const g = Math.round(colorA[1] + (colorB[1] - colorA[1]) * clampedFactor);
-  const b = Math.round(colorA[2] + (colorB[2] - colorA[2]) * clampedFactor);
-
-  return rgbToHex(r, g, b);
 }
 
 /**

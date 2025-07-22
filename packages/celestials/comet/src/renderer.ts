@@ -1,5 +1,4 @@
 import {
-  CometClass,
   CometProperties,
   RenderableCelestialObject,
   SCALE,
@@ -182,7 +181,7 @@ export class CometRenderer extends BaseCelestialRenderer {
       attenuatedLightSources,
     );
 
-    this.updateNucleusRotation(deltaTime, activityFactor);
+    this.updateNucleusRotation(object, deltaTime, activityFactor);
     this.updateComa(object, time, attenuatedLightSources, activityFactor);
     this.updateParticleTailPhysics(
       deltaTime,
@@ -253,8 +252,8 @@ export class CometRenderer extends BaseCelestialRenderer {
     // An active comet has a brighter, icy-rock color.
     let nucleusColorValue = "#5b7b96";
 
-    // An extinct comet is a dark, inert, asteroid-like rock.
-    if (properties.classType === CometClass.EXTINCT) {
+    // An extinct comet (activity = 0) is a dark, inert, asteroid-like rock.
+    if (properties.activity === 0) {
       nucleusColorValue = "#8e8b8b";
     }
 
@@ -425,9 +424,9 @@ export class CometRenderer extends BaseCelestialRenderer {
     let activityFactor =
       1.0 - THREE.MathUtils.smoothstep(distanceToLight, 0, activityDistance);
 
-    // An extinct comet has no activity, so no coma or tail.
+    // An extinct comet (activity = 0) has no activity, so no coma or tail.
     const properties = object.properties as CometProperties;
-    if (properties.classType === CometClass.EXTINCT) {
+    if (properties.activity === 0) {
       activityFactor = 0.0;
     }
 
@@ -435,14 +434,19 @@ export class CometRenderer extends BaseCelestialRenderer {
   }
 
   private updateNucleusRotation(
+    object: RenderableCelestialObject,
     deltaTime: number,
     activityFactor: number,
   ): void {
-    if (this.nucleusAndComaGroup) {
-      // Apply rotation to the group
-      const rotationSpeed = activityFactor * deltaTime * 0.5;
-      this.nucleusAndComaGroup.rotation.y += rotationSpeed;
-      this.nucleusAndComaGroup.rotation.x += rotationSpeed * 0.25;
+    if (this.nucleusAndComaGroup && object.orbit.siderealRotationPeriod_s) {
+      // Use the actual rotation period from the comet object
+      const rotationSpeed =
+        (2 * Math.PI) / object.orbit.siderealRotationPeriod_s;
+
+      // Apply rotation to the group with the correct speed
+      // Comets tumble, so we rotate around multiple axes
+      this.nucleusAndComaGroup.rotation.y += rotationSpeed * deltaTime;
+      this.nucleusAndComaGroup.rotation.x += rotationSpeed * 0.25 * deltaTime; // Slight tilt for tumbling effect
 
       if (this.nucleusAndComaGroup_lod1) {
         this.nucleusAndComaGroup_lod1.rotation.copy(

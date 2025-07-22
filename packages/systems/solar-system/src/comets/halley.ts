@@ -1,51 +1,49 @@
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  J2000_EPOCH,
-  createOrbitalElements,
-  kmToM,
-} from "@teskooano/core-physics";
-
-import {
-  CelestialType,
+  CelestialObject,
   CelestialStatus,
-  CometClass,
+  CelestialType,
+  CometOrbitType,
   type CometProperties,
-  type CelestialObject,
 } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
- * Halley's Comet configuration object for modular solar system initialization.
+ * Halley's Comet (1P/Halley)
+ *
+ * One of the most famous comets, with a period of about 76 years.
+ * It's a long-period comet that has been observed for over 2000 years.
  */
-export const halley: CelestialObject<CometProperties> = {
+export const halley: CelestialObject = {
   id: "halley",
-  name: "1P/Halley",
-  seed: "halley",
+  name: "Halley's Comet",
   type: CelestialType.COMET,
   status: CelestialStatus.ACTIVE,
   parentId: "sun",
-  realRadius_m: kmToM(5.5),
-  realMass_kg: 2.2e14,
-  albedo: 0.04,
-  temperature: 100,
+  realMass_kg: 2.2e14, // ~220 billion tons
+  realRadius_m: 5500, // ~5.5 km nucleus radius
+  temperature: 200, // Cold when far from Sun
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 17.8,
+    semiMajorAxisAU: 17.834,
     eccentricity: 0.967,
-    inclinationDeg: 162.3,
+    inclinationDeg: 162.26,
     longitudeOfAscendingNodeDeg: 58.42,
     argumentOfPeriapsisDeg: 111.33,
     meanAnomalyDeg: 38.38,
-    period_s: 2.357e9,
-    siderealRotationPeriod_s: 0,
-    axialTiltDeg: 0,
-    epoch: J2000_EPOCH,
+    period_s: 76.1 * 365.25 * 24 * 3600, // 76.1 years
+    siderealRotationPeriod_s: 52.8 * 3600, // 52.8 hours
+    axialTiltDeg: 0, // Tumbling object
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometClass.ACTIVE,
-    activity: 0.7,
-    composition: ["water ice", "dust"],
-    visualComaRadius: 75000 * 0.5,
-    visualComaColor: "#ADD8E6",
-    visualMaxTailLength: 0.2,
-    visualTailColor: "#ADD8E6",
-  },
+    classType: CometOrbitType.LONG_PERIOD,
+    composition: ["water ice", "CO2", "methane", "ammonia"],
+    activity: 0.8, // Active when near perihelion
+    visualComaRadius: 100000, // 100 km coma radius
+    visualComaColor: "#87CEEB",
+    visualComaOpacity: 0.7,
+    visualMaxTailLength: 10000000, // 10 million km tail
+    visualTailColor: "#DCE6FF",
+    visualTailOpacity: 0.6,
+  } as CometProperties,
 };

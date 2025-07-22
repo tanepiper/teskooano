@@ -3,8 +3,8 @@ import {
   CelestialType,
   CelestialStatus,
   CometProperties,
-  CometClass,
   type CelestialObject,
+  CometOrbitType,
 } from "@teskooano/data-types";
 
 /**
@@ -53,7 +53,7 @@ export const atlas: CelestialObject<CometProperties> = {
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometClass.ACTIVE,
+    classType: CometOrbitType.INTERSTELLAR,
     activity: 0.9,
     composition: ["water ice", "dust"],
     visualComaRadius: 150000,

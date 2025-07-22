@@ -7,6 +7,7 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
+import { ZoneCategory } from "../../zones/types";
 
 /**
  * @internal
@@ -61,10 +62,32 @@ export function determinePlanetTypeAndBaseProperties(
         zone.allowedGasGiantClasses &&
         zone.allowedGasGiantClasses.length > 0
       ) {
-        const gasGiantChance = zone.formationProbability || 0.5; // Use formation probability directly
+        // Use a realistic gas giant formation probability based on zone characteristics
+        // Gas giants are more common in outer zones, less common in inner zones
+        let gasGiantChance = 0.3; // Default 30% chance
+
+        // Adjust based on zone distance (outer zones favor gas giants)
+        if (
+          zone.category === ZoneCategory.COLD ||
+          zone.category === ZoneCategory.FROZEN ||
+          zone.category === ZoneCategory.OUTER
+        ) {
+          gasGiantChance = 0.6; // 60% chance in outer zones
+        } else if (zone.category === ZoneCategory.COOL) {
+          gasGiantChance = 0.4; // 40% chance in cool zones
+        } else if (zone.category === ZoneCategory.TEMPERATE) {
+          gasGiantChance = 0.25; // 25% chance in temperate zones
+        } else if (
+          zone.category === ZoneCategory.HOT ||
+          zone.category === ZoneCategory.SCORCHED
+        ) {
+          gasGiantChance = 0.15; // 15% chance in hot zones (hot Jupiters are rare)
+        }
+
         if (random() < gasGiantChance) {
           // Chance for gas giants when they're allowed in the zone
           isGasGiant = true;
+
           const allowedGGClasses = zone.allowedGasGiantClasses
             .map(
               (type: string) =>

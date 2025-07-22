@@ -13,6 +13,7 @@ import type {
   BlackHoleSubtype,
   WhiteDwarfSubtype,
   ProtostarSubtype,
+  CometOrbitType,
 } from "./enums";
 
 /**
@@ -239,28 +240,18 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
 }
 
 /**
- * The class of comet, based on its activity level.
- */
-export enum CometClass {
-  /** An active comet, currently outgassing and potentially forming a coma and tail. */
-  ACTIVE = "ACTIVE",
-  /** An extinct comet that has depleted its volatiles and now resembles a dark, inert asteroid. */
-  EXTINCT = "EXTINCT",
-}
-
-/**
  * Properties specific to Comets.
  */
 export interface CometProperties extends SpecificPropertiesBase {
   /** The type of celestial object. */
   type: CelestialType.COMET;
   /**
-   * The class of comet.
+   * The orbital classification of the comet.
    */
-  classType: CometClass;
+  classType: CometOrbitType;
   /** Array listing the primary chemical components (e.g., ["water ice", "CO2"]). */
   composition: string[];
-  /** A measure of the comet's outgassing activity, affecting tail and coma visibility (e.g., 0.0 - 1.0). */
+  /** A measure of the comet's outgassing activity, affecting tail and coma visibility (0.0 = extinct, 1.0 = highly active). */
   activity: number;
   /** Visual radius of the coma (in scaled units). */
   visualComaRadius?: number;
@@ -405,4 +396,4 @@ export type CelestiaClassType =
   | PlanetType
   | GasGiantClass
   | StellarType
-  | CometClass;
+  | CometOrbitType;

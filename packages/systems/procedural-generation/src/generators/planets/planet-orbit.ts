@@ -11,58 +11,6 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 
 /**
- * Calculates escape velocity at a given distance from a central mass
- * @param centralMass_kg Mass of the central body in kg
- * @param distance_m Distance from the central body in meters
- * @returns Escape velocity in m/s
- */
-function calculateEscapeVelocity(
-  centralMass_kg: number,
-  distance_m: number,
-): number {
-  const G = 6.6743e-11; // Gravitational constant
-  return Math.sqrt((2 * G * centralMass_kg) / distance_m);
-}
-
-/**
- * Validates that orbital velocity is reasonable compared to escape velocity
- * @param orbitalVelocity_mps Orbital velocity in m/s
- * @param escapeVelocity_mps Escape velocity in m/s
- * @param distanceAU Distance in AU for logging
- * @returns true if velocity is reasonable, false if too high
- */
-function validateOrbitalVelocity(
-  orbitalVelocity_mps: number,
-  escapeVelocity_mps: number,
-  distanceAU: number,
-  planetId: string,
-): boolean {
-  const velocityRatio = orbitalVelocity_mps / escapeVelocity_mps;
-
-  // Add a safety margin - orbital velocity should be less than 95% of escape velocity
-  // This ensures stable orbits even with small perturbations
-  if (velocityRatio >= 0.95) {
-    console.warn(
-      `[PlanetOrbit] ${planetId} at ${distanceAU.toFixed(2)} AU: ` +
-        `Orbital velocity (${orbitalVelocity_mps.toFixed(1)} m/s) >= 95% of Escape velocity (${escapeVelocity_mps.toFixed(1)} m/s). ` +
-        `Ratio: ${velocityRatio.toFixed(3)}`,
-    );
-    return false;
-  }
-
-  // Log extreme cases for debugging
-  if (velocityRatio > 0.8) {
-    console.warn(
-      `[PlanetOrbit] ${planetId} at ${distanceAU.toFixed(2)} AU: ` +
-        `High velocity ratio: ${velocityRatio.toFixed(3)} ` +
-        `(Orbital: ${orbitalVelocity_mps.toFixed(1)} m/s, Escape: ${escapeVelocity_mps.toFixed(1)} m/s)`,
-    );
-  }
-
-  return true;
-}
-
-/**
  * Calculates scientifically accurate orbital parameters and initial physics state for a planet
  * based on observed exoplanet statistics and orbital mechanics principles.
  *
@@ -87,9 +35,6 @@ export function calculatePlanetOrbitAndInitialState(
 ): {
   orbit: OrbitalParameters;
 } {
-  // Allow all distances - even those at the interstellar fringe!
-  // These distant objects can be fascinating rogue planets, captured objects, or primordial bodies
-
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
     bodyDistanceAU * CONST.AU_TO_METERS,
@@ -127,18 +72,6 @@ export function calculatePlanetOrbitAndInitialState(
       eccentricity = 0.01;
       break;
     }
-  }
-
-  // Additional validation: ensure semi-latus rectum is positive for orbital stability
-  const semiLatusRectum =
-    bodyDistanceAU * CONST.AU_TO_METERS * (1 - eccentricity * eccentricity);
-  if (semiLatusRectum <= 0) {
-    console.warn(
-      `[PlanetOrbit] Semi-latus rectum is non-positive (${semiLatusRectum.toFixed(2)} m) for ${planetId}. ` +
-        `Reducing eccentricity from ${eccentricity.toFixed(3)} to ensure orbital stability.`,
-    );
-    // Reduce eccentricity to ensure positive semi-latus rectum
-    eccentricity = Math.min(eccentricity, 0.99); // Cap at 0.99 to keep p > 0
   }
 
   // Generate realistic inclination - most planets are nearly coplanar

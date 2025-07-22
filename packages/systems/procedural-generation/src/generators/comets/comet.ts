@@ -3,7 +3,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CometClass,
+  CometOrbitType,
   type CometProperties,
   type OrbitalParameters,
   type StarProperties,
@@ -12,211 +12,397 @@ import { OSVector3 } from "@teskooano/core-math";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import { generateCelestialName } from "../names/celestial-name";
+import { Observable } from "rxjs";
 
 /**
- * Generates data for a single comet with a highly elliptical and inclined orbit,
- * typical of long-period comets originating from the outer system.
+ * Configuration for comet generation
+ */
+export interface CometGeneratorConfig {
+  random: () => number;
+  parentStar: CelestialObject;
+  bodyDistanceAU: number;
+  systemSeed: string;
+  slotIndex: number;
+  zone: any;
+}
+
+/**
+ * Generates comets with different orbital characteristics based on their type
+ */
+export class CometGenerator {
+  private config: CometGeneratorConfig;
+
+  constructor(config: CometGeneratorConfig) {
+    this.config = config;
+  }
+
+  generate(): Observable<CelestialObject> {
+    return new Observable((subscriber) => {
+      try {
+        const { random, parentStar, bodyDistanceAU, systemSeed, slotIndex } =
+          this.config;
+
+        // Determine comet type based on distance and random chance
+        const cometType = this.determineCometType(bodyDistanceAU, random);
+
+        // Generate orbital parameters based on comet type
+        const orbitalParams = this.createOrbitalParameters(
+          cometType,
+          bodyDistanceAU,
+          random,
+        );
+
+        // Generate physical properties
+        const { classType, activity } = this.getCometClassAndActivity(
+          cometType,
+          random,
+        );
+
+        // Calculate temperature based on distance from star
+        const starProps = parentStar.properties as StarProperties;
+        const starLuminosity = starProps?.luminosity || 1.0;
+        const distanceM = bodyDistanceAU * CONST.AU_TO_METERS;
+
+        // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
+        const temperature = Math.pow(
+          starLuminosity /
+            (16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceM * distanceM),
+          0.25,
+        );
+
+        // Generate comet properties
+        const cometProps: CometProperties = {
+          type: CelestialType.COMET,
+          classType: classType,
+          composition: this.generateComposition(random),
+          activity: activity,
+          visualComaRadius: this.calculateComaRadius(activity, bodyDistanceAU),
+          visualComaColor: this.generateComaColor(random),
+          visualComaOpacity: Math.min(activity * 0.8 + 0.2, 1.0),
+          visualMaxTailLength: this.calculateTailLength(
+            activity,
+            bodyDistanceAU,
+          ),
+          visualTailColor: this.generateTailColor(random),
+          visualTailOpacity: Math.min(activity * 0.6 + 0.1, 1.0),
+          visuals: {
+            darkColorMultiplier: 0.3 + random() * 0.4,
+            lightColorMultiplier: 0.6 + random() * 0.4,
+            fbmScale: 0.5 + random() * 1.0,
+            fineFbmScale: 2.0 + random() * 3.0,
+            fineFbmMix: 0.3 + random() * 0.4,
+            ambientStrength: 0.2 + random() * 0.3,
+          },
+        };
+
+        // Create the comet object
+        const comet: CelestialObject = {
+          id: `comet-${systemSeed}-${slotIndex}`,
+          name: generateCelestialName(random),
+          parentId: parentStar.id,
+          type: CelestialType.COMET,
+          properties: cometProps,
+          orbit: orbitalParams,
+          realMass_kg: this.calculateMass(random),
+          realRadius_m: this.calculateRadius(random),
+          temperature: temperature,
+          status: CelestialStatus.ACTIVE,
+        };
+
+        subscriber.next(comet);
+        subscriber.complete();
+      } catch (error) {
+        subscriber.error(error);
+      }
+    });
+  }
+
+  /**
+   * Determine comet type based on distance from star and random chance
+   */
+  private determineCometType(
+    distanceAU: number,
+    random: () => number,
+  ): CometOrbitType {
+    // Interstellar comets are rare and typically found at great distances
+    if (distanceAU > 50 && random() < 0.1) {
+      return CometOrbitType.INTERSTELLAR;
+    }
+
+    // Long-period comets are more common at medium distances
+    if (distanceAU > 20 && random() < 0.6) {
+      return CometOrbitType.LONG_PERIOD;
+    }
+
+    // Short-period comets are common at all distances
+    return CometOrbitType.SHORT_PERIOD;
+  }
+
+  /**
+   * Create orbital parameters based on comet type
+   */
+  private createOrbitalParameters(
+    cometType: CometOrbitType,
+    distanceAU: number,
+    random: () => number,
+  ): OrbitalParameters {
+    const { parentStar } = this.config;
+    const starProps = parentStar.properties as StarProperties;
+    const starMass = parentStar.realMass_kg || CONST.SOLAR_MASS_KG;
+
+    switch (cometType) {
+      case CometOrbitType.INTERSTELLAR:
+        return this.createInterstellarOrbit(distanceAU, starMass, random);
+      case CometOrbitType.LONG_PERIOD:
+        return this.createLongPeriodOrbit(distanceAU, starMass, random);
+      case CometOrbitType.SHORT_PERIOD:
+        return this.createShortPeriodOrbit(distanceAU, starMass, random);
+      default:
+        return this.createShortPeriodOrbit(distanceAU, starMass, random);
+    }
+  }
+
+  /**
+   * Create hyperbolic orbit for interstellar comets
+   */
+  private createInterstellarOrbit(
+    distanceAU: number,
+    starMass: number,
+    random: () => number,
+  ): OrbitalParameters {
+    // Interstellar comets have hyperbolic orbits (e > 1)
+    const eccentricity = 1.1 + random() * 1.9; // 1.1 to 3.0
+
+    // Calculate negative semi-major axis for hyperbolic orbit
+    const semiMajorAxisAU = -distanceAU / (eccentricity - 1);
+
+    // Calculate approach distance (where they come from)
+    const approachDistanceAU = Math.abs(semiMajorAxisAU) * (eccentricity + 1);
+
+    // Ensure approach is from outside the system
+    const finalApproachAU = Math.max(
+      approachDistanceAU,
+      CONST.SYSTEM_MAX_DISTANCE_AU * 0.8,
+    );
+
+    // Calculate orbital elements
+    const orbitalElements = createOrbitalElements({
+      semiMajorAxisAU: semiMajorAxisAU,
+      eccentricity: eccentricity,
+      inclinationDeg: (random() - 0.5) * 180, // Random inclination
+      argumentOfPeriapsisDeg: random() * 360,
+      longitudeOfAscendingNodeDeg: random() * 360,
+      meanAnomalyDeg: random() * 360,
+      period_s: 0, // No period for hyperbolic orbits
+      siderealRotationPeriod_s: (12 + random() * 24) * 3600, // 12-36 hour rotation
+      axialTiltDeg: 0, // Tumbling object
+      isHyperbolic: true,
+    });
+
+    return orbitalElements;
+  }
+
+  /**
+   * Create highly elliptical orbit for long-period comets
+   */
+  private createLongPeriodOrbit(
+    distanceAU: number,
+    starMass: number,
+    random: () => number,
+  ): OrbitalParameters {
+    // Long-period comets have high eccentricity (0.8 to 0.99)
+    const eccentricity = 0.8 + random() * 0.19;
+
+    // Semi-major axis is much larger than current distance
+    const semiMajorAxisAU = distanceAU / (1 - eccentricity);
+
+    // Calculate orbital period
+    const period_s = UTIL.calculateOrbitalPeriod_s(
+      starMass,
+      semiMajorAxisAU * CONST.AU_TO_METERS,
+      1e12,
+    );
+
+    // Calculate orbital elements
+    const orbitalElements = createOrbitalElements({
+      semiMajorAxisAU: semiMajorAxisAU,
+      eccentricity: eccentricity,
+      inclinationDeg: (random() - 0.5) * 90, // Moderate inclination
+      argumentOfPeriapsisDeg: random() * 360,
+      longitudeOfAscendingNodeDeg: random() * 360,
+      meanAnomalyDeg: random() * 360,
+      period_s: period_s,
+      siderealRotationPeriod_s: (6 + random() * 18) * 3600, // 6-24 hour rotation
+      axialTiltDeg: 0, // Tumbling object
+    });
+
+    return orbitalElements;
+  }
+
+  /**
+   * Create moderate eccentricity orbit for short-period comets
+   */
+  private createShortPeriodOrbit(
+    distanceAU: number,
+    starMass: number,
+    random: () => number,
+  ): OrbitalParameters {
+    // Short-period comets have moderate eccentricity (0.1 to 0.7)
+    const eccentricity = 0.1 + random() * 0.6;
+
+    // Semi-major axis is closer to current distance
+    const semiMajorAxisAU = distanceAU / (1 - eccentricity);
+
+    // Calculate orbital period
+    const period_s = UTIL.calculateOrbitalPeriod_s(
+      starMass,
+      semiMajorAxisAU * CONST.AU_TO_METERS,
+      1e12,
+    );
+
+    // Calculate orbital elements
+    const orbitalElements = createOrbitalElements({
+      semiMajorAxisAU: semiMajorAxisAU,
+      eccentricity: eccentricity,
+      inclinationDeg: (random() - 0.5) * 60, // Low inclination
+      argumentOfPeriapsisDeg: random() * 360,
+      longitudeOfAscendingNodeDeg: random() * 360,
+      meanAnomalyDeg: random() * 360,
+      period_s: period_s,
+      siderealRotationPeriod_s: (4 + random() * 12) * 3600, // 4-16 hour rotation
+      axialTiltDeg: 0, // Tumbling object
+    });
+
+    return orbitalElements;
+  }
+
+  /**
+   * Get comet class and activity level based on orbit type
+   */
+  private getCometClassAndActivity(
+    cometType: CometOrbitType,
+    random: () => number,
+  ): { classType: CometOrbitType; activity: number } {
+    switch (cometType) {
+      case CometOrbitType.INTERSTELLAR:
+        // Interstellar comets are usually active when they enter the system
+        return {
+          classType: CometOrbitType.INTERSTELLAR,
+          activity: random() < 0.7 ? 0.8 + random() * 0.2 : 0.0, // 70% active, 30% extinct
+        };
+      case CometOrbitType.LONG_PERIOD:
+        // Long-period comets are often active when they approach
+        return {
+          classType: CometOrbitType.LONG_PERIOD,
+          activity: random() < 0.8 ? 0.6 + random() * 0.4 : 0.0, // 80% active, 20% extinct
+        };
+      case CometOrbitType.SHORT_PERIOD:
+        // Short-period comets can be active or extinct depending on their history
+        return {
+          classType: CometOrbitType.SHORT_PERIOD,
+          activity: random() < 0.8 ? 0.4 + random() * 0.6 : 0.0, // 80% active, 20% extinct
+        };
+      default:
+        return {
+          classType: CometOrbitType.SHORT_PERIOD,
+          activity: 0.5 + random() * 0.5,
+        };
+    }
+  }
+
+  /**
+   * Generate composition for the comet
+   */
+  private generateComposition(random: () => number): string[] {
+    const compositions = [
+      ["water ice", "CO2"],
+      ["water ice", "methane"],
+      ["water ice", "ammonia"],
+      ["water ice", "CO2", "methane"],
+      ["water ice", "methane", "ammonia"],
+      ["water ice", "CO2", "ammonia"],
+    ];
+    return UTIL.getRandomItem(compositions, random);
+  }
+
+  /**
+   * Calculate coma radius based on activity and distance
+   */
+  private calculateComaRadius(activity: number, distanceAU: number): number {
+    // Base radius increases with activity and decreases with distance
+    const baseRadius = 0.1 + activity * 0.3;
+    const distanceFactor = Math.max(0.1, 1.0 - distanceAU / 100);
+    return baseRadius * distanceFactor;
+  }
+
+  /**
+   * Generate coma color
+   */
+  private generateComaColor(random: () => number): string {
+    const colors = ["#87CEEB", "#98FB98", "#F0E68C", "#DDA0DD", "#FFB6C1"];
+    return UTIL.getRandomItem(colors, random);
+  }
+
+  /**
+   * Calculate tail length based on activity and distance
+   */
+  private calculateTailLength(activity: number, distanceAU: number): number {
+    // Tail length increases with activity and decreases with distance
+    const baseLength = 0.5 + activity * 1.5;
+    const distanceFactor = Math.max(0.1, 1.0 - distanceAU / 100);
+    return baseLength * distanceFactor;
+  }
+
+  /**
+   * Generate tail color
+   */
+  private generateTailColor(random: () => number): string {
+    const colors = ["#87CEEB", "#98FB98", "#F0E68C", "#DDA0DD"];
+    return UTIL.getRandomItem(colors, random);
+  }
+
+  /**
+   * Calculate mass for the comet
+   */
+  private calculateMass(random: () => number): number {
+    // Comet masses range from 10^10 to 10^15 kg
+    const minMass = 1e10;
+    const maxMass = 1e15;
+    return minMass + random() * (maxMass - minMass);
+  }
+
+  /**
+   * Calculate radius for the comet nucleus
+   */
+  private calculateRadius(random: () => number): number {
+    // Comet nucleus radii range from 0.5 to 50 km
+    const minRadius = 500; // 0.5 km in meters
+    const maxRadius = 50000; // 50 km in meters
+    return minRadius + random() * (maxRadius - minRadius);
+  }
+}
+
+/**
+ * Creates an RxJS Observable that generates and emits data for a single comet
+ * with orbital characteristics based on its type.
  *
- * @param random The seeded pseudo-random number generator function.
- * @param parentStar The parent star `CelestialObject`.
- * @param distanceAU The perihelion distance for the comet's orbit in AU.
- * @param index The index in the generation loop for deterministic naming.
- * @returns A `CelestialObject` for the comet, or `null` if parameters are invalid.
+ * @deprecated Use CometGenerator class instead
  */
 export function generateComet(
   random: () => number,
   parentStar: CelestialObject,
-  distanceAU: number, // This will be used as the basis for the orbit
-  index: number,
-): CelestialObject | null {
-  // For comets with highly elliptical orbits, we need to check if the aphelion
-  // stays within the system boundary. If the provided distance would result in
-  // an orbit that exceeds the boundary, we need to adjust it.
-
-  // First, generate a sample eccentricity to check the orbit
-  const sampleEccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
-
-  // Check if this orbit would exceed the boundary
-  if (!UTIL.isOrbitWithinSystemBoundary(distanceAU, sampleEccentricity)) {
-    // Calculate the maximum distance that would keep the aphelion within bounds
-    // For a given eccentricity: maxSemiMajorAxis = BOUNDARY / (1 + eccentricity)
-    const maxSemiMajorAxisAU =
-      CONST.SYSTEM_MAX_DISTANCE_AU / (1 + sampleEccentricity);
-
-    if (maxSemiMajorAxisAU < 10) {
-      // If the maximum semi-major axis is too small for a meaningful comet orbit, skip
-      return null;
-    }
-
-    // Use the adjusted distance instead
-    distanceAU = Math.min(distanceAU, maxSemiMajorAxisAU);
-  }
-
-  // Validate final distance is within system boundary
-  if (distanceAU > CONST.SYSTEM_MAX_DISTANCE_AU) {
-    return null;
-  }
-
-  const starId = parentStar.id;
-  const starMass_kg = parentStar.realMass_kg;
-
-  if (starMass_kg <= 0 || !Number.isFinite(starMass_kg)) {
-    return null;
-  }
-
-  const cometName = generateCelestialName(random);
-  const cometId = `comet-${starId}-${cometName.toLowerCase().replace(/\s+/g, "-")}`;
-
-  // Comets are small, icy bodies with low density
-  const nucleusRadius_km = 1 + random() * 20; // 1-21 km radius
-  const nucleusRadius_m = nucleusRadius_km * 1000;
-  const density = 600; // Low density for comets (kg/m^3)
-  const mass_kg = (4 / 3) * Math.PI * Math.pow(nucleusRadius_m, 3) * density;
-
-  // Generate a highly elliptical and inclined orbit
-  const orbit = generateCometOrbit(random, distanceAU, starMass_kg, mass_kg);
-
-  const cometProperties: CometProperties = {
-    type: CelestialType.COMET,
-    classType: CometClass.ACTIVE,
-    composition: CONST.ICE_COMPOSITION,
-    activity: 0.5 + random() * 0.5, // Active comets
-    visualComaRadius: nucleusRadius_m * (50 + random() * 50), // Scale factor for visual representation
-    visualComaColor: "#C8DCFF",
-    visualComaOpacity: 0.5,
-    visualMaxTailLength: orbit.realSemiMajorAxis_m * 0.1, // Tail can be 10% of SMA
-    visualTailColor: "#DCE6FF",
-    visualTailOpacity: 0.6,
-  };
-
-  // Calculate realistic temperature based on the parent star's properties
-  const cometTemperature = calculateCometTemperature(distanceAU, parentStar);
-
-  const comet: CelestialObject = {
-    id: cometId,
-    name: cometName,
-    type: CelestialType.COMET,
-    status: CelestialStatus.ACTIVE,
-    parentId: starId,
-    realMass_kg: mass_kg,
-    realRadius_m: nucleusRadius_m,
-    temperature: cometTemperature,
-    orbit: orbit,
-    properties: cometProperties,
-    ignorePhysics: false,
-    ignoreCollisions: false,
-  };
-
-  return comet;
-}
-
-/**
- * Generates realistic orbital parameters for a long-period comet.
- *
- * @param random The seeded pseudo-random number generator function.
- * @param distanceAU The average distance from the star, used to calculate semi-major axis.
- * @param starMass_kg The mass of the parent star.
- * @param cometMass_kg The mass of the comet.
- * @returns A populated `OrbitalParameters` object.
- */
-function generateCometOrbit(
-  random: () => number,
-  distanceAU: number,
-  starMass_kg: number,
-  cometMass_kg: number,
-): OrbitalParameters {
-  // Comets have very high eccentricity
-  let eccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
-
-  // Ensure the orbit stays within system boundary by checking aphelion
-  while (!UTIL.isOrbitWithinSystemBoundary(distanceAU, eccentricity)) {
-    eccentricity *= 0.95; // Reduce eccentricity by 5% (more conservative for comets)
-    if (eccentricity < 0.5) {
-      // If we've reduced it too much, set a minimum for comet-like behavior
-      eccentricity = 0.5;
-      break;
-    }
-  }
-
-  // Use the provided distance as the semi-major axis for long-period comets
-  const period_s = UTIL.calculateOrbitalPeriod_s(
-    starMass_kg,
-    distanceAU * CONST.AU_TO_METERS,
-    cometMass_kg,
-  );
-
-  // High inclination, can be retrograde
-  const inclinationDeg = (random() - 0.5) * 180; // +/- 90 degrees
-
-  // Generate axial tilt (comets don't have meaningful axial tilt)
-  const axialTiltDeg = 0;
-
-  return createOrbitalElements({
-    semiMajorAxisAU: distanceAU,
-    eccentricity: eccentricity,
-    inclinationDeg: inclinationDeg,
-    longitudeOfAscendingNodeDeg: random() * 360,
-    argumentOfPeriapsisDeg: random() * 360,
-    meanAnomalyDeg: random() * 360, // Start at random point in orbit
-    period_s: period_s,
-    siderealRotationPeriod_s: period_s, // Comets don't have meaningful rotation
-    axialTiltDeg: axialTiltDeg,
+  bodyDistanceAU: number,
+  systemSeed: string,
+  slotIndex: number,
+  zone: any,
+): Observable<CelestialObject> {
+  const generator = new CometGenerator({
+    random,
+    parentStar,
+    bodyDistanceAU,
+    systemSeed,
+    slotIndex,
+    zone,
   });
-}
-
-/**
- * Calculates comet temperature based on distance from star
- */
-function calculateCometTemperature(
-  distanceAU: number,
-  parentStar: CelestialObject,
-): number {
-  // Use the star's actual luminosity from its properties if available
-  let starLuminosity: number;
-
-  if (
-    parentStar.properties &&
-    parentStar.properties.type === CelestialType.STAR
-  ) {
-    const starProps = parentStar.properties as StarProperties;
-    if (starProps.luminosity && starProps.luminosity > 0) {
-      starLuminosity = starProps.luminosity * CONST.SOLAR_LUMINOSITY;
-    } else {
-      // Fallback to mass-based calculation if luminosity is missing or invalid
-      const massRatio = Math.max(
-        0.01,
-        parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
-      );
-      starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
-    }
-  } else {
-    // Fallback to mass-based calculation if star properties aren't available
-    const massRatio = Math.max(
-      0.01,
-      parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
-    );
-    starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
-  }
-
-  // Ensure we have a valid luminosity
-  if (!Number.isFinite(starLuminosity) || starLuminosity <= 0) {
-    starLuminosity = CONST.SOLAR_LUMINOSITY; // Default to solar luminosity
-  }
-
-  // Calculate equilibrium temperature at distance
-  const distanceM = distanceAU * CONST.AU_TO_METERS;
-
-  // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
-  const temperature = Math.pow(
-    starLuminosity /
-      (16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceM * distanceM),
-    0.25,
-  );
-
-  // Ensure we have a valid temperature
-  if (!Number.isFinite(temperature) || temperature <= 0) {
-    return 200; // Default temperature for comets
-  }
-
-  return Math.max(2.7, temperature); // Not colder than cosmic background
+  return generator.generate();
 }

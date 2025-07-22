@@ -136,21 +136,30 @@ export class ZoneScaler {
   ): CelestialZone[] {
     if (stars.length === 0) return zones;
 
-    const totalLuminosity = this.calculateCombinedLuminosity(stars);
-    const complexity = this.getComplexityFactor(config);
-    const scaledLuminosity = totalLuminosity * complexity;
+    // Calculate combined scaling factor using the same logic as calculateScalingFactor
+    // This ensures we apply the same caps and adjustments
+    let totalScalingFactor = 0;
 
-    // Adjust zone boundaries based on luminosity
-    const luminosityFactor = Math.sqrt(scaledLuminosity);
+    for (const star of stars) {
+      const starScalingFactor = this.calculateScalingFactor(star);
+      totalScalingFactor += starScalingFactor;
+    }
+
+    // Average the scaling factors for multi-star systems
+    const averageScalingFactor = totalScalingFactor / stars.length;
+
+    // Apply complexity factor for multi-star systems
+    const complexity = this.getComplexityFactor(config);
+    const finalScalingFactor = averageScalingFactor * complexity;
 
     return zones.map((zone) => ({
       ...zone,
       minAU: Math.min(
-        zone.baseMinAU * luminosityFactor,
+        zone.baseMinAU * finalScalingFactor,
         CONST.SYSTEM_MAX_DISTANCE_AU,
       ),
       maxAU: Math.min(
-        zone.baseMaxAU * luminosityFactor,
+        zone.baseMaxAU * finalScalingFactor,
         CONST.SYSTEM_MAX_DISTANCE_AU,
       ),
       // Adjust formation probability based on system complexity

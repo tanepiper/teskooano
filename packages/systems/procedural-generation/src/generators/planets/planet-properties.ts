@@ -17,36 +17,6 @@ import { ProceduralSurfaceProperties } from "@teskooano/data-types";
 import { createProceduralSurfaceProperties } from "../../properties";
 
 /**
- * Generates the specific properties for a planet based on its high-level type.
- *
- * This function acts as a router, delegating to either
- * `generateGasGiantSpecificProperties` or `generateRockyPlanetSpecificProperties`
- * depending on the `planetType` in the base properties.
- *
- * @param random The seeded pseudo-random number generator function.
- * @param baseProps The base properties object, which includes the determined `planetType`.
- * @param bodyDistanceAU The planet's distance from the star in AU, used for
- *   temperature-dependent properties like those of gas giants.
- * @returns A `CelestialSpecificPropertiesUnion` containing the detailed
- *   properties for either a gas giant or a rocky planet.
- */
-export function generatePlanetSpecificProperties(
-  random: () => number,
-  baseProps: PlanetBaseProperties,
-  bodyDistanceAU: number,
-): CelestialSpecificPropertiesUnion {
-  if (baseProps.celestialType === CelestialType.GAS_GIANT) {
-    return generateGasGiantSpecificProperties(
-      random,
-      baseProps,
-      bodyDistanceAU,
-    );
-  } else {
-    return generateRockyPlanetSpecificProperties(random, baseProps);
-  }
-}
-
-/**
  * @internal
  * Generates properties specific to Gas Giants, including Ice Giants.
  *
@@ -59,7 +29,7 @@ export function generatePlanetSpecificProperties(
  * @param bodyDistanceAU The planet's distance from the star in AU.
  * @returns A `GasGiantProperties` object.
  */
-function generateGasGiantSpecificProperties(
+export function generateGasGiantSpecificProperties(
   random: () => number,
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
@@ -187,19 +157,16 @@ function generateGasGiantSpecificProperties(
 
 /**
  * @internal
- * Generates properties specific to rocky planets (e.g., Terrestrial, Ice, Lava).
+ * Generates properties specific to rocky planets (terrestrial, ice, ocean, etc.).
  *
- * This function determines the planet's detailed surface type, composition, and
- * atmosphere. It uses a probability-based approach to decide if a planet has an
- * atmosphere and, if so, its type and characteristics (color, density, clouds).
- * It then calls `createProceduralSurfaceProperties` to generate the detailed
- * data needed for shader-based rendering.
+ * It determines the surface type, composition, atmosphere, and other properties
+ * based on the planet's type and characteristics.
  *
  * @param random The seeded pseudo-random number generator function.
  * @param baseProps The planet's base properties.
  * @returns A `PlanetProperties` object.
  */
-function generateRockyPlanetSpecificProperties(
+export function generateRockyPlanetSpecificProperties(
   random: () => number,
   baseProps: PlanetBaseProperties,
 ): PlanetProperties {

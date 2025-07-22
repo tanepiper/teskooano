@@ -1,75 +1,50 @@
 import { createOrbitalElements } from "@teskooano/core-physics";
 import {
-  CelestialType,
+  CelestialObject,
   CelestialStatus,
-  CometProperties,
-  CometClass,
-  type CelestialObject,
+  CelestialType,
+  CometOrbitType,
+  type CometProperties,
 } from "@teskooano/data-types";
 
 /**
- * 1I/ʻOumuamua configuration object for modular solar system initialization.
- * The first confirmed interstellar object to pass through our solar system.
- * Discovered: October 19, 2017 by Robert Weryk using Pan-STARRS 1
+ * 1I/'Oumuamua
  *
- * Key characteristics:
- * - Hyperbolic trajectory (eccentricity > 1)
- * - Perihelion: 0.255916 AU (closest approach to sun)
- * - Semi-major axis: -1.2723 AU (negative for hyperbolic)
- * - Eccentricity: 1.20113
- * - Inclination: 122.74° (highly inclined)
- * - Interstellar origin (not from our solar system)
- *
- * Physical properties:
- * - Dimensions: ~115m × 111m × 19m (cigar-shaped)
- * - Rotation: Tumbling (non-principal axis rotation)
- * - Albedo: ~0.1 (dark surface)
- * - Composition: Likely rocky/icy interstellar object
+ * The first known interstellar object to pass through our solar system.
+ * Discovered in 2017, it has a hyperbolic orbit indicating it came from outside our solar system.
+ * No outgassing was observed, suggesting it may be an extinct comet or asteroid.
  */
-export const oumuamua: CelestialObject<CometProperties> = {
+export const oumuamua: CelestialObject = {
   id: "1i-oumuamua",
-  name: "1I/ʻOumuamua",
-  seed: "oumuamua_interstellar_2017",
+  name: "1I/'Oumuamua",
   type: CelestialType.COMET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Orbits the sun during its passage
-  realMass_kg: 1e9, // Estimated mass ~1 billion kg
-  realRadius_m: 115, // Using the larger dimension as radius
+  parentId: "sun",
+  realMass_kg: 2.3e8, // ~230 million tons
+  realRadius_m: 115, // ~115m radius (estimated)
   temperature: 200, // Cold interstellar object
-  albedo: 0.1, // Dark surface as observed
-  // Hyperbolic interstellar trajectory
   orbit: createOrbitalElements({
-    semiMajorAxisAU: -1.27234500742808, // Actual semi-major axis at epoch (Nov 23, 2017) - negative for hyperbolic
-    eccentricity: 1.20113, // Hyperbolic eccentricity
-    inclinationDeg: 122.74, // Highly inclined orbit
-    longitudeOfAscendingNodeDeg: 24.597,
-    argumentOfPeriapsisDeg: 241.811,
-    meanAnomalyDeg: 51.1576, // Position at epoch (Nov 23, 2017) - ~75 days post-perihelion
-    period_s: 0, // No orbital period for hyperbolic trajectories
-    siderealRotationPeriod_s: 8.1 * 3600, // ~8.1 hour rotation period
-    axialTiltDeg: 0, // Tumbling object, no stable axial tilt
-    epoch: "JD 2458080.5",
+    semiMajorAxisAU: -1.28, // Negative for hyperbolic orbit
+    eccentricity: 1.201,
+    inclinationDeg: 122.74,
+    longitudeOfAscendingNodeDeg: 24.6,
+    argumentOfPeriapsisDeg: 241.8,
+    meanAnomalyDeg: 0,
+    period_s: 0, // No period for hyperbolic orbits
+    siderealRotationPeriod_s: 8.67 * 3600, // 8.67 hours
+    axialTiltDeg: 0, // Tumbling object
+    isHyperbolic: true,
   }),
-  ignorePhysics: false,
-  ignoreCollisions: true,
   properties: {
     type: CelestialType.COMET,
-    classType: CometClass.EXTINCT, // No outgassing observed
-    composition: ["interstellar_object", "rocky", "icy"],
-    activity: 0.0, // No outgassing activity
-    visualComaRadius: 0,
-    visualComaColor: "#2a2a2a",
-    visualComaOpacity: 0,
-    visualMaxTailLength: 0,
-    visualTailColor: "#2a2a2a",
-    visualTailOpacity: 0,
-    visuals: {
-      darkColorMultiplier: 0.1, // Dark surface as observed
-      lightColorMultiplier: 0.3,
-      fbmScale: 0.5,
-      fineFbmScale: 2.0,
-      fineFbmMix: 0.7,
-      ambientStrength: 0.2,
-    },
-  },
+    classType: CometOrbitType.INTERSTELLAR,
+    composition: ["rock", "metal"], // No ice detected
+    activity: 0.0, // No outgassing observed
+    visualComaRadius: 0, // No coma
+    visualComaColor: "#8B4513",
+    visualComaOpacity: 0.0,
+    visualMaxTailLength: 0, // No tail
+    visualTailColor: "#8B4513",
+    visualTailOpacity: 0.0,
+  } as CometProperties,
 };

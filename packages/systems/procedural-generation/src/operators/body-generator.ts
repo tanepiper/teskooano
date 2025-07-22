@@ -12,11 +12,11 @@ import {
 } from "rxjs";
 import {
   generateAsteroidBelt,
-  generateComet,
   generateMoonsObservable,
   generatePlanet,
   generateRoguePlanet,
 } from "../generators";
+import { CometGenerator } from "../generators/comets/comet";
 import { isValidAsteroidBeltDistance } from "../generators/belts/utils";
 import type { BodyPlacement } from "../utils/body-placement";
 import { OrbitalConfiguration } from "../zones";
@@ -69,13 +69,15 @@ function generateStandardBody(
 
   // First, check for comets.
   if (bodyTypeRoll < cometChance) {
-    const comet = generateComet(
+    const cometGenerator = new CometGenerator({
       random,
       parentStar,
-      distanceRelativeToParentAU,
+      bodyDistanceAU: distanceRelativeToParentAU,
+      systemSeed: seed,
       slotIndex,
-    );
-    return comet ? of(comet) : EMPTY;
+      zone,
+    });
+    return cometGenerator.generate();
   }
 
   // Next, check for asteroid belts.
@@ -127,11 +129,12 @@ function generateRogueObject(
   placement: BodyPlacement,
   seed: string,
 ): Observable<CelestialObject> {
-  const { distanceAU } = placement;
+  const { parentStar, distanceAU } = placement;
 
   // Generate a rogue planet (no moons for rogue objects typically)
   return generateRoguePlanet(
     random,
+    parentStar,
     distanceAU,
     seed,
     placement.slotIndex,

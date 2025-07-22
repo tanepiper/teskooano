@@ -67,6 +67,18 @@ export enum PlanetType {
 }
 
 /**
+ * Classification system for comets based on their orbital characteristics and origin.
+ */
+export enum CometOrbitType {
+  /** Interstellar comets that originate from outside the solar system (e.g., 2I/Borisov, 1I/'Oumuamua). */
+  INTERSTELLAR = "INTERSTELLAR",
+  /** Long-period comets with highly elliptical orbits and periods > 200 years (e.g., Hale-Bopp). */
+  LONG_PERIOD = "LONG_PERIOD",
+  /** Short-period comets with moderate eccentricity and periods < 200 years (e.g., Halley's Comet). */
+  SHORT_PERIOD = "SHORT_PERIOD",
+}
+
+/**
  * Describes the general density of a celestial body's atmosphere.
  */
 export enum AtmosphereType {
