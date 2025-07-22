@@ -6,6 +6,7 @@ import {
   CelestialType,
   PlanetProperties,
   RingProperties,
+  RingSystemConfiguration,
 } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
 import * as CONST from "../../constants";
@@ -16,7 +17,7 @@ import {
   generateGasGiantSpecificProperties,
   generateRockyPlanetSpecificProperties,
 } from "./planet-properties";
-import { generateRings } from "./planet-rings";
+import { generateRings, generateRingsArray } from "./planet-rings";
 import {
   determinePlanetTypeAndBaseProperties,
   type PlanetBaseProperties,
@@ -63,7 +64,7 @@ abstract class BasePlanetGenerator {
   protected planetMass_kg: number = 0;
   protected planetRadius_m: number = 0;
   protected specificProperties!: CelestialSpecificPropertiesUnion;
-  protected generatedRings: RingProperties[] | undefined;
+  protected generatedRings: RingSystemConfiguration | undefined;
 
   constructor(config: BasePlanetConfig, idPrefix: string) {
     this.config = config;
@@ -281,9 +282,14 @@ abstract class BasePlanetGenerator {
     };
 
     // Add rings if generated
-    if (this.generatedRings && this.generatedRings.length > 0) {
+    if (this.generatedRings && this.generatedRings.rings.length > 0) {
       if (planetData.properties) {
-        (planetData.properties as PlanetProperties).rings = this.generatedRings;
+        // Add the enhanced ring system configuration
+        (planetData.properties as PlanetProperties).ringSystem =
+          this.generatedRings;
+        // Also add the rings array for backward compatibility
+        (planetData.properties as PlanetProperties).rings =
+          this.generatedRings.rings;
       }
     }
 

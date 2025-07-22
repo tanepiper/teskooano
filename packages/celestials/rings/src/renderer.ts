@@ -1,5 +1,9 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { CelestialType, RingSystemProperties } from "@teskooano/data-types";
+import {
+  CelestialType,
+  RingSystemProperties,
+  RingSystemConfiguration,
+} from "@teskooano/data-types";
 import * as THREE from "three";
 
 import {
@@ -47,6 +51,11 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   private ringMeshes: Map<string, THREE.Object3D[]> = new Map();
 
   /**
+   * Ring system configuration for enhanced controls
+   */
+  private ringSystemConfig?: RingSystemConfiguration;
+
+  /**
    * Create a new ring system renderer
    *
    * @param object The celestial object for this ring system
@@ -61,6 +70,31 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   }
 
   /**
+   * Gets ring data from either the new ringSystem configuration or legacy rings property
+   */
+  private getRingData(
+    object: RenderableCelestialObject,
+  ): RingSystemConfiguration | null {
+    const properties = object.properties as any;
+
+    // Check for new ring system configuration first
+    if (properties?.ringSystem) {
+      return properties.ringSystem as RingSystemConfiguration;
+    }
+
+    // Fall back to legacy rings property
+    if (properties?.rings && properties.rings.length > 0) {
+      return {
+        rings: properties.rings,
+        inheritParentTilt: true,
+        unifiedRendering: true,
+      };
+    }
+
+    return null;
+  }
+
+  /**
    * Creates and returns LOD levels for the ring system
    *
    * @param object The celestial object with ring properties
@@ -71,14 +105,17 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions & { parentLODDistances?: number[] },
   ): LODLevel[] {
-    const properties = object.properties as RingSystemProperties;
+    const ringData = this.getRingData(object);
 
-    if (!properties?.rings || properties.rings.length === 0) {
+    if (!ringData?.rings || ringData.rings.length === 0) {
       console.warn(
         `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
       );
       return [{ object: new THREE.Group(), distance: 0 }];
     }
+
+    // Store the ring system configuration for later use
+    this.ringSystemConfig = ringData;
 
     // Check if we should use the legacy mode with parentLODDistances
     if (options?.parentLODDistances && options.parentLODDistances.length > 0) {
@@ -215,9 +252,9 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   ): THREE.Group {
     const ringGroup = new THREE.Group();
     ringGroup.name = `${object.celestialObjectId}-rings`;
-    const properties = object.properties as RingSystemProperties;
 
-    if (!properties?.rings || properties.rings.length === 0) {
+    const ringData = this.getRingData(object);
+    if (!ringData?.rings || ringData.rings.length === 0) {
       console.warn(
         `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
       );
@@ -232,7 +269,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       return ringGroup;
     }
 
-    const sortedRings = [...properties.rings].sort(
+    const sortedRings = [...ringData.rings].sort(
       (a, b) => (a.innerRadius || 0) - (b.innerRadius || 0),
     );
 
@@ -295,6 +332,13 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
           emissionType: ringProps.emissionType ?? "thermal",
           isRelativistic: ringProps.isRelativistic ?? false,
           innerEdgeRadius: ringProps.innerEdgeRadius ?? 3.0,
+          axialInclination:
+            ringProps.axialInclination ??
+            ringData.systemAxialInclination ??
+            0.0,
+          ringTilt: ringProps.ringTilt ?? 0.0,
+          inheritParentTilt:
+            ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
         });
 
         // Only log once per accretion disk creation
@@ -308,10 +352,17 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
           );
         }
       } else {
-        // Create normal ring material
+        // Create normal ring material with enhanced axial inclination controls
         ringMaterial = new RingMaterial(ringColor, {
           opacity: ringOpacity,
           rotationRate: rotationRate,
+          axialInclination:
+            ringProps.axialInclination ??
+            ringData.systemAxialInclination ??
+            0.0,
+          ringTilt: ringProps.ringTilt ?? 0.0,
+          inheritParentTilt:
+            ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
         });
       }
 
@@ -427,6 +478,31 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       // Find shadow casters using centralized utility
       const shadowCasters = this.findRingShadowCasters(object, allObjects);
 
+      // Get parent axial tilt if available
+      let parentAxialTilt: THREE.Vector3 | undefined;
+      if (this.ringSystemConfig?.inheritParentTilt) {
+        // Try to get parent object's axial tilt
+        const parentObject = allObjects?.[object.parentId || ""];
+        if (parentObject?.axialTilt) {
+          if (typeof parentObject.axialTilt === "number") {
+            // Convert degrees to radians and create tilt vector
+            const tiltRad = parentObject.axialTilt * (Math.PI / 180);
+            parentAxialTilt = new THREE.Vector3(
+              0,
+              Math.cos(tiltRad),
+              Math.sin(tiltRad),
+            );
+          } else if (parentObject.axialTilt.x !== undefined) {
+            // Convert OSVector3 to THREE.Vector3 for shader uniforms
+            parentAxialTilt = new THREE.Vector3(
+              parentObject.axialTilt.x,
+              parentObject.axialTilt.y,
+              parentObject.axialTilt.z,
+            );
+          }
+        }
+      }
+
       // Update all ring materials
       this.ringMaterials.forEach((material) => {
         // Update dynamic ambient lighting
@@ -443,6 +519,8 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
             object.radius ?? 1.0,
             lightSources,
             shadowCasters,
+            parentAxialTilt,
+            this.ringSystemConfig?.precessionRate,
           );
         }
       });

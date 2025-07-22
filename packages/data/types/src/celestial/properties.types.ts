@@ -84,6 +84,69 @@ export interface PlanetAtmosphereProperties {
 }
 
 /**
+ * Represents the properties defining a single planetary ring or a segment of a ring system.
+ */
+export interface RingProperties {
+  /** The inner boundary radius of the ring (SCALED relative to parent's center). */
+  innerRadius: number;
+  /** The outer boundary radius of the ring (SCALED relative to parent's center). */
+  outerRadius: number;
+  /** The density of particles within the ring, affecting visual appearance. */
+  density: number;
+  /** The opacity of the ring (0.0 = transparent, 1.0 = opaque). */
+  opacity: number;
+  /** The base color tint of the ring particles, usually a hex string. */
+  color: string;
+  /** The rate at which the ring particles orbit the parent body (e.g., radians per second). */
+  rotationRate: number;
+  /** Identifier or path for the texture used to render the ring. */
+  texture: string;
+  /** Array listing the main composition of the ring particles (e.g., ["ice", "rock"]). */
+  composition: string[];
+  /** The dominant type of rocky material composing the ring particles. */
+  type: RockyType;
+
+  // Enhanced Axial Inclination Control
+  /** Axial inclination of the ring system relative to the parent's equatorial plane (in radians). This controls the overall tilt of the ring system. */
+  axialInclination?: number;
+  /** Individual ring tilt relative to the ring system's plane (in radians). Allows for warped or tilted individual rings. */
+  ringTilt?: number;
+  /** Whether this ring should inherit the parent body's axial tilt. Defaults to true for most rings. */
+  inheritParentTilt?: boolean;
+
+  // Accretion Disk Specific Properties
+  /** Whether this ring represents an accretion disk (affects rendering and physics). */
+  isAccretionDisk?: boolean;
+  /** Temperature of the accretion disk material in Kelvin (for emission calculations). */
+  temperature?: number;
+  /** Accretion rate in solar masses per year (for luminosity calculations). */
+  accretionRate?: number;
+  /** Type of emission from the accretion disk (thermal, synchrotron, etc.). */
+  emissionType?: "thermal" | "synchrotron" | "mixed";
+  /** Whether the disk has relativistic effects (for black holes). */
+  isRelativistic?: boolean;
+  /** Inner edge of the accretion disk (in gravitational radii for black holes). */
+  innerEdgeRadius?: number;
+}
+
+/**
+ * Enhanced ring system configuration that can be attached to any celestial object.
+ * This provides a more flexible and comprehensive approach to ring systems.
+ */
+export interface RingSystemConfiguration {
+  /** Array defining the rings within this system. */
+  rings: RingProperties[];
+  /** Overall axial inclination of the entire ring system relative to the parent's equatorial plane (in radians). */
+  systemAxialInclination?: number;
+  /** Whether the ring system should inherit the parent body's axial tilt. Defaults to true. */
+  inheritParentTilt?: boolean;
+  /** Precession rate of the ring system (radians per second). */
+  precessionRate?: number;
+  /** Whether rings should be rendered as a unified system or individual components. */
+  unifiedRendering?: boolean;
+}
+
+/**
  * Properties specific to Planets (including rocky, terrestrial, ice, etc.). Note: Moons use PlanetProperties.
  */
 export interface PlanetProperties<T = ProceduralSurfaceProperties>
@@ -112,7 +175,9 @@ export interface PlanetProperties<T = ProceduralSurfaceProperties>
   };
   /** Optional surface characteristics, specific structure depends on PlanetType. */
   surface?: T;
-  /** Optional array defining planetary rings. */
+  /** Enhanced ring system configuration. */
+  ringSystem?: RingSystemConfiguration;
+  /** Legacy rings property for backward compatibility. */
   rings?: RingProperties[];
 }
 
@@ -175,46 +240,6 @@ export interface ProceduralSurfaceProperties {
 }
 
 /**
- * Represents the properties defining a single planetary ring or a segment of a ring system.
- */
-export interface RingProperties {
-  /** The inner boundary radius of the ring (SCALED relative to parent's center). */
-  innerRadius: number;
-  /** The outer boundary radius of the ring (SCALED relative to parent's center). */
-  outerRadius: number;
-  /** The density of particles within the ring, affecting visual appearance. */
-  density: number;
-  /** The opacity of the ring (0.0 = transparent, 1.0 = opaque). */
-  opacity: number;
-  /** The base color tint of the ring particles, usually a hex string. */
-  color: string;
-  /** Optional tilt of this specific ring relative to the parent's equatorial plane (in radians). If part of a system, the tilt of the first ring is often used for all unless specified. */
-  tilt?: number;
-  /** The rate at which the ring particles orbit the parent body (e.g., radians per second). */
-  rotationRate: number;
-  /** Identifier or path for the texture used to render the ring. */
-  texture: string;
-  /** Array listing the main composition of the ring particles (e.g., ["ice", "rock"]). */
-  composition: string[];
-  /** The dominant type of rocky material composing the ring particles. */
-  type: RockyType;
-
-  // Accretion Disk Specific Properties
-  /** Whether this ring represents an accretion disk (affects rendering and physics). */
-  isAccretionDisk?: boolean;
-  /** Temperature of the accretion disk material in Kelvin (for emission calculations). */
-  temperature?: number;
-  /** Accretion rate in solar masses per year (for luminosity calculations). */
-  accretionRate?: number;
-  /** Type of emission from the accretion disk (thermal, synchrotron, etc.). */
-  emissionType?: "thermal" | "synchrotron" | "mixed";
-  /** Whether the disk has relativistic effects (for black holes). */
-  isRelativistic?: boolean;
-  /** Inner edge of the accretion disk (in gravitational radii for black holes). */
-  innerEdgeRadius?: number;
-}
-
-/**
  * Properties specific to Gas Giants.
  */
 export interface GasGiantProperties extends SpecificPropertiesBase {
@@ -236,6 +261,9 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
   axialTiltDeg?: number;
   emissiveColor?: string;
   emissiveIntensity?: number;
+  /** Enhanced ring system configuration. */
+  ringSystem?: RingSystemConfiguration;
+  /** Legacy rings property for backward compatibility. */
   rings?: RingProperties[];
 }
 

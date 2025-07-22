@@ -21,6 +21,9 @@ export class RingMaterial extends ShaderMaterial {
       opacity?: number;
       detailLevel?: "high" | "medium" | "low" | "very-low";
       rotationRate?: number;
+      axialInclination?: number;
+      ringTilt?: number;
+      inheritParentTilt?: boolean;
     } = {},
   ) {
     const detailLevel = options.detailLevel || "high";
@@ -50,6 +53,14 @@ export class RingMaterial extends ShaderMaterial {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
         uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
+
+        // Enhanced Axial Inclination Controls
+        uAxialInclination: { value: options.axialInclination ?? 0.0 },
+        uRingTilt: { value: options.ringTilt ?? 0.0 },
+        uInheritParentTilt: { value: options.inheritParentTilt ?? true },
+        uParentAxialTilt: { value: new Vector3(0, 1, 0) }, // Default Y-axis
+        uPrecessionAngle: { value: 0.0 },
+        uPrecessionRate: { value: 0.0 },
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,
@@ -87,6 +98,8 @@ export class RingMaterial extends ShaderMaterial {
     parentRadius: number,
     lightSources?: LightSourcesMap,
     shadowCasters?: { position: Vector3; radius: number }[],
+    parentAxialTilt?: Vector3,
+    precessionRate?: number,
   ) {
     this.uniforms.time.value = time;
 
@@ -94,8 +107,20 @@ export class RingMaterial extends ShaderMaterial {
     const rotationRate = this.uniforms.rotationRate.value;
     this.uniforms.rotationAngle.value = (time * rotationRate) % (Math.PI * 2);
 
+    // Update precession angle if provided
+    if (precessionRate !== undefined) {
+      this.uniforms.uPrecessionRate.value = precessionRate;
+      this.uniforms.uPrecessionAngle.value =
+        (time * precessionRate) % (Math.PI * 2);
+    }
+
     this.uniforms.uParentPosition.value.copy(parentPosition);
     this.uniforms.uParentRadius.value = parentRadius;
+
+    // Update parent axial tilt if provided
+    if (parentAxialTilt) {
+      this.uniforms.uParentAxialTilt.value.copy(parentAxialTilt);
+    }
 
     const numLights = lightSources?.size ?? 0;
     if (numLights !== this.currentNumLights) {
@@ -153,6 +178,9 @@ export class AccretionDiskMaterial extends ShaderMaterial {
       emissionType?: "thermal" | "synchrotron" | "mixed";
       isRelativistic?: boolean;
       innerEdgeRadius?: number;
+      axialInclination?: number;
+      ringTilt?: number;
+      inheritParentTilt?: boolean;
     } = {},
   ) {
     const detailLevel = options.detailLevel || "high";
@@ -197,6 +225,14 @@ export class AccretionDiskMaterial extends ShaderMaterial {
         },
         uIsRelativistic: { value: options.isRelativistic ?? false },
         uInnerEdgeRadius: { value: options.innerEdgeRadius ?? 3.0 }, // 3 gravitational radii
+
+        // Enhanced Axial Inclination Controls
+        uAxialInclination: { value: options.axialInclination ?? 0.0 },
+        uRingTilt: { value: options.ringTilt ?? 0.0 },
+        uInheritParentTilt: { value: options.inheritParentTilt ?? true },
+        uParentAxialTilt: { value: new Vector3(0, 1, 0) }, // Default Y-axis
+        uPrecessionAngle: { value: 0.0 },
+        uPrecessionRate: { value: 0.0 },
       },
       vertexShader: ringVertexShader,
       fragmentShader: accretionDiskFragmentShader,
@@ -234,6 +270,8 @@ export class AccretionDiskMaterial extends ShaderMaterial {
     parentRadius: number,
     lightSources?: LightSourcesMap,
     shadowCasters?: { position: Vector3; radius: number }[],
+    parentAxialTilt?: Vector3,
+    precessionRate?: number,
   ) {
     this.uniforms.time.value = time;
 
@@ -241,8 +279,20 @@ export class AccretionDiskMaterial extends ShaderMaterial {
     const rotationRate = this.uniforms.rotationRate.value;
     this.uniforms.rotationAngle.value = (time * rotationRate) % (Math.PI * 2);
 
+    // Update precession angle if provided
+    if (precessionRate !== undefined) {
+      this.uniforms.uPrecessionRate.value = precessionRate;
+      this.uniforms.uPrecessionAngle.value =
+        (time * precessionRate) % (Math.PI * 2);
+    }
+
     this.uniforms.uParentPosition.value.copy(parentPosition);
     this.uniforms.uParentRadius.value = parentRadius;
+
+    // Update parent axial tilt if provided
+    if (parentAxialTilt) {
+      this.uniforms.uParentAxialTilt.value.copy(parentAxialTilt);
+    }
 
     const numLights = lightSources?.size ?? 0;
     if (numLights !== this.currentNumLights) {

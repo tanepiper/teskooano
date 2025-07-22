@@ -1,4 +1,8 @@
-import type { CelestiaClassType, RingProperties } from "@teskooano/data-types";
+import type {
+  CelestiaClassType,
+  RingProperties,
+  RingSystemConfiguration,
+} from "@teskooano/data-types";
 import { RockyType } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
@@ -47,17 +51,22 @@ function generateEnhancedRingProperties(
   const rotationRate =
     0.001 / Math.pow((innerRadius_m + outerRadius_m) / 2e8, 1.5);
 
+  // Generate individual ring tilt (small variations around system tilt)
+  const ringTilt = systemTilt + (random() - 0.5) * 0.02; // ±0.01 radians variation
+
   return {
     innerRadius: innerRadius_m,
     outerRadius: outerRadius_m,
     density,
     opacity,
     color,
-    tilt: systemTilt,
     rotationRate,
     texture,
     composition: ringComp,
     type: ringType,
+    // Enhanced Axial Inclination Controls
+    ringTilt: ringTilt,
+    inheritParentTilt: true, // Most rings inherit parent's axial tilt
   };
 }
 
@@ -85,7 +94,7 @@ function getEnhancedRingTexture(ringType: RockyType): string {
  * @param allowedTypes Array of allowed ring composition types.
  * @param parentVisualRadius_m The visual radius of the parent planet in meters.
  * @param outerRadiusFactor Factor for determining outer ring radius (default: 1.5).
- * @returns Array of RingProperties or undefined if no rings are generated.
+ * @returns RingSystemConfiguration or undefined if no rings are generated.
  */
 export function generateRings(
   random: () => number,
@@ -93,7 +102,7 @@ export function generateRings(
   allowedTypes: RockyType[],
   parentVisualRadius_m: number,
   outerRadiusFactor: number = 1.5,
-): RingProperties[] | undefined {
+): RingSystemConfiguration | undefined {
   const roll = random();
 
   if (roll < chance && allowedTypes.length > 0) {
@@ -165,8 +174,47 @@ export function generateRings(
       currentInnerRadius_m = outerRadius_m + gap;
     }
 
-    return rings;
+    // Generate system-wide axial inclination (overall tilt of the ring system)
+    const systemAxialInclination = systemTilt + (random() - 0.5) * 0.05; // ±0.025 radians variation
+
+    // Generate precession rate (very slow for most ring systems)
+    const precessionRate = (random() - 0.5) * 0.0001; // ±0.00005 radians/second
+
+    return {
+      rings: rings,
+      systemAxialInclination: systemAxialInclination,
+      inheritParentTilt: true, // Most ring systems inherit parent's axial tilt
+      precessionRate: precessionRate,
+      unifiedRendering: true, // Render as a unified system
+    };
   }
 
   return undefined;
+}
+
+/**
+ * Generates ring systems for planets and returns just the rings array (backward compatibility).
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param chance The probability of ring formation (0-1).
+ * @param allowedTypes Array of allowed ring composition types.
+ * @param parentVisualRadius_m The visual radius of the parent planet in meters.
+ * @param outerRadiusFactor Factor for determining outer ring radius (default: 1.5).
+ * @returns Array of RingProperties or undefined if no rings are generated.
+ */
+export function generateRingsArray(
+  random: () => number,
+  chance: number,
+  allowedTypes: RockyType[],
+  parentVisualRadius_m: number,
+  outerRadiusFactor: number = 1.5,
+): RingProperties[] | undefined {
+  const ringSystem = generateRings(
+    random,
+    chance,
+    allowedTypes,
+    parentVisualRadius_m,
+    outerRadiusFactor,
+  );
+  return ringSystem?.rings;
 }

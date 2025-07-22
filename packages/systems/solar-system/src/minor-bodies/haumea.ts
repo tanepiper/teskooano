@@ -7,10 +7,17 @@ import {
   CelestialStatus,
   type PlanetProperties,
   type RingProperties,
+  type RingSystemConfiguration,
 } from "@teskooano/data-types";
 
 /**
  * Haumea dwarf planet configuration object for modular solar system initialization.
+ *
+ * Features enhanced ring system with axial inclination controls:
+ * - 126.0° axial tilt (2.199 radians) - extreme tilt, nearly upside down
+ * - Ring inherits Haumea's extreme axial tilt for unique seasonal effects
+ * - Very slow precession for stability
+ * - Single ice ring discovered in 2017
  */
 export const haumea: CelestialObject<PlanetProperties> = {
   id: "haumea",
@@ -48,6 +55,33 @@ export const haumea: CelestialObject<PlanetProperties> = {
       "organic compounds",
     ],
     shapeModel: "triaxial",
+    // Enhanced ring system configuration with axial inclination controls
+    ringSystem: {
+      rings: [
+        {
+          innerRadius: kmToM(2287),
+          outerRadius: kmToM(2322),
+          density: 0.5,
+          opacity: 0.5,
+          color: "#C0C0C0",
+          type: RockyType.ICE,
+          texture: "textures/ring_haumea.png",
+          rotationRate: 0.001,
+          composition: ["ice particles"],
+          inheritParentTilt: true, // Inherit Haumea's extreme 126.0° axial tilt
+        } as RingProperties,
+      ],
+      // Haumea's extreme axial inclination: 126.0° = 2.199 radians
+      systemAxialInclination: 2.199,
+      // Ring inherits Haumea's extreme axial tilt
+      inheritParentTilt: true,
+      // Very slow precession (Haumea's ring is quite stable)
+      precessionRate: 0.00001,
+      // Render as a unified system
+      unifiedRendering: true,
+    } as RingSystemConfiguration,
+
+    // Legacy rings property for backward compatibility
     rings: [
       {
         innerRadius: kmToM(2287),

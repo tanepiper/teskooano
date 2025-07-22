@@ -9,9 +9,20 @@ import {
   RockyType,
   CelestialStatus,
   type GasGiantProperties,
+  type RingProperties,
+  type RingSystemConfiguration,
   type CelestialObject,
 } from "@teskooano/data-types";
 
+/**
+ * Uranus configuration object for modular solar system initialization.
+ *
+ * Features enhanced ring system with axial inclination controls:
+ * - 97.77° axial tilt (1.706 radians) - extreme tilt, nearly on its side
+ * - All rings inherit Uranus's extreme axial tilt for unique seasonal effects
+ * - Very slow precession for stability
+ * - Dark, dusty ring system with one bright epsilon ring
+ */
 export const uranus: CelestialObject<GasGiantProperties> = {
   id: "uranus",
   name: "Uranus",
@@ -44,6 +55,129 @@ export const uranus: CelestialObject<GasGiantProperties> = {
     stormSpeed: 30,
     emissiveColor: "#B0E0E61A",
     emissiveIntensity: 0.05,
+    // Enhanced ring system configuration with axial inclination controls
+    ringSystem: {
+      rings: [
+        {
+          innerRadius: 25362 * 1.64,
+          outerRadius: 25362 * 1.641,
+          density: 0.1,
+          opacity: 0.4,
+          color: "#A0A0A0",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.003,
+          composition: ["dark dust"],
+          inheritParentTilt: true, // Inherit Uranus's extreme 97.77° axial tilt
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 1.7,
+          outerRadius: 25362 * 1.701,
+          density: 0.15,
+          opacity: 0.5,
+          color: "#989898",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.0028,
+          composition: ["dark dust"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 1.74,
+          outerRadius: 25362 * 1.741,
+          density: 0.15,
+          opacity: 0.5,
+          color: "#989898",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.0027,
+          composition: ["dark dust"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 1.77,
+          outerRadius: 25362 * 1.771,
+          density: 0.15,
+          opacity: 0.5,
+          color: "#989898",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.0026,
+          composition: ["dark dust"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 1.8,
+          outerRadius: 25362 * 1.801,
+          density: 0.15,
+          opacity: 0.5,
+          color: "#989898",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.0025,
+          composition: ["dark dust"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 1.81,
+          outerRadius: 25362 * 1.811,
+          density: 0.2,
+          opacity: 0.6,
+          color: "#B0B0B0",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.0024,
+          composition: ["dark dust", "small ice particles"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 1.95,
+          outerRadius: 25362 * 1.96,
+          density: 0.8,
+          opacity: 0.8,
+          color: "#C0C0C0",
+          type: RockyType.ICE_DUST,
+          texture: "textures/ring_epsilon.png",
+          rotationRate: 0.0022,
+          composition: ["ice boulders", "dust"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 2.55,
+          outerRadius: 25362 * 3.8,
+          density: 0.05,
+          opacity: 0.1,
+          color: "#87CEEB",
+          type: RockyType.DUST,
+          texture: "textures/ring_mu.png",
+          rotationRate: 0.0015,
+          composition: ["blue dust"],
+          inheritParentTilt: true,
+        } as RingProperties,
+        {
+          innerRadius: 25362 * 3.8,
+          outerRadius: 25362 * 3.86,
+          density: 0.02,
+          opacity: 0.05,
+          color: "#D3D3D3",
+          type: RockyType.DUST,
+          texture: "textures/ring_nu.png",
+          rotationRate: 0.001,
+          composition: ["faint dust"],
+          inheritParentTilt: true, // Inherit Uranus's extreme 97.77° axial tilt
+        } as RingProperties,
+      ],
+      // Uranus's extreme axial inclination: 97.77° = 1.706 radians
+      systemAxialInclination: 1.706,
+      // Rings inherit Uranus's extreme axial tilt
+      inheritParentTilt: true,
+      // Very slow precession (Uranus's rings are quite stable)
+      precessionRate: 0.00001,
+      // Render as a unified system
+      unifiedRendering: true,
+    } as RingSystemConfiguration,
+
+    // Legacy rings property for backward compatibility
     rings: [
       {
         innerRadius: 25362 * 1.64,

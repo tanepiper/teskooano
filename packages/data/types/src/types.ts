@@ -59,4 +59,7 @@ export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
 
   /** A collection of values intended to be passed as uniforms to shaders. */
   uniforms: { [key: string]: any };
+
+  /** The axial tilt of the object (copied from orbit.axialTilt for convenience). */
+  axialTilt?: OSVector3 | number;
 }
