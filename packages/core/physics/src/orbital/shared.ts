@@ -1,4 +1,5 @@
 import type { OrbitalParameters } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-types";
 import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
@@ -17,6 +18,9 @@ export function calculateKeplerTolerance(distanceAU: number): number {
   return Math.max(minTolerance, Math.min(maxTolerance, scaledTolerance));
 }
 
+// Simple cache for hyperbolic Kepler solutions to ensure consistency
+const hyperbolicCache = new Map<string, number>();
+
 /**
  * Solves Kepler's equation M = E - e * sin(E) for the eccentric anomaly E,
  * given the mean anomaly M and eccentricity e.
@@ -32,27 +36,16 @@ export function calculateKeplerTolerance(distanceAU: number): number {
 export const solveKeplerEquation = (
   meanAnomaly: number,
   eccentricity: number,
-  tolerance: number = 1e-4,
+  tolerance: number = 1e-8, // Tighter tolerance for more consistent results
   maxIterations: number = 100,
   distanceAU?: number,
 ): number => {
-  // Validate inputs
-  if (Number.isNaN(meanAnomaly) || Number.isNaN(eccentricity)) {
-    console.warn("[Kepler] Invalid inputs to solveKeplerEquation:", {
-      meanAnomaly,
-      eccentricity,
-      distanceAU,
-    });
-    return 0;
-  }
-
-  // Use distance-based tolerance if distance is provided
-  const effectiveTolerance =
-    distanceAU !== undefined ? calculateKeplerTolerance(distanceAU) : tolerance;
+  // Use a more precise tolerance for hyperbolic orbits
+  const effectiveTolerance = eccentricity > 1 ? 1e-10 : tolerance;
 
   if (eccentricity < 1) {
     // Elliptical orbit: M = E - e * sin(E)
-    let eccentricAnomaly = meanAnomaly; // Initial guess
+    let eccentricAnomaly = meanAnomaly;
     for (let i = 0; i < maxIterations; i++) {
       const delta =
         (eccentricAnomaly -
@@ -64,48 +57,39 @@ export const solveKeplerEquation = (
         return eccentricAnomaly;
       }
     }
-    return eccentricAnomaly; // Return the last approximation
+    return eccentricAnomaly;
   } else if (eccentricity > 1) {
     // Hyperbolic orbit: M = e * sinh(H) - H
+    // This is the correct Kepler's equation for hyperbolic orbits
+    // where H is the hyperbolic eccentric anomaly
+
+    // Check cache first for consistency
+    const cacheKey = `${meanAnomaly.toFixed(10)}_${eccentricity.toFixed(10)}`;
+    if (hyperbolicCache.has(cacheKey)) {
+      return hyperbolicCache.get(cacheKey)!;
+    }
+
     // Initial guess for hyperbolic eccentric anomaly H
+    // For hyperbolic orbits, a better initial guess is needed
     let hyperbolicAnomaly: number;
 
     if (Math.abs(meanAnomaly) < 1e-10) {
-      hyperbolicAnomaly = 0; // At periapsis
+      // At periapsis, H = 0
+      hyperbolicAnomaly = 0;
     } else {
-      // Better initial guess for hyperbolic orbits
-      // For large negative mean anomalies (approaching periapsis), use a small negative value
-      // For large positive mean anomalies (past periapsis), use a large positive value
-      if (meanAnomaly < -100) {
-        // Very large negative mean anomaly - object is approaching periapsis
-        hyperbolicAnomaly = -Math.log(
-          Math.abs(meanAnomaly) / (eccentricity - 1),
-        );
-      } else if (meanAnomaly > 100) {
-        // Very large positive mean anomaly - object is past periapsis
-        hyperbolicAnomaly = Math.log(meanAnomaly / (eccentricity - 1));
+      // For hyperbolic orbits, we can use the relationship between M and H
+      // For large |M|, H ≈ M/e (this is an approximation)
+      // For smaller |M|, we can use a more sophisticated guess
+      if (Math.abs(meanAnomaly) > 10) {
+        // Large mean anomaly - use the asymptotic approximation
+        hyperbolicAnomaly = meanAnomaly / eccentricity;
       } else {
-        // Moderate mean anomaly - use the original formula
-        hyperbolicAnomaly =
-          meanAnomaly >= 0
-            ? Math.log(meanAnomaly / (eccentricity - 1) + 1)
-            : -Math.log(-meanAnomaly / (eccentricity - 1) + 1);
+        // Smaller mean anomaly - use a more refined initial guess
+        hyperbolicAnomaly = meanAnomaly / (eccentricity - 1);
       }
     }
 
-    if (isNaN(hyperbolicAnomaly) || !isFinite(hyperbolicAnomaly)) {
-      console.warn(
-        "[Kepler] Invalid initial guess for hyperbolic anomaly, using fallback:",
-        {
-          meanAnomaly,
-          eccentricity,
-          hyperbolicAnomaly,
-        },
-      );
-      // Use a reasonable fallback based on the sign of mean anomaly
-      hyperbolicAnomaly = meanAnomaly < 0 ? -1 : 1;
-    }
-
+    // Newton-Raphson iteration for hyperbolic orbits
     for (let i = 0; i < maxIterations; i++) {
       const f =
         eccentricity * Math.sinh(hyperbolicAnomaly) -
@@ -115,45 +99,58 @@ export const solveKeplerEquation = (
 
       if (Math.abs(fPrime) < effectiveTolerance) {
         if (Math.abs(f) < effectiveTolerance) {
+          // Cache the result for consistency
+          hyperbolicCache.set(cacheKey, hyperbolicAnomaly);
           return hyperbolicAnomaly;
         }
-        break; // Avoid division by zero
+        break;
       }
 
       const delta = f / fPrime;
       hyperbolicAnomaly -= delta;
 
-      // Check for NaN or infinite values
-      if (isNaN(hyperbolicAnomaly) || !isFinite(hyperbolicAnomaly)) {
-        console.warn(
-          "[Kepler] NaN/Infinite value in hyperbolic solver, using fallback:",
-          {
-            meanAnomaly,
-            eccentricity,
-            hyperbolicAnomaly,
-            delta,
-          },
-        );
-        // Use a reasonable fallback based on the sign of mean anomaly
-        return meanAnomaly < 0 ? -1 : 1;
-      }
-
       if (Math.abs(delta) < effectiveTolerance) {
+        // Cache the result for consistency
+        hyperbolicCache.set(cacheKey, hyperbolicAnomaly);
         return hyperbolicAnomaly;
       }
+
+      if (isNaN(hyperbolicAnomaly) || !isFinite(hyperbolicAnomaly)) {
+        console.warn("[Kepler] Numerical instability in hyperbolic solver:", {
+          meanAnomaly,
+          eccentricity,
+          hyperbolicAnomaly,
+          delta,
+          iteration: i,
+        });
+        return meanAnomaly > 0 ? 1.0 : -1.0;
+      }
     }
-    return hyperbolicAnomaly; // Return the last approximation
+
+    // Cache the result for consistency
+    hyperbolicCache.set(cacheKey, hyperbolicAnomaly);
+    return hyperbolicAnomaly;
   } else {
-    // Parabolic orbit (eccentricity = 1) - use Barker's equation
-    // For now, treat as very eccentric ellipse
+    // Parabolic orbit: M = E + (1/6) * E³
+    // For parabolic orbits, we can use a series expansion
     let eccentricAnomaly = meanAnomaly;
     for (let i = 0; i < maxIterations; i++) {
-      const delta =
-        (eccentricAnomaly -
-          eccentricity * Math.sin(eccentricAnomaly) -
-          meanAnomaly) /
-        (1 - eccentricity * Math.cos(eccentricAnomaly));
+      const f =
+        eccentricAnomaly +
+        (1 / 6) * Math.pow(eccentricAnomaly, 3) -
+        meanAnomaly;
+      const fPrime = 1 + (1 / 2) * Math.pow(eccentricAnomaly, 2);
+
+      if (Math.abs(fPrime) < effectiveTolerance) {
+        if (Math.abs(f) < effectiveTolerance) {
+          return eccentricAnomaly;
+        }
+        break;
+      }
+
+      const delta = f / fPrime;
       eccentricAnomaly -= delta;
+
       if (Math.abs(delta) < effectiveTolerance) {
         return eccentricAnomaly;
       }
@@ -278,9 +275,15 @@ export function calculateOrbitalPlaneState(
 
   // Calculate velocity in orbital plane
   let mu: number;
-  if (eccentricity > 1 && parentMass_kg) {
-    // For hyperbolic orbits, use parent mass to calculate μ
-    mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
+  if (eccentricity > 1) {
+    // For hyperbolic orbits, always use parent mass to calculate μ
+    if (parentMass_kg) {
+      mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
+    } else {
+      // Fallback: use Sun's mass for solar system objects
+      const SUN_MASS = 1.9885e30; // kg
+      mu = GRAVITATIONAL_CONSTANT * SUN_MASS;
+    }
   } else if (period_s > 0) {
     // For elliptical/parabolic orbits, derive from period
     mu = Math.pow((2 * Math.PI) / period_s, 2) * Math.pow(semiMajorAxis, 3);
@@ -398,21 +401,6 @@ export const calculateKeplerianStateAtTime = (
       mu / Math.pow(Math.abs(realSemiMajorAxis_m), 3),
     );
     meanAnomaly = initialMeanAnomaly + meanMotionHyperbolic * time_s;
-
-    // For hyperbolic orbits, don't normalize the mean anomaly
-    // But check for reasonable bounds to prevent infinity
-    if (!isFinite(meanAnomaly)) {
-      console.warn(
-        "[Kepler] Hyperbolic mean anomaly became infinite, clamping:",
-        {
-          initialMeanAnomaly,
-          meanMotionHyperbolic,
-          time_s,
-          meanAnomaly,
-        },
-      );
-      meanAnomaly = meanAnomaly > 0 ? 1000 : -1000; // Clamp to reasonable values
-    }
 
     anomaly = solveKeplerEquation(meanAnomaly, eccentricity);
   } else {

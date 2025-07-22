@@ -8,6 +8,8 @@ import {
   auToM,
   earthMassesToKg,
   earthRadiiToM,
+  distanceAUToHyperbolicSemiMajorAxis,
+  hyperbolicSemiMajorAxisToPerihelionAU,
 } from "./helpers";
 
 describe("Orbital Helpers", () => {
@@ -117,5 +119,90 @@ describe("Orbital Helpers", () => {
     it("should convert Earth radii to meters", () => {
       expect(earthRadiiToM(1.0)).toBeCloseTo(6.371e6, 0);
     });
+  });
+});
+
+describe("Hyperbolic Helper Functions", () => {
+  describe("distanceAUToHyperbolicSemiMajorAxis", () => {
+    it("should convert distance AU to hyperbolic semi-major axis", () => {
+      const distanceAU = 167.019; // Voyager 1's current distance
+      const eccentricity = 1.5;
+
+      const semiMajorAxisAU = distanceAUToHyperbolicSemiMajorAxis(
+        distanceAU,
+        eccentricity,
+      );
+
+      // For hyperbolic orbits: r ≈ a(e - 1) at large distances
+      // So a ≈ r / (e - 1) = 167.019 / 0.5 = 334.038
+      // But a should be negative for hyperbolic orbits
+      expect(semiMajorAxisAU).toBeCloseTo(-334.038, 3);
+    });
+
+    it("should throw error for non-hyperbolic eccentricity", () => {
+      expect(() => {
+        distanceAUToHyperbolicSemiMajorAxis(100, 0.5);
+      }).toThrow("Eccentricity must be > 1 for hyperbolic orbits");
+    });
+
+    it("should handle edge case of eccentricity = 1", () => {
+      expect(() => {
+        distanceAUToHyperbolicSemiMajorAxis(100, 1.0);
+      }).toThrow("Eccentricity must be > 1 for hyperbolic orbits");
+    });
+  });
+
+  describe("hyperbolicSemiMajorAxisToPerihelionAU", () => {
+    it("should convert hyperbolic semi-major axis to perihelion distance", () => {
+      const semiMajorAxisAU = -334.038; // From previous test
+      const eccentricity = 1.5;
+
+      const perihelionAU = hyperbolicSemiMajorAxisToPerihelionAU(
+        semiMajorAxisAU,
+        eccentricity,
+      );
+
+      // For hyperbolic orbits: rp = |a|(e - 1) = 334.038 * 0.5 = 167.019
+      expect(perihelionAU).toBeCloseTo(167.019, 3);
+    });
+
+    it("should throw error for non-hyperbolic eccentricity", () => {
+      expect(() => {
+        hyperbolicSemiMajorAxisToPerihelionAU(-100, 0.5);
+      }).toThrow("Eccentricity must be > 1 for hyperbolic orbits");
+    });
+
+    it("should work with different eccentricities", () => {
+      const semiMajorAxisAU = -100;
+      const eccentricity = 2.0;
+
+      const perihelionAU = hyperbolicSemiMajorAxisToPerihelionAU(
+        semiMajorAxisAU,
+        eccentricity,
+      );
+
+      // rp = |a|(e - 1) = 100 * 1 = 100
+      expect(perihelionAU).toBeCloseTo(100, 3);
+    });
+  });
+
+  it("should have consistent round-trip conversion", () => {
+    const originalDistanceAU = 140.23; // Voyager 2's distance
+    const eccentricity = 1.5;
+
+    // Convert distance to semi-major axis
+    const semiMajorAxisAU = distanceAUToHyperbolicSemiMajorAxis(
+      originalDistanceAU,
+      eccentricity,
+    );
+
+    // Convert back to perihelion distance
+    const perihelionAU = hyperbolicSemiMajorAxisToPerihelionAU(
+      semiMajorAxisAU,
+      eccentricity,
+    );
+
+    // At large distances, perihelion ≈ distance
+    expect(perihelionAU).toBeCloseTo(originalDistanceAU, 3);
   });
 });

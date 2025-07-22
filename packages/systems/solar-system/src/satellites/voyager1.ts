@@ -1,4 +1,8 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  createOrbitalElements,
+  kmToM,
+  distanceAUToHyperbolicSemiMajorAxis,
+} from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
@@ -18,8 +22,7 @@ export const voyager1: CelestialObject<SatelliteProperties> = {
   albedo: 0.3,
   parentId: "sun",
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 167.019, // Desired distance from sun
-    isHyperbolic: true, // Automatically handles semi-major axis conversion
+    semiMajorAxisAU: distanceAUToHyperbolicSemiMajorAxis(167.019, 1.5), // Convert current distance to hyperbolic semi-major axis
     eccentricity: 1.5, // More realistic hyperbolic eccentricity
     inclinationDeg: 35.7,
     longitudeOfAscendingNodeDeg: 0,

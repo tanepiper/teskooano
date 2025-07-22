@@ -19,13 +19,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@teskooano/core-state": resolve(__dirname, "../../core/state/src"),
-      "@teskooano/data-types": resolve(__dirname, "../../data/types/src"),
-      "@teskooano/core-physics": resolve(__dirname, "../../core/physics/src"),
       "@teskooano/core-math": resolve(__dirname, "../../core/math/src"),
-      "@teskooano/renderer-threejs": resolve(
+      "@teskooano/data-types": resolve(__dirname, "../../data/types/src"),
+      "@teskooano/renderer-threejs-celestial": resolve(
         __dirname,
-        "../../renderer/threejs/src",
+        "../../renderer/threejs-celestial/src",
       ),
     },
   },

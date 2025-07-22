@@ -308,6 +308,8 @@ export interface AsteroidFieldProperties extends SpecificPropertiesBase {
   visualHeight?: number;
   visualDensity?: number;
   visualParticleColor?: string;
+  /** Optional array of texture paths for asteroid rendering. If empty or not provided, fallback textures will be used. */
+  texturePaths?: string[];
 }
 
 /**
@@ -328,6 +330,8 @@ export interface OortCloudProperties extends SpecificPropertiesBase {
   visualParticleCount: number;
   /** Color of the visual particles. */
   visualParticleColor: string;
+  /** Optional array of texture paths for Oort Cloud particle rendering. If empty or not provided, fallback textures will be used. */
+  texturePaths?: string[];
 }
 
 /**

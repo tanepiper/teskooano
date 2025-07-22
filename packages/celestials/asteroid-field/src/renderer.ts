@@ -69,14 +69,18 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   protected createMaterial(
     object: RenderableCelestialObject,
   ): AsteroidFieldMaterial {
+    // Get asteroid field properties to extract texture paths
+    const properties = this._getAsteroidFieldProperties(object);
+
     const material = new AsteroidFieldMaterial({
       particleRotationSpeed: this.particleRotationSpeed,
       renderScale: this.renderScale,
     });
 
-    console.debug(
-      `[AsteroidFieldRenderer] Created material for ${object.celestialObjectId}`,
-    );
+    // Load textures from properties if available
+    if (properties.texturePaths && properties.texturePaths.length > 0) {
+      material.loadTexturesFromPaths(properties.texturePaths);
+    }
 
     return material;
   }
@@ -94,9 +98,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     count: number,
   ): THREE.BufferGeometry {
     if (!this.random) {
-      console.warn(
-        `[AsteroidFieldRenderer] Seeded random not initialized for ${object.celestialObjectId}, using fallback`,
-      );
       this.random = createSeededRandomSync(
         object.seed ?? object.celestialObjectId,
       );
@@ -119,10 +120,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
 
     // Parse color or use default
     const baseColor = new THREE.Color(properties.color || "#8B7355");
-
-    console.debug(
-      `[AsteroidFieldRenderer] Generating ${count} asteroids between ${properties.innerRadiusAU}-${properties.outerRadiusAU} AU`,
-    );
 
     // Generate asteroid positions and properties
     for (let i = 0; i < count; i++) {
@@ -235,13 +232,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
 
     const lodLevels: LODLevel[] = [];
 
-    console.debug(
-      `[AsteroidFieldRenderer] Creating ${distancesSceneUnits.length} LOD levels for asteroid field at distances:`,
-      distancesSceneUnits.map(
-        (d) => `${(d / SCALE.RENDER_SCALE_AU).toFixed(2)} AU`,
-      ),
-    );
-
     for (let i = 0; i < distancesSceneUnits.length; i++) {
       const distance = distancesSceneUnits[i];
       const count = particleCounts[Math.min(i, particleCounts.length - 1)];
@@ -256,10 +246,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     }
 
     if (lodLevels.length === 0) {
-      console.error(
-        `[AsteroidFieldRenderer] Failed to generate any LOD levels for ${object.celestialObjectId}.`,
-      );
-
       const fallbackGeom = this._createAsteroidGeometry(object, 1000);
       const fallbackPoints = new THREE.Points(fallbackGeom, material);
       return [{ object: fallbackPoints, distance: 0 }];
@@ -284,9 +270,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       return object.properties as CentralAsteroidFieldProperties;
     }
 
-    console.warn(
-      `[AsteroidFieldRenderer] Invalid properties for ${object.celestialObjectId}. Using defaults.`,
-    );
     return {
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: 2.0,

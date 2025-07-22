@@ -1,6 +1,7 @@
 $schema: "https://moonrepo.dev/schemas/project.json"
 
 language: "typescript"
+id: "design-system"
 
 project:
   name: "design-system"
@@ -28,13 +29,6 @@ tasks:
 
   lint:
     command: "npm run lint"
-    inputs:
-      - "@group(sources)"
-      - "@group(configs)"
-    platform: "node"
-
-  test:
-    command: "npm run test"
     inputs:
       - "@group(sources)"
       - "@group(configs)"

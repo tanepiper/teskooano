@@ -26,6 +26,7 @@ export const idealOrbit = (
   const { position, velocity } = calculateKeplerianStateAtTime(
     orbitalParameters,
     currentTime_s,
+    parent.mass_kg, // Pass parent mass for proper gravitational parameter calculation
   );
 
   // --- 2. Add Parent's State for World Coordinates ---

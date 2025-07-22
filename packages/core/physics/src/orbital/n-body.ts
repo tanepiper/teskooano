@@ -35,10 +35,13 @@ export const calculateOrbitalPosition = (
 
   const { period_s, eccentricity } = orbitalParameters;
 
-  // Handle hyperbolic orbits (period_s = 0, eccentricity > 1)
+  // For n-body mode, we should use numerical integration for ALL orbits
+  // including hyperbolic ones. The analytical solution is only used for initial setup.
+  // For hyperbolic orbits, we still need to calculate the initial position,
+  // but then let the n-body integrator handle the motion.
   if (period_s === 0 && eccentricity > 1) {
-    // For hyperbolic orbits, we need to calculate position using hyperbolic equations
-    // Pass the parent mass for proper gravitational parameter calculation
+    // For hyperbolic orbits, calculate initial position using analytical solution
+    // This is only used for initial setup, not for ongoing motion
     const { position } = sharedCalculateKeplerianStateAtTime(
       orbitalParameters,
       currentTime,
@@ -109,12 +112,14 @@ export const calculateOrbitalVelocity = (
   // Handle hyperbolic orbits (period_s = 0, eccentricity > 1)
   if (period_s === 0 && eccentricity > 1) {
     // For hyperbolic orbits, we need to calculate velocity using hyperbolic equations
+    // For hyperbolic orbits, we should NOT add parent velocity since the orbit
+    // is calculated relative to the parent's rest frame
     const { velocity } = sharedCalculateKeplerianStateAtTime(
       orbitalParameters,
       currentTime,
       parentStateReal.mass_kg,
     );
-    return velocity.add(parentStateReal.velocity_mps);
+    return velocity; // Don't add parent velocity for hyperbolic orbits
   }
 
   // For regular orbits, period must be non-zero

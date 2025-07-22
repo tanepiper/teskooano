@@ -8,6 +8,7 @@ export interface OortCloudMaterialOptions {
   cloudTexture?: THREE.Texture;
   pointSizeScale?: number;
   particleRotationSpeed?: number;
+  texturePaths?: string[];
 }
 
 /**
@@ -48,6 +49,11 @@ export class OortCloudMaterial extends THREE.ShaderMaterial {
 
     this.needsUpdate = true;
     this.uniformsNeedUpdate = true;
+
+    // Load textures from paths if provided
+    if (options.texturePaths && options.texturePaths.length > 0) {
+      this.loadTexturesFromPaths(options.texturePaths);
+    }
   }
 
   /**
@@ -88,5 +94,29 @@ export class OortCloudMaterial extends THREE.ShaderMaterial {
   setCloudTexture(texture: THREE.Texture): void {
     this.uniforms.cloudTexture.value = texture;
     this.needsUpdate = true;
+  }
+
+  /**
+   * Loads textures from provided paths.
+   */
+  loadTexturesFromPaths(texturePaths: string[]): void {
+    if (texturePaths.length === 0) {
+      return;
+    }
+
+    // Use the first texture path for Oort Cloud (simpler than asteroid field)
+    const texturePath = texturePaths[0];
+    const textureLoader = new THREE.TextureLoader();
+
+    textureLoader.load(
+      texturePath,
+      (texture) => {
+        this.setCloudTexture(texture);
+      },
+      undefined,
+      (error) => {
+        // If texture loading fails, keep the fallback texture
+      },
+    );
   }
 }

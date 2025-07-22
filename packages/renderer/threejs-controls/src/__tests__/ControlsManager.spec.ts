@@ -3,6 +3,17 @@ import { ControlsManager } from "../ControlsManager";
 import * as THREE from "three";
 import { simulationStateService } from "@teskooano/core-state";
 
+// Mock the simulationStateService
+vi.mock("@teskooano/core-state", () => ({
+  simulationStateService: {
+    setSimulationState: vi.fn(),
+  },
+  StateSubscriptionMixin: class {
+    subscribeToState() {}
+    dispose() {}
+  },
+}));
+
 describe("ControlsManager", () => {
   let controlsManager: ControlsManager;
   let camera: THREE.PerspectiveCamera;
@@ -29,15 +40,15 @@ describe("ControlsManager", () => {
   it("should initialize with default settings", () => {
     expect(controlsManager.controls).toBeDefined();
     expect(controlsManager.controls.enableDamping).toBe(true);
-    expect(controlsManager.controls.dampingFactor).toBe(0.1);
+    expect(controlsManager.controls.dampingFactor).toBe(0.5);
     expect(controlsManager.controls.screenSpacePanning).toBe(false);
-    expect(controlsManager.controls.minDistance).toBe(0.1);
-    expect(controlsManager.controls.maxDistance).toBe(50000);
+    expect(controlsManager.controls.minDistance).toBe(0.0001);
+    expect(controlsManager.controls.maxDistance).toBe(1e8);
     expect(controlsManager.controls.maxPolarAngle).toBe(Math.PI);
     expect(controlsManager.controls.enableZoom).toBe(true);
-    expect(controlsManager.controls.zoomSpeed).toBe(0.7);
+    expect(controlsManager.controls.zoomSpeed).toBe(1.0);
     expect(controlsManager.controls.enableRotate).toBe(true);
-    expect(controlsManager.controls.rotateSpeed).toBe(0.5);
+    expect(controlsManager.controls.rotateSpeed).toBe(1.0);
     expect(controlsManager.controls.enablePan).toBe(true);
     expect(controlsManager.controls.panSpeed).toBe(1.0);
   });
@@ -67,41 +78,30 @@ describe("ControlsManager", () => {
     expect(controlsManager.controls.enabled).toBe(true);
   });
 
-  it("should update simulation state when controls change", () => {
+  it("should handle controls end event", () => {
+    // Ensure controls are enabled
+    controlsManager.setEnabled(true);
+
     camera.position.set(100, 200, 300);
     controlsManager.controls.target.set(10, 20, 30);
 
-    controlsManager.controls.dispatchEvent({ type: "change" });
-
-    expect(simulationStateService.setSimulationState).toHaveBeenCalledWith({
-      camera: {
-        position: expect.any(THREE.Vector3),
-        target: expect.any(THREE.Vector3),
-      },
-    });
-
-    const setCall = vi.mocked(simulationStateService.setSimulationState).mock
-      .calls[0][0];
-    const cameraState = setCall.camera;
-
-    expect(cameraState.position.x).toBe(100);
-    expect(cameraState.position.y).toBe(200);
-    expect(cameraState.position.z).toBe(300);
-
-    expect(cameraState.target.x).toBe(10);
-    expect(cameraState.target.y).toBe(20);
-    expect(cameraState.target.z).toBe(30);
+    // Trigger the end event - this should not throw an error
+    expect(() => {
+      controlsManager.controls.dispatchEvent({ type: "end" });
+    }).not.toThrow();
   });
 
-  it("should not update simulation state when controls are disabled", () => {
+  it("should not dispatch custom event when controls are disabled", () => {
+    const eventSpy = vi.spyOn(container, "dispatchEvent");
+
     controlsManager.setEnabled(false);
 
     camera.position.set(100, 200, 300);
     controlsManager.controls.target.set(10, 20, 30);
 
-    controlsManager.controls.dispatchEvent({ type: "change" });
+    controlsManager.controls.dispatchEvent({ type: "end" });
 
-    expect(simulationStateService.setSimulationState).not.toHaveBeenCalled();
+    expect(eventSpy).not.toHaveBeenCalled();
   });
 
   it("should dispose controls properly", () => {

@@ -35,7 +35,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
   private cloudTexture: THREE.Texture | null = null;
   private cloudRotationSpeed = 0.00002;
   private particleRotationSpeed = 0.75; // Default, will be seeded
-  private textureLoader: THREE.TextureLoader | null = null;
 
   constructor(object: RenderableCelestialObject) {
     super(object);
@@ -58,14 +57,10 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
     ) {
       properties = object.properties as CentralOortCloudProperties;
     } else {
-      console.error(
-        `[OortCloudRenderer] Could not find 'oortCloudProperties' in object properties for ${object.celestialObjectId}. Using defaults.`,
-      );
       properties = null;
     }
 
     if (!properties) {
-      console.error("Invalid OortCloudProperties:", properties);
       properties = {
         type: CelestialType.OORT_CLOUD,
         innerRadiusAU: 2000, // More realistic Oort cloud distance
@@ -88,11 +83,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
       typeof properties.outerRadiusAU !== "number" ||
       isNaN(properties.outerRadiusAU)
     ) {
-      console.error(
-        "Invalid essential OortCloudProperties after default assignment:",
-        properties,
-      );
-
       properties = {
         type: CelestialType.OORT_CLOUD,
         innerRadiusAU: 2000, // More realistic Oort cloud distance
@@ -125,10 +115,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
       !Number.isFinite(visualCount) ||
       visualThickness <= 0
     ) {
-      console.error(
-        `OortCloudRenderer: Invalid visualRadius (${visualRadius}), visualThickness (${visualThickness}), or visualCount (${visualCount}) before loop for object ${object.celestialObjectId}. Returning empty geometry/material.`,
-      );
-
       const material = this.createAndRegisterMaterial(object);
       return {
         geometry: new THREE.BufferGeometry(),
@@ -205,38 +191,16 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
   protected createMaterial(
     object: RenderableCelestialObject,
   ): OortCloudMaterial {
+    // Get Oort Cloud properties to extract texture paths
+    const properties = this.getOortCloudProperties(object);
+
     // Create material with fallback texture
     const material = new OortCloudMaterial({
       cloudTexture: this.cloudTexture || undefined,
       pointSizeScale: 0.3,
       particleRotationSpeed: this.particleRotationSpeed,
+      texturePaths: properties.texturePaths,
     });
-
-    // Load real texture asynchronously if not already loaded
-    if (!this.cloudTexture) {
-      const texturePath = "space/textures/asteroids/asteroid_1.png";
-
-      this.textureLoader = new THREE.TextureLoader();
-      this.textureLoader.load(
-        `${window.location.href}${texturePath}`,
-        (texture) => {
-          this.cloudTexture = texture;
-          const currentMaterial = this.getTypedMaterial(
-            object.celestialObjectId,
-          );
-          if (currentMaterial) {
-            currentMaterial.setCloudTexture(texture);
-          }
-        },
-        undefined,
-        (error) => {
-          console.error(
-            "[OortCloudRenderer] Error loading cloud texture:",
-            error,
-          );
-        },
-      );
-    }
 
     return material;
   }
@@ -289,9 +253,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
     // Create material
     const material = this.createAndRegisterMaterial(object);
     if (!material) {
-      console.error(
-        `[OortCloudRenderer] Could not create material for ${object.celestialObjectId}.`,
-      );
       return []; // Return empty array if material fails
     }
 
@@ -402,6 +363,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
         visualDensity: 0.1,
         visualParticleCount: 1000,
         visualParticleColor: "#303031",
+        texturePaths: undefined,
       };
     }
 
@@ -443,7 +405,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
     }
     this.particles = null;
     this.cloudTexture = null;
-    this.textureLoader = null;
 
     // Call parent dispose to clean up base class resources
     super.dispose();

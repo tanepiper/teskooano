@@ -26,7 +26,8 @@ export class OrbitCalculator {
     object: RenderableCelestialObject,
   ): number {
     const MIN_STEPS = 256;
-    const MAX_STEPS = 1024; // Lowered from 4096 to prevent performance issues
+    const MAX_STEPS_ELLIPTICAL = 1024; // Original max steps for elliptical/parabolic
+    const MAX_STEPS_HYPERBOLIC = 2048; // Increased for hyperbolic orbits
     // Use a higher density for Keplerian lines to ensure they are always smooth
     const POINTS_PER_AU = 500; // Lowered from 3000
 
@@ -38,8 +39,7 @@ export class OrbitCalculator {
 
     if (object.orbit.eccentricity > 1) {
       // Hyperbolic orbit: use a fixed number of steps since it's an open curve
-      // The range is limited by the true anomaly calculation, so we need enough points for smooth rendering
-      steps = MAX_STEPS; // Use maximum steps for smooth hyperbolic curves
+      steps = MAX_STEPS_HYPERBOLIC; // Use increased maximum steps for smooth hyperbolic curves
     } else {
       // Elliptical/parabolic orbit: approximate the circumference
       const circumferenceAU =
@@ -53,7 +53,15 @@ export class OrbitCalculator {
       object.type === CelestialType.COMET ? steps * 1.2 : steps;
 
     // Clamp the result to prevent excessively low or high step counts.
-    return Math.max(MIN_STEPS, Math.min(Math.round(finalSteps), MAX_STEPS));
+    return Math.max(
+      MIN_STEPS,
+      Math.min(
+        Math.round(finalSteps),
+        object.orbit.eccentricity > 1
+          ? MAX_STEPS_HYPERBOLIC
+          : MAX_STEPS_ELLIPTICAL,
+      ),
+    );
   }
 
   /**
@@ -99,44 +107,63 @@ export class OrbitCalculator {
     const points: OSVector3[] = [];
     const segments = this.calculateOrbitSteps(object);
 
-    // For hyperbolic orbits, we need to limit the true anomaly range
-    // to avoid infinite distances and show a reasonable portion of the trajectory
-    let trueAnomalyRange: number;
     if (orbitalParameters.eccentricity > 1) {
-      // Hyperbolic orbit: limit to a reasonable range around periapsis
-      // Calculate the angle where the object is at a reasonable distance (e.g., 10 AU)
-      const maxDistanceAU = 10;
-      const maxDistance_m = maxDistanceAU * AU_METERS;
-      const cosMaxAngle =
-        ((Math.abs(orbitalParameters.realSemiMajorAxis_m) *
-          (orbitalParameters.eccentricity * orbitalParameters.eccentricity -
-            1)) /
-          maxDistance_m -
-          1) /
-        orbitalParameters.eccentricity;
-      const maxAngle = Math.acos(Math.max(-1, Math.min(1, cosMaxAngle)));
-      trueAnomalyRange = 2 * maxAngle;
+      // Hyperbolic orbit: use the proper range from approach to departure
+      // For hyperbolic orbits, we want to show the trajectory from approach through periapsis to departure
+      // The true anomaly should go from negative (approach) through 0 (periapsis) to positive (departure)
+
+      // Calculate the asymptote angles for the hyperbola
+      const asymptoteAngle = Math.acos(-1 / orbitalParameters.eccentricity);
+
+      // Use a range that goes from well before periapsis to well after periapsis
+      // but doesn't go all the way to the asymptotes to avoid infinite distances
+      const approachAngle = -asymptoteAngle * 0.98; // 98% of the way to asymptote (increased from 0.95)
+      const departureAngle = asymptoteAngle * 0.98; // 98% of the way to asymptote (increased from 0.95)
+
+      // Calculate the total range and number of points
+      const totalRange = departureAngle - approachAngle;
+
+      for (let i = 0; i <= segments; i++) {
+        const trueAnomaly_rad = approachAngle + (i / segments) * totalRange;
+
+        const realRelativePosition = calculateKeplerianPositionAtTrueAnomaly(
+          orbitalParameters,
+          trueAnomaly_rad,
+        );
+
+        // Only push valid positions to prevent rendering errors
+        if (realRelativePosition.isFinite()) {
+          const scaledRelativePosition = realRelativePosition.multiplyScalar(
+            SCALE.RENDER_SCALE_AU / AU_METERS,
+          );
+          points.push(scaledRelativePosition);
+        } else {
+          console.warn(
+            `[OrbitCalc] Skipping NaN/Infinite position for ${object.celestialObjectId} at trueAnomaly_rad: ${trueAnomaly_rad}`,
+          );
+        }
+      }
     } else {
       // Elliptical/parabolic orbit: full 2π range
-      trueAnomalyRange = 2 * Math.PI;
-    }
+      const trueAnomalyRange = 2 * Math.PI;
 
-    for (let i = 0; i <= segments; i++) {
-      // Iterate through the true anomaly (angle) instead of time
-      const trueAnomaly_rad = (i / segments) * trueAnomalyRange;
+      for (let i = 0; i <= segments; i++) {
+        // Iterate through the true anomaly (angle) instead of time
+        const trueAnomaly_rad = (i / segments) * trueAnomalyRange;
 
-      // Use the new calculator to get the real-world position in meters
-      const realRelativePosition = calculateKeplerianPositionAtTrueAnomaly(
-        orbitalParameters,
-        trueAnomaly_rad,
-      );
+        // Use the new calculator to get the real-world position in meters
+        const realRelativePosition = calculateKeplerianPositionAtTrueAnomaly(
+          orbitalParameters,
+          trueAnomaly_rad,
+        );
 
-      // Scale the real position to the scene's rendering scale
-      const scaledRelativePosition = realRelativePosition.multiplyScalar(
-        SCALE.RENDER_SCALE_AU / AU_METERS,
-      );
+        // Scale the real position to the scene's rendering scale
+        const scaledRelativePosition = realRelativePosition.multiplyScalar(
+          SCALE.RENDER_SCALE_AU / AU_METERS,
+        );
 
-      points.push(scaledRelativePosition);
+        points.push(scaledRelativePosition);
+      }
     }
 
     // The loop from 0 to 2*PI naturally closes the loop, so no need to clone the first point.

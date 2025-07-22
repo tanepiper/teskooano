@@ -52,31 +52,29 @@ export class AsteroidFieldMaterial extends THREE.ShaderMaterial {
 
     this.textureLoader = new THREE.TextureLoader();
 
-    // If textures provided, use them, otherwise load default textures
+    // If textures provided, use them, otherwise load textures from paths or create fallbacks
     if (options.asteroidTextures && options.asteroidTextures.length > 0) {
       this.asteroidTextures = options.asteroidTextures;
       this.materialReady = true;
       this.uniforms.asteroidTextures.value = this.asteroidTextures;
     } else {
-      this.loadDefaultTextures();
+      this.loadTextures();
     }
 
     this.needsUpdate = true;
   }
 
   /**
-   * Loads default asteroid textures asynchronously.
+   * Loads asteroid textures asynchronously from provided paths or creates fallback textures.
    */
-  private loadDefaultTextures(): void {
-    const texturePaths = [
-      "space/textures/asteroids/asteroid_1.png",
-      "space/textures/asteroids/asteroid_2.png",
-      "space/textures/asteroids/asteroid_3.png",
-      "space/textures/asteroids/asteroid_4.png",
-      "space/textures/asteroids/asteroid_5.png",
-    ];
+  private loadTextures(texturePaths?: string[]): void {
+    // If no texture paths provided or empty array, create fallback textures
+    if (!texturePaths || texturePaths.length === 0) {
+      this.createFallbackTextures();
+      return;
+    }
 
-    this.asteroidTextures = new Array(5).fill(null);
+    this.asteroidTextures = new Array(texturePaths.length).fill(null);
     this.loadedTextureCount = 0;
     this.materialReady = false;
 
@@ -87,15 +85,8 @@ export class AsteroidFieldMaterial extends THREE.ShaderMaterial {
           this.asteroidTextures[index] = texture;
           this.loadedTextureCount++;
 
-          console.debug(
-            `[AsteroidFieldMaterial] Loaded texture ${index + 1}/5: ${path}`,
-          );
-
-          if (this.loadedTextureCount === 5) {
+          if (this.loadedTextureCount === texturePaths.length) {
             this.materialReady = true;
-            console.debug(
-              `[AsteroidFieldMaterial] All asteroid textures loaded`,
-            );
 
             // Update material with loaded textures
             this.uniforms.asteroidTextures.value = this.asteroidTextures;
@@ -104,13 +95,77 @@ export class AsteroidFieldMaterial extends THREE.ShaderMaterial {
         },
         undefined,
         (error) => {
-          console.error(
-            `[AsteroidFieldMaterial] Failed to load texture: ${path}`,
-            error,
-          );
+          // If texture loading fails, create a fallback for this slot
+          this.asteroidTextures[index] = this.createFallbackTexture();
+          this.loadedTextureCount++;
+
+          if (this.loadedTextureCount === texturePaths.length) {
+            this.materialReady = true;
+            this.uniforms.asteroidTextures.value = this.asteroidTextures;
+            this.needsUpdate = true;
+          }
         },
       );
     });
+  }
+
+  /**
+   * Creates a single fallback texture for asteroid rendering.
+   */
+  private createFallbackTexture(): THREE.Texture {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+
+    if (ctx) {
+      // Create a simple asteroid-like texture with noise
+      ctx.fillStyle = "#8B7355"; // Brown base color
+      ctx.fillRect(0, 0, 64, 64);
+
+      // Add some noise/detail
+      for (let i = 0; i < 100; i++) {
+        const x = Math.random() * 64;
+        const y = Math.random() * 64;
+        const size = Math.random() * 3 + 1;
+        const brightness = Math.random() * 0.3 + 0.7;
+
+        ctx.fillStyle = `rgba(139, 115, 85, ${brightness})`;
+        ctx.fillRect(x, y, size, size);
+      }
+
+      // Add some darker spots for craters
+      for (let i = 0; i < 20; i++) {
+        const x = Math.random() * 64;
+        const y = Math.random() * 64;
+        const radius = Math.random() * 4 + 2;
+
+        ctx.fillStyle = "rgba(50, 40, 30, 0.8)";
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  /**
+   * Creates fallback textures for when no texture paths are provided.
+   */
+  private createFallbackTextures(): void {
+    const fallbackTextures = [
+      this.createFallbackTexture(),
+      this.createFallbackTexture(),
+      this.createFallbackTexture(),
+      this.createFallbackTexture(),
+      this.createFallbackTexture(),
+    ];
+
+    this.asteroidTextures = fallbackTextures;
+    this.materialReady = true;
+    this.uniforms.asteroidTextures.value = this.asteroidTextures;
+    this.needsUpdate = true;
   }
 
   /**
@@ -149,6 +204,13 @@ export class AsteroidFieldMaterial extends THREE.ShaderMaterial {
     this.uniforms.asteroidTextures.value = textures;
     this.materialReady = true;
     this.needsUpdate = true;
+  }
+
+  /**
+   * Loads textures from provided paths.
+   */
+  loadTexturesFromPaths(texturePaths: string[]): void {
+    this.loadTextures(texturePaths);
   }
 
   /**

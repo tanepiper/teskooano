@@ -406,6 +406,7 @@ export class Octree {
         velocity_mps: new OSVector3(0, 0, 0),
       };
       const force = calculateGravitationalForce(nodePointMass, targetBody);
+
       accumulatedForce.add(force);
     } else {
       // Node is too close, so we must inspect its contents more closely.
@@ -414,6 +415,7 @@ export class Octree {
       for (const otherBody of node.bodies) {
         if (otherBody.id !== targetBody.id) {
           const force = calculateGravitationalForce(otherBody, targetBody);
+
           accumulatedForce.add(force);
         }
       }

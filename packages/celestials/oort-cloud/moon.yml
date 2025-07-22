@@ -3,6 +3,8 @@ language: "typescript"
 platform: "node"
 type: "library"
 
+id: "oort-cloud"
+
 tasks:
   lint:
     command: "eslint ."

@@ -40,5 +40,12 @@ export const asteroidBelt: CelestialObject<AsteroidFieldProperties> = {
     count: 50000,
     color: "#b4afac",
     composition: ["silicates", "carbonaceous", "metallic", "icy fragments"],
+    texturePaths: [
+      "space/textures/asteroids/asteroid_1.png",
+      "space/textures/asteroids/asteroid_2.png",
+      "space/textures/asteroids/asteroid_3.png",
+      "space/textures/asteroids/asteroid_4.png",
+      "space/textures/asteroids/asteroid_5.png",
+    ],
   },
 };

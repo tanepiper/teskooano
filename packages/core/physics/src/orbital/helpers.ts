@@ -97,16 +97,34 @@ export function createOrbitalElements(
 
     // Handle hyperbolic orbits with isHyperbolic flag
     if (input.isHyperbolic) {
-      // For hyperbolic orbits, the provided semiMajorAxisAU is the desired distance
-      // We need to convert it to the negative semi-major axis
-      // Formula: a = -2 × desiredDistance (for e=1.5 at periapsis)
-      const desiredDistance = input.semiMajorAxisAU;
-      semiMajorAxis_m = -2 * desiredDistance * AU;
-      eccentricity = input.eccentricity ?? 1.5; // Default to 1.5 for hyperbolic
+      // For hyperbolic orbits, eccentricity must be > 1
+      if (eccentricity <= 1) {
+        console.warn(
+          `[OrbitalElements] Hyperbolic orbit specified but eccentricity (${eccentricity}) is not > 1. Setting to 1.5.`,
+        );
+        eccentricity = 1.5; // Enforce hyperbolic eccentricity
+      }
       period_s = 0; // No period for hyperbolic orbits
 
-      // Perihelion is the closest approach distance
-      realPerihelion_m = Math.abs(semiMajorAxis_m) * (eccentricity - 1);
+      // Calculate semi-major axis from perihelion distance and eccentricity
+      // a = rp / (e - 1), where rp is perihelion distance
+      if (input.perihelionAU !== undefined) {
+        realPerihelion_m = input.perihelionAU * AU;
+        semiMajorAxis_m = realPerihelion_m / (eccentricity - 1);
+        semiMajorAxis_m = -Math.abs(semiMajorAxis_m); // Ensure it's negative for hyperbolic
+      } else if (input.semiMajorAxisAU !== undefined) {
+        // If semiMajorAxisAU is provided for hyperbolic, assume it's the intended
+        // absolute value of semi-major axis, and make it negative.
+        semiMajorAxis_m = -Math.abs(input.semiMajorAxisAU * AU);
+        realPerihelion_m = Math.abs(semiMajorAxis_m) * (eccentricity - 1);
+      } else {
+        // Fallback if neither perihelionAU nor semiMajorAxisAU is provided for hyperbolic
+        // Use a default perihelion distance of 0.5 AU
+        realPerihelion_m = 0.5 * AU;
+        semiMajorAxis_m = realPerihelion_m / (eccentricity - 1);
+        semiMajorAxis_m = -Math.abs(semiMajorAxis_m); // Ensure it's negative
+      }
+
       // Aphelion is undefined for hyperbolic orbits
       realAphelion_m = 0;
       // Average orbital speed is not meaningful for hyperbolic orbits
@@ -159,6 +177,57 @@ export function createOrbitalElements(
     timeOfPerihelion: input.timeOfPerihelion,
     lagrangePointType: input.lagrangePointType, // Include if present
   };
+}
+
+/**
+ * Converts a distance AU to hyperbolic semi-major axis AU.
+ * For hyperbolic orbits, the semi-major axis is negative and related to the perihelion distance.
+ * This function helps specify current distances for hyperbolic objects like Voyager.
+ *
+ * @param distanceAU The current distance from the central body in AU
+ * @param eccentricity The eccentricity of the hyperbolic orbit (must be > 1)
+ * @returns The negative semi-major axis in AU for hyperbolic orbits
+ */
+export function distanceAUToHyperbolicSemiMajorAxis(
+  distanceAU: number,
+  eccentricity: number,
+): number {
+  if (eccentricity <= 1) {
+    throw new Error(
+      `Eccentricity must be > 1 for hyperbolic orbits, got ${eccentricity}`,
+    );
+  }
+
+  // For hyperbolic orbits: r = a(e - 1) / (1 + e*cos(ν))
+  // At large distances (ν ≈ π), r ≈ a(e - 1)
+  // So a ≈ r / (e - 1)
+  // Since a is negative for hyperbolic orbits: a = -|r / (e - 1)|
+  const semiMajorAxisAU = -Math.abs(distanceAU / (eccentricity - 1));
+
+  return semiMajorAxisAU;
+}
+
+/**
+ * Converts hyperbolic semi-major axis AU to perihelion distance AU.
+ *
+ * @param semiMajorAxisAU The negative semi-major axis in AU
+ * @param eccentricity The eccentricity of the hyperbolic orbit (must be > 1)
+ * @returns The perihelion distance in AU
+ */
+export function hyperbolicSemiMajorAxisToPerihelionAU(
+  semiMajorAxisAU: number,
+  eccentricity: number,
+): number {
+  if (eccentricity <= 1) {
+    throw new Error(
+      `Eccentricity must be > 1 for hyperbolic orbits, got ${eccentricity}`,
+    );
+  }
+
+  // For hyperbolic orbits: rp = |a|(e - 1)
+  const perihelionAU = Math.abs(semiMajorAxisAU) * (eccentricity - 1);
+
+  return perihelionAU;
 }
 
 /**

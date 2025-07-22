@@ -193,6 +193,9 @@ export const updateSimulation = (
       };
     }
 
+    // Cache for ideal mode calculations to ensure each body is only calculated once
+    const idealCache = new Map<string, PhysicsStateReal>();
+
     const bodyMap = new Map(bodies.map((b) => [b.id, b]));
     const sortedBodies = sortBodiesByHierarchy(bodies, parentIds);
     const updatedStates: Record<string, PhysicsStateReal> = {};
@@ -203,6 +206,12 @@ export const updateSimulation = (
 
       if (!parentId || !bodyOrbitalParams) {
         updatedStates[body.id] = body;
+        continue;
+      }
+
+      // Check cache first - if we've already calculated this body's position, use it
+      if (idealCache.has(body.id)) {
+        updatedStates[body.id] = idealCache.get(body.id)!;
         continue;
       }
 
@@ -217,12 +226,16 @@ export const updateSimulation = (
         updatedStates[body.id] = body; // Can't update, so keep original state.
         continue;
       }
+
       const newState = idealOrbit(
         body,
         parentState,
         bodyOrbitalParams,
         currentTime_s,
       );
+
+      // Cache the result and store it
+      idealCache.set(body.id, newState);
       updatedStates[body.id] = newState;
     }
 

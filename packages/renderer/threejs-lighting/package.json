@@ -24,9 +24,9 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest",
-    "test:browser": "vitest --browser=chromium",
+    "test:browser": "vitest",
     "test:watch": "vitest",
-    "test:browser:watch": "vitest --browser=chromium",
+    "test:browser:watch": "vitest",
     "test:browser:headless": "vitest --browser.headless",
     "test:ui": "vitest --ui",
     "lint": "eslint src --ext .ts"

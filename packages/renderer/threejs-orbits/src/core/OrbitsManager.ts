@@ -114,7 +114,6 @@ export class OrbitsManager extends StateSubscriptionMixin {
   private determineVisualizationMode(
     config: SimulationConfiguration,
   ): OrbitDisplayMode {
-    console.log("determineVisualizationMode", config);
     if (config.mode === "ideal") {
       return OrbitDisplayMode.Ideal;
     } else {
