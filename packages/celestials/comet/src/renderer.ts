@@ -74,7 +74,7 @@ export class CometRenderer extends BaseCelestialRenderer {
   private random: () => number = () => 0;
 
   constructor(object: RenderableCelestialObject) {
-    super();
+    super(object);
     this.random = createSeededRandomSync(
       object.seed ?? object.celestialObjectId,
     );
@@ -97,22 +97,43 @@ export class CometRenderer extends BaseCelestialRenderer {
     // LOD 0: High detail with particle tail
     const lod0_container = new THREE.Group();
     this.nucleusAndComaGroup = new THREE.Group(); // Initialize the group
-    this.nucleusAndComaGroup.add(this.nucleus!); // Add nucleus to its own rotating group
-    this.nucleusAndComaGroup.add(this.coma!); // Add coma to the same group
+
+    // Add nucleus (should always exist)
+    if (this.nucleus) {
+      this.nucleusAndComaGroup.add(this.nucleus);
+    }
+
+    // Add coma (only if it exists)
+    if (this.coma) {
+      this.nucleusAndComaGroup.add(this.coma);
+    }
+
     lod0_container.add(this.nucleusAndComaGroup);
 
-    lod0_container.add(this.particleTail!); // Tail is a direct child of the main LOD group
+    // Add particle tail (only if it exists)
+    if (this.particleTail) {
+      lod0_container.add(this.particleTail);
+    }
+
+    // Add jets
     this.jets.forEach((jet) => lod0_container.add(jet.points));
 
     // LOD 1: Lower detail with simplified mesh tail
     const lod1_container = new THREE.Group();
     this.nucleusAndComaGroup_lod1 = new THREE.Group(); // Initialize the LOD 1 group
-    this.nucleus_lod1 = this.nucleus!.clone(false); // Clone geometry/material but not children
-    this.nucleusAndComaGroup_lod1.add(this.nucleus_lod1);
+
+    // Clone nucleus for LOD 1 (only if it exists)
+    if (this.nucleus) {
+      this.nucleus_lod1 = this.nucleus.clone(false); // Clone geometry/material but not children
+      this.nucleusAndComaGroup_lod1.add(this.nucleus_lod1);
+    }
+
+    // Clone coma for LOD 1 (only if it exists)
     if (this.coma) {
       this.coma_lod1 = this.coma.clone(false);
       this.nucleusAndComaGroup_lod1.add(this.coma_lod1);
     }
+
     lod1_container.add(this.nucleusAndComaGroup_lod1);
 
     return [
