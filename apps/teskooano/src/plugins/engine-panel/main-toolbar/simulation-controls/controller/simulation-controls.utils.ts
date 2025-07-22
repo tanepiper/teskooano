@@ -36,6 +36,48 @@ export function formatTime(seconds: number): string {
 }
 
 /**
+ * Formats a simulation date based on a start date and elapsed seconds.
+ * Uses Intl.DateTimeFormat for locale-aware date and time formatting.
+ *
+ * @param {Date} startDate - The starting date for the simulation
+ * @param {number} elapsedSeconds - The elapsed simulation time in seconds
+ * @param {boolean} compact - Whether to use a more compact format
+ * @returns {string} The formatted date and time string
+ */
+export function formatSimulationDate(
+  startDate: Date,
+  elapsedSeconds: number,
+  compact: boolean = false,
+): string {
+  const currentDate = new Date(startDate.getTime() + elapsedSeconds * 1000);
+
+  if (compact) {
+    // Compact format: "Jan 15, 14:30:25"
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return formatter.format(currentDate);
+  } else {
+    // Full format: "Jan 15, 2024, 14:30:25"
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return formatter.format(currentDate);
+  }
+}
+
+/**
  * Formats a simulation time scale multiplier into a compact, readable string.
  * It uses metric-like prefixes (K, M) for large numbers.
  *

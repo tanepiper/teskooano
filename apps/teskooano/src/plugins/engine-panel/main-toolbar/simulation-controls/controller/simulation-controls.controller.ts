@@ -10,6 +10,7 @@ import { PauseIcon, PlayIcon } from "../view/simulation-controls.template";
 import {
   formatScale,
   formatTime,
+  formatSimulationDate,
   getEngineShortName,
   getConfigurationShortName,
   getConfigurationDisplayName,
@@ -42,6 +43,7 @@ export interface SimulationUIElements {
  */
 export class SimulationControlsController extends StateSubscriptionMixin {
   private uiElements: SimulationUIElements;
+  private simulationStartDate: Date = new Date(); // Start from current time
   private readonly speedValues = [
     0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 20, 24,
     32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 2048, 4096, 8192, 16384,
@@ -64,6 +66,8 @@ export class SimulationControlsController extends StateSubscriptionMixin {
    */
   public init(): void {
     this.addEventListeners();
+    // Reset start date to current time when initializing
+    this.resetStartDate();
     // Initialize display with current state
     this.handleStateUpdate(StateAccessor.getCurrentSimulationState());
 
@@ -71,6 +75,22 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     this.subscribeToState(simulationState$, (state: SimulationState) => {
       this.handleStateUpdate(state);
     });
+  }
+
+  /**
+   * Resets the simulation start date to the current time.
+   * This should be called when a new simulation begins.
+   */
+  public resetStartDate(): void {
+    this.simulationStartDate = new Date();
+  }
+
+  /**
+   * Sets a custom start date for the simulation.
+   * @param {Date} startDate - The custom start date
+   */
+  public setStartDate(startDate: Date): void {
+    this.simulationStartDate = new Date(startDate);
   }
 
   /**
@@ -268,7 +288,14 @@ export class SimulationControlsController extends StateSubscriptionMixin {
   // UI Updaters
   private _updateTimeDisplay = (timeSeconds: number = 0): void => {
     if (this.uiElements.timeValueDisplay) {
-      this.uiElements.timeValueDisplay.textContent = formatTime(timeSeconds);
+      // Use compact format if the element has the mobile attribute
+      const isMobile =
+        this.uiElements.timeValueDisplay.closest("[mobile]") !== null;
+      this.uiElements.timeValueDisplay.textContent = formatSimulationDate(
+        this.simulationStartDate,
+        timeSeconds,
+        isMobile,
+      );
     }
   };
 

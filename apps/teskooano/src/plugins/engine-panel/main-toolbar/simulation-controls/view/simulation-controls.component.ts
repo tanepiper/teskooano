@@ -9,10 +9,11 @@ import { template } from "./simulation-controls.template";
  * @element teskooano-simulation-controls
  * @description
  * A custom element that provides UI controls for managing the simulation's
- * playback (play, pause, speed, time). It serves as the View in an MVC-like
+ * playback (play, pause, speed, date/time). It serves as the View in an MVC-like
  * pattern, delegating all logic to its corresponding Controller.
  * It subscribes to the global `simulationState$` and passes updates to the
- * controller to keep the UI synchronized.
+ * controller to keep the UI synchronized. The time display shows a configurable
+ * start date that progresses as the simulation runs.
  *
  * @attr {boolean} mobile - If present, applies styles optimized for smaller screens.
  */
@@ -67,6 +68,22 @@ export class SimulationControls extends HTMLElement {
   disconnectedCallback(): void {
     this.controller?.dispose();
     this.controller = null;
+  }
+
+  /**
+   * Resets the simulation start date to the current time.
+   * This can be called externally when a new simulation begins.
+   */
+  public resetStartDate(): void {
+    this.controller?.resetStartDate();
+  }
+
+  /**
+   * Sets a custom start date for the simulation.
+   * @param {Date} startDate - The custom start date
+   */
+  public setStartDate(startDate: Date): void {
+    this.controller?.setStartDate(startDate);
   }
 
   /**

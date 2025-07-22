@@ -62,7 +62,7 @@ template.innerHTML = `
         background-color: var(--color-surface-1); /* Use token */
     }
     #time-value {
-        min-width: 120px;
+        min-width: 200px;
         color: var(--color-primary); /* Use token (was primary-light) */
     }
     #engine-value {
@@ -89,8 +89,8 @@ template.innerHTML = `
         z-index: 10;
     }
     :host([mobile]) #time-value {
-       min-width: 90px; /* Reduce width */
-       font-size: 0.9em; /* Slightly smaller font */
+       min-width: 160px; /* Reduce width but accommodate date */
+       font-size: 0.8em; /* Smaller font for mobile */
     }
     :host([mobile]) #scale-value {
        min-width: 50px; /* Reduce width */

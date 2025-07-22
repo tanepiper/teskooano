@@ -1,6 +1,6 @@
 ## Simulation Controls Architecture (`@/simulation-controls`)
 
-**Purpose**: This document outlines the architecture of the `simulation-controls` plugin. This plugin provides the user interface for controlling the simulation's playback, including play/pause, speed adjustments, and time display.
+**Purpose**: This document outlines the architecture of the `simulation-controls` plugin. This plugin provides the user interface for controlling the simulation's playback, including play/pause, speed adjustments, and date/time display starting from a configurable date.
 
 **Core Pattern**: The plugin follows a strict **Model-View-Controller (MVC)** pattern to ensure a clear separation of concerns, making the component easier to maintain, debug, and test.
 
