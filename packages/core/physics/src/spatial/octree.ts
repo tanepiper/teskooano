@@ -2,6 +2,7 @@ import { OSVector3 } from "@teskooano/core-math";
 
 import { calculateNewtonianGravitationalForce as calculateGravitationalForce } from "../forces/gravity";
 import { PhysicsStateReal } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "..";
 
 /**
  * Represents a node in the octree
@@ -418,7 +419,7 @@ export class Octree {
       calculateGravitationalForce(
         nodePointMass,
         targetBody,
-        undefined,
+        GRAVITATIONAL_CONSTANT,
         this._tempForce,
       );
       accumulatedForce.add(this._tempForce);
@@ -432,7 +433,7 @@ export class Octree {
           calculateGravitationalForce(
             otherBody,
             targetBody,
-            undefined,
+            GRAVITATIONAL_CONSTANT,
             this._tempForce,
           );
           accumulatedForce.add(this._tempForce);

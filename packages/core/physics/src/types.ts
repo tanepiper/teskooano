@@ -23,11 +23,15 @@ export type NetForceCalculator = (
  *
  * @param body1 - The body (real state) exerting the force.
  * @param body2 - The body (real state) experiencing the force.
+ * @param G - The gravitational constant (optional, defaults to standard value).
+ * @param out - Optional output vector to reuse for performance.
  * @returns The force vector acting on body2 due to body1 (Newtons - kg*m/s^2).
  */
 export type PairForceCalculator = (
   body1: PhysicsStateReal,
   body2: PhysicsStateReal,
+  G?: number,
+  out?: OSVector3,
 ) => OSVector3;
 
 /**
