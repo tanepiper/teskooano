@@ -463,6 +463,10 @@ export class CometRenderer extends BaseCelestialRenderer {
     activityFactor: number,
   ): void {
     if (this.comaMaterial) {
+      // Skip expensive particle physics when comet is not active (far from star)
+      if (activityFactor <= 0) {
+        return;
+      }
       this.comaMaterial.uniforms.uOpacity.value = activityFactor;
       this.comaMaterial.uniforms.uTime.value = time;
       if (attenuatedLightSources) {
@@ -508,6 +512,11 @@ export class CometRenderer extends BaseCelestialRenderer {
       !this.particlePositions ||
       !this.particleAttributes
     ) {
+      return;
+    }
+
+    // Skip expensive particle physics when comet is not active (far from star)
+    if (activityFactor <= 0) {
       return;
     }
 
