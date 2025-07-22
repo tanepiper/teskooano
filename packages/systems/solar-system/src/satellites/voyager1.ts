@@ -16,14 +16,16 @@ export const voyager1: CelestialObject<SatelliteProperties> = {
   realRadius_m: 2.0,
   temperature: 300,
   albedo: 0.3,
+  parentId: "sun",
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0,
-    eccentricity: 0,
-    inclinationDeg: 0,
+    semiMajorAxisAU: 167.019, // Desired distance from sun
+    isHyperbolic: true, // Automatically handles semi-major axis conversion
+    eccentricity: 1.5, // More realistic hyperbolic eccentricity
+    inclinationDeg: 35.7,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
-    meanAnomalyDeg: 0,
-    period_s: 0,
+    meanAnomalyDeg: 0, // Start at periapsis
+    period_s: 0, // No orbital period for hyperbolic trajectories
     siderealRotationPeriod_s: 24 * 3600,
     axialTiltDeg: 0,
   }),

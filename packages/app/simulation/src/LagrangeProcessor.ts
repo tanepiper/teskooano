@@ -22,10 +22,6 @@ export function processLagrangeObjects(
   celestialObjects: Map<string, CelestialObject>,
   physicsStates: Map<string, PhysicsStateReal>,
 ): void {
-  console.log(
-    "[LagrangeProcessor] Starting to process Lagrange-bound objects...",
-  );
-
   celestialObjects.forEach((obj) => {
     if (
       obj.orbit.lagrangePointType &&
@@ -92,9 +88,6 @@ export function processLagrangeObjects(
         );
 
         if (realLPoint) {
-          console.log(
-            `[LagrangeProcessor] Found ${realLPoint.id} for ${obj.id}. Updating initial state.`,
-          );
           // Update the object's initial physics state with the Lagrange point data
           const targetPhysicsState = physicsStates.get(obj.id);
           if (targetPhysicsState) {
@@ -119,8 +112,4 @@ export function processLagrangeObjects(
       }
     }
   });
-
-  console.log(
-    "[LagrangeProcessor] Finished processing Lagrange-bound objects.",
-  );
 }

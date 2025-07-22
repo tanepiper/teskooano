@@ -45,15 +45,17 @@ export interface OrbitalElementsInput {
   epoch?: string;
   /** Optional: If the object is to be placed at a specific Lagrange point. */
   lagrangePointType?: LagrangePointType;
-  // Remove parentMass_kg, targetMass_kg, and parentToTargetSeparation_m here
-  // parentMass_kg?: number;
-  // targetMass_kg?: number;
-  // parentToTargetSeparation_m?: number;
+  /** Optional: Indicates if the orbit is hyperbolic (eccentricity > 1). If true, semiMajorAxisAU will be converted to negative semi-major axis. */
+  isHyperbolic?: boolean;
 }
 
 /**
  * Creates orbital elements from human-readable parameters.
  * All angles are automatically converted from degrees to radians.
+ *
+ * For hyperbolic orbits (isHyperbolic: true), the semiMajorAxisAU parameter represents
+ * the desired distance from the central body, and the function automatically converts
+ * it to the correct negative semi-major axis required for hyperbolic calculations.
  */
 export function createOrbitalElements(
   input: OrbitalElementsInput,
@@ -93,19 +95,51 @@ export function createOrbitalElements(
       throw new Error("period_s is required for non-Lagrange orbits.");
     }
 
-    semiMajorAxis_m = input.semiMajorAxisAU * AU;
-    period_s = input.period_s;
+    // Handle hyperbolic orbits with isHyperbolic flag
+    if (input.isHyperbolic) {
+      // For hyperbolic orbits, the provided semiMajorAxisAU is the desired distance
+      // We need to convert it to the negative semi-major axis
+      // Formula: a = -2 × desiredDistance (for e=1.5 at periapsis)
+      const desiredDistance = input.semiMajorAxisAU;
+      semiMajorAxis_m = -2 * desiredDistance * AU;
+      eccentricity = input.eccentricity ?? 1.5; // Default to 1.5 for hyperbolic
+      period_s = 0; // No period for hyperbolic orbits
 
-    realAphelion_m =
-      (input.aphelionAU ??
-        calculateAphelionAU(input.semiMajorAxisAU, eccentricity)) * AU;
-    realPerihelion_m =
-      (input.perihelionAU ??
-        calculatePerihelionAU(input.semiMajorAxisAU, eccentricity)) * AU;
-    averageOrbitalSpeed_mps =
-      (input.averageOrbitalSpeedKmps ??
-        calculateAverageOrbitalSpeedKmps(period_s, input.semiMajorAxisAU)) *
-      1000; // Convert km/s to m/s
+      // Perihelion is the closest approach distance
+      realPerihelion_m = Math.abs(semiMajorAxis_m) * (eccentricity - 1);
+      // Aphelion is undefined for hyperbolic orbits
+      realAphelion_m = 0;
+      // Average orbital speed is not meaningful for hyperbolic orbits
+      averageOrbitalSpeed_mps = 0;
+    } else {
+      // Regular elliptical/parabolic orbits
+      semiMajorAxis_m = input.semiMajorAxisAU * AU;
+      period_s = input.period_s;
+
+      // Handle hyperbolic orbits (eccentricity > 1) for non-isHyperbolic case
+      if (eccentricity > 1) {
+        // For hyperbolic orbits, semi-major axis should be negative
+        semiMajorAxis_m = -Math.abs(semiMajorAxis_m);
+        // Perihelion is the closest approach distance
+        realPerihelion_m = Math.abs(semiMajorAxis_m) * (eccentricity - 1);
+        // Aphelion is undefined for hyperbolic orbits
+        realAphelion_m = 0;
+        // Average orbital speed is not meaningful for hyperbolic orbits
+        averageOrbitalSpeed_mps = 0;
+      } else {
+        // Elliptical/parabolic orbits
+        realAphelion_m =
+          (input.aphelionAU ??
+            calculateAphelionAU(input.semiMajorAxisAU, eccentricity)) * AU;
+        realPerihelion_m =
+          (input.perihelionAU ??
+            calculatePerihelionAU(input.semiMajorAxisAU, eccentricity)) * AU;
+        averageOrbitalSpeed_mps =
+          (input.averageOrbitalSpeedKmps ??
+            calculateAverageOrbitalSpeedKmps(period_s, input.semiMajorAxisAU)) *
+          1000; // Convert km/s to m/s
+      }
+    }
   }
 
   return {
@@ -114,7 +148,7 @@ export function createOrbitalElements(
     inclination: utils.degToRad(inclinationDeg),
     longitudeOfAscendingNode: utils.degToRad(longitudeOfAscendingNodeDeg),
     argumentOfPeriapsis: utils.degToRad(argumentOfPeriapsisDeg),
-    meanAnomaly: utils.degToRad(meanAnomalyDeg),
+    meanAnomaly: utils.degToRad(meanAnomalyDeg ?? 0), // Ensure we have a valid default
     period_s: period_s,
     siderealRotationPeriod_s: input.siderealRotationPeriod_s,
     axialTilt: createAxialTiltVector(input.axialTiltDeg),

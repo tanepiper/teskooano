@@ -284,3 +284,69 @@ describe("Keplerian Position at True Anomaly", () => {
     expect(Math.abs(position.x)).not.toBeCloseTo(earthSemiMajorAxis);
   });
 });
+
+describe("Hyperbolic Orbit Calculation", () => {
+  const sunMass = 1.9885e30; // kg
+
+  it("should calculate correct position for hyperbolic orbit at periapsis", () => {
+    // Parameters for a sample hyperbolic orbit
+    const semiMajorAxis = -1e9; // Negative semi-major axis for hyperbolic, in meters
+    const eccentricity = 1.5; // Greater than 1 for hyperbolic
+    const perihelionDistance = semiMajorAxis * (1 - eccentricity); // Distance at closest approach
+
+    const orbitalParameters = {
+      period_s: 0, // Infinite period for hyperbolic orbits
+      realSemiMajorAxis_m: semiMajorAxis,
+      eccentricity: eccentricity,
+      inclination: 0,
+      meanAnomaly: 0, // At periapsis for t=0
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
+      realAphelion_m: 0, // Undefined for hyperbolic
+      realPerihelion_m: perihelionDistance,
+      averageOrbitalSpeed_mps: 0, // Will be calculated
+      epoch: "J2000",
+    };
+
+    const { position } = calculateKeplerianStateAtTime(
+      orbitalParameters,
+      0,
+      sunMass,
+    );
+
+    // At periapsis (meanAnomaly = 0, time_s = 0), position should be at (perihelionDistance, 0, 0)
+    expect(position.x).toBeCloseTo(perihelionDistance, -6); // Adjust precision due to floating point math
+    expect(position.y).toBeCloseTo(0);
+    expect(position.z).toBeCloseTo(0);
+  });
+
+  it("should calculate correct position for hyperbolic orbit at a later time", () => {
+    const semiMajorAxis = -1e9; // Negative semi-major axis for hyperbolic, in meters
+    const eccentricity = 1.5; // Greater than 1 for hyperbolic
+    const perihelionDistance = semiMajorAxis * (1 - eccentricity);
+
+    const orbitalParameters = {
+      period_s: 0, // Infinite period for hyperbolic orbits
+      realSemiMajorAxis_m: semiMajorAxis,
+      eccentricity: eccentricity,
+      inclination: 0,
+      meanAnomaly: 0, // At periapsis for t=0
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
+      realAphelion_m: 0, // Undefined for hyperbolic
+      realPerihelion_m: perihelionDistance,
+      averageOrbitalSpeed_mps: 0, // Will be calculated
+      epoch: "J2000",
+    };
+
+    const time_s = 1000; // 1000 seconds after periapsis
+    const { position } = calculateKeplerianStateAtTime(
+      orbitalParameters,
+      time_s,
+      sunMass,
+    );
+
+    // Assert that the object has moved away from periapsis
+    expect(position.length()).toBeGreaterThan(perihelionDistance);
+  });
+});

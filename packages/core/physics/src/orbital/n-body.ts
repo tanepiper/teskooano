@@ -19,6 +19,11 @@ export const calculateOrbitalPosition = (
   orbitalParameters: OrbitalParameters,
   currentTime: number,
 ): OSVector3 => {
+  // Check for zero parent mass - can't have orbital motion without mass
+  if (parentStateReal.mass_kg <= 0) {
+    return new OSVector3(0, 0, 0);
+  }
+
   // Validate inputs
   if (Number.isNaN(currentTime)) {
     console.warn("[NBody] Invalid inputs to calculateOrbitalPosition:", {
@@ -28,8 +33,36 @@ export const calculateOrbitalPosition = (
     return new OSVector3(0, 0, 0);
   }
 
-  const { period_s } = orbitalParameters;
+  const { period_s, eccentricity } = orbitalParameters;
 
+  // Handle hyperbolic orbits (period_s = 0, eccentricity > 1)
+  if (period_s === 0 && eccentricity > 1) {
+    // For hyperbolic orbits, we need to calculate position using hyperbolic equations
+    // Pass the parent mass for proper gravitational parameter calculation
+    const { position } = sharedCalculateKeplerianStateAtTime(
+      orbitalParameters,
+      currentTime,
+      parentStateReal.mass_kg,
+    );
+
+    // Validate position to prevent NaN
+    if (
+      Number.isNaN(position.x) ||
+      Number.isNaN(position.y) ||
+      Number.isNaN(position.z)
+    ) {
+      console.error("[NBody] NaN position detected for hyperbolic orbit:", {
+        position: position.toArray(),
+        orbitalParameters,
+        parentMass: parentStateReal.mass_kg,
+      });
+      return new OSVector3(orbitalParameters.realSemiMajorAxis_m || 0, 0, 0);
+    }
+
+    return position;
+  }
+
+  // For regular orbits, period must be non-zero
   if (period_s === 0) {
     console.error(
       `[OrbitalCalc Error] period is zero for object orbiting ${parentStateReal.id}! Calculation skipped. Returning zero relative vector.`,
@@ -71,9 +104,20 @@ export const calculateOrbitalVelocity = (
     return new OSVector3(0, 0, 0);
   }
 
-  const { period_s } = orbitalParameters;
+  const { period_s, eccentricity } = orbitalParameters;
 
-  // Check for zero period
+  // Handle hyperbolic orbits (period_s = 0, eccentricity > 1)
+  if (period_s === 0 && eccentricity > 1) {
+    // For hyperbolic orbits, we need to calculate velocity using hyperbolic equations
+    const { velocity } = sharedCalculateKeplerianStateAtTime(
+      orbitalParameters,
+      currentTime,
+      parentStateReal.mass_kg,
+    );
+    return velocity.add(parentStateReal.velocity_mps);
+  }
+
+  // For regular orbits, period must be non-zero
   if (period_s === 0) {
     console.error(
       `[OrbitalCalc Error] period is zero for object orbiting ${parentStateReal.id}! Calculation skipped. Returning zero velocity vector.`,

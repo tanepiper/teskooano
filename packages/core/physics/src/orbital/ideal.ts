@@ -8,13 +8,19 @@ import { calculateKeplerianStateAtTime as sharedCalculateKeplerianStateAtTime } 
  *
  * @param orbitalParameters The Keplerian elements of the orbit.
  * @param time_s The time in seconds for which to calculate the state.
+ * @param parentMass_kg Optional parent body mass for hyperbolic orbit calculations.
  * @returns The calculated relative state of the body (position in meters, velocity in m/s).
  */
 export const calculateKeplerianStateAtTime = (
   orbitalParameters: OrbitalParameters,
   time_s: number,
+  parentMass_kg?: number,
 ): { position: OSVector3; velocity: OSVector3 } => {
-  return sharedCalculateKeplerianStateAtTime(orbitalParameters, time_s);
+  return sharedCalculateKeplerianStateAtTime(
+    orbitalParameters,
+    time_s,
+    parentMass_kg,
+  );
 };
 
 /**
@@ -37,10 +43,22 @@ export const calculateKeplerianPositionAtTrueAnomaly = (
     argumentOfPeriapsis: argPeriapsis,
   } = orbitalParameters;
 
-  // Calculate the distance from the central body (radius) using the polar equation for an ellipse
-  const radius =
-    (semiMajorAxis * (1 - eccentricity * eccentricity)) /
-    (1 + eccentricity * Math.cos(trueAnomaly_rad));
+  // Calculate the distance from the central body (radius) using the polar equation
+  let radius: number;
+  if (eccentricity < 1) {
+    // Elliptical orbit
+    radius =
+      (semiMajorAxis * (1 - eccentricity * eccentricity)) /
+      (1 + eccentricity * Math.cos(trueAnomaly_rad));
+  } else if (eccentricity > 1) {
+    // Hyperbolic orbit
+    radius =
+      (Math.abs(semiMajorAxis) * (eccentricity * eccentricity - 1)) /
+      (1 + eccentricity * Math.cos(trueAnomaly_rad));
+  } else {
+    // Parabolic orbit (eccentricity = 1)
+    radius = (semiMajorAxis * 2) / (1 + Math.cos(trueAnomaly_rad));
+  }
 
   // --- 2. Calculate Position in the Orbital Plane (perifocal frame) ---
   // The initial orbit is on the XZ plane for a Y-up coordinate system.

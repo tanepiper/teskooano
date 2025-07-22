@@ -12,6 +12,7 @@ import { uranusSystemBodies } from "./uranus";
 import { venus } from "./venus/venus";
 import { allSatellites } from "./satellites";
 import { allComets } from "./comets";
+import { interstellarObjects } from "./intersteller";
 import { processSolarSystemToCurrentTime } from "./utils/dynamic-epoch-processor";
 
 /**
@@ -32,6 +33,7 @@ const solarSystemBodies = [
   ...allSatellites,
   ...allComets,
   ...minorBodies,
+  ...interstellarObjects,
 ];
 
 /**

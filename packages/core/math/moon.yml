@@ -1,5 +1,7 @@
 language: typescript
 
+id: "core-math"
+
 tags:
   - core
   - math

@@ -22,20 +22,21 @@ export const voyager2: CelestialObject<SatelliteProperties> = {
   seed: "voyager_2_golden_record",
   type: CelestialType.SATELLITE,
   status: CelestialStatus.ACTIVE,
-  // No parentId - Voyager 2 is a rogue object in interstellar space
+  parentId: "sun", // Add parentId for proper orbital calculations
   realMass_kg: 815,
   realRadius_m: 2.0,
   temperature: 300,
   albedo: 0.3, // More realistic albedo for visibility
-  // Rogue object orbital parameters (mostly zeros)
+  // Hyperbolic escape trajectory
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0, // Not orbiting anything
-    eccentricity: 0,
-    inclinationDeg: 0,
+    semiMajorAxisAU: 140.23, // Current distance from sun
+    isHyperbolic: true, // Automatically handles semi-major axis conversion
+    eccentricity: 1.5, // Realistic hyperbolic eccentricity
+    inclinationDeg: 35.7,
     longitudeOfAscendingNodeDeg: 0,
     argumentOfPeriapsisDeg: 0,
-    meanAnomalyDeg: 0,
-    period_s: 0,
+    meanAnomalyDeg: 0, // Start at periapsis
+    period_s: 0, // No orbital period for hyperbolic trajectories
     siderealRotationPeriod_s: 24 * 3600,
     axialTiltDeg: 0,
   }),

@@ -34,12 +34,18 @@ export class OrbitCalculator {
       return MIN_STEPS;
     }
 
-    // Approximate the circumference of the ellipse.
-    // A simple approximation using the semi-major axis is sufficient.
-    const circumferenceAU =
-      (2 * Math.PI * object.orbit.realSemiMajorAxis_m) / AU_METERS;
+    let steps: number;
 
-    const steps = Math.round(circumferenceAU * POINTS_PER_AU);
+    if (object.orbit.eccentricity > 1) {
+      // Hyperbolic orbit: use a fixed number of steps since it's an open curve
+      // The range is limited by the true anomaly calculation, so we need enough points for smooth rendering
+      steps = MAX_STEPS; // Use maximum steps for smooth hyperbolic curves
+    } else {
+      // Elliptical/parabolic orbit: approximate the circumference
+      const circumferenceAU =
+        (2 * Math.PI * object.orbit.realSemiMajorAxis_m) / AU_METERS;
+      steps = Math.round(circumferenceAU * POINTS_PER_AU);
+    }
 
     // For comets, which can have extreme eccentricity, we boost the steps
     // to ensure the sharp turn around the periapsis is smooth.
@@ -69,8 +75,6 @@ export class OrbitCalculator {
   ): OSVector3[] {
     if (
       !orbitalParameters ||
-      typeof orbitalParameters.period_s === "undefined" ||
-      orbitalParameters.period_s === 0 ||
       typeof orbitalParameters.realSemiMajorAxis_m === "undefined" ||
       orbitalParameters.realSemiMajorAxis_m === 0
     ) {
@@ -80,12 +84,46 @@ export class OrbitCalculator {
       return [];
     }
 
+    // For hyperbolic orbits, period_s is 0 (no period), which is valid
+    if (
+      orbitalParameters.eccentricity <= 1 &&
+      (typeof orbitalParameters.period_s === "undefined" ||
+        orbitalParameters.period_s === 0)
+    ) {
+      console.warn(
+        `[OrbitCalc] Invalid orbital parameters for ${object.celestialObjectId}. Elliptical/parabolic orbits must have a period.`,
+      );
+      return [];
+    }
+
     const points: OSVector3[] = [];
     const segments = this.calculateOrbitSteps(object);
 
+    // For hyperbolic orbits, we need to limit the true anomaly range
+    // to avoid infinite distances and show a reasonable portion of the trajectory
+    let trueAnomalyRange: number;
+    if (orbitalParameters.eccentricity > 1) {
+      // Hyperbolic orbit: limit to a reasonable range around periapsis
+      // Calculate the angle where the object is at a reasonable distance (e.g., 10 AU)
+      const maxDistanceAU = 10;
+      const maxDistance_m = maxDistanceAU * AU_METERS;
+      const cosMaxAngle =
+        ((Math.abs(orbitalParameters.realSemiMajorAxis_m) *
+          (orbitalParameters.eccentricity * orbitalParameters.eccentricity -
+            1)) /
+          maxDistance_m -
+          1) /
+        orbitalParameters.eccentricity;
+      const maxAngle = Math.acos(Math.max(-1, Math.min(1, cosMaxAngle)));
+      trueAnomalyRange = 2 * maxAngle;
+    } else {
+      // Elliptical/parabolic orbit: full 2π range
+      trueAnomalyRange = 2 * Math.PI;
+    }
+
     for (let i = 0; i <= segments; i++) {
       // Iterate through the true anomaly (angle) instead of time
-      const trueAnomaly_rad = (i / segments) * 2 * Math.PI;
+      const trueAnomaly_rad = (i / segments) * trueAnomalyRange;
 
       // Use the new calculator to get the real-world position in meters
       const realRelativePosition = calculateKeplerianPositionAtTrueAnomaly(
