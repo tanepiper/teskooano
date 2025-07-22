@@ -1,1 +1,3 @@
-export * from "./star";
+import { sun } from "./star";
+
+export const systemCelestials = [sun];

@@ -351,6 +351,16 @@ export interface OortCloudProperties extends SpecificPropertiesBase {
   visualParticleColor: string;
   /** Optional array of texture paths for Oort Cloud particle rendering. If empty or not provided, fallback textures will be used. */
   texturePaths?: string[];
+
+  // Optional properties for consistency with AsteroidFieldProperties
+  /** Optional visual override for inner radius (if different from physical innerRadiusAU). */
+  visualInnerRadius?: number;
+  /** Optional visual override for outer radius (if different from physical outerRadiusAU). */
+  visualOuterRadius?: number;
+  /** Alternative to visualParticleCount for consistency with asteroid field naming. */
+  count?: number;
+  /** Alternative to visualParticleColor for consistency with asteroid field naming. */
+  color?: string;
 }
 
 /**
@@ -417,6 +427,7 @@ export interface CelestialObjectProperties {
   star?: StarProperties;
   ringSystem?: RingSystemProperties;
   asteroidField?: AsteroidFieldProperties;
+  oortCloud?: OortCloudProperties;
   proceduralSurface?: ProceduralSurfaceProperties;
 }
 

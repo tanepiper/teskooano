@@ -37,6 +37,9 @@ export function generateOortCloud(
     visualDensity: 0.05 + random() * 0.1,
     visualParticleCount: 10000 + random() * 15000,
     visualParticleColor: "#B0D0FF",
+    // Additional properties for consistency
+    count: 10000 + random() * 15000, // Alternative to visualParticleCount
+    color: "#B0D0FF", // Alternative to visualParticleColor
   };
 
   const oortOrbit: OrbitalParameters = {

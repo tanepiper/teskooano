@@ -85,6 +85,9 @@ describe("Oort Cloud Generator", () => {
     expect(oortProps.visualParticleCount).toBeGreaterThanOrEqual(10000);
     expect(oortProps.visualParticleCount).toBeLessThanOrEqual(25000);
     expect(oortProps.visualParticleColor).toBe("#B0D0FF");
+    expect(oortProps.count).toBeGreaterThanOrEqual(10000);
+    expect(oortProps.count).toBeLessThanOrEqual(25000);
+    expect(oortProps.color).toBe("#B0D0FF");
   });
 
   it("should return null for invalid parent star", async () => {

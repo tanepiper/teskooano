@@ -74,8 +74,13 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       lastDistance: string;
       lastSpeed: string;
       lastVisible: boolean;
+      lastPosition?: THREE.Vector3; // Add caching for last position
     }
   >();
+
+  // Pre-allocated vectors for performance in calculateLabelPosition
+  private _tempPos1 = new THREE.Vector3();
+  private _tempPos2 = new THREE.Vector3();
 
   constructor(scene: THREE.Scene, config: LabelVisibilityConfig = {}) {
     super(scene);
@@ -134,6 +139,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       lastDistance: "",
       lastSpeed: "",
       lastVisible: false,
+      lastPosition: css2dObject.position.clone(), // Cache initial position
     });
   }
 
@@ -168,16 +174,23 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         return;
       }
 
-      // Update label position to follow the celestial object
+      // Update label position to follow the celestial object ONLY IF it has moved significantly
       const renderableObject = allObjects[objectId];
       if (renderableObject) {
-        label.position.copy(
-          this.calculateLabelPosition(
-            renderableObject,
-            ownObject,
-            objectManager,
-          ),
+        const newLabelPosition = this.calculateLabelPosition(
+          renderableObject,
+          ownObject,
+          objectManager,
         );
+
+        const cache = this.labelCache.get(objectId)!;
+        if (
+          !cache.lastPosition ||
+          !cache.lastPosition.equals(newLabelPosition)
+        ) {
+          label.position.copy(newLabelPosition);
+          cache.lastPosition = newLabelPosition.clone(); // Update cached position
+        }
       }
 
       // For label distance, measure from camera to object's surface
@@ -210,12 +223,8 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         formattedSpeed = this._formatSpeed(speed);
       }
 
-      // Get cached values for this label
-      const cache = this.labelCache.get(objectId) || {
-        lastDistance: "",
-        lastSpeed: "",
-        lastVisible: false,
-      };
+      // Get cached values for this label (re-fetch as it might have been updated above for lastPosition)
+      const cache = this.labelCache.get(objectId)!;
 
       // Only update attributes if values have changed
       if (cache.lastDistance !== formattedDistance) {
@@ -469,7 +478,9 @@ export class CelestialLabelLayer extends BaseLabelLayer {
             props.innerRadiusAU * SCALE.RENDER_SCALE_AU;
 
           // Get the parent star's position (asteroid fields orbit the star)
-          const parentStarPosition = new THREE.Vector3();
+          // Use pre-allocated vector _tempPos1
+          const parentStarPosition = this._tempPos1;
+          parentStarPosition.set(0, 0, 0); // Reset for reuse
           if (object.parentId && objectManager) {
             // Get parent object from the object manager
             const parentObject = objectManager.getObject(object.parentId);
@@ -479,9 +490,9 @@ export class CelestialLabelLayer extends BaseLabelLayer {
           }
 
           // Position label at the inner radius edge relative to the parent star
-          const labelPosition = parentStarPosition
-            .clone()
-            .add(new THREE.Vector3(innerRadiusSceneUnits, 0, 0));
+          // Use pre-allocated vector _tempPos2 for labelPosition
+          const labelPosition = this._tempPos2.copy(parentStarPosition);
+          labelPosition.add(new THREE.Vector3(innerRadiusSceneUnits, 0, 0));
           // Add offset above the belt for visibility
           return labelPosition.add(new THREE.Vector3(0, visualRadius * 1.5, 0));
         }
@@ -489,14 +500,17 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     }
 
     // Get the world position of the celestial object
-    const worldPosition = new THREE.Vector3();
+    // Use pre-allocated vector _tempPos1
+    const worldPosition = this._tempPos1;
+    worldPosition.set(0, 0, 0); // Reset for reuse
     parentMesh.getWorldPosition(worldPosition);
 
     // Position label at a fixed offset above the object in world space
     // Use world "up" direction (Y-axis) to ensure labels stay consistent
     // regardless of the object's axial tilt or rotation
-    return worldPosition
-      .clone()
+    // Use pre-allocated vector _tempPos2 for the final return value
+    return this._tempPos2
+      .copy(worldPosition)
       .add(new THREE.Vector3(0, visualRadius * 1.5, 0));
   }
 }

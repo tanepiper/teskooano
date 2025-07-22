@@ -7,367 +7,299 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import {
   BaseCelestialRenderer,
-  CelestialMeshOptions,
-  LightSourcesMap,
+  type CelestialMeshOptions,
+  type LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { OortCloudMaterial, type OortCloudMaterialOptions } from "./material";
+import { AsteroidFieldMaterial } from "@teskooano/celestials-asteroid-field";
 
 /**
- * Renderer for Oort Cloud objects using a particle system.
- *
- * Features:
- * - Spherical particle distribution representing icy cometary bodies
- * - Seeded random generation for consistent appearance
- * - Subtle color variations and size differences
- * - Texture-based rendering with fallback canvas texture
- * - Single LOD level with always-visible particles
- * - Configurable density and appearance parameters
- *
- * The Oort Cloud is rendered as a sparse collection of small particles
- * distributed in a thick spherical shell around the system's outer edge.
+ * Configuration options specific to the Oort Cloud renderer.
  */
-export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> {
-  private objectId: string | null = null;
-  private particles: THREE.Points | null = null;
-  private geometry: THREE.BufferGeometry | null = null;
-  private cloudTexture: THREE.Texture | null = null;
-  private cloudRotationSpeed = 0.00002;
-  private particleRotationSpeed = 0.75; // Default, will be seeded
-
-  constructor(object: RenderableCelestialObject) {
-    super(object);
-    this.objectId = object.celestialObjectId;
-  }
-
+export interface OortCloudRendererOptions extends CelestialMeshOptions {
   /**
-   * Creates and returns the geometry and material for the Oort cloud particles.
-   * @returns An object containing the geometry and material.
+   * Speed of cloud rotation (radians per second).
+   * @default 0.00002
    */
-  getMeshComponents(
+  cloudRotationSpeed?: number;
+
+  /**
+   * Whether to disable billboard LOD levels (Oort clouds manage their own LOD).
+   * @default true
+   */
+  disableBillboard?: boolean;
+}
+
+/**
+ * Renders an Oort Cloud using instanced meshes with LOD support.
+ *
+ * This renderer creates multiple LOD levels with varying particle counts
+ * to provide optimal performance at different viewing distances.
+ * Uses spherical distribution instead of toroidal like asteroid fields.
+ */
+export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMaterial> {
+  // Base geometry for a single Oort Cloud particle (asteroid-like)
+  private baseGeometry: THREE.BufferGeometry;
+  // Store instanced meshes for each LOD level
+  private instancedMeshes: THREE.InstancedMesh[] = [];
+  // Data for each Oort Cloud particle
+  private oortCloudData: {
+    position: THREE.Vector3;
+    color: THREE.Color;
+    size: number;
+    textureIndex: number;
+    initialRotation: number;
+  }[] = [];
+
+  private objectId: string;
+  private cloudRotationSpeed = 0.00002;
+  private particleRotationSpeed = 0.75;
+  private cloudRotationAngle = 0;
+  private previousSimTime = 0;
+  private cumulativeParticleTime = 0;
+  private renderScale = 1.0;
+  private random: () => number = () => 0;
+
+  // Pre-allocated for performance in update loop
+  private _tempMatrix = new THREE.Matrix4();
+  private _tempPosition = new THREE.Vector3();
+  private _tempRotation = new THREE.Euler();
+  private _tempScale = new THREE.Vector3();
+
+  constructor(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): { geometry: THREE.BufferGeometry; material: OortCloudMaterial } {
-    let properties: CentralOortCloudProperties | null = null;
-
-    if (
-      object.properties &&
-      object.properties.type === CelestialType.OORT_CLOUD
-    ) {
-      properties = object.properties as CentralOortCloudProperties;
-    } else {
-      properties = null;
-    }
-
-    if (!properties) {
-      properties = {
-        type: CelestialType.OORT_CLOUD,
-        innerRadiusAU: 2000, // More realistic Oort cloud distance
-        outerRadiusAU: 20000, // Reasonable outer radius for proper sphere
-        composition: ["ice"],
-        visualDensity: 0.1,
-        visualParticleCount: 150, // Much reduced for subtlety
-        visualParticleColor: "#101011",
-      };
-
-      if (!properties.innerRadiusAU) properties.innerRadiusAU = 2000;
-      if (!properties.outerRadiusAU) properties.outerRadiusAU = 20000;
-    }
-
-    if (
-      typeof properties.visualParticleCount !== "number" ||
-      isNaN(properties.visualParticleCount) ||
-      typeof properties.innerRadiusAU !== "number" ||
-      isNaN(properties.innerRadiusAU) ||
-      typeof properties.outerRadiusAU !== "number" ||
-      isNaN(properties.outerRadiusAU)
-    ) {
-      properties = {
-        type: CelestialType.OORT_CLOUD,
-        innerRadiusAU: 2000, // More realistic Oort cloud distance
-        outerRadiusAU: 20000, // Reasonable outer radius for proper sphere
-        composition: ["ice"],
-        visualDensity: 0.1,
-        visualParticleCount: 150, // Much reduced for subtlety
-        visualParticleColor: "#161717",
-      };
-    }
-
-    this.geometry = new THREE.BufferGeometry();
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const sizes: number[] = [];
-    const initialRotations: number[] = [];
-
-    const scaledInnerRadius = properties.innerRadiusAU * SCALE.RENDER_SCALE_AU;
-    const scaledOuterRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
-    const visualRadius = scaledInnerRadius;
-    const visualThickness = scaledOuterRadius - scaledInnerRadius;
-
-    const visualCount = Math.min(properties.visualParticleCount, 300);
-
-    const visualColorHex = properties.visualParticleColor ?? "#353536";
-
-    if (
-      !Number.isFinite(visualRadius) ||
-      !Number.isFinite(visualThickness) ||
-      !Number.isFinite(visualCount) ||
-      visualThickness <= 0
-    ) {
-      const material = this.createAndRegisterMaterial(object);
-      return {
-        geometry: new THREE.BufferGeometry(),
-        material: material || new OortCloudMaterial(),
-      };
-    }
-
-    // Initialize seeded random for consistent generation
-    const random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
-
-    // Create particles in a spherical distribution (Oort cloud)
-    for (let i = 0; i < visualCount; i++) {
-      // Spherical coordinates for uniform distribution on sphere
-      const phi = Math.acos(2 * random() - 1);
-      const theta = random() * Math.PI * 2;
-
-      // Radius varies between inner and outer radius
-      const r = visualRadius + random() * visualThickness;
-
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi);
-
-      positions.push(x, y, z);
-
-      const baseColor = new THREE.Color(visualColorHex);
-      const hsl = { h: 0, s: 0, l: 0 };
-      baseColor.getHSL(hsl);
-
-      // Very subtle color variation - keep it very dark
-      const newColor = new THREE.Color().setHSL(
-        hsl.h + (random() * 0.05 - 0.025),
-        Math.max(0.05, hsl.s * (0.5 + random() * 0.2)),
-        Math.max(0.1, hsl.l * (0.3 + random() * 0.2)),
-      );
-
-      colors.push(newColor.r, newColor.g, newColor.b);
-
-      // Make particles very small and subtle
-      sizes.push(0.5 + random() * 1.0);
-      initialRotations.push(random() * Math.PI * 2);
-    }
-
-    this.geometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(positions, 3),
-    );
-    this.geometry.setAttribute(
-      "color",
-      new THREE.Float32BufferAttribute(colors, 3),
-    );
-    this.geometry.setAttribute(
-      "size",
-      new THREE.Float32BufferAttribute(sizes, 1),
-    );
-    this.geometry.setAttribute(
-      "initialRotation",
-      new THREE.Float32BufferAttribute(initialRotations, 1),
-    );
-
-    const material = this.createAndRegisterMaterial(object);
-
-    return {
-      geometry: this.geometry,
-      material: material || new OortCloudMaterial(),
-    };
+    options: OortCloudRendererOptions = {},
+  ) {
+    super(object, {
+      ...options,
+      disableBillboard: options.disableBillboard ?? true,
+    });
+    this.objectId = object.celestialObjectId;
+    this.baseGeometry = new THREE.SphereGeometry(1, 8, 8); // Simple sphere for instance
+    this.baseGeometry.name = "OortCloudBaseGeometry";
   }
 
   /**
-   * Creates the shader material for the Oort cloud.
+   * Creates the asteroid field material (reusing from asteroid-field package).
    */
   protected createMaterial(
     object: RenderableCelestialObject,
-  ): OortCloudMaterial {
-    // Get Oort Cloud properties to extract texture paths
+  ): AsteroidFieldMaterial {
     const properties = this.getOortCloudProperties(object);
 
-    // Create material with fallback texture
-    const material = new OortCloudMaterial({
-      cloudTexture: this.cloudTexture || undefined,
-      pointSizeScale: 0.3,
+    const material = new AsteroidFieldMaterial({
       particleRotationSpeed: this.particleRotationSpeed,
-      texturePaths: properties.texturePaths,
+      renderScale: this.renderScale,
     });
+
+    if (properties.texturePaths && properties.texturePaths.length > 0) {
+      material.loadTexturesFromPaths(properties.texturePaths);
+    }
 
     return material;
   }
 
   /**
-   * Creates the THREE.Object3D (Points) for the Oort cloud.
-   * This represents the highest LOD level (Level 0).
+   * Generates Oort Cloud particle data (positions, colors, sizes, etc.) for a given count.
+   * This data will be used to populate the instance attributes of InstancedMesh.
+   * Uses spherical distribution instead of toroidal.
+   * @param object The celestial object.
+   * @param count Number of particles to generate.
+   * @returns An array of Oort Cloud particle data.
    */
-  createMesh(
+  private _generateOortCloudData(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): THREE.Object3D {
-    const { geometry, material } = this.getMeshComponents(object, options);
-
-    this.objectId = object.celestialObjectId;
-
-    this.particles = new THREE.Points(geometry, material);
-    this.particles.name = `${object.celestialObjectId}-oortcloud`;
-
-    this.particles.visible = true;
-    this.particles.frustumCulled = true; // Enable frustum culling like asteroid field
-    this.particles.renderOrder = 10;
-
-    return this.particles;
-  }
-
-  /**
-   * Creates and returns an array of LOD levels for the Oort Cloud.
-   * Like asteroid field, creates a single fixed spherical shell that's always visible.
-   */
-  getLODLevels(
-    object: RenderableCelestialObject,
-    options?: CelestialMeshOptions & {
-      parentLODDistances?: number[];
-      cloudRotationSpeed?: number;
-    },
-  ): LODLevel[] {
-    this.objectId = object.celestialObjectId;
-
-    // Initialize seeded random for this Oort cloud
-    const random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
-    this.particleRotationSpeed = 0.5 + random() * 1.0;
-
-    if (options?.cloudRotationSpeed !== undefined) {
-      this.cloudRotationSpeed = options.cloudRotationSpeed;
+    count: number,
+  ): typeof this.oortCloudData {
+    if (!this.random) {
+      this.random = createSeededRandomSync(
+        object.seed ?? object.celestialObjectId,
+      );
     }
 
-    // Create material
-    const material = this.createAndRegisterMaterial(object);
-    if (!material) {
-      return []; // Return empty array if material fails
-    }
+    const data: typeof this.oortCloudData = [];
 
-    // Create fixed geometry like asteroid field
-    const geometry = this._createOortCloudGeometry(object);
+    const properties = this.getOortCloudProperties(object);
 
-    const points = new THREE.Points(geometry, material);
-    points.name = `${object.celestialObjectId}-oortcloud`;
-    points.frustumCulled = true;
-
-    // Single LOD level - always visible like asteroid field
-    return [{ object: points, distance: 0 }];
-  }
-
-  /**
-   * Creates BufferGeometry for the Oort cloud particles like asteroid field.
-   * @param object - The renderable object data.
-   * @returns The generated BufferGeometry.
-   * @internal
-   */
-  private _createOortCloudGeometry(
-    object: RenderableCelestialObject,
-  ): THREE.BufferGeometry {
-    // Get properties (reuse the logic from getMeshComponents)
-    let properties = this.getOortCloudProperties(object);
-
-    const geometry = new THREE.BufferGeometry();
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const sizes: number[] = [];
-    const initialRotations: number[] = [];
-
-    const scaledInnerRadius = properties.innerRadiusAU * SCALE.RENDER_SCALE_AU;
-    const scaledOuterRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
-    const visualRadius = scaledInnerRadius;
+    const scaledInnerRadius =
+      (properties.visualInnerRadius ?? properties.innerRadiusAU) *
+      SCALE.RENDER_SCALE_AU;
+    const scaledOuterRadius =
+      (properties.visualOuterRadius ?? properties.outerRadiusAU) *
+      SCALE.RENDER_SCALE_AU;
     const visualThickness = scaledOuterRadius - scaledInnerRadius;
+    const visualColorHex =
+      properties.color ?? properties.visualParticleColor ?? "#101011";
+    const baseColor = new THREE.Color(visualColorHex);
 
-    const visualColorHex = properties.visualParticleColor ?? "#353536";
-    const targetParticleCount = properties.visualParticleCount;
-
-    // Initialize seeded random for consistent generation
-    const random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
-
-    // Create particles in a spherical distribution
-    for (let i = 0; i < targetParticleCount; i++) {
+    for (let i = 0; i < count; i++) {
       // Spherical distribution around the cloud center
-      const phi = Math.acos(2 * random() - 1);
-      const theta = random() * Math.PI * 2;
-      const r = visualRadius + random() * visualThickness;
+      const phi = Math.acos(2 * this.random() - 1);
+      const theta = this.random() * Math.PI * 2;
+      const r = scaledInnerRadius + this.random() * visualThickness;
 
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.sin(phi) * Math.sin(theta);
       const z = r * Math.cos(phi);
 
-      positions.push(x, y, z);
-
       // Color variation
-      const baseColor = new THREE.Color(visualColorHex);
       const hsl = { h: 0, s: 0, l: 0 };
       baseColor.getHSL(hsl);
       const newColor = new THREE.Color().setHSL(
-        hsl.h + (random() * 0.05 - 0.025),
-        Math.max(0.05, hsl.s * (0.5 + random() * 0.2)),
-        Math.max(0.1, hsl.l * (0.3 + random() * 0.2)),
+        hsl.h + (this.random() * 0.05 - 0.025),
+        Math.max(0.05, hsl.s * (0.5 + this.random() * 0.2)),
+        Math.max(0.1, hsl.l * (0.3 + this.random() * 0.2)),
       );
-      colors.push(newColor.r, newColor.g, newColor.b);
 
-      // Vary sizes
-      sizes.push(0.5 + random() * 1.0);
-      initialRotations.push(random() * Math.PI * 2);
+      // Vary sizes - Oort Cloud particles are extremely small
+      const size = Math.max(0.0000001, this.random() * 0.0000005); // e.g., 0.0000005 AU max radius
+      const textureIndex = Math.floor(this.random() * 5); // Assuming 5 texture variants from asteroid material
+      const initialRotation = this.random() * Math.PI * 2;
+
+      data.push({
+        position: new THREE.Vector3(x, y, z),
+        color: newColor,
+        size,
+        textureIndex,
+        initialRotation,
+      });
     }
-
-    geometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(positions, 3),
-    );
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-    geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
-    geometry.setAttribute(
-      "initialRotation",
-      new THREE.Float32BufferAttribute(initialRotations, 1),
-    );
-
-    return geometry;
+    return data;
   }
 
   /**
-   * Extract properties logic for reuse
+   * Creates and returns an array of LOD levels with varying particle counts,
+   * using THREE.InstancedMesh for performance.
    */
-  private getOortCloudProperties(object: RenderableCelestialObject) {
-    let properties = null;
+  getLODLevels(
+    object: RenderableCelestialObject,
+    options?: OortCloudRendererOptions,
+  ): LODLevel[] {
+    this.instancedMeshes = []; // Clear previous meshes
 
+    this.random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
+    this.particleRotationSpeed = 0.5 + this.random() * 1.0; // Slightly faster for Oort Cloud
+
+    if (options?.cloudRotationSpeed !== undefined) {
+      this.cloudRotationSpeed = options.cloudRotationSpeed;
+    }
+    if (options?.renderScale !== undefined) {
+      this.renderScale = options.renderScale;
+    }
+
+    let material = this.getTypedMaterial(object.celestialObjectId);
+    if (!material) {
+      material = this.createAndRegisterMaterial(object);
+    }
+
+    const properties = this.getOortCloudProperties(object);
+    const fieldRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
+
+    // Distances for LOD - Oort Cloud is always far away
+    const distancesSceneUnits = [
+      0, // Always visible
+      1000, // 1000 scene units
+      5000, // 5000 scene units
+      20000, // 20000 scene units
+    ];
+    // Use count or visualParticleCount from properties, but cap for performance
+    const baseParticleCount =
+      properties.count ?? properties.visualParticleCount;
+    const particleCounts = [
+      Math.min(baseParticleCount, 50000),
+      Math.min(baseParticleCount, 25000),
+      Math.min(baseParticleCount, 10000),
+      Math.min(baseParticleCount, 1000),
+    ];
+
+    const lodLevels: LODLevel[] = [];
+
+    for (let i = 0; i < distancesSceneUnits.length; i++) {
+      const distance = distancesSceneUnits[i];
+      const count = particleCounts[Math.min(i, particleCounts.length - 1)];
+
+      // Generate all Oort Cloud particle data for this LOD level
+      const oortCloudParticles = this._generateOortCloudData(object, count);
+      this.oortCloudData = oortCloudParticles; // Store for update method
+
+      // Create InstancedMesh
+      const instancedMesh = new THREE.InstancedMesh(
+        this.baseGeometry,
+        material,
+        count,
+      );
+      instancedMesh.name = `${object.celestialObjectId}-oortcloud-lod-${i}`;
+      instancedMesh.frustumCulled = true;
+
+      // Pre-populate instance matrices and colors
+      for (let j = 0; j < count; j++) {
+        const particle = oortCloudParticles[j];
+        this._tempPosition.copy(particle.position);
+        this._tempScale.set(particle.size, particle.size, particle.size);
+        this._tempRotation.set(0, particle.initialRotation, 0); // Apply initial rotation
+
+        this._tempMatrix.compose(
+          this._tempPosition,
+          new THREE.Quaternion().setFromEuler(this._tempRotation),
+          this._tempScale,
+        );
+        instancedMesh.setMatrixAt(j, this._tempMatrix);
+        instancedMesh.setColorAt(j, particle.color);
+      }
+
+      instancedMesh.instanceMatrix.needsUpdate = true;
+      if (instancedMesh.instanceColor) {
+        instancedMesh.instanceColor.needsUpdate = true;
+      }
+
+      this.instancedMeshes.push(instancedMesh); // Store for cleanup and update
+
+      lodLevels.push({ object: instancedMesh, distance: distance });
+    }
+
+    if (lodLevels.length === 0) {
+      const fallbackMesh = new THREE.Mesh(
+        this.baseGeometry,
+        this.createMaterial(object),
+      );
+      fallbackMesh.name = `${object.celestialObjectId}-oortcloud-fallback`;
+      return [{ object: fallbackMesh, distance: 0 }];
+    }
+
+    return lodLevels;
+  }
+
+  /**
+   * Helper method to extract and validate Oort Cloud properties.
+   * @param object The renderable celestial object.
+   * @returns Validated Oort Cloud properties.
+   * @private
+   */
+  private getOortCloudProperties(
+    object: RenderableCelestialObject,
+  ): CentralOortCloudProperties {
     if (
       object.properties &&
       object.properties.type === CelestialType.OORT_CLOUD
     ) {
-      properties = object.properties;
+      return object.properties as CentralOortCloudProperties;
     }
 
-    if (!properties) {
-      properties = {
-        type: CelestialType.OORT_CLOUD,
-        innerRadiusAU: 2000,
-        outerRadiusAU: 20000,
-        composition: ["ice"],
-        visualDensity: 0.1,
-        visualParticleCount: 1000,
-        visualParticleColor: "#303031",
-        texturePaths: undefined,
-      };
-    }
-
-    return properties;
+    return {
+      type: CelestialType.OORT_CLOUD,
+      innerRadiusAU: 2000,
+      outerRadiusAU: 20000,
+      visualParticleCount: 1000,
+      visualDensity: 0.1,
+      visualParticleColor: "#161717",
+      composition: ["ice"],
+      // Additional properties for consistency
+      count: 1000,
+      color: "#161717",
+    };
   }
 
   update(
@@ -376,37 +308,77 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
     timeScale: number,
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
-    allObjects?: Record<string, RenderableCelestialObject>,
-    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    // Call parent update to handle LOD and billboard updates
-    super.update(
-      object,
-      time,
-      timeScale,
-      lightSources,
-      camera,
-      allObjects,
-      allMeshes,
-    );
-
+    super.update(object, time, timeScale, lightSources, camera);
     const material = this.getTypedMaterial(object.celestialObjectId);
-    if (material) {
-      material.updateTime(this.getElapsedTime() * 0.0001);
+
+    if (material && material.isMaterialReady()) {
+      const deltaTime = (time - this.previousSimTime) * timeScale;
+
+      // Update cloud rotation for the entire field
+      this.cloudRotationAngle += this.cloudRotationSpeed * deltaTime;
+      this.cloudRotationAngle %= 2 * Math.PI;
+
+      // Update cumulative time for individual particle rotation
+      this.cumulativeParticleTime += deltaTime * 0.05;
+      this.cumulativeParticleTime %= 2 * Math.PI;
+
+      // Update material uniforms
+      material.updateBeltRotation(this.cloudRotationAngle);
+      material.updateTime(this.cumulativeParticleTime);
+      material.updateParticleRotationSpeed(this.particleRotationSpeed);
+      material.updateRenderScale(this.renderScale);
+
+      // Update instance matrices for each Oort Cloud particle
+      this.instancedMeshes.forEach((mesh) => {
+        if (!mesh.instanceMatrix) return;
+
+        for (let i = 0; i < this.oortCloudData.length; i++) {
+          const particle = this.oortCloudData[i];
+
+          // Apply cloud rotation to particle position
+          this._tempPosition.copy(particle.position);
+          this._tempPosition.applyAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            this.cloudRotationAngle,
+          );
+
+          // Apply individual particle size and initial rotation (from generation)
+          this._tempScale.set(particle.size, particle.size, particle.size);
+          this._tempRotation.set(0, particle.initialRotation, 0);
+
+          this._tempMatrix.compose(
+            this._tempPosition,
+            new THREE.Quaternion().setFromEuler(this._tempRotation),
+            this._tempScale,
+          );
+          mesh.setMatrixAt(i, this._tempMatrix);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+      });
+
+      this.previousSimTime = time;
     }
   }
 
   dispose(): void {
-    if (this.geometry) {
-      this.geometry.dispose();
-    }
-    if (this.cloudTexture) {
-      this.cloudTexture.dispose();
-    }
-    this.particles = null;
-    this.cloudTexture = null;
-
-    // Call parent dispose to clean up base class resources
     super.dispose();
+
+    // Dispose base geometry
+    this.baseGeometry.dispose();
+
+    // Dispose instanced meshes and their attributes
+    this.instancedMeshes.forEach((mesh) => {
+      if (mesh.parent) {
+        mesh.parent.remove(mesh);
+      }
+      // No explicit dispose needed for instanceMatrix/instanceColor as they are managed by InstancedMesh
+    });
+    this.instancedMeshes = [];
+    this.oortCloudData = [];
+
+    this.cloudRotationAngle = 0;
+    this.previousSimTime = 0;
+    this.cumulativeParticleTime = 0;
   }
 }

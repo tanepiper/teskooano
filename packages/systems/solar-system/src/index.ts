@@ -7,7 +7,7 @@ import { minorBodies } from "./minor-bodies";
 import { neptuneSystemBodies } from "./neptune";
 import { plutoSystemBodies } from "./pluto";
 import { saturnSystemBodies } from "./saturn";
-import { sun } from "./sol";
+import { systemCelestials } from "./sol";
 import { uranusSystemBodies } from "./uranus";
 import { venus } from "./venus/venus";
 import { allSatellites } from "./satellites";
@@ -20,7 +20,7 @@ import { processSolarSystemToCurrentTime } from "./utils/dynamic-epoch-processor
  * Each object should have a parentId that references an existing body.
  */
 const solarSystemBodies = [
-  sun,
+  ...systemCelestials,
   mercury,
   venus,
   ...earthSystemBodies,

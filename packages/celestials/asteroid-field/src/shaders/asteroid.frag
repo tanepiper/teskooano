@@ -1,6 +1,7 @@
 varying vec3 vColor;
 varying float vTextureIndex;
 varying float vInitialRotation;
+varying vec2 vUv; // Add vUv varying
 
 uniform sampler2D asteroidTextures[5];
 uniform float alphaTest;
@@ -8,17 +9,15 @@ uniform float time;
 uniform float particleRotationSpeed;
 
 void main() {
-  // Create circular particle with falloff
-  vec2 fromCenter = gl_PointCoord * 2.0 - 1.0;
-  float len = length(fromCenter);
-  if (len > 1.0) discard; 
+  // No need for gl_PointCoord as we are rendering geometry now.
+  // Use the interpolated vUv from the vertex shader.
   
   // Apply rotation to texture coordinates
   float angle = vInitialRotation + time * particleRotationSpeed;
   mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
   
   vec2 center = vec2(0.5, 0.5);
-  vec2 uv = gl_PointCoord - center;
+  vec2 uv = vUv - center; // Use vUv directly
   vec2 rotatedUV = rotationMatrix * uv + center;
 
   // Sample the appropriate texture based on texture index

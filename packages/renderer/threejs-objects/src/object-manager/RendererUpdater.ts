@@ -3,6 +3,7 @@ import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import type * as THREE from "three";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LightSourceComponent } from "@teskooano/renderer-threejs-lighting";
+import type { RenderableCelestialObject } from "@teskooano/data-types"; // Corrected import path
 
 type LightSourcesMap = Map<
   string,
@@ -49,7 +50,16 @@ export class RendererUpdater {
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
   ): void {
-    const context = { time, timeScale, camera, renderer, scene, allMeshes };
+    const allRenderableObjects = StateAccessor.getCurrentRenderableObjects();
+    const context = {
+      time,
+      timeScale,
+      camera,
+      renderer,
+      scene,
+      allMeshes,
+      allRenderableObjects,
+    };
 
     this.processRendererMap(this.starRenderers, context);
     this.processRendererMap(this.planetRenderers, context);
@@ -81,17 +91,26 @@ export class RendererUpdater {
       allMeshes: Map<string, THREE.Object3D>;
       renderer?: THREE.WebGLRenderer;
       scene?: THREE.Scene;
+      allRenderableObjects: Record<string, RenderableCelestialObject>;
     },
   ) {
-    const allObjects = StateAccessor.getCurrentRenderableObjects();
+    // const allObjects = StateAccessor.getCurrentRenderableObjects(); // Removed redundant call
 
     rendererMap.forEach((rendererInstance, objectId) => {
-      const object = allObjects[objectId];
+      const object = context.allRenderableObjects[objectId]; // Use directly from context
       if (!object) {
         return;
       }
 
-      const { time, timeScale, camera, renderer, scene, allMeshes } = context;
+      const {
+        time,
+        timeScale,
+        camera,
+        renderer,
+        scene,
+        allMeshes,
+        allRenderableObjects,
+      } = context;
 
       if (this.lightingManager) {
         // Get influential lights specifically for this object
@@ -105,7 +124,7 @@ export class RendererUpdater {
           timeScale,
           lightSources,
           camera,
-          allObjects,
+          allRenderableObjects, // Pass the pre-fetched allRenderableObjects
           Object.fromEntries(allMeshes),
         );
       } else {
@@ -116,7 +135,7 @@ export class RendererUpdater {
           timeScale,
           new Map(), // Pass empty map
           camera,
-          allObjects,
+          allRenderableObjects, // Pass the pre-fetched allRenderableObjects
           Object.fromEntries(allMeshes),
         );
       }

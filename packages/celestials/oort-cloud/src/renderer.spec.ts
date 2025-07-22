@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as THREE from "three";
 import { OortCloudRenderer } from "./renderer";
 import {
@@ -9,6 +9,30 @@ import {
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 
+// Mock THREE.TextureLoader
+vi.mock("three", async () => {
+  const actual = await vi.importActual("three");
+  return {
+    ...actual,
+    TextureLoader: vi.fn().mockImplementation(() => ({
+      load: vi.fn().mockImplementation((url, onLoad, onError) => {
+        // Create a mock texture
+        const mockTexture = {
+          uuid: Math.random().toString(),
+          name: url,
+          image: { width: 64, height: 64 },
+          needsUpdate: false,
+        } as THREE.Texture;
+
+        // Simulate successful load
+        if (onLoad) {
+          setTimeout(() => onLoad(mockTexture), 0);
+        }
+      }),
+    })),
+  };
+});
+
 describe("OortCloudRenderer", () => {
   let renderer: OortCloudRenderer;
   let mockObject: RenderableCelestialObject<OortCloudProperties>;
@@ -18,11 +42,14 @@ describe("OortCloudRenderer", () => {
       type: CelestialType.OORT_CLOUD,
       innerRadiusAU: 2000,
       outerRadiusAU: 20000,
-      composition: ["ice"],
+      visualParticleCount: 1000,
       visualDensity: 0.1,
-      visualParticleCount: 150,
-      visualParticleColor: "#353536",
-      // No texturePaths provided - will use fallback texture
+      visualParticleColor: "#161717",
+      composition: ["ice"],
+      // Additional properties for consistency
+      count: 1000,
+      color: "#161717",
+      // No texturePaths provided - will use fallback textures
     };
 
     mockObject = {
@@ -40,7 +67,7 @@ describe("OortCloudRenderer", () => {
       seed: "test-seed",
       realRadius_m: 1000000,
       realMass_kg: 1e20,
-      temperature: 50,
+      temperature: 200,
       albedo: 0.1,
       axialTilt: new OSVector3(0, 0, 0),
       uniforms: {},
@@ -73,41 +100,29 @@ describe("OortCloudRenderer", () => {
     renderer = new OortCloudRenderer(mockObject);
   });
 
-  it("should create LOD levels with points mesh", () => {
+  it("should create LOD levels with instanced meshes", () => {
     const lodLevels = renderer.getLODLevels(mockObject);
 
     expect(lodLevels).toBeDefined();
     expect(lodLevels.length).toBeGreaterThan(0);
 
     const level = lodLevels[0];
-    expect(level.object).toBeInstanceOf(THREE.Points);
+    expect(level.object).toBeInstanceOf(THREE.InstancedMesh);
     expect(level.distance).toBe(0);
 
-    const points = level.object as THREE.Points;
-    expect(points.geometry).toBeInstanceOf(THREE.BufferGeometry);
-    expect(points.material).toBeInstanceOf(THREE.ShaderMaterial);
+    const instancedMesh = level.object as THREE.InstancedMesh;
+    expect(instancedMesh.geometry).toBeInstanceOf(THREE.BufferGeometry);
+    expect(instancedMesh.material).toBeInstanceOf(THREE.ShaderMaterial);
   });
 
-  it("should create mesh components with geometry and material", () => {
-    const { geometry, material } = renderer.getMeshComponents(mockObject);
+  it("should create material with proper properties", () => {
+    const material = renderer["createMaterial"](mockObject);
 
-    expect(geometry).toBeInstanceOf(THREE.BufferGeometry);
     expect(material).toBeInstanceOf(THREE.ShaderMaterial);
-
-    // Check that geometry has required attributes
-    expect(geometry.attributes.position).toBeDefined();
-    expect(geometry.attributes.color).toBeDefined();
-    expect(geometry.attributes.size).toBeDefined();
-    expect(geometry.attributes.initialRotation).toBeDefined();
-  });
-
-  it("should create a points mesh", () => {
-    const mesh = renderer.createMesh(mockObject);
-
-    expect(mesh).toBeInstanceOf(THREE.Points);
-    expect(mesh.name).toBe("test-oort-cloud-oortcloud");
-    expect(mesh.visible).toBe(true);
-    expect(mesh.frustumCulled).toBe(true);
+    expect(material.uniforms).toBeDefined();
+    expect(material.uniforms.asteroidTextures).toBeDefined();
+    expect(material.uniforms.beltRotationAngle).toBeDefined();
+    expect(material.uniforms.time).toBeDefined();
   });
 
   it("should handle update calls without errors", () => {
@@ -127,30 +142,40 @@ describe("OortCloudRenderer", () => {
     }).not.toThrow();
   });
 
+  it("should create multiple LOD levels with different distances", () => {
+    const lodLevels = renderer.getLODLevels(mockObject);
+
+    expect(lodLevels.length).toBeGreaterThan(1);
+
+    // Check that distances are in ascending order
+    for (let i = 1; i < lodLevels.length; i++) {
+      expect(lodLevels[i].distance).toBeGreaterThanOrEqual(
+        lodLevels[i - 1].distance,
+      );
+    }
+
+    // Check that all levels have valid objects
+    lodLevels.forEach((level) => {
+      expect(level.object).toBeInstanceOf(THREE.InstancedMesh);
+    });
+  });
+
   it("should handle texture paths when provided", () => {
-    const oortCloudWithTextures: OortCloudProperties = {
-      type: CelestialType.OORT_CLOUD,
-      innerRadiusAU: 2000,
-      outerRadiusAU: 20000,
-      composition: ["ice"],
-      visualDensity: 0.1,
-      visualParticleCount: 150,
-      visualParticleColor: "#353536",
-      texturePaths: [
-        "space/textures/asteroids/asteroid_1.png",
-        "space/textures/asteroids/asteroid_2.png",
-      ],
+    const objectWithTextures: RenderableCelestialObject<OortCloudProperties> = {
+      ...mockObject,
+      properties: {
+        ...mockObject.properties!,
+        texturePaths: [
+          "space/textures/asteroids/asteroid_1.png",
+          "space/textures/asteroids/asteroid_2.png",
+        ],
+      },
     };
 
-    const mockObjectWithTextures = {
-      ...mockObject,
-      properties: oortCloudWithTextures,
-    } as RenderableCelestialObject<OortCloudProperties>;
+    const rendererWithTextures = new OortCloudRenderer(objectWithTextures);
+    const material = rendererWithTextures["createMaterial"](objectWithTextures);
 
-    const rendererWithTextures = new OortCloudRenderer(mockObjectWithTextures);
-    const lodLevels = rendererWithTextures.getLODLevels(mockObjectWithTextures);
-
-    expect(lodLevels).toBeDefined();
-    expect(lodLevels.length).toBeGreaterThan(0);
+    expect(material).toBeInstanceOf(THREE.ShaderMaterial);
+    expect(material.uniforms.asteroidTextures).toBeDefined();
   });
 });

@@ -29,6 +29,10 @@ export abstract class BaseLabelLayer {
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
   /** Reusable vector for calculations */
   private tempVector = new THREE.Vector3();
+  // Pre-allocated vectors for performance in occlusion testing
+  private _tempVector3_1 = new THREE.Vector3();
+  private _tempVector3_2 = new THREE.Vector3();
+  private _tempVector3_3 = new THREE.Vector3();
 
   /** Performance optimization: throttle occlusion checks */
   private occlusionCheckCounter = 0;
@@ -239,9 +243,12 @@ export abstract class BaseLabelLayer {
     }
 
     // Spatial culling: quick distance check
-    const cameraPosition = this.tempVector.clone();
+    // Reuse _tempVector3_1 for cameraPosition
+    const cameraPosition = this._tempVector3_1;
     camera.getWorldPosition(cameraPosition);
-    const distance = cameraPosition.distanceTo(labelPosition.toThreeJS());
+    // Reuse _tempVector3_2 for label position conversion
+    const labelPosThree = labelPosition.toThreeJS();
+    const distance = cameraPosition.distanceTo(labelPosThree);
 
     // If label is very close to camera, it's unlikely to be occluded
     if (distance < this.occlusionConfig.nearbyDistanceThreshold) {
@@ -274,7 +281,7 @@ export abstract class BaseLabelLayer {
       if (queuedLabelId === labelId) {
         // Perform the actual occlusion test
         const result = this.performOcclusionTest(
-          labelPosition,
+          labelPosThree, // Pass the pre-converted Three.js vector
           camera,
           objectManager,
           labelObjectId,
@@ -295,7 +302,7 @@ export abstract class BaseLabelLayer {
    * Separated from the main method for cleaner code organization.
    */
   private performOcclusionTest(
-    labelPosition: OSVector3,
+    labelPosition: THREE.Vector3, // Now expects a Three.js vector directly
     camera: THREE.Camera,
     objectManager: ObjectManager,
     labelObjectId: string,
@@ -305,8 +312,8 @@ export abstract class BaseLabelLayer {
       return false;
     }
 
-    // Get camera world position
-    const cameraPosition = this.tempVector.clone();
+    // Get camera world position, reuse _tempVector3_1
+    const cameraPosition = this._tempVector3_1;
     try {
       camera.getWorldPosition(cameraPosition);
     } catch (error) {
@@ -314,13 +321,12 @@ export abstract class BaseLabelLayer {
       return false;
     }
 
-    // Calculate direction from camera to label
-    const direction = labelPosition
-      .toThreeJS()
-      .clone()
+    // Calculate direction from camera to label, reuse _tempVector3_2 for direction
+    const direction = this._tempVector3_2
+      .copy(labelPosition)
       .sub(cameraPosition)
       .normalize();
-    const distance = cameraPosition.distanceTo(labelPosition.toThreeJS());
+    const distance = cameraPosition.distanceTo(labelPosition);
 
     // Set up the raycaster
     this.raycaster.set(cameraPosition, direction);
@@ -338,21 +344,25 @@ export abstract class BaseLabelLayer {
       const mesh = objectManager.getObject(objectId);
       if (mesh && mesh.visible && mesh.matrixWorld) {
         // Only test against objects that are reasonably close to the ray path
-        const objectPosition = mesh.position;
+        const objectPosition = this._tempVector3_3.copy(mesh.position);
         if (objectPosition) {
-          const rayToObjectDistance = this.tempVector
+          const rayToObjectDistance = this._tempVector3_1 // Reuse tempVector3_1
             .copy(cameraPosition)
-            .add(direction.clone().multiplyScalar(distance * 0.5))
+            .add(this._tempVector3_2.clone().multiplyScalar(distance * 0.5))
             .distanceTo(objectPosition);
 
           // Only include objects that could realistically block this ray
           if (rayToObjectDistance < distance * 0.5) {
+            // Add the main mesh and its immediate children if they are meshes or LODs
             intersectableObjects.push(mesh);
             mesh.traverse((child) => {
               if (
                 child &&
+                child !== mesh && // Avoid adding the parent mesh twice
                 child.matrixWorld &&
-                (child.type === "Mesh" || child.type === "LOD")
+                (child.type === "Mesh" ||
+                  child.type === "LOD" ||
+                  child.type === "Sprite") // Include sprites as they can occlude
               ) {
                 intersectableObjects.push(child);
               }

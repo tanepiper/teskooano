@@ -339,70 +339,80 @@ export class ObjectManager extends StateSubscriptionMixin {
    *          Hides labels for destroyed objects or objects at high LOD distances (e.g., distant moons).
    */
   private updateLabelVisibility(): void {
-    if (this.css2DManager?.update) {
-      if (!this.css2DManager) return; // Skip if no CSS2D manager
+    if (!this.css2DManager) return; // Skip if no CSS2D manager
 
-      const allRenderableObjects = this.latestRenderableObjects;
+    const allRenderableObjects = this.latestRenderableObjects;
 
-      for (const objectId in allRenderableObjects) {
-        const objectData = allRenderableObjects[objectId];
+    for (const objectId in allRenderableObjects) {
+      const objectData = allRenderableObjects[objectId];
 
-        // Hide label if object is destroyed or its mesh doesn't exist
+      // Hide label if object is destroyed or its mesh doesn't exist
+      if (
+        objectData.status === CelestialStatus.DESTROYED ||
+        !this.objects.has(objectId)
+      ) {
+        // Only hide if currently visible
         if (
-          objectData.status === CelestialStatus.DESTROYED ||
-          !this.objects.has(objectId)
+          this.css2DManager
+            .getLayer(CSS2DLayerType.CELESTIAL_LABELS)
+            ?.getElement(objectId)?.visible
         ) {
           this.css2DManager.hideInstance(
             CSS2DLayerType.CELESTIAL_LABELS,
             objectId,
           );
-          continue;
         }
+        continue;
+      }
 
-        let showLabel = false;
-        const type = objectData.type;
+      let showLabel = false;
+      const type = objectData.type;
 
-        // Determine default visibility based on type
-        if (
-          type === CelestialType.STAR ||
-          type === CelestialType.PLANET ||
-          type === CelestialType.GAS_GIANT ||
-          type === CelestialType.OORT_CLOUD || // Example: Always show Oort cloud representation label?
-          type === CelestialType.DWARF_PLANET ||
-          type === CelestialType.ASTEROID_FIELD ||
-          type === CelestialType.COMET ||
-          type === CelestialType.SATELLITE
-        ) {
-          showLabel = true;
-        } else if (
-          // For moons and rings, only show label if parent is close (low LOD level)
-          type === CelestialType.MOON ||
-          type === CelestialType.RING_SYSTEM
-        ) {
-          if (objectData.parentId) {
-            const parentLODLevel = this.lodManager.getCurrentLODLevel(
-              objectData.parentId,
-            );
-            // Show if parent LOD is 0 or 1 (closest levels)
-            if (parentLODLevel !== undefined && parentLODLevel <= 1) {
-              showLabel = true;
-            }
+      // Determine default visibility based on type
+      if (
+        type === CelestialType.STAR ||
+        type === CelestialType.PLANET ||
+        type === CelestialType.GAS_GIANT ||
+        type === CelestialType.OORT_CLOUD ||
+        type === CelestialType.DWARF_PLANET ||
+        type === CelestialType.ASTEROID_FIELD ||
+        type === CelestialType.COMET ||
+        type === CelestialType.SATELLITE
+      ) {
+        showLabel = true;
+      } else if (
+        // For moons and rings, only show label if parent is close (low LOD level)
+        type === CelestialType.MOON ||
+        type === CelestialType.RING_SYSTEM
+      ) {
+        if (objectData.parentId) {
+          const parentLODLevel = this.lodManager.getCurrentLODLevel(
+            objectData.parentId,
+          );
+          // Show if parent LOD is 0 or 1 (closest levels)
+          if (parentLODLevel !== undefined && parentLODLevel <= 1) {
+            showLabel = true;
           }
         }
-        // Add more specific logic here if needed
+      }
+      // Add more specific logic here if needed
 
-        // Apply visibility change
-        if (showLabel) {
-          this.css2DManager.showInstance(
-            CSS2DLayerType.CELESTIAL_LABELS,
-            objectId,
-          );
-        } else {
-          this.css2DManager.hideInstance(
-            CSS2DLayerType.CELESTIAL_LABELS,
-            objectId,
-          );
-        }
+      const currentLabelElement = this.css2DManager
+        .getLayer(CSS2DLayerType.CELESTIAL_LABELS)
+        ?.getElement(objectId);
+      const isCurrentlyVisible = currentLabelElement?.visible ?? false;
+
+      // Apply visibility change only if it differs from current state
+      if (showLabel && !isCurrentlyVisible) {
+        this.css2DManager.showInstance(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
+        );
+      } else if (!showLabel && isCurrentlyVisible) {
+        this.css2DManager.hideInstance(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
+        );
       }
     }
   }

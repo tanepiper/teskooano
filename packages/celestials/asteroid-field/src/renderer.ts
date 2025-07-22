@@ -35,15 +35,23 @@ export interface AsteroidFieldRendererOptions extends CelestialMeshOptions {
 }
 
 /**
- * Renders an asteroid field using a particle system with LOD support.
+ * Renders an asteroid field using instanced meshes with LOD support.
  *
  * This renderer creates multiple LOD levels with varying particle counts
  * to provide optimal performance at different viewing distances.
  */
 export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMaterial> {
-  private lodGeometries: THREE.BufferGeometry[] = [];
+  private baseGeometry: THREE.BufferGeometry; // Base geometry for a single asteroid
+  private instancedMeshes: THREE.InstancedMesh[] = []; // Store instanced meshes
+  private asteroidData: {
+    position: THREE.Vector3;
+    color: THREE.Color;
+    size: number;
+    textureIndex: number;
+    initialRotation: number;
+  }[] = [];
   private beltRotationSpeed = 0.00005;
-  private particleRotationSpeed = 1.5; // Default value, will be seeded
+  private particleRotationSpeed = 1.5;
   private beltRotationAngle = 0;
   private previousSimTime = 0;
   private cumulativeParticleTime = 0;
@@ -51,25 +59,28 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   private random: () => number = () => 0;
   private objectId: string;
 
+  // Pre-allocated for performance in update loop
+  private _tempMatrix = new THREE.Matrix4();
+  private _tempPosition = new THREE.Vector3();
+  private _tempRotation = new THREE.Euler();
+  private _tempScale = new THREE.Vector3();
+
   constructor(
     object: RenderableCelestialObject,
     options: AsteroidFieldRendererOptions = {},
   ) {
-    // Pass object and options to base class with billboard disabled by default
     super(object, {
       ...options,
       disableBillboard: options.disableBillboard ?? true,
     });
     this.objectId = object.celestialObjectId;
+    this.baseGeometry = new THREE.SphereGeometry(1, 8, 8); // Simple sphere for instance
+    this.baseGeometry.name = "AsteroidBaseGeometry";
   }
 
-  /**
-   * Creates the asteroid field material.
-   */
   protected createMaterial(
     object: RenderableCelestialObject,
   ): AsteroidFieldMaterial {
-    // Get asteroid field properties to extract texture paths
     const properties = this._getAsteroidFieldProperties(object);
 
     const material = new AsteroidFieldMaterial({
@@ -77,7 +88,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       renderScale: this.renderScale,
     });
 
-    // Load textures from properties if available
     if (properties.texturePaths && properties.texturePaths.length > 0) {
       material.loadTexturesFromPaths(properties.texturePaths);
     }
@@ -86,118 +96,78 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   }
 
   /**
-   * Creates asteroid field geometry with specified number of particles.
-   * Uses deterministic seeded randomization for consistent generation.
-   * @param object The celestial object to create geometry for.
+   * Generates asteroid data (positions, colors, sizes, etc.) for a given count.
+   * This data will be used to populate the instance attributes of InstancedMesh.
+   * @param object The celestial object.
    * @param count Number of asteroids to generate.
-   * @returns BufferGeometry with positioned asteroid particles.
-   * @private
+   * @returns An array of asteroid data.
    */
-  private _createAsteroidGeometry(
+  private _generateAsteroidData(
     object: RenderableCelestialObject,
     count: number,
-  ): THREE.BufferGeometry {
+  ): typeof this.asteroidData {
     if (!this.random) {
       this.random = createSeededRandomSync(
         object.seed ?? object.celestialObjectId,
       );
     }
 
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const textureIndices = new Float32Array(count);
-    const initialRotations = new Float32Array(count);
+    const data: typeof this.asteroidData = [];
 
-    // Get asteroid field properties with validation
     const properties = this._getAsteroidFieldProperties(object);
 
-    // Convert AU to scene units for positioning
     const innerRadius = properties.innerRadiusAU * SCALE.RENDER_SCALE_AU;
     const outerRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
     const height = properties.heightAU * SCALE.RENDER_SCALE_AU;
-
-    // Parse color or use default
     const baseColor = new THREE.Color(properties.color || "#8B7355");
 
-    // Generate asteroid positions and properties
     for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-
-      // Generate position in toroidal belt shape
       const angle = this.random() * Math.PI * 2;
       const radiusSpread = this.random();
       const radius = innerRadius + (outerRadius - innerRadius) * radiusSpread;
 
-      // Position with some vertical variation
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       const y = (this.random() - 0.5) * height;
 
-      positions[i3] = x;
-      positions[i3 + 1] = y;
-      positions[i3 + 2] = z;
-
-      // Color variation - slight hue and brightness changes
-      const colorVariation = this.random() * 0.3 - 0.15; // ±0.15
-      const brightnessVariation = this.random() * 0.4 + 0.8; // 0.8-1.2
+      const colorVariation = this.random() * 0.3 - 0.15;
+      const brightnessVariation = this.random() * 0.4 + 0.8;
 
       const finalColor = baseColor.clone();
       finalColor.offsetHSL(colorVariation * 0.1, 0, colorVariation * 0.2);
       finalColor.multiplyScalar(brightnessVariation);
 
-      colors[i3] = finalColor.r;
-      colors[i3 + 1] = finalColor.g;
-      colors[i3 + 2] = finalColor.b;
-
-      // Size variation based on distance from center (smaller asteroids further out)
       const distanceFromCenter = Math.sqrt(x * x + z * z);
       const normalizedDistance =
         (distanceFromCenter - innerRadius) / (outerRadius - innerRadius);
       const baseSizeVariation =
         (5.0 - normalizedDistance * 0.3) * (0.7 + this.random() * 0.6);
-      // Much smaller sizes for realistic asteroid appearance
-      sizes[i] = Math.max(0.5, baseSizeVariation * 3.0); // Reduced from 15.0 to 2.0
+      const size = Math.max(0.1, baseSizeVariation * 0.3); // Adjust size for InstancedMesh (e.g., 0.000005 AU max radius)
 
-      // Add texture index and initial rotation for shader compatibility
-      textureIndices[i] = Math.floor(this.random() * 5); // Assuming 5 texture variants
-      initialRotations[i] = this.random() * Math.PI * 2; // Random initial rotation
+      const textureIndex = Math.floor(this.random() * 5);
+      const initialRotation = this.random() * Math.PI * 2;
+
+      data.push({
+        position: new THREE.Vector3(x, y, z),
+        color: finalColor,
+        size,
+        textureIndex,
+        initialRotation,
+      });
     }
-
-    // Set geometry attributes
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
-    geometry.setAttribute(
-      "textureIndex",
-      new THREE.BufferAttribute(textureIndices, 1),
-    );
-    geometry.setAttribute(
-      "initialRotation",
-      new THREE.BufferAttribute(initialRotations, 1),
-    );
-
-    // Calculate bounding sphere for frustum culling
-    geometry.computeBoundingSphere();
-
-    // Store geometry for cleanup
-    this.lodGeometries.push(geometry);
-
-    return geometry;
+    return data;
   }
 
   /**
-   * Creates and returns an array of LOD levels with varying particle counts.
-   * Uses proper distance calculations based on the asteroid field properties.
+   * Creates and returns an array of LOD levels with varying particle counts,
+   * using THREE.InstancedMesh for performance.
    */
   getLODLevels(
     object: RenderableCelestialObject,
     options?: AsteroidFieldRendererOptions,
   ): LODLevel[] {
-    this.lodGeometries = [];
+    this.instancedMeshes = []; // Clear previous meshes
 
-    // Initialize seeded random for this asteroid field
     this.random = createSeededRandomSync(
       object.seed ?? object.celestialObjectId,
     );
@@ -215,11 +185,9 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       material = this.createAndRegisterMaterial(object);
     }
 
-    // Get asteroid field properties to calculate appropriate LOD distances
     const properties = this._getAsteroidFieldProperties(object);
     const fieldRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
 
-    // Much simpler LOD distances for debugging
     const distancesSceneUnits = [
       0, // Always visible
       1000, // 1000 scene units
@@ -227,7 +195,6 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       20000, // 20000 scene units
     ];
 
-    // Smaller particle counts for debugging
     const particleCounts = [50000, 25000, 10000, 1000];
 
     const lodLevels: LODLevel[] = [];
@@ -236,19 +203,52 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       const distance = distancesSceneUnits[i];
       const count = particleCounts[Math.min(i, particleCounts.length - 1)];
 
-      const geometry = this._createAsteroidGeometry(object, count);
+      // Generate all asteroid data once for this LOD level
+      const asteroidsToRender = this._generateAsteroidData(object, count);
+      this.asteroidData = asteroidsToRender; // Store for update method
 
-      const points = new THREE.Points(geometry, material);
-      points.name = `${object.celestialObjectId}-asteroidfield-lod-${i}`;
-      points.frustumCulled = true;
+      // Create InstancedMesh
+      const instancedMesh = new THREE.InstancedMesh(
+        this.baseGeometry,
+        material,
+        count,
+      );
+      instancedMesh.name = `${object.celestialObjectId}-asteroidfield-lod-${i}`;
+      instancedMesh.frustumCulled = true;
 
-      lodLevels.push({ object: points, distance: distance });
+      // Pre-populate instance matrices and colors (will be updated dynamically)
+      for (let j = 0; j < count; j++) {
+        const asteroid = asteroidsToRender[j];
+        this._tempPosition.copy(asteroid.position);
+        this._tempScale.set(asteroid.size, asteroid.size, asteroid.size);
+        this._tempRotation.set(0, asteroid.initialRotation, 0); // Apply initial rotation
+
+        this._tempMatrix.compose(
+          this._tempPosition,
+          new THREE.Quaternion().setFromEuler(this._tempRotation),
+          this._tempScale,
+        );
+        instancedMesh.setMatrixAt(j, this._tempMatrix);
+        instancedMesh.setColorAt(j, asteroid.color);
+      }
+
+      instancedMesh.instanceMatrix.needsUpdate = true;
+      if (instancedMesh.instanceColor) {
+        instancedMesh.instanceColor.needsUpdate = true;
+      }
+
+      this.instancedMeshes.push(instancedMesh); // Store for cleanup and update
+
+      lodLevels.push({ object: instancedMesh, distance: distance });
     }
 
     if (lodLevels.length === 0) {
-      const fallbackGeom = this._createAsteroidGeometry(object, 1000);
-      const fallbackPoints = new THREE.Points(fallbackGeom, material);
-      return [{ object: fallbackPoints, distance: 0 }];
+      const fallbackMesh = new THREE.Mesh(
+        this.baseGeometry,
+        this.createMaterial(object),
+      );
+      fallbackMesh.name = `${object.celestialObjectId}-asteroidfield-fallback`;
+      return [{ object: fallbackMesh, distance: 0 }];
     }
 
     return lodLevels;
@@ -292,20 +292,49 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     const material = this.getTypedMaterial(object.celestialObjectId);
 
     if (material && material.isMaterialReady()) {
-      // Time-based rotation for the entire belt
       const deltaTime = (time - this.previousSimTime) * timeScale;
+
+      // Update belt rotation for the entire field
       this.beltRotationAngle += this.beltRotationSpeed * deltaTime;
-      this.beltRotationAngle %= 2 * Math.PI; // Prevent precision loss
+      this.beltRotationAngle %= 2 * Math.PI;
 
-      // Slower, cumulative time for individual particle rotation
-      this.cumulativeParticleTime += deltaTime * 0.05; // Scale down for slower rotation
-      this.cumulativeParticleTime %= 2 * Math.PI; // Prevent precision loss
+      // Update cumulative time for individual particle rotation
+      this.cumulativeParticleTime += deltaTime * 0.05;
+      this.cumulativeParticleTime %= 2 * Math.PI;
 
-      // Update material using dedicated methods
+      // Update material uniforms
       material.updateBeltRotation(this.beltRotationAngle);
       material.updateTime(this.cumulativeParticleTime);
       material.updateParticleRotationSpeed(this.particleRotationSpeed);
       material.updateRenderScale(this.renderScale);
+
+      // Update instance matrices for each asteroid
+      this.instancedMeshes.forEach((mesh) => {
+        if (!mesh.instanceMatrix) return;
+
+        for (let i = 0; i < this.asteroidData.length; i++) {
+          const asteroid = this.asteroidData[i];
+
+          // Apply belt rotation to asteroid position
+          this._tempPosition.copy(asteroid.position);
+          this._tempPosition.applyAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            this.beltRotationAngle,
+          );
+
+          // Apply individual asteroid size and initial rotation (from generation)
+          this._tempScale.set(asteroid.size, asteroid.size, asteroid.size);
+          this._tempRotation.set(0, asteroid.initialRotation, 0);
+
+          this._tempMatrix.compose(
+            this._tempPosition,
+            new THREE.Quaternion().setFromEuler(this._tempRotation),
+            this._tempScale,
+          );
+          mesh.setMatrixAt(i, this._tempMatrix);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+      });
 
       this.previousSimTime = time;
     }
@@ -314,10 +343,26 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   dispose(): void {
     super.dispose();
 
-    this.lodGeometries.forEach((geometry) => {
-      geometry.dispose();
+    // Dispose base geometry
+    this.baseGeometry.dispose();
+
+    // Dispose instanced meshes and their attributes
+    this.instancedMeshes.forEach((mesh) => {
+      if (mesh.parent) {
+        mesh.parent.remove(mesh);
+      }
+      if (mesh.instanceMatrix) {
+        // These are attributes on the geometry, but InstancedMesh manages them.
+        // Disposing the mesh usually handles it, but explicit nulling is safer.
+        // mesh.instanceMatrix.dispose(); // No, this is managed by the InstancedBufferAttribute
+      }
+      if (mesh.instanceColor) {
+        // mesh.instanceColor.dispose();
+      }
     });
-    this.lodGeometries = [];
+    this.instancedMeshes = [];
+    this.asteroidData = [];
+
     this.beltRotationAngle = 0;
     this.previousSimTime = 0;
     this.cumulativeParticleTime = 0;

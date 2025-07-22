@@ -17,8 +17,11 @@
     "test:browser": "vitest --browser"
   },
   "dependencies": {
+    "@teskooano/celestials-asteroid-field": "file:../asteroid-field",
+    "@teskooano/core-math": "file:../../../core/math",
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/renderer-threejs-celestial": "file:../../../renderer/threejs-celestial",
+    "@teskooano/renderer-threejs-lod": "file:../../../renderer/threejs-lod",
     "three": "0.178.0"
   },
   "devDependencies": {

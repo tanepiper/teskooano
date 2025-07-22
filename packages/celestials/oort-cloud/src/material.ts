@@ -1,10 +1,8 @@
 import * as THREE from "three";
-
-// Import shaders from external files
-import oortCloudVertexShader from "./shaders/oort-cloud.vertex.glsl?raw";
-import oortCloudFragmentShader from "./shaders/oort-cloud.fragment.glsl?raw";
+import { AsteroidFieldMaterial } from "@teskooano/celestials-asteroid-field";
 
 export interface OortCloudMaterialOptions {
+  // These options are now largely handled by AsteroidFieldMaterial
   cloudTexture?: THREE.Texture;
   pointSizeScale?: number;
   particleRotationSpeed?: number;
@@ -14,41 +12,17 @@ export interface OortCloudMaterialOptions {
 /**
  * Material for rendering Oort Cloud particles.
  *
- * Features:
- * - Point-based particle rendering with size scaling
- * - Texture sampling with alpha testing
- * - Per-particle color variations
- * - Configurable point size and rotation parameters
+ * This class now primarily serves as a wrapper to use AsteroidFieldMaterial,
+ * ensuring consistency in rendering instanced particles.
  */
-export class OortCloudMaterial extends THREE.ShaderMaterial {
+export class OortCloudMaterial extends AsteroidFieldMaterial {
   constructor(options: OortCloudMaterialOptions = {}) {
-    // Create a fallback texture if none provided
-    const fallbackTexture =
-      options.cloudTexture || OortCloudMaterial.createFallbackTexture();
-
+    // Pass relevant options to the base AsteroidFieldMaterial constructor
     super({
-      uniforms: {
-        cloudTexture: { value: fallbackTexture },
-        alphaTest: { value: 0.5 },
-        pointSizeScale: { value: options.pointSizeScale ?? 0.3 },
-        time: { value: 0.0 },
-        cloudRotationAngleX: { value: 0.0 },
-        cloudRotationAngleY: { value: 0.0 },
-        cloudRotationAngleZ: { value: 0.0 },
-        particleRotationSpeed: { value: options.particleRotationSpeed ?? 0.75 },
-      },
-      vertexShader: oortCloudVertexShader,
-      fragmentShader: oortCloudFragmentShader,
-      transparent: false,
-      vertexColors: true,
-      depthWrite: true,
-      depthTest: true,
-      blending: THREE.NormalBlending,
-      alphaTest: 0.2,
+      particleRotationSpeed: options.particleRotationSpeed,
+      renderScale: options.pointSizeScale, // Map pointSizeScale to renderScale
+      asteroidTextures: options.cloudTexture ? [options.cloudTexture] : [],
     });
-
-    this.needsUpdate = true;
-    this.uniformsNeedUpdate = true;
 
     // Load textures from paths if provided
     if (options.texturePaths && options.texturePaths.length > 0) {
@@ -56,67 +30,6 @@ export class OortCloudMaterial extends THREE.ShaderMaterial {
     }
   }
 
-  /**
-   * Creates a fallback canvas texture for when the real texture doesn't load.
-   * Generates a radial gradient from white to transparent blue.
-   */
-  static createFallbackTexture(): THREE.Texture {
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
-    const ctx = canvas.getContext("2d");
-
-    if (ctx) {
-      // Create a simple circular gradient
-      const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-      gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-      gradient.addColorStop(0.5, "rgba(200, 220, 255, 0.8)");
-      gradient.addColorStop(1, "rgba(160, 192, 255, 0)");
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 32, 32);
-    }
-
-    return new THREE.CanvasTexture(canvas);
-  }
-
-  /**
-   * Updates the material's time uniform for animation.
-   */
-  updateTime(time: number): void {
-    this.uniforms.time.value = time;
-    this.uniformsNeedUpdate = true;
-  }
-
-  /**
-   * Sets the cloud texture, useful for loading textures asynchronously.
-   */
-  setCloudTexture(texture: THREE.Texture): void {
-    this.uniforms.cloudTexture.value = texture;
-    this.needsUpdate = true;
-  }
-
-  /**
-   * Loads textures from provided paths.
-   */
-  loadTexturesFromPaths(texturePaths: string[]): void {
-    if (texturePaths.length === 0) {
-      return;
-    }
-
-    // Use the first texture path for Oort Cloud (simpler than asteroid field)
-    const texturePath = texturePaths[0];
-    const textureLoader = new THREE.TextureLoader();
-
-    textureLoader.load(
-      texturePath,
-      (texture) => {
-        this.setCloudTexture(texture);
-      },
-      undefined,
-      (error) => {
-        // If texture loading fails, keep the fallback texture
-      },
-    );
-  }
+  // Methods like updateTime, setCloudTexture, loadTexturesFromPaths, isMaterialReady,
+  // and dispose are now handled by the base AsteroidFieldMaterial.
 }

@@ -325,6 +325,14 @@ export class Octree {
   private root: OctreeNode;
   private maxDepth: number;
   private softeningFactorSquared: number = 0.1 * 0.1;
+  // Pre-allocate OSVector3 instances for performance
+  private _tempForce: OSVector3 = new OSVector3();
+  private _tempNodePointMass: PhysicsStateReal = {
+    id: "",
+    mass_kg: 0,
+    position_m: new OSVector3(),
+    velocity_mps: new OSVector3(),
+  };
 
   constructor(size: number, maxDepth: number = 8) {
     const actualSize = Math.max(size, 0.1);
@@ -399,24 +407,35 @@ export class Octree {
 
     if (isFarAway) {
       // Node is far enough away, so we can approximate it as a single point mass.
-      const nodePointMass: PhysicsStateReal = {
-        id: `node_${node.center.x}_${node.center.y}_${node.center.z}`,
-        mass_kg: node.totalMass_kg,
-        position_m: node.centerOfMass_m,
-        velocity_mps: new OSVector3(0, 0, 0),
-      };
-      const force = calculateGravitationalForce(nodePointMass, targetBody);
+      // Reuse the pre-allocated temporary object
+      const nodePointMass = this._tempNodePointMass;
+      nodePointMass.id = `node_${node.center.x}_${node.center.y}_${node.center.z}`;
+      nodePointMass.mass_kg = node.totalMass_kg;
+      nodePointMass.position_m = node.centerOfMass_m;
+      // velocity_mps can remain a dummy, as it's not used in gravitational force calculation
 
-      accumulatedForce.add(force);
+      // Pass _tempForce as the 'out' parameter to avoid new allocations
+      calculateGravitationalForce(
+        nodePointMass,
+        targetBody,
+        undefined,
+        this._tempForce,
+      );
+      accumulatedForce.add(this._tempForce);
     } else {
       // Node is too close, so we must inspect its contents more closely.
 
       // 1. Calculate forces from any bodies stored directly in this (potentially internal) node.
       for (const otherBody of node.bodies) {
         if (otherBody.id !== targetBody.id) {
-          const force = calculateGravitationalForce(otherBody, targetBody);
-
-          accumulatedForce.add(force);
+          // Pass _tempForce as the 'out' parameter to avoid new allocations
+          calculateGravitationalForce(
+            otherBody,
+            targetBody,
+            undefined,
+            this._tempForce,
+          );
+          accumulatedForce.add(this._tempForce);
         }
       }
 

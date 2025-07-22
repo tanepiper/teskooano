@@ -15,14 +15,15 @@ export const calculateNewtonianGravitationalForce: PairForceCalculator = (
   body1: PhysicsStateReal,
   body2: PhysicsStateReal,
   G: number = GRAVITATIONAL_CONSTANT,
+  out?: OSVector3, // Add 'out' parameter
 ): OSVector3 => {
-  const displacement = new OSVector3();
+  const displacement = out || new OSVector3(); // Reuse 'out' or create new
   displacement.copy(body1.position_m).sub(body2.position_m);
 
   const distanceSq = displacement.lengthSq();
 
   if (distanceSq < EPSILON * EPSILON) {
-    return new OSVector3().setZero();
+    return displacement.setZero(); // Use setZero on existing 'displacement'
   }
 
   const forceMagnitude = (G * (body1.mass_kg * body2.mass_kg)) / distanceSq;

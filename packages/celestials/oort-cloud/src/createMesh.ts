@@ -34,8 +34,17 @@ export function createMesh(
 ): THREE.Object3D {
   const { celestialRenderers, createLodObject, debug = false } = options;
 
+  if (debug) {
+    console.debug(
+      `[OortCloud:createMesh] Creating mesh for ${object.celestialObjectId}`,
+    );
+  }
+
   // Force fallback if debug mode is enabled
   if (debug) {
+    console.debug(
+      `[OortCloud:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+    );
     return createFallbackSphere(object);
   }
 
@@ -47,19 +56,36 @@ export function createMesh(
     try {
       renderer = new OortCloudRenderer(object);
       celestialRenderers.set(object.celestialObjectId, renderer);
+
+      if (debug) {
+        console.debug(
+          `[OortCloud:createMesh] Created new renderer for ${object.celestialObjectId}`,
+        );
+      }
     } catch (error) {
+      console.error(
+        `[OortCloud:createMesh] Failed to create renderer for ${object.celestialObjectId}:`,
+        error,
+      );
       return createFallbackSphere(object);
     }
   }
 
-  if (renderer?.getLODLevels) {
-    const lodLevels = renderer.getLODLevels(object);
-    if (lodLevels && lodLevels.length > 0) {
-      const lod = createLodObject(object, lodLevels);
+  const lodLevels = renderer.getLODLevels(object);
+  if (lodLevels && lodLevels.length > 0) {
+    const lod = createLodObject(object, lodLevels);
 
-      return lod;
+    if (debug) {
+      console.debug(
+        `[OortCloud:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+      );
     }
+
+    return lod;
   }
 
+  console.warn(
+    `[OortCloud:createMesh] Renderer for ${object.celestialObjectId} provided no valid LOD levels. Using fallback.`,
+  );
   return createFallbackSphere(object);
 }
