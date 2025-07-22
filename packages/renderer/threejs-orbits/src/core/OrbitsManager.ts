@@ -103,6 +103,15 @@ export class OrbitsManager extends StateSubscriptionMixin {
       );
       this.setVisualizationMode(newMode, objectManager, renderableObjects$);
     });
+
+    // Listen for events to clear orbit trails and predictions
+    document.addEventListener("teskooano-clear-orbit-trails", () => {
+      this.clearAllTrails();
+    });
+
+    document.addEventListener("teskooano-clear-predictions", () => {
+      this.clearAllPredictions();
+    });
   }
 
   /**
@@ -311,6 +320,34 @@ export class OrbitsManager extends StateSubscriptionMixin {
   highlightVisualization(objectId: string | null): void {
     this.highlightedObjectId = objectId;
     this.activeStrategy?.highlight(objectId, this.highlightColor);
+  }
+
+  /**
+   * Clears all trail visualizations.
+   */
+  public clearAllTrails(): void {
+    if (this.activeStrategy) {
+      // For NBody strategy, clear trails
+      if ("trailManager" in this.activeStrategy) {
+        const trailManager = (this.activeStrategy as any).trailManager;
+        // Clear all trails by removing each one
+        trailManager.trailLines.forEach((_: any, objectId: string) => {
+          trailManager.removeTrail(objectId);
+        });
+      }
+    }
+  }
+
+  /**
+   * Clears all prediction visualizations.
+   */
+  public clearAllPredictions(): void {
+    if (this.activeStrategy) {
+      // For NBody strategy, clear predictions
+      if ("predictionManager" in this.activeStrategy) {
+        (this.activeStrategy as any).predictionManager.clearAllPredictions();
+      }
+    }
   }
 
   /**

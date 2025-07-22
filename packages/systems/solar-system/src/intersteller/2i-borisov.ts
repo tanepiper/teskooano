@@ -56,6 +56,7 @@ export const borisov: CelestialObject<CometProperties> = {
     classType: CometOrbitType.INTERSTELLAR,
     activity: 0.8,
     composition: ["water ice", "dust", "organic compounds"],
+    discoveredDate: "2019-08-30",
     visualComaRadius: 100000,
     visualComaColor: "#FFFFE0",
     visualMaxTailLength: 8.0,

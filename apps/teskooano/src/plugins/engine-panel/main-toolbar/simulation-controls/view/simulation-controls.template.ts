@@ -64,6 +64,15 @@ template.innerHTML = `
     #time-value {
         min-width: 200px;
         color: var(--color-primary); /* Use token (was primary-light) */
+        position: relative;
+    }
+
+    #time-value .date-display {
+        transition: color 0.2s ease;
+    }
+
+    #time-value .date-display:hover {
+        color: var(--color-accent);
     }
     #engine-value {
         min-width: 30px;

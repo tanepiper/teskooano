@@ -14,7 +14,7 @@ import {
  * Discovered in 2017, it has a hyperbolic orbit indicating it came from outside our solar system.
  * No outgassing was observed, suggesting it may be an extinct comet or asteroid.
  */
-export const oumuamua: CelestialObject = {
+export const oumuamua: CelestialObject<CometProperties> = {
   id: "1i-oumuamua",
   name: "1I/'Oumuamua",
   type: CelestialType.COMET,
@@ -38,6 +38,7 @@ export const oumuamua: CelestialObject = {
   properties: {
     type: CelestialType.COMET,
     classType: CometOrbitType.INTERSTELLAR,
+    discoveredDate: "2017-10-19",
     composition: ["rock", "metal"], // No ice detected
     activity: 0.0, // No outgassing observed
     visualComaRadius: 0, // No coma

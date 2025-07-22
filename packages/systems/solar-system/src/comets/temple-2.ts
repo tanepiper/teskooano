@@ -13,7 +13,7 @@ import {
  * A short-period comet with a period of about 5.4 years.
  * It's a Jupiter-family comet that has been observed for over 100 years.
  */
-export const temple2: CelestialObject = {
+export const temple2: CelestialObject<CometProperties> = {
   id: "temple-2",
   name: "10P/Tempel 2",
   type: CelestialType.COMET,
@@ -36,6 +36,7 @@ export const temple2: CelestialObject = {
   properties: {
     type: CelestialType.COMET,
     classType: CometOrbitType.SHORT_PERIOD,
+    discoveredDate: "1867-03-13",
     composition: ["water ice", "dust"],
     activity: 0.5, // Moderate activity
     visualComaRadius: 40000, // 40 km coma radius
@@ -44,5 +45,5 @@ export const temple2: CelestialObject = {
     visualMaxTailLength: 1200000, // 1.2 million km tail
     visualTailColor: "#E6E6FA",
     visualTailOpacity: 0.4,
-  } as CometProperties,
+  },
 };

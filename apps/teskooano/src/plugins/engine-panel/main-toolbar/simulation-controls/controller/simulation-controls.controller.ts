@@ -15,6 +15,14 @@ import {
   getConfigurationShortName,
   getConfigurationDisplayName,
 } from "./simulation-controls.utils";
+import { EditableDateInput } from "./editable-date-input";
+import { KeplerDateCalculator } from "./kepler-date-calculator";
+import {
+  simulationStateService,
+  physicsSystemAdapter,
+  celestialManager,
+  PhysicsStateProvider,
+} from "@teskooano/core-state";
 
 /**
  * Defines the structure for an object holding references to the UI elements
@@ -44,6 +52,7 @@ export interface SimulationUIElements {
 export class SimulationControlsController extends StateSubscriptionMixin {
   private uiElements: SimulationUIElements;
   private simulationStartDate: Date = new Date(); // Start from current time
+  private editableDateInput: EditableDateInput | null = null;
   private readonly speedValues = [
     0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 20, 24,
     32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 2048, 4096, 8192, 16384,
@@ -71,6 +80,9 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     // Initialize display with current state
     this.handleStateUpdate(StateAccessor.getCurrentSimulationState());
 
+    // Initialize editable date input
+    this.initializeEditableDateInput();
+
     // ✅ Using StateSubscriptionMixin for clean subscription management
     this.subscribeToState(simulationState$, (state: SimulationState) => {
       this.handleStateUpdate(state);
@@ -94,10 +106,127 @@ export class SimulationControlsController extends StateSubscriptionMixin {
   }
 
   /**
+   * Gets the current simulation date.
+   * @returns {Date} The current simulation date
+   */
+  public getCurrentDate(): Date {
+    return new Date(this.simulationStartDate);
+  }
+
+  /**
+   * Initializes the editable date input component.
+   */
+  private initializeEditableDateInput(): void {
+    if (!this.uiElements.timeValueDisplay) return;
+
+    // Clear the existing content
+    this.uiElements.timeValueDisplay.textContent = "";
+
+    // Create the editable date input
+    this.editableDateInput = new EditableDateInput(
+      this.uiElements.timeValueDisplay,
+      {
+        initialDate: this.simulationStartDate,
+        onDateChange: (newDate: Date) => this.handleDateChange(newDate),
+        compact: this.uiElements.timeValueDisplay.closest("[mobile]") !== null,
+      },
+    );
+  }
+
+  /**
+   * Handles date changes from the editable input.
+   * Calculates celestial positions for the new date using Kepler's laws.
+   */
+  private handleDateChange(newDate: Date): void {
+    console.log(`Calculating positions for date: ${newDate.toISOString()}`);
+
+    try {
+      // Update the simulation start date to the new date
+      this.simulationStartDate = new Date(newDate);
+
+      // Get current celestial objects and orbital parameters
+      const celestialObjects = StateAccessor.getCurrentCelestialObjects();
+      const orbitalParameters =
+        physicsSystemAdapter.getOrbitalParametersSnapshot();
+
+      console.log(
+        `Found ${Object.keys(celestialObjects).length} celestial objects`,
+      );
+      console.log(`Found ${orbitalParameters.size} orbital parameters`);
+
+      // Calculate positions for the new date
+      const calculationResponse =
+        KeplerDateCalculator.calculatePositionsForDate(
+          newDate,
+          celestialObjects,
+          orbitalParameters,
+        );
+
+      console.log(
+        `Calculated positions for ${calculationResponse.results.length} objects`,
+      );
+      console.log(
+        `Objects to remove: ${calculationResponse.objectsToRemove.length}`,
+      );
+
+      // Remove objects that shouldn't exist at this date
+      calculationResponse.objectsToRemove.forEach((objectId) => {
+        console.log(`Removing object ${objectId} from simulation`);
+        celestialManager.removeObject(objectId);
+      });
+
+      // Apply the calculated positions to the simulation state
+      calculationResponse.results.forEach((result) => {
+        const object = celestialObjects[result.objectId];
+        if (object) {
+          // Create the new physics state
+          const newPhysicsState = {
+            id: result.objectId,
+            mass_kg: object.realMass_kg,
+            position_m: result.position,
+            velocity_mps: result.velocity,
+          };
+
+          // Update the physics state cache directly
+          PhysicsStateProvider.updateCacheWithSimulationResult(
+            result.objectId,
+            newPhysicsState,
+          );
+        }
+      });
+
+      // Reset the simulation time to 0 since we're starting from the new date
+      const currentState = StateAccessor.getCurrentSimulationState();
+      simulationStateService.setSimulationState({
+        ...currentState,
+        time: 0,
+      });
+
+      // Clear orbit trails and prediction lines to prevent drawing incorrect paths
+      // This ensures a clean visual state when jumping to a new date
+      document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
+      document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
+
+      console.log(
+        `Updated ${calculationResponse.results.length} objects with new positions for date: ${newDate.toISOString()}`,
+      );
+    } catch (error) {
+      console.error("Failed to calculate positions for date:", error);
+    }
+  }
+
+  /**
    * Cleans up the controller by removing all event listeners and unsubscribing.
    */
   public dispose(): void {
     this.removeEventListeners();
+
+    // Clean up editable date input
+    if (this.editableDateInput) {
+      this.editableDateInput.destroy();
+      this.editableDateInput = null;
+    }
+
     // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
     super.dispose();
   }
@@ -287,15 +416,12 @@ export class SimulationControlsController extends StateSubscriptionMixin {
 
   // UI Updaters
   private _updateTimeDisplay = (timeSeconds: number = 0): void => {
-    if (this.uiElements.timeValueDisplay) {
-      // Use compact format if the element has the mobile attribute
-      const isMobile =
-        this.uiElements.timeValueDisplay.closest("[mobile]") !== null;
-      this.uiElements.timeValueDisplay.textContent = formatSimulationDate(
-        this.simulationStartDate,
-        timeSeconds,
-        isMobile,
+    if (this.editableDateInput) {
+      // Update the editable date input with the new time
+      const currentDate = new Date(
+        this.simulationStartDate.getTime() + timeSeconds * 1000,
       );
+      this.editableDateInput.setDate(currentDate);
     }
   };
 

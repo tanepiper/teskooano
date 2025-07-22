@@ -1,6 +1,6 @@
 ## Simulation Controls Architecture (`@/simulation-controls`)
 
-**Purpose**: This document outlines the architecture of the `simulation-controls` plugin. This plugin provides the user interface for controlling the simulation's playback, including play/pause, speed adjustments, and date/time display starting from a configurable date.
+**Purpose**: This document outlines the architecture of the `simulation-controls` plugin. This plugin provides the user interface for controlling the simulation's playback, including play/pause, speed adjustments, and an editable date/time display that allows users to jump to specific dates and calculate celestial positions using Kepler's laws.
 
 **Core Pattern**: The plugin follows a strict **Model-View-Controller (MVC)** pattern to ensure a clear separation of concerns, making the component easier to maintain, debug, and test.
 
@@ -48,14 +48,31 @@ graph TD
       - It attaches event listeners to the UI elements provided by the View.
       - When a user interacts with the UI (e.g., clicks the "play" button), the corresponding event handler in the controller is executed, which dispatches an action to the global state (e.g., `actions.togglePause()`).
       - When it receives a new state from `simulationState$`, it calls private `_update...` methods to directly manipulate the View's DOM elements (e.g., changing text content, toggling attributes).
+      - Manages the editable date input and handles date changes by calculating celestial positions using Kepler's laws.
 
-3.  **Template (`view/simulation-controls.template.ts`)**
+3.  **Editable Date Input (`controller/editable-date-input.ts`)**
+    - **Class**: `EditableDateInput`
+    - **Responsibilities**:
+      - Provides a clickable date display that becomes editable when clicked.
+      - Handles date validation and user input (Enter to confirm, Escape to cancel).
+      - Supports both full and compact date formats for mobile devices.
+      - Manages the visual transition between display and edit modes.
+
+4.  **Kepler Date Calculator (`controller/kepler-date-calculator.ts`)**
+    - **Class**: `KeplerDateCalculator`
+    - **Responsibilities**:
+      - Calculates celestial positions for specific dates using orbital parameters and Kepler's laws.
+      - Handles complex orbital hierarchies (moons orbiting planets, planets orbiting stars).
+      - Converts between dates and astronomical epochs (J2000).
+      - Provides error handling for calculation failures.
+
+5.  **Template (`view/simulation-controls.template.ts`)**
     - **Exports**: A `<template>` element.
     - **Responsibilities**:
       - Defines the complete, static HTML structure and CSS styles for the component's Shadow DOM.
       - Exports raw SVG icon imports for the controller to use when updating button icons.
 
-4.  **Utilities (`controller/simulation-controls.utils.ts`)**
+6.  **Utilities (`controller/simulation-controls.utils.ts`)**
     - **Exports**: Pure functions.
     - **Responsibilities**:
       - Contains simple, stateless helper functions for formatting data for display (e.g., `formatTime`, `formatScale`). These are used by the Controller before updating the View.

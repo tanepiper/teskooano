@@ -87,6 +87,14 @@ export class SimulationControls extends HTMLElement {
   }
 
   /**
+   * Gets the current simulation date.
+   * @returns {Date} The current simulation date
+   */
+  public getCurrentDate(): Date | undefined {
+    return this.controller?.getCurrentDate();
+  }
+
+  /**
    * Queries the shadow DOM to get references to all interactive UI elements
    * and stores them in the `uiElements` property for the controller to use.
    * @private

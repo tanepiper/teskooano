@@ -13,7 +13,7 @@ import {
  * A short-period comet with the shortest orbital period of any known comet.
  * It completes an orbit around the Sun every 3.3 years.
  */
-export const encke: CelestialObject = {
+export const encke: CelestialObject<CometProperties> = {
   id: "encke",
   name: "Encke's Comet",
   type: CelestialType.COMET,
@@ -36,6 +36,7 @@ export const encke: CelestialObject = {
   properties: {
     type: CelestialType.COMET,
     classType: CometOrbitType.SHORT_PERIOD,
+    discoveredDate: "1805-03-13",
     composition: ["water ice", "CO2", "dust"],
     activity: 0.6, // Moderate activity
     visualComaRadius: 50000, // 50 km coma radius
@@ -44,5 +45,5 @@ export const encke: CelestialObject = {
     visualMaxTailLength: 2000000, // 2 million km tail
     visualTailColor: "#F0E68C",
     visualTailOpacity: 0.5,
-  } as CometProperties,
+  },
 };

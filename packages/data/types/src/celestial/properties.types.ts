@@ -273,6 +273,10 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
 export interface CometProperties extends SpecificPropertiesBase {
   /** The type of celestial object. */
   type: CelestialType.COMET;
+
+  /** The date the comet was discovered. */
+  discoveredDate?: string;
+
   /**
    * The orbital classification of the comet.
    */

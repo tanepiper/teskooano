@@ -13,7 +13,7 @@ import {
  * A short-period comet with a period of about 6.8 years.
  * It's a Jupiter-family comet that has been extensively studied by spacecraft.
  */
-export const borrelly: CelestialObject = {
+export const borrelly: CelestialObject<CometProperties> = {
   id: "borrelly",
   name: "19P/Borrelly",
   type: CelestialType.COMET,
@@ -36,6 +36,7 @@ export const borrelly: CelestialObject = {
   properties: {
     type: CelestialType.COMET,
     classType: CometOrbitType.SHORT_PERIOD,
+    discoveredDate: "1892-03-12",
     composition: ["water ice", "dust"],
     activity: 0.6, // Moderate activity
     visualComaRadius: 45000, // 45 km coma radius
@@ -44,5 +45,5 @@ export const borrelly: CelestialObject = {
     visualMaxTailLength: 1500000, // 1.5 million km tail
     visualTailColor: "#F0F8FF",
     visualTailOpacity: 0.5,
-  } as CometProperties,
+  },
 };

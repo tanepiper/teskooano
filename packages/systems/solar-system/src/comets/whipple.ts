@@ -36,6 +36,7 @@ export const whipple: CelestialObject = {
   properties: {
     type: CelestialType.COMET,
     classType: CometOrbitType.SHORT_PERIOD,
+    discoveredDate: "1922-01-01",
     composition: ["water ice", "dust"],
     activity: 0.4, // Low activity
     visualComaRadius: 35000, // 35 km coma radius
