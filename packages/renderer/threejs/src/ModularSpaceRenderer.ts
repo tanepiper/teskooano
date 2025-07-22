@@ -22,6 +22,7 @@ import type { ModularSpaceRendererOptions } from "./types";
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
 import { LabelSystem } from "@teskooano/renderer-threejs-labels";
+import { simulationManager } from "@teskooano/app-simulation";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -191,6 +192,11 @@ export class ModularSpaceRenderer {
    * The order is critical for ensuring effects are based on the latest data.
    */
   private setupAnimationCallbacks(): void {
+    // Register physics simulation callback first
+    const physicsCallback = simulationManager.createPhysicsCallback();
+    this.animationLoop.onPhysics(physicsCallback);
+
+    // Register rendering callback
     this.animationLoop.onAnimate(this.renderPipeline.update);
   }
 

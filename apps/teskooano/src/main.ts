@@ -6,6 +6,9 @@ import { ApplicationInitializer } from "./core/initialization";
 import { pluginConfig } from "./config/pluginRegistry";
 import { pluginConfig as corePluginConfig } from "./core/config/pluginRegistry";
 
+// Import simulation loop state management to ensure it's initialized
+import "./core/state/simulation-loop.state";
+
 interface AppContext {
   modalManager?: any;
   dockviewController?: any;

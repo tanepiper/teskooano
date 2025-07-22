@@ -106,7 +106,8 @@ export class PanelLifecycleManager {
 
             if (!rendererExists) {
               this._options.initializeRendererAndUI();
-              simulationManager.startLoop();
+              // Physics simulation is now handled by the AnimationLoop
+              // No need to call simulationManager.startLoop() separately
             }
             this._options.placeholderManager?.hide();
           } else {

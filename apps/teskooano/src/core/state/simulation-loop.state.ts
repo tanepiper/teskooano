@@ -19,6 +19,8 @@ export const simulationLoopStarted$: Observable<boolean> =
 /**
  * Subscribes to the celestial objects store and automatically starts or stops
  * the simulation loop based on whether any objects exist.
+ * Note: The actual animation frame loop is now handled by the AnimationLoop.
+ * This just manages the simulation state.
  */
 StateAccessor.getCelestialObjectsStream()
   .pipe(
@@ -32,16 +34,15 @@ StateAccessor.getCelestialObjectsStream()
       if (simulationManager.isLoopRunning) {
         simulationManager.stopLoop();
         simulationLoopStartedSubject.next(false);
-        console.log(
-          "[State] Main simulation loop stopped as no objects exist.",
-        );
+        console.log("[State] Simulation state stopped as no objects exist.");
       }
     }
   });
 
 /**
- * Ensures that the main simulation loop is started if it hasn't been already.
+ * Ensures that the simulation state is started if it hasn't been already.
  * This also updates the `simulationLoopStarted$` observable.
+ * Note: The actual animation frame loop is now handled by the AnimationLoop.
  */
 export function ensureSimulationLoopStarted(): void {
   if (!simulationManager.isLoopRunning) {
@@ -49,11 +50,11 @@ export function ensureSimulationLoopStarted(): void {
       simulationManager.startLoop();
       simulationLoopStartedSubject.next(true);
       console.log(
-        "[State] Main simulation loop initiated by ensureSimulationLoopStarted via SimulationManager.",
+        "[State] Simulation state initiated by ensureSimulationLoopStarted via SimulationManager.",
       );
     } catch (error) {
       console.error(
-        "[State] Failed to start simulation loop via SimulationManager:",
+        "[State] Failed to start simulation state via SimulationManager:",
         error,
       );
       simulationLoopStartedSubject.next(false);

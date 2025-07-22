@@ -31,11 +31,9 @@ export class SimulationManager {
   private static instance: SimulationManager;
 
   // Loop properties
-  private lastTime = 0;
   private isRunning = false;
   private accumulatedTime = 0;
   private subscriptionManager = new StateSubscriptionMixin();
-  private animationFrameId: number | null = null;
   private hierarchyManager: HierarchyManager;
 
   // Event Subjects
@@ -96,7 +94,6 @@ export class SimulationManager {
     }
 
     this.isRunning = true;
-    this.lastTime = performance.now();
     this.accumulatedTime = simulationStateService.getSimulationState().time; // Sync with current state time
 
     this.subscriptionManager.dispose(); // Clear any existing subscriptions
@@ -108,10 +105,8 @@ export class SimulationManager {
       },
     );
 
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-    this.animationFrameId = requestAnimationFrame(this.simulationStep);
+    // Note: The actual animation frame loop is now handled by the AnimationLoop
+    // This method just sets the simulation as "running" so the physics callback will execute
   }
 
   /**
@@ -124,10 +119,6 @@ export class SimulationManager {
       return;
     }
     this.isRunning = false;
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
     this.subscriptionManager.dispose();
   }
 
@@ -140,132 +131,127 @@ export class SimulationManager {
   }
 
   /**
-   * The core simulation step, executed on each animation frame.
-   * This method calculates the time delta, runs the physics simulation,
-   * updates the global state, and schedules the next frame.
-   * @param currentTime - The current time provided by `requestAnimationFrame`.
+   * Creates a physics simulation callback that can be registered with an AnimationLoop.
+   * This eliminates the need for a separate requestAnimationFrame loop.
+   * @returns A callback function that performs one physics simulation step.
    */
-  private simulationStep = (currentTime: number): void => {
-    if (!this.isRunning) return;
+  public createPhysicsCallback(): (time: number, delta: number) => void {
+    return (time: number, delta: number) => {
+      if (!this.isRunning) return;
 
-    const acquiredVectors: OSVector3[] = []; // For vectorPool
+      const acquiredVectors: OSVector3[] = []; // For vectorPool
 
-    try {
-      const deltaTime = (currentTime - this.lastTime) / 1000;
-      this.lastTime = currentTime;
+      try {
+        // Use the delta time provided by the animation loop
+        const cappedDeltaTime = Math.min(delta, 1 / 30); // Cap to 30 FPS minimum
 
-      // Cap delta time to a minimum of 30 FPS to prevent physics instability on freezes or massive frame drops.
-      const cappedDeltaTime = Math.min(deltaTime, 1 / 30);
+        if (!simulationStateService.getSimulationState().paused) {
+          const timeScale =
+            simulationStateService.getSimulationState().timeScale;
+          const scaledDeltaTime = cappedDeltaTime * timeScale;
+          this.accumulatedTime += scaledDeltaTime;
 
-      if (!simulationStateService.getSimulationState().paused) {
-        const timeScale = simulationStateService.getSimulationState().timeScale;
-        const scaledDeltaTime = cappedDeltaTime * timeScale;
-        this.accumulatedTime += scaledDeltaTime;
-
-        simulationStateService.setSimulationState({
-          ...simulationStateService.getSimulationState(),
-          time: this.accumulatedTime,
-        });
-
-        const activeBodiesArray = physicsSystemAdapter.getPhysicsBodies(); // This is the PhysicsStateReal array
-        const allCelestialObjectsForParams =
-          physicsSystemAdapter.getCelestialObjectsSnapshot(); // This is the CelestialObject record
-
-        // Convert the record to a Map before passing to LagrangeProcessor
-        const celestialObjectsMap = new Map(
-          Object.entries(allCelestialObjectsForParams),
-        );
-
-        // Convert the array of PhysicsStateReal to a Map for LagrangeProcessor
-        const physicsStatesMap = new Map<string, PhysicsStateReal>();
-        activeBodiesArray.forEach((state) => {
-          physicsStatesMap.set(state.id, state);
-        });
-
-        // Process Lagrange-bound objects to update their initial physics states
-        processLagrangeObjects(celestialObjectsMap, physicsStatesMap);
-
-        const radii = new Map<string | number, number>();
-        const isStar = new Map<string | number, boolean>();
-        const bodyTypes = new Map<string | number, CelestialType>();
-        const ignoreCollisions = new Map<string | number, boolean>();
-        const parentIds = new Map<string | number, string | undefined>();
-
-        Object.values(allCelestialObjectsForParams)
-          .filter(
-            (obj: CelestialObject) =>
-              obj.status !== CelestialStatus.DESTROYED &&
-              obj.status !== CelestialStatus.ANNIHILATED &&
-              !obj.ignorePhysics,
-          )
-          .forEach((obj: CelestialObject) => {
-            radii.set(obj.id, obj.realRadius_m);
-            isStar.set(obj.id, obj.type === CelestialType.STAR);
-            bodyTypes.set(obj.id, obj.type);
-            ignoreCollisions.set(obj.id, obj.ignoreCollisions ?? false);
-            parentIds.set(obj.id, obj.parentId);
+          simulationStateService.setSimulationState({
+            ...simulationStateService.getSimulationState(),
+            time: this.accumulatedTime,
           });
 
-        const simParams: SimulationParameters = {
-          radii,
-          isStar,
-          bodyTypes,
-          ignoreCollisions,
-          parentIds,
-          simulationConfig:
-            simulationStateService.getSimulationState().simulationConfig, // Pass the correct config
-          orbitalParameters:
-            physicsSystemAdapter.getOrbitalParametersSnapshot(),
-          currentTime_s: this.accumulatedTime,
-        };
+          const activeBodiesArray = physicsSystemAdapter.getPhysicsBodies();
+          const allCelestialObjectsForParams =
+            physicsSystemAdapter.getCelestialObjectsSnapshot();
 
-        const result: SimulationStepResult = updateSimulation(
-          activeBodiesArray,
-          scaledDeltaTime,
-          simParams,
-        );
+          // Convert the record to a Map before passing to LagrangeProcessor
+          const celestialObjectsMap = new Map(
+            Object.entries(allCelestialObjectsForParams),
+          );
 
-        if (result.destructionEvents && result.destructionEvents.length > 0) {
-          result.destructionEvents.forEach((event: DestructionEvent) => {
-            this._destructionOccurred$.next(event);
+          // Convert the array of PhysicsStateReal to a Map for LagrangeProcessor
+          const physicsStatesMap = new Map<string, PhysicsStateReal>();
+          activeBodiesArray.forEach((state) => {
+            physicsStatesMap.set(state.id, state);
           });
-        }
 
-        physicsSystemAdapter.updateStateFromResult(result);
+          // Process Lagrange-bound objects to update their initial physics states
+          processLagrangeObjects(celestialObjectsMap, physicsStatesMap);
 
-        // After physics, check for hierarchy changes (orphans, escapes)
-        // Skip hierarchy updates in ideal mode since stars are fixed and orbits are perfect
-        if (
-          simulationStateService.getSimulationState().simulationConfig.mode !==
-          "ideal"
-        ) {
-          this.hierarchyManager.updateHierarchies();
-        }
+          const radii = new Map<string | number, number>();
+          const isStar = new Map<string | number, boolean>();
+          const bodyTypes = new Map<string | number, CelestialType>();
+          const ignoreCollisions = new Map<string | number, boolean>();
+          const parentIds = new Map<string | number, string | undefined>();
 
-        const updatedPositions: Record<
-          string,
-          { x: number; y: number; z: number }
-        > = {};
-        result.states.forEach((state) => {
-          updatedPositions[String(state.id)] = {
-            x: state.position_m.x,
-            y: state.position_m.y,
-            z: state.position_m.z,
+          Object.values(allCelestialObjectsForParams)
+            .filter(
+              (obj: CelestialObject) =>
+                obj.status !== CelestialStatus.DESTROYED &&
+                obj.status !== CelestialStatus.ANNIHILATED &&
+                !obj.ignorePhysics,
+            )
+            .forEach((obj: CelestialObject) => {
+              radii.set(obj.id, obj.realRadius_m);
+              isStar.set(obj.id, obj.type === CelestialType.STAR);
+              bodyTypes.set(obj.id, obj.type);
+              ignoreCollisions.set(obj.id, obj.ignoreCollisions ?? false);
+              parentIds.set(obj.id, obj.parentId);
+            });
+
+          const simParams: SimulationParameters = {
+            radii,
+            isStar,
+            bodyTypes,
+            ignoreCollisions,
+            parentIds,
+            simulationConfig:
+              simulationStateService.getSimulationState().simulationConfig,
+            orbitalParameters:
+              physicsSystemAdapter.getOrbitalParametersSnapshot(),
+            currentTime_s: this.accumulatedTime,
           };
-        });
-        this._orbitUpdate$.next({ positions: updatedPositions });
-      }
-    } catch (error) {
-      console.error("Error in simulation step:", error);
-      this.stopLoop(); // Stop loop on critical error
-    } finally {
-      vectorPool.releaseAll(acquiredVectors); // Ensure vectors are always released
-    }
 
-    if (this.isRunning) {
-      this.animationFrameId = requestAnimationFrame(this.simulationStep);
-    }
-  };
+          const result: SimulationStepResult = updateSimulation(
+            activeBodiesArray,
+            scaledDeltaTime,
+            simParams,
+          );
+
+          if (result.destructionEvents && result.destructionEvents.length > 0) {
+            result.destructionEvents.forEach((event: DestructionEvent) => {
+              this._destructionOccurred$.next(event);
+            });
+          }
+
+          physicsSystemAdapter.updateStateFromResult(result);
+
+          // After physics, check for hierarchy changes (orphans, escapes)
+          // Skip hierarchy updates in ideal mode since stars are fixed and orbits are perfect
+          if (
+            simulationStateService.getSimulationState().simulationConfig
+              .mode !== "ideal"
+          ) {
+            this.hierarchyManager.updateHierarchies();
+          }
+
+          const updatedPositions: Record<
+            string,
+            { x: number; y: number; z: number }
+          > = {};
+          result.states.forEach((state) => {
+            updatedPositions[String(state.id)] = {
+              x: state.position_m.x,
+              y: state.position_m.y,
+              z: state.position_m.z,
+            };
+          });
+          this._orbitUpdate$.next({ positions: updatedPositions });
+        }
+      } catch (error) {
+        console.error("Error in physics simulation step:", error);
+        this.stopLoop(); // Stop loop on critical error
+      } finally {
+        vectorPool.releaseAll(acquiredVectors); // Ensure vectors are always released
+      }
+    };
+  }
 
   /**
    * Resets all celestial objects and the simulation state.

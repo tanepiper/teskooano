@@ -42,6 +42,7 @@ export class AnimationLoop {
   private clock: THREE.Clock;
   private onAnimateCallbacks: ((time: number, delta: number) => void)[] = [];
   private onRenderCallbacks: (() => void)[] = [];
+  private onPhysicsCallbacks: ((time: number, delta: number) => void)[] = [];
 
   private renderer: THREE.WebGLRenderer | null = null;
   private camera: THREE.Camera | null = null;
@@ -112,10 +113,18 @@ export class AnimationLoop {
   }
 
   /**
-   * Registers a callback to be executed on each frame, after all `onAnimate`
-   * callbacks have completed.
-   * These callbacks are intended for secondary logic that does not require
-   * timing information (e.g., final rendering steps, UI updates).
+   * Registers a callback to be executed for physics simulation.
+   * These callbacks are executed before animation callbacks and are intended
+   * for physics calculations that need to happen before rendering updates.
+   * @param callback The function to call, which receives `time` and `delta`.
+   */
+  onPhysics(callback: (time: number, delta: number) => void): void {
+    this.onPhysicsCallbacks.push(callback);
+  }
+
+  /**
+   * Registers a callback to be executed after all other updates.
+   * These callbacks are executed last and are intended for final rendering operations.
    * @param callback The function to call.
    */
   onRender(callback: () => void): void {
@@ -123,35 +132,72 @@ export class AnimationLoop {
   }
 
   /**
-   * Removes a previously registered `onAnimate` callback.
-   * @param callback The exact callback function to remove.
+   * Removes a previously registered animation callback.
+   * @param callback The callback to remove.
    */
   removeAnimateCallback(callback: (time: number, delta: number) => void): void {
     const index = this.onAnimateCallbacks.indexOf(callback);
-    if (index !== -1) {
+    if (index > -1) {
       this.onAnimateCallbacks.splice(index, 1);
     }
   }
 
   /**
-   * Removes a previously registered `onRender` callback.
-   * @param callback The exact callback function to remove.
+   * Removes a previously registered physics callback.
+   * @param callback The callback to remove.
+   */
+  removePhysicsCallback(callback: (time: number, delta: number) => void): void {
+    const index = this.onPhysicsCallbacks.indexOf(callback);
+    if (index > -1) {
+      this.onPhysicsCallbacks.splice(index, 1);
+    }
+  }
+
+  /**
+   * Removes a previously registered render callback.
+   * @param callback The callback to remove.
    */
   removeRenderCallback(callback: () => void): void {
     const index = this.onRenderCallbacks.indexOf(callback);
-    if (index !== -1) {
+    if (index > -1) {
       this.onRenderCallbacks.splice(index, 1);
     }
   }
 
   /**
-   * Gets the array of `onRender` callbacks.
-   * @returns The array of render callbacks.
-   * @internal Be cautious with this. Modifying the returned array directly
-   * can lead to unexpected behavior. It is exposed for iteration purposes.
+   * Returns the current array of render callbacks.
+   * @returns Array of render callbacks.
    */
   getRenderCallbacks(): (() => void)[] {
-    return this.onRenderCallbacks;
+    return [...this.onRenderCallbacks];
+  }
+
+  /**
+   * Returns the current array of physics callbacks.
+   * @returns Array of physics callbacks.
+   */
+  getPhysicsCallbacks(): ((time: number, delta: number) => void)[] {
+    return [...this.onPhysicsCallbacks];
+  }
+
+  /**
+   * Gets performance statistics for the animation loop.
+   * @returns Performance statistics object
+   */
+  getPerformanceStats(): {
+    fps: number;
+    physicsCallbacks: number;
+    animationCallbacks: number;
+    renderCallbacks: number;
+    isRunning: boolean;
+  } {
+    return {
+      fps: this.currentFPS,
+      physicsCallbacks: this.onPhysicsCallbacks.length,
+      animationCallbacks: this.onAnimateCallbacks.length,
+      renderCallbacks: this.onRenderCallbacks.length,
+      isRunning: this.renderLoopId !== null,
+    };
   }
 
   /**
@@ -240,10 +286,17 @@ export class AnimationLoop {
 
     this._updateStats();
 
+    // Execute physics callbacks first (simulation updates)
+    for (const callback of this.onPhysicsCallbacks) {
+      callback(elapsedTime, deltaTime);
+    }
+
+    // Execute animation callbacks (rendering updates)
     for (const callback of this.onAnimateCallbacks) {
       callback(elapsedTime, deltaTime);
     }
 
+    // Execute render callbacks last (final rendering operations)
     for (const callback of this.onRenderCallbacks) {
       callback();
     }
