@@ -54,7 +54,7 @@ export function createMesh(
 
   if (!renderer) {
     try {
-      renderer = new CometRenderer();
+      renderer = new CometRenderer(object);
       celestialRenderers.set(object.celestialObjectId, renderer);
 
       if (debug) {

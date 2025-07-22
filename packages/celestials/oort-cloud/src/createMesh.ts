@@ -54,7 +54,7 @@ export function createMesh(
 
   if (!renderer) {
     try {
-      renderer = new OortCloudRenderer();
+      renderer = new OortCloudRenderer(object);
       celestialRenderers.set(object.celestialObjectId, renderer);
 
       if (debug) {

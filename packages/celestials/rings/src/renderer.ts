@@ -49,10 +49,14 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   /**
    * Create a new ring system renderer
    *
+   * @param object The celestial object for this ring system
    * @param parentRenderer Optional parent renderer that owns this ring system
    */
-  constructor(parentRenderer?: BaseCelestialRenderer) {
-    super();
+  constructor(
+    object: RenderableCelestialObject,
+    parentRenderer?: BaseCelestialRenderer,
+  ) {
+    super(object);
     this.parentRenderer = parentRenderer;
   }
 

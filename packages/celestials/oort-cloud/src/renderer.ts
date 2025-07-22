@@ -37,8 +37,9 @@ export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> 
   private particleRotationSpeed = 0.75; // Default, will be seeded
   private textureLoader: THREE.TextureLoader | null = null;
 
-  constructor() {
-    super();
+  constructor(object: RenderableCelestialObject) {
+    super(object);
+    this.objectId = object.celestialObjectId;
   }
 
   /**

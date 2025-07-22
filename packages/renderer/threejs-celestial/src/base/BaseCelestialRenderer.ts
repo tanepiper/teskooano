@@ -71,9 +71,13 @@ export abstract class BaseCelestialRenderer<
 
   /**
    * Initializes the renderer and its manager components.
+   * @param object The renderable celestial object data required for initialization.
    * @param options Configuration options for the renderer.
    */
-  constructor(options: BaseCelestialRendererOptions = {}) {
+  constructor(
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions = {},
+  ) {
     this.materialManager = new MaterialManager();
     this.lodManager = new LODManager();
     this.lightingManager = new CelestialLightingManager();

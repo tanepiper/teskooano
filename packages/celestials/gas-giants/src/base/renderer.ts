@@ -36,7 +36,7 @@ export abstract class BaseGasGiantRenderer<
   protected ringSystemRenderer: RingSystemRenderer | null = null;
 
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
-    super({ lightingManager: deps.lightingManager });
+    super(object, { lightingManager: deps.lightingManager });
     deps.celestialRenderers.set(object.celestialObjectId, this);
   }
 
@@ -68,7 +68,7 @@ export abstract class BaseGasGiantRenderer<
       properties?.rings &&
       properties.rings.length > 0
     ) {
-      this.ringSystemRenderer = new RingSystemRenderer(this);
+      this.ringSystemRenderer = new RingSystemRenderer(object, this);
     }
     if (this.ringSystemRenderer) {
       const ringLODs = this.ringSystemRenderer.getLODLevels(object, {

@@ -49,10 +49,18 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   private cumulativeParticleTime = 0;
   private renderScale = 1.0;
   private random: () => number = () => 0;
+  private objectId: string;
 
-  constructor(options: AsteroidFieldRendererOptions = {}) {
-    // Pass options to base class with billboard disabled by default
-    super({ ...options, disableBillboard: options.disableBillboard ?? true });
+  constructor(
+    object: RenderableCelestialObject,
+    options: AsteroidFieldRendererOptions = {},
+  ) {
+    // Pass object and options to base class with billboard disabled by default
+    super(object, {
+      ...options,
+      disableBillboard: options.disableBillboard ?? true,
+    });
+    this.objectId = object.celestialObjectId;
   }
 
   /**

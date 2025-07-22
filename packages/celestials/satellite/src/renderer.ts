@@ -45,9 +45,11 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
   private modelBoundingBox = new THREE.Box3();
   private currentObject?: RenderableCelestialObject;
   private _cachedLODLevels?: LODLevel[]; // Store current object reference
+  private objectId: string;
 
-  constructor() {
-    super();
+  constructor(object: RenderableCelestialObject) {
+    super(object);
+    this.objectId = object.celestialObjectId;
     this.dracoLoader = new DRACOLoader();
     // Set the path to the Draco decoder files (relative to your public directory)
     // this.dracoLoader.setDecoderPath('/draco/'); // You must copy the decoder files to public/draco/

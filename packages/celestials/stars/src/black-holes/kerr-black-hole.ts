@@ -271,7 +271,10 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       };
 
       // Create ring system renderer for the accretion disk
-      this.ringSystemRenderer = new RingSystemRenderer(this);
+      this.ringSystemRenderer = new RingSystemRenderer(
+        ringSystemObject as any,
+        this,
+      );
 
       // Get the ring system's LOD levels
       const ringLODLevels = this.ringSystemRenderer.getLODLevels(

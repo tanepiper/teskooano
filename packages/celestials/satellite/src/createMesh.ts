@@ -54,7 +54,7 @@ export function createMesh(
 
   if (!renderer) {
     try {
-      renderer = new SatelliteRenderer();
+      renderer = new SatelliteRenderer(object);
       celestialRenderers.set(object.celestialObjectId, renderer);
 
       if (debug) {

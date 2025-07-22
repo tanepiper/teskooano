@@ -73,11 +73,8 @@ export class CometRenderer extends BaseCelestialRenderer {
   private noise = new SimplexNoise();
   private random: () => number = () => 0;
 
-  getLODLevels(
-    object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): LODLevel[] {
-    // Initialize seeded random for this comet
+  constructor(object: RenderableCelestialObject) {
+    super();
     this.random = createSeededRandomSync(
       object.seed ?? object.celestialObjectId,
     );
@@ -86,6 +83,16 @@ export class CometRenderer extends BaseCelestialRenderer {
     this.createComa(object);
     this.createParticleTail(object);
     this._createJets(object);
+  }
+
+  getLODLevels(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
+    // Initialize seeded random for this comet
+    this.random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
 
     // LOD 0: High detail with particle tail
     const lod0_container = new THREE.Group();

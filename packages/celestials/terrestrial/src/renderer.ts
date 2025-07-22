@@ -58,7 +58,7 @@ export class BaseTerrestrialRenderer<
     object: RenderableCelestialObject,
     deps: TerrestrialRendererDeps,
   ) {
-    super();
+    super(object);
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
@@ -92,7 +92,7 @@ export class BaseTerrestrialRenderer<
       planetProps?.rings &&
       planetProps.rings.length > 0
     ) {
-      this.ringSystemRenderer = new RingSystemRenderer(this);
+      this.ringSystemRenderer = new RingSystemRenderer(object, this);
     }
 
     if (
@@ -486,7 +486,7 @@ export class BaseTerrestrialRenderer<
   initialize(object: RenderableCelestialObject): void {
     const planetProps = object.properties as PlanetProperties;
     if (planetProps?.rings && planetProps.rings.length > 0) {
-      this.ringSystemRenderer = new RingSystemRenderer(this);
+      this.ringSystemRenderer = new RingSystemRenderer(object, this);
     }
   }
 
