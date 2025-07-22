@@ -35,6 +35,7 @@ export class PhysicsStateProvider {
     const physicsState = PhysicsStateCalculator.calculatePhysicsState(
       object,
       allObjects,
+      new Set(),
     );
 
     if (physicsState) {
@@ -73,6 +74,7 @@ export class PhysicsStateProvider {
     const physicsState = PhysicsStateCalculator.calculatePhysicsState(
       object,
       allObjects,
+      new Set(),
     );
 
     if (physicsState) {

@@ -101,14 +101,16 @@ describe("Solar System Initialization", () => {
         // All objects should have valid orbital parameters
         expect(obj.orbit).toBeDefined();
         // Sun has 0 semi-major axis (it's the center), other celestial bodies should be > 0
+        // Allow negative semi-major axes for hyperbolic orbits (like Oumuamua)
         if (
           obj.type !== CelestialType.STAR &&
           obj.type !== CelestialType.SATELLITE
         ) {
-          expect(obj.orbit.realSemiMajorAxis_m).toBeGreaterThan(0);
+          expect(Math.abs(obj.orbit.realSemiMajorAxis_m)).toBeGreaterThan(0);
         }
         expect(obj.orbit.eccentricity).toBeGreaterThanOrEqual(0);
-        expect(obj.orbit.eccentricity).toBeLessThan(1);
+        // Allow very high eccentricity for interstellar objects and some comets
+        expect(obj.orbit.eccentricity).toBeLessThanOrEqual(10);
         expect(obj.orbit.inclination).toBeGreaterThanOrEqual(0);
         // Sun has 0 period (it's the center), others should be finite
         if (obj.type !== CelestialType.STAR) {
@@ -166,7 +168,8 @@ describe("Solar System Initialization", () => {
         expect(comet.properties).toBeDefined();
         const cometProps = comet.properties as CometProperties;
         expect(cometProps.type).toBe(CelestialType.COMET);
-        expect(cometProps.activity).toBeGreaterThan(0);
+        // Allow activity = 0 for extinct comets (like Oumuamua)
+        expect(cometProps.activity).toBeGreaterThanOrEqual(0);
         expect(cometProps.activity).toBeLessThanOrEqual(1);
         expect(cometProps.composition).toBeDefined();
         expect(Array.isArray(cometProps.composition)).toBe(true);

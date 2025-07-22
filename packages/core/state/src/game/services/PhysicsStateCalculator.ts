@@ -24,6 +24,7 @@ export class PhysicsStateCalculator {
   >(
     data: CelestialObject<T>,
     allObjects: Record<string, CelestialObject>,
+    visitedIds: Set<string> = new Set(),
   ): PhysicsStateReal | null {
     // Handle special object types
     if (this.isSpecialObject(data.type)) {
@@ -95,7 +96,7 @@ export class PhysicsStateCalculator {
     }
 
     // Handle normal orbital objects
-    return this.calculateOrbitalPhysics(data, allObjects);
+    return this.calculateOrbitalPhysics(data, allObjects, visitedIds);
   }
 
   /**
@@ -107,7 +108,11 @@ export class PhysicsStateCalculator {
     data: CelestialObject<T>,
     allObjects: Record<string, CelestialObject>,
   ): Promise<RenderableCelestialObject<T> | null> {
-    const physicsState = this.calculatePhysicsState(data, allObjects);
+    const physicsState = this.calculatePhysicsState(
+      data,
+      allObjects,
+      new Set(),
+    );
     if (!physicsState) {
       return null;
     }
@@ -213,6 +218,7 @@ export class PhysicsStateCalculator {
   private static calculateOrbitalPhysics(
     data: CelestialObject,
     allObjects: Record<string, CelestialObject>,
+    visitedIds: Set<string>,
   ): PhysicsStateReal | null {
     if (!data.orbit) {
       console.error(`[PhysicsStateCalculator] Missing orbit for ${data.id}`);
@@ -225,8 +231,23 @@ export class PhysicsStateCalculator {
       return null;
     }
 
+    // Check for circular references
+    if (visitedIds.has(data.id)) {
+      console.error(
+        `[PhysicsStateCalculator] Circular reference detected for ${data.id}`,
+      );
+      return null;
+    }
+
+    // Add current object to visited set
+    visitedIds.add(data.id);
+
     // Calculate parent's physics state first (recursively)
-    const parentPhysicsState = this.calculatePhysicsState(parent, allObjects);
+    const parentPhysicsState = this.calculatePhysicsState(
+      parent,
+      allObjects,
+      visitedIds,
+    );
     if (!parentPhysicsState) {
       console.error(
         `[PhysicsStateCalculator] Could not calculate parent physics state for ${data.id}`,

@@ -62,8 +62,6 @@ export class MaterialManager {
     textureKey: string,
     texture: THREE.Texture | null,
   ): void {
-    if (!texture) return;
-
     if (material instanceof THREE.ShaderMaterial) {
       if (material.uniforms && material.uniforms[textureKey] !== undefined) {
         material.uniforms[textureKey].value = texture;

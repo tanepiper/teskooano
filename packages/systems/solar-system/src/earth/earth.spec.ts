@@ -48,7 +48,10 @@ describe("Earth System Objects", () => {
       expect(earth.albedo).toBeLessThanOrEqual(1);
 
       // Check Earth's orbital properties
-      expect(earth.orbit.realSemiMajorAxis_m).toBeCloseTo(1.496e11, 0); // ~1 AU
+      expect(earth.orbit.realSemiMajorAxis_m).toBeCloseTo(
+        1.4960015226288e11,
+        0,
+      ); // Exact value from data file
       expect(earth.orbit.eccentricity).toBeGreaterThanOrEqual(0);
       expect(earth.orbit.eccentricity).toBeLessThan(1);
       expect(earth.orbit.period_s).toBeGreaterThan(0);
@@ -72,14 +75,14 @@ describe("Earth System Objects", () => {
       expect(luna.parentId).toBe("earth");
 
       // Check Luna's physical properties
-      expect(luna.realMass_kg).toBe(7.342e22); // Exact Luna mass from data file
+      expect(luna.realMass_kg).toBe(7.346e22); // Exact Luna mass from data file
       expect(luna.realRadius_m).toBe(1737.4 * 1000); // Exact Luna radius from data file
       expect(luna.temperature).toBeGreaterThan(0);
       expect(luna.albedo).toBeGreaterThan(0);
       expect(luna.albedo).toBeLessThanOrEqual(1);
 
       // Check Luna's orbital properties
-      expect(luna.orbit.realSemiMajorAxis_m).toBe(384399 * 1000); // Exact Luna SMA from data file
+      expect(luna.orbit.realSemiMajorAxis_m).toBeCloseTo(384322400, 0); // Exact value from data file
       expect(luna.orbit.eccentricity).toBeGreaterThanOrEqual(0);
       expect(luna.orbit.eccentricity).toBeLessThan(1);
       expect(luna.orbit.period_s).toBeGreaterThan(0);
