@@ -217,20 +217,13 @@ export class ObjectLifecycleManager {
       return;
     }
 
-    // Check if the object was marked destroyed previously and is now active again (unlikely but possible)
-    // This might require resetting visual appearance if a "destroyed look" was applied.
-
     // Apply updates
     existingMesh.position.copy(object.position);
-    existingMesh.quaternion.copy(object.rotation);
 
-    // Update light position if it's a star
-    if (object.type === CelestialType.STAR && object.position) {
-      // This is now handled by the store subscription in LightManager
-      // this.lightManager.updateStarLight(objectId, object.position);
+    // Only apply rotation if it's not a COMET, as comet rotation is handled internally
+    if (object.type !== CelestialType.COMET) {
+      existingMesh.quaternion.copy(object.rotation);
     }
-
-    // Update LOD, CSS labels, etc. if necessary (often handled in the main update loop)
   }
 
   /**

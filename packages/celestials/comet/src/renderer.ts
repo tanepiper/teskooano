@@ -66,8 +66,8 @@ export class CometRenderer extends BaseCelestialRenderer {
     repositionTimer: number;
   }[] = [];
   private comaMaterial?: CometComaMaterial;
-  private simplifiedTail?: THREE.Mesh;
-  private simplifiedTailMaterial?: CometSimplifiedTailMaterial;
+  private nucleusAndComaGroup?: THREE.Group; // New property for nucleus and coma
+  private nucleusAndComaGroup_lod1?: THREE.Group; // New property for LOD 1 nucleus and coma
   private lastParticleIndex = 0;
   private clock = new THREE.Clock();
   private noise = new SimplexNoise();
@@ -85,25 +85,28 @@ export class CometRenderer extends BaseCelestialRenderer {
     this.createNucleus(object);
     this.createComa(object);
     this.createParticleTail(object);
-
     this._createJets(object);
 
     // LOD 0: High detail with particle tail
     const lod0_container = new THREE.Group();
-    lod0_container.add(this.nucleus!);
-    lod0_container.add(this.coma!);
-    lod0_container.add(this.particleTail!);
+    this.nucleusAndComaGroup = new THREE.Group(); // Initialize the group
+    this.nucleusAndComaGroup.add(this.nucleus!); // Add nucleus to its own rotating group
+    this.nucleusAndComaGroup.add(this.coma!); // Add coma to the same group
+    lod0_container.add(this.nucleusAndComaGroup);
+
+    lod0_container.add(this.particleTail!); // Tail is a direct child of the main LOD group
     this.jets.forEach((jet) => lod0_container.add(jet.points));
 
     // LOD 1: Lower detail with simplified mesh tail
     const lod1_container = new THREE.Group();
+    this.nucleusAndComaGroup_lod1 = new THREE.Group(); // Initialize the LOD 1 group
     this.nucleus_lod1 = this.nucleus!.clone(false); // Clone geometry/material but not children
-    lod1_container.add(this.nucleus_lod1);
+    this.nucleusAndComaGroup_lod1.add(this.nucleus_lod1);
     if (this.coma) {
       this.coma_lod1 = this.coma.clone(false);
-      lod1_container.add(this.coma_lod1);
+      this.nucleusAndComaGroup_lod1.add(this.coma_lod1);
     }
-    lod1_container.add(this.simplifiedTail!);
+    lod1_container.add(this.nucleusAndComaGroup_lod1);
 
     return [
       {
@@ -403,13 +406,16 @@ export class CometRenderer extends BaseCelestialRenderer {
     deltaTime: number,
     activityFactor: number,
   ): void {
-    if (this.nucleus) {
+    if (this.nucleusAndComaGroup) {
+      // Apply rotation to the group
       const rotationSpeed = activityFactor * deltaTime * 0.5;
-      this.nucleus.rotation.y += rotationSpeed;
-      this.nucleus.rotation.x += rotationSpeed * 0.25;
+      this.nucleusAndComaGroup.rotation.y += rotationSpeed;
+      this.nucleusAndComaGroup.rotation.x += rotationSpeed * 0.25;
 
-      if (this.nucleus_lod1) {
-        this.nucleus_lod1.rotation.copy(this.nucleus.rotation);
+      if (this.nucleusAndComaGroup_lod1) {
+        this.nucleusAndComaGroup_lod1.rotation.copy(
+          this.nucleusAndComaGroup.rotation,
+        );
       }
     }
   }
@@ -444,10 +450,12 @@ export class CometRenderer extends BaseCelestialRenderer {
     if (this.coma) {
       const comaScale = 1.0 + activityFactor * 0.5;
       this.coma.scale.setScalar(comaScale);
-      this.coma.rotation.copy(this.nucleus!.rotation);
+      // Coma rotation is now handled by the parent group
+      // this.coma.rotation.copy(this.nucleus!.rotation);
       if (this.coma_lod1) {
         this.coma_lod1.scale.setScalar(comaScale);
-        this.coma_lod1.rotation.copy(this.nucleus!.rotation);
+        // Coma LOD 1 rotation is now handled by the parent group
+        // this.coma_lod1.rotation.copy(this.nucleus!.rotation);
       }
     }
   }
