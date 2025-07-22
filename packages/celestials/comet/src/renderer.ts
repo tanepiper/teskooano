@@ -1,27 +1,27 @@
-import * as THREE from "three";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   CometClass,
   CometProperties,
   RenderableCelestialObject,
   SCALE,
+  scaleSize,
 } from "@teskooano/data-types";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import * as THREE from "three";
 
+import { createSeededRandomSync } from "@teskooano/core-math";
 import {
   BaseCelestialRenderer,
+  GeometryUtilities,
   type CelestialMeshOptions,
   type LightSourcesMap,
-  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
+import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import {
   CometComaMaterial,
   CometJetMaterial,
   CometNucleusMaterial,
   CometParticleMaterial,
-  CometSimplifiedTailMaterial,
 } from "./material";
-import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
-import { createSeededRandomSync } from "@teskooano/core-math";
 
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds
@@ -253,8 +253,12 @@ export class CometRenderer extends BaseCelestialRenderer {
         "medium",
         32,
       );
-      const comaGeometry = new THREE.SphereGeometry(
+      const scaledComaRadius = scaleSize(
         properties.visualComaRadius,
+        object.type,
+      );
+      const comaGeometry = new THREE.SphereGeometry(
+        scaledComaRadius,
         comaSegments,
         comaSegments,
       );
