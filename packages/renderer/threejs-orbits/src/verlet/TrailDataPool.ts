@@ -142,6 +142,53 @@ export class TrailDataPool {
   }
 
   /**
+   * Retrieves only the most recent points for a given object's trail.
+   * This is more efficient than getting all points when only recent history is needed.
+   * @param objectId - The ID of the object.
+   * @param maxPoints - Maximum number of recent points to return.
+   * @returns An array of points, each as a [x, y, z] tuple.
+   */
+  public getRecentPoints(
+    objectId: string,
+    maxPoints: number,
+  ): [number, number, number][] {
+    const slot = this.objectSlots.get(objectId);
+    if (!slot || slot.count === 0) return [];
+
+    const pointsToReturn = Math.min(slot.count, maxPoints);
+    const points: [number, number, number][] = new Array(pointsToReturn);
+    const start = slot.offset;
+
+    if (slot.count < this.pointsPerSlot) {
+      // Buffer hasn't wrapped yet, read from the end
+      const startIndex = slot.count - pointsToReturn;
+      for (let i = 0; i < pointsToReturn; i++) {
+        const index = start + (startIndex + i) * this.floatsPerPoint;
+        points[i] = [
+          this.float32View[index],
+          this.float32View[index + 1],
+          this.float32View[index + 2],
+        ];
+      }
+    } else {
+      // Buffer has wrapped, read from the head backwards
+      const headIndex = slot.head;
+      for (let i = 0; i < pointsToReturn; i++) {
+        const bufferIndex =
+          (headIndex - pointsToReturn + i + this.pointsPerSlot) %
+          this.pointsPerSlot;
+        const index = start + bufferIndex * this.floatsPerPoint;
+        points[i] = [
+          this.float32View[index],
+          this.float32View[index + 1],
+          this.float32View[index + 2],
+        ];
+      }
+    }
+    return points;
+  }
+
+  /**
    * Clears all data and resets the pool.
    */
   public clear(): void {

@@ -32,7 +32,7 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
   /** Counter for throttling trail updates */
   private trailUpdateCounter: number = 0;
   /** How often to update trail geometry (every N frames) */
-  private readonly trailUpdateFrequency: number = 5;
+  private readonly trailUpdateFrequency: number = 10;
   /** Counter for throttling prediction updates */
   private predictionUpdateCounter: number = 0;
   /** How often to update predictions (every N frames) */
@@ -259,6 +259,7 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
    * Disposes both trail and prediction managers.
    */
   dispose(): void {
+    // Flush any pending trail updates before disposing
     this.trailManager.dispose();
     this.predictionManager.dispose();
   }

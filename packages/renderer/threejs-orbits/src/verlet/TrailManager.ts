@@ -43,7 +43,23 @@ export class TrailManager {
   private lastSampledTimes: Map<string, number> = new Map();
 
   /** Minimum distance to move before sampling (in scene units) - prevents micro-wobbles */
-  private readonly MIN_SAMPLE_DISTANCE_SQ = 1e-6; // Much larger than physics noise threshold
+  private readonly MIN_SAMPLE_DISTANCE_SQ = 1e-6;
+
+  /** Batch processing for worker communication */
+  private pendingUpdates: Array<{
+    objectId: string;
+    position: [number, number, number];
+    maxHistoryLength: number;
+    quality: string;
+  }> = [];
+  private lastBatchTime: number = 0;
+  private readonly BATCH_INTERVAL = 100; // Process batches every 100ms
+  private readonly MAX_BATCH_SIZE = 20; // Maximum updates per batch
+
+  /** Performance monitoring */
+  private messageCount: number = 0;
+  private lastPerformanceCheck: number = 0;
+  private readonly PERFORMANCE_CHECK_INTERVAL = 5000; // Check every 5 seconds
 
   /**
    * Creates a new TrailManager instance.
@@ -64,16 +80,24 @@ export class TrailManager {
 
     this.trailWorker.onmessage = (
       e: MessageEvent<{
-        objectId: string;
-        points: [number, number, number][];
-        maxHistoryLength: number;
+        type: "batch-results";
+        results: Array<{
+          objectId: string;
+          points: [number, number, number][];
+          maxHistoryLength: number;
+        }>;
       }>,
     ) => {
-      const { objectId, points, maxHistoryLength } = e.data;
-      const pointsTHREE = points.map(
-        (p) => new THREE.Vector3(p[0], p[1], p[2]),
-      );
-      this.drawTrailLine(objectId, pointsTHREE, maxHistoryLength);
+      const { results } = e.data;
+
+      // Process all results from the batch
+      for (const result of results) {
+        const { objectId, points, maxHistoryLength } = result;
+        const pointsTHREE = points.map(
+          (p) => new THREE.Vector3(p[0], p[1], p[2]),
+        );
+        this.drawTrailLine(objectId, pointsTHREE, maxHistoryLength);
+      }
     };
 
     this.trailWorker.onerror = (e) => {
@@ -117,13 +141,13 @@ export class TrailManager {
       // Dynamically adjust sample interval based on velocity.
       // Faster objects need more frequent sampling.
       const velocity = object.velocityMagnitude_mps || 1; // m/s, avoid 0
-      // An object at 50km/s (50000 m/s) should be sampled frequently (~50ms interval).
-      // An object at 1km/s (1000 m/s) can be sampled less often (~1s interval).
+      // An object at 50km/s (50000 m/s) should be sampled frequently (~100ms interval).
+      // An object at 1km/s (1000 m/s) can be sampled less often (~2s interval).
       // Using an inverse relationship: interval = C / velocity.
-      // For 50km/s: 50 = C / 50000 -> C = 2,500,000
-      const C = 2_500_000;
+      // For 50km/s: 100 = C / 50000 -> C = 5,000,000
+      const C = 5_000_000;
       let dynamicInterval = C / velocity;
-      dynamicInterval = Math.max(50, Math.min(1000, dynamicInterval)); // Clamp between 50ms and 1s.
+      dynamicInterval = Math.max(100, Math.min(2000, dynamicInterval)); // Clamp between 100ms and 2s.
 
       const distanceSqSinceLastSample =
         currentPosition.distanceToSquared(lastSampledPosition);
@@ -142,13 +166,21 @@ export class TrailManager {
       this.lastSampledPositions.set(objectId, currentPosition.clone());
       this.lastSampledTimes.set(objectId, currentTime);
 
-      this.trailWorker.postMessage({
-        type: "update",
+      // Add to pending batch instead of sending immediately
+      this.pendingUpdates.push({
         objectId,
         position: object.position.toArray(),
         maxHistoryLength,
         quality: this.trailQuality,
       });
+
+      // Send batch if we have enough updates or enough time has passed
+      if (
+        this.pendingUpdates.length >= this.MAX_BATCH_SIZE ||
+        currentTime - this.lastBatchTime >= this.BATCH_INTERVAL
+      ) {
+        this.sendBatch();
+      }
     }
 
     // Ensure the line is visible if it exists
@@ -304,6 +336,9 @@ export class TrailManager {
    * Disposes of all resources used by the TrailManager.
    */
   dispose(): void {
+    // Flush any pending updates before terminating
+    this.sendBatch();
+
     this.trailWorker?.postMessage({ type: "clear-all" });
     this.trailWorker?.terminate();
     this.trailLines.forEach((line, objectId) => {
@@ -334,5 +369,65 @@ export class TrailManager {
    */
   setTrailQuality(quality: TrailQuality): void {
     this.trailQuality = quality;
+  }
+
+  /**
+   * Sets the maximum number of points to send from the worker for trail rendering.
+   * Lower values improve performance but reduce trail detail.
+   * @param maxPoints The maximum number of points (default: 500)
+   */
+  setMaxTrailPoints(maxPoints: number): void {
+    this.trailWorker?.postMessage({
+      type: "set-max-points",
+      maxPoints: Math.max(100, Math.min(2000, maxPoints)), // Clamp between 100 and 2000
+    });
+  }
+
+  /**
+   * Gets performance statistics for monitoring.
+   * @returns Performance statistics object
+   */
+  getPerformanceStats(): {
+    trailLinesCount: number;
+    pendingUpdatesCount: number;
+    messageCount: number;
+  } {
+    return {
+      trailLinesCount: this.trailLines.size,
+      pendingUpdatesCount: this.pendingUpdates.length,
+      messageCount: this.messageCount,
+    };
+  }
+
+  private sendBatch(): void {
+    if (this.pendingUpdates.length === 0) return;
+
+    const batch = this.pendingUpdates;
+    this.pendingUpdates = [];
+    this.lastBatchTime = Date.now();
+
+    this.trailWorker?.postMessage({
+      type: "update-batch",
+      updates: batch,
+    });
+
+    // Performance monitoring
+    this.messageCount++;
+    const currentTime = Date.now();
+    if (
+      currentTime - this.lastPerformanceCheck >=
+      this.PERFORMANCE_CHECK_INTERVAL
+    ) {
+      const messagesPerSecond =
+        (this.messageCount * 1000) / this.PERFORMANCE_CHECK_INTERVAL;
+      if (messagesPerSecond > 10) {
+        // Log if more than 10 messages per second
+        console.warn(
+          `[TrailManager] High message frequency: ${messagesPerSecond.toFixed(1)} messages/sec`,
+        );
+      }
+      this.messageCount = 0;
+      this.lastPerformanceCheck = currentTime;
+    }
   }
 }
