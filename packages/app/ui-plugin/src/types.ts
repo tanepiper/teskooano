@@ -4,6 +4,7 @@ import type {
   IDockviewPanelProps,
   DockviewApi,
 } from "dockview-core";
+import type { Observable } from "rxjs";
 import type { pluginManager } from "./pluginManager.js";
 
 /**
@@ -15,6 +16,9 @@ export interface PluginManagerProxy {
   execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined;
   getManagerInstance<T = any>(id: string): T | undefined;
   registerPlugin(plugin: TeskooanoPlugin): void;
+  pluginsChanged$: Observable<void>;
+  getToolbarItemsForTarget(target: ToolbarTarget): ToolbarItemConfig[];
+  getToolbarWidgetsForTarget(target: ToolbarTarget): ToolbarWidgetConfig[];
 }
 
 /**

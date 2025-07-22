@@ -10,11 +10,9 @@ import {
   type FunctionToolbarItemConfig,
   type PanelToolbarItemConfig,
   type PluginExecutionContext,
-  type RegisteredItem,
   type ToolbarItemConfig,
-  type ToolbarItemDefinition,
-  type ToolbarRegistration,
   type ToolbarWidgetConfig,
+  pluginManager,
 } from "@teskooano/ui-plugin";
 import { template as toolbarTemplate } from "./ToolbarController.template.js";
 import { createToolbarButton } from "./ToolbarController.utils.js";
@@ -72,10 +70,11 @@ export class ToolbarController {
     this.setupStaticListeners();
     this.setupMobileAttributeToggle();
 
-    this._pluginChangesSubscription =
-      this._context.pluginManager.pluginsChanged$.subscribe(() => {
+    this._pluginChangesSubscription = pluginManager.pluginsChanged$.subscribe(
+      () => {
         this.reRenderToolbars();
-      });
+      },
+    );
   }
 
   /**
@@ -145,7 +144,7 @@ export class ToolbarController {
   private populateItems(buttonContainer: HTMLElement): void {
     try {
       const items: ToolbarItemConfig[] =
-        this._context.pluginManager.getToolbarItemsForTarget("main-toolbar");
+        pluginManager.getToolbarItemsForTarget("main-toolbar");
 
       items.forEach((item: ToolbarItemConfig) => {
         try {
@@ -203,7 +202,7 @@ export class ToolbarController {
   private populateWidgets(widgetContainer: HTMLElement): void {
     try {
       const widgets: ToolbarWidgetConfig[] =
-        this._context.pluginManager.getToolbarWidgetsForTarget("main-toolbar");
+        pluginManager.getToolbarWidgetsForTarget("main-toolbar");
       widgets.forEach((widget: ToolbarWidgetConfig) => {
         try {
           const widgetElement = document.createElement(widget.componentName);

@@ -2,6 +2,15 @@ export const template = document.createElement("template");
 
 template.innerHTML = `
   <style>
+
+    :host {
+      cursor: pointer;
+    }
+
+    #toolbar {
+    cursor: pointer;
+    }
+
     /* Styles moved from ToolbarController.css */
     .toolbar-container {
       display: flex;

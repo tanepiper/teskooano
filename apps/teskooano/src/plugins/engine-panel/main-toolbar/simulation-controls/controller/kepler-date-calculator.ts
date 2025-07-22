@@ -187,26 +187,34 @@ export class KeplerDateCalculator {
     timeSeconds: number,
     orbitalParams: OrbitalParameters,
   ): { position: OSVector3; velocity: OSVector3 } {
-    // Check if orbital parameters have an epoch and adjust time accordingly
+    // timeSeconds is the time from J2000 to target date
+    // We need to calculate the time from the orbital parameters' epoch to target date
     let adjustedTimeSeconds = timeSeconds;
 
-    if (orbitalParams.epoch) {
-      // If orbital parameters have an epoch, calculate the time difference from that epoch
+    if (orbitalParams.epoch && orbitalParams.epoch !== "J2000") {
+      // Parse the orbital parameters' epoch
       const epochDate = this.parseEpoch(orbitalParams.epoch);
-      const targetDate = this.secondsFromEpochToDate(timeSeconds);
-      const epochTimeSeconds = this.dateToSecondsFromEpoch(epochDate);
 
-      // Calculate time relative to the orbital parameters' epoch
-      adjustedTimeSeconds =
-        this.dateToSecondsFromEpoch(targetDate) - epochTimeSeconds;
+      // Calculate time from orbital epoch to target date
+      const targetDate = this.secondsFromEpochToDate(timeSeconds);
+      const timeFromEpochToTarget =
+        this.dateToSecondsFromEpoch(targetDate) -
+        this.dateToSecondsFromEpoch(epochDate);
+
+      adjustedTimeSeconds = timeFromEpochToTarget;
 
       console.log(`Epoch adjustment for ${orbitalParams.epoch}:`, {
         epochDate: epochDate.toISOString(),
         targetDate: targetDate.toISOString(),
-        epochTimeSeconds,
-        timeSeconds,
+        timeFromEpochToTarget,
+        originalTimeSeconds: timeSeconds,
         adjustedTimeSeconds,
       });
+    } else {
+      // For J2000 epoch or no epoch, use the time as-is
+      console.log(
+        `Using time as-is for epoch: ${orbitalParams.epoch || "none"}`,
+      );
     }
 
     const state = calculateKeplerianStateAtTime(
