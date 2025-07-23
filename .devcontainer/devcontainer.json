@@ -9,20 +9,26 @@
   "name": "Teskooano Sandbox",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
+    "dockerfile": "./Dockerfile",
+    "context": "..",
+    "options": {
+      "network": "host"
+    }
   },
   "runArgs": ["--network=host"],
-  "containerUser": "teskooano",
-
-  "appPort": [3000],
   "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Teskooano Sandbox",
+      "onAutoForward": "openPreview"
+    }
+  },
   "hostRequirements": {
     "cpus": 4,
     "memory": "16gb",
     "storage": "32gb"
   },
-  "postCreateCommand": "moon run teskooano:dev",
+  "remoteUser": "root"
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
 
@@ -36,5 +42,4 @@
   // "customizations": {},
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-  "remoteUser": "root"
 }
