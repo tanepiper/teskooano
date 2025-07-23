@@ -3,6 +3,7 @@ import * as THREE from "three";
 /**
  * Helper class for creating and managing Three.js scenes with consistent configuration.
  * Provides methods for scene setup, camera configuration, and renderer initialization.
+ * For lighting setup, use the separate LightingHelper class.
  */
 export class SceneHelper {
   /**
@@ -148,60 +149,6 @@ export class SceneHelper {
       antialias: false, // Disable antialiasing for faster rendering
       powerPreference: "default", // Use default power preference for debugging
     });
-  }
-
-  /**
-   * Adds basic lighting to a scene for immediate visibility.
-   *
-   * @param scene - The scene to add lighting to
-   * @param options - Lighting configuration options
-   * @param options.ambientIntensity - Ambient light intensity (default: 0.3)
-   * @param options.directionalIntensity - Directional light intensity (default: 0.7)
-   * @param options.directionalPosition - Directional light position (default: [10, 10, 5])
-   * @param options.enableShadows - Whether to enable shadows on directional light (default: true)
-   * @returns Object containing the created lights
-   */
-  static addBasicLighting(
-    scene: THREE.Scene,
-    options: {
-      ambientIntensity?: number;
-      directionalIntensity?: number;
-      directionalPosition?: [number, number, number];
-      enableShadows?: boolean;
-    } = {},
-  ): {
-    ambient: THREE.AmbientLight;
-    directional: THREE.DirectionalLight;
-  } {
-    const {
-      ambientIntensity = 0.3,
-      directionalIntensity = 0.7,
-      directionalPosition = [10, 10, 5],
-      enableShadows = true,
-    } = options;
-
-    // Create ambient light
-    const ambient = new THREE.AmbientLight(0xffffff, ambientIntensity);
-    scene.add(ambient);
-
-    // Create directional light
-    const directional = new THREE.DirectionalLight(
-      0xffffff,
-      directionalIntensity,
-    );
-    directional.position.set(...directionalPosition);
-
-    if (enableShadows) {
-      directional.castShadow = true;
-      directional.shadow.mapSize.width = 2048;
-      directional.shadow.mapSize.height = 2048;
-      directional.shadow.camera.near = 0.5;
-      directional.shadow.camera.far = 500;
-    }
-
-    scene.add(directional);
-
-    return { ambient, directional };
   }
 
   /**

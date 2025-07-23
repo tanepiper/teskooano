@@ -1,3 +1,5 @@
 // Rendering utilities
-export { LineHelper } from "./LineHelper";
 export { SceneHelper } from "./SceneHelper";
+export { LineHelper } from "./LineHelper";
+export { LightingHelper } from "./LightingHelper";
+export { ShadowHelper } from "./ShadowHelper";

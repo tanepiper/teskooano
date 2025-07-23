@@ -5,6 +5,7 @@ import {
   SCALE,
 } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
 import * as THREE from "three";
 import { BillboardLODConfig } from "./types";
 import { createBillboardSprite } from "./billboard-utils";
@@ -221,8 +222,8 @@ export class BillboardManager {
       (0.2 + config.color.getHSL({ h: 0, s: 0, l: 0 }).l) *
       (config.albedo ?? 0.3);
 
-    const pointLight = new THREE.PointLight(
-      lightColor,
+    const pointLight = LightingHelper.createPointLight(
+      lightColor.getHex(),
       lightIntensity,
       0, // No decay distance limit
       2, // Decay factor

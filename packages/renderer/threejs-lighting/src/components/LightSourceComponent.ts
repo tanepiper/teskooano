@@ -1,5 +1,6 @@
 import { StateAccessor } from "@teskooano/core-state";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
 import * as THREE from "three";
 
 /**
@@ -34,7 +35,8 @@ export class LightSourceComponent {
     options: LightSourceOptions = {},
   ) {
     this.celestialObject = object;
-    this.light = options.light ?? new THREE.PointLight(0xffffff, 1, 0, 2);
+    this.light =
+      options.light ?? LightingHelper.createPointLight(0xffffff, 1, 0, 2);
     this.light.castShadow = options.castShadow ?? false;
 
     // Set the initial position

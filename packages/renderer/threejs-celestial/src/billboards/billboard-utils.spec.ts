@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
 import * as THREE from "three";
 import {
   createBillboardSprite,
@@ -164,7 +165,7 @@ describe("Billboard Utils", () => {
   describe("createBillboardLODLevel", () => {
     it("should create LOD level with correct properties", () => {
       const sprite = new THREE.Sprite();
-      const pointLight = new THREE.PointLight();
+      const pointLight = LightingHelper.createPointLight();
       const billboardDistance = 1000;
 
       const lodLevel = createBillboardLODLevel(
@@ -184,7 +185,7 @@ describe("Billboard Utils", () => {
 
     it("should position sprite and point light correctly", () => {
       const sprite = new THREE.Sprite();
-      const pointLight = new THREE.PointLight();
+      const pointLight = LightingHelper.createPointLight();
       const billboardDistance = 1500;
 
       const lodLevel = createBillboardLODLevel(
@@ -203,7 +204,7 @@ describe("Billboard Utils", () => {
 
     it("should handle different billboard distances", () => {
       const sprite = new THREE.Sprite();
-      const pointLight = new THREE.PointLight();
+      const pointLight = LightingHelper.createPointLight();
       const distances = [500, 1000, 2000];
 
       distances.forEach((distance) => {

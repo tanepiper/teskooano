@@ -1,5 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
 import * as THREE from "three";
 import { BillboardInfo } from "./types";
 
@@ -65,8 +66,8 @@ export function createBillboardPointLight(
     lightIntensity = Math.max(0.5, Math.min(lightIntensity, 20.0)); // Clamp intensity
   }
 
-  const pointLight = new THREE.PointLight(
-    starColor,
+  const pointLight = LightingHelper.createPointLight(
+    starColor.getHex(),
     lightIntensity,
     0, // No decay distance limit
     2, // Decay factor
