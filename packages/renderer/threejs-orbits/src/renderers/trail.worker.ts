@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { TrailDataPool } from "./TrailDataPool";
 
 type TrailCommand =

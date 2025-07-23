@@ -97,15 +97,3 @@ export interface RenderPipelineOptions {
  * Defines a function that can be invoked from the console
  */
 export type RenderCallback = () => void;
-
-/**
- * Defines the quality levels for trail rendering, which determines the
- * maximum number of points in a smoothed trail.
- */
-export enum TrailQuality {
-  Low = "Low",
-  Med = "Med",
-  High = "High",
-  Ultra = "Ultra",
-  Cosmic = "Cosmic",
-}

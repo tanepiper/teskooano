@@ -17,7 +17,7 @@ import {
 } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
-import { LineBuilder } from "../utils/LineBuilder";
+import { LineHelper } from "@teskooano/renderer-threejs-helpers";
 import { Subscription } from "rxjs";
 import { map, distinctUntilChanged } from "rxjs/operators";
 import {
@@ -66,7 +66,7 @@ export class PredictionManager {
   private isCalculating: boolean = false;
 
   /** Line builder utility for efficient line creation and updates */
-  private lineBuilder: LineBuilder;
+  private lineBuilder: LineHelper;
 
   /** Object manager for scene interaction */
   private objectManager: ObjectManager;
@@ -114,7 +114,7 @@ export class PredictionManager {
    */
   constructor(objectManager: ObjectManager) {
     this.objectManager = objectManager;
-    this.lineBuilder = new LineBuilder();
+    this.lineBuilder = new LineHelper();
 
     this.initializeWorker();
     this.initializeStateSubscriptions();

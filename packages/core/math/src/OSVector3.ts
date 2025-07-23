@@ -274,7 +274,10 @@ export class OSVector3 {
    * Consider dependency injection or careful scoping if using in non-ThreeJS contexts.
    * @returns A new THREE.Vector3 instance.
    */
-  toThreeJS(): Vector3 {
+  toThreeJS(target?: Vector3): Vector3 {
+    if (target) {
+      return target.set(this.x, this.y, this.z);
+    }
     return new Vector3(this.x, this.y, this.z);
   }
 

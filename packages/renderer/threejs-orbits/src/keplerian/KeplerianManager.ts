@@ -6,8 +6,8 @@ import type { Observable } from "rxjs";
 import * as THREE from "three";
 import { OrbitCalculator } from "./OrbitCalculator";
 import { SharedMaterials } from "../core/SharedMaterials";
-import { LineBuilder } from "../utils/LineBuilder";
-import { updateThreeVector3Array } from "../utils/arrayUtils";
+import { LineHelper } from "@teskooano/renderer-threejs-helpers";
+import { ThreeVector3Converter } from "@teskooano/data-types"; // Corrected import
 import { type OSVector3 } from "@teskooano/core-math";
 
 /**
@@ -45,7 +45,10 @@ export class KeplerianManager extends StateSubscriptionMixin {
     {};
 
   /** Line builder utility for efficient line creation and update */
-  private lineBuilder: LineBuilder;
+  private lineBuilder: LineHelper;
+
+  /** Converter for OSVector3 to THREE.Vector3 arrays */
+  private threeVector3Converter: ThreeVector3Converter; // New instance
 
   /**
    * Creates an instance of KeplerianManager.
@@ -60,7 +63,8 @@ export class KeplerianManager extends StateSubscriptionMixin {
     super();
     this.objectManager = objectManager;
     this.renderableObjects$ = renderableObjects$;
-    this.lineBuilder = new LineBuilder();
+    this.lineBuilder = new LineHelper();
+    this.threeVector3Converter = new ThreeVector3Converter(); // Initialize converter
 
     this.subscribeToState(this.renderableObjects$, (objects) => {
       this.latestRenderableObjects = objects;
@@ -107,8 +111,9 @@ export class KeplerianManager extends StateSubscriptionMixin {
 
     if (cachedData && cachedData.version === currentVersion) {
       orbitPointsOS = cachedData.points;
-    } else {
-      // Only calculate if not cached or if the orbit has fundamentally changed.
+    }
+    // If the orbit has fundamentally changed or not cached, recalculate.
+    else {
       orbitPointsOS = OrbitCalculator.calculateOrbitPoints(
         orbitalParameters,
         objectState,
@@ -122,7 +127,7 @@ export class KeplerianManager extends StateSubscriptionMixin {
 
     // Efficiently update or create the THREE.Vector3 array
     const cachedPositions = this.positionCache.get(objectId) ?? [];
-    const orbitPointsTHREE = updateThreeVector3Array(
+    const orbitPointsTHREE = this.threeVector3Converter.update(
       orbitPointsOS,
       cachedPositions,
     );

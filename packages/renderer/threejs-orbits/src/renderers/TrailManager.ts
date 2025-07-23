@@ -1,11 +1,8 @@
-import * as THREE from "three";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { RenderableCelestialObject, TrailQuality } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import * as THREE from "three";
 import { SharedMaterials } from "../core/SharedMaterials";
-import { LineBuilder } from "../utils/LineBuilder";
-import { CircularBuffer } from "../utils/CircularBuffer";
-import { simplifyPath } from "../utils/simplify";
-import { TrailQuality } from "@teskooano/renderer-threejs";
+import { LineHelper } from "@teskooano/renderer-threejs-helpers";
 
 /**
  * Manages the creation and updating of trail lines showing an object's recent path.
@@ -21,7 +18,7 @@ export class TrailManager {
   private trailWorker: Worker | null = null;
 
   /** Line builder utility for efficient line creation and updates */
-  private lineBuilder: LineBuilder;
+  private lineBuilder: LineHelper;
 
   /** Object manager for scene interaction */
   private objectManager: ObjectManager;
@@ -68,7 +65,7 @@ export class TrailManager {
    */
   constructor(objectManager: ObjectManager) {
     this.objectManager = objectManager;
-    this.lineBuilder = new LineBuilder();
+    this.lineBuilder = new LineHelper();
     this.initializeWorker();
   }
 

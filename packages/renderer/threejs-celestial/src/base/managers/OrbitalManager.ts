@@ -4,7 +4,7 @@ import {
   RenderableCelestialObject,
   CelestialType,
 } from "@teskooano/data-types";
-import { CircularBuffer } from "./CircularBuffer";
+import { CircularBuffer } from "@teskooano/renderer-threejs-helpers";
 
 /**
  * Configuration for orbital data management

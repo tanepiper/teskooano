@@ -34,6 +34,7 @@
     "@teskooano/core-math": "file:../../../core/math",
     "@teskooano/core-physics": "file:../../../core/physics",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
+    "@teskooano/renderer-threejs-helpers": "file:../threejs-helpers",
     "eventemitter3": "5.0.1",
     "rxjs": "7.8.2"
   },

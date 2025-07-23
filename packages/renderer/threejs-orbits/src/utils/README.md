@@ -17,16 +17,6 @@ These utilities manage `three.js` objects or bridge the gap between the workers 
 - `BufferPool`: Maintains a cache of `THREE.BufferAttribute` objects. Instead of being destroyed, used buffers are returned to the pool and recycled, avoiding new memory allocations.
 - `LineBuilder`: A factory for `THREE.Line` objects that uses the `BufferPool` to acquire and release the underlying position attributes. It provides a clean API for creating and managing lines without the consumer needing to worry about memory management.
 
-### `arrayUtils.ts`
-
-**Purpose**: To provide an efficient bridge between the physics engine's data types and the renderer's data types.
-
-**Core Design**: The `updateThreeVector3Array` function bridges the gap between the renderer-agnostic physics engine and `three.js`.
-
-- **Input**: It takes an array of `OSVector3[]` (the output from a worker).
-- **Output**: It produces an array of `THREE.Vector3[]` (the required input for a rendering utility like `LineBuilder`).
-- **Performance**: It updates an existing target array in place, reusing `THREE.Vector3` objects to reduce memory churn in the render loop.
-
 ---
 
 ## Worker-Side Utilities
