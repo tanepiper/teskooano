@@ -245,12 +245,6 @@ export class PerformanceMonitor {
     ) as number;
     const maxVertexAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS) as number;
 
-    // Check for mobile device
-    const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
-      );
-
     // Enhanced device memory check using web API
     const hasLowMemory =
       this.deviceMemoryGB !== null && this.deviceMemoryGB < 4;
@@ -259,7 +253,6 @@ export class PerformanceMonitor {
 
     // Determine tier based on capabilities
     if (
-      isMobile ||
       hasLowMemory ||
       hasLowCores ||
       maxTextureSize < 2048 ||
@@ -271,7 +264,6 @@ export class PerformanceMonitor {
       maxVertexUniformVectors >= 512 &&
       maxVertexAttribs >= 16 &&
       maxFragmentUniformVectors >= 1024 &&
-      !isMobile &&
       (this.deviceMemoryGB === null || this.deviceMemoryGB >= 8)
     ) {
       return "cosmic";

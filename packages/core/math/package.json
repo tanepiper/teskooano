@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "@types/node": "24.0.15",
+    "@types/node": "24.1.0",
     "@types/three": "0.178.1",
     "vitest": "3.2.4"
   }
