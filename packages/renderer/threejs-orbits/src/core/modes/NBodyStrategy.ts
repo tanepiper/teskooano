@@ -1,7 +1,7 @@
 import type { IOrbitVisualizationStrategy } from "./IOrbitVisualizationStrategy";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { TrailManager } from "../../verlet/TrailManager";
-import { PredictionManager } from "../../verlet/PredictionManager";
+import { TrailManager } from "../../renderers/TrailManager";
+import { PredictionManager } from "../../renderers/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";

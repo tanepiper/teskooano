@@ -6,5 +6,5 @@
 
 export * from "./core";
 export * from "./keplerian";
-export * from "./verlet";
+export * from "./renderers";
 export * from "./utils";

@@ -1,6 +1,6 @@
 # Target Architecture: Compositional Celestial Rendering (v4 - Final)
 
-This document proposes a new target architecture for the celestial rendering system. The goal is to move away from the current deep and rigid inheritance hierarchy (`ClassIGasGiantRenderer` -> `BaseGasGiantRenderer` -> `BaseCelestialRenderer`) towards a flexible, component-based model based on **composition over inheritance**. This version refines the factory pattern to handle the project's complexity gracefully and promote maximum code reuse.
+This document proposes a new target architecture for the celestial rendering system. The goal is to move away from the current deep and rigid inheritance hierarchy (`ClassIGasGiantRenderer` -> `BaseGasGiantRenderer` -> `BaseCelestialRenderer`) towards a flexible, component-based model based on **composition over inheritance**. This version refines the factory pattern to handle the project's complexity gracefully and promote maximum code reuse, while preserving the benefits of centralized orbital data management.
 
 ## 1. Problems with the Current Architecture
 
@@ -10,13 +10,17 @@ As documented in `ARCHITECTURE.md`, the current system's weaknesses are:
 2.  **Poor Separation of Concerns:** Base classes are responsible for too many distinct tasks (body rendering, rings, LODs, lighting).
 3.  **Encapsulation Breaking:** The `update` method has a "kitchen sink" signature, tightly coupling renderers to the entire scene state.
 
+**However, the current system has one major strength that we must preserve:**
+
+4.  **Centralized Orbital Data Management:** The `OrbitalManager` provides efficient, LOD-based orbital data management that should be maintained in the new architecture.
+
 ## 2. Proposed Architecture: A Unified Component Model
 
 The new architecture is founded on a three-tier principle:
 
 1.  **Render Layers:** Self-contained components that render a single visual aspect (e.g., `BodyLayer`, `RingSystemLayer`, `AtmosphereLayer`).
 2.  **Composite Renderer:** An orchestrator that combines multiple `RenderLayer`s into a single `THREE.LOD` object.
-3.  **Celestial Component:** A top-level container that manages all aspects of an object's presence in the scene (3D mesh, UI labels, etc.).
+3.  **Celestial Component:** A top-level container that manages all aspects of an object's presence in the scene (3D mesh, UI labels, orbital data, etc.).
 
 ### 2.1. The `RenderLayer` Interface
 
@@ -30,6 +34,7 @@ interface RenderingContext {
   camera: THREE.Camera;
   lights: CalculatedLight[]; // Pre-calculated light data
   shadowCasters: CalculatedShadowCaster[]; // Pre-calculated shadow data
+  orbitalData?: OrbitalData; // Optional orbital data from OrbitalManager
 }
 
 interface RenderLayer {
@@ -84,6 +89,7 @@ class CelestialObjectComponent {
   public readonly objectId: string;
   private meshRenderer: CompositeMeshRenderer;
   private labelRenderer: LabelLayer; // Manages the 2D CSS label
+  private orbitalManager: OrbitalManager; // Preserves orbital data management
 
   public get mesh(): THREE.Object3D {
     return this.meshRenderer.mesh;
@@ -91,6 +97,12 @@ class CelestialObjectComponent {
 
   constructor(object: RenderableCelestialObject, context: RenderingContext) {
     this.objectId = object.celestialObjectId;
+
+    // Initialize orbital manager (preserved from current architecture)
+    this.orbitalManager = new OrbitalManager(
+      object.celestialObjectId,
+      context.orbitalConfig,
+    );
 
     // Use the factory to get the correct layers for this object type.
     const layers = getCelestialLayers(object, context);
@@ -103,13 +115,60 @@ class CelestialObjectComponent {
     object: RenderableCelestialObject,
     context: RenderingContext,
   ): void {
-    this.meshRenderer.update(object, context);
-    this.labelRenderer.update(object, context);
+    // Update orbital data first
+    this.orbitalManager.update(object, context.time);
+
+    // Enhance context with orbital data for layers that need it
+    const enhancedContext = {
+      ...context,
+      orbitalData: {
+        currentPosition: this.orbitalManager.getCurrentPosition(),
+        positionHistory: this.orbitalManager.getPositionHistory(),
+        shouldShowOrbitLines: this.orbitalManager.shouldShowOrbitLines(
+          context.camera.position.distanceTo(object.position),
+          object.type,
+        ),
+        shouldShowTrailLines: this.orbitalManager.shouldShowTrailLines(
+          context.camera.position.distanceTo(object.position),
+          object.type,
+        ),
+        isHighlighted: this.orbitalManager.isObjectHighlighted(),
+      },
+    };
+
+    this.meshRenderer.update(object, enhancedContext);
+    this.labelRenderer.update(object, enhancedContext);
   }
 
   public dispose(): void {
     this.meshRenderer.dispose();
     this.labelRenderer.dispose();
+    this.orbitalManager.dispose();
+  }
+
+  // Public API for external systems to interact with orbital data
+  public getOrbitalData(): OrbitalData {
+    return {
+      currentPosition: this.orbitalManager.getCurrentPosition(),
+      positionHistory: this.orbitalManager.getPositionHistory(),
+      shouldShowOrbitLines: this.orbitalManager.shouldShowOrbitLines(
+        0,
+        CelestialType.STAR,
+      ),
+      shouldShowTrailLines: this.orbitalManager.shouldShowTrailLines(
+        0,
+        CelestialType.STAR,
+      ),
+      isHighlighted: this.orbitalManager.isObjectHighlighted(),
+    };
+  }
+
+  public setHighlighted(highlighted: boolean): void {
+    this.orbitalManager.setHighlighted(highlighted);
+  }
+
+  public setShowPredictionLines(show: boolean): void {
+    this.orbitalManager.setShowPredictionLines(show);
   }
 }
 ```
@@ -128,8 +187,7 @@ function createCelestialComponent(
   object: RenderableCelestialObject,
   context: RenderingContext,
 ): CelestialObjectComponent {
-  const layers = getCelestialLayers(object, context);
-  return new CelestialObjectComponent(object, layers, context);
+  return new CelestialObjectComponent(object, context);
 }
 ```
 
@@ -268,11 +326,52 @@ function getMainSequenceStarCoreLayers(
 }
 ```
 
-## 4. Benefits of the Final Architecture
+## 4. Orbital Data Integration in the New Architecture
+
+The `OrbitalManager` will be preserved and enhanced in the new compositional architecture:
+
+### 4.1. Orbital Data Flow
+
+```typescript
+// The OrbitalManager remains as a core component
+class OrbitalManager {
+  // ... existing implementation preserved
+}
+
+// Orbital data is made available to layers through the RenderingContext
+interface OrbitalData {
+  currentPosition: OSVector3;
+  positionHistory: OSVector3[];
+  shouldShowOrbitLines: boolean;
+  shouldShowTrailLines: boolean;
+  isHighlighted: boolean;
+}
+
+// Layers can access orbital data when needed
+class TrailLayer implements RenderLayer {
+  update(object: RenderableCelestialObject, context: RenderingContext): void {
+    if (context.orbitalData?.shouldShowTrailLines) {
+      const trailPoints = context.orbitalData.positionHistory;
+      // Render trail using the position history
+    }
+  }
+}
+```
+
+### 4.2. Benefits of Preserved Orbital Management
+
+1. **Centralized Data**: Each celestial object still owns its orbital data
+2. **LOD Integration**: Automatic visibility control based on camera distance
+3. **Performance**: Efficient memory management and throttled updates
+4. **Clean API**: Simple access to orbital data through the component interface
+5. **Future-Proof**: Works seamlessly with both current and future architectures
+
+## 5. Benefits of the Final Architecture
 
 - **Maximum Reusability (DRY):** Logic for common components like rings and billboards exists in exactly one place: the main `getCelestialLayers` router.
 - **Improved Scalability & Focus:** Developers can create highly specific renderers (e.g., for a lava planet) by implementing a single `createLavaPlanetCoreLayers` function. They don't need to know how rings, billboards, or other celestial types are implemented.
 - **Clear Separation of Concerns:** The factory chain now perfectly distinguishes between what is _unique_ to a celestial type versus what is a _common, composable feature_.
+- **Preserved Orbital Management:** The benefits of centralized orbital data management are maintained and enhanced in the new architecture.
 - **Robustness:** The architecture is now extremely robust and provides a clear, scalable, and maintainable foundation for all future rendering development.
 
-This compositional model provides a robust, scalable, and maintainable foundation that will allow the rendering engine to evolve with the simulation's complexity.
+This compositional model provides a robust, scalable, and maintainable foundation that will allow the rendering engine to evolve with the simulation's complexity while preserving the performance and organizational benefits of centralized orbital data management.

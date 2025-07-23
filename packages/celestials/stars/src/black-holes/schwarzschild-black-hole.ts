@@ -101,8 +101,11 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
   private eventHorizonMaterial: SchwarzschildBlackHoleMaterial | null = null;
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
 
-  constructor(options?: BaseCelestialRendererOptions) {
-    super(options);
+  constructor(
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions = {},
+  ) {
+    super(object, options);
   }
 
   protected createMaterial(

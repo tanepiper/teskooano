@@ -4,3 +4,5 @@ export * from "./CelestialLightingManager";
 export * from "./GeometryUtilities";
 export * from "./PerformanceMonitor";
 export * from "./TimeManager";
+export * from "./OrbitalManager";
+export * from "./CircularBuffer";

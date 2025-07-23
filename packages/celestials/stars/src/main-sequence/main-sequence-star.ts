@@ -26,8 +26,11 @@ export class MainSequenceStarRenderer<
 > extends BaseStarRenderer<TMainSequenceMaterial> {
   private materialCache: Map<string, TMainSequenceMaterial> = new Map();
 
-  constructor(options: BaseCelestialRendererOptions = {}) {
-    super(options);
+  constructor(
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions = {},
+  ) {
+    super(object, options);
   }
 
   /**

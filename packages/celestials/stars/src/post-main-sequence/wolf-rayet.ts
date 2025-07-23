@@ -60,8 +60,11 @@ export class WolfRayetMaterial extends BaseStarMaterial {
  * Renderer for Wolf-Rayet stars
  */
 export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
-  constructor(options?: BaseCelestialRendererOptions) {
-    super(options);
+  constructor(
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions = {},
+  ) {
+    super(object, options);
   }
 
   protected getCustomLODs(

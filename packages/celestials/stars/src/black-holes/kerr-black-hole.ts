@@ -165,9 +165,10 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
    * Constructor allows setting rotation speed
    */
   constructor(
+    object: RenderableCelestialObject,
     options: BaseCelestialRendererOptions & { rotationSpeed?: number } = {},
   ) {
-    super(options);
+    super(object, options);
     this.rotationSpeed = options.rotationSpeed ?? 0.5;
   }
 

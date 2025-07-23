@@ -11,8 +11,8 @@ import { IdealStrategy } from "./modes/IdealStrategy";
 import { NBodyStrategy } from "./modes/NBodyStrategy";
 import type { IOrbitVisualizationStrategy } from "./modes/IOrbitVisualizationStrategy";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
-import { PredictionManager } from "../verlet/PredictionManager";
-import { TrailManager } from "../verlet/TrailManager";
+import { PredictionManager } from "../renderers/PredictionManager";
+import { TrailManager } from "../renderers/TrailManager";
 
 /**
  * Enum defining the available modes for orbit visualization.

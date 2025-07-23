@@ -44,8 +44,11 @@ export class ClassKStarMaterial extends BaseStarMaterial {
  * Renderer for K-class stars
  */
 export class ClassKStarRenderer extends MainSequenceStarRenderer<ClassKStarMaterial> {
-  constructor(options?: BaseCelestialRendererOptions) {
-    super(options);
+  constructor(
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions = {},
+  ) {
+    super(object, options);
   }
 
   /**

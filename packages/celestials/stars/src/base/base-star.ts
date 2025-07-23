@@ -324,8 +324,11 @@ export abstract class BaseStarRenderer<
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
   protected starLightingManager?: LightingManager;
 
-  constructor(options?: BaseCelestialRendererOptions) {
-    super(options);
+  constructor(
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions = {},
+  ) {
+    super(object, options);
     this.starLightingManager = options?.lightingManager;
   }
 

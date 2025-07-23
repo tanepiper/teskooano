@@ -51,6 +51,7 @@ export interface CreateMeshOptions {
  * Helper function to create the appropriate star renderer based on spectral class or stellar type
  */
 function createStarRenderer(
+  object: RenderableCelestialObject,
   spectralClass?: string,
   stellarType?: StellarType,
   neutronStarSubtype?: NeutronStarSubtype,
@@ -60,59 +61,59 @@ function createStarRenderer(
   lightingManager?: LightingManager,
 ): BaseStarRenderer {
   if (stellarType) {
-    const options = { lightingManager };
+    const rendererOptions = { lightingManager };
     switch (stellarType) {
       case StellarType.NEUTRON_STAR:
         // Use subtype to determine neutron star renderer behavior
-        return new NeutronStarRenderer({
-          ...options,
+        return new NeutronStarRenderer(object, {
+          ...rendererOptions,
           subtype: neutronStarSubtype,
         });
       case StellarType.WHITE_DWARF:
         // Use subtype to determine white dwarf renderer behavior
-        return new WhiteDwarfRenderer({
-          ...options,
+        return new WhiteDwarfRenderer(object, {
+          ...rendererOptions,
           subtype: whiteDwarfSubtype,
         });
       case StellarType.WOLF_RAYET:
-        return new WolfRayetRenderer(options);
+        return new WolfRayetRenderer(object, rendererOptions);
       case StellarType.HYPERGIANT:
         // For now, use main sequence renderer with enhanced parameters
-        return new MainSequenceStarRenderer(options);
+        return new MainSequenceStarRenderer(object, rendererOptions);
       case StellarType.PROTOSTAR:
       case StellarType.PRE_MAIN_SEQUENCE:
         // Use main sequence renderer with special parameters for young stars
-        return new MainSequenceStarRenderer(options);
+        return new MainSequenceStarRenderer(object, rendererOptions);
       case StellarType.BLACK_HOLE:
         // Use subtype to determine which black hole renderer
         if (blackHoleSubtype === BlackHoleSubtype.KERR) {
-          return new KerrBlackHoleRenderer(options);
+          return new KerrBlackHoleRenderer(object, rendererOptions);
         } else {
-          return new SchwarzschildBlackHoleRenderer(options);
+          return new SchwarzschildBlackHoleRenderer(object, rendererOptions);
         }
       case StellarType.MAIN_SEQUENCE:
         break;
     }
   }
 
-  const options = { lightingManager };
+  const rendererOptions = { lightingManager };
   switch (spectralClass?.toUpperCase()) {
     case "O":
-      return new ClassOStarRenderer(options);
+      return new ClassOStarRenderer(object, rendererOptions);
     case "B":
-      return new ClassBStarRenderer(options);
+      return new ClassBStarRenderer(object, rendererOptions);
     case "A":
-      return new ClassAStarRenderer(options);
+      return new ClassAStarRenderer(object, rendererOptions);
     case "F":
-      return new ClassFStarRenderer(options);
+      return new ClassFStarRenderer(object, rendererOptions);
     case "G":
-      return new ClassGStarRenderer(options);
+      return new ClassGStarRenderer(object, rendererOptions);
     case "K":
-      return new ClassKStarRenderer(options);
+      return new ClassKStarRenderer(object, rendererOptions);
     case "M":
-      return new ClassMStarRenderer(options);
+      return new ClassMStarRenderer(object, rendererOptions);
     default:
-      return new MainSequenceStarRenderer(options);
+      return new MainSequenceStarRenderer(object, rendererOptions);
   }
 }
 
@@ -152,6 +153,7 @@ export function createMesh(
       const starProps = object.properties as StarProperties;
       try {
         const newRenderer = createStarRenderer(
+          object,
           starProps.spectralClass,
           starProps.stellarType,
           starProps.neutronStarSubtype,

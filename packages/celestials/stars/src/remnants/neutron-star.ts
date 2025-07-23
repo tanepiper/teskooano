@@ -86,9 +86,12 @@ export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
   private subtype: NeutronStarSubtype;
 
   constructor(
-    options?: BaseCelestialRendererOptions & { subtype?: NeutronStarSubtype },
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions & {
+      subtype?: NeutronStarSubtype;
+    } = {},
   ) {
-    super(options);
+    super(object, options);
     this.subtype = options?.subtype ?? NeutronStarSubtype.STANDARD;
     this.material = new NeutronStarMaterial(this.subtype);
     this.registerMaterial("neutron-star-material", this.material);

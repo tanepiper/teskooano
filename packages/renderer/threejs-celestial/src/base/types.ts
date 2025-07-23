@@ -2,6 +2,7 @@ import { RenderableCelestialObject } from "@teskooano/data-types";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
+import { type OrbitalConfig } from "./managers/OrbitalManager";
 
 /**
  * Configuration options for the BaseCelestialRenderer.
@@ -19,6 +20,12 @@ export interface BaseCelestialRendererOptions {
    * @default false
    */
   disableBillboard?: boolean;
+
+  /**
+   * Configuration for orbital data management and LOD-based rendering control.
+   * Controls position history, orbit line visibility, and trail rendering.
+   */
+  orbitalConfig?: Partial<OrbitalConfig>;
 }
 
 export type DetailLevel = "high" | "medium" | "low" | "very-low";

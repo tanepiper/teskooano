@@ -127,9 +127,12 @@ export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
   private subtype: WhiteDwarfSubtype;
 
   constructor(
-    options?: BaseCelestialRendererOptions & { subtype?: WhiteDwarfSubtype },
+    object: RenderableCelestialObject,
+    options: BaseCelestialRendererOptions & {
+      subtype?: WhiteDwarfSubtype;
+    } = {},
   ) {
-    super(options);
+    super(object, options);
     this.subtype = options?.subtype ?? WhiteDwarfSubtype.DA;
     this.material = new WhiteDwarfMaterial(this.subtype);
   }

@@ -1,7 +1,11 @@
-import { RenderableCelestialObject } from "@teskooano/data-types";
+import {
+  RenderableCelestialObject,
+  CelestialType,
+} from "@teskooano/data-types";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 import { BillboardManager } from "../billboards";
 import {
   CelestialRenderer,
@@ -17,6 +21,8 @@ import {
   CelestialLightingManager,
   GeometryUtilities,
   TimeManager,
+  OrbitalManager,
+  type OrbitalConfig,
 } from "./managers";
 
 /**
@@ -58,6 +64,11 @@ export abstract class BaseCelestialRenderer<
   protected billboardManager: BillboardManager;
 
   /**
+   * Manager for orbital data and position history
+   */
+  protected orbitalManager!: OrbitalManager;
+
+  /**
    * Whether billboard LOD levels are disabled for this renderer
    */
   protected billboardDisabled: boolean;
@@ -71,11 +82,11 @@ export abstract class BaseCelestialRenderer<
 
   /**
    * Initializes the renderer and its manager components.
-   * @param object The renderable celestial object data required for initialization.
-   * @param options Configuration options for the renderer.
+   * @param objectOrOptions The renderable celestial object data or configuration options.
+   * @param options Configuration options for the renderer (used when object is provided).
    */
   constructor(
-    object: RenderableCelestialObject,
+    objectOrOptions: RenderableCelestialObject | BaseCelestialRendererOptions,
     options: BaseCelestialRendererOptions = {},
   ) {
     this.materialManager = new MaterialManager();
@@ -83,7 +94,25 @@ export abstract class BaseCelestialRenderer<
     this.lightingManager = new CelestialLightingManager();
     this.timeManager = new TimeManager();
     this.billboardManager = new BillboardManager();
-    this.billboardDisabled = options.disableBillboard ?? false;
+
+    // Handle both constructor signatures for backward compatibility
+    if ("celestialObjectId" in objectOrOptions) {
+      // First parameter is a RenderableCelestialObject
+      const object = objectOrOptions as RenderableCelestialObject;
+      this.orbitalManager = new OrbitalManager(
+        object.celestialObjectId,
+        options.orbitalConfig,
+      );
+      this.billboardDisabled = options.disableBillboard ?? false;
+    } else {
+      // First parameter is BaseCelestialRendererOptions (legacy constructor)
+      const legacyOptions = objectOrOptions as BaseCelestialRendererOptions;
+      this.orbitalManager = new OrbitalManager(
+        "unknown",
+        legacyOptions.orbitalConfig,
+      );
+      this.billboardDisabled = legacyOptions.disableBillboard ?? false;
+    }
   }
 
   /**
@@ -108,7 +137,7 @@ export abstract class BaseCelestialRenderer<
 
   /**
    * The main update method, called once per frame. It orchestrates calls to update
-   * the object's LOD and its billboard representation. Subclasses should extend this
+   * the object's LOD, orbital data, and its billboard representation. Subclasses should extend this
    * to add their own update logic (e.g., for materials and shaders).
    * @param object The celestial object being updated.
    * @param time The current simulation time.
@@ -129,6 +158,9 @@ export abstract class BaseCelestialRenderer<
   ): void {
     // Update time tracking
     this.timeManager.update(time, timeScale);
+
+    // Update orbital data and position history
+    this.orbitalManager.update(object, time);
 
     // Update LOD position and level
     this.lodManager.updateObjectLOD(object, camera);
@@ -330,6 +362,131 @@ export abstract class BaseCelestialRenderer<
     return this.timeManager.getStartTime();
   }
 
+  // === Orbital Management Delegation ===
+
+  /**
+   * Gets the current position of the celestial object.
+   * @returns Current position as OSVector3
+   */
+  protected getCurrentPosition(): OSVector3 {
+    return this.orbitalManager.getCurrentPosition();
+  }
+
+  /**
+   * Gets the current velocity of the celestial object.
+   * @returns Current velocity as OSVector3
+   */
+  protected getCurrentVelocity(): OSVector3 {
+    return this.orbitalManager.getCurrentVelocity();
+  }
+
+  /**
+   * Gets the position history for trail rendering.
+   * @param maxPoints Maximum number of points to return (0 for all)
+   * @returns Array of position vectors
+   */
+  protected getPositionHistory(maxPoints: number = 0): OSVector3[] {
+    return this.orbitalManager.getPositionHistory(maxPoints);
+  }
+
+  /**
+   * Gets the position history with timestamps for advanced trail rendering.
+   * @param maxPoints Maximum number of points to return (0 for all)
+   * @returns Array of position samples with timestamps
+   */
+  protected getPositionHistoryWithTimestamps(maxPoints: number = 0) {
+    return this.orbitalManager.getPositionHistoryWithTimestamps(maxPoints);
+  }
+
+  /**
+   * Determines if orbit lines should be visible based on LOD.
+   * @param cameraDistance Distance from camera to object
+   * @param objectType Type of celestial object
+   * @returns Whether orbit lines should be visible
+   */
+  protected shouldShowOrbitLines(
+    cameraDistance: number,
+    objectType: CelestialType,
+  ): boolean {
+    return this.orbitalManager.shouldShowOrbitLines(cameraDistance, objectType);
+  }
+
+  /**
+   * Determines if trail lines should be visible based on LOD.
+   * @param cameraDistance Distance from camera to object
+   * @param objectType Type of celestial object
+   * @returns Whether trail lines should be visible
+   */
+  protected shouldShowTrailLines(
+    cameraDistance: number,
+    objectType: CelestialType,
+  ): boolean {
+    return this.orbitalManager.shouldShowTrailLines(cameraDistance, objectType);
+  }
+
+  /**
+   * Determines if prediction lines should be visible.
+   * @returns Whether prediction lines should be visible
+   */
+  protected shouldShowPredictionLines(): boolean {
+    return this.orbitalManager.shouldShowPredictionLines();
+  }
+
+  /**
+   * Sets whether this object should show prediction lines.
+   * @param show Whether to show prediction lines
+   */
+  protected setShowPredictionLines(show: boolean): void {
+    this.orbitalManager.setShowPredictionLines(show);
+  }
+
+  /**
+   * Sets whether this object is highlighted.
+   * @param highlighted Whether the object is highlighted
+   */
+  protected setHighlighted(highlighted: boolean): void {
+    this.orbitalManager.setHighlighted(highlighted);
+  }
+
+  /**
+   * Gets whether this object is highlighted.
+   * @returns Whether the object is highlighted
+   */
+  protected isObjectHighlighted(): boolean {
+    return this.orbitalManager.isObjectHighlighted();
+  }
+
+  /**
+   * Updates the orbital configuration.
+   * @param newConfig New configuration values
+   */
+  protected updateOrbitalConfig(newConfig: Partial<OrbitalConfig>): void {
+    this.orbitalManager.updateConfig(newConfig);
+  }
+
+  /**
+   * Gets the current orbital configuration.
+   * @returns Current configuration
+   */
+  protected getOrbitalConfig(): OrbitalConfig {
+    return this.orbitalManager.getConfig();
+  }
+
+  /**
+   * Gets memory usage statistics for orbital data.
+   * @returns Memory usage information
+   */
+  protected getOrbitalMemoryStats() {
+    return this.orbitalManager.getMemoryStats();
+  }
+
+  /**
+   * Clears the position history.
+   */
+  protected clearOrbitalHistory(): void {
+    this.orbitalManager.clearHistory();
+  }
+
   // === Legacy Interface Support ===
 
   /**
@@ -372,6 +529,13 @@ export abstract class BaseCelestialRenderer<
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): void {
+    // Update orbital manager with correct object ID if it was initialized with 'unknown'
+    if (this.orbitalManager.getObjectId() === "unknown") {
+      this.orbitalManager = new OrbitalManager(
+        object.celestialObjectId,
+        this.orbitalManager.getConfig(),
+      );
+    }
     // Base implementation does nothing, subclasses should override.
   }
 
@@ -383,6 +547,7 @@ export abstract class BaseCelestialRenderer<
     this.materialManager.dispose();
     this.lodManager.dispose();
     this.billboardManager.dispose();
+    this.orbitalManager.dispose();
     // Note: lighting and time managers don't require disposal
   }
 }

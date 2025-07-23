@@ -37,16 +37,54 @@ These utilities are pure, data-in/data-out functions designed to be used inside 
 
 **Purpose**: A memory-efficient, fixed-size buffer that overwrites the oldest elements when full.
 
-**Core Design**: Used inside the `trail.worker.ts` to manage long position histories without the performance cost of JavaScript's native `Array.shift()`.
+**Core Design**: Used inside the `trail.worker.ts` to manage long position histories without the performance cost of JavaScript's native `Array.shift()`. Provides efficient circular buffer operations with automatic wrapping and ordered data retrieval.
 
 ### `simplify.ts`
 
-**Purpose**: Implements the Ramer-Douglas-Peucker (RDP) algorithm.
+**Purpose**: Implements the Ramer-Douglas-Peucker (RDP) algorithm for path simplification.
 
-**Core Design**: This function takes a long array of points and removes redundant ones while preserving the essential shape of the line. It's used in the `trail.worker.ts` to reduce the complexity of a trail before rendering.
+**Core Design**: This function takes a long array of points and removes redundant ones while preserving the essential shape of the line. It's used in the `trail.worker.ts` to reduce the complexity of a trail before rendering, significantly reducing GPU load.
 
-### `spline.ts`
+### `TrailDataPool.ts`
 
-**Purpose**: Implements a Catmull-Rom spline algorithm.
+**Purpose**: Manages a pre-allocated ArrayBuffer to store trail data for multiple objects efficiently.
 
-**Core Design**: This function takes an array of points (typically the output from `simplifyPath`) and generates a smooth, curved path that passes through them. This is used in the `trail.worker.ts` to turn a jagged, simplified path into a visually appealing smooth curve.
+**Core Design**:
+
+- **Fixed-Size Allocation**: Provides fixed-size "slots" from a large, single buffer to avoid dynamic memory allocation
+- **Circular Buffer**: Each slot implements a circular buffer approach that overwrites oldest data when full
+- **Efficient Access**: Uses `Float32Array` views for fast float access and minimal memory overhead
+- **Slot Management**: Tracks free slots and provides efficient allocation/deallocation
+
+### `PredictionDataPool.worker.ts`
+
+**Purpose**: Manages a pre-allocated pool of PhysicsStateReal objects to avoid continuous memory allocation and de-allocation within the prediction worker.
+
+**Core Design**:
+
+- **Pre-allocated Objects**: Creates all physics state objects upfront with their vectors
+- **Index Mapping**: Maintains efficient mapping between object IDs and pool indices
+- **Buffer Updates**: Efficiently updates the entire pool from serialized data
+- **Memory Reuse**: Avoids garbage collection pressure in the worker thread
+
+---
+
+## Performance Characteristics
+
+### Memory Management
+
+- **Object Pooling**: All utilities use pre-allocated pools to avoid runtime allocations
+- **Buffer Reuse**: Shared buffers reduce memory fragmentation and garbage collection
+- **Zero-Copy Transfers**: Efficient data serialization for worker communication
+
+### Computational Efficiency
+
+- **Algorithmic Optimization**: RDP simplification and spline smoothing are optimized for performance
+- **Batch Processing**: Utilities support batch operations to reduce overhead
+- **Lazy Evaluation**: Expensive operations are deferred until necessary
+
+### Scalability
+
+- **Configurable Limits**: All utilities support configurable size limits and quality settings
+- **Automatic Cleanup**: Memory is automatically managed and cleaned up
+- **Performance Monitoring**: Built-in performance tracking and statistics

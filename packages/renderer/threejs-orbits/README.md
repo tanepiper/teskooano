@@ -1,54 +1,109 @@
-# @teskooano/renderer-threejs-orbits
+# `@teskooano/renderer-threejs-orbits`
 
-This package is responsible for all orbit visualization within the Teskooano engine.
+A comprehensive orbit visualization system for the Teskooano space simulation, supporting both ideal (Keplerian) and N-body physics modes with high-performance rendering and real-time trajectory prediction.
 
-## Features
+## Overview
 
-- **Dual Visualization Modes**: Dynamically switches between two modes to match the active physics engine:
-  - **Keplerian Mode**: Renders precise, analytical orbital ellipses based on an object's orbital parameters.
-  - **Verlet Mode**: Renders numerically-integrated paths, including historical trails and predicted future trajectories.
-- **Centralized Management**: An `OrbitsManager` orchestrates all orbit-related rendering.
-- **Highlighting**: Supports highlighting the orbit of a specific object.
-- **Performance-Optimized**: Uses shared materials and efficient buffer management to minimize performance overhead.
+This package provides sophisticated visualization of orbital paths and trajectories in 3D space. It supports two distinct visualization modes that correspond to the underlying physics engines:
+
+- **Ideal Mode**: Renders perfect elliptical orbits based on analytical Keplerian orbital parameters
+- **N-Body Mode**: Renders dynamic trails and predictions based on real-time N-body physics simulation
+
+## Key Features
+
+- **Dual Visualization Modes**: Seamless switching between ideal and N-body orbit visualization
+- **Real-time Trajectory Prediction**: Advanced physics-based prediction of future object paths
+- **Historical Trail Visualization**: Dynamic trails showing recent object movement
+- **Performance Optimized**: Web Worker offloading for heavy calculations
+- **Memory Efficient**: Object pooling and buffer reuse to minimize garbage collection
+- **Quality Control**: Configurable trail quality and prediction accuracy settings
 
 ## Architecture
 
-The package uses a **Strategy Pattern**, where the `OrbitsManager` acts as the main context. It switches between different visualization strategies (`KeplerianManager` vs. a combination of `TrailManager` and `PredictionManager`) based on the simulation's active physics engine state. This keeps the rendering logic decoupled and allows for easy expansion.
+The package follows a **Strategy Pattern** architecture with clear separation of concerns:
 
-For a complete breakdown and a component diagram, please see the `ARCHITECTURE.md` file.
+### Core Components
+
+- **`OrbitsManager`**: Main facade and coordinator that switches between visualization strategies
+- **`IdealStrategy`**: Renders perfect Keplerian orbits using analytical calculations
+- **`NBodyStrategy`**: Renders dynamic trails and predictions using N-body physics
+- **`KeplerianManager`**: Manages static elliptical orbit lines
+- **`TrailManager`**: Manages historical trajectory trails with optional simplification
+- **`PredictionManager`**: Manages future trajectory predictions with physics simulation
+
+### Performance Features
+
+- **Web Worker Offloading**: Heavy calculations (trail processing, trajectory prediction) run in background workers
+- **Memory Pooling**: Efficient buffer and object reuse to minimize allocations
+- **Throttled Updates**: Configurable update frequencies to balance performance and accuracy
+- **LOD Support**: Quality settings that adapt to system performance
 
 ## Usage
 
-This package is an internal dependency of `@teskooano/renderer-threejs`. The main `ModularSpaceRenderer` instantiates the `OrbitsManager` and calls its `updateAllVisualizations()` method from the main render pipeline. It is not designed to be used directly by the application.
-
 ```typescript
-// Simplified conceptual usage inside ModularSpaceRenderer
-
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import { renderableStore } from "@teskooano/core-state";
-import { stateAdapter } from "./RendererStateAdapter"; // Assuming stateAdapter is available
 
-// --- Initialization ---
+// Create the orbits manager
 const orbitsManager = new OrbitsManager(
-  this.objectManager, // Assumes an ObjectManager instance
-  this.stateAdapter,
-  renderableStore.renderableObjects$,
+  objectManager,
+  stateAdapter,
+  renderableObjects$,
+  layer2DManager,
 );
 
-// --- In the Render Loop / Pipeline ---
-function animate() {
-  // This single call triggers updates for the currently active orbit strategy
-  orbitsManager.updateAllVisualizations();
-}
+// Update visualizations each frame
+orbitsManager.updateAllVisualizations(deltaTime);
 
-// --- Changing Visualization Mode ---
-// The OrbitsManager automatically listens for changes from the RendererStateAdapter
-// and switches its internal strategy. No direct call is needed.
+// Control visibility
+orbitsManager.setOrbitTrailsVisibility(true);
+orbitsManager.setPredictionVisibility(true);
 
-// --- Highlighting an orbit ---
-orbitsManager.highlightVisualization("earth"); // Highlight Earth's orbit
-orbitsManager.highlightVisualization(null); // Clear highlight
+// Highlight specific objects
+orbitsManager.highlightVisualization(objectId);
 
-// --- Cleanup ---
+// Clean up resources
 orbitsManager.dispose();
 ```
+
+## Visualization Modes
+
+### Ideal Mode (Keplerian)
+
+- Perfect elliptical orbits based on orbital parameters
+- Static, mathematically precise paths
+- Efficient rendering with minimal computation
+- Suitable for stable, well-defined orbital systems
+
+### N-Body Mode
+
+- Dynamic trails showing actual object movement
+- Real-time trajectory predictions using physics simulation
+- Handles complex gravitational interactions
+- Supports multiple algorithms (direct, Barnes-Hut, FMM, etc.)
+
+## Performance Considerations
+
+- **Trail Updates**: Throttled to every 10 frames by default
+- **Prediction Updates**: Throttled to every 90 frames by default
+- **Memory Management**: Automatic cleanup of unused trails and predictions
+- **Worker Communication**: Efficient data serialization for minimal transfer overhead
+
+## Dependencies
+
+- `@teskooano/core-physics`: For trajectory prediction calculations
+- `@teskooano/core-math`: For vector mathematics (OSVector3)
+- `@teskooano/data-types`: For celestial object definitions
+- `@teskooano/core-state`: For simulation state access
+- `@teskooano/renderer-threejs-objects`: For scene object management
+- `@teskooano/renderer-threejs-labels`: For 2D label management
+
+## Development
+
+The package is organized into logical modules:
+
+- `/core`: Main manager and strategy interfaces
+- `/keplerian`: Ideal orbit visualization
+- `/renderers`: Trail and prediction managers
+- `/utils`: Performance utilities and data structures
+
+Each module includes comprehensive documentation and follows established architectural patterns for maintainability and performance.
