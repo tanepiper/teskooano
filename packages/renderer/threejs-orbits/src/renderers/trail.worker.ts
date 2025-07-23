@@ -8,6 +8,13 @@ type TrailCommand =
         position: [number, number, number];
         maxHistoryLength: number;
         quality: string;
+        curveConfig: {
+          type: string;
+          tension?: number;
+          segments?: number;
+          smoothing?: number;
+          adaptiveThreshold?: number;
+        };
       }>;
     }
   | { type: "remove"; objectId: string }
@@ -36,6 +43,7 @@ const MIN_DISTANCE_SQ_TO_ADD = 1e-10; // Increased threshold for better filterin
 
 // Batch processing state
 let pendingUpdates: Map<string, [number, number, number]> = new Map();
+let pendingCurveConfigs: Map<string, any> = new Map(); // Store curve configs per object
 let lastBatchTime = 0;
 let maxPointsToSend = MAX_POINTS_TO_SEND; // Configurable max points
 
@@ -49,7 +57,7 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
 
       // Add all updates to pending batch
       for (const update of updates) {
-        const { objectId, position } = update;
+        const { objectId, position, curveConfig } = update;
 
         // Filter out duplicate points before adding to batch
         const lastPoint = lastPoints.get(objectId);
@@ -63,6 +71,7 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
         }
 
         pendingUpdates.set(objectId, position);
+        pendingCurveConfigs.set(objectId, curveConfig); // Store curve config
         lastPoints.set(objectId, position);
       }
 
@@ -80,12 +89,14 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
       trailDataPool.free(command.objectId);
       lastPoints.delete(command.objectId);
       pendingUpdates.delete(command.objectId);
+      pendingCurveConfigs.delete(command.objectId);
       break;
     }
     case "clear-all": {
       trailDataPool.clear();
       lastPoints.clear();
       pendingUpdates.clear();
+      pendingCurveConfigs.clear();
       break;
     }
     case "set-max-points": {
@@ -102,6 +113,7 @@ function processBatch(): void {
     objectId: string;
     points: [number, number, number][];
     maxHistoryLength: number;
+    curveConfig: any;
   }> = [];
 
   // Process all pending updates
@@ -115,10 +127,20 @@ function processBatch(): void {
     // Get only recent points to reduce data transfer
     const rawPoints = trailDataPool.getRecentPoints(objectId, maxPointsToSend);
 
+    // Get the curve config for this object
+    const curveConfig = pendingCurveConfigs.get(objectId) || {
+      type: "adaptive",
+      tension: 0.5,
+      segments: 8,
+      smoothing: 0.3,
+      adaptiveThreshold: 10,
+    };
+
     results.push({
       objectId,
       points: rawPoints,
       maxHistoryLength: trailDataPool.pointsPerSlot,
+      curveConfig,
     });
   }
 
@@ -130,4 +152,5 @@ function processBatch(): void {
 
   // Clear pending updates
   pendingUpdates.clear();
+  pendingCurveConfigs.clear();
 }

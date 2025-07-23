@@ -1,6 +1,6 @@
 import type { IOrbitVisualizationStrategy } from "./IOrbitVisualizationStrategy";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { TrailManager } from "../../renderers/TrailManager";
+import { TrailManager, TrailCurveType } from "../../renderers/TrailManager";
 import { PredictionManager } from "../../renderers/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
@@ -47,8 +47,22 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
    * @param layer2DManager - Optional manager for 2D labels (used for prediction markers)
    */
   constructor(objectManager: ObjectManager, layer2DManager?: Layer2DManager) {
-    this.trailManager = new TrailManager(objectManager);
-    this.predictionManager = new PredictionManager(objectManager);
+    // Create managers with optimized curve configurations for N-body visualization
+    this.trailManager = new TrailManager(objectManager, {
+      type: TrailCurveType.Adaptive,
+      tension: 0.5,
+      segments: 8,
+      smoothing: 0.3,
+      adaptiveThreshold: 10,
+    });
+
+    this.predictionManager = new PredictionManager(objectManager, {
+      type: TrailCurveType.Orbital,
+      tension: 0.5,
+      segments: 6,
+      smoothing: 0.4,
+      adaptiveThreshold: 8,
+    });
 
     if (layer2DManager) {
       this.predictionManager.setLayer2DManager(layer2DManager);

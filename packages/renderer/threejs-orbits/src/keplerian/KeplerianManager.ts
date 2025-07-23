@@ -9,6 +9,11 @@ import { SharedMaterials } from "../core/SharedMaterials";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
 import { ThreeVector3Converter } from "@teskooano/data-types"; // Corrected import
 import { type OSVector3 } from "@teskooano/core-math";
+import { TrailCurveInterpolator } from "../renderers/TrailCurveInterpolator";
+import {
+  TrailCurveType,
+  type TrailCurveConfig,
+} from "../renderers/TrailManager";
 
 /**
  * Manages the creation, update, visibility, and highlighting of static Keplerian orbit lines.
@@ -16,6 +21,8 @@ import { type OSVector3 } from "@teskooano/core-math";
  * This class is responsible for maintaining and rendering the classic elliptical orbit paths
  * based on Keplerian orbital elements. It works with the ObjectManager to add/remove lines
  * from the scene and handles visual properties like highlighting and visibility.
+ *
+ * Enhanced with curved trail interpolation for more realistic orbital visualization.
  */
 export class KeplerianManager extends StateSubscriptionMixin {
   /** Map storing static Keplerian orbit lines, keyed by celestial object ID. */
@@ -50,25 +57,55 @@ export class KeplerianManager extends StateSubscriptionMixin {
   /** Converter for OSVector3 to THREE.Vector3 arrays */
   private threeVector3Converter: ThreeVector3Converter; // New instance
 
+  /** Curve configuration for Keplerian orbit interpolation */
+  private curveConfig: TrailCurveConfig = {
+    type: TrailCurveType.Orbital,
+    tension: 0.3,
+    segments: 4,
+    smoothing: 0.2,
+    adaptiveThreshold: 5,
+  };
+
   /**
    * Creates an instance of KeplerianManager.
    *
    * @param objectManager - The scene's ObjectManager instance.
    * @param renderableObjects$ - An Observable emitting RenderableCelestialObject data.
+   * @param curveConfig - Optional curve configuration for orbit interpolation
    */
   constructor(
     objectManager: ObjectManager,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
+    curveConfig?: TrailCurveConfig,
   ) {
     super();
     this.objectManager = objectManager;
     this.renderableObjects$ = renderableObjects$;
     this.lineBuilder = new LineHelper();
     this.threeVector3Converter = new ThreeVector3Converter(); // Initialize converter
+    if (curveConfig) {
+      this.curveConfig = { ...this.curveConfig, ...curveConfig };
+    }
 
     this.subscribeToState(this.renderableObjects$, (objects) => {
       this.latestRenderableObjects = objects;
     });
+  }
+
+  /**
+   * Sets the curve configuration for Keplerian orbit interpolation.
+   * @param config - The new curve configuration
+   */
+  setCurveConfig(config: TrailCurveConfig): void {
+    this.curveConfig = { ...this.curveConfig, ...config };
+  }
+
+  /**
+   * Gets the current curve configuration.
+   * @returns The current curve configuration
+   */
+  getCurveConfig(): TrailCurveConfig {
+    return { ...this.curveConfig };
   }
 
   /**
@@ -138,6 +175,12 @@ export class KeplerianManager extends StateSubscriptionMixin {
       return;
     }
 
+    // Apply curve interpolation to Keplerian orbit points
+    const interpolatedPoints = TrailCurveInterpolator.interpolate(
+      orbitPointsTHREE,
+      this.curveConfig,
+    );
+
     // Choose the appropriate material based on type
     const isMoon = parentState.type !== CelestialType.STAR;
     const materialType = isMoon ? "KEPLERIAN_MOON" : "KEPLERIAN";
@@ -146,8 +189,8 @@ export class KeplerianManager extends StateSubscriptionMixin {
       // Update existing line
       this.lineBuilder.updateLine(
         existingLine,
-        orbitPointsTHREE,
-        orbitPointsTHREE.length,
+        interpolatedPoints,
+        interpolatedPoints.length,
       );
       existingLine.position.copy(parentWorldPosition);
       existingLine.visible = isVisible;
@@ -163,16 +206,16 @@ export class KeplerianManager extends StateSubscriptionMixin {
       const material = SharedMaterials.clone(materialType);
 
       const newLine = this.lineBuilder.createLine(
-        orbitPointsTHREE.length,
+        interpolatedPoints.length,
         material,
         `orbit-line-${objectId}`,
       );
 
-      // Update the line with the calculated points
+      // Update the line with the interpolated points
       this.lineBuilder.updateLine(
         newLine,
-        orbitPointsTHREE,
-        orbitPointsTHREE.length,
+        interpolatedPoints,
+        interpolatedPoints.length,
       );
 
       newLine.position.copy(parentWorldPosition);

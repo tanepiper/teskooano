@@ -12,7 +12,11 @@ import { NBodyStrategy } from "./modes/NBodyStrategy";
 import type { IOrbitVisualizationStrategy } from "./modes/IOrbitVisualizationStrategy";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { PredictionManager } from "../renderers/PredictionManager";
-import { TrailManager } from "../renderers/TrailManager";
+import {
+  TrailManager,
+  TrailCurveType,
+  type TrailCurveConfig,
+} from "../renderers/TrailManager";
 
 /**
  * Enum defining the available modes for orbit visualization.
@@ -310,6 +314,54 @@ export class OrbitsManager extends StateSubscriptionMixin {
       return this.activeStrategy.trailManager;
     }
     return undefined;
+  }
+
+  /**
+   * Sets the curve configuration for trail interpolation.
+   * Only available when using NBodyStrategy.
+   *
+   * @param config - The curve configuration to apply
+   */
+  public setTrailCurveConfig(config: TrailCurveConfig): void {
+    const trailManager = this.getTrailManager();
+    if (trailManager) {
+      trailManager.setCurveConfig(config);
+    }
+  }
+
+  /**
+   * Gets the current curve configuration for trail interpolation.
+   * Only available when using NBodyStrategy.
+   *
+   * @returns The current curve configuration or undefined if not available
+   */
+  public getTrailCurveConfig(): TrailCurveConfig | undefined {
+    const trailManager = this.getTrailManager();
+    return trailManager?.getCurveConfig();
+  }
+
+  /**
+   * Sets the curve configuration for prediction interpolation.
+   * Only available when using NBodyStrategy.
+   *
+   * @param config - The curve configuration to apply
+   */
+  public setPredictionCurveConfig(config: TrailCurveConfig): void {
+    const predictionManager = this.getPredictionManager();
+    if (predictionManager) {
+      predictionManager.setCurveConfig(config);
+    }
+  }
+
+  /**
+   * Gets the current curve configuration for prediction interpolation.
+   * Only available when using NBodyStrategy.
+   *
+   * @returns The current curve configuration or undefined if not available
+   */
+  public getPredictionCurveConfig(): TrailCurveConfig | undefined {
+    const predictionManager = this.getPredictionManager();
+    return predictionManager?.getCurveConfig();
   }
 
   /**

@@ -3,12 +3,36 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import * as THREE from "three";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
+import { TrailCurveInterpolator } from "./TrailCurveInterpolator";
+
+/**
+ * Trail curve interpolation types for different visual styles
+ */
+export enum TrailCurveType {
+  Linear = "linear", // Simple linear interpolation
+  Smooth = "smooth", // Catmull-Rom spline smoothing
+  Orbital = "orbital", // Orbital-aware curve fitting
+  Adaptive = "adaptive", // Automatically choose based on object type
+}
+
+/**
+ * Configuration for trail curve interpolation
+ */
+export interface TrailCurveConfig {
+  type: TrailCurveType;
+  tension?: number; // Catmull-Rom tension (0-1, default: 0.5)
+  segments?: number; // Number of curve segments per point pair
+  smoothing?: number; // Smoothing factor (0-1, default: 0.3)
+  adaptiveThreshold?: number; // Minimum points for adaptive smoothing
+}
 
 /**
  * Manages the creation and updating of trail lines showing an object's recent path.
  *
  * This manager offloads the storage and management of position history to a
  * Web Worker to keep the main render thread as light as possible.
+ *
+ * Enhanced with curved trail interpolation for more realistic orbital visualization.
  */
 export class TrailManager {
   /** Map storing trail lines, keyed by celestial object ID */
@@ -35,6 +59,15 @@ export class TrailManager {
   /** The quality setting for smoothed trails. */
   private trailQuality: TrailQuality = TrailQuality.High;
 
+  /** Curve configuration for trail interpolation */
+  private curveConfig: TrailCurveConfig = {
+    type: TrailCurveType.Adaptive,
+    tension: 0.5,
+    segments: 8,
+    smoothing: 0.3,
+    adaptiveThreshold: 10,
+  };
+
   /** Sampling state for orbital-aware trail collection */
   private lastSampledPositions: Map<string, THREE.Vector3> = new Map();
   private lastSampledTimes: Map<string, number> = new Map();
@@ -48,6 +81,7 @@ export class TrailManager {
     position: [number, number, number];
     maxHistoryLength: number;
     quality: string;
+    curveConfig: TrailCurveConfig;
   }> = [];
   private lastBatchTime: number = 0;
   private readonly BATCH_INTERVAL = 100; // Process batches every 100ms
@@ -62,11 +96,61 @@ export class TrailManager {
    * Creates a new TrailManager instance.
    *
    * @param objectManager - The scene's ObjectManager for adding/removing objects
+   * @param curveConfig - Optional curve configuration for trail interpolation
    */
-  constructor(objectManager: ObjectManager) {
+  constructor(objectManager: ObjectManager, curveConfig?: TrailCurveConfig) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
+    if (curveConfig) {
+      this.curveConfig = { ...this.curveConfig, ...curveConfig };
+    }
     this.initializeWorker();
+  }
+
+  /**
+   * Sets the curve configuration for trail interpolation.
+   * @param config - The new curve configuration
+   */
+  setCurveConfig(config: TrailCurveConfig): void {
+    this.curveConfig = { ...this.curveConfig, ...config };
+  }
+
+  /**
+   * Gets the current curve configuration.
+   * @returns The current curve configuration
+   */
+  getCurveConfig(): TrailCurveConfig {
+    return { ...this.curveConfig };
+  }
+
+  /**
+   * Determines the best curve type for a given object based on its properties.
+   *
+   * @param object - The celestial object
+   * @param pointCount - Number of trail points
+   * @returns The recommended curve type
+   */
+  private determineCurveType(
+    object: RenderableCelestialObject,
+    pointCount: number,
+  ): TrailCurveType {
+    if (this.curveConfig.type !== TrailCurveType.Adaptive) {
+      return this.curveConfig.type;
+    }
+
+    // Adaptive logic based on object type and trail characteristics
+    const threshold = this.curveConfig.adaptiveThreshold || 10;
+
+    if (pointCount < threshold) {
+      return TrailCurveType.Linear; // Too few points for meaningful curves
+    }
+
+    // Use orbital curves for planets and moons, smooth for other objects
+    if (object.type === "PLANET" || object.type === "MOON") {
+      return TrailCurveType.Orbital;
+    }
+
+    return TrailCurveType.Smooth;
   }
 
   private initializeWorker(): void {
@@ -82,6 +166,7 @@ export class TrailManager {
           objectId: string;
           points: [number, number, number][];
           maxHistoryLength: number;
+          curveConfig: TrailCurveConfig;
         }>;
       }>,
     ) => {
@@ -89,11 +174,16 @@ export class TrailManager {
 
       // Process all results from the batch
       for (const result of results) {
-        const { objectId, points, maxHistoryLength } = result;
+        const { objectId, points, maxHistoryLength, curveConfig } = result;
         const pointsTHREE = points.map(
           (p) => new THREE.Vector3(p[0], p[1], p[2]),
         );
-        this.drawTrailLine(objectId, pointsTHREE, maxHistoryLength);
+        this.drawTrailLine(
+          objectId,
+          pointsTHREE,
+          maxHistoryLength,
+          curveConfig,
+        );
       }
     };
 
@@ -169,6 +259,7 @@ export class TrailManager {
         position: object.position.toArray(),
         maxHistoryLength,
         quality: this.trailQuality,
+        curveConfig: this.curveConfig,
       });
 
       // Send batch if we have enough updates or enough time has passed
@@ -192,6 +283,7 @@ export class TrailManager {
     objectId: string,
     points: THREE.Vector3[],
     maxHistoryLength: number,
+    curveConfig: TrailCurveConfig,
   ): void {
     let line = this.trailLines.get(objectId);
     const requiredBufferSize = Math.max(1, maxHistoryLength);
@@ -215,13 +307,32 @@ export class TrailManager {
 
     // Only update geometry if there are points to draw
     if (points.length > 0) {
-      this._updateLineGeometryFromVectors(line, points);
+      // Apply curve interpolation based on configuration
+      const interpolatedPoints = this.interpolateTrailPoints(
+        points,
+        curveConfig,
+      );
+      this._updateLineGeometryFromVectors(line, interpolatedPoints);
     }
 
     line.visible = this.visualizationVisible;
     this.trailLines.forEach((_, id) => {
       this.applyHighlight(id, line);
     });
+  }
+
+  /**
+   * Interpolates trail points using the specified curve configuration.
+   *
+   * @param points - Raw trail points
+   * @param curveConfig - Curve configuration
+   * @returns Interpolated curve points
+   */
+  private interpolateTrailPoints(
+    points: THREE.Vector3[],
+    curveConfig: TrailCurveConfig,
+  ): THREE.Vector3[] {
+    return TrailCurveInterpolator.interpolate(points, curveConfig);
   }
 
   private _updateLineGeometryFromVectors(

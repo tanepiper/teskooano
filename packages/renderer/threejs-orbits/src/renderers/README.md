@@ -1,83 +1,178 @@
-# Architecture: N-Body Trajectory Visualization (`/renderers`)
+# Architecture: Orbit Visualization Renderers (`/renderers`)
 
-This directory contains managers responsible for visualizing object trajectories based on N-body physics simulation. This includes predicting future paths and displaying recent historical trails.
+This directory contains the core rendering components for orbit visualization, including trails, predictions, and the new curved trails interpolation system.
 
-A key architectural principle here is offloading expensive calculations to Web Workers to keep the main render thread responsive. Both managers in this module follow this pattern.
+## Enhanced Curved Trails System
 
-## `PredictionManager.ts`
+The entire orbits module now uses a unified curved trails system that provides smooth, realistic orbital visualization across all components:
 
-**Purpose**: Renders an object's future path based on a full n-body physics simulation.
+### Core Components
 
-### Core Design
+#### `TrailCurveInterpolator.ts`
 
-1.  **State-Driven Configuration**: The `PredictionManager` is a consumer of the global simulation state from `@teskooano/core-state`. It subscribes to `simulationStateService.simulationState$` and automatically updates its prediction duration when the user changes the setting in the UI. This ensures a single source of truth for configuration and removes redundant state from the manager.
-2.  **Web Worker Offloading**: The manager does not perform physics calculations itself. It offloads the expensive n-body simulation to `prediction.worker.ts`. The main `PredictionManager` class acts as a coordinator, sending the current physics state of all objects and the current prediction duration to the worker, then receiving back a calculated trajectory. This is a critical pattern to keep the main render thread from blocking.
-3.  **Data Flow**: The data flow is designed to keep the core physics engine decoupled from the renderer.
-    - The main thread gathers `CelestialObject` instances, which contain `PhysicsStateReal` objects (using `OSVector3`).
-    - The raw physics data is serialized into a `Float32Array` and sent to the worker via `postMessage` for zero-copy transfer.
-    - The worker "re-hydrates" the buffer back into physics state objects with `OSVector3` methods using `PredictionDataPool`.
-    - It calls the `predictTrajectory` function from `@teskooano/core-physics`.
-    - The resulting `OSVector3[]` array is serialized to a `[number, number, number][]` array and sent back to the main thread.
-    - Finally, the `PredictionManager` converts this data into a `THREE.Vector3[]` array suitable for rendering with the `LineBuilder` utility.
-4.  **Memory Management**: Uses `PredictionDataPool` to pre-allocate physics state objects and avoid continuous memory allocation/de-allocation in the worker.
+**Purpose**: Central utility for interpolating trail points into smooth curves.
 
-This pattern enforces a strict one-way data flow and isolates the renderer-agnostic physics logic in the worker.
+**Features**:
 
-## `TrailManager.ts`
+- **Multiple Curve Types**: Linear, Smooth (Catmull-Rom), Orbital-aware, and Adaptive
+- **Orbital Optimization**: Specialized curves that account for gravitational motion patterns
+- **Performance Optimized**: Efficient interpolation with configurable quality settings
+- **Type-Specific Curves**: Automatic curve selection based on celestial object type
 
-**Purpose**: Renders an object's recent historical path with optional simplification and smoothing.
+**Curve Types**:
 
-### Core Design & Performance
+- `Linear`: Simple linear interpolation (no smoothing)
+- `Smooth`: Catmull-Rom spline with configurable tension
+- `Orbital`: Orbital-aware curves optimized for gravitational motion
+- `Adaptive`: Automatically selects the best curve type based on object properties
 
-1.  **Web Worker Offloading**: Like the `PredictionManager`, this manager offloads all heavy lifting to `trail.worker.ts`. The main-thread class is a lightweight coordinator that sends position updates to the worker and receives back a final array of points to render. This ensures that managing and processing long trail histories does not impact frame rate.
-2.  **Data Flow**: The `TrailManager` now adheres to the same robust data flow pattern as the `PredictionManager`, eliminating a previous architectural exception.
-    - The main thread sends new positions to the worker as simple `[number, number, number]` arrays.
-    - The worker re-hydrates these into `OSVector3` objects and stores them in a `CircularBuffer` using `TrailDataPool`.
-    - When an update is posted back, the worker prepares a renderable array of points, which the main thread consumes as `THREE.Vector3[]`.
-3.  **Optional Simplification & Smoothing Pipeline**: The worker can apply a two-stage process to the historical data, controlled by the `TrailManager`:
-    - **Simplification**: If enabled, uses the Ramer-Douglas-Peucker (RDP) algorithm to reduce the number of points in the trail while preserving its essential shape. This is ideal for reducing the data sent to the GPU.
-    - **Smoothing**: The simplified (or raw) path is then passed through a Catmull-Rom spline function. This generates a smooth, visually appealing curve from the points, eliminating sharp angles.
-4.  **Quality Control**: The spline generation is governed by a `TrailQuality` setting (`Low` to `Cosmic`). This maps to a total point budget for the entire smoothed curve, ensuring that the number of vertices does not grow uncontrollably, which prevents performance issues and crashes.
-5.  **Memory Management**: Uses `TrailDataPool` to manage pre-allocated buffers for trail data, avoiding dynamic memory allocation in the worker.
+#### `TrailManager.ts`
 
-## `TrailDataPool.ts`
+**Purpose**: Manages historical trail visualization with curved interpolation.
 
-**Purpose**: Manages a pre-allocated ArrayBuffer to store trail data for multiple objects efficiently.
+**Enhanced Features**:
 
-### Core Design
+- **Curved Trail Rendering**: All trails now use curve interpolation for smooth visualization
+- **Adaptive Sampling**: Orbital-aware sampling that captures trajectory essence
+- **Configurable Curves**: Full curve configuration support with real-time updates
+- **Performance Optimized**: Web Worker-based processing with batched updates
 
-- **Fixed-Size Allocation**: Provides fixed-size "slots" from a large, single buffer to avoid dynamic memory allocation
-- **Circular Buffer**: Each slot implements a circular buffer approach that overwrites oldest data when full
-- **Efficient Access**: Uses `Float32Array` views for fast float access and minimal memory overhead
-- **Slot Management**: Tracks free slots and provides efficient allocation/deallocation
+#### `PredictionManager.ts`
 
-## `PredictionDataPool.worker.ts`
+**Purpose**: Manages future trajectory prediction with curved interpolation.
 
-**Purpose**: Manages a pre-allocated pool of PhysicsStateReal objects to avoid continuous memory allocation and de-allocation within the prediction worker.
+**Enhanced Features**:
 
-### Core Design
+- **Curved Predictions**: All prediction lines now use curve interpolation
+- **Orbital-Aware Curves**: Predictions optimized for orbital motion patterns
+- **Configurable Quality**: Adjustable curve parameters for different visualization needs
+- **Smooth Animations**: Animated transitions when prediction data updates
 
-- **Pre-allocated Objects**: Creates all physics state objects upfront with their vectors
-- **Index Mapping**: Maintains efficient mapping between object IDs and pool indices
-- **Buffer Updates**: Efficiently updates the entire pool from serialized data
-- **Memory Reuse**: Avoids garbage collection pressure in the worker thread
+#### `KeplerianManager.ts`
 
-## Performance Optimizations
+**Purpose**: Manages static Keplerian orbit lines with curved interpolation.
 
-### Update Throttling
+**Enhanced Features**:
 
-- **Trail Updates**: Throttled to every 10 frames by default
-- **Prediction Updates**: Throttled to every 90 frames by default
-- **Batch Processing**: Trail updates are batched to reduce worker communication overhead
+- **Curved Orbit Lines**: Perfect elliptical orbits now rendered with smooth curves
+- **Optimized for Static Orbits**: Lower curve complexity for better performance
+- **Consistent Styling**: Maintains visual consistency with other orbit types
 
-### Memory Efficiency
+### Configuration System
 
-- **Zero-Copy Transfers**: Uses `Float32Array` for efficient data transfer between main thread and workers
-- **Object Pooling**: Pre-allocated data structures eliminate runtime allocations
-- **Buffer Reuse**: Shared buffer pools reduce memory fragmentation
+All managers support configurable curve parameters:
 
-### Quality Settings
+```typescript
+interface TrailCurveConfig {
+  type: TrailCurveType; // Curve type to use
+  tension?: number; // Catmull-Rom tension (0-1)
+  segments?: number; // Curve segments per point pair
+  smoothing?: number; // Smoothing factor (0-1)
+  adaptiveThreshold?: number; // Minimum points for adaptive smoothing
+}
+```
 
-- **Trail Quality**: Configurable from Low to Cosmic with automatic point budget management
-- **Prediction Accuracy**: Adjustable step count and duration for performance vs. accuracy trade-offs
-- **Update Frequency**: Configurable throttling to balance responsiveness and performance
+### Default Configurations
+
+**Trails (N-Body)**: Adaptive curves with high quality for dynamic motion
+
+```typescript
+{
+  type: TrailCurveType.Adaptive,
+  tension: 0.5,
+  segments: 8,
+  smoothing: 0.3,
+  adaptiveThreshold: 10
+}
+```
+
+**Predictions (N-Body)**: Orbital curves optimized for future trajectories
+
+```typescript
+{
+  type: TrailCurveType.Orbital,
+  tension: 0.5,
+  segments: 6,
+  smoothing: 0.4,
+  adaptiveThreshold: 8
+}
+```
+
+**Keplerian Orbits (Ideal)**: Orbital curves with lower complexity
+
+```typescript
+{
+  type: TrailCurveType.Orbital,
+  tension: 0.3,
+  segments: 4,
+  smoothing: 0.2,
+  adaptiveThreshold: 5
+}
+```
+
+### Integration Points
+
+#### `OrbitsManager.ts`
+
+The main entry point now provides curve configuration methods:
+
+- `setTrailCurveConfig(config)`: Configure trail curves
+- `getTrailCurveConfig()`: Get current trail configuration
+- `setPredictionCurveConfig(config)`: Configure prediction curves
+- `getPredictionCurveConfig()`: Get current prediction configuration
+
+#### Strategy Pattern
+
+Both `IdealStrategy` and `NBodyStrategy` now create their managers with optimized curve configurations:
+
+- **IdealStrategy**: Uses orbital curves for static Keplerian orbits
+- **NBodyStrategy**: Uses adaptive curves for trails and orbital curves for predictions
+
+### Performance Considerations
+
+1. **Curve Complexity**: Higher segment counts provide smoother curves but impact performance
+2. **Adaptive Thresholds**: Objects with fewer points use simpler curves automatically
+3. **Worker Processing**: Trail data processing remains in Web Workers to maintain performance
+4. **Caching**: Interpolated curves are cached to avoid recalculation
+
+### Usage Examples
+
+**Basic Usage** (automatic curve configuration):
+
+```typescript
+// The system automatically uses optimized curves
+const orbitsManager = new OrbitsManager(objectManager, stateAdapter, objects$);
+```
+
+**Custom Configuration**:
+
+```typescript
+// Configure custom curve settings
+orbitsManager.setTrailCurveConfig({
+  type: TrailCurveType.Smooth,
+  tension: 0.7,
+  segments: 12,
+  smoothing: 0.5,
+});
+```
+
+**Real-time Updates**:
+
+```typescript
+// Update curve configuration at runtime
+orbitsManager.setPredictionCurveConfig({
+  type: TrailCurveType.Orbital,
+  tension: 0.4,
+  segments: 8,
+});
+```
+
+### Benefits
+
+1. **Visual Quality**: All orbit lines now have smooth, realistic curves
+2. **Consistency**: Unified curve system across all visualization types
+3. **Flexibility**: Configurable curves for different use cases
+4. **Performance**: Optimized curves that balance quality and performance
+5. **Maintainability**: Centralized curve logic in `TrailCurveInterpolator`
+
+This enhanced system ensures that all orbital visualizations in the Teskooano project provide smooth, realistic, and visually appealing representations of celestial motion.

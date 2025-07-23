@@ -1,6 +1,7 @@
 import type { IOrbitVisualizationStrategy } from "./IOrbitVisualizationStrategy";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { KeplerianManager } from "../../keplerian/KeplerianManager";
+import { TrailCurveType } from "../../renderers/TrailManager";
 import * as THREE from "three";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { Observable } from "rxjs";
@@ -36,6 +37,13 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
     this.keplerianManager = new KeplerianManager(
       objectManager,
       renderableObjects$,
+      {
+        type: TrailCurveType.Orbital,
+        tension: 0.3,
+        segments: 4,
+        smoothing: 0.2,
+        adaptiveThreshold: 5,
+      },
     );
   }
 

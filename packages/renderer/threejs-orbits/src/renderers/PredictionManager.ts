@@ -18,6 +18,8 @@ import {
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
+import { TrailCurveInterpolator } from "./TrailCurveInterpolator";
+import { TrailCurveType, type TrailCurveConfig } from "./TrailManager";
 import { Subscription } from "rxjs";
 import { map, distinctUntilChanged } from "rxjs/operators";
 import {
@@ -54,6 +56,8 @@ function formatTimestamp(seconds: number): string {
  *
  * Prediction lines visualize the expected future path of a celestial object based on
  * the current physics state, simulated using the Verlet integration method.
+ *
+ * Enhanced with curved trail interpolation for more realistic orbital visualization.
  */
 export class PredictionManager {
   /** Map storing prediction lines, keyed by celestial object ID */
@@ -80,6 +84,15 @@ export class PredictionManager {
     element: HTMLElement;
   }[] = [];
 
+  /** Curve configuration for prediction line interpolation */
+  private curveConfig: TrailCurveConfig = {
+    type: TrailCurveType.Orbital,
+    tension: 0.5,
+    segments: 6,
+    smoothing: 0.4,
+    adaptiveThreshold: 8,
+  };
+
   // --- Animation State ---
   /** The currently displayed points of the prediction line. */
   private currentPoints: THREE.Vector3[] = [];
@@ -98,24 +111,27 @@ export class PredictionManager {
   /** Duration to predict into the future (in seconds), synced from global state. */
   private predictionDuration: number = 0;
 
-  /** Number of steps to use for the prediction calculation */
+  /** Number of steps to use for prediction calculations */
   private predictionSteps: number = 60;
 
   /** Flag indicating if prediction visualization is enabled */
   private visualizationVisible: boolean = true;
 
-  /** Subscription to the global simulation state */
+  /** Subscription to state changes */
   private stateSubscription: Subscription | undefined;
 
   /**
    * Creates a new PredictionManager instance.
    *
    * @param objectManager - The scene's ObjectManager for adding/removing objects
+   * @param curveConfig - Optional curve configuration for prediction interpolation
    */
-  constructor(objectManager: ObjectManager) {
+  constructor(objectManager: ObjectManager, curveConfig?: TrailCurveConfig) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
-
+    if (curveConfig) {
+      this.curveConfig = { ...this.curveConfig, ...curveConfig };
+    }
     this.initializeWorker();
     this.initializeStateSubscriptions();
   }
@@ -384,8 +400,14 @@ export class PredictionManager {
       return;
     }
 
+    // Apply curve interpolation to prediction points
+    const interpolatedPoints = TrailCurveInterpolator.interpolate(
+      predictionPoints,
+      this.curveConfig,
+    );
+
     let line = this.predictionLines.get(objectId);
-    const predictionSteps = predictionPoints.length;
+    const predictionSteps = interpolatedPoints.length;
 
     if (!line) {
       const material = SharedMaterials.clone("PREDICTION");
@@ -399,7 +421,7 @@ export class PredictionManager {
       this.predictionLines.set(objectId, line);
     }
 
-    this.lineBuilder.updateLine(line, predictionPoints, predictionSteps);
+    this.lineBuilder.updateLine(line, interpolatedPoints, predictionSteps);
     line.computeLineDistances();
 
     if (
@@ -469,6 +491,22 @@ export class PredictionManager {
       this.predictionSteps = steps;
       this.clearAllPredictions();
     }
+  }
+
+  /**
+   * Sets the curve configuration for prediction interpolation.
+   * @param config - The new curve configuration
+   */
+  setCurveConfig(config: TrailCurveConfig): void {
+    this.curveConfig = { ...this.curveConfig, ...config };
+  }
+
+  /**
+   * Gets the current curve configuration.
+   * @returns The current curve configuration
+   */
+  getCurveConfig(): TrailCurveConfig {
+    return { ...this.curveConfig };
   }
 
   /**
