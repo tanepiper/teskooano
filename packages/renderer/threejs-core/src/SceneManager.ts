@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
 import { CelestialType, DeviceTier } from "@teskooano/data-types";
+import { SceneHelper } from "@teskooano/renderer-threejs-helpers";
 
 /**
  * @interface SceneManagerOptions
@@ -270,17 +271,13 @@ export class SceneManager {
     this.width = container.clientWidth;
     this.height = container.clientHeight;
 
-    // Initialize core components
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(
-      this.fov,
-      this.width / this.height,
-      DefaultSceneManagerConfig.CAMERA.NEAR_PLANE,
-      DefaultSceneManagerConfig.CAMERA.FAR_PLANE,
-    );
+    // Use SceneHelper to create optimized scene components
+    const sceneSetup = this._createSceneWithHelper(container);
+    this.scene = sceneSetup.scene;
+    this.camera = sceneSetup.camera;
+    this.renderer = sceneSetup.renderer;
 
-    // Initialize renderer with capability detection
-    this.renderer = this._initializeRenderer(container);
+    // Initialize capability detection and performance optimization
     this.webGLCapabilities = detectWebGLCapabilities(this.renderer);
 
     // Get initial performance optimization based on current state
@@ -353,12 +350,17 @@ export class SceneManager {
   }
 
   /**
-   * Sets up the WebGL renderer, configures its features based on options
-   * and performance profile, and appends its canvas to the container element.
-   * @param container The host element for the renderer's canvas.
-   * @returns The configured `WebGLRenderer`.
+   * Creates scene components using SceneHelper with optimized configuration.
+   * @param container The HTML element that will contain the renderer's canvas.
+   * @returns Object containing scene, camera, renderer, and THREE instance
    */
-  private _initializeRenderer(container: HTMLElement): THREE.WebGLRenderer {
+  private _createSceneWithHelper(container: HTMLElement): {
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+    renderer: THREE.WebGLRenderer;
+    three: typeof THREE;
+  } {
+    // Determine power preference based on performance profile
     const initialState = StateAccessor.getCurrentSimulationState();
     const profile = initialState.performanceProfile;
     let powerPref: "default" | "high-performance" | "low-power" =
@@ -374,31 +376,35 @@ export class SceneManager {
         break;
     }
 
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
+    // Use SceneHelper to create optimized space scene
+    const sceneSetup = SceneHelper.createScene({
+      backgroundColor: 0x000011, // Dark blue space background
+      fov: this.fov,
+      near: DefaultSceneManagerConfig.CAMERA.NEAR_PLANE,
+      far: DefaultSceneManagerConfig.CAMERA.FAR_PLANE,
+      cameraPosition: [0, 20, 50], // Default camera position
+      aspectRatio: this.width / this.height,
+      enableShadows: this.options.shadows ?? true,
+      shadowMapSize: 4096, // High resolution for space scenes
       antialias: this.options.antialias ?? true,
-      stencil: false,
-      logarithmicDepthBuffer: false,
-      preserveDrawingBuffer: false,
+      alpha: true,
       powerPreference: powerPref,
     });
 
-    renderer.setSize(this.width, this.height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+    // Configure renderer size and append to container
+    sceneSetup.renderer.setSize(this.width, this.height);
+    sceneSetup.renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(sceneSetup.renderer.domElement);
 
-    if (this.options.shadows ?? true) {
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    }
-
+    // Apply HDR configuration if enabled
     if (this.options.hdr ?? true) {
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure =
+      sceneSetup.renderer.outputColorSpace = THREE.SRGBColorSpace;
+      sceneSetup.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      sceneSetup.renderer.toneMappingExposure =
         DefaultSceneManagerConfig.RENDERER.TONE_MAPPING_EXPOSURE;
     }
-    return renderer;
+
+    return sceneSetup;
   }
 
   /**
