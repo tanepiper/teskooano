@@ -311,6 +311,52 @@ export class GeometryHelper {
   }
 
   /**
+   * Creates a ring geometry (annulus).
+   *
+   * @param x - X position
+   * @param y - Y position
+   * @param z - Z position
+   * @param size - Scale factor
+   * @param color - Hex color value
+   * @param wireframe - Whether to render as wireframe
+   * @param innerRadius - Inner radius of the ring (default: 5)
+   * @param outerRadius - Outer radius of the ring (default: 10)
+   * @param segments - Number of segments (default: 32)
+   * @param name - Optional name for the mesh
+   * @param material - Optional custom material (overrides color and wireframe)
+   * @returns Configured THREE.Mesh
+   */
+  static createRing(
+    x: number,
+    y: number,
+    z: number,
+    size: number = 1,
+    color: number = 0xffffff,
+    wireframe: boolean = false,
+    innerRadius: number = 5,
+    outerRadius: number = 10,
+    segments: number = 32,
+    name?: string,
+    material?: THREE.Material,
+  ): THREE.Mesh {
+    const geometry = new THREE.RingGeometry(innerRadius, outerRadius, segments);
+    const meshMaterial =
+      material ||
+      new THREE.MeshBasicMaterial({
+        color,
+        side: THREE.DoubleSide,
+        wireframe,
+      });
+    const mesh = new THREE.Mesh(geometry, meshMaterial);
+    mesh.position.set(x, y, z);
+    mesh.scale.set(size, size, size);
+    if (name) {
+      mesh.name = name;
+    }
+    return mesh;
+  }
+
+  /**
    * Creates a star field using points geometry.
    *
    * @param amount - Number of stars to create

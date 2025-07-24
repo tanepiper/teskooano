@@ -407,7 +407,7 @@ export class CameraTransitionManager {
         orbitControls: this.orbitControlsHandler.controls,
         onUpdate: () => {
           activeTimeline = this.activeAnimation;
-          timelineUpdateCallback("Turning to");
+          timelineUpdateCallback(`𑙬 Aligning to ${targetName}`);
         },
         onComplete: () => {
           // Stage 2: Move to the final position while maintaining the look-at
@@ -421,7 +421,7 @@ export class CameraTransitionManager {
               orbitControls: this.orbitControlsHandler.controls,
               onUpdate: () => {
                 activeTimeline = this.activeAnimation;
-                timelineUpdateCallback("Moving to");
+                timelineUpdateCallback(`⤳ Travelling to ${targetName}`);
               },
               onComplete: onTimelineComplete,
             },

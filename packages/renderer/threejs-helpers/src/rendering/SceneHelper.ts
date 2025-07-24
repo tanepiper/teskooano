@@ -25,6 +25,7 @@ export class SceneHelper {
    */
   static createScene(
     options: {
+      name?: string;
       backgroundColor?: number;
       fov?: number;
       near?: number;
@@ -32,10 +33,10 @@ export class SceneHelper {
       cameraPosition?: [number, number, number];
       aspectRatio?: number;
       enableShadows?: boolean;
-      shadowMapSize?: number;
       antialias?: boolean;
       alpha?: boolean;
       powerPreference?: "default" | "high-performance" | "low-power";
+      shadowMapType?: THREE.ShadowMapType;
     } = {},
   ): {
     scene: THREE.Scene;
@@ -44,6 +45,7 @@ export class SceneHelper {
     three: typeof THREE;
   } {
     const {
+      name = "Scene",
       backgroundColor = 0x000000,
       fov = 60,
       near = 1,
@@ -51,14 +53,18 @@ export class SceneHelper {
       cameraPosition = [0, 0, 30],
       aspectRatio = window.innerWidth / window.innerHeight,
       enableShadows = true,
-      shadowMapSize = 2048,
       antialias = true,
       alpha = false,
       powerPreference = "high-performance",
+      shadowMapType = THREE.PCFSoftShadowMap,
     } = options;
 
     // Create scene
     const scene = new THREE.Scene();
+    scene.scale.set(1, 1, 1);
+    scene.name = name;
+    scene.castShadow = false;
+    scene.receiveShadow = false;
     scene.background = new THREE.Color(backgroundColor);
 
     // Create camera
@@ -67,6 +73,9 @@ export class SceneHelper {
 
     // Create renderer
     const renderer = new THREE.WebGLRenderer({
+      precision:
+        options.powerPreference === "high-performance" ? "highp" : "mediump",
+      logarithmicDepthBuffer: true,
       antialias,
       alpha,
       powerPreference,
@@ -77,7 +86,8 @@ export class SceneHelper {
     // Configure shadows
     if (enableShadows) {
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.autoUpdate = true;
+      renderer.shadowMap.type = shadowMapType;
     }
 
     return { scene, camera, renderer, three: THREE };
@@ -122,8 +132,7 @@ export class SceneHelper {
       near: 0.1, // Closer near plane for detailed close-ups
       far: 100000, // Much farther far plane for astronomical distances
       cameraPosition: [0, 0, 50],
-      enableShadows: true,
-      shadowMapSize: 4096, // Higher resolution for space scenes
+      enableShadows: true, // Higher resolution for space scenes
       antialias: true,
     });
   }

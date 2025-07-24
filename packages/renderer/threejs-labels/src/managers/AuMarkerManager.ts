@@ -1,49 +1,9 @@
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
+import { GeometryHelper } from "@teskooano/renderer-threejs-helpers";
 import { Layer2DManager } from "../Layer2DManager";
 import { AuMarkerLabelLayer } from "../layers/AuMarkerLabelLayer";
 import { CSS2DLayerType } from "../types";
-
-/**
- * Generates AU marker data dynamically.
- * Creates markers in groups of 10, where each tenth marker (0.1, 1, 10, 100, etc.) is green
- * and the others are orange. Goes up to the specified maximum AU.
- * @param maxAu The maximum AU value to generate markers for (default: 1,000,000)
- * @returns Array of AU marker data objects
- */
-function generateAuMarkersData(
-  maxAu: number = 1000000,
-): Array<{ au: number; color: string }> {
-  const markers: Array<{ au: number; color: string }> = [];
-
-  // Start with 0.1 AU and go up in groups of 10
-  let currentGroup = 0.1;
-
-  while (currentGroup <= maxAu) {
-    // Generate 10 markers for this group (0.1, 0.2, ..., 0.9, 1.0)
-    for (let i = 1; i <= 10; i++) {
-      let au = currentGroup * i;
-      if (au < 1) {
-        au = parseFloat(au.toFixed(1));
-      }
-
-      // Skip if we've exceeded the maximum
-      if (au > maxAu) break;
-
-      // Every 10th marker (i === 10) is green, others are orange
-      const color = i === 10 ? "#00ff00" : "#FFA500";
-
-      markers.push({ au, color });
-    }
-
-    // Move to the next group (multiply by 10)
-    currentGroup *= 10;
-  }
-
-  return markers;
-}
-
-const auMarkersData = generateAuMarkersData();
 
 /**
  * Manages the creation, visibility, and disposal of AU (Astronomical Unit) markers.
@@ -54,6 +14,7 @@ export class AuMarkerManager {
   private scene: THREE.Scene;
   private css2DManager: Layer2DManager;
   private isVisible: boolean = true;
+  private auMarkersData: Array<{ au: number; color: string }>;
 
   /**
    * @param scene The main THREE.Scene to add the markers to.
@@ -62,8 +23,10 @@ export class AuMarkerManager {
   constructor(
     scene: THREE.Scene,
     css2DManager: Layer2DManager,
-    name = "AuMarkersGroup",
+    name = "GROUP_AU_MARKER_RINGS",
   ) {
+    this.auMarkersData = this.generateAuMarkersData();
+
     this.scene = scene;
     this.css2DManager = css2DManager;
     this.group = new THREE.Group();
@@ -79,22 +42,33 @@ export class AuMarkerManager {
     const auMarkerLayer = new AuMarkerLabelLayer(this.scene);
     this.css2DManager.registerLayer(CSS2DLayerType.AU_MARKERS, auMarkerLayer);
 
-    auMarkersData.forEach(({ au, color }) => {
+    this.auMarkersData.forEach(({ au, color }) => {
       const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
       const ringThickness = radiusSceneUnits * 0.001;
-      const circleGeometry = new THREE.RingGeometry(
-        radiusSceneUnits - ringThickness / 2,
-        radiusSceneUnits + ringThickness / 2,
-        256,
-      );
-      const circleMaterial = new THREE.MeshBasicMaterial({
-        color: color,
+
+      // Create material with required properties
+      const material = new THREE.MeshBasicMaterial({
+        color: parseInt(color.replace("#", "0x")),
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0.5,
-        toneMapped: false,
+        toneMapped: true,
       });
-      const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+
+      const circle = GeometryHelper.createRing(
+        0,
+        0,
+        0, // position
+        1, // size
+        0xffffff, // color (ignored when material is provided)
+        false, // wireframe (ignored when material is provided)
+        radiusSceneUnits - ringThickness / 2, // innerRadius
+        radiusSceneUnits + ringThickness / 2, // outerRadius
+        256, // segments
+        `AU_RING_${au}`, // name
+        material, // custom material
+      );
+
       circle.rotation.x = -Math.PI / 2;
       this.group.add(circle);
 
@@ -154,5 +128,44 @@ export class AuMarkerManager {
     }
 
     this.css2DManager.clearLayer(CSS2DLayerType.AU_MARKERS);
+  }
+
+  /**
+   * Generates AU marker data dynamically.
+   * Creates markers in groups of 10, where each tenth marker (0.1, 1, 10, 100, etc.) is green
+   * and the others are orange. Goes up to the specified maximum AU.
+   * @param maxAu The maximum AU value to generate markers for (default: 1,000,000)
+   * @returns Array of AU marker data objects
+   */
+  private generateAuMarkersData(
+    maxAu: number = 1000000,
+  ): Array<{ au: number; color: string }> {
+    const markers: Array<{ au: number; color: string }> = [];
+
+    // Start with 0.1 AU and go up in groups of 10
+    let currentGroup = 0.1;
+
+    while (currentGroup <= maxAu) {
+      // Generate 10 markers for this group (0.1, 0.2, ..., 0.9, 1.0)
+      for (let i = 1; i <= 10; i++) {
+        let au = currentGroup * i;
+        if (au < 1) {
+          au = parseFloat(au.toFixed(1));
+        }
+
+        // Skip if we've exceeded the maximum
+        if (au > maxAu) break;
+
+        // Every 10th marker (i === 10) is green, others are orange
+        const color = i === 10 ? "#00ff00" : "#FFA500";
+
+        markers.push({ au, color });
+      }
+
+      // Move to the next group (multiply by 10)
+      currentGroup *= 10;
+    }
+
+    return markers;
   }
 }

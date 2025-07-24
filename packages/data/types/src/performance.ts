@@ -4,6 +4,27 @@
  * consistent performance configuration and optimization.
  */
 
+import type { ShadowMapType, WebGLCapabilities } from "three";
+
+/**
+ * Configuration options for creating a SceneManager instance.
+ * This provides a strongly-typed contract for initializing the core scene components.
+ */
+export interface SceneManagerOptions {
+  /** Enables or disables anti-aliasing. Defaults to true. */
+  antialias?: boolean;
+  /** Enables or disables shadow mapping. Defaults to true. */
+  shadows?: boolean;
+  /** Enables or disables the High Dynamic Range (HDR) rendering pipeline with ACES Filmic tone mapping. Defaults to true. */
+  hdr?: boolean;
+  /** The camera's vertical Field of View (FOV) in degrees. Defaults to 75. */
+  fov?: number;
+  /** Initial camera position [x, y, z]. Defaults to [0, 20, 50]. */
+  cameraPosition?: [number, number, number];
+  /** Initial camera target [x, y, z]. Defaults to [0, 0, 0]. */
+  cameraTarget?: [number, number, number];
+}
+
 /**
  * Represents the performance tier of a device based on hardware capabilities.
  * Used for automatic performance optimization and user-configurable quality settings.
@@ -34,6 +55,7 @@ export interface PerformanceConfig {
 
 /**
  * Performance optimization settings for rendering.
+ * Defines performance optimization settings based on device capabilities.
  */
 export interface PerformanceOptimization {
   /** Whether to enable anti-aliasing */
@@ -45,7 +67,7 @@ export interface PerformanceOptimization {
   /** Pixel ratio for rendering (1.0 = native, 2.0 = retina) */
   pixelRatio: number;
   /** Type of shadow mapping to use */
-  shadowMapType: any; // THREE.ShadowMapType
+  shadowMapType: ShadowMapType;
   /** Maximum number of lights to render */
   maxLights: number;
   /** Maximum number of shadow casters */
@@ -56,34 +78,4 @@ export interface PerformanceOptimization {
   trailQuality: "low" | "medium" | "high";
   /** Multiplier for particle count */
   particleCountMultiplier: number;
-}
-
-/**
- * WebGL capabilities information for performance optimization.
- */
-export interface WebGLCapabilities {
-  /** Whether WebGL 2 is supported */
-  isWebGL2: boolean;
-  /** Precision level supported */
-  precision: string;
-  /** Maximum number of texture units */
-  maxTextures: number;
-  /** Maximum texture size (width/height) */
-  maxTextureSize: number;
-  /** Maximum vertex uniform vectors */
-  maxVertexUniforms: number;
-  /** Maximum fragment uniform vectors */
-  maxFragmentUniforms: number;
-  /** Maximum varying vectors */
-  maxVaryings: number;
-  /** Maximum vertex attributes */
-  maxAttributes: number;
-  /** Whether vertex textures are supported */
-  vertexTextures: boolean;
-  /** Maximum number of samples for MSAA */
-  maxSamples: number;
-  /** Whether logarithmic depth buffer is supported */
-  logarithmicDepthBuffer: boolean;
-  /** Whether reverse depth buffer is supported */
-  reverseDepthBuffer: boolean;
 }
