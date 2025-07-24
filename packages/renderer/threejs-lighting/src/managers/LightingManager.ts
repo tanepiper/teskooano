@@ -38,8 +38,12 @@ export class LightingManager {
   /**
    * Registers a new light source component.
    * @param component - The `LightSourceComponent` to register.
+   * @param meshGroup - The mesh group of the celestial object to attach the light to.
    */
-  public register(component: LightSourceComponent): void {
+  public register(
+    component: LightSourceComponent,
+    meshGroup?: THREE.Object3D,
+  ): void {
     if (this.lightSources.has(component.celestialObject.celestialObjectId)) {
       this.unregister(component.celestialObject.celestialObjectId);
     }
@@ -48,7 +52,13 @@ export class LightingManager {
       component.celestialObject.celestialObjectId,
       component,
     );
-    this.scene.add(component.light);
+
+    // Add the light to the mesh group if provided, otherwise add to scene
+    if (meshGroup) {
+      meshGroup.add(component.light);
+    } else {
+      this.scene.add(component.light);
+    }
   }
 
   /**
@@ -119,7 +129,12 @@ export class LightingManager {
   public unregister(objectId: string): void {
     const component = this.lightSources.get(objectId);
     if (component) {
-      this.scene.remove(component.light);
+      // Remove the light from its current parent if it was added to a mesh group
+      if (component.light.parent && component.light.parent.type === "Group") {
+        component.light.parent.remove(component.light);
+      } else {
+        this.scene.remove(component.light);
+      }
       component.dispose();
       this.lightSources.delete(objectId);
     }
@@ -446,7 +461,12 @@ export class LightingManager {
    */
   public dispose(): void {
     this.lightSources.forEach((component) => {
-      this.scene.remove(component.light);
+      // Remove the light from its current parent if it was added to a mesh group
+      if (component.light.parent && component.light.parent.type === "Group") {
+        component.light.parent.remove(component.light);
+      } else {
+        this.scene.remove(component.light);
+      }
       component.dispose();
     });
     this.lightSources.clear();

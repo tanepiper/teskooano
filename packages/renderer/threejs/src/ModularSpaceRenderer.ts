@@ -69,6 +69,8 @@ export class ModularSpaceRenderer {
   private renderPipeline: RenderPipeline;
 
   private debrisEffectsEnabled: boolean = true;
+  private container?: HTMLElement;
+  private resizeHandler?: () => void;
 
   /**
    * Initializes the renderer and all its subordinate managers.
@@ -163,6 +165,14 @@ export class ModularSpaceRenderer {
    * @param container The main HTML container for the renderer.
    */
   private setupEventListeners(container: HTMLElement): void {
+    this.container = container;
+    this.resizeHandler = () => {
+      if (this.container) {
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        this.onResize(width, height);
+      }
+    };
     container.addEventListener("toggleGrid", () => {
       this.toggleGrid();
     });
@@ -170,13 +180,7 @@ export class ModularSpaceRenderer {
       this.backgroundManager.toggleDebug();
     });
 
-    window.addEventListener("resize", () => {
-      if (container) {
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        this.onResize(width, height);
-      }
-    });
+    window.addEventListener("resize", this.resizeHandler);
 
     // This listener is a hook for responding to camera system events.
     document.addEventListener("camera-transition-complete", (event) => {
@@ -258,6 +262,8 @@ export class ModularSpaceRenderer {
    * Stops the animation loop and removes event listeners.
    */
   dispose(): void {
+    console.log("[ModularSpaceRenderer] Disposing resources...");
+
     this.stateAdapter.dispose();
 
     this.sceneManager.dispose();
@@ -271,9 +277,27 @@ export class ModularSpaceRenderer {
     this.lodManager.dispose();
     this.gridManager.dispose();
 
-    window.removeEventListener("resize", () => {
-      this.onResize(window.innerWidth, window.innerHeight);
-    });
+    if (this.resizeHandler) {
+      window.removeEventListener("resize", this.resizeHandler);
+    }
+
+    // Nullify references to allow garbage collection
+    (this.sceneManager as any) = null;
+    (this.objectManager as any) = null;
+    (this.orbitManager as any) = null;
+    (this.backgroundManager as any) = null;
+    (this.controlsManager as any) = null;
+    (this.css2DManager as any) = null;
+    (this.auMarkerManager as any) = null;
+    (this.lightingManager as any) = null;
+    (this.lodManager as any) = null;
+    (this.gridManager as any) = null;
+    (this.stateAdapter as any) = null;
+    (this.renderPipeline as any) = null;
+    (this.container as any) = null;
+    (this.resizeHandler as any) = null;
+
+    console.log("[ModularSpaceRenderer] Disposal complete");
   }
 
   /**

@@ -95,7 +95,9 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     // LOD 0: High detail with particle tail
     const lod0_container = new THREE.Group();
+    lod0_container.name = `${object.celestialObjectId}-comet-lod0-container`;
     this.nucleusAndComaGroup = new THREE.Group(); // Initialize the group
+    this.nucleusAndComaGroup.name = `${object.celestialObjectId}-nucleus-coma-group`;
 
     // Add nucleus (should always exist)
     if (this.nucleus) {
@@ -119,7 +121,9 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     // LOD 1: Lower detail with simplified mesh tail
     const lod1_container = new THREE.Group();
+    lod1_container.name = `${object.celestialObjectId}-comet-lod1-container`;
     this.nucleusAndComaGroup_lod1 = new THREE.Group(); // Initialize the LOD 1 group
+    this.nucleusAndComaGroup_lod1.name = `${object.celestialObjectId}-nucleus-coma-group-lod1`;
 
     // Clone nucleus for LOD 1 (only if it exists)
     if (this.nucleus) {
@@ -197,6 +201,7 @@ export class CometRenderer extends BaseCelestialRenderer {
     const nucleusMaterial = this.createNucleusMaterial(object);
 
     this.nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+    this.nucleus.name = `${object.celestialObjectId}-nucleus`;
     this.registerMaterial(
       `comet-nucleus-${object.celestialObjectId}`,
       nucleusMaterial,
@@ -290,6 +295,7 @@ export class CometRenderer extends BaseCelestialRenderer {
         comaSegments,
       );
       this.coma = new THREE.Mesh(comaGeometry, this.comaMaterial);
+      this.coma.name = `${object.celestialObjectId}-coma`;
     }
   }
 
@@ -336,6 +342,7 @@ export class CometRenderer extends BaseCelestialRenderer {
         this.particleGeometry,
         particleMaterial,
       );
+      this.particleTail.name = `${object.celestialObjectId}-tail`;
       this.registerMaterial(
         `comet-tail-${object.celestialObjectId}`,
         particleMaterial,

@@ -122,11 +122,14 @@ export class PanelLifecycleManager {
               // Set a timeout to dispose the renderer after a short delay
               // This prevents disposing during rapid state changes (like system loading)
               this._clearTimeout = window.setTimeout(() => {
+                console.log(
+                  "[PanelLifecycleManager] Disposing renderer after delay",
+                );
                 this._options.disposeRendererAndUI();
                 // Don't call resetSystem here as it might interfere with the state
                 // simulationManager.resetSystem(true);
                 this._clearTimeout = null;
-              }, 100); // 100ms delay
+              }, 50); // Reduced from 100ms to 50ms
             }
             if (!this._isGeneratingSystem) {
               this._options.placeholderManager?.showMessage(false);

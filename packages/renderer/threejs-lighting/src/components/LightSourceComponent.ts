@@ -36,8 +36,16 @@ export class LightSourceComponent {
   ) {
     this.celestialObject = object;
     this.light =
-      options.light ?? LightingHelper.createPointLight(0xffffff, 1, 0, 2);
-    this.light.castShadow = options.castShadow ?? false;
+      options.light ??
+      LightingHelper.createPointLight({
+        color: 0xffffff,
+        intensity: 1,
+        decay: 2,
+        distance: 0,
+        castShadow: options.castShadow ?? false,
+        shadowMapSize: 1024,
+        name: `${object.celestialObjectId}-light`,
+      });
 
     // Set the initial position
     this.update();

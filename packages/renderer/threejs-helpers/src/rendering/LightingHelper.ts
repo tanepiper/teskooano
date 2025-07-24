@@ -84,17 +84,32 @@ export class LightingHelper {
    * @returns The created point light
    */
   static createPointLight(
-    color: number = 0xffffff,
-    intensity: number = 1.0,
-    distance: number = 0,
-    decay: number = 2,
-    position: [number, number, number] = [0, 0, 0],
-    castShadow: boolean = false,
-    shadowMapSize: number = 1024,
+    options: {
+      color?: number;
+      intensity?: number;
+      distance?: number;
+      decay?: number;
+      position?: [number, number, number];
+      castShadow?: boolean;
+      shadowMapSize?: number;
+      name?: string;
+    } = {},
   ): THREE.PointLight {
+    const {
+      color = 0xffffff,
+      intensity = 1.0,
+      distance = 0,
+      decay = 2,
+      position = [0, 0, 0],
+      castShadow = false,
+      shadowMapSize = 1024,
+      name,
+    } = options;
+
     const light = new THREE.PointLight(color, intensity, distance, decay);
     light.position.set(...position);
-
+    light.name =
+      name ?? `point-light-${color}-${intensity}-${distance}-${decay}`;
     if (castShadow) {
       light.castShadow = true;
       light.shadow.mapSize.width = shadowMapSize;

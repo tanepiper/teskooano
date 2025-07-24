@@ -546,5 +546,13 @@ export class CompositeEnginePanel
     // Disconnect resize observer
     this._resizeObserver?.disconnect();
     this._resizeObserver = undefined;
+
+    // Nullify references to allow garbage collection
+    (this._renderer as any) = null;
+    (this._sceneManager as any) = null;
+    (this._labelSystem as any) = null;
+    (this._cameraCoordinator as any) = null;
+    (this._engineToolbar as any) = null;
+    (this._resizeObserver as any) = null;
   }
 }

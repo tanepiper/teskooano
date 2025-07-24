@@ -38,6 +38,7 @@ export class NebulaField extends Field {
     this.material = this.createMaterial(options);
 
     const mesh = new THREE.Mesh(geometry, this.material);
+    mesh.name = `${this.options.name || "nebula"}-mesh`;
     this.object.add(mesh);
 
     // Position the entire field object at its base distance.

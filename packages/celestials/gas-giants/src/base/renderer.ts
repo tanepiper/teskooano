@@ -129,6 +129,7 @@ export abstract class BaseGasGiantRenderer<
     );
     highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
     const level0Group = new THREE.Group();
+    level0Group.name = `${object.celestialObjectId}-high-lod-group`;
     level0Group.add(highDetailMesh);
 
     const level0: LODLevel = { object: level0Group, distance: 0 };
@@ -149,6 +150,7 @@ export abstract class BaseGasGiantRenderer<
     const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
     mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
     const level1Group = new THREE.Group();
+    level1Group.name = `${object.celestialObjectId}-medium-lod-group`;
     level1Group.add(mediumMesh);
     const level1: LODLevel = {
       object: level1Group,

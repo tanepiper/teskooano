@@ -488,6 +488,11 @@ export class ObjectManager extends StateSubscriptionMixin {
 
     // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();
+
+    // Only nullify properties that won't be reused
+    // Don't nullify managers that are reused (objectLifecycleManager, lodManager, etc.)
+    (this.accelerationSubscription as any) = null;
+    (this.latestRenderableObjects as any) = null;
   }
 
   /**

@@ -33,7 +33,9 @@ export class BackgroundManager {
   constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
     this.scene = scene;
     this.group = new THREE.Group();
+    this.group.name = "background-manager-group";
     this.debugGroup = new THREE.Group();
+    this.debugGroup.name = "background-debug-group";
     this.group.add(this.debugGroup);
     scene.add(this.group);
 

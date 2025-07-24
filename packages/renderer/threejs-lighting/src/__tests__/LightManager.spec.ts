@@ -16,21 +16,42 @@ const createMockRenderableStar = (
   position: THREE.Vector3,
 ): RenderableCelestialObject => {
   return {
+    id: id,
     celestialObjectId: id,
     name: `Test Star ${id}`,
     type: CelestialType.STAR,
     status: CelestialStatus.ACTIVE,
     seed: id,
     radius: 696340,
-    mass: 1.989e30,
+    mass: 696340000,
+    realMass_kg: 1.989e30,
     position: position,
     rotation: new THREE.Quaternion(),
     realRadius_m: 696340000,
     temperature: 5778,
+    orbit: {
+      realSemiMajorAxis_m: 0,
+      eccentricity: 0,
+      inclination: 0,
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
+      meanAnomaly: 0,
+      period_s: 0,
+      realAphelion_m: 0,
+      realPerihelion_m: 0,
+      averageOrbitalSpeed_mps: 0,
+      epoch: "J2000",
+    },
+    physicsStateReal: {
+      id: id,
+      mass_kg: 1.989e30,
+      position_m: new OSVector3(position.x, position.y, position.z),
+      velocity_mps: new OSVector3(),
+    },
     properties: {
       type: CelestialType.STAR,
       isMainStar: true,
-      classType: StellarType.MAIN_SEQUENCE,
+      stellarType: StellarType.MAIN_SEQUENCE,
       spectralClass: "G2V",
       luminosity: 1,
       color: "#FFFFFF",
@@ -67,6 +88,21 @@ describe("LightingManager", () => {
     expect(scene.add).toHaveBeenCalledWith(component.light);
   });
 
+  it("should register a light source and add its light to a mesh group when provided", () => {
+    const mockObject = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const component = new LightSourceComponent(mockObject);
+    const mockMeshGroup = new THREE.Group();
+    const addSpy = vi.spyOn(mockMeshGroup, "add");
+
+    lightingManager.register(component, mockMeshGroup);
+
+    expect(addSpy).toHaveBeenCalledWith(component.light);
+    expect(scene.add).not.toHaveBeenCalledWith(component.light);
+  });
+
   it("should unregister a light source and remove its light from the scene", () => {
     const mockObject = createMockRenderableStar(
       "star1",
@@ -78,6 +114,22 @@ describe("LightingManager", () => {
     lightingManager.unregister("star1");
 
     expect(scene.remove).toHaveBeenCalledWith(component.light);
+  });
+
+  it("should unregister a light source and remove its light from a mesh group when attached to one", () => {
+    const mockObject = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const component = new LightSourceComponent(mockObject);
+    const mockMeshGroup = new THREE.Group();
+    const removeSpy = vi.spyOn(mockMeshGroup, "remove");
+
+    lightingManager.register(component, mockMeshGroup);
+    lightingManager.unregister("star1");
+
+    expect(removeSpy).toHaveBeenCalledWith(component.light);
+    expect(scene.remove).not.toHaveBeenCalledWith(component.light);
   });
 
   it("should call dispose on the component when unregistering", () => {

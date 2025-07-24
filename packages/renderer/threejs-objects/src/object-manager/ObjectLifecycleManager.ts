@@ -154,7 +154,8 @@ export class ObjectLifecycleManager {
 
       if (!isBlackHole) {
         // Only register non-black hole stars as light sources
-        this.lightingManager.register(new LightSourceComponent(object));
+        // Pass the mesh group so the light is attached to the celestial object's group
+        this.lightingManager.register(new LightSourceComponent(object), mesh);
       }
     }
 

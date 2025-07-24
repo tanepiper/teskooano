@@ -8,6 +8,7 @@ export function createDebugVisuals(
   layerMultipliers: number[],
 ): THREE.Group {
   const debugGroup = new THREE.Group();
+  debugGroup.name = "background-debug-visuals";
 
   const colors = ["#FF0000", "#00FF00", "#0000FF"];
 
@@ -20,6 +21,7 @@ export function createDebugVisuals(
       opacity: 0.1,
     });
     const sphere = new THREE.Mesh(geometry, material);
+    sphere.name = `debug-layer-sphere-${radius}`;
     debugGroup.add(sphere);
   };
 

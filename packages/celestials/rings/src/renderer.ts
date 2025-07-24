@@ -111,7 +111,9 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       console.warn(
         `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
       );
-      return [{ object: new THREE.Group(), distance: 0 }];
+      const emptyGroup = new THREE.Group();
+      emptyGroup.name = `${object.celestialObjectId}-no-rings-empty`;
+      return [{ object: emptyGroup, distance: 0 }];
     }
 
     // Store the ring system configuration for later use

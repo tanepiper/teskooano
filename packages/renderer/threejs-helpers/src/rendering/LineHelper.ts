@@ -245,6 +245,7 @@ export class LineHelper {
     radius: number = 5,
   ): THREE.Group {
     const lines = new THREE.Group();
+    lines.name = "spiral-lines-group";
 
     for (let i = 0; i < lineCount; i++) {
       const per = i / lineCount;

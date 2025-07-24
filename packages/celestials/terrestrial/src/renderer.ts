@@ -267,6 +267,7 @@ export class BaseTerrestrialRenderer<
     const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
     mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
     const level1Group = new THREE.Group();
+    level1Group.name = `${object.celestialObjectId}-medium-lod-group`;
     level1Group.add(mediumMesh);
     return level1Group;
   }

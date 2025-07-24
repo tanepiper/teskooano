@@ -222,13 +222,13 @@ export class BillboardManager {
       (0.2 + config.color.getHSL({ h: 0, s: 0, l: 0 }).l) *
       (config.albedo ?? 0.3);
 
-    const pointLight = LightingHelper.createPointLight(
-      lightColor.getHex(),
-      lightIntensity,
-      0, // No decay distance limit
-      2, // Decay factor
-    );
-    pointLight.name = `${object.celestialObjectId}-low-lod-light`;
+    const pointLight = LightingHelper.createPointLight({
+      color: lightColor.getHex(),
+      intensity: lightIntensity,
+      decay: 2,
+      distance: 0,
+      name: `${object.celestialObjectId}-billboard-lod-light`,
+    });
     // Store the original intensity for fading calculations
     pointLight.userData.originalIntensity = lightIntensity;
     return pointLight;

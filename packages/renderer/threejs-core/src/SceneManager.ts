@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
 import { getPerformanceOptimization } from "./helpers/performance";
+import { Subscription } from "rxjs";
 
 /**
  * Manages the core Three.js components: the scene, camera, and renderer.
@@ -42,6 +43,7 @@ export class SceneManager {
   private height: number;
   private webGLCapabilities: THREE.WebGLCapabilities;
   private performanceOptimization: PerformanceOptimization;
+  private performanceSubscription?: Subscription;
 
   /**
    * Creates a new SceneManager instance.
@@ -104,14 +106,17 @@ export class SceneManager {
       profile,
     );
 
-    // Apply new settings to renderer
-    this.renderer.setPixelRatio(this.performanceOptimization.pixelRatio);
+    // Apply new settings to renderer (with null check)
+    if (this.renderer) {
+      this.renderer.setPixelRatio(this.performanceOptimization.pixelRatio);
 
-    if (this.performanceOptimization.shadows) {
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = this.performanceOptimization.shadowMapType;
-    } else {
-      this.renderer.shadowMap.enabled = false;
+      if (this.performanceOptimization.shadows) {
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type =
+          this.performanceOptimization.shadowMapType;
+      } else {
+        this.renderer.shadowMap.enabled = false;
+      }
     }
 
     // Emit optimization change event
@@ -124,7 +129,7 @@ export class SceneManager {
    * Subscribes to performance profile changes from the state
    */
   private _subscribeToPerformanceChanges(): void {
-    simulationState$.subscribe((state: any) => {
+    this.performanceSubscription = simulationState$.subscribe((state: any) => {
       if (state.performanceProfile) {
         this._updatePerformanceOptimization(state.performanceProfile);
       }
@@ -210,14 +215,18 @@ export class SceneManager {
    * Starts the render loop.
    */
   startRenderLoop(): void {
-    this.animationLoop.start();
+    if (this.animationLoop) {
+      this.animationLoop.start();
+    }
   }
 
   /**
    * Stops the render loop.
    */
   stopRenderLoop(): void {
-    this.animationLoop.stop();
+    if (this.animationLoop) {
+      this.animationLoop.stop();
+    }
   }
 
   /**
@@ -228,8 +237,10 @@ export class SceneManager {
     if (this.fov === newFov) return;
 
     this.fov = newFov;
-    this.camera.fov = newFov;
-    this.camera.updateProjectionMatrix();
+    if (this.camera) {
+      this.camera.fov = newFov;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   /**
@@ -242,10 +253,14 @@ export class SceneManager {
     this.width = width;
     this.height = height;
 
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
+    if (this.camera) {
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+    }
 
-    this.renderer.setSize(width, height);
+    if (this.renderer) {
+      this.renderer.setSize(width, height);
+    }
   }
 
   /**
@@ -254,6 +269,10 @@ export class SceneManager {
    * features like grids or backgrounds, which should be handled by specialized managers.
    */
   render(): void {
+    if (!this.renderer || !this.scene || !this.camera) {
+      return; // Cannot render if core components are null
+    }
+
     this.renderer.setViewport(0, 0, this.width, this.height);
 
     try {
@@ -268,21 +287,44 @@ export class SceneManager {
    * This should be called when the SceneManager is no longer needed to prevent memory leaks.
    */
   dispose(): void {
-    // Stop the animation loop first
-    this.animationLoop.stop();
+    console.log("[SceneManager] Disposing resources...");
 
-    // Remove the canvas from the DOM
-    if (this.renderer.domElement && this.renderer.domElement.parentElement) {
+    // Unsubscribe from performance changes first
+    if (this.performanceSubscription) {
+      this.performanceSubscription.unsubscribe();
+      this.performanceSubscription = undefined;
+    }
+
+    // Stop the animation loop first (with null check)
+    if (this.animationLoop) {
+      this.animationLoop.stop();
+    }
+
+    // Remove the canvas from the DOM (with null check)
+    if (this.renderer?.domElement?.parentElement) {
       this.renderer.domElement.parentElement.removeChild(
         this.renderer.domElement,
       );
     }
 
-    // Dispose the renderer (this also disposes the canvas)
-    this.renderer.dispose();
+    // Dispose the renderer (this also disposes the canvas) (with null check)
+    if (this.renderer) {
+      this.renderer.dispose();
+    }
 
-    // Clear the scene
-    this.scene.clear();
+    // Clear the scene (with null check)
+    if (this.scene) {
+      this.scene.clear();
+    }
+
+    // Nullify references to allow garbage collection
+    (this.scene as any) = null;
+    (this.camera as any) = null;
+    (this.renderer as any) = null;
+    (this.animationLoop as any) = null;
+    (this.performanceSubscription as any) = null;
+
+    console.log("[SceneManager] Disposal complete");
   }
 
   /**
@@ -291,7 +333,9 @@ export class SceneManager {
    * @param celestialType The type of celestial object being focused
    */
   public updateCameraSettingsForObject(celestialType?: string): void {
-    CameraHelper.updateCameraForCelestialType(this.camera, celestialType);
+    if (this.camera) {
+      CameraHelper.updateCameraForCelestialType(this.camera, celestialType);
+    }
   }
 
   /**

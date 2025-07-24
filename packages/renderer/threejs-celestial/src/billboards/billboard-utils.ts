@@ -66,13 +66,14 @@ export function createBillboardPointLight(
     lightIntensity = Math.max(0.5, Math.min(lightIntensity, 20.0)); // Clamp intensity
   }
 
-  const pointLight = LightingHelper.createPointLight(
-    starColor.getHex(),
-    lightIntensity,
-    0, // No decay distance limit
-    2, // Decay factor
-  );
-  pointLight.name = `${object.celestialObjectId}-low-lod-light`;
+  const pointLight = LightingHelper.createPointLight({
+    color: starColor.getHex(),
+    intensity: lightIntensity,
+    decay: 2,
+    distance: 0,
+    name: `${object.celestialObjectId}-low-lod-light`,
+    castShadow: false,
+  });
   // Store the original intensity for fading calculations
   pointLight.userData.originalIntensity = lightIntensity;
   return pointLight;

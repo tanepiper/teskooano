@@ -68,6 +68,7 @@ export class MainSequenceStarRenderer<
     mesh.name = `${object.celestialObjectId}-body`;
 
     const group = new THREE.Group();
+    group.name = `${object.celestialObjectId}-high-lod-group`;
     group.add(mesh);
     this._addCoronaToGroup(object, group);
 
@@ -82,7 +83,9 @@ export class MainSequenceStarRenderer<
       mediumSegments,
     );
     const mediumMesh = new THREE.Mesh(mediumGeometry, material);
+    mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
     const mediumGroup = new THREE.Group();
+    mediumGroup.name = `${object.celestialObjectId}-medium-lod-group`;
     mediumGroup.add(mediumMesh);
 
     return [

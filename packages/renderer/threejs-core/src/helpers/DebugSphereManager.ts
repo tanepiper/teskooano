@@ -95,6 +95,7 @@ export class DebugSphereManager {
       color: DEBUG_SPHERE_CONFIG.COLOR,
     });
     this.debugSphere = new THREE.Mesh(geometry, material);
+    this.debugSphere.name = "debug-sphere-origin";
     this.debugSphere.position.set(0, 0, 0);
     this.scene.add(this.debugSphere);
   }
