@@ -3,7 +3,7 @@ language: "typescript"
 platform: "node"
 type: "library"
 
-id: "oort-cloud"
+id: "celestials-oort-cloud"
 
 tasks:
   lint:

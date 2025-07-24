@@ -362,7 +362,7 @@ export function generateIconConfig(
       baseConfig.atmosphere = undefined;
       break;
     }
-    case CelestialType.SPACE_ROCK: {
+    case CelestialType.ASTEROID: {
       baseConfig.base.color = "#8B4513";
       break;
     }

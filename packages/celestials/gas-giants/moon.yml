@@ -1,6 +1,8 @@
 type: library
 language: typescript
 
+id: "celestials-gas-giants"
+
 tasks:
   build:
     command: npm run build

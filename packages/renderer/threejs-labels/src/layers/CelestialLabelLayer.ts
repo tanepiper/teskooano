@@ -24,6 +24,7 @@ export interface LabelVisibilityConfig {
   default?: number;
   satellite?: number;
   ejectedSatellite?: number;
+  asteroid?: number; // Add asteroid visibility config
 }
 
 /**
@@ -54,6 +55,7 @@ function calculateSurfaceDistance(
     CelestialType.COMET,
     CelestialType.ASTEROID_FIELD,
     CelestialType.OORT_CLOUD,
+    CelestialType.ASTEROID, // Add ASTEROID to solid body types
   ];
 
   if (solidBodyTypes.includes(objectType) && objectRadius > 0) {
@@ -97,6 +99,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       default: config.default ?? 400,
       satellite: config.satellite ?? 1,
       ejectedSatellite: config.ejectedSatellite ?? 200000000,
+      asteroid: config.asteroid ?? 1, // Default asteroid visibility to 1 AU
     };
 
     // Create a dedicated group for all celestial labels
@@ -215,6 +218,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         CelestialType.DWARF_PLANET,
         CelestialType.MOON,
         CelestialType.SATELLITE,
+        CelestialType.ASTEROID, // Include ASTEROID for surface distance calculation
       ];
 
       let distanceToSelf = centerDistance;
@@ -274,6 +278,11 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
         case CelestialType.DWARF_PLANET: {
           visible = distanceToSelf < config.planet;
+          break;
+        }
+
+        case CelestialType.ASTEROID: {
+          visible = distanceToSelf < config.asteroid;
           break;
         }
 
@@ -342,6 +351,13 @@ export class CelestialLabelLayer extends BaseLabelLayer {
               visible = distanceToSelf < config.ejectedMoon;
             }
           }
+          break;
+        }
+        case CelestialType.ASTEROID_FIELD:
+        case CelestialType.OORT_CLOUD: {
+          // These objects typically don't have labels, or are handled differently.
+          // Explicitly set to false to avoid displaying labels for them.
+          visible = false;
           break;
         }
         default: {
@@ -465,6 +481,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       ejectedSatellite: this.auToSceneUnits(
         this.visibilityConfig.ejectedSatellite,
       ),
+      asteroid: this.auToSceneUnits(this.visibilityConfig.asteroid), // Add asteroid visibility config
     };
   }
 

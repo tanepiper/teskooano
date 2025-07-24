@@ -217,7 +217,7 @@ export function formatDetailedType(object: CelestialObject): string {
     case CelestialType.RING_SYSTEM:
       return "Ring System";
 
-    case CelestialType.SPACE_ROCK:
+    case CelestialType.ASTEROID:
       return "Space Rock";
 
     case CelestialType.BARYCENTER:

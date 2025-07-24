@@ -17,7 +17,8 @@
       "@teskooano/renderer-threejs-celestial": ["../threejs-celestial/src"],
       "@teskooano/celestials-comet": ["../../celestials/comet/src"],
       "@teskooano/celestials-terrestrial": ["../../celestials/terrestrial/src"],
-      "@teskooano/celestials-gas-giants": ["../../celestials/gas-giants/src"]
+      "@teskooano/celestials-gas-giants": ["../../celestials/gas-giants/src"],
+      "@teskooano/celestials-asteroid": ["../../celestials/asteroid/src"]
     },
     "noEmit": false
   },
@@ -34,6 +35,7 @@
     { "path": "../threejs-labels" },
     { "path": "../../celestials/comet" },
     { "path": "../../celestials/terrestrial" },
-    { "path": "../../celestials/gas-giants" }
+    { "path": "../../celestials/gas-giants" },
+    { "path": "../../celestials/asteroid" }
   ]
 }

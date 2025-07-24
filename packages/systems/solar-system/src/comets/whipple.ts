@@ -3,7 +3,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CometOrbitType,
+  CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
@@ -35,7 +35,7 @@ export const whipple: CelestialObject = {
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometOrbitType.SHORT_PERIOD,
+    classType: CometClass.SHORT_PERIOD,
     discoveredDate: "1922-01-01",
     composition: ["water ice", "dust"],
     activity: 0.4, // Low activity

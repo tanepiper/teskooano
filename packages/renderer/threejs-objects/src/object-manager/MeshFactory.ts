@@ -12,6 +12,7 @@ import {
 import { createCometMesh } from "@teskooano/celestials-comet";
 import { createSatelliteMesh } from "@teskooano/celestials-satellite";
 import { createGasGiantMesh } from "@teskooano/celestials-gas-giants";
+import { createMesh as createAsteroidMesh } from "@teskooano/celestials-asteroid"; // Import asteroid createMesh as createAsteroidMesh
 import {
   type CelestialRenderer,
   createFallbackSphere,
@@ -156,6 +157,9 @@ export class MeshFactory {
           break;
         case CelestialType.OORT_CLOUD:
           mesh = createOortCloudMesh(object, deps);
+          break;
+        case CelestialType.ASTEROID:
+          mesh = createAsteroidMesh(object, deps);
           break;
         default:
           console.warn(

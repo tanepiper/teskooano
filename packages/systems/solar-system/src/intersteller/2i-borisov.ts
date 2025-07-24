@@ -4,7 +4,7 @@ import {
   CelestialStatus,
   CometProperties,
   type CelestialObject,
-  CometOrbitType,
+  CometClass,
 } from "@teskooano/data-types";
 
 /**
@@ -53,7 +53,7 @@ export const borisov: CelestialObject<CometProperties> = {
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometOrbitType.INTERSTELLAR,
+    classType: CometClass.INTERSTELLAR,
     activity: 0.8,
     composition: ["water ice", "dust", "organic compounds"],
     discoveredDate: "2019-08-30",

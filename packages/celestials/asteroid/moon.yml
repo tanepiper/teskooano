@@ -1,7 +1,7 @@
 type: library
 language: typescript
 
-id: "celestials-satellite"
+id: "celestials-asteroid"
 
 tasks:
   build:

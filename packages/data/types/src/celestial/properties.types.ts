@@ -13,8 +13,10 @@ import type {
   BlackHoleSubtype,
   WhiteDwarfSubtype,
   ProtostarSubtype,
-  CometOrbitType,
+  CometClass,
+  AsteroidClass,
 } from "./enums";
+import * as THREE from "three";
 
 /**
  * Common properties shared by all specific celestial object property types.
@@ -181,6 +183,39 @@ export interface PlanetProperties<T = ProceduralSurfaceProperties>
   rings?: RingProperties[];
 }
 
+export interface AsteroidProperties extends SpecificPropertiesBase {
+  type: CelestialType.ASTEROID;
+  /** The specific type classification of the asteroid (e.g., ROCKY, TERRESTRIAL). */
+  classType?: AsteroidClass;
+  /** The color of the asteroid, usually a hex string. */
+  color: string;
+  /** The composition of the asteroid, usually a string. */
+  composition: string;
+  /** The density of the asteroid, usually a number between 0 and 1. */
+  density: number;
+  /** The temperature of the asteroid, usually a number between 0 and 1. */
+  temperature: number;
+
+  /** A measure of the asteroid's activity, affecting how much it spins. */
+  activity: number;
+
+  visuals: {
+    darkColorMultiplier?: number;
+    lightColorMultiplier?: number;
+    fbmScale?: number;
+    fineFbmScale?: number;
+    fineFbmMix?: number;
+    ambientStrength?: number;
+    metallicFactor?: number;
+    roughness?: number;
+    specularColor?: THREE.Color;
+    shininess?: number; // Added from ProceduralSurfaceProperties
+    undulation?: number; // Added from ProceduralSurfaceProperties
+    terrainType?: number; // Added from ProceduralSurfaceProperties
+    terrainAmplitude?: number; // Added from ProceduralSurfaceProperties
+  };
+}
+
 /**
  * Interface defining properties for procedural surface generation and rendering.
  * These properties control the appearance and characteristics of procedurally generated surfaces
@@ -280,7 +315,7 @@ export interface CometProperties extends SpecificPropertiesBase {
   /**
    * The orbital classification of the comet.
    */
-  classType: CometOrbitType;
+  classType: CometClass;
   /** Array listing the primary chemical components (e.g., ["water ice", "CO2"]). */
   composition: string[];
   /** A measure of the comet's outgassing activity, affecting tail and coma visibility (0.0 = extinct, 1.0 = highly active). */
@@ -298,7 +333,7 @@ export interface CometProperties extends SpecificPropertiesBase {
   /** Opacity of the tail (0 to 1). */
   visualTailOpacity?: number;
   /** Optional container for detailed visual parameters of the nucleus shader. */
-  visuals?: {
+  visuals: {
     darkColorMultiplier?: number;
     lightColorMultiplier?: number;
     fbmScale?: number;
@@ -424,7 +459,8 @@ export type CelestialSpecificPropertiesUnion =
   | AsteroidFieldProperties
   | OortCloudProperties
   | RingSystemProperties
-  | SatelliteProperties;
+  | SatelliteProperties
+  | AsteroidProperties;
 
 export interface CelestialObjectProperties {
   planet?: PlanetProperties;
@@ -439,4 +475,4 @@ export type CelestiaClassType =
   | PlanetType
   | GasGiantClass
   | StellarType
-  | CometOrbitType;
+  | CometClass;

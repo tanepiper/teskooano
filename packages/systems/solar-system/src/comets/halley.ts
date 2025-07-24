@@ -3,7 +3,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CometOrbitType,
+  CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
@@ -38,7 +38,7 @@ export const halley: CelestialObject<CometProperties> = {
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometOrbitType.LONG_PERIOD,
+    classType: CometClass.LONG_PERIOD,
     discoveredDate: "240 BCE", // First recorded observation by Chinese astronomers
     composition: ["water ice", "CO2", "methane", "ammonia"],
     activity: 0.8, // Active when near perihelion

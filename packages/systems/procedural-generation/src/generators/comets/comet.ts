@@ -3,7 +3,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CometOrbitType,
+  CometClass,
   type CometProperties,
   type OrbitalParameters,
   type StarProperties,
@@ -123,26 +123,26 @@ export class CometGenerator {
   private determineCometType(
     distanceAU: number,
     random: () => number,
-  ): CometOrbitType {
+  ): CometClass {
     // Interstellar comets are rare and typically found at great distances
     if (distanceAU > 50 && random() < 0.1) {
-      return CometOrbitType.INTERSTELLAR;
+      return CometClass.INTERSTELLAR;
     }
 
     // Long-period comets are more common at medium distances
     if (distanceAU > 20 && random() < 0.6) {
-      return CometOrbitType.LONG_PERIOD;
+      return CometClass.LONG_PERIOD;
     }
 
     // Short-period comets are common at all distances
-    return CometOrbitType.SHORT_PERIOD;
+    return CometClass.SHORT_PERIOD;
   }
 
   /**
    * Create orbital parameters based on comet type
    */
   private createOrbitalParameters(
-    cometType: CometOrbitType,
+    cometType: CometClass,
     distanceAU: number,
     random: () => number,
   ): OrbitalParameters {
@@ -151,11 +151,11 @@ export class CometGenerator {
     const starMass = parentStar.realMass_kg || CONST.SOLAR_MASS_KG;
 
     switch (cometType) {
-      case CometOrbitType.INTERSTELLAR:
+      case CometClass.INTERSTELLAR:
         return this.createInterstellarOrbit(distanceAU, starMass, random);
-      case CometOrbitType.LONG_PERIOD:
+      case CometClass.LONG_PERIOD:
         return this.createLongPeriodOrbit(distanceAU, starMass, random);
-      case CometOrbitType.SHORT_PERIOD:
+      case CometClass.SHORT_PERIOD:
         return this.createShortPeriodOrbit(distanceAU, starMass, random);
       default:
         return this.createShortPeriodOrbit(distanceAU, starMass, random);
@@ -280,31 +280,31 @@ export class CometGenerator {
    * Get comet class and activity level based on orbit type
    */
   private getCometClassAndActivity(
-    cometType: CometOrbitType,
+    cometType: CometClass,
     random: () => number,
-  ): { classType: CometOrbitType; activity: number } {
+  ): { classType: CometClass; activity: number } {
     switch (cometType) {
-      case CometOrbitType.INTERSTELLAR:
+      case CometClass.INTERSTELLAR:
         // Interstellar comets are usually active when they enter the system
         return {
-          classType: CometOrbitType.INTERSTELLAR,
+          classType: CometClass.INTERSTELLAR,
           activity: random() < 0.7 ? 0.8 + random() * 0.2 : 0.0, // 70% active, 30% extinct
         };
-      case CometOrbitType.LONG_PERIOD:
+      case CometClass.LONG_PERIOD:
         // Long-period comets are often active when they approach
         return {
-          classType: CometOrbitType.LONG_PERIOD,
+          classType: CometClass.LONG_PERIOD,
           activity: random() < 0.8 ? 0.6 + random() * 0.4 : 0.0, // 80% active, 20% extinct
         };
-      case CometOrbitType.SHORT_PERIOD:
+      case CometClass.SHORT_PERIOD:
         // Short-period comets can be active or extinct depending on their history
         return {
-          classType: CometOrbitType.SHORT_PERIOD,
+          classType: CometClass.SHORT_PERIOD,
           activity: random() < 0.8 ? 0.4 + random() * 0.6 : 0.0, // 80% active, 20% extinct
         };
       default:
         return {
-          classType: CometOrbitType.SHORT_PERIOD,
+          classType: CometClass.SHORT_PERIOD,
           activity: 0.5 + random() * 0.5,
         };
     }

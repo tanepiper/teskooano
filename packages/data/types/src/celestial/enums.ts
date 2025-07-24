@@ -11,7 +11,7 @@ export enum CelestialType {
   /** A moon orbiting a planet or gas giant. */
   MOON = "MOON",
   /** Individual space rock objects, used for asteroid fields or rings. */
-  SPACE_ROCK = "SPACE_ROCK",
+  ASTEROID = "ASTEROID",
   /** A collection of space rocks, typically forming a belt. */
   ASTEROID_FIELD = "ASTEROID_FIELD",
   /** A large planet composed mostly of gases. */
@@ -69,7 +69,7 @@ export enum PlanetType {
 /**
  * Classification system for comets based on their orbital characteristics and origin.
  */
-export enum CometOrbitType {
+export enum CometClass {
   /** Interstellar comets that originate from outside the solar system (e.g., 2I/Borisov, 1I/'Oumuamua). */
   INTERSTELLAR = "INTERSTELLAR",
   /** Long-period comets with highly elliptical orbits and periods > 200 years (e.g., Hale-Bopp). */
@@ -92,6 +92,28 @@ export enum AtmosphereType {
   DENSE = "DENSE",
   /** A very dense atmosphere, potentially hazardous. */
   VERY_DENSE = "VERY_DENSE",
+}
+
+/**
+ * Classification system for asteroids based on their orbital characteristics and origin.
+ */
+export enum AsteroidClass {
+  /** Interstellar asteroids that originate from outside the solar system (e.g., 2I/Borisov, 1I/'Oumuamua). */
+  INTERSTELLAR = "INTERSTELLAR",
+  /** Long-period asteroids with highly elliptical orbits and periods > 200 years (e.g., Hale-Bopp). */
+  LONG_PERIOD = "LONG_PERIOD",
+  /** Short-period asteroids with moderate eccentricity and periods < 200 years (e.g., Halley's Comet). */
+  SHORT_PERIOD = "SHORT_PERIOD",
+  /** Captured asteroids that orbit a planet. */
+  CAPTURED = "CAPTURED",
+  /** A cluster of asteroids. */
+  CLUSTER = "CLUSTER",
+  /** A belt of asteroids. */
+  BELT = "BELT",
+  /** A ring of asteroids. */
+  RING = "RING",
+  /** A cloud of asteroids. */
+  CLOUD = "CLOUD",
 }
 
 /**

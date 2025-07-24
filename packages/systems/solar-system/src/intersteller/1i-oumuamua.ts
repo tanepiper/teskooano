@@ -3,7 +3,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CometOrbitType,
+  CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
@@ -37,7 +37,7 @@ export const oumuamua: CelestialObject<CometProperties> = {
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometOrbitType.INTERSTELLAR,
+    classType: CometClass.INTERSTELLAR,
     discoveredDate: "2017-10-19",
     composition: ["rock", "metal"], // No ice detected
     activity: 0.0, // No outgassing observed

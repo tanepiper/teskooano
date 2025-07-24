@@ -3,6 +3,8 @@ language: "typescript"
 platform: "node"
 type: "library"
 
+id: "celestials-asteroid-field"
+
 tasks:
   lint:
     command: "eslint ."

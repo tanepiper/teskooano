@@ -84,7 +84,7 @@ export function createMockMoon(overrides = {}): CelestialObject {
 export function createMockAsteroid(overrides = {}): CelestialObject {
   return {
     id: "test-asteroid",
-    type: CelestialType.SPACE_ROCK,
+    type: CelestialType.ASTEROID,
     name: "Test Asteroid",
     position: createMockVector3(200, 0, 0),
     rotation: { x: 0, y: 0, z: 0, w: 1 },

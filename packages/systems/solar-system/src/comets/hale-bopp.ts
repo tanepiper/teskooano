@@ -3,7 +3,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CometOrbitType,
+  CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
 
@@ -36,7 +36,7 @@ export const haleBopp: CelestialObject = {
   }),
   properties: {
     type: CelestialType.COMET,
-    classType: CometOrbitType.LONG_PERIOD,
+    classType: CometClass.LONG_PERIOD,
     discoveredDate: "1995-03-23",
     composition: ["water ice", "dust", "CO2"],
     activity: 0.9, // Very active

@@ -1,6 +1,8 @@
 type: library
 language: typescript
 
+id: "celestials-comet"
+
 tasks:
   build:
     command: npm run build

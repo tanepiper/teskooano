@@ -221,9 +221,9 @@ describe("Collision Handling (handleCollisions)", () => {
       ["3", false],
     ]);
     const bodyTypes = new Map<string | number, CelestialType>([
-      ["1", CelestialType.SPACE_ROCK],
-      ["2", CelestialType.SPACE_ROCK],
-      ["3", CelestialType.SPACE_ROCK],
+      ["1", CelestialType.ASTEROID],
+      ["2", CelestialType.ASTEROID],
+      ["3", CelestialType.ASTEROID],
     ]);
 
     const [updatedBodies] = handleCollisions(bodies, radii, isStar, bodyTypes);
