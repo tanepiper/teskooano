@@ -4,7 +4,11 @@ import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
 import { CelestialType, DeviceTier } from "@teskooano/data-types";
-import { SceneHelper } from "@teskooano/renderer-threejs-helpers";
+import {
+  SceneHelper,
+  CameraHelper,
+  CameraPreset,
+} from "@teskooano/renderer-threejs-helpers";
 
 /**
  * @interface SceneManagerOptions
@@ -59,43 +63,6 @@ export interface PerformanceOptimization {
 }
 
 /**
- * Dynamic camera settings based on celestial object type and size
- */
-const DynamicCameraSettings = {
-  // Near plane values for different celestial object types
-  NEAR_PLANES: {
-    [CelestialType.STAR]: 0.01, // Stars need slightly higher near plane to avoid shader issues
-    [CelestialType.PLANET]: 0.001, // Planets also need higher near plane
-    [CelestialType.GAS_GIANT]: 0.001,
-    [CelestialType.DWARF_PLANET]: 0.001,
-    [CelestialType.MOON]: 0.001,
-    [CelestialType.COMET]: 0.0000001, // Comets can use very low near plane for close viewing (like satellites)
-    [CelestialType.SATELLITE]: 0.0000001, // Satellites can use very low near plane for close viewing
-    [CelestialType.OORT_CLOUD]: 0.0001,
-    [CelestialType.ASTEROID_FIELD]: 0.0001,
-  },
-
-  // Min distance values for orbit controls
-  MIN_DISTANCES: {
-    [CelestialType.STAR]: 0.1, // Stars need slightly higher min distance
-    [CelestialType.PLANET]: 0.01, // Planets also need higher min distance
-    [CelestialType.GAS_GIANT]: 0.1,
-    [CelestialType.DWARF_PLANET]: 0.01,
-    [CelestialType.MOON]: 0.01,
-    [CelestialType.COMET]: 0.000001, // Comets can use very low min distance (like satellites)
-    [CelestialType.SATELLITE]: 0.000001, // Satellites can use very low min distance
-    [CelestialType.OORT_CLOUD]: 0.0001,
-    [CelestialType.ASTEROID_FIELD]: 0.0001,
-  },
-
-  // Default values when no specific object is focused
-  DEFAULT: {
-    NEAR_PLANE: 0.0001,
-    MIN_DISTANCE: 0.0001,
-  },
-};
-
-/**
  * @const DefaultSceneManagerConfig
  * @description Contains the default values for various scene, camera, and renderer settings.
  * This centralizes "magic numbers" and default configurations for easier management and consistency.
@@ -103,7 +70,7 @@ const DynamicCameraSettings = {
 const DefaultSceneManagerConfig = {
   CAMERA: {
     FOV: 75,
-    NEAR_PLANE: DynamicCameraSettings.DEFAULT.NEAR_PLANE, // Use dynamic default
+    NEAR_PLANE: 0.0001, // Default near plane for space scenes
     FAR_PLANE: 10000000,
     DEFAULT_POSITION: new OSVector3().setFromArray([0, 20, 50]),
     DEFAULT_TARGET: new OSVector3().setFromArray([0, 0, 0]),
@@ -376,11 +343,20 @@ export class SceneManager {
         break;
     }
 
+    // Use CameraHelper to create optimized space camera
+    const camera = CameraHelper.createCamera(CameraPreset.Space, {
+      fov: this.fov,
+      near: DefaultSceneManagerConfig.CAMERA.NEAR_PLANE,
+      far: DefaultSceneManagerConfig.CAMERA.FAR_PLANE,
+      position: [0, 20, 50], // Default camera position
+      aspect: this.width / this.height,
+    });
+
     // Use SceneHelper to create optimized space scene
     const sceneSetup = SceneHelper.createScene({
       backgroundColor: 0x000011, // Dark blue space background
       fov: this.fov,
-      near: DefaultSceneManagerConfig.CAMERA.NEAR_PLANE,
+      near: 0.0001, // Default near plane for space scenes
       far: DefaultSceneManagerConfig.CAMERA.FAR_PLANE,
       cameraPosition: [0, 20, 50], // Default camera position
       aspectRatio: this.width / this.height,
@@ -390,6 +366,16 @@ export class SceneManager {
       alpha: true,
       powerPreference: powerPref,
     });
+
+    // Replace the camera with our optimized one (ensure it's a PerspectiveCamera)
+    if (camera instanceof THREE.PerspectiveCamera) {
+      sceneSetup.camera = camera;
+    } else {
+      // Fallback to the original camera if CameraHelper returns OrthographicCamera
+      console.warn(
+        "CameraHelper returned OrthographicCamera, using default PerspectiveCamera",
+      );
+    }
 
     // Configure renderer size and append to container
     sceneSetup.renderer.setSize(this.width, this.height);
@@ -515,50 +501,15 @@ export class SceneManager {
    * @param celestialType The type of celestial object being focused
    */
   public updateCameraSettingsForObject(celestialType?: string): void {
-    if (!celestialType) {
-      // Use default settings when no specific object is focused
-      this._updateCameraNearPlane(DynamicCameraSettings.DEFAULT.NEAR_PLANE);
-      return;
-    }
-
-    // Get the appropriate near plane for this celestial type
-    const nearPlane =
-      DynamicCameraSettings.NEAR_PLANES[
-        celestialType as keyof typeof DynamicCameraSettings.NEAR_PLANES
-      ] ?? DynamicCameraSettings.DEFAULT.NEAR_PLANE;
-
-    this._updateCameraNearPlane(nearPlane);
+    CameraHelper.updateCameraForCelestialType(this.camera, celestialType);
   }
 
   /**
    * Gets the minimum distance setting for orbit controls based on celestial object type
-   * @param celestialType The type of celestial object being focused
+   * @param celestial object type
    * @returns The appropriate minimum distance value
    */
   public getMinDistanceForObject(celestialType?: string): number {
-    if (!celestialType) {
-      return DynamicCameraSettings.DEFAULT.MIN_DISTANCE;
-    }
-
-    return (
-      DynamicCameraSettings.MIN_DISTANCES[
-        celestialType as keyof typeof DynamicCameraSettings.MIN_DISTANCES
-      ] ?? DynamicCameraSettings.DEFAULT.MIN_DISTANCE
-    );
-  }
-
-  /**
-   * Updates the camera's near plane and recalculates the projection matrix
-   * @param nearPlane The new near plane value
-   */
-  private _updateCameraNearPlane(nearPlane: number): void {
-    if (this.camera.near !== nearPlane) {
-      this.camera.near = nearPlane;
-      this.camera.updateProjectionMatrix();
-
-      console.debug(
-        `[SceneManager] Updated camera near plane to ${nearPlane} for better shader compatibility`,
-      );
-    }
+    return CameraHelper.getMinDistanceForCelestialType(celestialType);
   }
 }

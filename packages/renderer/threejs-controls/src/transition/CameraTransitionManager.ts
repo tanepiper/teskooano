@@ -4,7 +4,10 @@ import {
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import { notificationManager } from "@teskooano/notifications";
-import gsap from "gsap";
+import {
+  AnimationHelper,
+  AnimationEase,
+} from "@teskooano/renderer-threejs-helpers";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
 import { StateAccessor } from "@teskooano/core-state";
 import { OSVector3 } from "@teskooano/core-math";
@@ -17,11 +20,12 @@ import { PerspectiveCamera, Vector3 } from "three";
 export class CameraTransitionManager {
   private camera: PerspectiveCamera;
   private orbitControlsHandler: OrbitControlsHandler;
+  private objectFollower: any; // Reference to ObjectFollower
 
   /** Flag indicating if the camera is currently undergoing a programmatic GSAP animation. */
   private isAnimating: boolean = false;
-  /** Stores the active GSAP timeline during transitions to allow cancellation. */
-  private activeTimeline: gsap.core.Timeline | null = null;
+  /** Stores the active animation during transitions to allow cancellation. */
+  private activeAnimation: any = null;
   /** Reusable temporary vector for calculations to avoid allocations. */
   private tempVector = new Vector3();
   /** The ID of the currently active transition notification. */
@@ -42,9 +46,11 @@ export class CameraTransitionManager {
   constructor(
     camera: PerspectiveCamera,
     orbitControlsHandler: OrbitControlsHandler,
+    objectFollower?: any,
   ) {
     this.camera = camera;
     this.orbitControlsHandler = orbitControlsHandler;
+    this.objectFollower = objectFollower;
   }
 
   /**
@@ -84,6 +90,11 @@ export class CameraTransitionManager {
     this.orbitControlsHandler.controls.enableDamping = false;
     this.orbitControlsHandler.setEnabled(false);
     this.isAnimating = true;
+
+    // Set the following transition flag to prevent ObjectFollower from interfering
+    if (this.objectFollower) {
+      this.objectFollower.isFollowingTransitioning = true;
+    }
   }
 
   /**
@@ -105,7 +116,7 @@ export class CameraTransitionManager {
     }
 
     this.isAnimating = false;
-    this.activeTimeline = null;
+    this.activeAnimation = null;
 
     this.camera.position.copy(finalCameraPos.toThreeJS());
     this.orbitControlsHandler.controls.target.copy(finalTargetPos.toThreeJS());
@@ -116,6 +127,11 @@ export class CameraTransitionManager {
       this._originalDampingFactor;
     this.orbitControlsHandler.setEnabled(true);
     this.orbitControlsHandler.controls.update();
+
+    // Clear the following transition flag
+    if (this.objectFollower) {
+      this.objectFollower.isFollowingTransitioning = false;
+    }
 
     const transitionCompleteEvent = new CustomEvent(
       CustomEvents.CAMERA_TRANSITION_COMPLETE,
@@ -146,11 +162,16 @@ export class CameraTransitionManager {
       this.activeTransitionNotificationId = null;
     }
 
-    if (this.isAnimating && this.activeTimeline) {
-      this.activeTimeline.kill();
-      this.activeTimeline = null;
+    if (this.isAnimating && this.activeAnimation) {
+      AnimationHelper.stopAnimation(`camera_${this.camera.uuid}`);
+      this.activeAnimation = null;
       this.isAnimating = false;
       this.orbitControlsHandler.setEnabled(true);
+    }
+
+    // Clear the following transition flag
+    if (this.objectFollower) {
+      this.objectFollower.isFollowingTransitioning = false;
     }
   }
 
@@ -180,18 +201,21 @@ export class CameraTransitionManager {
       );
     };
 
-    this.activeTimeline = gsap.timeline({ onComplete: onComplete });
-
-    this.activeTimeline.to(this.orbitControlsHandler.controls.target, {
-      x: target.x,
-      y: target.y,
-      z: target.z,
-      duration: duration,
-      ease: "power3.inOut",
-      onUpdate: () => {
-        this.camera.lookAt(this.orbitControlsHandler.controls.target);
+    this.activeAnimation = AnimationHelper.animateCamera(
+      this.camera,
+      new Vector3(
+        this.camera.position.x,
+        this.camera.position.y,
+        this.camera.position.z,
+      ),
+      {
+        duration: duration,
+        ease: AnimationEase.Power3InOut,
+        lookAt: new Vector3(target.x, target.y, target.z),
+        orbitControls: this.orbitControlsHandler.controls,
+        onComplete: onComplete,
       },
-    });
+    );
   }
 
   /**
@@ -250,13 +274,81 @@ export class CameraTransitionManager {
       );
     };
 
-    this.activeTimeline = gsap.timeline({ onComplete: onTimelineComplete });
+    // Use AnimationHelper for smooth camera transition
+    this.activeAnimation = AnimationHelper.animateCamera(
+      this.camera,
+      new Vector3(endPos.x, endPos.y, endPos.z),
+      {
+        duration: totalDuration,
+        ease: AnimationEase.Power3InOut,
+        lookAt: new Vector3(endTarget.x, endTarget.y, endTarget.z),
+        orbitControls: this.orbitControlsHandler.controls,
+        onComplete: onTimelineComplete,
+        onUpdate: () => {
+          if (!this.activeTransitionNotificationId) return;
 
-    const timelineUpdateCallback = () => {
-      if (!this.activeTimeline || !this.activeTransitionNotificationId) return;
+          const currentPosition = OSVector3.fromThreeJS(this.camera.position);
+          const remainingDistance = currentPosition.distanceTo(endPos);
+          const remainingDistanceAU = this.sceneUnitsToAu(remainingDistance);
+
+          notificationManager.updateNotification(
+            this.activeTransitionNotificationId,
+            {
+              message: `
+              Target: <strong>${targetName}</strong><br/>
+              Remaining: <strong>${remainingDistanceAU.toFixed(2)} AU</strong>
+            `,
+            },
+          );
+        },
+      },
+    );
+  }
+
+  /**
+   * Initiates a two-stage camera transition: first turn to face the target, then move to position.
+   */
+  public transitionToWithLookAtFirst(
+    endPos: OSVector3,
+    endTarget: OSVector3,
+    options?: { focusedObjectId?: string | null },
+  ): void {
+    this.beginTransition();
+
+    const startPos = OSVector3.fromThreeJS(this.camera.position);
+    this.lastUpdatePosition.copy(startPos);
+    this.lastUpdateTime = 0;
+    const totalDuration = this.calculateTransitionDuration(startPos, endPos);
+
+    let targetName = "Position";
+    if (options?.focusedObjectId) {
+      const targetObject = StateAccessor.getRenderableObject(
+        options.focusedObjectId,
+      );
+      if (targetObject) {
+        targetName = targetObject.name;
+      }
+    }
+
+    // Create the notification
+    const notification = notificationManager.addNotification({
+      title: `Moving to ${targetName}`,
+      message: `Calculating route to ${targetName}...`,
+      level: "info",
+      source: "CameraManager",
+    });
+    this.activeTransitionNotificationId = notification.id;
+
+    // At the start of transitionToWithLookAtFirst:
+    this.lastUpdatePosition.copy(OSVector3.fromThreeJS(this.camera.position));
+    this.lastUpdateTime = 0;
+    let activeTimeline: any = null;
+
+    const timelineUpdateCallback = (title: string) => {
+      if (!activeTimeline || !this.activeTransitionNotificationId) return;
 
       const currentPosition = OSVector3.fromThreeJS(this.camera.position);
-      const currentTime = this.activeTimeline.time();
+      const currentTime = activeTimeline.time();
 
       const deltaTime = currentTime - this.lastUpdateTime;
       const deltaDistance = currentPosition.distanceTo(this.lastUpdatePosition);
@@ -271,11 +363,12 @@ export class CameraTransitionManager {
 
       const remainingDistance = currentPosition.distanceTo(endPos);
       const remainingDistanceAU = this.sceneUnitsToAu(remainingDistance);
-      const remainingTime = this.activeTimeline.duration() - currentTime;
+      const remainingTime = activeTimeline.duration() - currentTime;
 
       notificationManager.updateNotification(
         this.activeTransitionNotificationId,
         {
+          title,
           message: `
           Target: <strong>${targetName}</strong><br/>
           Speed: <strong>${speedInAU.toFixed(2)} AU/s</strong><br/>
@@ -286,44 +379,56 @@ export class CameraTransitionManager {
       );
     };
 
-    if (rotationDuration > 0.01) {
-      this.activeTimeline.to(this.orbitControlsHandler.controls.target, {
-        x: endTarget.x,
-        y: endTarget.y,
-        z: endTarget.z,
-        duration: rotationDuration,
-        ease: "power3.inOut",
-        onUpdate: () => {
-          this.orbitControlsHandler.controls.update();
-          timelineUpdateCallback(); // Update during rotation phase
-        },
-      });
-    }
+    const onTimelineComplete = () => {
+      this.endTransition(
+        endPos,
+        endTarget,
+        "position-and-target",
+        options?.focusedObjectId,
+      );
+    };
 
-    if (positionDuration > 0.01) {
-      this.activeTimeline.to(
-        this.camera.position,
-        {
-          x: endPos.x,
-          y: endPos.y,
-          z: endPos.z,
-          duration: positionDuration,
-          ease: "power4.inOut",
-          onUpdate: () => {
-            this.orbitControlsHandler.controls.update();
-            timelineUpdateCallback(); // Update during position phase
-          },
+    // Stage 1: Turn to face the target (0.3 of total duration)
+    const turnDuration = totalDuration * 0.3;
+    const moveDuration = totalDuration * 0.7;
+
+    // First, turn the camera to face the target
+    this.activeAnimation = AnimationHelper.animateCamera(
+      this.camera,
+      new Vector3(
+        this.camera.position.x,
+        this.camera.position.y,
+        this.camera.position.z,
+      ), // Stay in same position
+      {
+        duration: turnDuration,
+        ease: AnimationEase.Power2InOut,
+        lookAt: new Vector3(endTarget.x, endTarget.y, endTarget.z),
+        orbitControls: this.orbitControlsHandler.controls,
+        onUpdate: () => {
+          activeTimeline = this.activeAnimation;
+          timelineUpdateCallback("Turning to");
         },
-        rotationDuration > 0.01 ? ">" : 0,
-      );
-    } else if (rotationDuration <= 0.01) {
-      console.warn(
-        "[CameraTransitionManager] Transition duration too short, jumping to end state.",
-      );
-      this.camera.position.copy(endPos.toThreeJS());
-      this.orbitControlsHandler.controls.target.copy(endTarget.toThreeJS());
-      onTimelineComplete();
-    }
+        onComplete: () => {
+          // Stage 2: Move to the final position while maintaining the look-at
+          this.activeAnimation = AnimationHelper.animateCamera(
+            this.camera,
+            new Vector3(endPos.x, endPos.y, endPos.z),
+            {
+              duration: moveDuration,
+              ease: AnimationEase.Power3InOut,
+              lookAt: new Vector3(endTarget.x, endTarget.y, endTarget.z),
+              orbitControls: this.orbitControlsHandler.controls,
+              onUpdate: () => {
+                activeTimeline = this.activeAnimation;
+                timelineUpdateCallback("Moving to");
+              },
+              onComplete: onTimelineComplete,
+            },
+          );
+        },
+      },
+    );
   }
 
   /**
@@ -375,11 +480,10 @@ export class CameraTransitionManager {
   }
 
   /**
-   * Cleans up any active GSAP animations.
+   * Cleans up any active animations.
    */
   public dispose(): void {
     this.cancelTransition();
-    gsap.killTweensOf(this.camera.position);
-    gsap.killTweensOf(this.orbitControlsHandler.controls.target);
+    AnimationHelper.stopObjectAnimations(this.camera);
   }
 }

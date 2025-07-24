@@ -12,6 +12,12 @@ import {
   DEFAULT_FOV,
 } from "./constants";
 import { Vector3 } from "three";
+import {
+  CameraHelper,
+  CameraPreset,
+  AnimationHelper,
+  AnimationEase,
+} from "@teskooano/renderer-threejs-helpers";
 
 /**
  * Manages camera operations within a Teskooano engine view.
@@ -329,11 +335,10 @@ export class CameraManager {
           );
         }
 
-        // Now, transition to the PREDICTED positions.
-        this.renderer.controlsManager.moveToPosition(
+        // Use a two-stage transition: first turn to face the object, then move to it
+        this.renderer.controlsManager.transitionToWithLookAtFirst(
           OSVector3.fromThreeJS(cameraPosition),
           OSVector3.fromThreeJS(predictedTargetPosition),
-          true,
           { focusedObjectId: objectId },
         );
       } else {

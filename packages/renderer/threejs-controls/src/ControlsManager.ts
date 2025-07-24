@@ -48,11 +48,12 @@ export class ControlsManager extends StateSubscriptionMixin {
       camera,
       rendererElement,
     );
+    this.objectFollower = new ObjectFollower(camera, this.orbitControlsHandler);
     this.transitionManager = new CameraTransitionManager(
       camera,
       this.orbitControlsHandler,
+      this.objectFollower,
     );
-    this.objectFollower = new ObjectFollower(camera, this.orbitControlsHandler);
 
     // Expose the raw controls instance
     this.controls = this.orbitControlsHandler.controls;
@@ -147,6 +148,26 @@ export class ControlsManager extends StateSubscriptionMixin {
     }
 
     this.transitionManager.transitionTo(position, target, options);
+  }
+
+  /**
+   * Moves the camera to a new position and target with a two-stage transition:
+   * 1. First turns the camera to face the target (without moving)
+   * 2. Then moves to the position while maintaining the look-at
+   * @param position The desired final camera position.
+   * @param target The desired final target position.
+   * @param options Optional parameters for the transition.
+   */
+  public transitionToWithLookAtFirst(
+    position: OSVector3,
+    target: OSVector3,
+    options?: { focusedObjectId?: string | null },
+  ): void {
+    this.transitionManager.transitionToWithLookAtFirst(
+      position,
+      target,
+      options,
+    );
   }
 
   /**

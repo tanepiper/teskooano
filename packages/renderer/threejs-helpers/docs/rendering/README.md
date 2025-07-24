@@ -1,6 +1,6 @@
 # Rendering Utilities
 
-The rendering utilities provide specialized tools for Three.js rendering operations, scene management, and line creation with optimized performance.
+The rendering utilities provide specialized tools for Three.js rendering operations, scene management, camera control, and line creation with optimized performance.
 
 ## SceneHelper
 
@@ -231,6 +231,242 @@ const stopAnimation = SceneHelper.createAnimationLoop(
 stopAnimation();
 ```
 
+## CameraHelper
+
+The `CameraHelper` class provides comprehensive methods for creating, configuring, and animating Three.js cameras with various presets and smooth transitions.
+
+### Overview
+
+```typescript
+import {
+  CameraHelper,
+  CameraPreset,
+  CameraMovementType,
+} from "@teskooano/renderer-threejs-helpers";
+
+// Create cameras with different presets and configurations
+```
+
+### Camera Presets
+
+```typescript
+// Basic camera with sensible defaults
+const basicCamera = CameraHelper.createCamera(CameraPreset.Basic);
+
+// Space camera optimized for astronomical visualization
+const spaceCamera = CameraHelper.createCamera(CameraPreset.Space, {
+  fov: 90,
+  near: 0.01,
+  far: 1000000,
+});
+
+// Debug camera with wide viewing angles
+const debugCamera = CameraHelper.createCamera(CameraPreset.Debug);
+
+// Cinematic camera for dramatic shots
+const cinematicCamera = CameraHelper.createCamera(CameraPreset.Cinematic, {
+  fov: 45,
+});
+
+// Orthographic camera for 2D-like rendering
+const orthoCamera = CameraHelper.createCamera(CameraPreset.Orthographic);
+```
+
+### Camera Animation
+
+```typescript
+// Smooth camera transitions
+CameraHelper.transitionTo(
+  camera,
+  new THREE.Vector3(10, 5, 20),
+  new THREE.Vector3(0, 0, 0),
+  {
+    duration: 2000,
+    movementType: CameraMovementType.Smooth,
+    onComplete: () => console.log("Transition complete"),
+  },
+);
+
+// Update animations in render loop
+function animate() {
+  requestAnimationFrame(animate);
+  CameraHelper.updateAnimations(deltaTime);
+  renderer.render(scene, camera);
+}
+```
+
+### Specialized Camera Types
+
+```typescript
+// Follow camera that tracks an object
+const followCamera = CameraHelper.createFollowCamera(
+  targetObject,
+  new THREE.Vector3(0, 5, 10),
+);
+
+// Orbit camera around a target point
+const orbitCamera = CameraHelper.createOrbitCamera(
+  new THREE.Vector3(0, 0, 0),
+  10, // radius
+  5, // height
+);
+
+// Keyframe camera for complex animations
+const keyframeCamera = CameraHelper.createKeyframeCamera([
+  {
+    position: new THREE.Vector3(0, 5, 10),
+    target: new THREE.Vector3(0, 0, 0),
+    time: 0,
+  },
+  {
+    position: new THREE.Vector3(10, 5, 10),
+    target: new THREE.Vector3(0, 0, 0),
+    time: 2000,
+  },
+]);
+```
+
+For detailed camera documentation, see [Camera Utilities](./camera.md).
+
+## AnimationHelper
+
+The `AnimationHelper` class provides comprehensive methods for creating smooth, performant animations using GSAP for Three.js objects, cameras, and materials.
+
+### Overview
+
+```typescript
+import {
+  AnimationHelper,
+  AnimationEase,
+} from "@teskooano/renderer-threejs-helpers";
+
+// Create smooth animations with GSAP integration
+```
+
+### Basic Animations
+
+```typescript
+// Position animation
+AnimationHelper.animatePosition(cube, new THREE.Vector3(10, 5, 0), {
+  duration: 2,
+  ease: AnimationEase.Power2Out,
+});
+
+// Rotation animation
+AnimationHelper.createRotationAnimation(
+  planet,
+  "y", // rotate around Y axis
+  20, // 20 seconds per rotation
+);
+
+// Scale animation
+AnimationHelper.createPulseAnimation(
+  star,
+  1.3, // scale to 130%
+  2, // 2 seconds per pulse
+);
+```
+
+### Camera Animations
+
+```typescript
+// Smooth camera movement
+AnimationHelper.animateCamera(camera, new THREE.Vector3(0, 10, 20), {
+  duration: 3,
+  ease: AnimationEase.Power2InOut,
+  lookAt: new THREE.Vector3(0, 0, 0),
+});
+
+// Camera orbit
+AnimationHelper.createOrbitAnimation(
+  camera,
+  new THREE.Vector3(0, 0, 0), // target
+  15, // radius
+  0, // start angle
+  Math.PI * 2, // full circle
+);
+```
+
+### Material Animations
+
+```typescript
+// Color animation
+AnimationHelper.animateColor(
+  material,
+  0xff0000, // red
+  { duration: 1, ease: AnimationEase.Power2Out },
+);
+
+// Opacity animation
+AnimationHelper.animateOpacity(
+  material,
+  0.0, // fade out
+  { duration: 0.5, ease: AnimationEase.Power2In },
+);
+```
+
+For detailed animation documentation, see [Animation Utilities](./animation.md).
+
+## CelestialAnimationHelper
+
+The `CelestialAnimationHelper` class provides specialized animation methods for celestial objects in the Teskooano app, building on top of the core AnimationHelper.
+
+### Overview
+
+```typescript
+import { CelestialAnimationHelper } from "@teskooano/renderer-threejs-helpers";
+
+// Specialized animations for celestial objects
+```
+
+### Planet and Moon Animations
+
+```typescript
+// Planet rotation
+CelestialAnimationHelper.createPlanetRotation(
+  earthObject,
+  86400, // 24 hours in seconds
+);
+
+// Moon floating
+CelestialAnimationHelper.createMoonFloat(
+  moonObject,
+  0.1, // amplitude
+  3.0, // period
+);
+```
+
+### Star Animations
+
+```typescript
+// Star pulsing
+CelestialAnimationHelper.createStarPulse(
+  starObject,
+  1.05, // pulse intensity
+  2.0, // pulse period
+);
+
+// Star glow
+CelestialAnimationHelper.createGlowAnimation(
+  starMaterial,
+  0.8, // min intensity
+  1.2, // max intensity
+);
+```
+
+### Camera Focus
+
+```typescript
+// Focus on celestial object
+CelestialAnimationHelper.createFocusAnimation(
+  camera,
+  planetObject,
+  15, // distance
+);
+```
+
+For detailed celestial animation documentation, see [Celestial Animation Utilities](./celestial-animation.md).
+
 ## LineHelper
 
 The `LineHelper` class provides comprehensive creation and management of `THREE.Line` objects, curves, and complex line patterns with automatic buffer pooling and memory optimization.
@@ -460,4 +696,6 @@ The rendering utilities are designed to work seamlessly with the Teskooano engin
 - [Getting Started](../getting-started.md) - Basic setup and usage
 - [Geometry Utilities](../geometry/README.md) - Geometry creation
 - [Memory Management](../memory/README.md) - Buffer pooling and optimization
+- [Camera Utilities](./camera.md) - Camera creation and animation
+- [Animation Utilities](./animation.md) - GSAP-based animations
 - [API Reference](../api-reference.md) - Complete method documentation

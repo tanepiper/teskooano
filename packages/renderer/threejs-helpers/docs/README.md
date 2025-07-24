@@ -25,6 +25,9 @@ This package provides a comprehensive collection of utility classes and function
 ### [Rendering Utilities](./rendering/README.md)
 
 - **LineBuilder** - Efficient line creation and management
+- **CameraHelper** - Camera creation and animation
+- **AnimationHelper** - GSAP-based animations
+- **CelestialAnimationHelper** - Specialized celestial object animations
 - Buffer optimization techniques
 - Performance monitoring
 
@@ -54,6 +57,9 @@ import {
   BufferPool,
   CircularBuffer,
   LineBuilder,
+  CameraHelper,
+  AnimationHelper,
+  CelestialAnimationHelper,
 } from "@teskooano/renderer-threejs-helpers";
 
 // Create a scene with basic setup
@@ -74,6 +80,18 @@ const line = lineBuilder.createLine(
   1000,
   new THREE.LineBasicMaterial({ color: 0xffffff }),
 );
+
+// Create cameras with different presets
+const spaceCamera = CameraHelper.createCamera(CameraPreset.Space);
+const followCamera = CameraHelper.createFollowCamera(targetObject);
+
+// Create smooth animations
+AnimationHelper.animatePosition(cube, new THREE.Vector3(10, 5, 0));
+AnimationHelper.createRotationAnimation(planet, "y", 20);
+
+// Create celestial animations
+CelestialAnimationHelper.createPlanetRotation(earth, 86400);
+CelestialAnimationHelper.createStarPulse(sun, 1.05, 2.0);
 ```
 
 ## 🏗️ Architecture
@@ -90,7 +108,7 @@ Advanced memory management utilities that reduce garbage collection and improve 
 
 ### Rendering (`/rendering`)
 
-Specialized utilities for rendering operations, particularly focused on line rendering and buffer optimization.
+Specialized utilities for rendering operations, camera control, line rendering, and buffer optimization.
 
 ## 📊 Performance Features
 
