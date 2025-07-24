@@ -45,24 +45,37 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
    *
    * @param objectManager - The scene's ObjectManager for rendering operations
    * @param layer2DManager - Optional manager for 2D labels (used for prediction markers)
+   * @param orbitLinesGroup - Shared group for all orbit-related lines
    */
-  constructor(objectManager: ObjectManager, layer2DManager?: Layer2DManager) {
+  constructor(
+    objectManager: ObjectManager,
+    layer2DManager?: Layer2DManager,
+    orbitLinesGroup?: THREE.Group,
+  ) {
     // Create managers with optimized curve configurations for N-body visualization
-    this.trailManager = new TrailManager(objectManager, {
-      type: TrailCurveType.Adaptive,
-      tension: 0.5,
-      segments: 8,
-      smoothing: 0.3,
-      adaptiveThreshold: 10,
-    });
+    this.trailManager = new TrailManager(
+      objectManager,
+      {
+        type: TrailCurveType.Adaptive,
+        tension: 0.5,
+        segments: 8,
+        smoothing: 0.3,
+        adaptiveThreshold: 10,
+      },
+      orbitLinesGroup,
+    );
 
-    this.predictionManager = new PredictionManager(objectManager, {
-      type: TrailCurveType.Orbital,
-      tension: 0.5,
-      segments: 6,
-      smoothing: 0.4,
-      adaptiveThreshold: 8,
-    });
+    this.predictionManager = new PredictionManager(
+      objectManager,
+      {
+        type: TrailCurveType.Orbital,
+        tension: 0.5,
+        segments: 6,
+        smoothing: 0.4,
+        adaptiveThreshold: 8,
+      },
+      orbitLinesGroup,
+    );
 
     if (layer2DManager) {
       this.predictionManager.setLayer2DManager(layer2DManager);

@@ -40,6 +40,7 @@ export class PredictionLabelLayer extends BaseLabelLayer {
     labelElement.dataset.markerTime = timeInSeconds.toString();
 
     const label = new CSS2DObject(labelElement);
+    label.name = `prediction-label-${id}`;
     label.position.copy(position);
     this.elements.set(id, label);
 

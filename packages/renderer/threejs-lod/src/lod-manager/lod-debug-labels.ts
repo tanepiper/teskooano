@@ -20,6 +20,7 @@ export function createDebugLabel(): DebugLabel {
   element.textContent = "LOD: ?";
 
   const sprite = new CSS2DObject(element);
+  sprite.name = "lod-debug-label";
   sprite.position.set(0, 1.1, 0);
   sprite.center.set(0.5, 0);
   sprite.layers.set(0);

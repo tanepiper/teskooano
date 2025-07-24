@@ -29,14 +29,17 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
    *
    * @param objectManager - The scene's ObjectManager for rendering operations
    * @param renderableObjects$ - Observable stream of renderable object data
+   * @param orbitLinesGroup - Shared group for all orbit-related lines
    */
   constructor(
     objectManager: ObjectManager,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
+    orbitLinesGroup: THREE.Group,
   ) {
     this.keplerianManager = new KeplerianManager(
       objectManager,
       renderableObjects$,
+      orbitLinesGroup,
       {
         type: TrailCurveType.Orbital,
         tension: 0.3,
@@ -78,7 +81,7 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
           this.highlightedObjectId,
           this.highlightColor,
         );
-      } else if (this.keplerianManager.lines.has(obj.celestialObjectId)) {
+      } else if (this.keplerianManager.hasLine(obj.celestialObjectId)) {
         this.keplerianManager.remove(obj.celestialObjectId);
       }
     });

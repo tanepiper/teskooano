@@ -77,6 +77,9 @@ export class OrbitsManager extends StateSubscriptionMixin {
   /** The optional manager for 2D labels, passed to strategies. */
   private layer2DManager?: Layer2DManager;
 
+  /** Shared orbit lines group for all orbit-related visualizations */
+  private orbitLinesGroup: THREE.Group;
+
   /**
    * Creates a new OrbitsManager instance.
    *
@@ -94,6 +97,11 @@ export class OrbitsManager extends StateSubscriptionMixin {
     super();
     this.stateAdapter = stateAdapter;
     this.layer2DManager = layer2DManager;
+
+    // Create a shared orbit lines group for all orbit-related visualizations
+    this.orbitLinesGroup = new THREE.Group();
+    this.orbitLinesGroup.name = "GROUP_ORBIT_LINES";
+    objectManager.addRawObjectToScene(this.orbitLinesGroup);
 
     // Subscribe to renderable objects stream
     this.subscribeToState(renderableObjects$, (objects) => {
@@ -172,12 +180,14 @@ export class OrbitsManager extends StateSubscriptionMixin {
       this.activeStrategy = new IdealStrategy(
         objectManager,
         renderableObjects$,
+        this.orbitLinesGroup,
       );
     } else {
       // N-Body mode uses the NBodyStrategy for all algorithms
       this.activeStrategy = new NBodyStrategy(
         objectManager,
         this.layer2DManager,
+        this.orbitLinesGroup,
       );
     }
 

@@ -106,6 +106,8 @@ export class PredictionManager {
   private readonly animationDuration: number = 0.5;
   /** ID of the currently highlighted object, to know which line to animate. */
   private highlightedObjectId: string | null = null;
+  /** Color for the highlighted prediction line. */
+  private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
   // -----------------------
 
   /** Duration to predict into the future (in seconds), synced from global state. */
@@ -120,18 +122,45 @@ export class PredictionManager {
   /** Subscription to state changes */
   private stateSubscription: Subscription | undefined;
 
+  /** Group for all orbit-related lines (prediction, trail, etc.) */
+  private orbitLinesGroup: THREE.Group;
+  /** Dedicated group for prediction lines within the orbit lines group */
+  private predictionLinesGroup: THREE.Group;
+
   /**
    * Creates a new PredictionManager instance.
    *
    * @param objectManager - The scene's ObjectManager for adding/removing objects
    * @param curveConfig - Optional curve configuration for prediction interpolation
+   * @param orbitLinesGroup - Optional shared group for all orbit-related lines
    */
-  constructor(objectManager: ObjectManager, curveConfig?: TrailCurveConfig) {
+  constructor(
+    objectManager: ObjectManager,
+    curveConfig?: TrailCurveConfig,
+    orbitLinesGroup?: THREE.Group,
+  ) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
+
     if (curveConfig) {
       this.curveConfig = { ...this.curveConfig, ...curveConfig };
     }
+
+    // Use the shared orbit lines group if provided, otherwise create our own
+    if (orbitLinesGroup) {
+      this.orbitLinesGroup = orbitLinesGroup;
+    } else {
+      // Create a dedicated group for all orbit-related lines
+      this.orbitLinesGroup = new THREE.Group();
+      this.orbitLinesGroup.name = "GROUP_ORBIT_LINES";
+      this.objectManager.addRawObjectToScene(this.orbitLinesGroup);
+    }
+
+    // Create a dedicated group for prediction lines within the orbit lines group
+    this.predictionLinesGroup = new THREE.Group();
+    this.predictionLinesGroup.name = "GROUP_PREDICTION_LINES";
+    this.orbitLinesGroup.add(this.predictionLinesGroup);
+
     this.initializeWorker();
     this.initializeStateSubscriptions();
   }
@@ -417,7 +446,10 @@ export class PredictionManager {
         `prediction-line-${objectId}`,
       );
       line.frustumCulled = false;
-      this.objectManager.addRawObjectToScene(line);
+
+      // Add prediction lines to the dedicated orbit lines group
+      this.predictionLinesGroup.add(line);
+
       this.predictionLines.set(objectId, line);
     }
 
@@ -443,7 +475,9 @@ export class PredictionManager {
   removePrediction(objectId: string): void {
     const line = this.predictionLines.get(objectId);
     if (line) {
-      this.objectManager.removeRawObjectFromScene(line);
+      // Remove from the orbit lines group
+      this.predictionLinesGroup.remove(line);
+
       this.lineBuilder.disposeLine(line);
       this.predictionLines.delete(objectId);
     }
@@ -603,6 +637,10 @@ export class PredictionManager {
         markerTime,
       );
       label.visible = false; // Initially hidden
+
+      // Add the label to the prediction lines group for better organization
+      this.predictionLinesGroup.add(label);
+
       this.predictionLabels.push({ label, element: label.element });
     });
   }
@@ -704,6 +742,7 @@ export class PredictionManager {
     this.clearAllPredictions();
     this.lineBuilder.clear();
     this.disposeLabels();
+    this.orbitLinesGroup.removeFromParent(); // Dispose the group
   }
 
   /**

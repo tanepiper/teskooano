@@ -10,11 +10,12 @@ import { CSS2DLayerType } from "../types";
  * This class encapsulates both the 3D ring geometries and the 2D CSS labels.
  */
 export class AuMarkerManager {
-  private group: THREE.Group;
+  private mainGroup: THREE.Group;
   private scene: THREE.Scene;
   private css2DManager: Layer2DManager;
   private isVisible: boolean = true;
   private auMarkersData: Array<{ au: number; color: string }>;
+  private auMarkerGroups: Map<number, THREE.Group> = new Map();
 
   /**
    * @param scene The main THREE.Scene to add the markers to.
@@ -23,15 +24,15 @@ export class AuMarkerManager {
   constructor(
     scene: THREE.Scene,
     css2DManager: Layer2DManager,
-    name = "GROUP_AU_MARKER_RINGS",
+    name = "GROUP_AU_MARKERS",
   ) {
     this.auMarkersData = this.generateAuMarkersData();
 
     this.scene = scene;
     this.css2DManager = css2DManager;
-    this.group = new THREE.Group();
-    this.group.name = name;
-    this.scene.add(this.group);
+    this.mainGroup = new THREE.Group();
+    this.mainGroup.name = name;
+    this.scene.add(this.mainGroup);
   }
 
   /**
@@ -45,6 +46,11 @@ export class AuMarkerManager {
     this.auMarkersData.forEach(({ au, color }) => {
       const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
       const ringThickness = radiusSceneUnits * 0.001;
+
+      // Create a group for this specific AU marker
+      const auMarkerGroup = new THREE.Group();
+      auMarkerGroup.name = `au-marker-group-${au}`;
+      this.auMarkerGroups.set(au, auMarkerGroup);
 
       // Create material with required properties
       const material = new THREE.MeshBasicMaterial({
@@ -69,20 +75,27 @@ export class AuMarkerManager {
         material,
       });
 
-      circle.rotation.x = -Math.PI / 2;
-      this.group.add(circle);
+      circle.rotation.x = Math.PI / 2;
 
       const labelPositions = {
         Xpos: new THREE.Vector3(radiusSceneUnits, 0, 0),
         Xneg: new THREE.Vector3(-radiusSceneUnits, 0, 0),
-        Zpos: new THREE.Vector3(0, 0, radiusSceneUnits),
-        Zneg: new THREE.Vector3(0, 0, -radiusSceneUnits),
+        Ypos: new THREE.Vector3(0, radiusSceneUnits, 0),
+        Yneg: new THREE.Vector3(0, -radiusSceneUnits, 0),
       };
 
       for (const [dir, pos] of Object.entries(labelPositions)) {
-        const labelId = `au-label-${dir}-${au}`;
-        auMarkerLayer.createLabel(labelId, au, pos, color);
+        const labelId = `au-marker-group-${au}-label-${dir}`;
+        // Create the CSS2D label and add it directly to the circle mesh
+        const css2dObject = auMarkerLayer.createLabel(labelId, au, pos, color);
+        circle.add(css2dObject);
       }
+
+      // Add the circle (with its labels) to the group
+      auMarkerGroup.add(circle);
+
+      // Add the AU marker group to the main group
+      this.mainGroup.add(auMarkerGroup);
     });
   }
 
@@ -92,7 +105,7 @@ export class AuMarkerManager {
    */
   public setVisible(visible: boolean): void {
     this.isVisible = visible;
-    this.group.visible = this.isVisible;
+    this.mainGroup.visible = this.isVisible;
     this.css2DManager.setLayerVisibility(
       CSS2DLayerType.AU_MARKERS,
       this.isVisible,
@@ -110,9 +123,9 @@ export class AuMarkerManager {
    * Removes all AU marker objects and labels from the scene and disposes of their resources.
    */
   public dispose(): void {
-    this.scene.remove(this.group);
+    this.scene.remove(this.mainGroup);
     // Dispose of all geometries and materials in the group
-    this.group.traverse((object) => {
+    this.mainGroup.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         object.geometry.dispose();
         if (Array.isArray(object.material)) {
@@ -123,8 +136,8 @@ export class AuMarkerManager {
       }
     });
     // Clear the group itself
-    while (this.group.children.length > 0) {
-      this.group.remove(this.group.children[0]);
+    while (this.mainGroup.children.length > 0) {
+      this.mainGroup.remove(this.mainGroup.children[0]);
     }
 
     this.css2DManager.clearLayer(CSS2DLayerType.AU_MARKERS);

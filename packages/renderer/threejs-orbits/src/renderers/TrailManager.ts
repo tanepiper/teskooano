@@ -63,9 +63,9 @@ export class TrailManager {
   private curveConfig: TrailCurveConfig = {
     type: TrailCurveType.Adaptive,
     tension: 0.5,
-    segments: 8,
+    segments: 10,
     smoothing: 0.3,
-    adaptiveThreshold: 10,
+    adaptiveThreshold: 5,
   };
 
   /** Sampling state for orbital-aware trail collection */
@@ -92,18 +92,44 @@ export class TrailManager {
   private lastPerformanceCheck: number = 0;
   private readonly PERFORMANCE_CHECK_INTERVAL = 5000; // Check every 5 seconds
 
+  private orbitLinesGroup: THREE.Group;
+  /** Dedicated group for trail lines within the orbit lines group */
+  private trailLinesGroup: THREE.Group;
+
   /**
    * Creates a new TrailManager instance.
    *
    * @param objectManager - The scene's ObjectManager for adding/removing objects
    * @param curveConfig - Optional curve configuration for trail interpolation
+   * @param orbitLinesGroup - Optional shared group for all orbit-related lines
    */
-  constructor(objectManager: ObjectManager, curveConfig?: TrailCurveConfig) {
+  constructor(
+    objectManager: ObjectManager,
+    curveConfig?: TrailCurveConfig,
+    orbitLinesGroup?: THREE.Group,
+  ) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
+
     if (curveConfig) {
       this.curveConfig = { ...this.curveConfig, ...curveConfig };
     }
+
+    // Use the shared orbit lines group if provided, otherwise create our own
+    if (orbitLinesGroup) {
+      this.orbitLinesGroup = orbitLinesGroup;
+    } else {
+      // Create a dedicated group for all orbit-related lines
+      this.orbitLinesGroup = new THREE.Group();
+      this.orbitLinesGroup.name = "GROUP_ORBIT_LINES";
+      this.objectManager.addRawObjectToScene(this.orbitLinesGroup);
+    }
+
+    // Create a dedicated group for all trail lines
+    this.trailLinesGroup = new THREE.Group();
+    this.trailLinesGroup.name = "GROUP_TRAIL_LINES";
+    this.orbitLinesGroup.add(this.trailLinesGroup);
+
     this.initializeWorker();
   }
 
@@ -299,7 +325,10 @@ export class TrailManager {
       );
 
       line.frustumCulled = false;
-      this.objectManager.addRawObjectToScene(line);
+
+      // Add trail lines to the dedicated orbit lines group
+      this.trailLinesGroup.add(line);
+
       this.trailLines.set(objectId, line);
     } else {
       this.lineBuilder.resizeLineBuffer(line, requiredBufferSize);
@@ -375,7 +404,9 @@ export class TrailManager {
   removeTrail(objectId: string): void {
     const line = this.trailLines.get(objectId);
     if (line) {
-      this.objectManager.removeRawObjectFromScene(line);
+      // Remove from the orbit lines group
+      this.trailLinesGroup.remove(line);
+
       this.lineBuilder.disposeLine(line);
       this.trailLines.delete(objectId);
     }
@@ -384,7 +415,9 @@ export class TrailManager {
     this.lastSampledPositions.delete(objectId);
     this.lastSampledTimes.delete(objectId);
 
-    this.trailWorker?.postMessage({ type: "remove", objectId });
+    this.trailLines.forEach((_, id) => {
+      this.applyHighlight(id, line!);
+    });
   }
 
   /**

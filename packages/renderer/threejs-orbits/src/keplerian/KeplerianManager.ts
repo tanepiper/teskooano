@@ -26,7 +26,7 @@ import {
  */
 export class KeplerianManager extends StateSubscriptionMixin {
   /** Map storing static Keplerian orbit lines, keyed by celestial object ID. */
-  public lines: Map<string, THREE.Line> = new Map();
+  private lines: Map<string, THREE.Line> = new Map();
 
   /** Cache for THREE.Vector3 arrays to avoid reallocation */
   private positionCache: Map<string, THREE.Vector3[]> = new Map();
@@ -66,16 +66,23 @@ export class KeplerianManager extends StateSubscriptionMixin {
     adaptiveThreshold: 5,
   };
 
+  /** Group for all orbit lines to manage visibility and highlighting collectively */
+  private orbitLinesGroup: THREE.Group;
+  /** Dedicated group for keplerian lines within the orbit lines group */
+  private keplerianLinesGroup: THREE.Group;
+
   /**
    * Creates an instance of KeplerianManager.
    *
    * @param objectManager - The scene's ObjectManager instance.
    * @param renderableObjects$ - An Observable emitting RenderableCelestialObject data.
+   * @param orbitLinesGroup - Shared group for all orbit-related lines
    * @param curveConfig - Optional curve configuration for orbit interpolation
    */
   constructor(
     objectManager: ObjectManager,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
+    orbitLinesGroup: THREE.Group,
     curveConfig?: TrailCurveConfig,
   ) {
     super();
@@ -83,10 +90,18 @@ export class KeplerianManager extends StateSubscriptionMixin {
     this.renderableObjects$ = renderableObjects$;
     this.lineBuilder = new LineHelper();
     this.threeVector3Converter = new ThreeVector3Converter(); // Initialize converter
+    this.orbitLinesGroup = orbitLinesGroup; // Use the shared group
+
     if (curveConfig) {
       this.curveConfig = { ...this.curveConfig, ...curveConfig };
     }
 
+    // Create a dedicated group for keplerian lines within the orbit lines group
+    this.keplerianLinesGroup = new THREE.Group();
+    this.keplerianLinesGroup.name = "GROUP_KEPLERIAN_LINES";
+    this.orbitLinesGroup.add(this.keplerianLinesGroup);
+
+    // Subscribe to renderable objects stream
     this.subscribeToState(this.renderableObjects$, (objects) => {
       this.latestRenderableObjects = objects;
     });
@@ -222,7 +237,10 @@ export class KeplerianManager extends StateSubscriptionMixin {
       newLine.visible = isVisible;
       newLine.frustumCulled = false;
 
-      this.objectManager.addRawObjectToScene(newLine);
+      // Orbit lines need to be positioned in absolute world space, not relative to celestial objects
+      // So we add them directly to the scene
+      this.keplerianLinesGroup.add(newLine);
+
       this.lines.set(objectId, newLine);
 
       this.applyHighlight(
@@ -242,7 +260,9 @@ export class KeplerianManager extends StateSubscriptionMixin {
   remove(objectId: string): void {
     const line = this.lines.get(objectId);
     if (line) {
-      this.objectManager.removeRawObjectFromScene(line);
+      // Remove from scene directly since orbit lines are positioned in absolute world space
+      this.keplerianLinesGroup.remove(line);
+
       this.lineBuilder.disposeLine(line);
       this.lines.delete(objectId);
       this.positionCache.delete(objectId);
@@ -264,8 +284,8 @@ export class KeplerianManager extends StateSubscriptionMixin {
    * @param visible - True to make lines visible, false to hide.
    */
   setVisibility(visible: boolean): void {
-    this.lines.forEach((line) => {
-      line.visible = visible;
+    this.keplerianLinesGroup.children.forEach((child) => {
+      child.visible = visible;
     });
   }
 
@@ -345,11 +365,25 @@ export class KeplerianManager extends StateSubscriptionMixin {
   }
 
   /**
-   * Cleans up resources for all managed lines.
+   * Checks if a line exists for the given object ID.
+   *
+   * @param objectId - ID of the object to check
+   * @returns True if a line exists for the object
+   */
+  hasLine(objectId: string): boolean {
+    return this.lines.has(objectId);
+  }
+
+  /**
+   * Disposes of all resources and cleans up internal state.
    */
   dispose(): void {
-    this.clearAll();
     super.dispose();
     this.lineBuilder.clear();
+
+    // Clear the orbit lines group
+    while (this.keplerianLinesGroup.children.length > 0) {
+      this.keplerianLinesGroup.remove(this.keplerianLinesGroup.children[0]);
+    }
   }
 }

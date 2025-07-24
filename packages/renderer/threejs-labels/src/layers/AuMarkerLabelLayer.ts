@@ -31,13 +31,14 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
    * @param auValue
    * @param position
    * @param color
+   * @returns The created CSS2DObject
    */
   public createLabel(
     id: string,
     auValue: number,
     position: THREE.Vector3,
     color: string,
-  ): void {
+  ): CSS2DObject {
     if (!this.scene) {
       throw new Error("No scene to create AU Markers with");
     }
@@ -55,11 +56,15 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
     labelElement.setAttribute("data-color", color);
 
     const css2dObject = new CSS2DObject(labelElement);
+    css2dObject.name = `au-marker-label-${id}`;
     css2dObject.position.copy(position);
 
-    this.scene.add(css2dObject);
+    // Don't add to scene here - the caller will add it to the appropriate mesh/group
+    // this.scene.add(css2dObject);
 
     this.elements.set(id, css2dObject);
+
+    return css2dObject;
   }
 
   public override update(

@@ -82,6 +82,9 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   private _tempPos1 = new THREE.Vector3();
   private _tempPos2 = new THREE.Vector3();
 
+  /** Group for all celestial labels to manage visibility and organization */
+  private celestialLabelsGroup: THREE.Group;
+
   constructor(scene: THREE.Scene, config: LabelVisibilityConfig = {}) {
     super(scene);
     this.visibilityConfig = {
@@ -95,6 +98,13 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       satellite: config.satellite ?? 1,
       ejectedSatellite: config.ejectedSatellite ?? 200000000,
     };
+
+    // Create a dedicated group for all celestial labels
+    this.celestialLabelsGroup = new THREE.Group();
+    this.celestialLabelsGroup.name = "GROUP_CELESTIAL_LABELS";
+    if (this.scene) {
+      this.scene.add(this.celestialLabelsGroup);
+    }
   }
 
   /**
@@ -129,9 +139,10 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     }
 
     const css2dObject = new CSS2DObject(labelElement);
+    css2dObject.name = `celestial-label-${object.celestialObjectId}`;
     css2dObject.position.copy(this.calculateLabelPosition(object, parentMesh));
 
-    this.scene.add(css2dObject);
+    this.celestialLabelsGroup.add(css2dObject);
     this.elements.set(object.celestialObjectId, css2dObject);
 
     // Initialize cache for this label
