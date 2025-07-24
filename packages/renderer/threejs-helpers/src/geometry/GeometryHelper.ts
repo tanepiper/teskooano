@@ -11,28 +11,35 @@ export class GeometryHelper {
   /**
    * Creates a box geometry with specified parameters.
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param width - Box width (default: 10)
-   * @param height - Box height (default: 10)
-   * @param depth - Box depth (default: 10)
+   * @param options - Box creation options
    * @returns Configured THREE.Mesh
    */
   static createBox(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    width: number = 10,
-    height: number = 10,
-    depth: number = 10,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      width?: number;
+      height?: number;
+      depth?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      width = 10,
+      height = 10,
+      depth = 10,
+      name,
+    } = options;
     const geometry = new THREE.BoxGeometry(width, height, depth);
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -42,32 +49,40 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a sphere geometry with specified parameters.
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param radius - Sphere radius (default: 1)
-   * @param segments - Number of segments (default: 64)
+   * @param options - Sphere creation options
    * @returns Configured THREE.Mesh
    */
   static createSphere(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    radius: number = 1,
-    segments: number = 64,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      radius?: number;
+      segments?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      radius = 1,
+      segments = 64,
+      name,
+    } = options;
     const geometry = new THREE.SphereGeometry(radius, segments, segments);
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -77,32 +92,40 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a tetrahedron geometry (triangle-based pyramid).
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param radius - Radius of the tetrahedron (default: 10)
-   * @param detail - Level of detail (default: 0)
+   * @param options - Tetrahedron creation options
    * @returns Configured THREE.Mesh
    */
   static createTetrahedron(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    radius: number = 10,
-    detail: number = 0,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      radius?: number;
+      detail?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      radius = 10,
+      detail = 0,
+      name,
+    } = options;
     const geometry = new THREE.TetrahedronGeometry(radius, detail);
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -112,36 +135,44 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a torus geometry (donut shape).
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param radius - Major radius (default: 10)
-   * @param tubeRadius - Minor radius (default: 5)
-   * @param segments - Number of segments (default: 16)
-   * @param tubeSegments - Number of tube segments (default: 32)
+   * @param options - Torus creation options
    * @returns Configured THREE.Mesh
    */
   static createTorus(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    radius: number = 10,
-    tubeRadius: number = 5,
-    segments: number = 16,
-    tubeSegments: number = 32,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      radius?: number;
+      tubeRadius?: number;
+      segments?: number;
+      tubeSegments?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      radius = 10,
+      tubeRadius = 5,
+      segments = 16,
+      tubeSegments = 32,
+      name,
+    } = options;
     const geometry = new THREE.TorusGeometry(
       radius,
       tubeRadius,
@@ -156,32 +187,40 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a plane geometry.
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param width - Plane width (default: 10)
-   * @param height - Plane height (default: 10)
+   * @param options - Plane creation options
    * @returns Configured THREE.Mesh
    */
   static createPlane(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    width: number = 10,
-    height: number = 10,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      width?: number;
+      height?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      width = 10,
+      height = 10,
+      name,
+    } = options;
     const geometry = new THREE.PlaneGeometry(width, height);
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -191,36 +230,44 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a cylinder geometry.
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param radiusTop - Top radius (default: 10)
-   * @param radiusBottom - Bottom radius (default: 10)
-   * @param height - Cylinder height (default: 20)
-   * @param segments - Number of segments (default: 32)
+   * @param options - Cylinder creation options
    * @returns Configured THREE.Mesh
    */
   static createCylinder(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    radiusTop: number = 10,
-    radiusBottom: number = 10,
-    height: number = 20,
-    segments: number = 32,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      radiusTop?: number;
+      radiusBottom?: number;
+      height?: number;
+      segments?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      radiusTop = 10,
+      radiusBottom = 10,
+      height = 20,
+      segments = 32,
+      name,
+    } = options;
     const geometry = new THREE.CylinderGeometry(
       radiusTop,
       radiusBottom,
@@ -235,34 +282,42 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a cone geometry.
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param radius - Base radius (default: 10)
-   * @param height - Cone height (default: 20)
-   * @param segments - Number of segments (default: 32)
+   * @param options - Cone creation options
    * @returns Configured THREE.Mesh
    */
   static createCone(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    radius: number = 10,
-    height: number = 20,
-    segments: number = 32,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      radius?: number;
+      height?: number;
+      segments?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      radius = 10,
+      height = 20,
+      segments = 32,
+      name,
+    } = options;
     const geometry = new THREE.ConeGeometry(radius, height, segments);
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -272,32 +327,40 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a circle geometry.
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param radius - Circle radius (default: 10)
-   * @param segments - Number of segments (default: 32)
+   * @param options - Circle creation options
    * @returns Configured THREE.Mesh
    */
   static createCircle(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    radius: number = 10,
-    segments: number = 32,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      radius?: number;
+      segments?: number;
+      name?: string;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      radius = 10,
+      segments = 32,
+      name,
+    } = options;
     const geometry = new THREE.CircleGeometry(radius, segments);
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -307,38 +370,44 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
+    if (name) mesh.name = name;
     return mesh;
   }
 
   /**
    * Creates a ring geometry (annulus).
    *
-   * @param x - X position
-   * @param y - Y position
-   * @param z - Z position
-   * @param size - Scale factor
-   * @param color - Hex color value
-   * @param wireframe - Whether to render as wireframe
-   * @param innerRadius - Inner radius of the ring (default: 5)
-   * @param outerRadius - Outer radius of the ring (default: 10)
-   * @param segments - Number of segments (default: 32)
-   * @param name - Optional name for the mesh
-   * @param material - Optional custom material (overrides color and wireframe)
+   * @param options - Ring creation options
    * @returns Configured THREE.Mesh
    */
   static createRing(
-    x: number,
-    y: number,
-    z: number,
-    size: number = 1,
-    color: number = 0xffffff,
-    wireframe: boolean = false,
-    innerRadius: number = 5,
-    outerRadius: number = 10,
-    segments: number = 32,
-    name?: string,
-    material?: THREE.Material,
+    options: {
+      x?: number;
+      y?: number;
+      z?: number;
+      size?: number;
+      color?: number;
+      wireframe?: boolean;
+      innerRadius?: number;
+      outerRadius?: number;
+      segments?: number;
+      name?: string;
+      material?: THREE.Material;
+    } = {},
   ): THREE.Mesh {
+    const {
+      x = 0,
+      y = 0,
+      z = 0,
+      size = 1,
+      color = 0xffffff,
+      wireframe = false,
+      innerRadius = 5,
+      outerRadius = 10,
+      segments = 32,
+      name,
+      material,
+    } = options;
     const geometry = new THREE.RingGeometry(innerRadius, outerRadius, segments);
     const meshMaterial =
       material ||
@@ -350,9 +419,7 @@ export class GeometryHelper {
     const mesh = new THREE.Mesh(geometry, meshMaterial);
     mesh.position.set(x, y, z);
     mesh.scale.set(size, size, size);
-    if (name) {
-      mesh.name = name;
-    }
+    if (name) mesh.name = name;
     return mesh;
   }
 

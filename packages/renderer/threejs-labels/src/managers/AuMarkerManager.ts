@@ -55,19 +55,19 @@ export class AuMarkerManager {
         toneMapped: true,
       });
 
-      const circle = GeometryHelper.createRing(
-        0,
-        0,
-        0, // position
-        1, // size
-        0xffffff, // color (ignored when material is provided)
-        false, // wireframe (ignored when material is provided)
-        radiusSceneUnits - ringThickness / 2, // innerRadius
-        radiusSceneUnits + ringThickness / 2, // outerRadius
-        256, // segments
-        `AU_RING_${au}`, // name
-        material, // custom material
-      );
+      const circle = GeometryHelper.createRing({
+        x: 0,
+        y: 0,
+        z: 0,
+        size: 1,
+        color: 0xffffff, // ignored when material is provided
+        wireframe: false, // ignored when material is provided
+        innerRadius: radiusSceneUnits - ringThickness / 2,
+        outerRadius: radiusSceneUnits + ringThickness / 2,
+        segments: 256,
+        name: `AU_RING_${au}`,
+        material,
+      });
 
       circle.rotation.x = -Math.PI / 2;
       this.group.add(circle);
