@@ -128,6 +128,38 @@ export class ObjectManager extends StateSubscriptionMixin {
   }
 
   /**
+   * Public accessor for the celestial renderers map.
+   * @returns Map of celestial renderers keyed by object ID.
+   */
+  public getCelestialRenderers(): Map<string, CelestialRenderer> {
+    return this.celestialRenderers;
+  }
+
+  /**
+   * Public accessor for the star renderers map.
+   * @returns Map of star renderers keyed by object ID.
+   */
+  public getStarRenderers(): Map<string, CelestialRenderer> {
+    return this.starRenderers;
+  }
+
+  /**
+   * Public accessor for the planet renderers map.
+   * @returns Map of planet renderers keyed by object ID.
+   */
+  public getPlanetRenderers(): Map<string, CelestialRenderer> {
+    return this.planetRenderers;
+  }
+
+  /**
+   * Public accessor for the moon renderers map.
+   * @returns Map of moon renderers keyed by object ID.
+   */
+  public getMoonRenderers(): Map<string, CelestialRenderer> {
+    return this.moonRenderers;
+  }
+
+  /**
    * Creates an instance of ObjectManager.
    *
    * @param scene - The main Three.js scene.

@@ -17,6 +17,7 @@ import {
   TrailCurveType,
   type TrailCurveConfig,
 } from "../renderers/TrailManager";
+import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Enum defining the available modes for orbit visualization.
@@ -80,6 +81,11 @@ export class OrbitsManager extends StateSubscriptionMixin {
   /** Shared orbit lines group for all orbit-related visualizations */
   private orbitLinesGroup: THREE.Group;
 
+  private starRenderers: Map<string, CelestialRenderer> = new Map();
+  private planetRenderers: Map<string, CelestialRenderer> = new Map();
+  private moonRenderers: Map<string, CelestialRenderer> = new Map();
+  private celestialRenderers: Map<string, CelestialRenderer> = new Map();
+
   /**
    * Creates a new OrbitsManager instance.
    *
@@ -93,10 +99,20 @@ export class OrbitsManager extends StateSubscriptionMixin {
     stateAdapter: RendererStateAdapter,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     layer2DManager?: Layer2DManager,
+    renderers?: {
+      starRenderers: Map<string, CelestialRenderer>;
+      planetRenderers: Map<string, CelestialRenderer>;
+      moonRenderers: Map<string, CelestialRenderer>;
+      celestialRenderers: Map<string, CelestialRenderer>;
+    },
   ) {
     super();
     this.stateAdapter = stateAdapter;
     this.layer2DManager = layer2DManager;
+    this.starRenderers = renderers?.starRenderers ?? new Map();
+    this.planetRenderers = renderers?.planetRenderers ?? new Map();
+    this.moonRenderers = renderers?.moonRenderers ?? new Map();
+    this.celestialRenderers = renderers?.celestialRenderers ?? new Map();
 
     // Create a shared orbit lines group for all orbit-related visualizations
     this.orbitLinesGroup = new THREE.Group();
@@ -188,6 +204,12 @@ export class OrbitsManager extends StateSubscriptionMixin {
         objectManager,
         this.layer2DManager,
         this.orbitLinesGroup,
+        {
+          starRenderers: this.starRenderers,
+          planetRenderers: this.planetRenderers,
+          moonRenderers: this.moonRenderers,
+          celestialRenderers: this.celestialRenderers,
+        },
       );
     }
 
@@ -321,7 +343,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
    */
   public getTrailManager(): TrailManager | undefined {
     if (this.activeStrategy instanceof NBodyStrategy) {
-      return this.activeStrategy.trailManager;
+      return this.activeStrategy.orbitalRenderer as any;
     }
     return undefined;
   }
@@ -390,12 +412,8 @@ export class OrbitsManager extends StateSubscriptionMixin {
   public clearAllTrails(): void {
     if (this.activeStrategy) {
       // For NBody strategy, clear trails
-      if ("trailManager" in this.activeStrategy) {
-        const trailManager = (this.activeStrategy as any).trailManager;
-        // Clear all trails by removing each one
-        trailManager.trailLines.forEach((_: any, objectId: string) => {
-          trailManager.removeTrail(objectId);
-        });
+      if (this.activeStrategy instanceof NBodyStrategy) {
+        this.activeStrategy.orbitalRenderer.clearAllOrbitalLines();
       }
     }
   }

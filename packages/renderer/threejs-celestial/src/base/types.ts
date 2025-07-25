@@ -2,7 +2,7 @@ import { RenderableCelestialObject } from "@teskooano/data-types";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { type OrbitalConfig } from "./managers/OrbitalManager";
+import { type OrbitalConfig } from "./managers/PositionHistorylManager";
 
 /**
  * Configuration options for the BaseCelestialRenderer.

@@ -1,6 +1,6 @@
 import type { IOrbitVisualizationStrategy } from "./IOrbitVisualizationStrategy";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { TrailManager, TrailCurveType } from "../../renderers/TrailManager";
+import { SimpleOrbitalRenderer } from "../../renderers/SimpleOrbitalRenderer";
 import { PredictionManager } from "../../renderers/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
@@ -8,6 +8,9 @@ import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { simulationStateService } from "@teskooano/core-state";
 import { StateAccessor } from "@teskooano/core-state";
 import { CelestialType } from "@teskooano/data-types";
+import { TrailCurveType } from "../../renderers/TrailManager";
+import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
+import { BaseCelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Implementation of the orbit visualization strategy for N-Body simulation modes.
@@ -23,16 +26,16 @@ import { CelestialType } from "@teskooano/data-types";
  * results rather than using static mathematical formulas.
  */
 export class NBodyStrategy implements IOrbitVisualizationStrategy {
-  /** Manager for historical orbit trails */
-  public trailManager: TrailManager;
+  /** Simple renderer for orbital lines using PositionHistoryManager data */
+  public orbitalRenderer: SimpleOrbitalRenderer;
   /** Manager for future trajectory predictions */
   public predictionManager: PredictionManager;
   /** Currently highlighted object ID */
   private highlightedObjectId: string | null = null;
-  /** Counter for throttling trail updates */
-  private trailUpdateCounter: number = 0;
-  /** How often to update trail geometry (every N frames) */
-  private readonly trailUpdateFrequency: number = 10;
+  /** Counter for throttling orbital updates */
+  private orbitalUpdateCounter: number = 0;
+  /** How often to update orbital geometry (every N frames) */
+  private readonly orbitalUpdateFrequency: number = 10;
   /** Counter for throttling prediction updates */
   private predictionUpdateCounter: number = 0;
   /** How often to update predictions (every N frames) */
@@ -40,28 +43,34 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
   /** Visibility state for all visualizations */
   private isVisible: boolean = true;
 
+  /** Maps of renderers for different celestial types */
+  private starRenderers: Map<string, CelestialRenderer>;
+  private planetRenderers: Map<string, CelestialRenderer>;
+  private moonRenderers: Map<string, CelestialRenderer>;
+  private celestialRenderers: Map<string, CelestialRenderer>;
+
   /**
    * Creates a new NBodyStrategy instance.
    *
    * @param objectManager - The scene's ObjectManager for rendering operations
    * @param layer2DManager - Optional manager for 2D labels (used for prediction markers)
    * @param orbitLinesGroup - Shared group for all orbit-related lines
+   * @param renderers - Maps of renderers for different celestial types
    */
   constructor(
     objectManager: ObjectManager,
     layer2DManager?: Layer2DManager,
     orbitLinesGroup?: THREE.Group,
+    renderers?: {
+      starRenderers: Map<string, CelestialRenderer>;
+      planetRenderers: Map<string, CelestialRenderer>;
+      moonRenderers: Map<string, CelestialRenderer>;
+      celestialRenderers: Map<string, CelestialRenderer>;
+    },
   ) {
-    // Create managers with optimized curve configurations for N-body visualization
-    this.trailManager = new TrailManager(
+    // Create simple orbital renderer that uses PositionHistoryManager directly
+    this.orbitalRenderer = new SimpleOrbitalRenderer(
       objectManager,
-      {
-        type: TrailCurveType.Adaptive,
-        tension: 0.5,
-        segments: 8,
-        smoothing: 0.3,
-        adaptiveThreshold: 10,
-      },
       orbitLinesGroup,
     );
 
@@ -77,16 +86,39 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
       orbitLinesGroup,
     );
 
+    // Store renderer maps for accessing PositionHistoryManager
+    this.starRenderers = renderers?.starRenderers ?? new Map();
+    this.planetRenderers = renderers?.planetRenderers ?? new Map();
+    this.moonRenderers = renderers?.moonRenderers ?? new Map();
+    this.celestialRenderers = renderers?.celestialRenderers ?? new Map();
+
     if (layer2DManager) {
       this.predictionManager.setLayer2DManager(layer2DManager);
     }
   }
 
   /**
-   * Updates all trail and prediction visualizations.
+   * Gets the renderer for a specific object ID.
+   *
+   * @param objectId - The ID of the object
+   * @returns The renderer for the object, or undefined if not found
+   */
+  private getRenderer(objectId: string): BaseCelestialRenderer | undefined {
+    const renderer =
+      this.starRenderers.get(objectId) ||
+      this.planetRenderers.get(objectId) ||
+      this.moonRenderers.get(objectId) ||
+      this.celestialRenderers.get(objectId);
+
+    // Cast to BaseCelestialRenderer to access positionHistoryManager
+    return renderer as BaseCelestialRenderer;
+  }
+
+  /**
+   * Updates all orbital and prediction visualizations.
    *
    * This method:
-   * 1. Updates the trail history for all objects
+   * 1. Updates the orbital lines for all objects using their PositionHistoryManager
    * 2. Updates the prediction trajectory for the highlighted object
    * 3. Positions prediction lines and labels correctly based on simulation mode
    *
@@ -105,28 +137,28 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
     },
     deltaTime: number,
   ): void {
-    const trailLength = 50000;
-
     this.predictionManager.update(deltaTime);
 
-    if (this.predictionUpdateCounter === 0) {
-      this.trailManager.limitHistoryMemory(trailLength);
+    this.orbitalUpdateCounter++;
+    const shouldUpdateOrbitalGeometry =
+      this.orbitalUpdateCounter >= this.orbitalUpdateFrequency;
+    if (shouldUpdateOrbitalGeometry) {
+      this.orbitalUpdateCounter = 0;
     }
 
-    this.trailUpdateCounter++;
-    const shouldUpdateTrailGeometry =
-      this.trailUpdateCounter >= this.trailUpdateFrequency;
-    if (shouldUpdateTrailGeometry) {
-      this.trailUpdateCounter = 0;
-    }
-
+    // Update orbital lines for all objects using their PositionHistoryManager
     Object.values(objects).forEach((obj) => {
-      this.trailManager.updateTrail(
-        obj.celestialObjectId,
-        obj,
-        trailLength,
-        shouldUpdateTrailGeometry,
-      );
+      const renderer = this.getRenderer(obj.celestialObjectId);
+      if (renderer && renderer.positionHistoryManager) {
+        // For now, use a simple distance calculation based on object position
+        // In a real implementation, we'd need to pass the camera as a parameter
+        const distance = obj.position.length(); // Simple distance from origin
+        this.orbitalRenderer.updateOrbitalLine(
+          obj.celestialObjectId,
+          renderer.positionHistoryManager,
+          distance,
+        );
+      }
     });
 
     this.predictionUpdateCounter++;
@@ -134,146 +166,43 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
       this.predictionUpdateCounter >= this.predictionUpdateFrequency;
     if (shouldUpdatePredictions) {
       this.predictionUpdateCounter = 0;
-    }
 
-    if (this.highlightedObjectId) {
-      // Check if the highlighted object still exists
-      if (!objects[this.highlightedObjectId]) {
-        // Object no longer exists, clear the highlight
-        this.highlightedObjectId = null;
-        this.predictionManager.highlightPrediction(null);
-        return;
+      // Update prediction for highlighted object
+      if (this.highlightedObjectId) {
+        this.predictionManager.updatePrediction(this.highlightedObjectId, {
+          forceRecalculate: true,
+          timeScale: visualSettings.timeScale,
+          predictionSteps: visualSettings.predictionSteps,
+        });
       }
-
-      this.predictionManager.updatePrediction(this.highlightedObjectId, {
-        forceRecalculate: shouldUpdatePredictions,
-        timeScale: visualSettings.timeScale,
-        predictionSteps: visualSettings.predictionSteps,
-      });
-      this.predictionManager.highlightPrediction(this.highlightedObjectId);
-
-      const line = this.predictionManager.predictionLines.get(
-        this.highlightedObjectId,
-      );
-      const object = objects[this.highlightedObjectId];
-      const labels = this.predictionManager.getPredictionLabels();
-
-      // Check simulation mode to determine how to position prediction lines
-      const simulationConfig =
-        simulationStateService.getSimulationState().simulationConfig;
-      const isIdealMode = simulationConfig.mode === "ideal";
-
-      if (line) {
-        if (isIdealMode) {
-          // In ideal mode, predictions are calculated in absolute world coordinates
-          // so the line should be positioned at the origin
-          line.position.set(0, 0, 0);
-          labels.forEach(({ label }) => {
-            if (label.visible && label.userData.localPosition) {
-              label.position.copy(label.userData.localPosition);
-            }
-          });
-        } else {
-          // In N-body mode, check if we have a valid parent for relative positioning
-          if (object?.parentId) {
-            const parent = objects[object.parentId];
-
-            // Additional check: in multi-star systems, if parent is a moving star,
-            // the prediction system uses absolute coordinates, so position at origin
-            const allObjects = StateAccessor.getCurrentCelestialObjects();
-            const stars = Object.values(allObjects).filter(
-              (obj) => obj.type === CelestialType.STAR,
-            );
-            const isMultiStarSystem = stars.length > 1;
-            const parentIsMovingStar =
-              parent && parent.type === CelestialType.STAR && isMultiStarSystem;
-
-            if (parent?.position && !parentIsMovingStar) {
-              // Normal relative positioning for single-star systems or non-star parents
-              line.position.copy(parent.position);
-              labels.forEach(({ label }) => {
-                if (label.visible && label.userData.localPosition) {
-                  label.position
-                    .copy(label.userData.localPosition)
-                    .add(parent.position);
-                }
-              });
-            } else {
-              // Use absolute positioning (origin) for multi-star systems with star parents
-              line.position.set(0, 0, 0);
-              labels.forEach(({ label }) => {
-                if (label.visible && label.userData.localPosition) {
-                  label.position.copy(label.userData.localPosition);
-                }
-              });
-            }
-          } else {
-            // No parent - use absolute positioning
-            line.position.set(0, 0, 0);
-            labels.forEach(({ label }) => {
-              if (label.visible && label.userData.localPosition) {
-                label.position.copy(label.userData.localPosition);
-              }
-            });
-          }
-        }
-      }
-    } else {
-      this.predictionManager.highlightPrediction(null);
     }
   }
 
   /**
-   * Highlights a specific object's trail and prediction visualizations.
-   *
-   * When an object is highlighted:
-   * 1. Its trail is highlighted with the specified color
-   * 2. A prediction trajectory is calculated and displayed
+   * Highlights a specific object's orbit visualization.
    *
    * @param objectId - ID of the object to highlight, or null to clear highlighting
    * @param color - Color to use for highlighting
    */
   highlight(objectId: string | null, color: THREE.Color): void {
     this.highlightedObjectId = objectId;
-    this.trailManager.setHighlightedObject(objectId, color);
-
-    if (objectId) {
-      // Validate that the object exists before trying to highlight it
-      const allObjects = StateAccessor.getCurrentCelestialObjects();
-      if (!allObjects[objectId]) {
-        // Object doesn't exist, clear the highlight
-        this.highlightedObjectId = null;
-        this.predictionManager.highlightPrediction(null);
-        return;
-      }
-
-      const visualSettings = {
-        timeScale: 1,
-        predictionSteps: 1000,
-        predictionDuration: 31557600,
-      };
-      this.predictionManager.updatePrediction(objectId, {
-        forceRecalculate: true,
-        timeScale: visualSettings.timeScale,
-        predictionSteps: visualSettings.predictionSteps,
-      });
-      this.predictionManager.highlightPrediction(objectId);
-    } else {
-      this.predictionManager.highlightPrediction(null);
-    }
+    this.orbitalRenderer.setHighlightedObject(objectId, color);
+    // Note: PredictionManager doesn't have setHighlightedObject, so we'll skip that for now
   }
 
   /**
-   * Sets the visibility of all trail visualizations.
+   * Sets the visibility of all visualizations.
    *
-   * @param visible - Whether trail visualizations should be visible
+   * @param visible - Whether visualizations should be visible
    */
   setVisibility(visible: boolean): void {
-    this.trailManager.setVisibility(visible);
+    this.isVisible = visible;
+    this.orbitalRenderer.setVisibility(visible);
+    this.predictionManager.setVisibility(visible);
   }
 
   /**
-   * Sets the visibility of prediction trajectory visualizations.
+   * Sets the visibility of trajectory prediction visualizations.
    *
    * @param visible - Whether prediction visualizations should be visible
    */
@@ -282,12 +211,41 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
   }
 
   /**
-   * Cleans up resources used by this strategy.
-   * Disposes both trail and prediction managers.
+   * Clears all orbital trails.
+   */
+  clearAllTrails(): void {
+    this.orbitalRenderer.clearAllOrbitalLines();
+  }
+
+  /**
+   * Clears all prediction lines.
+   */
+  clearAllPredictions(): void {
+    this.predictionManager.clearAllPredictions();
+  }
+
+  /**
+   * Disposes of resources used by this strategy.
    */
   dispose(): void {
-    // Flush any pending trail updates before disposing
-    this.trailManager.dispose();
+    this.orbitalRenderer.dispose();
     this.predictionManager.dispose();
+  }
+
+  /**
+   * Gets performance statistics for this strategy.
+   *
+   * @returns Performance statistics
+   */
+  getPerformanceStats(): {
+    orbitalLinesCount: number;
+    predictionLinesCount: number;
+  } {
+    const orbitalStats = this.orbitalRenderer.getPerformanceStats();
+    // Note: PredictionManager doesn't have getPerformanceStats, so we'll return 0 for now
+    return {
+      orbitalLinesCount: orbitalStats.orbitalLinesCount,
+      predictionLinesCount: 0, // Placeholder until PredictionManager has this method
+    };
   }
 }

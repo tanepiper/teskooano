@@ -1,10 +1,13 @@
-import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  RenderableCelestialObject,
   CelestialType,
+  RenderableCelestialObject,
+  TimePoint,
 } from "@teskooano/data-types";
 import { CircularBuffer } from "@teskooano/renderer-threejs-helpers";
+import * as THREE from "three";
+import { BaseCelestialRenderer } from "../BaseCelestialRenderer";
+import { StateAccessor } from "@teskooano/core-state";
 
 /**
  * Configuration for orbital data management
@@ -25,18 +28,6 @@ export interface OrbitalConfig {
 }
 
 /**
- * Represents a single position sample in the orbital history
- */
-export interface PositionSample {
-  /** Position in scene units */
-  position: OSVector3;
-  /** Timestamp in seconds */
-  timestamp: number;
-  /** Velocity magnitude in m/s */
-  velocityMagnitude: number;
-}
-
-/**
  * Manages orbital data for a celestial object including position history,
  * orbit parameters, and LOD-based rendering control.
  *
@@ -44,21 +35,21 @@ export interface PositionSample {
  * and circular buffers for position history. It integrates with the LOD system
  * to control visibility of orbit lines and trails based on camera distance.
  */
-export class OrbitalManager {
+export class PositionHistoryManager {
   /** Unique identifier for this orbital manager */
   private readonly objectId: string;
 
   /** Circular buffer for position history */
-  private positionHistory: CircularBuffer<PositionSample>;
+  private positionHistory: CircularBuffer<TimePoint>;
 
   /** Current orbital configuration */
   private config: OrbitalConfig;
 
   /** Current position in scene units */
-  private currentPosition: OSVector3 = new OSVector3();
+  private currentPosition: THREE.Vector3 = new THREE.Vector3();
 
   /** Current velocity in m/s */
-  private currentVelocity: OSVector3 = new OSVector3();
+  private currentVelocity: THREE.Vector3 = new THREE.Vector3();
 
   /** Whether this object is currently highlighted */
   private isHighlighted: boolean = false;
@@ -73,20 +64,42 @@ export class OrbitalManager {
   private readonly minUpdateInterval: number = 0.016; // ~60fps
 
   /** Reusable vectors to avoid allocations */
-  private readonly tempVector1: OSVector3 = new OSVector3();
-  private readonly tempVector2: OSVector3 = new OSVector3();
+  private readonly tempVector1: THREE.Vector3 = new THREE.Vector3();
+  private readonly tempVector2: THREE.Vector3 = new THREE.Vector3();
+
+  /** The renderer that is managing this orbital manager */
+  private renderer: BaseCelestialRenderer;
+
+  /** The sample rate for the orbital manager */
+  public sampleRateKm: number = 100; // 1000km
+
+  /** The last sample time */
+  public lastSampleTime: number = 0;
+
+  /** The last sample position */
+  public lastSamplePosition: THREE.Vector3 = new THREE.Vector3();
+
+  /** The last sample velocity */
+  public lastSampleVelocity: THREE.Vector3 = new THREE.Vector3();
+
+  /** The last update index */
+  private lastUpdateIndex: number = 0;
 
   /**
    * Creates a new OrbitalManager instance
    * @param objectId Unique identifier for the celestial object
    * @param config Configuration for orbital data management
    */
-  constructor(objectId: string, config: Partial<OrbitalConfig> = {}) {
+  constructor(
+    objectId: string,
+    config: Partial<OrbitalConfig> = {},
+    renderer: BaseCelestialRenderer,
+  ) {
     this.objectId = objectId;
 
     // Set default configuration
     this.config = {
-      maxHistoryPoints: 1000,
+      maxHistoryPoints: 1000000,
       minDistanceThreshold: 1e-6,
       showOrbitLines: true,
       showPredictionLines: false,
@@ -96,9 +109,11 @@ export class OrbitalManager {
     };
 
     // Initialize position history with circular buffer
-    this.positionHistory = new CircularBuffer<PositionSample>(
+    this.positionHistory = new CircularBuffer<TimePoint>(
       this.config.maxHistoryPoints,
     );
+
+    this.renderer = renderer;
   }
 
   /**
@@ -107,54 +122,35 @@ export class OrbitalManager {
    * @param time Current simulation time
    */
   update(object: RenderableCelestialObject, time: number): void {
-    // Throttle updates to prevent excessive processing
-    if (time - this.lastUpdateTime < this.minUpdateInterval) {
-      return;
-    }
-    this.lastUpdateTime = time;
+    // Get current time scale from state to scale sample collection
+    const timeScale = this.getTimeScaleFromState();
 
-    // Update current position and velocity
-    this.currentPosition.setFromArray(object.position.toArray());
-    if (object.velocity) {
-      this.currentVelocity.setFromArray(object.velocity.toArray());
-    } else {
-      this.currentVelocity.setZero();
-    }
+    // Scale sample rate based on time scale (1-10 range)
+    // Higher time scale = more samples collected
+    const scaledSampleRate = Math.max(1, Math.floor(timeScale / 10));
 
-    // Check if we should add a new position sample
-    this.addPositionSampleIfNeeded(time);
-  }
-
-  /**
-   * Adds a new position sample if the object has moved significantly
-   * @param time Current simulation time
-   */
-  private addPositionSampleIfNeeded(time: number): void {
-    const lastSample = this.positionHistory.getOrderedItems().pop();
-
-    if (!lastSample) {
-      // First sample - always add
-      this.addPositionSample(time);
+    if (this.lastUpdateIndex < this.sampleRateKm / scaledSampleRate) {
+      this.lastUpdateIndex++;
       return;
     }
 
-    // Calculate distance from last sample
-    const distance = this.currentPosition.distanceTo(lastSample.position);
+    this.addPositionSample(object, time);
 
-    if (distance >= this.config.minDistanceThreshold) {
-      this.addPositionSample(time);
-    }
+    this.lastUpdateIndex = 0;
   }
 
   /**
    * Adds a new position sample to the history
    * @param time Current simulation time
    */
-  private addPositionSample(time: number): void {
-    const sample: PositionSample = {
-      position: this.currentPosition.clone(),
+  private addPositionSample(
+    object: RenderableCelestialObject,
+    time: number,
+  ): void {
+    const sample: TimePoint = {
+      position: OSVector3.fromThreeJS(object.position.clone()),
       timestamp: time,
-      velocityMagnitude: this.currentVelocity.length(),
+      velocityMagnitude: object.velocity?.length() ?? 0,
     };
 
     this.positionHistory.push(sample);
@@ -165,7 +161,7 @@ export class OrbitalManager {
    * @returns Current position as OSVector3
    */
   getCurrentPosition(): OSVector3 {
-    return this.currentPosition.clone();
+    return OSVector3.fromThreeJS(this.currentPosition.clone());
   }
 
   /**
@@ -173,7 +169,7 @@ export class OrbitalManager {
    * @returns Current velocity as OSVector3
    */
   getCurrentVelocity(): OSVector3 {
-    return this.currentVelocity.clone();
+    return OSVector3.fromThreeJS(this.currentVelocity.clone());
   }
 
   /**
@@ -196,7 +192,7 @@ export class OrbitalManager {
    * @param maxPoints Maximum number of points to return (0 for all)
    * @returns Array of position samples with timestamps
    */
-  getPositionHistoryWithTimestamps(maxPoints: number = 0): PositionSample[] {
+  getPositionHistoryWithTimestamps(maxPoints: number = 0): TimePoint[] {
     const samples = this.positionHistory.getOrderedItems();
 
     if (maxPoints > 0 && samples.length > maxPoints) {
@@ -352,5 +348,21 @@ export class OrbitalManager {
    */
   dispose(): void {
     this.clearHistory();
+  }
+
+  /**
+   * Gets the current time scale from the simulation state
+   * @returns Current time scale (1-10 range)
+   */
+  private getTimeScaleFromState(): number {
+    try {
+      // Import here to avoid circular dependencies
+
+      const simulationState = StateAccessor.getCurrentSimulationState();
+      return simulationState.timeScale || 1;
+    } catch (error) {
+      console.warn("Could not get time scale from state, using default 1");
+      return 1;
+    }
   }
 }
