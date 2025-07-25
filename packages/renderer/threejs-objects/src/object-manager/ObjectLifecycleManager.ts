@@ -31,9 +31,6 @@ export interface ObjectLifecycleManagerConfig {
   lightingManager: LightingManager;
   lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
   camera: THREE.PerspectiveCamera;
   css2DManager?: Layer2DManager;
 }
@@ -52,9 +49,7 @@ export class ObjectLifecycleManager {
   private lensingHandler: GravitationalLensingHandler;
   private css2DManager?: Layer2DManager;
   private renderer: THREE.WebGLRenderer | null;
-  private starRenderers: Map<string, CelestialRenderer>;
-  private planetRenderers: Map<string, CelestialRenderer>;
-  private moonRenderers: Map<string, CelestialRenderer>;
+
   private camera: THREE.PerspectiveCamera; // Add camera reference
 
   constructor(config: ObjectLifecycleManagerConfig) {
@@ -65,9 +60,6 @@ export class ObjectLifecycleManager {
     this.lightingManager = config.lightingManager;
     this.lensingHandler = config.lensingHandler;
     this.renderer = config.renderer;
-    this.starRenderers = config.starRenderers;
-    this.planetRenderers = config.planetRenderers;
-    this.moonRenderers = config.moonRenderers;
     this.camera = config.camera;
     this.css2DManager = config.css2DManager;
   }
@@ -249,19 +241,6 @@ export class ObjectLifecycleManager {
     this.lightingManager.unregister(objectId); // Remove associated light
     this.lightingManager.unregisterShadowCaster(objectId); // Remove shadow caster registration
     this.lightingManager.unregisterRingShadowCasters(`${objectId}-rings`); // Remove ring shadow casters
-
-    // Clean up specialized renderers associated with this object ID
-    const starRenderer = this.starRenderers.get(objectId);
-    if (starRenderer?.dispose) starRenderer.dispose();
-    this.starRenderers.delete(objectId);
-
-    const planetRenderer = this.planetRenderers.get(objectId);
-    if (planetRenderer?.dispose) planetRenderer.dispose();
-    this.planetRenderers.delete(objectId);
-
-    const moonRenderer = this.moonRenderers.get(objectId);
-    if (moonRenderer?.dispose) moonRenderer.dispose();
-    this.moonRenderers.delete(objectId);
 
     // Remove the main mesh from the scene
     this.scene.remove(mesh);

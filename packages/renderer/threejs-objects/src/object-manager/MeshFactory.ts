@@ -25,9 +25,7 @@ import * as THREE from "three";
  */
 export interface MeshFactoryConfig {
   celestialRenderers: Map<string, CelestialRenderer>;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
+
   lodManager: LODManager;
   lightingManager: LightingManager;
   camera: THREE.PerspectiveCamera; // Needed for LOD registration?
@@ -45,9 +43,7 @@ export interface MeshFactoryConfig {
  */
 export class MeshFactory {
   private celestialRenderers: Map<string, CelestialRenderer>;
-  private starRenderers: Map<string, CelestialRenderer>;
-  private planetRenderers: Map<string, CelestialRenderer>;
-  private moonRenderers: Map<string, CelestialRenderer>;
+
   private lodManager: LODManager;
   private lightingManager: LightingManager;
   private createLodCallback: (
@@ -59,9 +55,6 @@ export class MeshFactory {
 
   // Store deps needed by creator functions
   private creatorDeps: {
-    starRenderers: Map<string, CelestialRenderer>;
-    planetRenderers: Map<string, CelestialRenderer>;
-    moonRenderers: Map<string, CelestialRenderer>;
     celestialRenderers: Map<string, CelestialRenderer>;
     lightingManager: LightingManager;
     createLodObject: (
@@ -72,9 +65,7 @@ export class MeshFactory {
 
   constructor(config: MeshFactoryConfig) {
     this.celestialRenderers = config.celestialRenderers;
-    this.starRenderers = config.starRenderers;
-    this.planetRenderers = config.planetRenderers;
-    this.moonRenderers = config.moonRenderers;
+
     this.lodManager = config.lodManager;
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
@@ -82,9 +73,6 @@ export class MeshFactory {
 
     // Prepare deps object for creator functions
     this.creatorDeps = {
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
       celestialRenderers: this.celestialRenderers,
       createLodObject: this.createLodCallback,
       lightingManager: this.lightingManager,

@@ -81,9 +81,6 @@ export class OrbitsManager extends StateSubscriptionMixin {
   /** Shared orbit lines group for all orbit-related visualizations */
   private orbitLinesGroup: THREE.Group;
 
-  private starRenderers: Map<string, CelestialRenderer> = new Map();
-  private planetRenderers: Map<string, CelestialRenderer> = new Map();
-  private moonRenderers: Map<string, CelestialRenderer> = new Map();
   private celestialRenderers: Map<string, CelestialRenderer> = new Map();
 
   /**
@@ -98,21 +95,13 @@ export class OrbitsManager extends StateSubscriptionMixin {
     objectManager: ObjectManager,
     stateAdapter: RendererStateAdapter,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
-    layer2DManager?: Layer2DManager,
-    renderers?: {
-      starRenderers: Map<string, CelestialRenderer>;
-      planetRenderers: Map<string, CelestialRenderer>;
-      moonRenderers: Map<string, CelestialRenderer>;
-      celestialRenderers: Map<string, CelestialRenderer>;
-    },
+    layer2DManager: Layer2DManager,
+    celestialRenderers: Map<string, CelestialRenderer>,
   ) {
     super();
     this.stateAdapter = stateAdapter;
     this.layer2DManager = layer2DManager;
-    this.starRenderers = renderers?.starRenderers ?? new Map();
-    this.planetRenderers = renderers?.planetRenderers ?? new Map();
-    this.moonRenderers = renderers?.moonRenderers ?? new Map();
-    this.celestialRenderers = renderers?.celestialRenderers ?? new Map();
+    this.celestialRenderers = celestialRenderers;
 
     // Create a shared orbit lines group for all orbit-related visualizations
     this.orbitLinesGroup = new THREE.Group();
@@ -202,14 +191,9 @@ export class OrbitsManager extends StateSubscriptionMixin {
       // N-Body mode uses the NBodyStrategy for all algorithms
       this.activeStrategy = new NBodyStrategy(
         objectManager,
-        this.layer2DManager,
+        this.layer2DManager!,
         this.orbitLinesGroup,
-        {
-          starRenderers: this.starRenderers,
-          planetRenderers: this.planetRenderers,
-          moonRenderers: this.moonRenderers,
-          celestialRenderers: this.celestialRenderers,
-        },
+        this.celestialRenderers,
       );
     }
 

@@ -60,12 +60,6 @@ export class ObjectManager extends StateSubscriptionMixin {
   public lightingManager: LightingManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
   private celestialRenderers: Map<string, CelestialRenderer> = new Map();
-  /** @internal Map storing specialized renderers specifically for stars, keyed by object ID. */
-  private starRenderers: Map<string, CelestialRenderer> = new Map();
-  /** @internal Map storing specialized renderers specifically for planets, keyed by object ID. */
-  private planetRenderers: Map<string, CelestialRenderer> = new Map();
-  /** @internal Map storing specialized renderers specifically for moons, keyed by object ID. */
-  private moonRenderers: Map<string, CelestialRenderer> = new Map();
 
   /** @internal Observable stream of renderable object data from the core state. */
   private renderableObjects$: Observable<
@@ -136,30 +130,6 @@ export class ObjectManager extends StateSubscriptionMixin {
   }
 
   /**
-   * Public accessor for the star renderers map.
-   * @returns Map of star renderers keyed by object ID.
-   */
-  public getStarRenderers(): Map<string, CelestialRenderer> {
-    return this.starRenderers;
-  }
-
-  /**
-   * Public accessor for the planet renderers map.
-   * @returns Map of planet renderers keyed by object ID.
-   */
-  public getPlanetRenderers(): Map<string, CelestialRenderer> {
-    return this.planetRenderers;
-  }
-
-  /**
-   * Public accessor for the moon renderers map.
-   * @returns Map of moon renderers keyed by object ID.
-   */
-  public getMoonRenderers(): Map<string, CelestialRenderer> {
-    return this.moonRenderers;
-  }
-
-  /**
    * Creates an instance of ObjectManager.
    *
    * @param scene - The main Three.js scene.
@@ -192,15 +162,12 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.lodManager = new LODManager(camera);
     this.lightingManager = lightingManager || new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
-      starRenderers: this.starRenderers,
+      celestialRenderers: this.celestialRenderers,
     });
 
     // Setup the MeshFactory with dependencies
     this.meshFactory = new MeshFactory({
       celestialRenderers: this.celestialRenderers,
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
       lodManager: this.lodManager,
       lightingManager: this.lightingManager,
       camera: this.camera,
@@ -219,9 +186,6 @@ export class ObjectManager extends StateSubscriptionMixin {
       lightingManager: this.lightingManager,
       lensingHandler: this.lensingHandler,
       renderer: this.renderer,
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
       css2DManager: this.css2DManager,
     });
 
@@ -230,9 +194,6 @@ export class ObjectManager extends StateSubscriptionMixin {
       objects: this.objects,
     });
     this.rendererUpdater = new RendererUpdater({
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
       celestialRenderers: this.celestialRenderers,
       lightingManager: this.lightingManager,
     });
@@ -514,10 +475,6 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.lensingHandler.clear();
 
     this.celestialRenderers.clear();
-    this.starRenderers.clear();
-    this.planetRenderers.clear();
-    this.moonRenderers.clear();
-
     // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();
 

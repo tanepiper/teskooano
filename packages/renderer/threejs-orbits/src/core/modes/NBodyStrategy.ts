@@ -43,10 +43,6 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
   /** Visibility state for all visualizations */
   private isVisible: boolean = true;
 
-  /** Maps of renderers for different celestial types */
-  private starRenderers: Map<string, CelestialRenderer>;
-  private planetRenderers: Map<string, CelestialRenderer>;
-  private moonRenderers: Map<string, CelestialRenderer>;
   private celestialRenderers: Map<string, CelestialRenderer>;
 
   /**
@@ -59,14 +55,9 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
    */
   constructor(
     objectManager: ObjectManager,
-    layer2DManager?: Layer2DManager,
-    orbitLinesGroup?: THREE.Group,
-    renderers?: {
-      starRenderers: Map<string, CelestialRenderer>;
-      planetRenderers: Map<string, CelestialRenderer>;
-      moonRenderers: Map<string, CelestialRenderer>;
-      celestialRenderers: Map<string, CelestialRenderer>;
-    },
+    layer2DManager: Layer2DManager,
+    orbitLinesGroup: THREE.Group,
+    celestialRenderers: Map<string, CelestialRenderer>,
   ) {
     // Create simple orbital renderer that uses PositionHistoryManager directly
     this.orbitalRenderer = new SimpleOrbitalRenderer(
@@ -87,10 +78,7 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
     );
 
     // Store renderer maps for accessing PositionHistoryManager
-    this.starRenderers = renderers?.starRenderers ?? new Map();
-    this.planetRenderers = renderers?.planetRenderers ?? new Map();
-    this.moonRenderers = renderers?.moonRenderers ?? new Map();
-    this.celestialRenderers = renderers?.celestialRenderers ?? new Map();
+    this.celestialRenderers = celestialRenderers;
 
     if (layer2DManager) {
       this.predictionManager.setLayer2DManager(layer2DManager);
@@ -104,11 +92,7 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
    * @returns The renderer for the object, or undefined if not found
    */
   private getRenderer(objectId: string): BaseCelestialRenderer | undefined {
-    const renderer =
-      this.starRenderers.get(objectId) ||
-      this.planetRenderers.get(objectId) ||
-      this.moonRenderers.get(objectId) ||
-      this.celestialRenderers.get(objectId);
+    const renderer = this.celestialRenderers.get(objectId);
 
     // Cast to BaseCelestialRenderer to access positionHistoryManager
     return renderer as BaseCelestialRenderer;

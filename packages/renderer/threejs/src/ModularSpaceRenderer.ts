@@ -117,12 +117,7 @@ export class ModularSpaceRenderer {
       this.stateAdapter,
       renderableStore.renderableObjects$,
       this.css2DManager,
-      {
-        starRenderers: this.objectManager.getStarRenderers(),
-        planetRenderers: this.objectManager.getPlanetRenderers(),
-        moonRenderers: this.objectManager.getMoonRenderers(),
-        celestialRenderers: this.objectManager.getCelestialRenderers(),
-      },
+      this.objectManager.getCelestialRenderers(),
     );
 
     this.backgroundManager = new BackgroundManager(

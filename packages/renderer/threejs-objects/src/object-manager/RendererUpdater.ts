@@ -16,9 +16,6 @@ type LightSourcesMap = Map<
  */
 export interface RendererUpdaterConfig {
   celestialRenderers: Map<string, CelestialRenderer>;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
   lightingManager: LightingManager;
 }
 
@@ -28,17 +25,12 @@ export interface RendererUpdaterConfig {
  */
 export class RendererUpdater {
   private celestialRenderers: Map<string, CelestialRenderer>;
-  private starRenderers: Map<string, CelestialRenderer>;
-  private planetRenderers: Map<string, CelestialRenderer>;
-  private moonRenderers: Map<string, CelestialRenderer>;
+
   private lightingManager: LightingManager;
   private loggedIds = new Set<string>();
 
   constructor(config: RendererUpdaterConfig) {
     this.celestialRenderers = config.celestialRenderers;
-    this.starRenderers = config.starRenderers;
-    this.planetRenderers = config.planetRenderers;
-    this.moonRenderers = config.moonRenderers;
     this.lightingManager = config.lightingManager;
   }
 
@@ -61,9 +53,6 @@ export class RendererUpdater {
       allRenderableObjects,
     };
 
-    this.processRendererMap(this.starRenderers, context);
-    this.processRendererMap(this.planetRenderers, context);
-    this.processRendererMap(this.moonRenderers, context);
     this.processRendererMap(this.celestialRenderers, context);
   }
 

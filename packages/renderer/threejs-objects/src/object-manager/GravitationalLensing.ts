@@ -13,7 +13,7 @@ import { GravitationalLensingHelper } from "@teskooano/celestials-stars";
  * Configuration for GravitationalLensingHandler.
  */
 export interface GravitationalLensingHandlerConfig {
-  starRenderers: Map<string, CelestialRenderer>;
+  celestialRenderers: Map<string, CelestialRenderer>;
 }
 
 /**
@@ -22,11 +22,11 @@ export interface GravitationalLensingHandlerConfig {
  * the underlying `GravitationalLensingHelper` instances.
  */
 export class GravitationalLensingHandler {
-  private starRenderers: Map<string, CelestialRenderer>;
+  private celestialRenderers: Map<string, CelestialRenderer>;
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
 
   constructor(config: GravitationalLensingHandlerConfig) {
-    this.starRenderers = config.starRenderers;
+    this.celestialRenderers = config.celestialRenderers;
   }
 
   /**
