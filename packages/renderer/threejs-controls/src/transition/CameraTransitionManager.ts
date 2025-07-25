@@ -245,7 +245,7 @@ export class CameraTransitionManager {
 
     // Create the notification but don't set a duration, as we'll manage it manually.
     const notification = notificationManager.addNotification({
-      title: `Moving to ${targetName}`,
+      title: `⎌ Moving to ${targetName}`,
       message: `Calculating route to ${targetName}...`,
       level: "info",
       source: "CameraManager",
@@ -332,7 +332,7 @@ export class CameraTransitionManager {
 
     // Create the notification
     const notification = notificationManager.addNotification({
-      title: `Moving to ${targetName}`,
+      title: `⎌ Moving to ${targetName}`,
       message: `Calculating route to ${targetName}...`,
       level: "info",
       source: "CameraManager",
@@ -421,7 +421,7 @@ export class CameraTransitionManager {
               orbitControls: this.orbitControlsHandler.controls,
               onUpdate: () => {
                 activeTimeline = this.activeAnimation;
-                timelineUpdateCallback(`⤳ Travelling to ${targetName}`);
+                timelineUpdateCallback(`⎌ Travelling to ${targetName}`);
               },
               onComplete: onTimelineComplete,
             },

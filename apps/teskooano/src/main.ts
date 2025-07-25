@@ -15,7 +15,14 @@ async function initializeApp(): Promise<TeskooanoApp> {
   ];
 
   try {
-    const app = await TeskooanoApp.create(pluginIds);
+    const app = new TeskooanoApp({
+      pluginIds,
+      appName: "Teskooano",
+      version: import.meta.env.PACKAGE_VERSION || "dev",
+      gitHash: import.meta.env.GIT_COMMIT_HASH || "local",
+    });
+
+    await app.start();
     return app;
   } catch (error) {
     console.error("[App] Unhandled error during application startup:", error);
@@ -27,7 +34,9 @@ async function initializeApp(): Promise<TeskooanoApp> {
 // Start the application
 initializeApp()
   .then((app) => {
-    console.log("[App] Application initialized successfully", app);
+    console.log(`🛰️ ${app.appName} v${app.version} (${app.gitHash})`);
+    // @ts-expect-error - globalThis is not typed
+    window["teskooano"] = app;
   })
   .catch((err) => {
     console.error("[App] Critical startup failure:", err);

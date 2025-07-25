@@ -9,21 +9,29 @@ import { IContentRenderer, PanelInitParameters } from "dockview-core";
  * Handles registration of panel components with the dockview system
  */
 export class PanelRegistry {
+  private readonly pluginManager: typeof pluginManager;
+  private readonly dockviewController: any;
+
+  constructor(
+    pluginManagerInstance: typeof pluginManager,
+    dockviewController: any,
+  ) {
+    this.pluginManager = pluginManagerInstance;
+    this.dockviewController = dockviewController;
+  }
+
   /**
    * Registers all panel components from loaded plugins
    * @throws {Error} If critical panel registration fails
    */
-  public static registerPanelComponents(
-    pluginManagerInstance: typeof pluginManager,
-    dockviewController: any,
-  ): void {
-    const plugins = pluginManagerInstance.getPlugins();
+  public registerPanelComponents(): void {
+    const plugins = this.pluginManager.getPlugins();
     const errors: string[] = [];
 
     plugins.forEach((plugin: TeskooanoPlugin) => {
       plugin.panels?.forEach((panelConfig: PanelConfig) => {
         try {
-          this.registerSinglePanel(panelConfig, plugin.id, dockviewController);
+          this.registerSinglePanel(panelConfig, plugin.id);
         } catch (error) {
           const errorMessage = `Failed to register panel '${panelConfig.componentName}' from plugin '${plugin.id}': ${error instanceof Error ? error.message : "Unknown error"}`;
           console.error(`[PanelRegistry] ${errorMessage}`);
@@ -43,10 +51,9 @@ export class PanelRegistry {
    * Registers a single panel component
    * @throws {Error} If panel registration fails
    */
-  private static registerSinglePanel(
+  private registerSinglePanel(
     panelConfig: PanelConfig,
     pluginId: string,
-    dockviewController: any,
   ): void {
     const PanelComponentOrConstructor = panelConfig.panelClass;
     const componentName = panelConfig.componentName;
@@ -61,23 +68,16 @@ export class PanelRegistry {
       PanelComponentOrConstructor.prototype instanceof HTMLElement;
 
     if (isCustomElementConstructor) {
-      this.registerCustomElementPanel(componentName, dockviewController);
+      this.registerCustomElementPanel(componentName);
     } else {
-      this.registerDirectPanel(
-        componentName,
-        PanelComponentOrConstructor,
-        dockviewController,
-      );
+      this.registerDirectPanel(componentName, PanelComponentOrConstructor);
     }
   }
 
   /**
    * Registers a custom element as a panel component
    */
-  private static registerCustomElementPanel(
-    componentName: string,
-    dockviewController: any,
-  ): void {
+  private registerCustomElementPanel(componentName: string): void {
     class CustomElementPanelWrapper implements IContentRenderer {
       private _element: HTMLElement;
 
@@ -96,7 +96,7 @@ export class PanelRegistry {
       }
     }
 
-    dockviewController.registerComponent(
+    this.dockviewController.registerComponent(
       componentName,
       CustomElementPanelWrapper,
     );
@@ -106,13 +106,12 @@ export class PanelRegistry {
    * Registers a direct panel component
    * @throws {Error} If panel registration fails
    */
-  private static registerDirectPanel(
+  private registerDirectPanel(
     componentName: string,
     PanelComponentOrConstructor: any,
-    dockviewController: any,
   ): void {
     try {
-      dockviewController.registerComponent(
+      this.dockviewController.registerComponent(
         componentName,
         PanelComponentOrConstructor as new () => IContentRenderer,
       );

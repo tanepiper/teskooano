@@ -9,11 +9,20 @@ import {
   CameraPreset,
   SceneHelper,
 } from "@teskooano/renderer-threejs-helpers";
-import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
 import { getPerformanceOptimization } from "./helpers/performance";
 import { Subscription } from "rxjs";
+import {
+  PerspectiveCamera,
+  type Scene,
+  type Camera,
+  type WebGLRenderer,
+  type WebGLCapabilities,
+  SRGBColorSpace,
+  ACESFilmicToneMapping,
+  PCFSoftShadowMap,
+} from "three";
 
 /**
  * The main scene manager for Teskooano which handles the main Three.js scene, camera, and renderer.
@@ -24,21 +33,50 @@ import { Subscription } from "rxjs";
  * It also handles listening for performance profile changes and updating the renderer accordingly.
  */
 export class SceneManager {
-  /** The root `THREE.Scene` object. */
-  public scene: THREE.Scene;
-  /** The primary `THREE.PerspectiveCamera` for the scene. */
-  public camera: THREE.PerspectiveCamera;
-  /** The `THREE.WebGLRenderer` instance. */
-  public renderer: THREE.WebGLRenderer;
-  /** Manages the `requestAnimationFrame` loop. */
+  /**
+   * The main ThreeJS scene object, this is the root object for all the objects in the scene.
+   */
+  public scene: Scene;
+  /**
+   * The primary camera for the scene.
+   */
+  public camera: Camera;
+  /**
+   * The `THREE.WebGLRenderer` instance.
+   */
+  public renderer: WebGLRenderer;
+  /**
+   * Manages the `requestAnimationFrame` loop.
+   */
   public animationLoop: AnimationLoop;
 
-  private fov: number;
+  /**
+   * The field of view of the camera.
+   */
+  public fov: number;
+  /**
+   * The options for the scene manager.
+   */
   private options: SceneManagerOptions;
+  /**
+   * The width of the scene.
+   */
   private width: number;
+  /**
+   * The height of the scene.
+   */
   private height: number;
-  private webGLCapabilities: THREE.WebGLCapabilities;
+  /**
+   * The WebGL capabilities of the renderer.
+   */
+  private webGLCapabilities: WebGLCapabilities;
+  /**
+   * The performance optimization of the renderer.
+   */
   private performanceOptimization: PerformanceOptimization;
+  /**
+   * The subscription to the performance profile changes.
+   */
   private performanceSubscription?: Subscription;
 
   /**
@@ -82,7 +120,7 @@ export class SceneManager {
   /**
    * Gets the detected WebGL capabilities
    */
-  public getWebGLCapabilities(): THREE.WebGLCapabilities {
+  public getWebGLCapabilities(): WebGLCapabilities {
     return this.webGLCapabilities;
   }
 
@@ -138,10 +176,9 @@ export class SceneManager {
    * @returns Object containing scene, camera, renderer, and THREE instance
    */
   private _createSceneWithHelper(container: HTMLElement): {
-    scene: THREE.Scene;
-    camera: THREE.PerspectiveCamera;
-    renderer: THREE.WebGLRenderer;
-    three: typeof THREE;
+    scene: Scene;
+    camera: Camera;
+    renderer: WebGLRenderer;
   } {
     // Determine power preference based on performance profile
     const simState = StateAccessor.getCurrentSimulationState();
@@ -179,11 +216,11 @@ export class SceneManager {
       antialias: this.options.antialias ?? true,
       alpha: true,
       powerPreference: powerPref,
-      shadowMapType: THREE.PCFSoftShadowMap, // Use default shadow map type
+      shadowMapType: PCFSoftShadowMap, // Use default shadow map type
     });
 
     // Replace the camera with our optimized one (ensure it's a PerspectiveCamera)
-    if (camera instanceof THREE.PerspectiveCamera) {
+    if (camera instanceof PerspectiveCamera) {
       sceneSetup.camera = camera;
     } else {
       // Fallback to the original camera if CameraHelper returns OrthographicCamera
@@ -199,8 +236,8 @@ export class SceneManager {
 
     // Apply HDR configuration if enabled
     if (this.options.hdr ?? true) {
-      sceneSetup.renderer.outputColorSpace = THREE.SRGBColorSpace;
-      sceneSetup.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      sceneSetup.renderer.outputColorSpace = SRGBColorSpace;
+      sceneSetup.renderer.toneMapping = ACESFilmicToneMapping;
       sceneSetup.renderer.toneMappingExposure = 1.0; // Default exposure
     }
 
@@ -233,7 +270,7 @@ export class SceneManager {
     if (this.fov === newFov) return;
 
     this.fov = newFov;
-    if (this.camera) {
+    if (this.camera instanceof PerspectiveCamera) {
       this.camera.fov = newFov;
       this.camera.updateProjectionMatrix();
     }
@@ -249,7 +286,7 @@ export class SceneManager {
     this.width = width;
     this.height = height;
 
-    if (this.camera) {
+    if (this.camera instanceof PerspectiveCamera) {
       this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
     }
