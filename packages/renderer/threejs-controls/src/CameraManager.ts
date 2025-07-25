@@ -219,12 +219,15 @@ export class CameraManager {
     }
 
     // Update camera settings in the scene manager
-    this.renderer.sceneManager.updateCameraSettingsForObject(celestialType);
+    CameraHelper.updateCameraForCelestialType(
+      this.renderer.camera,
+      celestialType,
+    );
 
     // Update orbit controls min distance
     if (this.renderer.controlsManager) {
       const minDistance =
-        this.renderer.sceneManager.getMinDistanceForObject(celestialType);
+        CameraHelper.getMinDistanceForCelestialType(celestialType);
       this.renderer.controlsManager.updateMinDistance(minDistance);
     }
   }
@@ -252,6 +255,11 @@ export class CameraManager {
         focusedObjectId: objectId,
       });
       this.intendedFocusIdForTransition = objectId;
+
+      // Highlight prediction lines for the focused object (or hide all if null)
+      if (this.renderer) {
+        this.renderer.highlightPrediction(objectId);
+      }
     } else if (objectId === null) {
       this.intendedFocusIdForTransition = null;
     }

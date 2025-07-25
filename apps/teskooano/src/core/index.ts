@@ -56,7 +56,7 @@ export type { TourStep } from "./interface/tour-controller/types";
 
 // --- Initialization ---
 export {
-  ApplicationInitializer,
+  TeskooanoApp,
   ManagerInitializer,
   PanelRegistry,
   EventSetup,

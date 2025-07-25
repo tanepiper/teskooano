@@ -16,16 +16,12 @@ import { getPerformanceOptimization } from "./helpers/performance";
 import { Subscription } from "rxjs";
 
 /**
- * Manages the core Three.js components: the scene, camera, and renderer.
+ * The main scene manager for Teskooano which handles the main Three.js scene, camera, and renderer.
  *
  * This class is responsible for the initial setup of the 3D environment,
- * handling resizing, and providing the main `render` method. It encapsulates
- * the boilerplate of Three.js setup and provides a clean API for interacting
- * with the scene.
+ * handling resizing, and providing the main `render` method.
  *
- * Note: This class focuses solely on core scene management. UI-specific features
- * like grids, backgrounds, and debug helpers should be handled by specialized
- * managers in the rendering pipeline.
+ * It also handles listening for performance profile changes and updating the renderer accordingly.
  */
 export class SceneManager {
   /** The root `THREE.Scene` object. */
@@ -214,7 +210,7 @@ export class SceneManager {
   /**
    * Starts the render loop.
    */
-  startRenderLoop(): void {
+  start(): void {
     if (this.animationLoop) {
       this.animationLoop.start();
     }
@@ -223,7 +219,7 @@ export class SceneManager {
   /**
    * Stops the render loop.
    */
-  stopRenderLoop(): void {
+  stop(): void {
     if (this.animationLoop) {
       this.animationLoop.stop();
     }
@@ -287,8 +283,6 @@ export class SceneManager {
    * This should be called when the SceneManager is no longer needed to prevent memory leaks.
    */
   dispose(): void {
-    console.log("[SceneManager] Disposing resources...");
-
     // Unsubscribe from performance changes first
     if (this.performanceSubscription) {
       this.performanceSubscription.unsubscribe();
@@ -323,27 +317,5 @@ export class SceneManager {
     (this.renderer as any) = null;
     (this.animationLoop as any) = null;
     (this.performanceSubscription as any) = null;
-
-    console.log("[SceneManager] Disposal complete");
-  }
-
-  /**
-   * Updates camera settings based on the focused celestial object type
-   * This prevents shader transparency issues while maintaining close viewing for satellites
-   * @param celestialType The type of celestial object being focused
-   */
-  public updateCameraSettingsForObject(celestialType?: string): void {
-    if (this.camera) {
-      CameraHelper.updateCameraForCelestialType(this.camera, celestialType);
-    }
-  }
-
-  /**
-   * Gets the minimum distance setting for orbit controls based on celestial object type
-   * @param celestial object type
-   * @returns The appropriate minimum distance value
-   */
-  public getMinDistanceForObject(celestialType?: string): number {
-    return CameraHelper.getMinDistanceForCelestialType(celestialType);
   }
 }

@@ -11,7 +11,8 @@ export * from "./dockview-controller/DockviewController";
 export * from "./group-manager";
 export * from "./overlay-manager";
 export * from "./fallback-panel";
-export * from "./types";
+export * from "./panel.service";
+export * from "./types/index";
 
 /**
  * Initialization function for the Dockview system.

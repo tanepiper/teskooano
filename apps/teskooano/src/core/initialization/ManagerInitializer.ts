@@ -1,4 +1,5 @@
 import type { pluginManager } from "@teskooano/ui-plugin";
+import type { OverlayManager } from "../controllers/dockview";
 
 /**
  * Handles initialization of application managers in the correct order
@@ -13,7 +14,8 @@ export class ManagerInitializer {
     appElement: HTMLElement,
     toolbarElement: HTMLElement,
     dockviewController: any,
-  ): Promise<{ modalManager: any }> {
+    modalManager: OverlayManager,
+  ): Promise<void> {
     try {
       // Initialize engine view manager (critical)
       console.debug("[ManagerInit] Initializing engine view...");
@@ -27,51 +29,44 @@ export class ManagerInitializer {
         targetElement: toolbarElement,
       });
 
-      // Initialize and configure DockView modal manager (critical)
-      console.debug("[ManagerInit] Initializing DockView modal manager...");
-      const modalManager = pluginManagerInstance.getManagerInstance<any>(
-        "dockview-modal-manager",
-      );
-      if (!modalManager) {
-        throw new Error(
-          "Failed to get DockViewModalManager instance from plugin manager.",
-        );
-      }
-
-      if (typeof modalManager.initialize === "function") {
-        modalManager.initialize(dockviewController);
-      } else {
-        throw new Error(
-          "DockViewModalManager instance does not have an initialize method.",
-        );
-      }
-
       // Initialize system controls (critical)
       console.debug("[ManagerInit] Initializing system controls...");
       await pluginManagerInstance.execute("system-controls:initialize", {
         dockviewController,
       });
 
-      // Initialize tour controller (optional - shouldn't block startup)
-      console.debug("[ManagerInit] Initializing tour controller...");
-      try {
-        await pluginManagerInstance.execute("tour:initialize", {
-          dockviewController,
-          modalManager,
-        });
-      } catch (error) {
-        console.warn(
-          "[ManagerInit] Tour controller initialization failed (non-critical):",
-          error,
-        );
-        // Tour is optional, don't let this block the app
-      }
+      // Note: DockView modal manager is automatically initialized when the modal plugin is loaded
+      // No explicit initialization needed
 
-      return { modalManager };
+      // Note: Tour controller initialization is moved to after panel creation
+      // to ensure the engine panel exists when the tour controller starts
     } catch (error) {
       throw new Error(
         `Manager initialization failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
+    }
+  }
+
+  /**
+   * Initializes the tour controller after panels are created
+   * @throws {Error} If tour controller fails to initialize (non-critical)
+   */
+  public static async initializeTourController(
+    pluginManagerInstance: typeof pluginManager,
+    dockviewController: any,
+  ): Promise<void> {
+    // Initialize tour controller (optional - shouldn't block startup)
+    console.debug("[ManagerInit] Initializing tour controller...");
+    try {
+      await pluginManagerInstance.execute("tour:initialize", {
+        dockviewController,
+      });
+    } catch (error) {
+      console.warn(
+        "[ManagerInit] Tour controller initialization failed (non-critical):",
+        error,
+      );
+      // Tour is optional, don't let this block the app
     }
   }
 }

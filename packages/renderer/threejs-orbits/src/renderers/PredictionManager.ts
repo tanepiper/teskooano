@@ -295,11 +295,33 @@ export class PredictionManager {
     );
     const isMultiStarSystem = stars.length > 1;
 
-    // If we're in a multi-star system and the parent is a star, use absolute coordinates
+    // If we're in a multi-star system, check if any ancestor is a moving star
     if (isMultiStarSystem && relativeToBodyId) {
-      const parentObject = fullObjectsMap[relativeToBodyId];
-      if (parentObject?.type === CelestialType.STAR) {
-        // Use absolute coordinates (relative to origin/barycenter) instead of relative to moving star
+      // Helper function to check if any ancestor in the hierarchy is a star
+      const hasStarAncestor = (
+        objectId: string,
+        visited = new Set<string>(),
+      ): boolean => {
+        if (visited.has(objectId)) return false; // Prevent infinite loops
+        visited.add(objectId);
+
+        const obj = fullObjectsMap[objectId];
+        if (!obj) return false;
+
+        // If this object is a star, we found a star ancestor
+        if (obj.type === CelestialType.STAR) return true;
+
+        // If this object has a parent, check recursively
+        if (obj.parentId) {
+          return hasStarAncestor(obj.parentId, visited);
+        }
+
+        return false;
+      };
+
+      // If the object has a star ancestor, use absolute coordinates
+      if (hasStarAncestor(relativeToBodyId)) {
+        // Use absolute coordinates (relative to origin/barycenter) instead of relative to moving reference
         relativeToBodyId = undefined;
       }
     }

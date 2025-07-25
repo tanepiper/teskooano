@@ -25,13 +25,19 @@ export class TourController {
   private _context: PluginExecutionContext;
   private currentTourId: string | null = null;
   private tourRegistry: Map<string, TourFactory> = new Map();
+  private modalManager: DockViewModalManager | null = null;
 
   /**
    * Creates an instance of TourController.
    * @param context The plugin execution context, providing access to core app controllers.
+   * @param modalManager The modal manager for showing tour prompts.
    */
-  constructor(context: PluginExecutionContext) {
+  constructor(
+    context: PluginExecutionContext,
+    modalManager?: DockViewModalManager,
+  ) {
     this._context = context;
+    this.modalManager = modalManager || null;
 
     this.driverInstance = driver({
       animate: true,
@@ -115,16 +121,28 @@ export class TourController {
    * Waits for the engine panel to be fully created and initialized.
    */
   private async waitForEnginePanel(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      let retryCount = 0;
+      const maxRetries = 50; // 5 seconds maximum wait time
+
       const checkForEnginePanel = () => {
+        retryCount++;
+
         // Check if there's an engine panel in the DockView by looking for the known ID pattern
         const hasEnginePanel = this._context.dockviewController?.api?.getPanel(
           "composite_engine_view_1",
         );
 
+        // Check if there's an engine panel in the DockView by looking for the known ID pattern
+
         if (hasEnginePanel) {
           // Give a bit more time for the panel to fully initialize
           setTimeout(resolve, 200);
+        } else if (retryCount >= maxRetries) {
+          console.warn(
+            "[TourController] Max retries reached, proceeding without engine panel",
+          );
+          resolve(); // Continue anyway to show the modal
         } else {
           // Check again in 100ms
           setTimeout(checkForEnginePanel, 100);
@@ -140,21 +158,15 @@ export class TourController {
    */
   private async showTourModal(): Promise<void> {
     try {
-      // Get the DockView modal manager from the plugin manager
-      const modalManager =
-        this._context.pluginManager.getManagerInstance<DockViewModalManager>(
-          "dockview-modal-manager",
-        );
-
-      if (!modalManager) {
-        console.error("TourController: Could not get DockView modal manager");
+      if (!this.modalManager) {
+        console.error("TourController: Modal manager not available");
         return;
       }
 
       const content = `<p>Would you like to take a quick tour of the interface?</p>
                        <p><small>You can restart the tour later from the help menu.</small></p>`;
 
-      const result: ModalResult = await modalManager.show({
+      const result: ModalResult = await this.modalManager.show({
         title: "Welcome to Teskooano!",
         content,
         confirmText: "Start Tour",

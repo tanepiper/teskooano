@@ -6,29 +6,41 @@ import { EnvironmentValidator } from "../validation/EnvironmentValidator";
 import { ManagerInitializer } from "./ManagerInitializer";
 import { PanelRegistry } from "./PanelRegistry";
 import { EventSetup } from "./EventSetup";
-
-interface AppContext {
-  modalManager?: any;
-  dockviewController?: any;
-}
-
-interface InitializationResult {
-  dockviewController: any;
-  dockviewApi: DockviewApi;
-  appContext: AppContext;
-}
+import { SimulationLoopManager } from "../state/SimulationLoopManager";
+import { DockviewController, OverlayManager } from "../controllers/dockview";
 
 /**
- * Orchestrates the complete application initialization process
+ * The main Teskooano application class that orchestrates the complete initialization process
+ * and provides access to all core application components.
  */
-export class ApplicationInitializer {
+export class TeskooanoApp {
+  public readonly dockviewController: DockviewController;
+  public readonly dockviewApi: DockviewApi;
+  public readonly simulationLoopManager: SimulationLoopManager;
+  public readonly performanceMonitor: PerformanceMonitor;
+  public readonly modalManager: OverlayManager;
+
+  private constructor(
+    dockviewController: DockviewController,
+    dockviewApi: DockviewApi,
+    simulationLoopManager: SimulationLoopManager,
+    performanceMonitor: PerformanceMonitor,
+    modalManager: OverlayManager,
+  ) {
+    this.dockviewController = dockviewController;
+    this.dockviewApi = dockviewApi;
+    this.simulationLoopManager = simulationLoopManager;
+    this.performanceMonitor = performanceMonitor;
+    this.modalManager = modalManager;
+  }
+
   /**
-   * Runs the complete application initialization sequence
+   * Creates and initializes a new TeskooanoApp instance.
+   * @param pluginIds Array of plugin IDs to load
+   * @returns A fully initialized TeskooanoApp instance
    * @throws {Error} If any critical initialization step fails
    */
-  public static async initialize(
-    pluginIds: string[],
-  ): Promise<InitializationResult> {
+  public static async create(pluginIds: string[]): Promise<TeskooanoApp> {
     console.log("🔭 Initializing Teskooano...");
 
     try {
@@ -39,7 +51,7 @@ export class ApplicationInitializer {
 
       // Step 2: Load and register plugins
       console.debug("[Init] Loading plugins...");
-      await this.loadPlugins(pluginIds);
+      await TeskooanoApp.loadPlugins(pluginIds);
 
       // Step 2.5: Initialize performance monitoring (but don't start monitoring yet)
       console.debug("[Init] Initializing performance monitoring...");
@@ -48,7 +60,7 @@ export class ApplicationInitializer {
       // Step 3: Initialize dockview system
       console.debug("[Init] Initializing dockview system...");
       const { dockviewController, dockviewApi } =
-        await this.initializeDockview(appElement);
+        await TeskooanoApp.initializeDockview(appElement);
 
       // Step 4: Set plugin manager dependencies
       console.debug("[Init] Setting plugin dependencies...");
@@ -61,26 +73,39 @@ export class ApplicationInitializer {
       console.debug("[Init] Registering panel components...");
       PanelRegistry.registerPanelComponents(pluginManager, dockviewController);
 
-      // Step 6: Initialize application managers
+      // Step 6: Initialize modal manager
+      console.debug("[Init] Initializing modal manager...");
+      const modalManager =
+        await TeskooanoApp.initializeModalManager(appElement);
+
+      // Step 7: Initialize application managers
       console.debug("[Init] Initializing application managers...");
-      const { modalManager } = await ManagerInitializer.initializeManagers(
+      await ManagerInitializer.initializeManagers(
         pluginManager,
         appElement,
         toolbarElement,
         dockviewController,
+        modalManager,
       );
 
-      // Step 7: Create initial panels
+      // Step 8: Create initial panels
       console.debug("[Init] Creating initial panels...");
-      await this.createInitialPanels(dockviewController);
+      await TeskooanoApp.createInitialPanels(dockviewController);
 
-      // Step 8: Setup event listeners
-      console.debug("[Init] Setting up event listeners...");
-      const appContext: AppContext = {
+      // Step 8.5: Initialize tour controller (after panels are created)
+      console.debug("[Init] Initializing tour controller...");
+      await ManagerInitializer.initializeTourController(
+        pluginManager,
         dockviewController,
-        modalManager,
-      };
-      EventSetup.setupEventListeners(pluginManager, appContext);
+      );
+
+      // Step 9: Initialize simulation loop manager
+      console.debug("[Init] Initializing simulation loop manager...");
+      const simulationLoopManager = new SimulationLoopManager();
+
+      // Step 10: Setup event listeners
+      console.debug("[Init] Setting up event listeners...");
+      EventSetup.setupEventListeners(pluginManager, { dockviewController });
 
       console.log("🪐 Teskooano Initialized.");
 
@@ -90,11 +115,13 @@ export class ApplicationInitializer {
         loadingElement.remove();
       }
 
-      return {
+      return new TeskooanoApp(
         dockviewController,
         dockviewApi,
-        appContext,
-      };
+        simulationLoopManager,
+        performanceMonitor,
+        modalManager,
+      );
     } catch (error) {
       console.error("💥 Critical initialization failure:", error);
 
@@ -114,7 +141,7 @@ export class ApplicationInitializer {
       }
 
       // Attempt cleanup
-      await this.cleanup();
+      await TeskooanoApp.cleanup();
 
       throw new Error(
         `Application initialization failed: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -125,9 +152,10 @@ export class ApplicationInitializer {
   /**
    * Initializes the dockview system
    */
-  private static async initializeDockview(
-    appElement: HTMLElement,
-  ): Promise<{ dockviewController: any; dockviewApi: DockviewApi }> {
+  private static async initializeDockview(appElement: HTMLElement): Promise<{
+    dockviewController: DockviewController;
+    dockviewApi: DockviewApi;
+  }> {
     // Set initial null dependencies
     pluginManager.setAppDependencies({
       dockviewApi: null as any,
@@ -159,7 +187,7 @@ export class ApplicationInitializer {
       }
     } catch (error) {
       console.error(
-        "[ApplicationInitializer] Error calling dockview:initialize function:",
+        "[TeskooanoApp] Error calling dockview:initialize function:",
         error,
       );
       throw error;
@@ -183,7 +211,7 @@ export class ApplicationInitializer {
    * Creates initial application panels
    */
   private static async createInitialPanels(
-    dockviewController: any,
+    dockviewController: DockviewController,
   ): Promise<void> {
     try {
       await pluginManager.execute("view:addCompositeEnginePanel", {
@@ -194,6 +222,20 @@ export class ApplicationInitializer {
         `Failed to create initial panels: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
+  }
+
+  /**
+   * Initializes the modal manager
+   */
+  private static async initializeModalManager(
+    appElement: HTMLElement,
+  ): Promise<OverlayManager> {
+    console.debug("[TeskooanoApp] Initializing modal manager...");
+
+    // Create a dedicated OverlayManager for the app using the same container element
+    const modalManager = new OverlayManager(appElement);
+
+    return modalManager;
   }
 
   /**
@@ -221,5 +263,19 @@ export class ApplicationInitializer {
       console.warn("[Init] Cleanup failed:", cleanupError);
       // Don't throw here - cleanup failure shouldn't mask the original error
     }
+  }
+
+  /**
+   * Disposes of the application and cleans up all resources.
+   */
+  public dispose(): void {
+    console.log("[TeskooanoApp] Disposing application...");
+
+    // Dispose simulation loop manager
+    this.simulationLoopManager.dispose();
+
+    // Additional cleanup can be added here as needed
+
+    console.log("[TeskooanoApp] Application disposed");
   }
 }

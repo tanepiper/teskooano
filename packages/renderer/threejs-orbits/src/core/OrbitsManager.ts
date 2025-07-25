@@ -415,6 +415,21 @@ export class OrbitsManager extends StateSubscriptionMixin {
   }
 
   /**
+   * Highlights prediction lines for a specific object, hiding all others.
+   * @param objectId - ID of the object to show prediction for, or null to hide all
+   */
+  public highlightPrediction(objectId: string | null): void {
+    if (this.activeStrategy) {
+      // For NBody strategy, highlight specific prediction
+      if ("predictionManager" in this.activeStrategy) {
+        (this.activeStrategy as any).predictionManager.highlightPrediction(
+          objectId,
+        );
+      }
+    }
+  }
+
+  /**
    * Cleans up resources used by this manager.
    * Should be called when the manager is no longer needed.
    */

@@ -6,6 +6,7 @@ import type {
 } from "@teskooano/ui-plugin";
 import { TourController } from "./TourController";
 import { createIntroTour } from "./tours/intro-tour";
+import type { DockViewModalManager } from "../../components/modal/DockViewModalManager";
 
 import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
 
@@ -16,9 +17,23 @@ let tourControllerInstance: TourController | null = null;
 
 const initializeTourFunction: FunctionConfig = {
   id: "tour:initialize",
-  execute: async (context: PluginExecutionContext) => {
+  execute: async (
+    context: PluginExecutionContext,
+    options?: { dockviewController?: any },
+  ) => {
     if (!tourControllerInstance) {
-      tourControllerInstance = new TourController(context);
+      // Get the DockView modal manager from the plugin manager
+      const modalManager =
+        context.pluginManager.getManagerInstance<DockViewModalManager>(
+          "dockview-modal-manager",
+        );
+
+      // Initialize the modal manager with the dockview controller
+      if (modalManager) {
+        modalManager.initialize(context.dockviewController);
+      }
+
+      tourControllerInstance = new TourController(context, modalManager);
       // Register the default tour immediately after creation.
       tourControllerInstance.registerTour("intro", createIntroTour);
     }

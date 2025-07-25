@@ -3,7 +3,7 @@ import type {
   AddPanelOptions,
   IDockviewPanel,
 } from "dockview-core";
-import type { RegisteredComponentInfo } from "../types";
+import type { RegisteredComponentInfo } from "../types/index";
 
 /**
  * Adds a new panel to the Dockview instance using the core API.

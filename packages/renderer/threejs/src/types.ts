@@ -87,8 +87,7 @@ export interface RenderPipelineOptions {
   lodManager: LODManager;
   /** The manager for the grid helper. */
   gridManager: GridManager;
-  /** The manager for the main animation loop. */
-  animationLoop: AnimationLoop;
+
   /** The optional manager for 2D HTML labels. */
   css2DManager: Layer2DManager;
 }

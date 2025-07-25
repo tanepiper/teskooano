@@ -31,7 +31,6 @@ export class RenderPipeline {
   private lodManager: LODManager;
   private gridManager: GridManager;
   private css2DManager: Layer2DManager;
-  private animationLoop: AnimationLoop;
 
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
@@ -65,7 +64,6 @@ export class RenderPipeline {
     this.lodManager = managers.lodManager;
     this.gridManager = managers.gridManager;
     this.css2DManager = managers.css2DManager;
-    this.animationLoop = managers.animationLoop;
 
     // Cache core three.js objects
     this.camera = this.sceneManager.camera;
@@ -141,7 +139,7 @@ export class RenderPipeline {
 
     // 7. Run any custom render callbacks injected into the loop.
     // Optimize callback execution by getting the array once
-    const callbacks = this.animationLoop.getRenderCallbacks();
+    const callbacks = this.sceneManager.animationLoop.getRenderCallbacks();
     if (callbacks.length > 0) {
       for (let i = 0; i < callbacks.length; i++) {
         callbacks[i]();

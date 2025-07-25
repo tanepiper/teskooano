@@ -39,8 +39,6 @@ import { LabelSystem } from "@teskooano/renderer-threejs-labels";
 export class ModularSpaceRenderer {
   /** Manages the core THREE.Scene, camera, and renderer instances. */
   public sceneManager: SceneManager;
-  /** Controls the `requestAnimationFrame` loop. */
-  public animationLoop: AnimationLoop;
 
   /** Manages the lifecycle of celestial `THREE.Object3D` instances. */
   public objectManager: ObjectManager;
@@ -85,7 +83,6 @@ export class ModularSpaceRenderer {
     this.sceneManager = new SceneManager(container, {
       antialias: true,
     });
-    this.animationLoop = this.sceneManager.animationLoop;
 
     const css2DManager = new Layer2DManager(this.sceneManager.scene, container);
 
@@ -146,7 +143,6 @@ export class ModularSpaceRenderer {
       lodManager: this.lodManager,
       gridManager: this.gridManager,
       css2DManager: this.css2DManager,
-      animationLoop: this.animationLoop,
     });
 
     this.setupAnimationCallbacks();
@@ -159,10 +155,10 @@ export class ModularSpaceRenderer {
   private setupAnimationCallbacks(): void {
     // Register physics simulation callback first
     const physicsCallback = simulationManager.createPhysicsCallback();
-    this.animationLoop.onPhysics(physicsCallback);
+    this.sceneManager.animationLoop.onPhysics(physicsCallback);
 
     // Register rendering callback
-    this.animationLoop.onAnimate(this.renderPipeline.update);
+    this.sceneManager.animationLoop.onAnimate(this.renderPipeline.update);
   }
 
   /**
@@ -198,13 +194,13 @@ export class ModularSpaceRenderer {
    * Starts the rendering loop.
    */
   start(): void {
-    this.sceneManager.startRenderLoop();
+    this.sceneManager.start();
   }
   /**
    * Stops the rendering loop.
    */
   stop(): void {
-    this.sceneManager.stopRenderLoop();
+    this.sceneManager.stop();
   }
 
   /**
@@ -297,5 +293,13 @@ export class ModularSpaceRenderer {
     this.objectManager.setDebugMode(enabled);
     this.objectManager.recreateAllMeshes();
     this.controlsManager.setDebugMode(enabled);
+  }
+
+  /**
+   * Highlights prediction lines for a specific object, hiding all others.
+   * @param objectId - ID of the object to show prediction for, or null to hide all
+   */
+  public highlightPrediction(objectId: string | null): void {
+    this.orbitManager.highlightPrediction(objectId);
   }
 }

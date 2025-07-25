@@ -2,44 +2,34 @@ import "@teskooano/design-system/styles.css";
 import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
-import { ApplicationInitializer } from "./core/initialization";
 import { pluginConfig } from "./config/pluginRegistry";
-import { pluginConfig as corePluginConfig } from "./core/config/pluginRegistry";
-
-// Import simulation loop state management to ensure it's initialized
-import "./core/state/simulation-loop.state";
-
-interface AppContext {
-  modalManager?: any;
-  dockviewController?: any;
-}
-
-/**
- * Global application context for sharing state between components
- */
-export const appContext: AppContext = {};
+import { TeskooanoApp, pluginConfig as corePluginConfig } from "./core";
 
 /**
  * Application entry point - orchestrates initialization
  */
-async function initializeApp(): Promise<void> {
+async function initializeApp(): Promise<TeskooanoApp> {
   const pluginIds = [
     ...Object.keys(corePluginConfig),
     ...Object.keys(pluginConfig),
   ];
 
   try {
-    const result = await ApplicationInitializer.initialize(pluginIds);
-
-    // Update global context for legacy components that depend on it
-    Object.assign(appContext, result.appContext);
+    const app = await TeskooanoApp.create(pluginIds);
+    return app;
   } catch (error) {
     console.error("[App] Unhandled error during application startup:", error);
+    console.trace(error);
     throw error;
   }
 }
 
 // Start the application
-initializeApp().catch((err) => {
-  console.error("[App] Critical startup failure:", err);
-});
+initializeApp()
+  .then((app) => {
+    console.log("[App] Application initialized successfully", app);
+  })
+  .catch((err) => {
+    console.error("[App] Critical startup failure:", err);
+    console.trace(err);
+  });
