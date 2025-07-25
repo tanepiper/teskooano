@@ -324,7 +324,7 @@ export class CameraManager {
 
         // Set up follow BEFORE initiating transition for better continuity
         // Get the THREE.Object3D from the renderer that matches this objectId
-        const objectToFollow = this.renderer.getObjectById(objectId);
+        const objectToFollow = this.renderer.objectManager.getObject(objectId);
 
         if (objectToFollow) {
           // Start following immediately with the calculated offset

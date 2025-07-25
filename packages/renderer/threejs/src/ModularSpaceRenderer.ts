@@ -2,11 +2,12 @@ import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import {
   AnimationLoop,
-  SceneManager,
   GridManager,
+  SceneManager,
 } from "@teskooano/renderer-threejs-core";
 import {
   AuMarkerManager,
+  CelestialLabelLayer,
   CSS2DLayerType,
   Layer2DManager,
 } from "@teskooano/renderer-threejs-labels";
@@ -19,10 +20,9 @@ import { RendererStateAdapter } from "./RendererStateAdapter";
 import { RenderPipeline } from "./RenderPipeline";
 import type { ModularSpaceRendererOptions } from "./types";
 
-import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
+import { simulationManager } from "@teskooano/app-simulation";
 import { renderableStore } from "@teskooano/core-state";
 import { LabelSystem } from "@teskooano/renderer-threejs-labels";
-import { simulationManager } from "@teskooano/app-simulation";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -64,11 +64,10 @@ export class ModularSpaceRenderer {
   public gridManager: GridManager;
 
   /** Bridges core application state to the renderer-consumable `renderableStore`. */
-  private stateAdapter: RendererStateAdapter;
+  public stateAdapter: RendererStateAdapter;
   /** Orchestrates the per-frame update sequence. */
-  private renderPipeline: RenderPipeline;
+  public renderPipeline: RenderPipeline;
 
-  private debrisEffectsEnabled: boolean = true;
   private container?: HTMLElement;
   private resizeHandler?: () => void;
 
@@ -80,19 +79,27 @@ export class ModularSpaceRenderer {
    * @param options Configuration options for the renderer.
    * @param labelSystem The optional LabelSystem.
    */
-  constructor(
-    container: HTMLElement,
-    sceneManager: SceneManager,
-    options: ModularSpaceRendererOptions = {},
-    labelSystem: LabelSystem,
-  ) {
+  constructor(container: HTMLElement) {
     this.stateAdapter = new RendererStateAdapter();
 
-    this.sceneManager = sceneManager;
+    this.sceneManager = new SceneManager(container, {
+      antialias: true,
+    });
     this.animationLoop = this.sceneManager.animationLoop;
 
-    this.css2DManager = labelSystem.css2DManager;
-    this.auMarkerManager = labelSystem.auMarkerManager;
+    const css2DManager = new Layer2DManager(this.sceneManager.scene, container);
+
+    const celestialLayer = new CelestialLabelLayer(this.sceneManager.scene);
+    css2DManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
+
+    const auMarkerManager = new AuMarkerManager(
+      this.sceneManager.scene,
+      css2DManager,
+    );
+    auMarkerManager.createMarkers();
+
+    this.css2DManager = css2DManager;
+    this.auMarkerManager = auMarkerManager;
 
     this.lightingManager = new LightingManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
@@ -127,10 +134,7 @@ export class ModularSpaceRenderer {
     this.backgroundManager.setCamera(this.sceneManager.camera);
 
     // Initialize grid manager with visibility from options
-    this.gridManager = new GridManager(
-      this.sceneManager.scene,
-      options.showGrid !== false,
-    );
+    this.gridManager = new GridManager(this.sceneManager.scene);
 
     this.renderPipeline = new RenderPipeline({
       sceneManager: this.sceneManager,
@@ -145,51 +149,7 @@ export class ModularSpaceRenderer {
       animationLoop: this.animationLoop,
     });
 
-    this.setupEventListeners(container);
-
     this.setupAnimationCallbacks();
-
-    this.onResize(container.clientWidth, container.clientHeight);
-
-    if (options.showAuMarkers !== undefined) {
-      this.setAuMarkersVisible(options.showAuMarkers);
-    }
-    if (options.showDebrisEffects !== undefined) {
-      this.setDebrisEffectsEnabled(options.showDebrisEffects);
-    } else {
-      this.setDebrisEffectsEnabled(this.debrisEffectsEnabled);
-    }
-  }
-
-  /**
-   * Sets up event listeners for the renderer.
-   * @param container The main HTML container for the renderer.
-   */
-  private setupEventListeners(container: HTMLElement): void {
-    this.container = container;
-    this.resizeHandler = () => {
-      if (this.container) {
-        const width = this.container.clientWidth;
-        const height = this.container.clientHeight;
-        this.onResize(width, height);
-      }
-    };
-    container.addEventListener("toggleGrid", () => {
-      this.toggleGrid();
-    });
-    container.addEventListener("toggleBackgroundDebug", () => {
-      this.backgroundManager.toggleDebug();
-    });
-
-    window.addEventListener("resize", this.resizeHandler);
-
-    // This listener is a hook for responding to camera system events.
-    document.addEventListener("camera-transition-complete", (event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail) {
-        // Future logic can be placed here, e.g., for analytics or UI updates.
-      }
-    });
   }
 
   /**
@@ -237,13 +197,13 @@ export class ModularSpaceRenderer {
   /**
    * Starts the rendering loop.
    */
-  startRenderLoop(): void {
+  start(): void {
     this.sceneManager.startRenderLoop();
   }
   /**
    * Stops the rendering loop.
    */
-  stopRenderLoop(): void {
+  stop(): void {
     this.sceneManager.stopRenderLoop();
   }
 
@@ -254,7 +214,6 @@ export class ModularSpaceRenderer {
    */
   onResize(width: number, height: number): void {
     this.sceneManager.onResize(width, height);
-
     this.css2DManager?.onResize(width, height);
   }
 
@@ -302,64 +261,6 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * Sets the visibility of celestial object labels (CSS2D layer).
-   * @param visible - True to show labels, false to hide.
-   */
-  setCelestialLabelsVisible(visible: boolean): void {
-    this.css2DManager?.setLayerVisibility(
-      CSS2DLayerType.CELESTIAL_LABELS,
-      visible,
-    );
-  }
-  /**
-   * Sets the visibility of the background grid helper.
-   * @param visible - True to show the grid, false to hide.
-   */
-  setGridVisible(visible: boolean): void {
-    this.gridManager.setVisible(visible);
-  }
-  /**
-   * Sets the visibility of the AU (Astronomical Unit) marker lines.
-   * @param visible - True to show AU markers, false to hide.
-   */
-  setAuMarkersVisible(visible: boolean): void {
-    this.auMarkerManager?.setVisible(visible);
-  }
-  /**
-   * Sets the visibility of all orbital lines.
-   * @param visible - True to show orbits, false to hide.
-   */
-  setOrbitsVisible(visible: boolean): void {
-    this.orbitManager.setOrbitTrailsVisibility(visible);
-  }
-  /**
-   * Sets the visibility of all prediction lines.
-   * @param visible - True to show prediction lines, false to hide.
-   */
-  setPredictionLinesVisible(visible: boolean): void {
-    this.orbitManager.setPredictionVisibility(visible);
-    this.css2DManager?.setLayerVisibility(
-      CSS2DLayerType.PREDICTION_LABELS,
-      visible,
-    );
-  }
-  /**
-   * Toggles the visibility of the background grid helper.
-   */
-  toggleGrid(): void {
-    this.gridManager.toggle();
-  }
-
-  /**
-   * Retrieves a specific 3D object from the scene by its ID.
-   * @param id - The unique identifier of the object.
-   * @returns The found object, or null if not found.
-   */
-  public getObjectById(id: string): THREE.Object3D | null {
-    return this.objectManager.getObject(id);
-  }
-
-  /**
    * Calculates the total number of triangles currently being rendered in the scene.
    * This is a costly operation and should only be used for debugging purposes.
    *
@@ -381,71 +282,9 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * Directly tells the ControlsManager to start or stop following a THREE.Object3D.
-   * This is a low-level method. For semantic focus and smooth transitions,
-   * use the application's `CameraManager`.
-   *
-   * @param object The THREE.Object3D to follow, or null to stop.
-   * @param cameraOffset The offset the camera should maintain from the object. Required if `object` is not null.
-   */
-  setFollowTargetObject(
-    object: THREE.Object3D | null,
-    cameraOffset?: THREE.Vector3,
-  ): void {
-    if (!this.controlsManager) {
-      console.error("[Renderer] ControlsManager not initialized.");
-      return;
-    }
-
-    if (object) {
-      if (!cameraOffset) {
-        console.error(
-          "[Renderer.setFollowTargetObject] cameraOffset is required when providing an object to follow.",
-        );
-        return;
-      }
-      this.controlsManager.startFollowing(object, cameraOffset);
-    } else {
-      this.controlsManager.stopFollowing();
-    }
-  }
-
-  /**
-   * Enables or disables debug visualizations for various renderer components.
-   * @param enabled Whether debug visualizations should be shown.
-   */
-  public setDebugVisualization(enabled: boolean): void {
-    setVisualizationEnabled(enabled);
-  }
-
-  /**
-   * Toggles debug visualizations on or off.
-   * @returns The new state (true if enabled, false if disabled).
-   */
-  public toggleDebugVisualization(): boolean {
-    const newState = !debugConfig.visualize;
-    this.setDebugVisualization(newState);
-    return newState;
-  }
-
-  /**
-   * Enables or disables the particle effects shown when objects are destroyed.
-   * @param enabled Whether debris effects should be shown.
-   */
-  public setDebrisEffectsEnabled(enabled: boolean): void {
-    this.debrisEffectsEnabled = enabled;
-    this.objectManager.setDebrisEffectsEnabled(enabled);
-  }
-
-  /**
    * Toggles debris effects on or off.
    * @returns The new state (true if enabled, false if disabled).
    */
-  public toggleDebrisEffects(): boolean {
-    this.debrisEffectsEnabled = !this.debrisEffectsEnabled;
-    this.objectManager.setDebrisEffectsEnabled(this.debrisEffectsEnabled);
-    return this.debrisEffectsEnabled;
-  }
 
   /**
    * Sets the global debug mode for the renderer.
@@ -458,40 +297,5 @@ export class ModularSpaceRenderer {
     this.objectManager.setDebugMode(enabled);
     this.objectManager.recreateAllMeshes();
     this.controlsManager.setDebugMode(enabled);
-  }
-
-  /**
-   * Returns the `OrbitsManager` instance to allow for advanced configuration
-   * of orbit visualizations, such as changing the visualization mode.
-   *
-   * @returns The orbit manager instance.
-   */
-  getOrbitsManager(): OrbitsManager {
-    return this.orbitManager;
-  }
-
-  /**
-   * Gets the current visualization status including mode transitions and configuration.
-   * Useful for providing real-time feedback to users about physics mode changes.
-   *
-   * @returns Current visualization status with transition information
-   */
-  getVisualizationStatus(): {
-    mode: string;
-    isTransitioning: boolean;
-    transitionProgress: number;
-    configurationSummary: string;
-  } {
-    return this.orbitManager.getVisualizationStatus();
-  }
-
-  /**
-   * Returns the `LightSourceManager` instance to allow for advanced access
-   * to lighting information.
-   *
-   * @returns The light source manager instance.
-   */
-  getLightSourceManager(): LightingManager {
-    return this.lightingManager;
   }
 }

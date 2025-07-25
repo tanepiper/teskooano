@@ -15,11 +15,7 @@ import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 
 import { CustomEvents } from "@teskooano/data-types";
-import { RendererStats, SceneManager } from "@teskooano/renderer-threejs-core";
-import {
-  initializeLabelSystem,
-  type LabelSystem,
-} from "@teskooano/renderer-threejs-labels";
+import { RendererStats } from "@teskooano/renderer-threejs-core";
 import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import "../../../../core/interface/engine-toolbar/view/engine-toolbar.component";
@@ -66,8 +62,6 @@ export class CompositeEnginePanel
   private _subscriptionManager = new StateSubscriptionMixin();
   private _isInitialized = false;
 
-  private _sceneManager: SceneManager | undefined = undefined;
-  private _labelSystem: LabelSystem | undefined = undefined;
   private _cameraCoordinator: PanelCameraCoordinator | undefined = undefined;
   private _lifecycleManager: PanelLifecycleManager;
   private _eventManager: PanelEventManager;
@@ -221,7 +215,7 @@ export class CompositeEnginePanel
    * Useful for direct manipulation or querying of orbit visualization data.
    */
   public get orbitManager(): OrbitsManager | undefined {
-    return this._renderer?.getOrbitsManager();
+    return this._renderer?.orbitManager;
   }
 
   /**
@@ -229,7 +223,7 @@ export class CompositeEnginePanel
    * Useful for direct manipulation or querying of lighting data.
    */
   public get lightSourceManager(): LightingManager | undefined {
-    return this._renderer?.getLightSourceManager();
+    return this._renderer?.lightingManager;
   }
 
   /**
@@ -254,22 +248,6 @@ export class CompositeEnginePanel
    */
   public get toolbar(): EngineToolbar | null {
     return this._engineToolbar;
-  }
-
-  /**
-   * Provides access to the LabelSystem instance.
-   * @returns The LabelSystem instance or undefined if not initialized.
-   */
-  public get labelSystem(): LabelSystem | undefined {
-    return this._labelSystem;
-  }
-
-  /**
-   * Provides access to the SceneManager instance.
-   * @returns The SceneManager instance or undefined if not initialized.
-   */
-  public get sceneManager(): SceneManager | undefined {
-    return this._sceneManager;
   }
 
   /**
@@ -385,30 +363,10 @@ export class CompositeEnginePanel
     }
     const viewState = this.getViewState();
 
-    // 1. Create the SceneManager first, as it owns the scene and camera.
-    this._sceneManager = new SceneManager(this._engineContainer, {
-      antialias: true,
-    });
-
     // 2. Decide if the label system is needed and initialize it.
-    this._labelSystem = initializeLabelSystem(
-      this._sceneManager.scene,
-      this._engineContainer,
-      {
-        showAuMarkers: viewState.showAuMarkers,
-      },
-    );
 
     // 3. Create the main renderer, injecting the dependencies.
-    this._renderer = new ModularSpaceRenderer(
-      this._engineContainer,
-      this._sceneManager,
-      {
-        // Pass other non-scene/label options here if any
-        showDebrisEffects: viewState.showDebrisEffects,
-      },
-      this._labelSystem,
-    );
+    this._renderer = new ModularSpaceRenderer(this._engineContainer);
 
     // 4. Finalize setup.
     this._cameraCoordinator = new PanelCameraCoordinator(
@@ -454,7 +412,7 @@ export class CompositeEnginePanel
       );
     }
 
-    this._renderer.startRenderLoop();
+    this._renderer.start();
 
     // Start performance monitoring after renderer is ready
     PerformanceMonitor.getInstance().startMonitoring();
@@ -527,15 +485,6 @@ export class CompositeEnginePanel
     this._cameraCoordinator?.dispose();
     this._cameraCoordinator = undefined;
 
-    // Dispose scene manager and label system
-    this._sceneManager?.dispose();
-    this._sceneManager = undefined;
-
-    // LabelSystem doesn't have a dispose method, but its components do
-    this._labelSystem?.css2DManager?.dispose();
-    this._labelSystem?.auMarkerManager?.dispose();
-    this._labelSystem = undefined;
-
     // Dispose toolbar
     const toolbarManager = this._params?.params?.engineToolbarManager;
     if (toolbarManager && this._api?.id) {
@@ -549,8 +498,6 @@ export class CompositeEnginePanel
 
     // Nullify references to allow garbage collection
     (this._renderer as any) = null;
-    (this._sceneManager as any) = null;
-    (this._labelSystem as any) = null;
     (this._cameraCoordinator as any) = null;
     (this._engineToolbar as any) = null;
     (this._resizeObserver as any) = null;

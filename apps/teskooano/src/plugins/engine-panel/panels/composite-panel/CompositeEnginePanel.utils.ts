@@ -1,6 +1,7 @@
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { OSVector3 } from "../../../../../../../packages/core/math/src/OSVector3";
 import type { CompositeEngineState } from "../types";
+import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 
 /**
  * The default FOV for the panel state, aligning with SceneManager's default
@@ -34,22 +35,29 @@ export function applyViewStateToRenderer(
   if (!renderer) return;
 
   if (updates.showGrid !== undefined) {
-    renderer.setGridVisible(updates.showGrid);
+    renderer.gridManager.setVisible(updates.showGrid);
   }
   if (updates.showCelestialLabels !== undefined) {
-    renderer.setCelestialLabelsVisible(updates.showCelestialLabels);
+    renderer.css2DManager.setLayerVisibility(
+      CSS2DLayerType.CELESTIAL_LABELS,
+      updates.showCelestialLabels,
+    );
   }
   if (updates.showAuMarkers !== undefined) {
-    renderer.setAuMarkersVisible(updates.showAuMarkers);
+    renderer.auMarkerManager?.setVisible(updates.showAuMarkers);
   }
   if (updates.showDebrisEffects !== undefined) {
-    renderer.setDebrisEffectsEnabled(updates.showDebrisEffects);
+    renderer.objectManager.setDebrisEffectsEnabled(updates.showDebrisEffects);
   }
   if (updates.showOrbitLines !== undefined) {
-    renderer.setOrbitsVisible(updates.showOrbitLines);
+    renderer.orbitManager.setOrbitTrailsVisibility(updates.showOrbitLines);
   }
   if (updates.showPredictionLines !== undefined) {
-    renderer.setPredictionLinesVisible(updates.showPredictionLines);
+    renderer.orbitManager.setPredictionVisibility(updates.showPredictionLines);
+    renderer.css2DManager.setLayerVisibility(
+      CSS2DLayerType.PREDICTION_LABELS,
+      updates.showPredictionLines,
+    );
   }
   if (updates.fov !== undefined) {
     renderer.camera.fov = updates.fov;
