@@ -54,7 +54,7 @@ export class ExternalLinksController {
       "teskooano-button",
     ) as TeskooanoButton;
 
-    button.setAttribute("variant", "icon-toolbar");
+    button.setAttribute("variant", "icon");
     button.setAttribute("aria-label", linkData.label);
     button.onclick = () =>
       window.open(linkData.url, "_blank", "noopener,noreferrer");

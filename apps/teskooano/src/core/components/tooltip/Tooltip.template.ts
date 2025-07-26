@@ -29,8 +29,6 @@ template.innerHTML = `
       z-index: var(--z-index-tooltip, 150); /* Ensure high z-index */
       
       /* Hide by default, show on hover/focus of the parent/trigger */
-      opacity: 0;
-      visibility: hidden;
       transition: opacity var(--transition-duration-fast, 150ms) var(--transition-timing-base, ease-in-out), 
                   visibility var(--transition-duration-fast, 150ms) var(--transition-timing-base, ease-in-out);
       pointer-events: none; /* Allow clicks to pass through */
@@ -120,7 +118,7 @@ template.innerHTML = `
     }
 
     .main {
-           word-break: break-word;
+       word-break: break-word;
        word-wrap: break-word;
        width: 100%;
        }

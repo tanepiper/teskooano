@@ -1,55 +1,55 @@
 /**
  * @fileoverview Teskooano UI Plugin Patterns
- * 
+ *
  * This module exports all the improved patterns for the Teskooano plugin system.
  * These patterns provide a more developer-friendly approach to building UI components
  * and plugins, inspired by modern frameworks like Nue.js but designed to work
  * within the existing Teskooano architecture.
- * 
+ *
  * ## Available Patterns
- * 
+ *
  * ### 1. Reactive State Management
  * - `ReactiveState` - Reactive state with computed properties and change tracking
  * - `createReactiveState` - Type-safe reactive state factory
  * - `connectObservable` - RxJS integration helper
- * 
+ *
  * ### 2. Event-Driven Communication
  * - `EventBus` - Centralized event system with debugging support
  * - `Events` - Standard event type registry
  * - Typed payload interfaces for all events
- * 
+ *
  * ### 3. Coming Soon (Phase 2)
  * - Template processing with directives
  * - Declarative component factory
  * - Convention-based plugin registration
  * - Template binding engine
- * 
+ *
  * @example Basic Usage
  * ```typescript
- * import { 
- *   ReactiveState, 
- *   EventBus, 
- *   Events, 
- *   ObjectSelectedPayload 
+ * import {
+ *   ReactiveState,
+ *   EventBus,
+ *   Events,
+ *   ObjectSelectedPayload
  * } from '@teskooano/ui-plugin/patterns';
- * 
+ *
  * // Create reactive state
  * const state = new ReactiveState({
  *   selectedObject: null,
  *   isLoading: false
  * });
- * 
+ *
  * // Add computed property
  * state.computed('hasSelection', {
  *   deps: ['selectedObject'],
  *   compute: (selectedObject) => selectedObject !== null
  * });
- * 
+ *
  * // Listen for changes
  * state.watch('selectedObject', (newValue) => {
  *   console.log('Selection changed:', newValue);
  * });
- * 
+ *
  * // Use event bus
  * const eventBus = EventBus.getInstance();
  * eventBus.on(Events.OBJECT_SELECTED, (event) => {
@@ -57,7 +57,7 @@
  *   state.set('selectedObject', payload.object);
  * });
  * ```
- * 
+ *
  * @version 0.1.0 - Phase 1 Implementation
  * @author Teskooano Team
  */
@@ -71,8 +71,8 @@ export {
   createReactiveState,
   connectObservable,
   type ComputedDefinition,
-  type StateWatcher
-} from './reactive-state.js';
+  type StateWatcher,
+} from "./reactive-state.js";
 
 // =====================================
 // Event System
@@ -84,8 +84,8 @@ export {
   autoCleanup,
   type EventConfig,
   type EventListener,
-  type SubscriptionOptions
-} from './event-bus.js';
+  type SubscriptionOptions,
+} from "./event-bus.js";
 
 export {
   Events,
@@ -93,7 +93,7 @@ export {
   EventDomains,
   type EventType,
   type PayloadForEvent,
-  
+
   // Payload type exports
   type BaseEventPayload,
   type ObjectSelectedPayload,
@@ -106,12 +106,16 @@ export {
   type SearchEventPayload,
   type NotificationEventPayload,
   type EventPayloadMap,
-  type CelestialObject
-} from './events.js';
+  type CelestialObject,
+} from "./events.js";
 
 // =====================================
 // Utility Functions
 // =====================================
+
+// Import the classes directly to avoid circular dependencies
+import { ReactiveState, createReactiveState } from "./reactive-state.js";
+import { EventBus } from "./event-bus.js";
 
 /**
  * Create a reactive component state with event integration
@@ -128,13 +132,10 @@ export function createComponentState<T extends Record<string, any>>(
       eventType: string;
       handler: (payload: any) => void;
     }>;
-  }
+  },
 ) {
-  const { ReactiveState: ReactiveStateClass, createReactiveState: createState } = require('./reactive-state.js');
-  const { EventBus: EventBusClass } = require('./event-bus.js');
-  
-  const state = createState(initialData);
-  const eventBus = EventBusClass.getInstance();
+  const state = createReactiveState(initialData);
+  const eventBus = EventBus.getInstance();
   const unsubscribers: Array<() => void> = [];
 
   // Set up auto-events
@@ -153,7 +154,7 @@ export function createComponentState<T extends Record<string, any>>(
   };
 
   enhancedState.cleanup = () => {
-    unsubscribers.forEach(unsubscribe => unsubscribe());
+    unsubscribers.forEach((unsubscribe) => unsubscribe());
     state.dispose();
   };
 
@@ -166,12 +167,11 @@ export function createComponentState<T extends Record<string, any>>(
 export function createEventListener(
   eventType: string,
   handler: any,
-  options?: any
+  options?: any,
 ): { unsubscribe: () => void } {
-  const { EventBus: EventBusClass } = require('./event-bus.js');
-  const eventBus = EventBusClass.getInstance();
+  const eventBus = EventBus.getInstance();
   const unsubscribe = eventBus.on(eventType, handler, options);
-  
+
   return { unsubscribe };
 }
 
@@ -185,10 +185,9 @@ export function emitEvent(
     source?: string;
     target?: string;
     bubbles?: boolean;
-  }
+  },
 ): void {
-  const { EventBus: EventBusClass } = require('./event-bus.js');
-  const eventBus = EventBusClass.getInstance();
+  const eventBus = EventBus.getInstance();
   eventBus.emit(eventType, payload, options);
 }
 
@@ -197,11 +196,11 @@ export function emitEvent(
  */
 export function debugState(state: any, label?: string): void {
   const snapshot = state.snapshot();
-  console.group(`🔍 State Debug${label ? ` - ${label}` : ''}`);
-  console.log('Data:', snapshot.data);
-  console.log('Computed:', snapshot.computed);
-  console.log('Watched Properties:', state.getWatchedProperties());
-  console.log('Computed Properties:', state.getComputedProperties());
+  console.group(`🔍 State Debug${label ? ` - ${label}` : ""}`);
+  console.log("Data:", snapshot.data);
+  console.log("Computed:", snapshot.computed);
+  console.log("Watched Properties:", state.getWatchedProperties());
+  console.log("Computed Properties:", state.getComputedProperties());
   console.groupEnd();
 }
 
@@ -209,15 +208,14 @@ export function debugState(state: any, label?: string): void {
  * Debug helper to inspect event bus
  */
 export function debugEventBus(): void {
-  const { EventBus: EventBusClass } = require('./event-bus.js');
-  const eventBus = EventBusClass.getInstance();
+  const eventBus = EventBus.getInstance();
   const stats = eventBus.getStats();
-  
-  console.group('🚌 EventBus Debug');
-  console.log('Listener Counts:', stats.listenerCounts);
-  console.log('Global Listeners:', stats.globalListeners);
-  console.log('Event History Count:', stats.eventHistory);
-  console.log('Last Events:', stats.lastEvents);
+
+  console.group("🚌 EventBus Debug");
+  console.log("Listener Counts:", stats.listenerCounts);
+  console.log("Global Listeners:", stats.globalListeners);
+  console.log("Event History Count:", stats.eventHistory);
+  console.log("Last Events:", stats.lastEvents);
   console.groupEnd();
 }
 
@@ -225,22 +223,21 @@ export function debugEventBus(): void {
  * Enable debug mode for all patterns
  */
 export function enablePatternDebugging(): void {
-  const { EventBus: EventBusClass } = require('./event-bus.js');
-  const eventBus = EventBusClass.getInstance();
+  const eventBus = EventBus.getInstance();
   eventBus.setDebugMode(true);
-  
-  console.log('🚀 Teskooano UI Patterns - Debug mode enabled');
-  console.log('Available debug functions:');
-  console.log('- debugState(state, label?)');
-  console.log('- debugEventBus()');
+
+  console.log("🚀 Teskooano UI Patterns - Debug mode enabled");
+  console.log("Available debug functions:");
+  console.log("- debugState(state, label?)");
+  console.log("- debugEventBus()");
 }
 
 // =====================================
 // Version Information
 // =====================================
 
-export const PATTERNS_VERSION = '0.1.0';
-export const PATTERNS_PHASE = 'Phase 1 - Foundation';
+export const PATTERNS_VERSION = "0.1.0";
+export const PATTERNS_PHASE = "Phase 1 - Foundation";
 
 /**
  * Get information about the patterns implementation
@@ -255,17 +252,17 @@ export function getPatternsInfo(): {
     version: PATTERNS_VERSION,
     phase: PATTERNS_PHASE,
     implemented: [
-      'Reactive State Management',
-      'Event-Driven Communication',
-      'Typed Event Registry',
-      'Component State Helpers'
+      "Reactive State Management",
+      "Event-Driven Communication",
+      "Typed Event Registry",
+      "Component State Helpers",
     ],
     upcoming: [
-      'Template Processing Engine',
-      'Declarative Component Factory',
-      'Convention-Based Plugin Registration',
-      'Template Binding System'
-    ]
+      "Template Processing Engine",
+      "Declarative Component Factory",
+      "Convention-Based Plugin Registration",
+      "Template Binding System",
+    ],
   };
 }
 
@@ -294,14 +291,14 @@ export default {
   createComponentState,
   emitEvent,
   createEventListener,
-  
+
   // Debug helpers
   debugState,
   debugEventBus,
   enablePatternDebugging,
-  
+
   // Info
   getPatternsInfo,
   version: PATTERNS_VERSION,
-  phase: PATTERNS_PHASE
+  phase: PATTERNS_PHASE,
 };

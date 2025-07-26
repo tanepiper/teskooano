@@ -8,7 +8,7 @@ export function createToolbarButton(
   id: string,
   options: {
     title?: string;
-    variant?: "icon" | "image" | "text";
+    variant?: "primary" | "ghost" | "image" | "icon";
     size?: "sm" | "md" | "lg";
     iconSvg?: string;
     imageUrl?: string;
@@ -16,7 +16,6 @@ export function createToolbarButton(
     tooltipText?: string;
     tooltipTitle?: string;
     tooltipIconSvg?: string;
-    tooltipHorizontalAlign?: "start" | "center" | "end";
     mobileAware?: boolean;
   },
 ): HTMLElement {
@@ -24,7 +23,7 @@ export function createToolbarButton(
   buttonElement.id = id;
 
   if (options.title) buttonElement.title = options.title;
-  buttonElement.setAttribute("variant", options.variant ?? "icon");
+  buttonElement.setAttribute("variant", options.variant ?? "ghost");
   buttonElement.setAttribute("size", options.size ?? "sm");
 
   if (options.iconSvg) {
@@ -40,12 +39,7 @@ export function createToolbarButton(
   if (options.tooltipTitle)
     buttonElement.setAttribute("tooltip-title", options.tooltipTitle);
   if (options.tooltipIconSvg)
-    buttonElement.setAttribute("tooltip-icon-svg", options.tooltipIconSvg);
-  if (options.tooltipHorizontalAlign)
-    buttonElement.setAttribute(
-      "tooltip-horizontal-align",
-      options.tooltipHorizontalAlign,
-    );
+    buttonElement.setAttribute("tooltip-icon", options.tooltipIconSvg);
 
   if (!options.tooltipText && options.title) {
     buttonElement.title = options.title;

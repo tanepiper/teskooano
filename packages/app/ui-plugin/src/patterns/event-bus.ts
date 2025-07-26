@@ -1,6 +1,6 @@
 /**
  * @fileoverview Event Bus System for Component Communication
- * 
+ *
  * This module provides a centralized event system for loose coupling between
  * components and plugins. It supports:
  * - Type-safe event emissions and subscriptions
@@ -8,24 +8,24 @@
  * - Global and specific event listeners
  * - Automatic cleanup and memory management
  * - Event debugging and logging
- * 
+ *
  * @example
  * ```typescript
  * import { EventBus, Events } from './event-bus';
- * 
+ *
  * const bus = EventBus.getInstance();
- * 
+ *
  * // Listen for events
  * const unsubscribe = bus.on(Events.OBJECT_SELECTED, (event) => {
  *   console.log('Object selected:', event.payload);
  * });
- * 
+ *
  * // Emit events
  * bus.emit(Events.OBJECT_SELECTED, {
  *   objectId: 'earth',
  *   source: 'celestial-info-panel'
  * });
- * 
+ *
  * // Clean up
  * unsubscribe();
  * ```
@@ -87,7 +87,7 @@ interface EventSubscription {
  */
 export class EventBus {
   private static instance: EventBus;
-  
+
   private listeners: Map<string, Map<string, EventSubscription>> = new Map();
   private globalListeners: Map<string, EventSubscription> = new Map();
   private lastEvents: Map<string, EventConfig> = new Map();
@@ -118,7 +118,7 @@ export class EventBus {
   setDebugMode(enabled: boolean): void {
     this.debugMode = enabled;
     if (enabled) {
-      console.log('🚌 EventBus debug mode enabled');
+      console.log("🚌 EventBus debug mode enabled");
     }
   }
 
@@ -128,7 +128,11 @@ export class EventBus {
    * @param payload Event payload data
    * @param options Additional event options
    */
-  emit(eventType: string, payload?: any, options: Partial<EventConfig> = {}): void {
+  emit(
+    eventType: string,
+    payload?: any,
+    options: Partial<EventConfig> = {},
+  ): void {
     const event: EventConfig = {
       type: eventType,
       payload,
@@ -138,27 +142,27 @@ export class EventBus {
       cancelable: options.cancelable ?? false,
       timestamp: Date.now(),
       id: this.generateEventId(),
-      ...options
+      ...options,
     };
 
     // Store as last event for immediate subscriptions
     this.lastEvents.set(eventType, event);
-    
+
     // Add to history
     this.addToHistory(event);
-    
+
     // Debug logging
     if (this.debugMode) {
       console.log(`🚌 Event emitted: ${eventType}`, {
         payload,
         source: event.source,
-        target: event.target
+        target: event.target,
       });
     }
 
     // Notify specific listeners
     this.notifyListeners(eventType, event);
-    
+
     // Notify global listeners if event bubbles
     if (event.bubbles) {
       this.notifyGlobalListeners(event);
@@ -173,23 +177,23 @@ export class EventBus {
    * @returns Unsubscribe function
    */
   on(
-    eventType: string, 
-    listener: EventListener, 
-    options: SubscriptionOptions = {}
+    eventType: string,
+    listener: EventListener,
+    options: SubscriptionOptions = {},
   ): () => void {
     const subscriptionId = this.generateSubscriptionId();
     const subscription: EventSubscription = {
       listener,
       options,
       triggerCount: 0,
-      id: subscriptionId
+      id: subscriptionId,
     };
 
     // Initialize event type listeners map if needed
     if (!this.listeners.has(eventType)) {
       this.listeners.set(eventType, new Map());
     }
-    
+
     this.listeners.get(eventType)!.set(subscriptionId, subscription);
 
     // Handle immediate option
@@ -201,7 +205,10 @@ export class EventBus {
     }
 
     if (this.debugMode) {
-      console.log(`🚌 Listener added for: ${eventType}`, { subscriptionId, options });
+      console.log(`🚌 Listener added for: ${eventType}`, {
+        subscriptionId,
+        options,
+      });
     }
 
     // Return unsubscribe function
@@ -210,9 +217,11 @@ export class EventBus {
       if (this.listeners.get(eventType)?.size === 0) {
         this.listeners.delete(eventType);
       }
-      
+
       if (this.debugMode) {
-        console.log(`🚌 Listener removed for: ${eventType}`, { subscriptionId });
+        console.log(`🚌 Listener removed for: ${eventType}`, {
+          subscriptionId,
+        });
       }
     };
   }
@@ -223,13 +232,16 @@ export class EventBus {
    * @param options Subscription options
    * @returns Unsubscribe function
    */
-  onAll(listener: EventListener, options: SubscriptionOptions = {}): () => void {
+  onAll(
+    listener: EventListener,
+    options: SubscriptionOptions = {},
+  ): () => void {
     const subscriptionId = this.generateSubscriptionId();
     const subscription: EventSubscription = {
       listener,
       options,
       triggerCount: 0,
-      id: subscriptionId
+      id: subscriptionId,
     };
 
     this.globalListeners.set(subscriptionId, subscription);
@@ -240,7 +252,7 @@ export class EventBus {
 
     return () => {
       this.globalListeners.delete(subscriptionId);
-      
+
       if (this.debugMode) {
         console.log(`🚌 Global listener removed`, { subscriptionId });
       }
@@ -254,14 +266,18 @@ export class EventBus {
    * @param options Subscription options
    */
   once(
-    eventType: string, 
-    listener: EventListener, 
-    options: SubscriptionOptions = {}
+    eventType: string,
+    listener: EventListener,
+    options: SubscriptionOptions = {},
   ): void {
-    const unsubscribe = this.on(eventType, (event) => {
-      listener(event);
-      unsubscribe();
-    }, { ...options, maxTriggers: 1 });
+    const unsubscribe = this.on(
+      eventType,
+      (event) => {
+        listener(event);
+        unsubscribe();
+      },
+      { ...options, maxTriggers: 1 },
+    );
   }
 
   /**
@@ -271,7 +287,7 @@ export class EventBus {
   off(eventType: string): void {
     const removedCount = this.listeners.get(eventType)?.size || 0;
     this.listeners.delete(eventType);
-    
+
     if (this.debugMode && removedCount > 0) {
       console.log(`🚌 Removed ${removedCount} listeners for: ${eventType}`);
     }
@@ -286,9 +302,11 @@ export class EventBus {
     this.globalListeners.clear();
     this.lastEvents.clear();
     this.eventHistory = [];
-    
+
     if (this.debugMode && totalListeners > 0) {
-      console.log(`🚌 Cleared all ${totalListeners} listeners and event history`);
+      console.log(
+        `🚌 Cleared all ${totalListeners} listeners and event history`,
+      );
     }
   }
 
@@ -319,7 +337,7 @@ export class EventBus {
       listenerCounts,
       globalListeners: this.globalListeners.size,
       eventHistory: this.eventHistory.length,
-      lastEvents: Array.from(this.lastEvents.keys())
+      lastEvents: Array.from(this.lastEvents.keys()),
     };
   }
 
@@ -335,17 +353,19 @@ export class EventBus {
     eventListeners.forEach((subscription, subscriptionId) => {
       if (this.shouldNotifyListener(event, subscription)) {
         this.callListener(subscription, event);
-        
+
         // Check if listener should be removed after reaching max triggers
-        if (subscription.options.maxTriggers && 
-            subscription.triggerCount >= subscription.options.maxTriggers) {
+        if (
+          subscription.options.maxTriggers &&
+          subscription.triggerCount >= subscription.options.maxTriggers
+        ) {
           listenersToRemove.push(subscriptionId);
         }
       }
     });
 
     // Remove listeners that reached their trigger limit
-    listenersToRemove.forEach(id => eventListeners.delete(id));
+    listenersToRemove.forEach((id) => eventListeners.delete(id));
   }
 
   /**
@@ -357,55 +377,69 @@ export class EventBus {
     this.globalListeners.forEach((subscription, subscriptionId) => {
       if (this.shouldNotifyListener(event, subscription)) {
         this.callListener(subscription, event);
-        
-        if (subscription.options.maxTriggers && 
-            subscription.triggerCount >= subscription.options.maxTriggers) {
+
+        if (
+          subscription.options.maxTriggers &&
+          subscription.triggerCount >= subscription.options.maxTriggers
+        ) {
           listenersToRemove.push(subscriptionId);
         }
       }
     });
 
     // Remove listeners that reached their trigger limit
-    listenersToRemove.forEach(id => this.globalListeners.delete(id));
+    listenersToRemove.forEach((id) => this.globalListeners.delete(id));
   }
 
   /**
    * Check if a listener should be notified for an event
    */
-  private shouldNotifyListener(event: EventConfig, subscription: EventSubscription): boolean {
+  private shouldNotifyListener(
+    event: EventConfig,
+    subscription: EventSubscription,
+  ): boolean {
     const { options } = subscription;
-    
+
     // Check source filter
     if (options.source && event.source !== options.source) {
       return false;
     }
-    
+
     // Check target filter
     if (options.target && event.target !== options.target) {
       return false;
     }
-    
+
     // Check max triggers
-    if (options.maxTriggers && subscription.triggerCount >= options.maxTriggers) {
+    if (
+      options.maxTriggers &&
+      subscription.triggerCount >= options.maxTriggers
+    ) {
       return false;
     }
-    
+
     return true;
   }
 
   /**
    * Call a listener safely with error handling
    */
-  private callListener(subscription: EventSubscription, event: EventConfig): void {
+  private callListener(
+    subscription: EventSubscription,
+    event: EventConfig,
+  ): void {
     try {
       subscription.triggerCount++;
-      
+
       const result = subscription.listener(event);
-      
+
       // Handle async listeners
       if (result instanceof Promise) {
-        result.catch(error => {
-          console.error(`🚌 Async event listener error for ${event.type}:`, error);
+        result.catch((error) => {
+          console.error(
+            `🚌 Async event listener error for ${event.type}:`,
+            error,
+          );
         });
       }
     } catch (error) {
@@ -418,7 +452,7 @@ export class EventBus {
    */
   private addToHistory(event: EventConfig): void {
     this.eventHistory.push(event);
-    
+
     if (this.eventHistory.length > this.maxHistorySize) {
       this.eventHistory = this.eventHistory.slice(-this.maxHistorySize);
     }
@@ -443,7 +477,7 @@ export class EventBus {
    */
   private getTotalListenerCount(): number {
     let total = this.globalListeners.size;
-    this.listeners.forEach(listeners => {
+    this.listeners.forEach((listeners) => {
       total += listeners.size;
     });
     return total;
@@ -468,23 +502,27 @@ export function getEventBus(): EventBus {
  * Decorator for automatically cleaning up event subscriptions
  * when a component is destroyed
  */
-export function autoCleanup(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function autoCleanup(
+  target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor,
+) {
   const originalMethod = descriptor.value;
-  
-  descriptor.value = function(this: any, ...args: any[]) {
+
+  descriptor.value = function (this: any, ...args: any[]) {
     const result = originalMethod.apply(this, args);
-    
+
     // Store unsubscribe function for cleanup
     if (!this._eventUnsubscribers) {
       this._eventUnsubscribers = [];
     }
-    
-    if (typeof result === 'function') {
+
+    if (typeof result === "function") {
       this._eventUnsubscribers.push(result);
     }
-    
+
     return result;
   };
-  
+
   return descriptor;
 }

@@ -6,25 +6,25 @@
  * and toolbar items.
  *
  * ## New in v0.4.0: Improved Patterns
- * 
+ *
  * This version introduces new patterns inspired by modern frameworks to make
  * plugin development more developer-friendly:
- * 
+ *
  * - **Reactive State**: Automatic state management with computed properties
  * - **Event Bus**: Decoupled component communication
  * - **Typed Events**: Type-safe event system with payload validation
- * 
+ *
  * @example Using New Patterns
  * ```typescript
- * import { 
- *   ReactiveState, 
- *   EventBus, 
- *   Events 
+ * import {
+ *   ReactiveState,
+ *   EventBus,
+ *   Events
  * } from '@teskooano/ui-plugin/patterns';
- * 
+ *
  * // Create reactive state
  * const state = new ReactiveState({ selectedObject: null });
- * 
+ *
  * // Listen for events
  * EventBus.getInstance().on(Events.OBJECT_SELECTED, (event) => {
  *   state.set('selectedObject', event.payload.object);

@@ -12,16 +12,16 @@ The patterns are included in the `@teskooano/ui-plugin` package. Update your imp
 
 ```typescript
 // New pattern imports
-import { 
-  ReactiveState, 
-  EventBus, 
+import {
+  ReactiveState,
+  EventBus,
   Events,
   createComponentState,
-  enablePatternDebugging 
-} from '@teskooano/ui-plugin/patterns';
+  enablePatternDebugging,
+} from "@teskooano/ui-plugin/patterns";
 
 // Existing plugin system still available
-import { createPanelPlugin } from '@teskooano/ui-plugin';
+import { createPanelPlugin } from "@teskooano/ui-plugin";
 ```
 
 ### Basic Example
@@ -29,37 +29,37 @@ import { createPanelPlugin } from '@teskooano/ui-plugin';
 Here's a simple component using the new patterns:
 
 ```typescript
-import { 
-  ReactiveState, 
-  EventBus, 
-  Events, 
-  ObjectSelectedPayload 
-} from '@teskooano/ui-plugin/patterns';
+import {
+  ReactiveState,
+  EventBus,
+  Events,
+  ObjectSelectedPayload,
+} from "@teskooano/ui-plugin/patterns";
 
 // Create reactive state
 const state = new ReactiveState({
   selectedObject: null,
   isLoading: false,
-  filter: 'all'
+  filter: "all",
 });
 
 // Add computed properties
-state.computed('hasSelection', {
-  deps: ['selectedObject'],
-  compute: (selectedObject) => selectedObject !== null
+state.computed("hasSelection", {
+  deps: ["selectedObject"],
+  compute: (selectedObject) => selectedObject !== null,
 });
 
-state.computed('displayText', {
-  deps: ['selectedObject', 'isLoading'],
+state.computed("displayText", {
+  deps: ["selectedObject", "isLoading"],
   compute: (selectedObject, isLoading) => {
-    if (isLoading) return 'Loading...';
-    if (!selectedObject) return 'No selection';
+    if (isLoading) return "Loading...";
+    if (!selectedObject) return "No selection";
     return `Selected: ${selectedObject.name}`;
-  }
+  },
 });
 
 // Listen for state changes
-state.watch('selectedObject', (newValue, oldValue) => {
+state.watch("selectedObject", (newValue, oldValue) => {
   console.log(`Selection changed from ${oldValue?.name} to ${newValue?.name}`);
 });
 
@@ -67,12 +67,12 @@ state.watch('selectedObject', (newValue, oldValue) => {
 const eventBus = EventBus.getInstance();
 eventBus.on(Events.OBJECT_SELECTED, (event) => {
   const payload = event.payload as ObjectSelectedPayload;
-  state.set('selectedObject', payload.object);
+  state.set("selectedObject", payload.object);
 });
 
 // Update UI (this would typically be in a component)
-state.watch('displayText', (newText) => {
-  document.querySelector('.status')!.textContent = newText;
+state.watch("displayText", (newText) => {
+  document.querySelector(".status")!.textContent = newText;
 });
 ```
 
@@ -85,23 +85,23 @@ state.watch('displayText', (newText) => {
 ```typescript
 const state = new ReactiveState({
   count: 0,
-  multiplier: 2
+  multiplier: 2,
 });
 
 // Computed property
-state.computed('doubledCount', {
-  deps: ['count', 'multiplier'],
-  compute: (count, multiplier) => count * multiplier
+state.computed("doubledCount", {
+  deps: ["count", "multiplier"],
+  compute: (count, multiplier) => count * multiplier,
 });
 
 // Watch for changes
-state.watch('count', (newValue) => {
+state.watch("count", (newValue) => {
   console.log(`Count is now: ${newValue}`);
 });
 
 // Update state
-state.set('count', 5); // Logs: "Count is now: 5"
-console.log(state.get('doubledCount')); // 10
+state.set("count", 5); // Logs: "Count is now: 5"
+console.log(state.get("doubledCount")); // 10
 ```
 
 ### ✅ Event-Driven Communication
@@ -119,10 +119,10 @@ const unsubscribe = eventBus.on(Events.CAMERA_FOCUSED, (event) => {
 
 // Emit events
 eventBus.emit(Events.CAMERA_FOCUSED, {
-  objectId: 'earth',
+  objectId: "earth",
   animated: true,
   duration: 1000,
-  source: 'celestial-info-panel'
+  source: "celestial-info-panel",
 } as CameraEventPayload);
 
 // Clean up
@@ -137,24 +137,24 @@ All events are centrally defined with TypeScript interfaces:
 
 ```typescript
 // Object selection events
-Events.OBJECT_SELECTED     // object:selected
-Events.OBJECT_DESELECTED   // object:deselected
-Events.OBJECT_FOCUSED      // object:focused
+Events.OBJECT_SELECTED; // object:selected
+Events.OBJECT_DESELECTED; // object:deselected
+Events.OBJECT_FOCUSED; // object:focused
 
-// Camera events  
-Events.CAMERA_FOCUSED      // camera:focused
-Events.CAMERA_MOVED        // camera:moved
-Events.CAMERA_ZOOMED       // camera:zoomed
+// Camera events
+Events.CAMERA_FOCUSED; // camera:focused
+Events.CAMERA_MOVED; // camera:moved
+Events.CAMERA_ZOOMED; // camera:zoomed
 
 // Simulation events
-Events.SIMULATION_STARTED  // simulation:started
-Events.SIMULATION_PAUSED   // simulation:paused
-Events.SIMULATION_STOPPED  // simulation:stopped
+Events.SIMULATION_STARTED; // simulation:started
+Events.SIMULATION_PAUSED; // simulation:paused
+Events.SIMULATION_STOPPED; // simulation:stopped
 
 // System events
-Events.SYSTEM_LOADED       // system:loaded
-Events.SYSTEM_GENERATED    // system:generated
-Events.SYSTEM_CLEARED      // system:cleared
+Events.SYSTEM_LOADED; // system:loaded
+Events.SYSTEM_GENERATED; // system:generated
+Events.SYSTEM_CLEARED; // system:cleared
 
 // And many more...
 ```
@@ -199,8 +199,8 @@ state.dispose(): void
 
 ```typescript
 interface ComputedDefinition {
-  deps: string[];                    // Properties this computed depends on
-  compute: (...deps: any[]) => any;  // Function to compute the value
+  deps: string[]; // Properties this computed depends on
+  compute: (...deps: any[]) => any; // Function to compute the value
 }
 ```
 
@@ -213,7 +213,7 @@ Centralized event management system.
 ```typescript
 const eventBus = EventBus.getInstance();
 // or
-import { getEventBus } from '@teskooano/ui-plugin/patterns';
+import { getEventBus } from "@teskooano/ui-plugin/patterns";
 const eventBus = getEventBus();
 ```
 
@@ -242,10 +242,10 @@ eventBus.getStats(): EventBusStats
 
 ```typescript
 interface SubscriptionOptions {
-  source?: string;        // Only listen to events from specific source
-  target?: string;        // Only listen to events targeting specific target
-  immediate?: boolean;    // Receive last emitted event immediately
-  maxTriggers?: number;   // Maximum number of times to trigger
+  source?: string; // Only listen to events from specific source
+  target?: string; // Only listen to events targeting specific target
+  immediate?: boolean; // Receive last emitted event immediately
+  maxTriggers?: number; // Maximum number of times to trigger
 }
 ```
 
@@ -256,23 +256,26 @@ interface SubscriptionOptions {
 Convenience function combining reactive state with event integration:
 
 ```typescript
-const componentState = createComponentState({
-  selectedObject: null,
-  isVisible: true
-}, {
-  componentName: 'my-component',
-  autoEvents: [
-    {
-      eventType: Events.OBJECT_SELECTED,
-      handler: (payload) => {
-        componentState.set('selectedObject', payload.object);
-      }
-    }
-  ]
-});
+const componentState = createComponentState(
+  {
+    selectedObject: null,
+    isVisible: true,
+  },
+  {
+    componentName: "my-component",
+    autoEvents: [
+      {
+        eventType: Events.OBJECT_SELECTED,
+        handler: (payload) => {
+          componentState.set("selectedObject", payload.object);
+        },
+      },
+    ],
+  },
+);
 
 // Enhanced with convenience methods
-componentState.emit(Events.OBJECT_HIGHLIGHTED, { objectId: 'earth' });
+componentState.emit(Events.OBJECT_HIGHLIGHTED, { objectId: "earth" });
 componentState.cleanup(); // Clean up all subscriptions and state
 ```
 
@@ -283,7 +286,7 @@ componentState.cleanup(); // Clean up all subscriptions and state
 enablePatternDebugging();
 
 // Debug specific state
-debugState(state, 'MyComponent');
+debugState(state, "MyComponent");
 
 // Debug event bus
 debugEventBus();
@@ -294,12 +297,12 @@ debugEventBus();
 ### Example 1: Simple Selection Panel
 
 ```typescript
-import { 
-  ReactiveState, 
-  EventBus, 
-  Events, 
-  ObjectSelectedPayload 
-} from '@teskooano/ui-plugin/patterns';
+import {
+  ReactiveState,
+  EventBus,
+  Events,
+  ObjectSelectedPayload,
+} from "@teskooano/ui-plugin/patterns";
 
 export class SelectionPanel extends HTMLElement {
   private state: ReactiveState;
@@ -308,32 +311,32 @@ export class SelectionPanel extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    
+    this.attachShadow({ mode: "open" });
+
     // Initialize reactive state
     this.state = new ReactiveState({
       selectedObject: null,
-      isLoading: false
+      isLoading: false,
     });
-    
+
     // Setup computed properties
-    this.state.computed('displayName', {
-      deps: ['selectedObject', 'isLoading'],
+    this.state.computed("displayName", {
+      deps: ["selectedObject", "isLoading"],
       compute: (selectedObject, isLoading) => {
-        if (isLoading) return 'Loading...';
-        return selectedObject?.name || 'Nothing selected';
-      }
+        if (isLoading) return "Loading...";
+        return selectedObject?.name || "Nothing selected";
+      },
     });
-    
+
     // Setup event bus
     this.eventBus = EventBus.getInstance();
-    
+
     // Create template
     this.render();
     this.setupEventListeners();
     this.setupStateWatchers();
   }
-  
+
   private render() {
     this.shadowRoot!.innerHTML = `
       <style>
@@ -356,136 +359,151 @@ export class SelectionPanel extends HTMLElement {
       </div>
     `;
   }
-  
+
   private setupEventListeners() {
     // Listen for object selection events
     const unsubscribe1 = this.eventBus.on(Events.OBJECT_SELECTED, (event) => {
       const payload = event.payload as ObjectSelectedPayload;
-      this.state.set('selectedObject', payload.object);
+      this.state.set("selectedObject", payload.object);
     });
-    
+
     // Listen for system cleared events
     const unsubscribe2 = this.eventBus.on(Events.SYSTEM_CLEARED, () => {
-      this.state.set('selectedObject', null);
+      this.state.set("selectedObject", null);
     });
-    
+
     this.unsubscribers.push(unsubscribe1, unsubscribe2);
-    
+
     // Setup button click
-    const focusBtn = this.shadowRoot!.querySelector('.focus-btn') as HTMLButtonElement;
-    focusBtn.addEventListener('click', () => {
-      const selectedObject = this.state.get('selectedObject');
+    const focusBtn = this.shadowRoot!.querySelector(
+      ".focus-btn",
+    ) as HTMLButtonElement;
+    focusBtn.addEventListener("click", () => {
+      const selectedObject = this.state.get("selectedObject");
       if (selectedObject) {
         this.eventBus.emit(Events.CAMERA_FOCUSED, {
           objectId: selectedObject.id,
           animated: true,
           duration: 1000,
-          source: 'selection-panel'
+          source: "selection-panel",
         });
       }
     });
   }
-  
+
   private setupStateWatchers() {
     // Update display when computed property changes
-    this.state.watch('displayName', (newName) => {
-      const nameEl = this.shadowRoot!.querySelector('.object-name') as HTMLElement;
+    this.state.watch("displayName", (newName) => {
+      const nameEl = this.shadowRoot!.querySelector(
+        ".object-name",
+      ) as HTMLElement;
       nameEl.textContent = newName;
     });
-    
+
     // Update button state when selection changes
-    this.state.watch('selectedObject', (selectedObject) => {
-      const focusBtn = this.shadowRoot!.querySelector('.focus-btn') as HTMLButtonElement;
+    this.state.watch("selectedObject", (selectedObject) => {
+      const focusBtn = this.shadowRoot!.querySelector(
+        ".focus-btn",
+      ) as HTMLButtonElement;
       focusBtn.disabled = !selectedObject;
     });
-    
+
     // Update loading state
-    this.state.watch('isLoading', (isLoading) => {
-      const panel = this.shadowRoot!.querySelector('.panel') as HTMLElement;
-      panel.classList.toggle('loading', isLoading);
+    this.state.watch("isLoading", (isLoading) => {
+      const panel = this.shadowRoot!.querySelector(".panel") as HTMLElement;
+      panel.classList.toggle("loading", isLoading);
     });
   }
-  
+
   disconnectedCallback() {
     // Clean up subscriptions
-    this.unsubscribers.forEach(unsubscribe => unsubscribe());
+    this.unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.state.dispose();
   }
 }
 
-customElements.define('selection-panel', SelectionPanel);
+customElements.define("selection-panel", SelectionPanel);
 ```
 
 ### Example 2: System Status Component
 
 ```typescript
-import { 
-  createComponentState, 
-  Events, 
+import {
+  createComponentState,
+  Events,
   SystemEventPayload,
-  SimulationEventPayload 
-} from '@teskooano/ui-plugin/patterns';
+  SimulationEventPayload,
+} from "@teskooano/ui-plugin/patterns";
 
 export class SystemStatus extends HTMLElement {
   private componentState;
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    
+    this.attachShadow({ mode: "open" });
+
     // Use convenience function for integrated state + events
-    this.componentState = createComponentState({
-      objectCount: 0,
-      systemName: null,
-      simulationState: 'stopped',
-      isLoading: false
-    }, {
-      componentName: 'system-status',
-      autoEvents: [
-        {
-          eventType: Events.SYSTEM_LOADED,
-          handler: (payload: SystemEventPayload) => {
-            this.componentState.set('objectCount', payload.objects?.length || 0);
-            this.componentState.set('systemName', payload.metadata?.name || 'Unnamed System');
-            this.componentState.set('isLoading', false);
-          }
-        },
-        {
-          eventType: Events.SYSTEM_CLEARED,
-          handler: () => {
-            this.componentState.set('objectCount', 0);
-            this.componentState.set('systemName', null);
-            this.componentState.set('simulationState', 'stopped');
-          }
-        },
-        {
-          eventType: Events.SIMULATION_STARTED,
-          handler: () => {
-            this.componentState.set('simulationState', 'running');
-          }
-        },
-        {
-          eventType: Events.SIMULATION_PAUSED,
-          handler: () => {
-            this.componentState.set('simulationState', 'paused');
-          }
-        }
-      ]
-    });
-    
+    this.componentState = createComponentState(
+      {
+        objectCount: 0,
+        systemName: null,
+        simulationState: "stopped",
+        isLoading: false,
+      },
+      {
+        componentName: "system-status",
+        autoEvents: [
+          {
+            eventType: Events.SYSTEM_LOADED,
+            handler: (payload: SystemEventPayload) => {
+              this.componentState.set(
+                "objectCount",
+                payload.objects?.length || 0,
+              );
+              this.componentState.set(
+                "systemName",
+                payload.metadata?.name || "Unnamed System",
+              );
+              this.componentState.set("isLoading", false);
+            },
+          },
+          {
+            eventType: Events.SYSTEM_CLEARED,
+            handler: () => {
+              this.componentState.set("objectCount", 0);
+              this.componentState.set("systemName", null);
+              this.componentState.set("simulationState", "stopped");
+            },
+          },
+          {
+            eventType: Events.SIMULATION_STARTED,
+            handler: () => {
+              this.componentState.set("simulationState", "running");
+            },
+          },
+          {
+            eventType: Events.SIMULATION_PAUSED,
+            handler: () => {
+              this.componentState.set("simulationState", "paused");
+            },
+          },
+        ],
+      },
+    );
+
     // Add computed properties
-    this.componentState.computed('statusText', {
-      deps: ['objectCount', 'systemName', 'simulationState'],
+    this.componentState.computed("statusText", {
+      deps: ["objectCount", "systemName", "simulationState"],
       compute: (objectCount, systemName, simulationState) => {
-        if (!systemName) return 'No system loaded';
+        if (!systemName) return "No system loaded";
         return `${systemName} (${objectCount} objects) - ${simulationState}`;
-      }
+      },
     });
-    
+
     this.render();
     this.setupStateWatchers();
   }
-  
+
   private render() {
     this.shadowRoot!.innerHTML = `
       <style>
@@ -502,27 +520,27 @@ export class SystemStatus extends HTMLElement {
       <div class="status">No system loaded</div>
     `;
   }
-  
+
   private setupStateWatchers() {
-    const statusEl = this.shadowRoot!.querySelector('.status') as HTMLElement;
-    
+    const statusEl = this.shadowRoot!.querySelector(".status") as HTMLElement;
+
     // Update text when computed property changes
-    this.componentState.watch('statusText', (newText) => {
+    this.componentState.watch("statusText", (newText) => {
       statusEl.textContent = newText;
     });
-    
+
     // Update styling based on simulation state
-    this.componentState.watch('simulationState', (state) => {
+    this.componentState.watch("simulationState", (state) => {
       statusEl.className = `status ${state}`;
     });
   }
-  
+
   disconnectedCallback() {
     this.componentState.cleanup();
   }
 }
 
-customElements.define('system-status', SystemStatus);
+customElements.define("system-status", SystemStatus);
 ```
 
 ## 🐛 Debugging
@@ -530,13 +548,14 @@ customElements.define('system-status', SystemStatus);
 ### Enable Debug Mode
 
 ```typescript
-import { enablePatternDebugging } from '@teskooano/ui-plugin/patterns';
+import { enablePatternDebugging } from "@teskooano/ui-plugin/patterns";
 
 // Enable debug mode for all patterns
 enablePatternDebugging();
 ```
 
 This will:
+
 - Enable event bus debug logging
 - Add console helpers for debugging
 - Show pattern version information
@@ -544,10 +563,10 @@ This will:
 ### Debug Individual Components
 
 ```typescript
-import { debugState, debugEventBus } from '@teskooano/ui-plugin/patterns';
+import { debugState, debugEventBus } from "@teskooano/ui-plugin/patterns";
 
 // Debug reactive state
-debugState(myComponentState, 'MyComponent');
+debugState(myComponentState, "MyComponent");
 
 // Debug event bus
 debugEventBus();
@@ -569,59 +588,64 @@ When debug mode is enabled, you'll see console output like:
 ### From Current Pattern to New Patterns
 
 **Before (Current Pattern):**
+
 ```typescript
 export class MyController extends StateSubscriptionMixin {
   private _selectedObject: CelestialObject | null = null;
-  
+
   constructor() {
     super();
     this.subscribeToState(celestialObjects$, this.handleObjectUpdate);
-    document.addEventListener('custom-event', this.handleCustomEvent);
+    document.addEventListener("custom-event", this.handleCustomEvent);
   }
-  
+
   private handleObjectUpdate = (objects) => {
     // Manual state management
-    this._selectedObject = objects.find(obj => obj.selected);
+    this._selectedObject = objects.find((obj) => obj.selected);
     this.updateUI();
   };
-  
+
   private updateUI() {
     // Manual DOM manipulation
-    const nameEl = this.element.querySelector('.name');
-    nameEl.textContent = this._selectedObject?.name || 'None';
+    const nameEl = this.element.querySelector(".name");
+    nameEl.textContent = this._selectedObject?.name || "None";
   }
 }
 ```
 
 **After (New Patterns):**
+
 ```typescript
-import { createComponentState, Events } from '@teskooano/ui-plugin/patterns';
+import { createComponentState, Events } from "@teskooano/ui-plugin/patterns";
 
 export class MyController {
   private state;
-  
+
   constructor() {
-    this.state = createComponentState({
-      selectedObject: null
-    }, {
-      componentName: 'my-controller',
-      autoEvents: [
-        {
-          eventType: Events.OBJECT_SELECTED,
-          handler: (payload) => {
-            this.state.set('selectedObject', payload.object);
-          }
-        }
-      ]
-    });
-    
+    this.state = createComponentState(
+      {
+        selectedObject: null,
+      },
+      {
+        componentName: "my-controller",
+        autoEvents: [
+          {
+            eventType: Events.OBJECT_SELECTED,
+            handler: (payload) => {
+              this.state.set("selectedObject", payload.object);
+            },
+          },
+        ],
+      },
+    );
+
     // Automatic UI updates
-    this.state.watch('selectedObject', (object) => {
-      const nameEl = this.element.querySelector('.name');
-      nameEl.textContent = object?.name || 'None';
+    this.state.watch("selectedObject", (object) => {
+      const nameEl = this.element.querySelector(".name");
+      nameEl.textContent = object?.name || "None";
     });
   }
-  
+
   dispose() {
     this.state.cleanup();
   }
@@ -629,6 +653,7 @@ export class MyController {
 ```
 
 **Benefits:**
+
 - ✅ 70% less code
 - ✅ Automatic state management
 - ✅ Type-safe events
@@ -638,24 +663,28 @@ export class MyController {
 ## 🛣️ Roadmap
 
 ### Phase 1: Foundation ✅ (Current)
+
 - ✅ Reactive State Management
-- ✅ Event-Driven Communication  
+- ✅ Event-Driven Communication
 - ✅ Typed Event Registry
 - ✅ Debug Tools
 
 ### Phase 2: Templates (Next - 2-3 weeks)
+
 - 🔄 Template Processing Engine
 - 🔄 Declarative Component Factory
 - 🔄 Template Binding System
 - 🔄 Directive Support (t-if, t-for, etc.)
 
-### Phase 3: Plugins (Following - 2-3 weeks)  
+### Phase 3: Plugins (Following - 2-3 weeks)
+
 - 📋 Convention-Based Plugin Registration
 - 📋 Auto-Discovery System
 - 📋 Enhanced Factory Functions
 - 📋 Migration Tools
 
 ### Phase 4: Polish (Final - 1-2 weeks)
+
 - 📋 Performance Optimizations
 - 📋 Developer Tooling
 - 📋 Complete Documentation
@@ -664,18 +693,23 @@ export class MyController {
 ## ❓ FAQ
 
 ### Q: Can I use these patterns with existing plugins?
+
 **A:** Yes! The patterns are designed to work alongside the existing plugin system. You can gradually migrate components to use the new patterns.
 
 ### Q: Do the patterns affect bundle size?
+
 **A:** The patterns add ~10KB to the bundle but typically reduce your component code by 70-90%, resulting in net savings.
 
 ### Q: Are the patterns compatible with TypeScript?
+
 **A:** Yes! Full TypeScript support with strongly typed events and state management.
 
 ### Q: How do I migrate existing components?
+
 **A:** Start with new components using the patterns, then gradually migrate existing ones. See the Migration Guide above.
 
 ### Q: What about performance?
+
 **A:** The patterns include optimizations like batched updates, computed property caching, and efficient event handling. Performance is typically better than manual implementations.
 
 ---

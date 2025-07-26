@@ -11,7 +11,10 @@ This example shows a complete component built with the new patterns, comparing i
 ```typescript
 // Traditional approach - lots of boilerplate
 import { IContentRenderer, GroupPanelPartInitParameters } from "dockview-core";
-import { StateSubscriptionMixin, celestialObjects$ } from "@teskooano/core-state";
+import {
+  StateSubscriptionMixin,
+  celestialObjects$,
+} from "@teskooano/core-state";
 
 export class ObjectInfoPanel extends HTMLElement implements IContentRenderer {
   private _selectedObject: any = null;
@@ -20,7 +23,7 @@ export class ObjectInfoPanel extends HTMLElement implements IContentRenderer {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.render();
     this.setupEventListeners();
     this.setupStateSubscriptions();
@@ -45,28 +48,36 @@ export class ObjectInfoPanel extends HTMLElement implements IContentRenderer {
         </div>
       </div>
     `;
-    
+
     this.setupButtonListeners();
   }
 
   private setupButtonListeners() {
-    const focusBtn = this.shadowRoot!.querySelector('#focus-btn') as HTMLButtonElement;
-    const highlightBtn = this.shadowRoot!.querySelector('#highlight-btn') as HTMLButtonElement;
-    
-    focusBtn.addEventListener('click', () => {
+    const focusBtn = this.shadowRoot!.querySelector(
+      "#focus-btn",
+    ) as HTMLButtonElement;
+    const highlightBtn = this.shadowRoot!.querySelector(
+      "#highlight-btn",
+    ) as HTMLButtonElement;
+
+    focusBtn.addEventListener("click", () => {
       if (this._selectedObject) {
         // Manual event dispatching
-        document.dispatchEvent(new CustomEvent('camera-focus', {
-          detail: { objectId: this._selectedObject.id }
-        }));
+        document.dispatchEvent(
+          new CustomEvent("camera-focus", {
+            detail: { objectId: this._selectedObject.id },
+          }),
+        );
       }
     });
-    
-    highlightBtn.addEventListener('click', () => {
+
+    highlightBtn.addEventListener("click", () => {
       if (this._selectedObject) {
-        document.dispatchEvent(new CustomEvent('object-highlight', {
-          detail: { objectId: this._selectedObject.id }
-        }));
+        document.dispatchEvent(
+          new CustomEvent("object-highlight", {
+            detail: { objectId: this._selectedObject.id },
+          }),
+        );
       }
     });
   }
@@ -76,74 +87,88 @@ export class ObjectInfoPanel extends HTMLElement implements IContentRenderer {
       this._selectedObject = event.detail.object;
       this.updateUI();
     };
-    
-    document.addEventListener('object-selected', handleSelection);
+
+    document.addEventListener("object-selected", handleSelection);
     this._unsubscribers.push(() => {
-      document.removeEventListener('object-selected', handleSelection);
+      document.removeEventListener("object-selected", handleSelection);
     });
   }
 
   private setupStateSubscriptions() {
     // Manual RxJS subscription management
-    const subscription = celestialObjects$.subscribe(objects => {
+    const subscription = celestialObjects$.subscribe((objects) => {
       // Manual state management
       if (this._selectedObject) {
-        const updated = objects.find(obj => obj.id === this._selectedObject.id);
+        const updated = objects.find(
+          (obj) => obj.id === this._selectedObject.id,
+        );
         if (updated && updated !== this._selectedObject) {
           this._selectedObject = updated;
           this.updateUI();
         }
       }
     });
-    
+
     this._unsubscribers.push(() => subscription.unsubscribe());
   }
 
   private updateUI() {
     // Manual DOM manipulation
-    const nameEl = this.shadowRoot!.querySelector('.object-name') as HTMLElement;
-    const infoEl = this.shadowRoot!.querySelector('.object-info') as HTMLElement;
-    const focusBtn = this.shadowRoot!.querySelector('#focus-btn') as HTMLButtonElement;
-    const highlightBtn = this.shadowRoot!.querySelector('#highlight-btn') as HTMLButtonElement;
-    
+    const nameEl = this.shadowRoot!.querySelector(
+      ".object-name",
+    ) as HTMLElement;
+    const infoEl = this.shadowRoot!.querySelector(
+      ".object-info",
+    ) as HTMLElement;
+    const focusBtn = this.shadowRoot!.querySelector(
+      "#focus-btn",
+    ) as HTMLButtonElement;
+    const highlightBtn = this.shadowRoot!.querySelector(
+      "#highlight-btn",
+    ) as HTMLButtonElement;
+
     if (this._selectedObject) {
       nameEl.textContent = this._selectedObject.name;
       infoEl.textContent = `Type: ${this._selectedObject.type} | Distance: ${this._selectedObject.distance}`;
       focusBtn.disabled = false;
       highlightBtn.disabled = false;
     } else {
-      nameEl.textContent = 'Nothing selected';
-      infoEl.textContent = 'Select an object to view details';
+      nameEl.textContent = "Nothing selected";
+      infoEl.textContent = "Select an object to view details";
       focusBtn.disabled = true;
       highlightBtn.disabled = true;
     }
-    
+
     // Update loading state
-    const panel = this.shadowRoot!.querySelector('.panel') as HTMLElement;
-    panel.classList.toggle('loading', this._isLoading);
+    const panel = this.shadowRoot!.querySelector(".panel") as HTMLElement;
+    panel.classList.toggle("loading", this._isLoading);
   }
 
   disconnectedCallback() {
-    this._unsubscribers.forEach(unsubscribe => unsubscribe());
+    this._unsubscribers.forEach((unsubscribe) => unsubscribe());
   }
 
   // Dockview interface
-  get element(): HTMLElement { return this; }
+  get element(): HTMLElement {
+    return this;
+  }
   init(params: GroupPanelPartInitParameters): void {}
 }
 
 // Manual custom element registration
-customElements.define('object-info-panel', ObjectInfoPanel);
+customElements.define("object-info-panel", ObjectInfoPanel);
 
 // Manual plugin registration
 export const plugin = {
-  id: 'object-info',
-  name: 'Object Info Panel',
-  panels: [{
-    componentName: 'object-info-panel',
-    panelClass: ObjectInfoPanel,
-    defaultTitle: 'Object Info',
-  }],
+  id: "object-info",
+  name: "Object Info Panel",
+  panels: [
+    {
+      componentName: "object-info-panel",
+      panelClass: ObjectInfoPanel,
+      defaultTitle: "Object Info",
+    },
+  ],
   // ... lots more boilerplate
 };
 ```
@@ -154,63 +179,66 @@ export const plugin = {
 
 ```typescript
 // New patterns approach - dramatically simplified!
-import { 
-  createComponentState, 
-  Events, 
+import {
+  createComponentState,
+  Events,
   type ObjectSelectedPayload,
   type CameraEventPayload,
-  type ObjectInteractionPayload
-} from '@teskooano/ui-plugin/patterns';
+  type ObjectInteractionPayload,
+} from "@teskooano/ui-plugin/patterns";
 
 export class SmartObjectInfoPanel extends HTMLElement {
-  private state = createComponentState({
-    selectedObject: null,
-    isLoading: false
-  }, {
-    componentName: 'smart-object-info-panel',
-    autoEvents: [
-      {
-        eventType: Events.OBJECT_SELECTED,
-        handler: (payload: ObjectSelectedPayload) => {
-          this.state.set('selectedObject', payload.object);
-        }
-      },
-      {
-        eventType: Events.SYSTEM_CLEARED,
-        handler: () => {
-          this.state.set('selectedObject', null);
-        }
-      }
-    ]
-  });
+  private state = createComponentState(
+    {
+      selectedObject: null,
+      isLoading: false,
+    },
+    {
+      componentName: "smart-object-info-panel",
+      autoEvents: [
+        {
+          eventType: Events.OBJECT_SELECTED,
+          handler: (payload: ObjectSelectedPayload) => {
+            this.state.set("selectedObject", payload.object);
+          },
+        },
+        {
+          eventType: Events.SYSTEM_CLEARED,
+          handler: () => {
+            this.state.set("selectedObject", null);
+          },
+        },
+      ],
+    },
+  );
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    
+    this.attachShadow({ mode: "open" });
+
     // Add computed properties
-    this.state.computed('displayName', {
-      deps: ['selectedObject', 'isLoading'],
+    this.state.computed("displayName", {
+      deps: ["selectedObject", "isLoading"],
       compute: (selectedObject, isLoading) => {
-        if (isLoading) return 'Loading...';
-        return selectedObject?.name || 'Nothing selected';
-      }
+        if (isLoading) return "Loading...";
+        return selectedObject?.name || "Nothing selected";
+      },
     });
-    
-    this.state.computed('displayInfo', {
-      deps: ['selectedObject'],
+
+    this.state.computed("displayInfo", {
+      deps: ["selectedObject"],
       compute: (selectedObject) => {
-        return selectedObject 
+        return selectedObject
           ? `Type: ${selectedObject.type} | Distance: ${selectedObject.distance}`
-          : 'Select an object to view details';
-      }
+          : "Select an object to view details";
+      },
     });
-    
-    this.state.computed('hasSelection', {
-      deps: ['selectedObject'],
-      compute: (selectedObject) => selectedObject !== null
+
+    this.state.computed("hasSelection", {
+      deps: ["selectedObject"],
+      compute: (selectedObject) => selectedObject !== null,
     });
-    
+
     this.render();
     this.setupStateWatchers();
     this.setupActions();
@@ -239,54 +267,66 @@ export class SmartObjectInfoPanel extends HTMLElement {
 
   private setupStateWatchers() {
     // Automatic UI updates based on computed properties
-    this.state.watch('displayName', (name) => {
-      const nameEl = this.shadowRoot!.querySelector('.object-name') as HTMLElement;
+    this.state.watch("displayName", (name) => {
+      const nameEl = this.shadowRoot!.querySelector(
+        ".object-name",
+      ) as HTMLElement;
       nameEl.textContent = name;
     });
-    
-    this.state.watch('displayInfo', (info) => {
-      const infoEl = this.shadowRoot!.querySelector('.object-info') as HTMLElement;
+
+    this.state.watch("displayInfo", (info) => {
+      const infoEl = this.shadowRoot!.querySelector(
+        ".object-info",
+      ) as HTMLElement;
       infoEl.textContent = info;
     });
-    
-    this.state.watch('hasSelection', (hasSelection) => {
-      const focusBtn = this.shadowRoot!.querySelector('#focus-btn') as HTMLButtonElement;
-      const highlightBtn = this.shadowRoot!.querySelector('#highlight-btn') as HTMLButtonElement;
+
+    this.state.watch("hasSelection", (hasSelection) => {
+      const focusBtn = this.shadowRoot!.querySelector(
+        "#focus-btn",
+      ) as HTMLButtonElement;
+      const highlightBtn = this.shadowRoot!.querySelector(
+        "#highlight-btn",
+      ) as HTMLButtonElement;
       focusBtn.disabled = !hasSelection;
       highlightBtn.disabled = !hasSelection;
     });
-    
-    this.state.watch('isLoading', (isLoading) => {
-      const panel = this.shadowRoot!.querySelector('.panel') as HTMLElement;
-      panel.classList.toggle('loading', isLoading);
+
+    this.state.watch("isLoading", (isLoading) => {
+      const panel = this.shadowRoot!.querySelector(".panel") as HTMLElement;
+      panel.classList.toggle("loading", isLoading);
     });
   }
 
   private setupActions() {
-    const focusBtn = this.shadowRoot!.querySelector('#focus-btn') as HTMLButtonElement;
-    const highlightBtn = this.shadowRoot!.querySelector('#highlight-btn') as HTMLButtonElement;
-    
-    focusBtn.addEventListener('click', () => {
-      const selectedObject = this.state.get('selectedObject');
+    const focusBtn = this.shadowRoot!.querySelector(
+      "#focus-btn",
+    ) as HTMLButtonElement;
+    const highlightBtn = this.shadowRoot!.querySelector(
+      "#highlight-btn",
+    ) as HTMLButtonElement;
+
+    focusBtn.addEventListener("click", () => {
+      const selectedObject = this.state.get("selectedObject");
       if (selectedObject) {
         // Type-safe event emission
         this.state.emit(Events.CAMERA_FOCUSED, {
           objectId: selectedObject.id,
           animated: true,
           duration: 1000,
-          source: 'smart-object-info-panel'
+          source: "smart-object-info-panel",
         } as CameraEventPayload);
       }
     });
-    
-    highlightBtn.addEventListener('click', () => {
-      const selectedObject = this.state.get('selectedObject');
+
+    highlightBtn.addEventListener("click", () => {
+      const selectedObject = this.state.get("selectedObject");
       if (selectedObject) {
         this.state.emit(Events.OBJECT_HIGHLIGHTED, {
           objectId: selectedObject.id,
-          interactionType: 'highlight',
+          interactionType: "highlight",
           active: true,
-          source: 'smart-object-info-panel'
+          source: "smart-object-info-panel",
         } as ObjectInteractionPayload);
       }
     });
@@ -297,27 +337,29 @@ export class SmartObjectInfoPanel extends HTMLElement {
   }
 
   // Dockview interface
-  get element(): HTMLElement { return this; }
+  get element(): HTMLElement {
+    return this;
+  }
   init(): void {}
 }
 
 // Register component
-customElements.define('smart-object-info-panel', SmartObjectInfoPanel);
+customElements.define("smart-object-info-panel", SmartObjectInfoPanel);
 
 // Simplified plugin registration using existing factory
-import { createPanelPlugin } from '@teskooano/ui-plugin';
-import InfoIcon from './info-icon.svg?raw';
+import { createPanelPlugin } from "@teskooano/ui-plugin";
+import InfoIcon from "./info-icon.svg?raw";
 
 export const plugin = createPanelPlugin({
-  id: 'smart-object-info',
-  name: 'Smart Object Info',
-  description: 'Smart object info panel with reactive state',
-  componentName: 'smart-object-info-panel',
+  id: "smart-object-info",
+  name: "Smart Object Info",
+  description: "Smart object info panel with reactive state",
+  componentName: "smart-object-info-panel",
   panelClass: SmartObjectInfoPanel,
-  defaultTitle: 'Object Info',
+  defaultTitle: "Object Info",
   iconSvg: InfoIcon,
-  target: 'engine-toolbar',
-  order: 20
+  target: "engine-toolbar",
+  order: 20,
 });
 ```
 
@@ -326,53 +368,61 @@ export const plugin = createPanelPlugin({
 ## Key Improvements
 
 ### 1. Automatic State Management
+
 - **Before**: Manual property tracking, manual UI updates
 - **After**: Reactive state with computed properties and automatic UI updates
 
 ### 2. Event System
+
 - **Before**: Manual event listeners, custom events, cleanup management
 - **After**: Type-safe event bus with automatic cleanup
 
 ### 3. Computed Properties
+
 - **Before**: Manual calculations scattered throughout update methods
 - **After**: Centralized computed properties with automatic dependency tracking
 
 ### 4. Lifecycle Management
+
 - **Before**: Manual subscription management and cleanup
 - **After**: Automatic cleanup through `state.cleanup()`
 
 ### 5. Type Safety
+
 - **Before**: Untyped events and data
 - **After**: Fully typed events with payload interfaces
 
 ## Usage Examples
 
 ### Enable Debug Mode
+
 ```typescript
-import { enablePatternDebugging } from '@teskooano/ui-plugin/patterns';
+import { enablePatternDebugging } from "@teskooano/ui-plugin/patterns";
 
 // Enable debug mode to see what's happening
 enablePatternDebugging();
 ```
 
 ### Manual Event Emission
+
 ```typescript
-import { emitEvent, Events } from '@teskooano/ui-plugin/patterns';
+import { emitEvent, Events } from "@teskooano/ui-plugin/patterns";
 
 // Emit events from anywhere in your code
 emitEvent(Events.OBJECT_SELECTED, {
-  objectId: 'earth',
+  objectId: "earth",
   object: earthObject,
-  source: 'manual-selection'
+  source: "manual-selection",
 });
 ```
 
 ### State Debugging
+
 ```typescript
-import { debugState } from '@teskooano/ui-plugin/patterns';
+import { debugState } from "@teskooano/ui-plugin/patterns";
 
 // Debug your component state
-debugState(this.state, 'ObjectInfoPanel');
+debugState(this.state, "ObjectInfoPanel");
 ```
 
 ## Next Steps (Phase 2)

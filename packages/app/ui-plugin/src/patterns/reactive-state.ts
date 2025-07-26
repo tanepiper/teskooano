@@ -1,26 +1,26 @@
 /**
  * @fileoverview Reactive State Management System
- * 
+ *
  * This module provides a reactive state management system inspired by Vue.js reactivity
  * but designed specifically for the Teskooano plugin system. It handles:
  * - Automatic dependency tracking
  * - Computed properties with caching
  * - Change notifications
  * - Efficient updates
- * 
+ *
  * @example
  * ```typescript
  * const state = new ReactiveState({
  *   selectedObject: null,
  *   filter: 'all'
  * });
- * 
+ *
  * // Add computed property
  * state.computed('filteredObjects', {
  *   deps: ['objects', 'filter'],
  *   compute: (objects, filter) => objects.filter(obj => filter === 'all' || obj.type === filter)
  * });
- * 
+ *
  * // Watch for changes
  * state.watch('selectedObject', (newValue, oldValue) => {
  *   console.log(`Selection changed from ${oldValue} to ${newValue}`);
@@ -28,7 +28,7 @@
  * ```
  */
 
-import { Subscription } from 'rxjs';
+import { Subscription } from "rxjs";
 
 /**
  * Configuration for computed properties
@@ -55,7 +55,11 @@ interface ComputedProperty extends ComputedDefinition {
 /**
  * Function signature for state change watchers
  */
-export type StateWatcher = (newValue: any, oldValue: any, property: string) => void;
+export type StateWatcher = (
+  newValue: any,
+  oldValue: any,
+  property: string,
+) => void;
 
 /**
  * Reactive state management system with automatic dependency tracking
@@ -77,33 +81,33 @@ export class ReactiveState {
       set: (target, prop, value) => {
         const propName = prop as string;
         const oldValue = target[propName];
-        
+
         // Don't trigger updates if value hasn't changed
         if (oldValue === value) return true;
-        
+
         target[propName] = value;
         this.scheduleUpdate(propName, value, oldValue);
         return true;
       },
-      
+
       get: (target, prop) => {
         const propName = prop as string;
-        
+
         // Return computed value if it's a computed property
         if (this._computed.has(propName)) {
           return this.getComputed(propName);
         }
-        
+
         return target[propName];
-      }
+      },
     });
   }
 
   /**
    * Get the raw data object (for debugging or direct access)
    */
-  get data(): Record<string, any> { 
-    return this._data; 
+  get data(): Record<string, any> {
+    return this._data;
   }
 
   /**
@@ -144,7 +148,7 @@ export class ReactiveState {
       this._watchers.set(property, new Set());
     }
     this._watchers.get(property)!.add(callback);
-    
+
     // Return unsubscribe function
     return () => {
       this._watchers.get(property)?.delete(callback);
@@ -165,18 +169,18 @@ export class ReactiveState {
       compute: definition.compute,
       cache: null,
       dirty: true,
-      dependents: new Set()
+      dependents: new Set(),
     };
-    
+
     this._computed.set(property, computedProp);
-    
+
     // Set up dependency tracking
-    definition.deps.forEach(dep => {
+    definition.deps.forEach((dep) => {
       // Watch direct dependencies
       this.watch(dep, () => {
         this.invalidateComputed(property);
       });
-      
+
       // Handle computed dependencies
       if (this._computed.has(dep)) {
         this._computed.get(dep)!.dependents.add(property);
@@ -193,7 +197,7 @@ export class ReactiveState {
     if (!computed) return;
 
     // Remove from dependents of dependencies
-    computed.deps.forEach(dep => {
+    computed.deps.forEach((dep) => {
       if (this._computed.has(dep)) {
         this._computed.get(dep)!.dependents.delete(property);
       }
@@ -211,10 +215,10 @@ export class ReactiveState {
     if (!computed) {
       throw new Error(`Computed property '${property}' not found`);
     }
-    
+
     if (computed.dirty || computed.cache === null) {
       try {
-        const deps = computed.deps.map(dep => this._data[dep]);
+        const deps = computed.deps.map((dep) => this._data[dep]);
         computed.cache = computed.compute(...deps);
         computed.dirty = false;
       } catch (error) {
@@ -222,7 +226,7 @@ export class ReactiveState {
         computed.cache = null;
       }
     }
-    
+
     return computed.cache;
   }
 
@@ -233,14 +237,14 @@ export class ReactiveState {
   private invalidateComputed(property: string): void {
     const computed = this._computed.get(property);
     if (!computed || computed.dirty) return;
-    
+
     computed.dirty = true;
-    
+
     // Schedule update for this computed property
     this.scheduleUpdate(property, undefined, undefined);
-    
+
     // Recursively invalidate dependent computed properties
-    computed.dependents.forEach(dependent => {
+    computed.dependents.forEach((dependent) => {
       this.invalidateComputed(dependent);
     });
   }
@@ -253,10 +257,10 @@ export class ReactiveState {
    */
   private scheduleUpdate(property: string, newValue: any, oldValue: any): void {
     this._updateQueue.add(property);
-    
+
     if (!this._isUpdating) {
       this._isUpdating = true;
-      
+
       // Use microtask to batch updates
       Promise.resolve().then(() => {
         this.flushUpdates();
@@ -271,8 +275,8 @@ export class ReactiveState {
     const updates = Array.from(this._updateQueue);
     this._updateQueue.clear();
     this._isUpdating = false;
-    
-    updates.forEach(property => {
+
+    updates.forEach((property) => {
       this.notifyWatchers(property);
     });
   }
@@ -284,10 +288,10 @@ export class ReactiveState {
   private notifyWatchers(property: string): void {
     const watchers = this._watchers.get(property);
     if (!watchers) return;
-    
+
     const newValue = this._data[property];
-    
-    watchers.forEach(callback => {
+
+    watchers.forEach((callback) => {
       try {
         callback(newValue, undefined, property);
       } catch (error) {
@@ -325,18 +329,19 @@ export class ReactiveState {
    */
   snapshot(): { data: any; computed: Record<string, any> } {
     const computedValues: Record<string, any> = {};
-    
+
     this._computed.forEach((_, key) => {
       try {
         computedValues[key] = this.getComputed(key);
       } catch (error) {
-        computedValues[key] = `<Error: ${(error as Error).message || 'Unknown error'}>`;
+        computedValues[key] =
+          `<Error: ${(error as Error).message || "Unknown error"}>`;
       }
     });
-    
+
     return {
       data: { ...this._data },
-      computed: computedValues
+      computed: computedValues,
     };
   }
 }
@@ -345,7 +350,7 @@ export class ReactiveState {
  * Utility function to create a reactive state with type safety
  */
 export function createReactiveState<T extends Record<string, any>>(
-  initialData: T
+  initialData: T,
 ): ReactiveState & { data: T } {
   return new ReactiveState(initialData) as ReactiveState & { data: T };
 }
@@ -359,7 +364,7 @@ export function createReactiveState<T extends Record<string, any>>(
 export function connectObservable(
   state: ReactiveState,
   property: string,
-  observable: any // Observable type from rxjs
+  observable: any, // Observable type from rxjs
 ): Subscription {
   return observable.subscribe((value: any) => {
     state.set(property, value);

@@ -1,4 +1,4 @@
-import { template } from "./Tooltip.template.ts";
+import { template } from "./Tooltip.template";
 
 /**
  * @element teskooano-tooltip

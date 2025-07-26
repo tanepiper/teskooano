@@ -1,6 +1,23 @@
 # `teskooano-button`
 
-A versatile custom button element with multiple variants, sizes, and deeply integrated tooltip functionality managed by a `ButtonTooltipManager`.
+A versatile custom button element with multiple variants, sizes, and deeply integrated tooltip functionality. Built with the new Teskooano UI patterns for reactive state management and event-driven communication.
+
+## 🚀 New in v2: Reactive Patterns
+
+This component has been refactored to use the new Teskooano UI patterns, providing:
+
+- **Reactive State Management**: Automatic UI updates based on state changes
+- **Event-Driven Communication**: Type-safe events for component interactions
+- **Computed Properties**: Derived state with automatic dependency tracking
+- **Automatic Cleanup**: Memory leak prevention with automatic subscription management
+
+### Events Emitted
+
+- `button:clicked` - When button is clicked (not disabled)
+- `button:activated` - When button becomes active
+- `button:deactivated` - When button becomes inactive
+- `tooltip:shown` - When tooltip is displayed
+- `tooltip:hidden` - When tooltip is hidden
 
 ## Usage
 
@@ -24,7 +41,7 @@ A versatile custom button element with multiple variants, sizes, and deeply inte
 
 ## Attributes
 
-- `variant`: `primary` | `ghost` | `image`. Sets the visual style. Defaults to a standard bordered button.
+- `variant`: `primary` | `ghost` | `image` | `icon`. Sets the visual style. Defaults to a standard bordered button.
 - `size`: `xs` | `sm` | `md` (default) | `lg` | `xl`.
 - `disabled`: Boolean attribute to disable the button.
 - `fullwidth`: Boolean attribute to make the button span the full width of its container.
