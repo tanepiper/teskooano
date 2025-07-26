@@ -1,4 +1,3 @@
-export { TeskooanoApp } from "./TeskooanoApp";
-export { ManagerInitializer } from "./ManagerInitializer";
-export { PanelRegistry } from "./PanelRegistry";
-export { EventSetup } from "./EventSetup";
+export * from "./ManagerInitializer";
+export * from "./PanelRegistry";
+export * from "./EventSetup";

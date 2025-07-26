@@ -15,7 +15,22 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "types": ["vitest/globals", "vite-plugin-glsl/ext"]
+    "types": ["vitest/globals", "vite-plugin-glsl/ext"],
+    "paths": {
+      "@core": ["./src/core"],
+      "@core/*": ["./src/core/*"],
+      "@teskooano/core": ["../packages/core/src"],
+      "@teskooano/data-types": ["../packages/data-types/src"],
+      "@teskooano/renderer-threejs-core": [
+        "../packages/renderer/threejs-core/src"
+      ],
+      "@teskooano/renderer-threejs-celestial": [
+        "../packages/renderer/threejs-celestial/src"
+      ],
+      "@teskooano/renderer-threejs-controls": [
+        "../packages/renderer/threejs-controls/src"
+      ]
+    }
   },
   "include": ["src"]
 }

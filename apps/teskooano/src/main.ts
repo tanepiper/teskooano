@@ -3,7 +3,8 @@ import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
 import { pluginConfig } from "./config/pluginRegistry";
-import { TeskooanoApp, pluginConfig as corePluginConfig } from "./core";
+import { TeskooanoApp } from "@core/app";
+import { pluginConfig as corePluginConfig } from "@core/config";
 
 /**
  * Application entry point - orchestrates initialization

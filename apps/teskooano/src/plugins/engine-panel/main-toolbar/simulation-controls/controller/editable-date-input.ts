@@ -43,6 +43,14 @@ export class EditableDateInput {
   private startEditing(): void {
     if (this.input) return; // Already editing
 
+    // Check if the element is still in the DOM
+    if (!this.element.isConnected) {
+      console.warn(
+        "EditableDateInput: Element no longer in DOM, cannot start editing",
+      );
+      return;
+    }
+
     // Create input element
     this.input = document.createElement("input");
     this.input.type = "datetime-local";
@@ -104,20 +112,34 @@ export class EditableDateInput {
   private finishEditing(): void {
     if (!this.input) return;
 
-    const newDate = new Date(this.input.value);
+    const inputValue = this.input.value;
 
-    // Validate the date
-    if (isNaN(newDate.getTime())) {
+    // Basic validation - check if the input has a value
+    if (!inputValue) {
+      console.warn(
+        "EditableDateInput: No date value provided, cancelling edit",
+      );
       this.cancelEditing();
       return;
     }
 
-    // Update the date
+    const newDate = new Date(inputValue);
+
+    // Validate the date - check if it's a valid date
+    if (isNaN(newDate.getTime())) {
+      console.warn("EditableDateInput: Invalid date provided, cancelling edit");
+      this.cancelEditing();
+      return;
+    }
+
+    // Update the date and notify callback
     this.currentDate = newDate;
     this.updateDisplay();
+
+    // Call the callback with the new date
     this.options.onDateChange(newDate);
 
-    // Use setTimeout to avoid the blur event conflict
+    // Clean up
     setTimeout(() => this.cleanup(), 0);
   }
 

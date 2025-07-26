@@ -56,12 +56,12 @@ export type { TourStep } from "./interface/tour-controller/types";
 
 // --- Initialization ---
 export {
-  TeskooanoApp,
   ManagerInitializer,
   PanelRegistry,
   EventSetup,
 } from "./initialization";
-export { EnvironmentValidator } from "./validation";
+export { TeskooanoApp } from "./app";
+export * from "./app/validation";
 
 // --- Configuration ---
 export { pluginConfig } from "./config/pluginRegistry";

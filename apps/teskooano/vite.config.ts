@@ -83,6 +83,12 @@ export default defineConfig({
   ] as PluginOption[],
   base: basePath,
   publicDir: assetPath,
+  resolve: {
+    alias: {
+      "@core": path.resolve(__dirname, "src/core"),
+      "@core/*": path.resolve(__dirname, "src/core/*"),
+    },
+  },
   define: {
     "import.meta.env.PACKAGE_VERSION": JSON.stringify(appVersion),
     "import.meta.env.GIT_COMMIT_HASH": JSON.stringify(gitCommitHash),

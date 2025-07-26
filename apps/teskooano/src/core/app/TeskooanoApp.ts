@@ -2,26 +2,13 @@ import { pluginManager } from "@teskooano/ui-plugin";
 import type { DockviewApi } from "dockview-core";
 import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
 
-import { EnvironmentValidator } from "../validation/EnvironmentValidator";
-import { ManagerInitializer } from "./ManagerInitializer";
-import { PanelRegistry } from "./PanelRegistry";
-import { EventSetup } from "./EventSetup";
+import { EnvironmentValidator } from "./validation";
+import { ManagerInitializer } from "../initialization/ManagerInitializer";
+import { PanelRegistry } from "../initialization/PanelRegistry";
+import { EventSetup } from "../initialization/EventSetup";
 import { SimulationLoopManager } from "../state/SimulationLoopManager";
 import { DockviewController, OverlayManager } from "../controllers/dockview";
-
-/**
- * Configuration options for TeskooanoApp initialization
- */
-export interface TeskooanoAppOptions {
-  /** Array of plugin IDs to load */
-  pluginIds: string[];
-  /** Application name (defaults to "Teskooano") */
-  appName?: string;
-  /** Application version (defaults to "unknown") */
-  version?: string;
-  /** Git hash for build tracking (defaults to "unknown") */
-  gitHash?: string;
-}
+import { TeskooanoAppOptions } from "./types";
 
 /**
  * The main Teskooano application class that orchestrates the complete initialization process
@@ -31,45 +18,45 @@ export class TeskooanoApp {
   /**
    * The dockview controller instance.
    */
-  public readonly dockviewController!: DockviewController;
+  public dockviewController!: DockviewController;
   /**
    * The dockview API instance.
    */
-  public readonly dockviewApi!: DockviewApi;
+  public dockviewApi!: DockviewApi;
   /**
    * The simulation loop manager instance.
    */
-  public readonly simulationLoopManager!: SimulationLoopManager;
+  public simulationLoopManager!: SimulationLoopManager;
   /**
    * The performance monitor instance.
    */
-  public readonly performanceMonitor!: PerformanceMonitor;
+  public performanceMonitor!: PerformanceMonitor;
   /**
    * The modal manager instance.
    */
-  public readonly modalManager!: OverlayManager;
+  public modalManager!: OverlayManager;
   /**
    * The plugin manager instance.
    */
-  public readonly pluginManager: typeof pluginManager;
+  public pluginManager: typeof pluginManager;
 
   // Application metadata
   /**
    * The name of the application.
    */
-  public readonly appName: string;
+  public appName: string;
   /**
    * The version of the application.
    */
-  public readonly version: string;
+  public version: string;
   /**
    * The git hash of the application.
    */
-  public readonly gitHash: string;
+  public gitHash: string;
   /**
    * The plugin IDs to load.
    */
-  public readonly pluginIds: string[];
+  public pluginIds: string[];
 
   /**
    * Whether the application has been started.
@@ -125,8 +112,8 @@ export class TeskooanoApp {
    * Main initialization orchestrator
    */
   private async initialize(): Promise<void> {
-    // Step 1: Environment & Core Setup (must be first)
-    const { appElement, toolbarElement } = this.setupEnvironment();
+    const { appElement, toolbarElement } =
+      EnvironmentValidator.validateRequiredElements();
 
     // Step 2: Plugin System (can run in parallel with performance monitor)
     const [{ dockviewController, dockviewApi }, performanceMonitor] =
@@ -145,7 +132,7 @@ export class TeskooanoApp {
       appElement,
       dockviewController,
     );
-    (this as any).modalManager = modalManager;
+    this.modalManager = modalManager;
 
     // Step 4: Application Services (requires UI infrastructure)
     await this.initializeApplicationServices(
@@ -172,7 +159,6 @@ export class TeskooanoApp {
 
   private setupEnvironment() {
     console.debug("[Init] Validating environment...");
-    return EnvironmentValidator.validateRequiredElements();
   }
 
   private async initializePerformanceMonitoring(): Promise<PerformanceMonitor> {
@@ -356,8 +342,6 @@ export class TeskooanoApp {
   }
 
   private finishInitialization(): void {
-    console.log("🪐 Teskooano Initialized.");
-
     // Hide the loading screen
     const loadingElement = document.getElementById("loading");
     if (loadingElement) {
