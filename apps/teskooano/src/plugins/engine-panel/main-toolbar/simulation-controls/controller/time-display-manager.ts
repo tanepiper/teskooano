@@ -1,6 +1,21 @@
-import { StateAccessor, actions } from "@teskooano/core-state";
+import {
+  StateAccessor,
+  actions,
+  simulationStateService,
+} from "@teskooano/core-state";
 import { EditableDateInput } from "./editable-date-input";
 import { TimeStepCalculator } from "./time-step-calculator";
+import { SimulationMode } from "@teskooano/data-types";
+import {
+  Subject,
+  timer,
+  takeUntil,
+  switchMap,
+  tap,
+  finalize,
+  EMPTY,
+  of,
+} from "rxjs";
 
 export interface TimeDisplayConfig {
   element: HTMLElement;
@@ -19,6 +34,10 @@ export class TimeDisplayManager {
   private config: TimeDisplayConfig;
   private lastDateChangeTime: number = 0;
   private readonly dateChangeDebounceMs: number = 1000; // 1 second debounce
+
+  // RxJS subjects for managing date change flow
+  private destroy$ = new Subject<void>();
+  private dateJumpCancel$ = new Subject<void>();
 
   constructor(config: TimeDisplayConfig) {
     this.config = config;
@@ -73,6 +92,10 @@ export class TimeDisplayManager {
    * Cleans up resources
    */
   public dispose(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.dateJumpCancel$.complete();
+
     if (this.editableDateInput) {
       this.editableDateInput.destroy();
       this.editableDateInput = null;
@@ -80,8 +103,8 @@ export class TimeDisplayManager {
   }
 
   /**
-   * Handles date changes from the editable input.
-   * Uses time stepping approach rather than complex orbital calculations.
+   * Handles date changes from the editable input using RxJS flow.
+   * Fixes the date calculation to properly handle target dates.
    */
   private handleDateChange = (newDate: Date): void => {
     const now = Date.now();
@@ -99,6 +122,9 @@ export class TimeDisplayManager {
     console.log(
       `[TimeDisplayManager] Date change requested: ${newDate.toISOString()}`,
     );
+
+    // Cancel any ongoing date jump
+    this.dateJumpCancel$.next();
 
     try {
       const currentState = StateAccessor.getCurrentSimulationState();
@@ -118,19 +144,28 @@ export class TimeDisplayManager {
         return;
       }
 
-      // Calculate time steps needed
-      const timeDifference =
-        newDate.getTime() - this.simulationStartDate.getTime();
-      const timeDifferenceSeconds = timeDifference / 1000;
+      // Calculate target time in seconds from original start date
+      const targetTimeSeconds =
+        (newDate.getTime() - this.simulationStartDate.getTime()) / 1000;
+      const currentTimeSeconds = currentTime;
+      const timeDifference = targetTimeSeconds - currentTimeSeconds;
+
+      // If we're already at the target time, no need to jump
+      if (Math.abs(timeDifference) < 1) {
+        console.log(
+          `[TimeDisplayManager] Already at target date, no jump needed`,
+        );
+        return;
+      }
 
       // Get optimal step size for the time jump
       const stepSize = TimeStepCalculator.getOptimalStepSize(
-        timeDifferenceSeconds,
+        Math.abs(timeDifference),
       );
 
       const stepCalculation = TimeStepCalculator.calculateTimeSteps(
         this.simulationStartDate,
-        currentTime,
+        currentTimeSeconds,
         newDate,
         stepSize,
       );
@@ -140,48 +175,21 @@ export class TimeDisplayManager {
         stepCalculation,
       );
 
-      // Update the simulation start date and reset simulation time
-      this.simulationStartDate = new Date(newDate);
-
-      // Reset simulation time to 0 since we're jumping to a new date
-      actions.resetTime();
-
-      // Calculate the time scale needed to complete the jump in a reasonable time
-      const jumpDurationSeconds = 2; // Complete the jump in 2 seconds
-      const requiredTimeScale =
-        Math.abs(stepCalculation.totalTimeSeconds) / jumpDurationSeconds;
-
-      // Apply direction to the time scale
-      const timeScale =
-        stepCalculation.direction === "forward"
-          ? requiredTimeScale
-          : -requiredTimeScale;
-
-      console.log(
-        `[TimeDisplayManager] Setting time scale to ${timeScale} for ${stepCalculation.direction} time jump (${stepCalculation.totalTimeSeconds}s in ${jumpDurationSeconds}s)`,
-      );
-
-      // Set the calculated time scale to perform the jump
-      actions.setTimeScale(timeScale);
-
-      // After the jump duration, reset to normal speed
-      setTimeout(() => {
-        actions.setTimeScale(1); // Reset to normal speed
-        console.log(
-          `[TimeDisplayManager] Time jump completed, reset to normal speed`,
-        );
-      }, jumpDurationSeconds * 1000);
-
-      // Clear visualizations to prevent showing incorrect paths
-      document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
-      document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
-
-      // Call external callback if provided
-      this.config.onDateChange?.(newDate);
-
-      console.log(
-        `[TimeDisplayManager] Date jump completed to: ${newDate.toISOString()}`,
-      );
+      // Start the RxJS-based date jump flow
+      this.performDateJump(targetTimeSeconds, timeDifference, stepCalculation)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log(
+              `[TimeDisplayManager] Date jump completed to: ${newDate.toISOString()}`,
+            );
+            this.config.onDateChange?.(newDate);
+          },
+          error: (error) => {
+            console.error("[TimeDisplayManager] Date jump failed:", error);
+            alert("Failed to change date. Please try again.");
+          },
+        });
     } catch (error) {
       console.error(
         "[TimeDisplayManager] Failed to process date change:",
@@ -190,6 +198,84 @@ export class TimeDisplayManager {
       alert("Failed to change date. Please try again.");
     }
   };
+
+  /**
+   * Performs the date jump using RxJS flow to avoid race conditions
+   */
+  private performDateJump(
+    targetTimeSeconds: number,
+    timeDifference: number,
+    stepCalculation: any,
+  ) {
+    // Store original simulation state
+    const simulationState = StateAccessor.getCurrentSimulationState();
+    const originalMode = simulationState.simulationConfig?.mode;
+    const needsModeSwitch =
+      originalMode && originalMode !== SimulationMode.IDEAL;
+
+    console.log(`[TimeDisplayManager] Starting date jump flow`);
+
+    return of(null).pipe(
+      // Step 1: Switch to ideal mode if needed
+      tap(() => {
+        if (needsModeSwitch) {
+          console.log(
+            `[TimeDisplayManager] Temporarily switching from ${originalMode} to IDEAL mode for time jump`,
+          );
+          simulationStateService.setSimulationMode(SimulationMode.IDEAL);
+        }
+      }),
+
+      // Step 2: Calculate and set time scale for the jump
+      tap(() => {
+        const jumpDurationSeconds = 2; // Complete the jump in 2 seconds
+        const requiredTimeScale =
+          Math.abs(timeDifference) / jumpDurationSeconds;
+
+        // Apply direction to the time scale
+        const timeScale =
+          timeDifference >= 0 ? requiredTimeScale : -requiredTimeScale;
+
+        console.log(
+          `[TimeDisplayManager] Setting time scale to ${timeScale} for ${stepCalculation.direction} time jump (${Math.abs(timeDifference)}s in ${jumpDurationSeconds}s)`,
+        );
+
+        actions.setTimeScale(timeScale);
+
+        // Clear visualizations to prevent showing incorrect paths
+        document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
+        document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
+      }),
+
+      // Step 3: Wait for the jump duration or monitor progress
+      switchMap(() => {
+        const jumpDurationMs = 2000;
+
+        return timer(jumpDurationMs).pipe(
+          takeUntil(this.dateJumpCancel$),
+          tap(() => {
+            console.log(`[TimeDisplayManager] Jump duration completed`);
+          }),
+        );
+      }),
+
+      // Step 4: Cleanup - reset time scale and restore mode
+      finalize(() => {
+        console.log(
+          `[TimeDisplayManager] Finalizing date jump - resetting time scale and mode`,
+        );
+
+        actions.setTimeScale(1); // Reset to normal speed
+
+        if (needsModeSwitch && originalMode) {
+          console.log(
+            `[TimeDisplayManager] Restoring original simulation mode: ${originalMode}`,
+          );
+          simulationStateService.setSimulationMode(originalMode);
+        }
+      }),
+    );
+  }
 
   private hasActiveSimulation(): boolean {
     const celestialObjects = StateAccessor.getCurrentCelestialObjects();
@@ -217,6 +303,7 @@ export class TimeDisplayManager {
     }
 
     if (this.editableDateInput) {
+      // Fix: Calculate current date properly from start date + elapsed time
       const currentDate = new Date(
         this.simulationStartDate.getTime() + timeSeconds * 1000,
       );
