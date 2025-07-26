@@ -24,6 +24,14 @@ export interface DockViewModalOptions extends ModalPanelOptions {
 }
 
 /**
+ * Extended modal result that includes the panel ID for CSS targeting.
+ */
+export interface ModalResultWithId {
+  result: ModalResult;
+  panelId: string;
+}
+
+/**
  * Manages the creation and interaction of modal dialogs using DockView floating panels
  * instead of overlays. This provides better integration with the DockView system.
  */
@@ -57,11 +65,20 @@ export class DockViewModalManager {
    * @returns Promise that resolves with the action taken
    */
   public show(options: DockViewModalOptions): Promise<ModalResult> {
+    return this.showWithId(options).then((result) => result.result);
+  }
+
+  /**
+   * Shows a modal dialog and returns both the result and panel ID for CSS targeting
+   * @param options Modal configuration options
+   * @returns Promise that resolves with both the action taken and the panel ID
+   */
+  public showWithId(options: DockViewModalOptions): Promise<ModalResultWithId> {
     if (!this.isInitialized || !this._dockviewController) {
       console.error(
         "DockViewModalManager not initialized. Call initialize() before show().",
       );
-      return Promise.resolve("dismissed");
+      return Promise.resolve({ result: "dismissed", panelId: "" });
     }
 
     this._modalCounter++;
@@ -99,11 +116,11 @@ export class DockViewModalManager {
 
       if (!panelApi) {
         console.error("DockViewModalManager: Failed to create modal panel");
-        return Promise.resolve("dismissed");
+        return Promise.resolve({ result: "dismissed", panelId: modalId });
       }
 
       // Return a promise that resolves when the modal is closed
-      return new Promise<ModalResult>((resolve) => {
+      return new Promise<ModalResultWithId>((resolve) => {
         // Wait for the panel to be fully initialized and then set up the promise resolution
         setTimeout(() => {
           // Find the modal panel element in the DOM
@@ -116,8 +133,10 @@ export class DockViewModalManager {
           );
           if (modalElement && modalElement._resolvePromise === undefined) {
             console.log("DockViewModalManager: Setting up promise resolution");
-            // Set up the promise resolution
-            modalElement._resolvePromise = resolve;
+            // Set up the promise resolution with panel ID
+            modalElement._resolvePromise = (result: ModalResult) => {
+              resolve({ result, panelId: panelApi.id });
+            };
           } else {
             console.log(
               "DockViewModalManager: Modal element not found or _resolvePromise already set",
@@ -128,7 +147,7 @@ export class DockViewModalManager {
         // Listen for panel removal as fallback
         const handlePanelRemoved = (removedPanelId: string) => {
           if (removedPanelId === modalId) {
-            resolve("dismissed");
+            resolve({ result: "dismissed", panelId: panelApi.id });
             this._dockviewController!.onPanelRemoved$.subscribe(
               handlePanelRemoved,
             ).unsubscribe();
@@ -139,7 +158,7 @@ export class DockViewModalManager {
       });
     } catch (error) {
       console.error("DockViewModalManager: Error creating modal panel:", error);
-      return Promise.resolve("dismissed");
+      return Promise.resolve({ result: "dismissed", panelId: modalId });
     }
   }
 

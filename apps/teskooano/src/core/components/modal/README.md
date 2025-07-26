@@ -71,6 +71,88 @@ The `show` method accepts a `DockViewModalOptions` object with the following pro
 
 The `show` method returns a `Promise<ModalResult>`, which resolves to one of the following strings when the modal is closed: `'confirm'`, `'close'`, `'secondary'`, or `'dismissed'`.
 
+### CSS Targeting and Styling
+
+Each modal instance is automatically assigned a unique panel ID from DockView. You can target specific modals with CSS using:
+
+**1. Data Attribute Targeting:**
+
+```css
+/* Target any modal */
+teskooano-modal-panel {
+  border: 2px solid blue;
+}
+
+/* Target specific modal by panel ID */
+teskooano-modal-panel[data-panel-id="panel-123"] {
+  border: 2px solid red;
+}
+```
+
+**2. CSS Class Targeting:**
+
+```css
+/* Target specific modal using generated class */
+.modal-panel-panel-123 {
+  background: rgba(0, 0, 0, 0.9);
+}
+```
+
+**3. Getting Panel ID Programmatically:**
+
+```typescript
+// Method 1: Use showWithId() to get both result and panel ID
+const { result, panelId } = await modalManager.showWithId({
+  title: "Confirm Action",
+  content: "<p>Are you sure?</p>",
+});
+
+console.log("Modal result:", result);
+console.log("Panel ID for CSS:", panelId);
+
+// Method 2: Access panel ID from modal element
+const modalElement = document.querySelector("teskooano-modal-panel");
+const panelId = modalElement?.getPanelId();
+
+// Method 3: Use the panel ID for dynamic styling
+const style = document.createElement("style");
+style.textContent = `
+  teskooano-modal-panel[data-panel-id="${panelId}"] {
+    backdrop-filter: blur(10px);
+  }
+`;
+document.head.appendChild(style);
+```
+
+**4. Advanced CSS Targeting:**
+
+```typescript
+// Show a modal with custom styling
+async function showStyledModal() {
+  const { result, panelId } = await modalManager.showWithId({
+    title: "Special Modal",
+    content: "<p>This modal has custom styling!</p>",
+    confirmText: "Awesome!",
+  });
+
+  // Add custom CSS for this specific modal
+  const customStyle = document.createElement("style");
+  customStyle.textContent = `
+    .modal-panel-${panelId} {
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-panel-${panelId} .modal-header {
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    }
+  `;
+  document.head.appendChild(customStyle);
+
+  return result;
+}
+```
+
 ## Legacy Overlay Modal System
 
 The `TeskooanoModalManager` creates modals as overlays using the Dockview overlay system. This system is maintained for backward compatibility.

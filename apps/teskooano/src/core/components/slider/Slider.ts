@@ -184,30 +184,30 @@ export class TeskooanoSlider extends HTMLElement {
 
   private setupStateWatchers(): void {
     // Watch for value changes to update UI
-    this.state.watch("value", (newValue) => {
+    this.state.watch("value", (newValue: number) => {
       this.updateSliderValue(newValue);
       this.updateValueDisplay(newValue);
       this.emitChangeEvent(newValue);
     });
 
     // Watch for min/max/step changes to update slider attributes
-    this.state.watch("min", (newValue) => {
+    this.state.watch("min", (newValue: number) => {
       this.sliderElement.min = newValue.toString();
       this.valueInputElement.min = newValue.toString();
     });
 
-    this.state.watch("max", (newValue) => {
+    this.state.watch("max", (newValue: number) => {
       this.sliderElement.max = newValue.toString();
       this.valueInputElement.max = newValue.toString();
     });
 
-    this.state.watch("step", (newValue) => {
+    this.state.watch("step", (newValue: number) => {
       this.sliderElement.step = newValue.toString();
       this.valueInputElement.step = newValue.toString();
     });
 
     // Watch for disabled state changes
-    this.state.watch("isDisabled", (isDisabled) => {
+    this.state.watch("isDisabled", (isDisabled: boolean) => {
       this.sliderElement.disabled = isDisabled;
       this.valueInputElement.disabled = isDisabled;
 
@@ -219,7 +219,7 @@ export class TeskooanoSlider extends HTMLElement {
     });
 
     // Watch for editable state changes
-    this.state.watch("isEditable", (isEditable) => {
+    this.state.watch("isEditable", (isEditable: boolean) => {
       if (isEditable) {
         this.setAttribute("editable-value", "");
       } else {
@@ -228,7 +228,7 @@ export class TeskooanoSlider extends HTMLElement {
     });
 
     // Watch for invalid state changes
-    this.state.watch("isInvalid", (isInvalid) => {
+    this.state.watch("isInvalid", (isInvalid: boolean) => {
       if (isInvalid) {
         this.valueInputElement.classList.add("invalid");
       } else {
@@ -237,19 +237,19 @@ export class TeskooanoSlider extends HTMLElement {
     });
 
     // Watch for input value changes
-    this.state.watch("inputValue", (newValue) => {
+    this.state.watch("inputValue", (newValue: string) => {
       if (this.valueInputElement.value !== newValue) {
         this.valueInputElement.value = newValue;
       }
     });
 
     // Watch for label changes
-    this.state.watch("label", (newLabel) => {
+    this.state.watch("label", (newLabel: string) => {
       this.updateLabel(newLabel);
     });
 
     // Watch for help text changes
-    this.state.watch("helpText", (newHelpText) => {
+    this.state.watch("helpText", (newHelpText: string) => {
       this.updateHelpText(newHelpText);
     });
   }

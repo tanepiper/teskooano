@@ -358,37 +358,22 @@ export class ObjectManager extends StateSubscriptionMixin {
         continue;
       }
 
-      let showLabel = false;
+      let showLabel = true; // Default to showing labels
       const type = objectData.type;
 
-      // Determine default visibility based on type
-      if (
-        type === CelestialType.STAR ||
-        type === CelestialType.PLANET ||
-        type === CelestialType.GAS_GIANT ||
-        type === CelestialType.OORT_CLOUD ||
-        type === CelestialType.DWARF_PLANET ||
-        type === CelestialType.ASTEROID_FIELD ||
-        type === CelestialType.COMET ||
-        type === CelestialType.SATELLITE
-      ) {
-        showLabel = true;
-      } else if (
-        // For moons and rings, only show label if parent is close (low LOD level)
-        type === CelestialType.MOON ||
-        type === CelestialType.RING_SYSTEM
-      ) {
+      // Hide labels for specific types that shouldn't have them
+      if (type === CelestialType.RING_SYSTEM) {
+        showLabel = false;
+      } else if (type === CelestialType.MOON) {
+        // For moons, only show label if parent is close (low LOD level)
         if (objectData.parentId) {
           const parentLODLevel = this.lodManager.getCurrentLODLevel(
             objectData.parentId,
           );
           // Show if parent LOD is 0 or 1 (closest levels)
-          if (parentLODLevel !== undefined && parentLODLevel <= 1) {
-            showLabel = true;
-          }
+          showLabel = parentLODLevel !== undefined && parentLODLevel <= 1;
         }
       }
-      // Add more specific logic here if needed
 
       const currentLabelElement = this.css2DManager
         .getLayer(CSS2DLayerType.CELESTIAL_LABELS)

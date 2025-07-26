@@ -9,7 +9,6 @@ export const modalStyles = `
     border-radius: var(--radius-md, 4px);
     overflow: hidden;
     font-family: var(--font-family-base, system-ui);
-    opacity: 0;
     transform: scale(0.95);
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
   }
@@ -17,6 +16,11 @@ export const modalStyles = `
   :host(.visible) {
     opacity: 1;
     transform: scale(1);
+  }
+
+  /* Remove box shadow from DockView resize container when it contains a modal */
+  :host-context(.dv-resize-container) {
+    box-shadow: none;
   }
 
   .modal-header {
@@ -50,6 +54,12 @@ export const modalStyles = `
     flex: 1;
     display: flex;
     flex-direction: column;
+  }
+
+  /* Content slot styling */
+  ::slotted(*) {
+    display: block;
+    width: 100%;
   }
 
   .modal-footer {
@@ -106,12 +116,6 @@ export const modalStyles = `
 
   .modal-button.hidden {
     display: none;
-  }
-
-  /* Content slot styling */
-  ::slotted(*) {
-    display: block;
-    width: 100%;
   }
 
   /* Responsive design */
