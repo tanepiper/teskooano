@@ -1,18 +1,13 @@
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { template } from "./Slider.template";
 import {
-  BehaviorSubject,
-  Subject,
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  tap,
-} from "rxjs";
+  ReactiveState,
+  EventBus,
+  Events,
+  createComponentState,
+} from "@teskooano/ui-plugin/patterns";
 
-interface SliderUIState {
+interface SliderState {
   value: number;
   min: number;
   max: number;
@@ -21,6 +16,8 @@ interface SliderUIState {
   isEditable: boolean;
   isInvalid: boolean;
   inputValue: string;
+  label: string;
+  helpText: string;
 }
 
 export class TeskooanoSlider extends HTMLElement {
@@ -42,19 +39,26 @@ export class TeskooanoSlider extends HTMLElement {
   private helpTextElement!: HTMLElement;
   private valueInputElement!: HTMLInputElement;
 
-  private valueSubject = new BehaviorSubject<number>(50);
-  private minSubject = new BehaviorSubject<number>(0);
-  private maxSubject = new BehaviorSubject<number>(100);
-  private stepSubject = new BehaviorSubject<number>(1);
-  private isDisabledSubject = new BehaviorSubject<boolean>(false);
-  private isEditableSubject = new BehaviorSubject<boolean>(false);
-  private isInvalidSubject = new BehaviorSubject<boolean>(false);
+  // Use the new reactive state pattern
+  private state = createComponentState(
+    {
+      value: 50,
+      min: 0,
+      max: 100,
+      step: 1,
+      isDisabled: false,
+      isEditable: false,
+      isInvalid: false,
+      inputValue: "50",
+      label: "Slider",
+      helpText: "",
+    } as SliderState,
+    {
+      componentName: "teskooano-slider",
+    },
+  );
 
-  private inputValueSubject = new BehaviorSubject<string>("");
-
-  private debouncedUpdateSubject = new Subject<number>();
-
-  private subscriptionManager = new StateSubscriptionMixin();
+  private debounceTimeout: number | null = null;
 
   constructor() {
     super();
@@ -75,18 +79,17 @@ export class TeskooanoSlider extends HTMLElement {
   }
 
   connectedCallback() {
-    this.updateSubjectsFromAttributes();
-
+    this.updateStateFromAttributes();
     this.setupEventListeners();
-
-    this.setupRxJSPipelines();
+    this.setupStateWatchers();
   }
 
   disconnectedCallback() {
     this.removeEventListeners();
-
-    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
-    this.subscriptionManager.dispose();
+    this.state.cleanup(); // Automatic cleanup of all subscriptions
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
   }
 
   attributeChangedCallback(
@@ -98,46 +101,35 @@ export class TeskooanoSlider extends HTMLElement {
 
     switch (name) {
       case "label":
-        this.updateLabelAttribute(newValue);
+        this.state.set("label", newValue || "Slider");
         break;
       case "value":
         const numValue = this.parseAttributeSafe(newValue, 50);
-        if (numValue !== this.valueSubject.getValue()) {
-          this.valueSubject.next(numValue);
-        }
+        this.state.set("value", numValue);
+        this.state.set("inputValue", numValue.toString());
         break;
       case "min":
         const minValue = this.parseAttributeSafe(newValue, 0);
-        if (minValue !== this.minSubject.getValue()) {
-          this.minSubject.next(minValue);
-        }
+        this.state.set("min", minValue);
         break;
       case "max":
         const maxValue = this.parseAttributeSafe(newValue, 100);
-        if (maxValue !== this.maxSubject.getValue()) {
-          this.maxSubject.next(maxValue);
-        }
+        this.state.set("max", maxValue);
         break;
       case "step":
         const stepValue = this.parseAttributeSafe(newValue, 1, true);
-        if (stepValue !== this.stepSubject.getValue()) {
-          this.stepSubject.next(stepValue);
-        }
+        this.state.set("step", stepValue);
         break;
       case "disabled":
         const isDisabled = newValue !== null;
-        if (isDisabled !== this.isDisabledSubject.getValue()) {
-          this.isDisabledSubject.next(isDisabled);
-        }
+        this.state.set("isDisabled", isDisabled);
         break;
       case "help-text":
-        this.updateHelpTextAttribute(newValue);
+        this.state.set("helpText", newValue || "");
         break;
       case "editable-value":
         const isEditable = newValue !== null;
-        if (isEditable !== this.isEditableSubject.getValue()) {
-          this.isEditableSubject.next(isEditable);
-        }
+        this.state.set("isEditable", isEditable);
         break;
     }
   }
@@ -157,24 +149,25 @@ export class TeskooanoSlider extends HTMLElement {
     return num;
   }
 
-  private updateSubjectsFromAttributes(): void {
-    this.minSubject.next(this.parseAttributeSafe(this.getAttribute("min"), 0));
-    this.maxSubject.next(
+  private updateStateFromAttributes(): void {
+    this.state.set("min", this.parseAttributeSafe(this.getAttribute("min"), 0));
+    this.state.set(
+      "max",
       this.parseAttributeSafe(this.getAttribute("max"), 100),
     );
-    this.stepSubject.next(
+    this.state.set(
+      "step",
       this.parseAttributeSafe(this.getAttribute("step"), 1, true),
     );
-    this.valueSubject.next(
+    this.state.set(
+      "value",
       this.parseAttributeSafe(this.getAttribute("value"), 50),
     );
-    this.isDisabledSubject.next(this.hasAttribute("disabled"));
-    this.isEditableSubject.next(this.hasAttribute("editable-value"));
-
-    this.inputValueSubject.next(this.valueSubject.getValue().toString());
-
-    this.updateLabelAttribute(this.getAttribute("label"));
-    this.updateHelpTextAttribute(this.getAttribute("help-text"));
+    this.state.set("isDisabled", this.hasAttribute("disabled"));
+    this.state.set("isEditable", this.hasAttribute("editable-value"));
+    this.state.set("label", this.getAttribute("label") || "Slider");
+    this.state.set("helpText", this.getAttribute("help-text") || "");
+    this.state.set("inputValue", this.state.get("value").toString());
   }
 
   private setupEventListeners(): void {
@@ -189,185 +182,167 @@ export class TeskooanoSlider extends HTMLElement {
     this.valueInputElement.removeEventListener("blur", this.handleInputBlur);
   }
 
-  private setupRxJSPipelines(): void {
-    const coreState$ = combineLatest([
-      this.valueSubject.pipe(distinctUntilChanged()),
-      this.minSubject.pipe(distinctUntilChanged()),
-      this.maxSubject.pipe(distinctUntilChanged()),
-      this.stepSubject.pipe(distinctUntilChanged()),
-      this.isDisabledSubject.pipe(distinctUntilChanged()),
-      this.isEditableSubject.pipe(distinctUntilChanged()),
-      this.isInvalidSubject.pipe(distinctUntilChanged()),
-      this.inputValueSubject.pipe(distinctUntilChanged()),
-    ]).pipe(
-      map(
-        ([
-          value,
-          min,
-          max,
-          step,
-          isDisabled,
-          isEditable,
-          isInvalid,
-          inputValue,
-        ]): SliderUIState => ({
-          value,
-          min,
-          max,
-          step,
-          isDisabled,
-          isEditable,
-          isInvalid,
-          inputValue,
-        }),
-      ),
-    );
+  private setupStateWatchers(): void {
+    // Watch for value changes to update UI
+    this.state.watch("value", (newValue) => {
+      this.updateSliderValue(newValue);
+      this.updateValueDisplay(newValue);
+      this.emitChangeEvent(newValue);
+    });
 
-    // ✅ Using StateSubscriptionMixin composition for clean subscription management
-    this.subscriptionManager.subscribeToStateComposition(
-      coreState$,
-      (state: SliderUIState) => this.updateUI(state),
-    );
+    // Watch for min/max/step changes to update slider attributes
+    this.state.watch("min", (newValue) => {
+      this.sliderElement.min = newValue.toString();
+      this.valueInputElement.min = newValue.toString();
+    });
 
-    this.subscriptionManager.subscribeToStateComposition(
-      this.debouncedUpdateSubject.pipe(
-        debounceTime(400),
-        distinctUntilChanged(),
-        filter(() => !this.isInvalidSubject.getValue()),
-      ),
-      (finalValue) => {
-        this.valueSubject.next(finalValue);
+    this.state.watch("max", (newValue) => {
+      this.sliderElement.max = newValue.toString();
+      this.valueInputElement.max = newValue.toString();
+    });
 
-        this.dispatchEvent(
-          new CustomEvent<SliderValueChangePayload>(
-            CustomEvents.SLIDER_CHANGE,
-            {
-              detail: { value: finalValue },
-              bubbles: true,
-              composed: true,
-            },
-          ),
-        );
-      },
-    );
+    this.state.watch("step", (newValue) => {
+      this.sliderElement.step = newValue.toString();
+      this.valueInputElement.step = newValue.toString();
+    });
+
+    // Watch for disabled state changes
+    this.state.watch("isDisabled", (isDisabled) => {
+      this.sliderElement.disabled = isDisabled;
+      this.valueInputElement.disabled = isDisabled;
+
+      if (isDisabled) {
+        this.setAttribute("disabled", "");
+      } else {
+        this.removeAttribute("disabled");
+      }
+    });
+
+    // Watch for editable state changes
+    this.state.watch("isEditable", (isEditable) => {
+      if (isEditable) {
+        this.setAttribute("editable-value", "");
+      } else {
+        this.removeAttribute("editable-value");
+      }
+    });
+
+    // Watch for invalid state changes
+    this.state.watch("isInvalid", (isInvalid) => {
+      if (isInvalid) {
+        this.valueInputElement.classList.add("invalid");
+      } else {
+        this.valueInputElement.classList.remove("invalid");
+      }
+    });
+
+    // Watch for input value changes
+    this.state.watch("inputValue", (newValue) => {
+      if (this.valueInputElement.value !== newValue) {
+        this.valueInputElement.value = newValue;
+      }
+    });
+
+    // Watch for label changes
+    this.state.watch("label", (newLabel) => {
+      this.updateLabel(newLabel);
+    });
+
+    // Watch for help text changes
+    this.state.watch("helpText", (newHelpText) => {
+      this.updateHelpText(newHelpText);
+    });
   }
 
   private handleSliderInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const newValue = parseFloat(target.value);
 
-    if (!isNaN(newValue) && !this.isDisabledSubject.getValue()) {
-      this.valueSubject.next(newValue);
-
-      this.inputValueSubject.next(newValue.toString());
-
-      this.isInvalidSubject.next(false);
-
-      this.dispatchEvent(
-        new CustomEvent<SliderValueChangePayload>(CustomEvents.SLIDER_CHANGE, {
-          detail: { value: newValue },
-          bubbles: true,
-          composed: true,
-        }),
-      );
+    if (!isNaN(newValue) && !this.state.get("isDisabled")) {
+      this.state.set("value", newValue);
+      this.state.set("inputValue", newValue.toString());
+      this.state.set("isInvalid", false);
     }
   };
 
   private handleTextInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const rawValue = target.value;
-    this.inputValueSubject.next(rawValue);
+    this.state.set("inputValue", rawValue);
 
     const numValue = parseFloat(rawValue);
-    const min = this.minSubject.getValue();
-    const max = this.maxSubject.getValue();
+    const min = this.state.get("min");
+    const max = this.state.get("max");
 
     if (isNaN(numValue) || numValue < min || numValue > max) {
-      this.isInvalidSubject.next(true);
+      this.state.set("isInvalid", true);
     } else {
-      this.isInvalidSubject.next(false);
+      this.state.set("isInvalid", false);
 
-      const step = this.stepSubject.getValue();
+      const step = this.state.get("step");
       const steppedValue = Math.round((numValue - min) / step) * step + min;
       const clampedValue = Math.max(min, Math.min(steppedValue, max));
-      this.debouncedUpdateSubject.next(clampedValue);
+
+      // Debounce the update to avoid too many events
+      if (this.debounceTimeout) {
+        clearTimeout(this.debounceTimeout);
+      }
+      this.debounceTimeout = window.setTimeout(() => {
+        this.state.set("value", clampedValue);
+      }, 400);
     }
   };
 
   private handleInputBlur = () => {
-    if (this.isInvalidSubject.getValue()) {
-      const lastValidValue = this.valueSubject.getValue();
-      this.inputValueSubject.next(lastValidValue.toString());
-      this.isInvalidSubject.next(false);
+    if (this.state.get("isInvalid")) {
+      const lastValidValue = this.state.get("value");
+      this.state.set("inputValue", lastValidValue.toString());
+      this.state.set("isInvalid", false);
     }
   };
 
-  private updateUI = (state: SliderUIState) => {
-    this._silentAttributeUpdate("value", state.value.toString());
-    this._silentAttributeUpdate("min", state.min.toString());
-    this._silentAttributeUpdate("max", state.max.toString());
-    this._silentAttributeUpdate("step", state.step.toString());
-    this.sliderElement.disabled = state.isDisabled;
-    this.valueInputElement.disabled = state.isDisabled;
-
-    if (state.isDisabled) {
-      this.setAttribute("disabled", "");
-    } else {
-      this.removeAttribute("disabled");
-    }
-    if (state.isEditable) {
-      this.setAttribute("editable-value", "");
-    } else {
-      this.removeAttribute("editable-value");
-    }
-
-    this.valueDisplayElement.textContent = state.value.toFixed(
-      this.calculatePrecision(state.step),
-    );
-
-    if (this.valueInputElement.value !== state.inputValue) {
-      this.valueInputElement.value = state.inputValue;
-    }
-
-    if (state.isInvalid) {
-      this.valueInputElement.classList.add("invalid");
-    } else {
-      this.valueInputElement.classList.remove("invalid");
-    }
-
-    if (parseFloat(this.sliderElement.value) !== state.value) {
-      this.sliderElement.value = state.value.toString();
-    }
-  };
-
-  private _silentAttributeUpdate(name: string, value: string) {
-    const currentAttr = this.sliderElement.getAttribute(name);
-    if (currentAttr !== value) {
-      this.sliderElement.setAttribute(name, value);
+  private updateSliderValue(value: number): void {
+    if (parseFloat(this.sliderElement.value) !== value) {
+      this.sliderElement.value = value.toString();
     }
   }
 
-  private updateLabelAttribute(value: string | null) {
-    if (value !== null && !this.querySelector('[slot="label"]')) {
-      this.labelSlot.textContent = value;
+  private updateValueDisplay(value: number): void {
+    const precision = this.calculatePrecision(this.state.get("step"));
+    this.valueDisplayElement.textContent = value.toFixed(precision);
+  }
+
+  private updateLabel(label: string): void {
+    if (!this.querySelector('[slot="label"]')) {
+      this.labelSlot.textContent = label;
     }
     this.labelElement.setAttribute("for", "slider-input");
     const labelText =
       this.labelSlot.textContent?.trim() ||
       this.querySelector('[slot="label"]')?.textContent?.trim() ||
-      "Slider";
+      label;
     this.sliderElement.setAttribute("aria-label", labelText);
   }
 
-  private updateHelpTextAttribute(value: string | null) {
-    this.helpTextElement.textContent = value || "";
-    if (value) {
+  private updateHelpText(helpText: string): void {
+    this.helpTextElement.textContent = helpText;
+    if (helpText) {
       const helpTextId = "help-text-" + this.getUniqueId();
       this.helpTextElement.id = helpTextId;
       this.sliderElement.setAttribute("aria-describedby", helpTextId);
     } else {
       this.sliderElement.removeAttribute("aria-describedby");
     }
+  }
+
+  private emitChangeEvent(value: number): void {
+    this.dispatchEvent(
+      new CustomEvent<SliderValueChangePayload>(CustomEvents.SLIDER_CHANGE, {
+        detail: { value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   private calculatePrecision(step: number): number {
@@ -382,29 +357,30 @@ export class TeskooanoSlider extends HTMLElement {
     return performance.now().toString(36).substring(2, 9);
   }
 
+  // Public API
   get value(): number {
-    return this.valueSubject.getValue();
+    return this.state.get("value");
   }
 
   set value(newValue: number) {
-    const min = this.minSubject.getValue();
-    const max = this.maxSubject.getValue();
-    const step = this.stepSubject.getValue();
+    const min = this.state.get("min");
+    const max = this.state.get("max");
+    const step = this.state.get("step");
     const steppedValue = Math.round((newValue - min) / step) * step + min;
     const clampedValue = Math.max(min, Math.min(steppedValue, max));
 
-    if (!isNaN(clampedValue) && clampedValue !== this.valueSubject.getValue()) {
-      this.valueSubject.next(clampedValue);
+    if (!isNaN(clampedValue) && clampedValue !== this.state.get("value")) {
+      this.state.set("value", clampedValue);
     }
   }
 
   get disabled(): boolean {
-    return this.isDisabledSubject.getValue();
+    return this.state.get("isDisabled");
   }
 
   set disabled(isDisabled: boolean) {
-    if (isDisabled !== this.isDisabledSubject.getValue()) {
-      this.isDisabledSubject.next(isDisabled);
+    if (isDisabled !== this.state.get("isDisabled")) {
+      this.state.set("isDisabled", isDisabled);
     }
   }
 }
