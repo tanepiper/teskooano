@@ -1,4 +1,5 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { createComponentState } from "@teskooano/ui-plugin/patterns";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -70,6 +71,19 @@ template.innerHTML = `
   </div>
 `;
 
+interface SelectState {
+  value: string;
+  isDisabled: boolean;
+  label: string;
+  helpText: string;
+  options: Array<{
+    value: string;
+    text: string;
+    disabled: boolean;
+    selected: boolean;
+  }>;
+}
+
 export class TeskooanoSelect extends HTMLElement {
   static observedAttributes = ["label", "value", "disabled", "help-text"];
 
@@ -78,7 +92,20 @@ export class TeskooanoSelect extends HTMLElement {
   private labelSlot: HTMLSlotElement;
   private helpTextElement: HTMLElement;
   private mutationObserver: MutationObserver;
-  private _internalUpdate = false;
+
+  // Use the new reactive state pattern
+  private state = createComponentState(
+    {
+      value: "",
+      isDisabled: false,
+      label: "Select",
+      helpText: "",
+      options: [],
+    } as SelectState,
+    {
+      componentName: "teskooano-select",
+    },
+  );
 
   constructor() {
     super();
@@ -93,84 +120,17 @@ export class TeskooanoSelect extends HTMLElement {
   }
 
   connectedCallback() {
-    this.updateLabelAttribute(this.getAttribute("label"));
-    this.updateAttribute("disabled", this.getAttribute("disabled"));
-    this.updateHelpTextAttribute(this.getAttribute("help-text"));
-
-    this.mutationObserver.observe(this, {
-      childList: true,
-      subtree: false,
-      characterData: false,
-      attributes: false,
-    });
-
+    this.updateStateFromAttributes();
+    this.setupEventListeners();
+    this.setupStateWatchers();
+    this.setupMutationObserver();
     this.syncOptions();
-
-    requestAnimationFrame(() => {
-      this.updateValueAttribute(this.getAttribute("value"));
-    });
-
-    this.selectElement.addEventListener("change", this.handleChange);
-    this.addEventListener("click", this.handleClick);
-
-    if (
-      !this.selectElement.hasAttribute("aria-label") &&
-      !this.hasAttribute("aria-labelledby")
-    ) {
-      const labelText =
-        this.labelSlot.textContent?.trim() ||
-        (this.querySelector('[slot="label"]')?.textContent?.trim() ?? "Select");
-      this.selectElement.setAttribute("aria-label", labelText);
-    }
   }
 
   disconnectedCallback() {
+    this.removeEventListeners();
     this.mutationObserver.disconnect();
-    this.selectElement.removeEventListener("change", this.handleChange);
-    this.removeEventListener("click", this.handleClick);
-  }
-
-  private handleOptionChanges = (mutations: MutationRecord[]) => {
-    this.syncOptions();
-  };
-
-  private syncOptions() {
-    while (this.selectElement.firstChild) {
-      this.selectElement.removeChild(this.selectElement.firstChild);
-    }
-
-    const lightDomOptions = Array.from(this.children).filter(
-      (child) => child.tagName === "OPTION",
-    );
-
-    lightDomOptions.forEach((option) => {
-      const newOption = document.createElement("option");
-      const originalOption = option as HTMLOptionElement;
-
-      if (originalOption.value) {
-        newOption.value = originalOption.value;
-      }
-      if (originalOption.disabled) {
-        newOption.disabled = true;
-      }
-      if (originalOption.selected) {
-        newOption.selected = true;
-      }
-
-      newOption.textContent = originalOption.textContent;
-
-      this.selectElement.appendChild(newOption);
-    });
-
-    const currentValue = this.getAttribute("value");
-    if (currentValue !== null) {
-      this.updateValueAttribute(currentValue);
-    } else if (this.selectElement.options.length > 0) {
-      this.selectElement.selectedIndex = 0;
-      this._internalUpdate = true;
-      this.setAttribute("value", this.selectElement.value);
-      this._internalUpdate = false;
-    }
+    this.state.cleanup(); // Automatic cleanup of all subscriptions
   }
 
   attributeChangedCallback(
@@ -180,49 +140,111 @@ export class TeskooanoSelect extends HTMLElement {
   ) {
     if (oldValue === newValue) return;
 
-    if (name === "value" && newValue === this.selectElement.value) {
-      return;
-    }
-
     switch (name) {
       case "label":
-        this.updateLabelAttribute(newValue);
+        this.state.set("label", newValue || "Select");
         break;
       case "value":
-        if (!this._internalUpdate) {
-          this.updateValueAttribute(newValue);
-        }
+        this.state.set("value", newValue || "");
         break;
       case "disabled":
-        this.updateAttribute(name, newValue);
+        const isDisabled = newValue !== null;
+        this.state.set("isDisabled", isDisabled);
         break;
       case "help-text":
-        this.updateHelpTextAttribute(newValue);
+        this.state.set("helpText", newValue || "");
         break;
     }
   }
 
-  private updateLabelAttribute(value: string | null) {
-    if (value !== null && !this.querySelector('[slot="label"]')) {
-      this.labelSlot.textContent = value;
-    } else if (
-      value === null &&
-      this.labelSlot.hasChildNodes() &&
-      this.labelSlot.childNodes[0].nodeType === Node.TEXT_NODE
-    ) {
-      this.labelSlot.textContent = "";
-    }
-    this.labelElement.setAttribute("for", "select-input");
-
-    const labelText =
-      this.labelSlot.textContent?.trim() ||
-      (this.querySelector('[slot="label"]')?.textContent?.trim() ?? "Select");
-    this.selectElement.setAttribute("aria-label", labelText);
+  private updateStateFromAttributes(): void {
+    this.state.set("label", this.getAttribute("label") || "Select");
+    this.state.set("value", this.getAttribute("value") || "");
+    this.state.set("isDisabled", this.hasAttribute("disabled"));
+    this.state.set("helpText", this.getAttribute("help-text") || "");
   }
 
-  private updateValueAttribute(value: string | null) {
+  private setupEventListeners(): void {
+    this.selectElement.addEventListener("change", this.handleChange);
+    this.addEventListener("click", this.handleClick);
+  }
+
+  private removeEventListeners(): void {
+    this.selectElement.removeEventListener("change", this.handleChange);
+    this.removeEventListener("click", this.handleClick);
+  }
+
+  private setupStateWatchers(): void {
+    // Watch for value changes to update select element
+    this.state.watch("value", (newValue: string) => {
+      this.updateSelectValue(newValue);
+    });
+
+    // Watch for disabled state changes
+    this.state.watch("isDisabled", (isDisabled: boolean) => {
+      this.selectElement.disabled = isDisabled;
+      this.selectElement.setAttribute(
+        "aria-disabled",
+        isDisabled ? "true" : "false",
+      );
+
+      if (isDisabled) {
+        this.setAttribute("disabled", "");
+      } else {
+        this.removeAttribute("disabled");
+      }
+    });
+
+    // Watch for label changes
+    this.state.watch("label", (newLabel: string) => {
+      this.updateLabel(newLabel);
+    });
+
+    // Watch for help text changes
+    this.state.watch("helpText", (newHelpText: string) => {
+      this.updateHelpText(newHelpText);
+    });
+
+    // Watch for options changes
+    this.state.watch("options", (newOptions: SelectState["options"]) => {
+      this.updateSelectOptions(newOptions);
+    });
+  }
+
+  private setupMutationObserver(): void {
+    this.mutationObserver.observe(this, {
+      childList: true,
+      subtree: false,
+      characterData: false,
+      attributes: false,
+    });
+  }
+
+  private handleOptionChanges = (mutations: MutationRecord[]) => {
+    this.syncOptions();
+  };
+
+  private syncOptions() {
+    const lightDomOptions = Array.from(this.children).filter(
+      (child) => child.tagName === "OPTION",
+    );
+
+    const options = lightDomOptions.map((option) => {
+      const originalOption = option as HTMLOptionElement;
+      return {
+        value: originalOption.value || "",
+        text: originalOption.textContent || "",
+        disabled: originalOption.disabled,
+        selected: originalOption.selected,
+      };
+    });
+
+    this.state.set("options", options);
+  }
+
+  private updateSelectValue(value: string): void {
     if (this.selectElement.options.length > 0) {
-      if (value !== null) {
+      if (value) {
         const optionExists = Array.from(this.selectElement.options).some(
           (opt) => opt.value === value,
         );
@@ -234,39 +256,57 @@ export class TeskooanoSelect extends HTMLElement {
             `<teskooano-select>: Value "${value}" does not match any available options. Selecting first option.`,
           );
           this.selectElement.selectedIndex = 0;
-
-          if (this.selectElement.value !== value) {
-            this._internalUpdate = true;
-            this.setAttribute("value", this.selectElement.value);
-            this._internalUpdate = false;
-          }
+          this.state.set("value", this.selectElement.value);
         }
       } else {
         this.selectElement.selectedIndex = 0;
-        this._internalUpdate = true;
-        this.setAttribute("value", this.selectElement.value);
-        this._internalUpdate = false;
+        this.state.set("value", this.selectElement.value);
       }
     }
   }
 
-  private updateAttribute(name: string, value: string | null) {
-    if (name === "disabled") {
-      const isDisabled = value !== null;
-      this.selectElement.disabled = isDisabled;
-      this.toggleAttribute("disabled", isDisabled);
+  private updateSelectOptions(options: SelectState["options"]): void {
+    // Clear existing options
+    while (this.selectElement.firstChild) {
+      this.selectElement.removeChild(this.selectElement.firstChild);
+    }
 
-      this.selectElement.setAttribute(
-        "aria-disabled",
-        isDisabled ? "true" : "false",
-      );
+    // Add new options
+    options.forEach((option) => {
+      const newOption = document.createElement("option");
+      newOption.value = option.value;
+      newOption.textContent = option.text;
+      newOption.disabled = option.disabled;
+      newOption.selected = option.selected;
+      this.selectElement.appendChild(newOption);
+    });
+
+    // Update value after options are set
+    const currentValue = this.state.get("value");
+    if (currentValue) {
+      this.updateSelectValue(currentValue);
+    } else if (this.selectElement.options.length > 0) {
+      this.selectElement.selectedIndex = 0;
+      this.state.set("value", this.selectElement.value);
     }
   }
 
-  private updateHelpTextAttribute(value: string | null) {
-    this.helpTextElement.textContent = value || "";
+  private updateLabel(label: string): void {
+    if (!this.querySelector('[slot="label"]')) {
+      this.labelSlot.textContent = label;
+    }
+    this.labelElement.setAttribute("for", "select-input");
 
-    if (value) {
+    const labelText =
+      this.labelSlot.textContent?.trim() ||
+      (this.querySelector('[slot="label"]')?.textContent?.trim() ?? label);
+    this.selectElement.setAttribute("aria-label", labelText);
+  }
+
+  private updateHelpText(helpText: string): void {
+    this.helpTextElement.textContent = helpText;
+
+    if (helpText) {
       const helpTextId = "help-text-" + this.getUniqueId();
       this.helpTextElement.id = helpTextId;
       this.selectElement.setAttribute("aria-describedby", helpTextId);
@@ -282,51 +322,44 @@ export class TeskooanoSelect extends HTMLElement {
   private handleChange = (e: Event) => {
     e.stopPropagation();
 
-    this._internalUpdate = true;
-    this.setAttribute("value", this.selectElement.value);
-    this._internalUpdate = false;
+    const newValue = this.selectElement.value;
+    this.state.set("value", newValue);
 
     this.dispatchEvent(
       new CustomEvent(CustomEvents.SELECT_CHANGE, {
         bubbles: true,
         composed: true,
-        detail: { value: this.value },
+        detail: { value: newValue },
       }),
     );
   };
 
   private handleClick = (e: MouseEvent) => {
-    if (this.disabled) {
+    if (this.state.get("isDisabled")) {
       e.stopPropagation();
       return;
     }
 
     if (e.target !== this.selectElement) {
       this.selectElement.click();
-
       this.selectElement.focus();
     }
   };
 
+  // Public API
   get value(): string {
-    return this.selectElement.value;
+    return this.state.get("value");
   }
 
   set value(newValue: string) {
-    this._internalUpdate = true;
-    this.setAttribute("value", newValue);
-    this._internalUpdate = false;
+    this.state.set("value", newValue);
   }
 
   get disabled(): boolean {
-    return this.hasAttribute("disabled");
+    return this.state.get("isDisabled");
   }
 
   set disabled(isDisabled: boolean) {
-    if (isDisabled) {
-      this.setAttribute("disabled", "");
-    } else {
-      this.removeAttribute("disabled");
-    }
+    this.state.set("isDisabled", isDisabled);
   }
 }

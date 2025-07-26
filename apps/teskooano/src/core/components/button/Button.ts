@@ -1,11 +1,16 @@
 import type { TeskooanoTooltip } from "../tooltip/Tooltip";
 import { template } from "./Button.template";
 import { ButtonTooltipManager } from "./ButtonTooltipManager";
+import {
+  createComponentState,
+  Events,
+  type EventConfig,
+} from "@teskooano/ui-plugin/patterns";
 
 /**
  * A custom button element `<teskooano-button>` that extends standard button functionality
  * with features like tooltips, different sizes, variants, and an active state.
- * It supports disabling the button and handling tooltip display logic.
+ * Built with the new Teskooano UI patterns for reactive state management and event-driven communication.
  *
  * @element teskooano-button
  * @attr {boolean} [disabled=false] - Disables the button.
@@ -17,7 +22,7 @@ import { ButtonTooltipManager } from "./ButtonTooltipManager";
  * @attr {string} [tooltip-title] - Title content for the tooltip.
  * @attr {string} [tooltip-icon] - SVG string or path for an icon within the tooltip. Overrides the button's icon if provided.
  * @attr {boolean} [active=false] - Indicates if the button is in an active state (e.g., toggled on).
- * @attr {"primary" | "secondary" | "tertiary" | "danger" | "icon"} [variant="primary"] - Sets the visual style variant of the button.
+ * @attr {"primary" | "ghost" | "image" | "icon"} [variant] - Sets the visual style variant of the button.
  *
  * @slot - Default slot for the button's text content.
  * @slot icon - Slot for an icon to be displayed within the button.
@@ -28,6 +33,12 @@ import { ButtonTooltipManager } from "./ButtonTooltipManager";
  * @csspart button - The native button element.
  * @csspart icon - The container for the icon slot.
  * @csspart label - The container for the default slot (text).
+ *
+ * @fires button:clicked - Emitted when button is clicked (not disabled)
+ * @fires button:activated - Emitted when button becomes active
+ * @fires button:deactivated - Emitted when button becomes inactive
+ * @fires tooltip:shown - Emitted when tooltip is displayed
+ * @fires tooltip:hidden - Emitted when tooltip is hidden
  */
 export class TeskooanoButton extends HTMLElement {
   /**
@@ -51,6 +62,36 @@ export class TeskooanoButton extends HTMLElement {
   private buttonElement: HTMLButtonElement;
   /** @internal */
   private tooltipManager: ButtonTooltipManager;
+  /** @internal - Reactive state management */
+  private state = createComponentState(
+    {
+      disabled: false,
+      type: "button",
+      title: null,
+      fullwidth: false,
+      size: "md",
+      tooltipText: null,
+      tooltipTitle: null,
+      tooltipIcon: null,
+      active: false,
+      variant: null,
+      isHovered: false,
+      isFocused: false,
+      tooltipVisible: false,
+    },
+    {
+      componentName: "teskooano-button",
+      autoEvents: [
+        // Listen for global theme changes to update button styling
+        {
+          eventType: Events.THEME_CHANGED,
+          handler: () => {
+            this.refreshTooltipContent();
+          },
+        },
+      ],
+    },
+  );
 
   constructor() {
     super();
@@ -68,11 +109,54 @@ export class TeskooanoButton extends HTMLElement {
       tooltipElement,
     );
 
+    // Setup computed properties for derived state
+    this.state.computed("shouldShowTooltip", {
+      deps: ["tooltipText", "tooltipTitle", "tooltipIcon", "title", "disabled"],
+      compute: (
+        tooltipText: string | null,
+        tooltipTitle: string | null,
+        tooltipIcon: string | null,
+        title: string | null,
+        disabled: boolean,
+      ) => {
+        return (
+          !disabled &&
+          (!!tooltipText || !!tooltipTitle || !!tooltipIcon || !!title)
+        );
+      },
+    });
+
+    this.state.computed("effectiveTooltipText", {
+      deps: ["tooltipText", "title"],
+      compute: (tooltipText: string | null, title: string | null) =>
+        tooltipText || title || "",
+    });
+
+    this.state.computed("isInteractable", {
+      deps: ["disabled"],
+      compute: (disabled: boolean) => !disabled,
+    });
+
+    this.state.computed("buttonClasses", {
+      deps: ["active", "variant", "size"],
+      compute: (active: boolean, variant: string | null, size: string) => {
+        const classes = [];
+        if (active) classes.push("active");
+        if (variant) classes.push(`variant-${variant}`);
+        if (size && size !== "md") classes.push(`size-${size}`);
+        return classes.join(" ");
+      },
+    });
+
+    // Setup event listeners with reactive state integration
     this.addEventListener("click", this.handleClickProxy);
-    this.addEventListener("mouseenter", this.handleShowTooltipProxy);
-    this.addEventListener("focusin", this.handleShowTooltipProxy);
-    this.addEventListener("mouseleave", this.handleHideTooltipProxy);
-    this.addEventListener("focusout", this.handleHideTooltipProxy);
+    this.addEventListener("mouseenter", this.handleMouseEnter);
+    this.addEventListener("focusin", this.handleFocusIn);
+    this.addEventListener("mouseleave", this.handleMouseLeave);
+    this.addEventListener("focusout", this.handleFocusOut);
+
+    // Setup state watchers for automatic UI updates
+    this.setupStateWatchers();
   }
 
   /**
@@ -80,40 +164,175 @@ export class TeskooanoButton extends HTMLElement {
    * @internal
    */
   connectedCallback() {
-    this.updateDisabledState();
-    this.updateAttribute("type", this.getAttribute("type") || "button");
+    // Sync initial state from attributes
+    this.state.update({
+      disabled: this.hasAttribute("disabled"),
+      type: this.getAttribute("type") || "button",
+      title: this.getAttribute("title"),
+      fullwidth: this.hasAttribute("fullwidth"),
+      size: this.getAttribute("size") || "md",
+      tooltipText: this.getAttribute("tooltip-text"),
+      tooltipTitle: this.getAttribute("tooltip-title"),
+      tooltipIcon: this.getAttribute("tooltip-icon"),
+      active: this.hasAttribute("active"),
+      variant: this.getAttribute("variant"),
+    });
 
-    if (!this.hasAttribute("tooltip-text") && this.hasAttribute("title")) {
-      // this.buttonElement.setAttribute("title", this.getAttribute("title")); // Manager handles this interaction now
-    }
-    this.updateActiveState();
+    // Initialize tooltip content
     this.tooltipManager.updateContent();
-    this.updateVariant();
   }
 
   disconnectedCallback() {
     this.removeEventListener("click", this.handleClickProxy);
-    this.removeEventListener("mouseenter", this.handleShowTooltipProxy);
-    this.removeEventListener("focusin", this.handleShowTooltipProxy);
-    this.removeEventListener("mouseleave", this.handleHideTooltipProxy);
-    this.removeEventListener("focusout", this.handleHideTooltipProxy);
+    this.removeEventListener("mouseenter", this.handleMouseEnter);
+    this.removeEventListener("focusin", this.handleFocusIn);
+    this.removeEventListener("mouseleave", this.handleMouseLeave);
+    this.removeEventListener("focusout", this.handleFocusOut);
     this.tooltipManager.disconnected();
+
+    // Clean up reactive state
+    this.state.cleanup();
+  }
+
+  /**
+   * Setup reactive state watchers for automatic UI updates
+   * @internal
+   */
+  private setupStateWatchers(): void {
+    // Watch for disabled state changes
+    this.state.watch("disabled", (disabled: boolean) => {
+      this.updateDisabledState();
+      if (disabled) {
+        this.hideTooltip();
+      }
+    });
+
+    // Watch for tooltip-related state changes
+    this.state.watch("shouldShowTooltip", (shouldShow: boolean) => {
+      if (!shouldShow) {
+        this.hideTooltip();
+      }
+    });
+
+    // Watch for tooltip visibility changes and emit events
+    this.state.watch("tooltipVisible", (visible: boolean) => {
+      if (visible) {
+        this.state.emit("tooltip:shown", {
+          buttonId: this.id,
+          tooltipText: this.state.get("effectiveTooltipText"),
+          source: "teskooano-button",
+        });
+      } else {
+        this.state.emit("tooltip:hidden", {
+          buttonId: this.id,
+          source: "teskooano-button",
+        });
+      }
+    });
+
+    // Watch for active state changes and emit events
+    this.state.watch("active", (active: boolean, oldActive: boolean) => {
+      this.updateActiveState();
+      if (active !== oldActive) {
+        this.state.emit(active ? "button:activated" : "button:deactivated", {
+          buttonId: this.id,
+          active,
+          source: "teskooano-button",
+        });
+      }
+    });
+
+    // Watch for variant changes
+    this.state.watch("variant", () => {
+      this.updateVariant();
+      this.refreshTooltipContent();
+    });
+
+    // Watch for size changes
+    this.state.watch("size", () => {
+      // Size changes are handled via CSS, no DOM updates needed
+    });
+
+    // Watch for type changes
+    this.state.watch("type", (type: string) => {
+      this.setButtonAttribute("type", type);
+    });
+  }
+
+  /**
+   * Handle mouse enter with reactive state
+   * @internal
+   */
+  private handleMouseEnter = (): void => {
+    this.state.set("isHovered", true);
+    this.showTooltip();
+  };
+
+  /**
+   * Handle focus in with reactive state
+   * @internal
+   */
+  private handleFocusIn = (): void => {
+    this.state.set("isFocused", true);
+    this.showTooltip();
+  };
+
+  /**
+   * Handle mouse leave with reactive state
+   * @internal
+   */
+  private handleMouseLeave = (): void => {
+    this.state.set("isHovered", false);
+    this.hideTooltip();
+  };
+
+  /**
+   * Handle focus out with reactive state
+   * @internal
+   */
+  private handleFocusOut = (): void => {
+    this.state.set("isFocused", false);
+    this.hideTooltip();
+  };
+
+  /**
+   * Show tooltip using reactive state
+   * @internal
+   */
+  private showTooltip(): void {
+    const shouldShow = this.state.get("shouldShowTooltip");
+    if (shouldShow && !this.state.get("tooltipVisible")) {
+      this.state.set("tooltipVisible", true);
+      this.tooltipManager.show();
+    }
+  }
+
+  /**
+   * Hide tooltip using reactive state
+   * @internal
+   */
+  private hideTooltip(): void {
+    if (this.state.get("tooltipVisible")) {
+      this.state.set("tooltipVisible", false);
+      this.tooltipManager.hide();
+    }
   }
 
   private handleClickProxy = (e: MouseEvent) => {
-    if (this.disabled) {
+    if (this.state.get("disabled")) {
       e.stopPropagation();
       e.preventDefault();
       return;
     }
-  };
 
-  private handleShowTooltipProxy = () => {
-    this.tooltipManager.show();
-  };
-
-  private handleHideTooltipProxy = () => {
-    this.tooltipManager.hide();
+    // Emit click event through the event system
+    this.state.emit("button:clicked", {
+      buttonId: this.id,
+      variant: this.state.get("variant"),
+      active: this.state.get("active"),
+      disabled: this.state.get("disabled"),
+      source: "teskooano-button",
+    });
   };
 
   attributeChangedCallback(
@@ -123,36 +342,45 @@ export class TeskooanoButton extends HTMLElement {
   ) {
     if (oldValue === newValue) return;
 
+    // Update reactive state based on attribute changes
     switch (name) {
       case "disabled":
-        this.updateDisabledState();
-        if (this.disabled) this.tooltipManager.hide();
+        this.state.set("disabled", newValue !== null);
         break;
       case "tooltip-text":
+        this.state.set("tooltipText", newValue);
+        this.tooltipManager.updateContent();
+        break;
       case "tooltip-title":
+        this.state.set("tooltipTitle", newValue);
+        this.tooltipManager.updateContent();
+        break;
       case "tooltip-icon":
+        this.state.set("tooltipIcon", newValue);
         this.tooltipManager.updateContent();
         break;
       case "title":
+        this.state.set("title", newValue);
         if (!this.hasAttribute("tooltip-text")) {
           this.tooltipManager.updateContent();
         }
         break;
       case "active":
-        this.updateActiveState();
+        this.state.set("active", newValue !== null);
         this.tooltipManager.updateContent();
         break;
       case "fullwidth":
+        this.state.set("fullwidth", newValue !== null);
+        break;
       case "size":
+        this.state.set("size", newValue || "md");
         break;
       case "variant":
-        this.updateVariant();
+        this.state.set("variant", newValue);
         this.tooltipManager.updateContent();
         break;
-      default:
-        if (name === "type") {
-          this.setButtonAttribute(name, newValue || "button");
-        }
+      case "type":
+        this.state.set("type", newValue || "button");
         break;
     }
   }
@@ -172,7 +400,7 @@ export class TeskooanoButton extends HTMLElement {
   }
 
   get disabled(): boolean {
-    return this.hasAttribute("disabled");
+    return this.state.get("disabled");
   }
 
   set disabled(isDisabled: boolean) {
@@ -193,8 +421,8 @@ export class TeskooanoButton extends HTMLElement {
     }
   }
 
-  get size(): string | null {
-    return this.getAttribute("size");
+  get size(): string {
+    return this.state.get("size");
   }
   set size(newSize: string | null) {
     if (newSize) {
@@ -213,7 +441,7 @@ export class TeskooanoButton extends HTMLElement {
   }
 
   get variant(): string | null {
-    return this.getAttribute("variant");
+    return this.state.get("variant");
   }
 
   private updateActiveState() {
@@ -233,7 +461,7 @@ export class TeskooanoButton extends HTMLElement {
   }
 
   get active(): boolean {
-    return this.hasAttribute("active");
+    return this.state.get("active");
   }
 
   set active(isActive: boolean) {

@@ -1,6 +1,11 @@
 export class CelestialLabelComponent extends HTMLElement {
   static get observedAttributes() {
-    return ["data-name", "data-distance-formatted", "data-speed-formatted"];
+    return [
+      "data-name",
+      "data-distance-formatted",
+      "data-speed-formatted",
+      "visible",
+    ];
   }
 
   private nameSpan!: HTMLSpanElement;

@@ -145,6 +145,24 @@ template.innerHTML = `
        border-color: transparent;
     }
 
+    /* --- Icon Variant --- */
+    :host([variant="icon"]) button {
+        background-color: transparent;
+        border-color: transparent;
+        color: var(--color-text-secondary);
+    }
+     :host([variant="icon"]) button:hover:not([disabled]) {
+        background-color: var(--color-surface-2);
+        border-color: var(--color-border-subtle);
+        color: var(--color-text-primary);
+    }
+    :host([variant="icon"]) button:active:not([disabled]) {
+        background-color: var(--color-surface-1);
+    }
+     :host([variant="icon"]) button:focus-visible {
+       border-color: var(--color-border-focus); 
+    }
+
     /* --- Sizes using host attributes --- */
     :host([size="xs"]) button {
         min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 0.5em);

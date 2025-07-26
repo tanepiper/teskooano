@@ -1,4 +1,5 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { createComponentState } from "@teskooano/ui-plugin/patterns";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -98,14 +99,35 @@ template.innerHTML = `
   </div>
 `;
 
+interface OutputDisplayState {
+  value: string;
+  isMonospace: boolean;
+  isCopyEnabled: boolean;
+  hasSlotContent: boolean;
+  copyFeedbackVisible: boolean;
+}
+
 export class TeskooanoOutputDisplay extends HTMLElement {
   static observedAttributes = ["value", "monospace", "copy-enabled"];
 
   private slotElement: HTMLSlotElement;
   private copyButton: HTMLButtonElement;
   private copyFeedback: HTMLElement;
-  private _internalUpdate = false;
-  private _copyTimeout: number | null = null;
+  private copyTimeout: number | null = null;
+
+  // Use the new reactive state pattern
+  private state = createComponentState(
+    {
+      value: "",
+      isMonospace: false,
+      isCopyEnabled: false,
+      hasSlotContent: false,
+      copyFeedbackVisible: false,
+    } as OutputDisplayState,
+    {
+      componentName: "teskooano-output-display",
+    },
+  );
 
   constructor() {
     super();
@@ -115,16 +137,12 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this.slotElement = this.shadowRoot!.querySelector("slot")!;
     this.copyButton = this.shadowRoot!.querySelector(".copy-button")!;
     this.copyFeedback = this.shadowRoot!.querySelector(".copy-feedback")!;
-
-    this.slotElement.addEventListener("slotchange", this.handleSlotChange);
-
-    this.copyButton.addEventListener("click", this.handleCopyClick);
   }
 
   connectedCallback() {
-    this.updateMonospaceAttribute(this.getAttribute("monospace"));
-    this.updateCopyEnabledAttribute(this.getAttribute("copy-enabled"));
-    this.updateValueAttribute(this.getAttribute("value"));
+    this.updateStateFromAttributes();
+    this.setupStateWatchers();
+    this.setupEventListeners();
 
     if (!this.hasAttribute("tabindex")) {
       this.setAttribute("tabindex", "0");
@@ -135,13 +153,8 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.slotElement.removeEventListener("slotchange", this.handleSlotChange);
-    this.copyButton.removeEventListener("click", this.handleCopyClick);
-
-    if (this._copyTimeout !== null) {
-      window.clearTimeout(this._copyTimeout);
-      this._copyTimeout = null;
-    }
+    this.clearCopyTimeout();
+    this.state.cleanup(); // Automatic cleanup of all subscriptions
   }
 
   attributeChangedCallback(
@@ -153,25 +166,70 @@ export class TeskooanoOutputDisplay extends HTMLElement {
 
     switch (name) {
       case "value":
-        if (!this._internalUpdate) {
-          this.updateValueAttribute(newValue);
-        }
+        this.state.set("value", newValue || "");
         break;
       case "monospace":
-        this.updateMonospaceAttribute(newValue);
+        this.state.set("isMonospace", newValue !== null);
         break;
       case "copy-enabled":
-        this.updateCopyEnabledAttribute(newValue);
+        this.state.set("isCopyEnabled", newValue !== null);
         break;
     }
   }
 
+  private updateStateFromAttributes(): void {
+    this.state.set("value", this.getAttribute("value") || "");
+    this.state.set("isMonospace", this.hasAttribute("monospace"));
+    this.state.set("isCopyEnabled", this.hasAttribute("copy-enabled"));
+  }
+
+  private setupStateWatchers(): void {
+    // Watch for value changes
+    this.state.watch("value", (value: string) => {
+      this.updateValueDisplay(value);
+    });
+
+    // Watch for monospace changes
+    this.state.watch("isMonospace", (isMonospace: boolean) => {
+      this.updateMonospaceDisplay(isMonospace);
+    });
+
+    // Watch for copy enabled changes
+    this.state.watch("isCopyEnabled", (isCopyEnabled: boolean) => {
+      this.updateCopyButtonVisibility(isCopyEnabled);
+    });
+
+    // Watch for slot content changes
+    this.state.watch("hasSlotContent", (hasSlotContent: boolean) => {
+      if (hasSlotContent && !this.state.get("value")) {
+        const slottedText = this.getSlottedText();
+        if (slottedText) {
+          this.state.set("value", slottedText);
+        }
+      }
+    });
+
+    // Watch for copy feedback visibility
+    this.state.watch("copyFeedbackVisible", (copyFeedbackVisible: boolean) => {
+      if (copyFeedbackVisible) {
+        this.copyFeedback.classList.add("visible");
+      } else {
+        this.copyFeedback.classList.remove("visible");
+      }
+    });
+  }
+
+  private setupEventListeners(): void {
+    this.slotElement.addEventListener("slotchange", this.handleSlotChange);
+    this.copyButton.addEventListener("click", this.handleCopyClick);
+  }
+
   private handleSlotChange = () => {
     const slottedText = this.getSlottedText();
-    if (slottedText && !this.hasAttribute("value")) {
-      this._internalUpdate = true;
-      this.setAttribute("value", slottedText);
-      this._internalUpdate = false;
+    this.state.set("hasSlotContent", !!slottedText);
+
+    if (slottedText && !this.state.get("value")) {
+      this.state.set("value", slottedText);
     }
 
     this.dispatchEvent(
@@ -226,29 +284,30 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   };
 
   private showCopyFeedback() {
-    this.copyFeedback.classList.add("visible");
+    this.state.set("copyFeedbackVisible", true);
 
-    if (this._copyTimeout !== null) {
-      window.clearTimeout(this._copyTimeout);
-    }
-
-    this._copyTimeout = window.setTimeout(() => {
-      this.copyFeedback.classList.remove("visible");
-      this._copyTimeout = null;
+    this.clearCopyTimeout();
+    this.copyTimeout = window.setTimeout(() => {
+      this.state.set("copyFeedbackVisible", false);
+      this.copyTimeout = null;
     }, 2000);
   }
 
-  private updateValueAttribute(value: string | null) {
-    if (value !== null && this.slotElement.assignedNodes().length === 0) {
+  private clearCopyTimeout() {
+    if (this.copyTimeout !== null) {
+      window.clearTimeout(this.copyTimeout);
+      this.copyTimeout = null;
+    }
+  }
+
+  private updateValueDisplay(value: string): void {
+    if (value && !this.state.get("hasSlotContent")) {
       this.textContent = value;
-    } else if (
-      value === null &&
-      this.slotElement.assignedNodes().length === 0
-    ) {
+    } else if (!value && !this.state.get("hasSlotContent")) {
       this.textContent = "";
     }
 
-    if (value !== null) {
+    if (value) {
       this.setAttribute(
         "aria-label",
         `Output: ${value.substring(0, 50)}${value.length > 50 ? "..." : ""}`,
@@ -256,17 +315,16 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     }
   }
 
-  private updateMonospaceAttribute(value: string | null) {
-    if (value !== null) {
+  private updateMonospaceDisplay(isMonospace: boolean): void {
+    if (isMonospace) {
       this.setAttribute("aria-description", "Displayed in monospace font");
     } else {
       this.removeAttribute("aria-description");
     }
   }
 
-  private updateCopyEnabledAttribute(value: string | null) {
-    const copyEnabled = value !== null;
-    this.copyButton.style.display = copyEnabled ? "block" : "none";
+  private updateCopyButtonVisibility(isCopyEnabled: boolean): void {
+    this.copyButton.style.display = isCopyEnabled ? "block" : "none";
   }
 
   get value(): string {
@@ -274,13 +332,11 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     if (slottedText) {
       return slottedText;
     }
-    return this.getAttribute("value") ?? this.textContent ?? "";
+    return this.state.get("value") || this.textContent || "";
   }
 
   set value(newValue: string) {
-    this._internalUpdate = true;
-    this.setAttribute("value", newValue);
-    this._internalUpdate = false;
+    this.state.set("value", newValue);
   }
 
   public async copyToClipboard(): Promise<boolean> {
@@ -296,9 +352,7 @@ export class TeskooanoOutputDisplay extends HTMLElement {
 
   public clear() {
     this.textContent = "";
-    this._internalUpdate = true;
-    this.setAttribute("value", "");
-    this._internalUpdate = false;
+    this.state.set("value", "");
 
     this.dispatchEvent(
       new CustomEvent(CustomEvents.CLEAR, { bubbles: true, composed: true }),

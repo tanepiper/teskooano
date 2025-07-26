@@ -1,15 +1,25 @@
 import type { TeskooanoButton } from "./Button";
 import type { TeskooanoTooltip } from "../tooltip/Tooltip";
+import {
+  getEventBus,
+  Events,
+  type EventListener,
+} from "@teskooano/ui-plugin/patterns";
 
 /**
  * Manages the behavior and content of a tooltip associated with a TeskooanoButton.
  * This class encapsulates tooltip-specific logic, such as showing, hiding,
  * updating content based on button attributes/slots, and handling DOM interactions.
+ *
+ * Now enhanced with the Teskooano UI patterns for event-driven communication
+ * and automatic cleanup management.
  */
 export class ButtonTooltipManager {
   private buttonInstance: TeskooanoButton;
   private tooltipElement: TeskooanoTooltip | null;
   private nativeButtonElement: HTMLButtonElement;
+  private eventBus = getEventBus();
+  private eventUnsubscribers: Array<() => void> = [];
 
   private tooltipOriginContainer: Node | null = null;
   private isTooltipInBody: boolean = false;
@@ -32,12 +42,56 @@ export class ButtonTooltipManager {
     if (this.tooltipElement) {
       this.tooltipOriginContainer = this.tooltipElement.parentNode ?? null;
     }
+
+    this.setupEventListeners();
+  }
+
+  /**
+   * Setup event listeners for global tooltip coordination
+   * @private
+   */
+  private setupEventListeners(): void {
+    // Listen for global tooltip events to coordinate with other tooltips
+    const hideOnOtherTooltip = this.eventBus.on("tooltip:shown", (event) => {
+      const payload = event.payload as any;
+      // Hide this tooltip if another button's tooltip is shown
+      if (payload.buttonId !== this.buttonInstance.id && this.isTooltipInBody) {
+        this.hide();
+      }
+    });
+
+    // Listen for theme changes to update tooltip styling
+    const updateOnThemeChange = this.eventBus.on(Events.THEME_CHANGED, () => {
+      if (this.isTooltipInBody) {
+        this.updateContent();
+      }
+    });
+
+    // Listen for window resize to reposition tooltip
+    const repositionOnResize = this.eventBus.on("window:resized", () => {
+      if (this.isTooltipInBody && this.tooltipElement) {
+        // Reposition tooltip if it's currently shown
+        this.tooltipElement.hide();
+        setTimeout(() => {
+          if (this.isTooltipInBody) {
+            this.tooltipElement?.show(this.buttonInstance);
+          }
+        }, 10);
+      }
+    });
+
+    this.eventUnsubscribers.push(
+      hideOnOtherTooltip,
+      updateOnThemeChange,
+      repositionOnResize,
+    );
   }
 
   /**
    * Shows the tooltip if the button is not disabled and the tooltip has content.
    * Manages moving the tooltip to the document body for correct positioning
    * and temporarily removes the native button title to prevent double tooltips.
+   * Emits tooltip events for coordination with other components.
    */
   public show(): void {
     if (
@@ -64,15 +118,32 @@ export class ButtonTooltipManager {
     }
 
     this.tooltipElement.show(this.buttonInstance); // Show tooltip, anchored to the TeskooanoButton
+
+    // Emit event for global coordination
+    this.eventBus.emit("tooltip:shown", {
+      buttonId: this.buttonInstance.id,
+      tooltipElement: this.tooltipElement,
+      buttonElement: this.buttonInstance,
+      source: "button-tooltip-manager",
+    });
   }
 
   /**
    * Hides the tooltip and schedules its removal from the DOM after a short delay
    * to allow for animations. Restores the native button title if applicable.
+   * Emits tooltip events for coordination with other components.
    */
   public hide(): void {
-    if (this.tooltipElement) {
+    if (this.tooltipElement && this.isTooltipInBody) {
       this.tooltipElement.hide();
+
+      // Emit event for global coordination
+      this.eventBus.emit("tooltip:hidden", {
+        buttonId: this.buttonInstance.id,
+        tooltipElement: this.tooltipElement,
+        buttonElement: this.buttonInstance,
+        source: "button-tooltip-manager",
+      });
 
       // Delay removal to allow for fade-out animations
       setTimeout(() => {
@@ -153,11 +224,20 @@ export class ButtonTooltipManager {
    * `teskooano-tooltip`'s template. This relies on the re-slotting mechanism
    * in `Button.template.ts`.
    * Prioritizes slotted content over attributes.
+   *
+   * Enhanced with reactive updates and event coordination.
    */
   public updateContent(): void {
     if (!this.tooltipElement) return;
 
     const btn = this.buttonInstance;
+
+    // Emit content update event for debugging and coordination
+    this.eventBus.emit("tooltip:content-updated", {
+      buttonId: btn.id,
+      hasContent: this.hasContent(),
+      source: "button-tooltip-manager",
+    });
 
     // Determine text content
     const textAttr =
@@ -228,9 +308,22 @@ export class ButtonTooltipManager {
   /**
    * Cleans up the tooltip when the associated button is disconnected from the DOM.
    * Ensures the tooltip is removed from the body and the button's native title is restored.
+   * Also cleans up event subscriptions to prevent memory leaks.
    */
   public disconnected(): void {
     // Called when the button is disconnected
     this.removeTooltipFromDomAndRestoreButtonTitle();
+
+    // Clean up event subscriptions
+    this.eventUnsubscribers.forEach((unsubscribe) => unsubscribe());
+    this.eventUnsubscribers = [];
+
+    // Emit final cleanup event
+    if (this.isTooltipInBody) {
+      this.eventBus.emit("tooltip:disconnected", {
+        buttonId: this.buttonInstance.id,
+        source: "button-tooltip-manager",
+      });
+    }
   }
 }

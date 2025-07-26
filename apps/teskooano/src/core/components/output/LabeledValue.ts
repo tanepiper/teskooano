@@ -1,3 +1,5 @@
+import { createComponentState } from "@teskooano/ui-plugin/patterns";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -34,6 +36,13 @@ template.innerHTML = `
   <span class="value" part="value"><slot>Value</slot></span>
 `;
 
+interface LabeledValueState {
+  label: string;
+  value: string;
+  hasLabelSlot: boolean;
+  hasValueSlot: boolean;
+}
+
 export class TeskooanoLabeledValue extends HTMLElement {
   static observedAttributes = ["label", "value"];
 
@@ -41,6 +50,19 @@ export class TeskooanoLabeledValue extends HTMLElement {
   private valueSlot: HTMLSlotElement;
   private labelSpan: HTMLSpanElement;
   private valueSpan: HTMLSpanElement;
+
+  // Use the new reactive state pattern
+  private state = createComponentState(
+    {
+      label: "",
+      value: "",
+      hasLabelSlot: false,
+      hasValueSlot: false,
+    } as LabeledValueState,
+    {
+      componentName: "teskooano-labeled-value",
+    },
+  );
 
   constructor() {
     super();
@@ -50,18 +72,12 @@ export class TeskooanoLabeledValue extends HTMLElement {
     this.valueSlot = this.shadowRoot!.querySelector("slot:not([name])")!;
     this.labelSpan = this.shadowRoot!.querySelector(".label")!;
     this.valueSpan = this.shadowRoot!.querySelector(".value")!;
-
-    this.labelSlot.addEventListener("slotchange", () =>
-      this.updateAttribute("label", this.getAttribute("label")),
-    );
-    this.valueSlot.addEventListener("slotchange", () =>
-      this.updateAttribute("value", this.getAttribute("value")),
-    );
   }
 
   connectedCallback() {
-    this.updateAttribute("label", this.getAttribute("label"));
-    this.updateAttribute("value", this.getAttribute("value"));
+    this.updateStateFromAttributes();
+    this.setupStateWatchers();
+    this.setupSlotListeners();
   }
 
   attributeChangedCallback(
@@ -69,35 +85,82 @@ export class TeskooanoLabeledValue extends HTMLElement {
     oldValue: string | null,
     newValue: string | null,
   ) {
-    this.updateAttribute(name, newValue);
-  }
+    if (oldValue === newValue) return;
 
-  private updateAttribute(name: string, value: string | null) {
     switch (name) {
       case "label":
-        if (value !== null && this.labelSlot.assignedNodes().length === 0) {
-          this.labelSpan.textContent = value;
-        } else if (
-          value === null &&
-          this.labelSlot.assignedNodes().length === 0
-        ) {
-          this.labelSpan.textContent = "";
-        } else if (this.labelSlot.assignedNodes().length > 0) {
-          this.labelSpan.textContent = "";
-        }
+        this.state.set("label", newValue || "");
         break;
       case "value":
-        if (value !== null && this.valueSlot.assignedNodes().length === 0) {
-          this.valueSpan.textContent = value;
-        } else if (
-          value === null &&
-          this.valueSlot.assignedNodes().length === 0
-        ) {
-          this.valueSpan.textContent = "";
-        } else if (this.valueSlot.assignedNodes().length > 0) {
-          this.valueSpan.textContent = "";
-        }
+        this.state.set("value", newValue || "");
         break;
     }
+  }
+
+  private updateStateFromAttributes(): void {
+    this.state.set("label", this.getAttribute("label") || "");
+    this.state.set("value", this.getAttribute("value") || "");
+  }
+
+  private setupStateWatchers(): void {
+    // Watch for label changes
+    this.state.watch("label", (label: string) => {
+      this.updateLabelDisplay(label);
+    });
+
+    // Watch for value changes
+    this.state.watch("value", (value: string) => {
+      this.updateValueDisplay(value);
+    });
+
+    // Watch for slot availability changes
+    this.state.watch("hasLabelSlot", (hasLabelSlot: boolean) => {
+      this.updateLabelDisplay(this.state.get("label"));
+    });
+
+    this.state.watch("hasValueSlot", (hasValueSlot: boolean) => {
+      this.updateValueDisplay(this.state.get("value"));
+    });
+  }
+
+  private setupSlotListeners(): void {
+    this.labelSlot.addEventListener("slotchange", () => {
+      this.state.set("hasLabelSlot", this.labelSlot.assignedNodes().length > 0);
+    });
+
+    this.valueSlot.addEventListener("slotchange", () => {
+      this.state.set("hasValueSlot", this.valueSlot.assignedNodes().length > 0);
+    });
+  }
+
+  private updateLabelDisplay(label: string): void {
+    const hasLabelSlot = this.state.get("hasLabelSlot");
+
+    if (label && !hasLabelSlot) {
+      this.labelSpan.textContent = label;
+    } else if (!label && !hasLabelSlot) {
+      this.labelSpan.textContent = "";
+    } else if (hasLabelSlot) {
+      this.labelSpan.textContent = "";
+    }
+  }
+
+  private updateValueDisplay(value: string): void {
+    const hasValueSlot = this.state.get("hasValueSlot");
+
+    if (value && !hasValueSlot) {
+      this.valueSpan.textContent = value;
+    } else if (!value && !hasValueSlot) {
+      this.valueSpan.textContent = "";
+    } else if (hasValueSlot) {
+      this.valueSpan.textContent = "";
+    }
+  }
+
+  /**
+   * Cleanup when component is disconnected
+   */
+  disconnectedCallback() {
+    this.state.cleanup(); // Automatic cleanup of all subscriptions
   }
 }

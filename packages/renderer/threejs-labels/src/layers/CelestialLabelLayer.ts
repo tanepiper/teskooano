@@ -99,7 +99,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       default: config.default ?? 400,
       satellite: config.satellite ?? 1,
       ejectedSatellite: config.ejectedSatellite ?? 200000000,
-      asteroid: config.asteroid ?? 1, // Default asteroid visibility to 1 AU
+      asteroid: config.asteroid ?? 100, // Increase asteroid visibility to 100 AU for practical viewing
     };
 
     // Create a dedicated group for all celestial labels

@@ -6,6 +6,7 @@ import { ModalPanel } from "./view/modal-panel.component";
 export {
   DockViewModalManager,
   type DockViewModalOptions,
+  type ModalResultWithId,
 } from "./DockViewModalManager";
 export {
   ModalPanel,
