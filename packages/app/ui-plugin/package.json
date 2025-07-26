@@ -12,6 +12,12 @@
         "default": "./dist/index.js"
       }
     },
+    "./patterns": {
+      "import": {
+        "types": "./dist/patterns/index.d.ts",
+        "default": "./dist/patterns/index.js"
+      }
+    },
     "./vite.js": {
       "import": {
         "types": "./dist/vite-plugin.d.ts",
