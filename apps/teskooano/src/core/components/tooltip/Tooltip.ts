@@ -1,4 +1,17 @@
 import { template } from "./Tooltip.template";
+import { createComponentState } from "@teskooano/ui-plugin/patterns";
+
+interface TooltipState {
+  isVisible: boolean;
+  verticalAlign: "above" | "below";
+  horizontalAlign: "start" | "center" | "end";
+  timeout: number;
+  triggerElement: HTMLElement | null;
+  position: {
+    top: number;
+    left: number;
+  } | null;
+}
 
 /**
  * @element teskooano-tooltip
@@ -50,16 +63,22 @@ export class TeskooanoTooltip extends HTMLElement {
   ];
 
   private tooltipElement: HTMLElement | null = null;
-  /**
-   * The element that triggered the tooltip and relative to which it should be positioned.
-   * @private
-   */
-  private _triggerElement: HTMLElement | null = null;
-  /**
-   * Timeout ID for auto-hiding the tooltip after 5 seconds.
-   * @private
-   */
-  private _hideTimeout: number | null = null;
+  private hideTimeout: number | null = null;
+
+  // Use the new reactive state pattern
+  private state = createComponentState(
+    {
+      isVisible: false,
+      verticalAlign: "below" as const,
+      horizontalAlign: "center" as const,
+      timeout: 5000,
+      triggerElement: null,
+      position: null,
+    } as TooltipState,
+    {
+      componentName: "teskooano-tooltip",
+    },
+  );
 
   /**
    * Initializes the component, attaches the shadow DOM, and clones the template content.
@@ -85,8 +104,8 @@ export class TeskooanoTooltip extends HTMLElement {
    * Updates initial visibility based on the 'visible' attribute.
    */
   connectedCallback() {
-    this.updateVisibility();
-    this.updatePositioning();
+    this.updateStateFromAttributes();
+    this.setupStateWatchers();
   }
 
   /**
@@ -100,31 +119,104 @@ export class TeskooanoTooltip extends HTMLElement {
     oldValue: string | null,
     newValue: string | null,
   ) {
-    if (name === "visible") {
-      this.updateVisibility();
-    } else if (name === "vertical-align" || name === "horizontal-align") {
-      this.updatePositioning();
-    } else if (name === "timeout") {
-      // Restart timeout if tooltip is currently visible
-      if (this.hasAttribute("visible")) {
-        this._startHideTimeout();
-      }
+    if (oldValue === newValue) return;
+
+    switch (name) {
+      case "visible":
+        this.state.set("isVisible", newValue !== null);
+        break;
+      case "vertical-align":
+        this.state.set(
+          "verticalAlign",
+          (newValue as "above" | "below") || "below",
+        );
+        break;
+      case "horizontal-align":
+        this.state.set(
+          "horizontalAlign",
+          (newValue as "start" | "center" | "end") || "center",
+        );
+        break;
+      case "timeout":
+        const timeoutValue = parseInt(newValue || "5000", 10);
+        this.state.set("timeout", isNaN(timeoutValue) ? 5000 : timeoutValue);
+        break;
     }
   }
 
+  private updateStateFromAttributes(): void {
+    this.state.set("isVisible", this.hasAttribute("visible"));
+    this.state.set(
+      "verticalAlign",
+      (this.getAttribute("vertical-align") as "above" | "below") || "below",
+    );
+    this.state.set(
+      "horizontalAlign",
+      (this.getAttribute("horizontal-align") as "start" | "center" | "end") ||
+        "center",
+    );
+
+    const timeoutAttr = this.getAttribute("timeout");
+    const timeoutValue = timeoutAttr ? parseInt(timeoutAttr, 10) : 5000;
+    this.state.set("timeout", isNaN(timeoutValue) ? 5000 : timeoutValue);
+  }
+
+  private setupStateWatchers(): void {
+    // Watch for visibility changes
+    this.state.watch("isVisible", (isVisible: boolean) => {
+      this.updateVisibility(isVisible);
+    });
+
+    // Watch for alignment changes
+    this.state.watch("verticalAlign", (verticalAlign: "above" | "below") => {
+      this.updatePositioning();
+    });
+
+    this.state.watch(
+      "horizontalAlign",
+      (horizontalAlign: "start" | "center" | "end") => {
+        this.updatePositioning();
+      },
+    );
+
+    // Watch for timeout changes
+    this.state.watch("timeout", (timeout: number) => {
+      if (this.state.get("isVisible")) {
+        this.startHideTimeout();
+      }
+    });
+
+    // Watch for trigger element changes
+    this.state.watch("triggerElement", (triggerElement: HTMLElement | null) => {
+      if (triggerElement && this.state.get("isVisible")) {
+        requestAnimationFrame(() => this.calculateAndAdjustPosition());
+      }
+    });
+
+    // Watch for position changes
+    this.state.watch(
+      "position",
+      (position: { top: number; left: number } | null) => {
+        if (position && this.tooltipElement) {
+          this.tooltipElement.style.position = "fixed";
+          this.tooltipElement.style.left = `${Math.round(position.left)}px`;
+          this.tooltipElement.style.top = `${Math.round(position.top)}px`;
+          this.tooltipElement.style.transform = "none";
+        }
+      },
+    );
+  }
+
   /**
-   * Updates the tooltip's opacity and visibility styles based on the presence
-   * of the 'visible' attribute.
+   * Updates the tooltip's opacity and visibility styles based on the visibility state.
    */
-  private updateVisibility() {
-    if (this.hasAttribute("visible")) {
+  private updateVisibility(isVisible: boolean) {
+    if (isVisible) {
       this.tooltipElement?.style.setProperty("opacity", "1");
       this.tooltipElement?.style.setProperty("visibility", "visible");
 
-      requestAnimationFrame(() => this._calculateAndAdjustPosition());
-
-      // Start 5-second timeout to auto-hide
-      this._startHideTimeout();
+      requestAnimationFrame(() => this.calculateAndAdjustPosition());
+      this.startHideTimeout();
     } else {
       this.tooltipElement?.style.setProperty("opacity", "0");
       this.tooltipElement?.style.setProperty("visibility", "hidden");
@@ -133,8 +225,7 @@ export class TeskooanoTooltip extends HTMLElement {
       this.tooltipElement?.style.removeProperty("top");
       this.tooltipElement?.style.removeProperty("transform");
 
-      // Clear timeout when hiding
-      this._clearHideTimeout();
+      this.clearHideTimeout();
     }
   }
 
@@ -144,16 +235,15 @@ export class TeskooanoTooltip extends HTMLElement {
    * @param triggerElement - The element to position relative to.
    */
   public setTriggerElement(triggerElement: HTMLElement | null): void {
-    this._triggerElement = triggerElement;
+    this.state.set("triggerElement", triggerElement);
   }
 
   /**
    * Calculates the tooltip's position based on alignment attributes and the trigger element,
    * then adjusts it to stay within the viewport boundaries.
-   * @private
    */
-  private _calculateAndAdjustPosition() {
-    const trigger = this._triggerElement ?? this.parentElement;
+  private calculateAndAdjustPosition() {
+    const trigger = this.state.get("triggerElement") ?? this.parentElement;
 
     if (!this.tooltipElement || !trigger) {
       this.tooltipElement?.style.setProperty("transform", "none");
@@ -167,8 +257,8 @@ export class TeskooanoTooltip extends HTMLElement {
 
     const tooltipRect = this.tooltipElement.getBoundingClientRect();
     const triggerRect = trigger.getBoundingClientRect();
-    const vAlign = this.getAttribute("vertical-align") || "below";
-    const hAlign = this.getAttribute("horizontal-align") || "center";
+    const vAlign = this.state.get("verticalAlign");
+    const hAlign = this.state.get("horizontalAlign");
 
     const gap = 5;
 
@@ -218,10 +308,7 @@ export class TeskooanoTooltip extends HTMLElement {
       top = viewportHeight - tooltipRect.height - margin;
     }
 
-    this.tooltipElement.style.position = "fixed";
-    this.tooltipElement.style.left = `${Math.round(left)}px`;
-    this.tooltipElement.style.top = `${Math.round(top)}px`;
-    this.tooltipElement.style.transform = "none";
+    this.state.set("position", { top, left });
   }
 
   /**
@@ -231,8 +318,8 @@ export class TeskooanoTooltip extends HTMLElement {
   private updatePositioning() {
     if (!this.tooltipElement) return;
 
-    const vAlign = this.getAttribute("vertical-align") || "below";
-    const hAlign = this.getAttribute("horizontal-align") || "center";
+    const vAlign = this.state.get("verticalAlign");
+    const hAlign = this.state.get("horizontalAlign");
 
     this.tooltipElement.classList.remove(
       "vertical-above",
@@ -255,74 +342,52 @@ export class TeskooanoTooltip extends HTMLElement {
    */
   show(triggerElement?: HTMLElement | null) {
     if (triggerElement) {
-      this._triggerElement = triggerElement;
-    } else if (!this._triggerElement && this.parentElement) {
+      this.state.set("triggerElement", triggerElement);
+    } else if (!this.state.get("triggerElement") && this.parentElement) {
       console.warn(
         "[Tooltip] No trigger element provided to show(), falling back to parentElement. Consider explicitly setting the trigger.",
       );
-      this._triggerElement = this.parentElement;
-    } else if (!this._triggerElement) {
+      this.state.set("triggerElement", this.parentElement);
+    } else if (!this.state.get("triggerElement")) {
       console.error(
         "[Tooltip] Cannot show: No trigger element set or provided, and no parentElement available.",
       );
       return;
     }
-    this.setAttribute("visible", "");
+    this.state.set("isVisible", true);
   }
 
   /**
    * Hides the tooltip by removing the 'visible' attribute.
    */
   hide() {
-    this._triggerElement = null;
-    this.removeAttribute("visible");
+    this.state.set("triggerElement", null);
+    this.state.set("isVisible", false);
   }
 
   /**
    * Starts the timeout to automatically hide the tooltip.
    * Uses the configurable timeout attribute or defaults to 5 seconds.
-   * @private
    */
-  private _startHideTimeout() {
-    this._clearHideTimeout(); // Clear any existing timeout
+  private startHideTimeout() {
+    this.clearHideTimeout();
 
-    const timeoutMs = this.getTimeoutMs();
-    this._hideTimeout = window.setTimeout(() => {
-      this.hide();
-      this._hideTimeout = null;
-    }, timeoutMs);
-  }
-
-  /**
-   * Gets the timeout duration in milliseconds.
-   * @returns Timeout duration in milliseconds, defaults to 5000ms (5 seconds)
-   * @private
-   */
-  private getTimeoutMs(): number {
-    const timeoutAttr = this.getAttribute("timeout");
-    if (timeoutAttr === null) {
-      return 5000; // Default 5 seconds
+    const timeoutMs = this.state.get("timeout");
+    if (timeoutMs > 0) {
+      this.hideTimeout = window.setTimeout(() => {
+        this.hide();
+        this.hideTimeout = null;
+      }, timeoutMs);
     }
-
-    const timeoutValue = parseInt(timeoutAttr, 10);
-    if (isNaN(timeoutValue) || timeoutValue < 0) {
-      console.warn(
-        `[Tooltip] Invalid timeout value: ${timeoutAttr}, using default 5000ms`,
-      );
-      return 5000;
-    }
-
-    return timeoutValue;
   }
 
   /**
    * Clears the hide timeout if it exists.
-   * @private
    */
-  private _clearHideTimeout() {
-    if (this._hideTimeout !== null) {
-      window.clearTimeout(this._hideTimeout);
-      this._hideTimeout = null;
+  private clearHideTimeout() {
+    if (this.hideTimeout !== null) {
+      window.clearTimeout(this.hideTimeout);
+      this.hideTimeout = null;
     }
   }
 
@@ -364,7 +429,7 @@ export class TeskooanoTooltip extends HTMLElement {
    * @returns Timeout duration in milliseconds
    */
   get timeout(): number {
-    return this.getTimeoutMs();
+    return this.state.get("timeout");
   }
 
   /**
@@ -378,6 +443,14 @@ export class TeskooanoTooltip extends HTMLElement {
       );
       return;
     }
-    this.setAttribute("timeout", value.toString());
+    this.state.set("timeout", value);
+  }
+
+  /**
+   * Cleanup when component is disconnected
+   */
+  disconnectedCallback() {
+    this.clearHideTimeout();
+    this.state.cleanup(); // Automatic cleanup of all subscriptions
   }
 }

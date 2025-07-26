@@ -1,4 +1,14 @@
 import { template } from "./Card.template";
+import { createComponentState } from "@teskooano/ui-plugin/patterns";
+
+interface CardState {
+  variant: "fixed" | "fluid" | "full";
+  hasTitleSlot: boolean;
+  hasContentSlot: boolean;
+  hasImageSlot: boolean;
+  hasLabelSlot: boolean;
+  hasCtaSlot: boolean;
+}
 
 /**
  * A container element `<teskooano-card>` used to display grouped content,
@@ -30,6 +40,21 @@ export class TeskooanoCard extends HTMLElement {
    */
   static observedAttributes = ["variant"];
 
+  // Use the new reactive state pattern
+  private state = createComponentState(
+    {
+      variant: "fixed" as const,
+      hasTitleSlot: false,
+      hasContentSlot: false,
+      hasImageSlot: false,
+      hasLabelSlot: false,
+      hasCtaSlot: false,
+    } as CardState,
+    {
+      componentName: "teskooano-card",
+    },
+  );
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -42,11 +67,9 @@ export class TeskooanoCard extends HTMLElement {
    * @internal
    */
   connectedCallback() {
-    // Set default variant if none is provided
-    if (!this.hasAttribute("variant")) {
-      this.setAttribute("variant", "fixed");
-    }
-    this._validateSlots();
+    this.updateStateFromAttributes();
+    this.setupStateWatchers();
+    this.validateSlots();
   }
 
   /**
@@ -61,36 +84,94 @@ export class TeskooanoCard extends HTMLElement {
     oldValue: string | null,
     newValue: string | null,
   ) {
-    if (name === "variant" && oldValue !== newValue) {
-      // Validation could be added here if needed, but CSS handles defaults/invalid values gracefully.
+    if (oldValue === newValue) return;
+
+    if (name === "variant") {
+      this.state.set(
+        "variant",
+        (newValue as "fixed" | "fluid" | "full") || "fixed",
+      );
     }
   }
 
+  private updateStateFromAttributes(): void {
+    const variant = this.getAttribute("variant") as "fixed" | "fluid" | "full";
+    this.state.set("variant", variant || "fixed");
+  }
+
+  private setupStateWatchers(): void {
+    // Watch for variant changes
+    this.state.watch("variant", (variant: "fixed" | "fluid" | "full") => {
+      if (variant) {
+        this.setAttribute("variant", variant);
+      } else {
+        this.removeAttribute("variant");
+        this.setAttribute("variant", "fixed"); // Set back to default
+      }
+    });
+
+    // Watch for slot changes to update validation
+    this.state.watch("hasTitleSlot", (hasTitleSlot: boolean) => {
+      if (!hasTitleSlot) {
+        console.warn(
+          `TeskooanoCard (${this.id || "no-id"}): Required slot [title] is empty.`,
+        );
+      }
+    });
+
+    this.state.watch("hasContentSlot", (hasContentSlot: boolean) => {
+      if (!hasContentSlot) {
+        console.warn(
+          `TeskooanoCard (${this.id || "no-id"}): Required default slot (for content) is empty.`,
+        );
+      }
+    });
+  }
+
   /**
-   * Checks for required slots and logs warnings if they are missing.
+   * Checks for required slots and updates state accordingly.
    * @internal
    */
-  private _validateSlots() {
+  private validateSlots() {
     const titleSlot = this.shadowRoot?.querySelector(
       'slot[name="title"]',
     ) as HTMLSlotElement;
     const contentSlot = this.shadowRoot?.querySelector(
       "slot:not([name])",
     ) as HTMLSlotElement;
+    const imageSlot = this.shadowRoot?.querySelector(
+      'slot[name="image"]',
+    ) as HTMLSlotElement;
+    const labelSlot = this.shadowRoot?.querySelector(
+      'slot[name="label"]',
+    ) as HTMLSlotElement;
+    const ctaSlot = this.shadowRoot?.querySelector(
+      'slot[name="cta"]',
+    ) as HTMLSlotElement;
 
-    if (!titleSlot || titleSlot.assignedNodes({ flatten: true }).length === 0) {
-      console.warn(
-        `TeskooanoCard (${this.id || "no-id"}): Required slot [title] is empty.`,
-      );
-    }
-    if (
-      !contentSlot ||
-      contentSlot.assignedNodes({ flatten: true }).length === 0
-    ) {
-      console.warn(
-        `TeskooanoCard (${this.id || "no-id"}): Required default slot (for content) is empty.`,
-      );
-    }
+    // Update state with slot availability
+    this.state.set(
+      "hasTitleSlot",
+      !!(titleSlot && titleSlot.assignedNodes({ flatten: true }).length > 0),
+    );
+    this.state.set(
+      "hasContentSlot",
+      !!(
+        contentSlot && contentSlot.assignedNodes({ flatten: true }).length > 0
+      ),
+    );
+    this.state.set(
+      "hasImageSlot",
+      !!(imageSlot && imageSlot.assignedNodes({ flatten: true }).length > 0),
+    );
+    this.state.set(
+      "hasLabelSlot",
+      !!(labelSlot && labelSlot.assignedNodes({ flatten: true }).length > 0),
+    );
+    this.state.set(
+      "hasCtaSlot",
+      !!(ctaSlot && ctaSlot.assignedNodes({ flatten: true }).length > 0),
+    );
   }
 
   // --- Getters/Setters for attributes --- //
@@ -100,7 +181,7 @@ export class TeskooanoCard extends HTMLElement {
    * @returns {"fixed" | "fluid" | "full" | null}
    */
   get variant(): "fixed" | "fluid" | "full" | null {
-    return this.getAttribute("variant") as "fixed" | "fluid" | "full" | null;
+    return this.state.get("variant");
   }
 
   /**
@@ -108,14 +189,13 @@ export class TeskooanoCard extends HTMLElement {
    * @param { "fixed" | "fluid" | "full" | null } value - The desired variant.
    */
   set variant(value: "fixed" | "fluid" | "full" | null) {
-    if (value) {
-      this.setAttribute("variant", value);
-    } else {
-      this.removeAttribute("variant");
-      // Optionally set back to default if removed
-      // this.setAttribute("variant", "fixed");
-    }
+    this.state.set("variant", value || "fixed");
   }
 
-  disconnectedCallback() {}
+  /**
+   * Cleanup when component is disconnected
+   */
+  disconnectedCallback() {
+    this.state.cleanup(); // Automatic cleanup of all subscriptions
+  }
 }
