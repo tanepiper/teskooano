@@ -290,6 +290,17 @@ export class HierarchicalLODManager extends StateSubscriptionMixin {
     if (!multipliers) {
       console.warn(`[HierarchicalLODManager] No LOD multipliers defined for ${config.type}, using OTHER as fallback`);
       multipliers = LOD_DISTANCE_MULTIPLIERS[CelestialType.OTHER];
+      
+      // If OTHER is also undefined, create a default
+      if (!multipliers) {
+        console.error(`[HierarchicalLODManager] CRITICAL: Even OTHER fallback is undefined! Creating emergency fallback for ${config.type}`);
+        multipliers = {
+          high: { factor: 5, children: 10 },
+          medium: { factor: 15, children: 30 },
+          low: { factor: 30, children: 60 },
+          billboard: { factor: 150, children: 300 }
+        };
+      }
     }
     
     const baseRadius = config.radius;
