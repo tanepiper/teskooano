@@ -177,7 +177,8 @@ export class RendererInfoDisplayController {
     }
 
     try {
-      const stats = this._renderer.animationLoop?.getCurrentStats();
+      const stats =
+        this._renderer.sceneManager?.animationLoop?.getCurrentStats();
       this.updateDisplay(stats);
       // Also update device performance display
       this._updateDevicePerformanceDisplay();
@@ -252,7 +253,8 @@ export class RendererInfoDisplayController {
     let rendererStats = null;
     if (this._renderer) {
       try {
-        rendererStats = this._renderer.animationLoop?.getCurrentStats();
+        rendererStats =
+          this._renderer.sceneManager?.animationLoop?.getCurrentStats();
       } catch (error) {
         console.error(
           "[RendererInfoDisplay] Error getting renderer stats:",
@@ -272,15 +274,15 @@ export class RendererInfoDisplayController {
       const predictionManager = orbitsManager.getPredictionManager();
       const trailManager = orbitsManager.getTrailManager();
 
-      predictionLines = predictionManager?.predictionLines.size ?? 0;
-      if (predictionManager) {
+      predictionLines = predictionManager?.predictionLines?.size ?? 0;
+      if (predictionManager?.predictionLines) {
         for (const line of predictionManager.predictionLines.values()) {
           predictionSegments += line.geometry.drawRange.count;
         }
       }
 
-      trailLines = trailManager?.trailLines.size ?? 0;
-      if (trailManager) {
+      trailLines = trailManager?.trailLines?.size ?? 0;
+      if (trailManager?.trailLines) {
         for (const line of trailManager.trailLines.values()) {
           trailSegments += line.geometry.drawRange.count;
         }
