@@ -3,122 +3,94 @@ import type {
   PanelConfig,
   TeskooanoPlugin,
 } from "@teskooano/ui-plugin";
-import { IContentRenderer, PanelInitParameters } from "dockview-core";
+import type { DockviewController } from "../controllers/dockview";
+import { PanelFactory } from "./PanelFactory";
 
 /**
- * Handles registration of panel components with the dockview system
+ * Handles the registration of panel components from all loaded plugins
+ * into the Dockview system. It acts as an orchestrator, delegating the
+ * creation of panel constructors to the PanelFactory.
  */
 export class PanelRegistry {
   private readonly pluginManager: typeof pluginManager;
-  private readonly dockviewController: any;
+  private readonly dockviewController: DockviewController;
+  private readonly panelFactory: PanelFactory;
 
   constructor(
     pluginManagerInstance: typeof pluginManager,
-    dockviewController: any,
+    dockviewController: DockviewController,
   ) {
     this.pluginManager = pluginManagerInstance;
     this.dockviewController = dockviewController;
+    this.panelFactory = new PanelFactory();
   }
 
   /**
-   * Registers all panel components from loaded plugins
-   * @throws {Error} If critical panel registration fails
+   * Iterates through all loaded plugins and registers their panel components.
+   * Gathers and throws a comprehensive error if any registrations fail.
+   * @throws {Error} If one or more panel registrations fail.
    */
-  public registerPanelComponents(): void {
+  public registerAllPanels(): void {
     const plugins = this.pluginManager.getPlugins();
-    const errors: string[] = [];
+    const registrationErrors: string[] = [];
 
     plugins.forEach((plugin: TeskooanoPlugin) => {
       plugin.panels?.forEach((panelConfig: PanelConfig) => {
         try {
-          this.registerSinglePanel(panelConfig, plugin.id);
+          this.registerPanel(panelConfig, plugin.id);
         } catch (error) {
-          const errorMessage = `Failed to register panel '${panelConfig.componentName}' from plugin '${plugin.id}': ${error instanceof Error ? error.message : "Unknown error"}`;
+          const errorMessage = this.formatErrorMessage(
+            panelConfig,
+            plugin.id,
+            error,
+          );
           console.error(`[PanelRegistry] ${errorMessage}`);
-          errors.push(errorMessage);
+          registrationErrors.push(errorMessage);
         }
       });
     });
 
-    if (errors.length > 0) {
+    if (registrationErrors.length > 0) {
       throw new Error(
-        `Panel registration failed with ${errors.length} error(s):\n${errors.join("\n")}`,
+        `Panel registration failed for ${registrationErrors.length} panel(s):\n- ${registrationErrors.join("\n- ")}`,
       );
     }
   }
 
   /**
-   * Registers a single panel component
-   * @throws {Error} If panel registration fails
+   * Registers a single panel using the PanelFactory to create the constructor,
+   * then adds it to the Dockview controller.
+   *
+   * @param panelConfig - The configuration for the panel to register.
+   * @param pluginId - The ID of the plugin that defines the panel.
    */
-  private registerSinglePanel(
-    panelConfig: PanelConfig,
-    pluginId: string,
-  ): void {
-    const PanelComponentOrConstructor = panelConfig.panelClass;
-    const componentName = panelConfig.componentName;
-
-    if (!PanelComponentOrConstructor) {
-      throw new Error(
-        `Panel class not found for ${componentName} in plugin ${pluginId}`,
-      );
-    }
-
-    const isCustomElementConstructor =
-      PanelComponentOrConstructor.prototype instanceof HTMLElement;
-
-    if (isCustomElementConstructor) {
-      this.registerCustomElementPanel(componentName);
-    } else {
-      this.registerDirectPanel(componentName, PanelComponentOrConstructor);
-    }
-  }
-
-  /**
-   * Registers a custom element as a panel component
-   */
-  private registerCustomElementPanel(componentName: string): void {
-    class CustomElementPanelWrapper implements IContentRenderer {
-      private _element: HTMLElement;
-
-      get element(): HTMLElement {
-        return this._element;
-      }
-
-      constructor() {
-        this._element = document.createElement(componentName);
-      }
-
-      init(params: PanelInitParameters): void {
-        if (typeof (this._element as any).init === "function") {
-          (this._element as any).init(params);
-        }
-      }
-    }
-
+  private registerPanel(panelConfig: PanelConfig, pluginId: string): void {
+    const panelConstructor = this.panelFactory.createPanelConstructor(
+      panelConfig,
+      pluginId,
+    );
     this.dockviewController.registerComponent(
-      componentName,
-      CustomElementPanelWrapper,
+      panelConfig.componentName,
+      panelConstructor,
     );
   }
 
   /**
-   * Registers a direct panel component
-   * @throws {Error} If panel registration fails
+   * Formats a consistent error message for a failed panel registration.
+   *
+   * @param panelConfig - The configuration of the panel that failed.
+   * @param pluginId - The ID of the plugin attempting to register the panel.
+   * @param error - The caught error object.
+   * @returns A formatted, descriptive error string.
    */
-  private registerDirectPanel(
-    componentName: string,
-    PanelComponentOrConstructor: any,
-  ): void {
-    try {
-      this.dockviewController.registerComponent(
-        componentName,
-        PanelComponentOrConstructor as new () => IContentRenderer,
-      );
-    } catch (error) {
-      throw new Error(
-        `Error registering panel '${componentName}' directly: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
+  private formatErrorMessage(
+    panelConfig: PanelConfig,
+    pluginId: string,
+    error: unknown,
+  ): string {
+    const baseMessage = `Failed to register panel '${panelConfig.componentName}' from plugin '${pluginId}'`;
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
+    return `${baseMessage}: ${errorMessage}`;
   }
 }

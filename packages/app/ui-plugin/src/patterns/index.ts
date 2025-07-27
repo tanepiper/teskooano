@@ -97,6 +97,7 @@ export {
   // Payload type exports
   type BaseEventPayload,
   type ObjectSelectedPayload,
+  type ObjectFocusedPayload,
   type ObjectInteractionPayload,
   type CameraEventPayload,
   type SimulationEventPayload,

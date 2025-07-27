@@ -72,6 +72,9 @@ export const Events = {
   /** Fired when user stops hovering over a celestial object */
   OBJECT_UNHOVERED: "object:unhovered",
 
+  /** Fired when a tour is requested to start or restart */
+  TOUR_REQUESTED: "tour:requested",
+
   // =====================================
   // Camera & View Events
   // =====================================
@@ -238,7 +241,7 @@ export type EventType = (typeof Events)[keyof typeof Events];
  */
 export interface BaseEventPayload {
   /** Source component/plugin that triggered the event */
-  source: string;
+  source?: string;
   /** Optional additional metadata */
   metadata?: Record<string, any>;
 }
@@ -253,6 +256,13 @@ export interface ObjectSelectedPayload extends BaseEventPayload {
   object?: CelestialObject;
   /** Previous selection (for deselection events) */
   previousObjectId?: string;
+}
+
+/**
+ * Payload for object focus events.
+ */
+export interface ObjectFocusedPayload extends BaseEventPayload {
+  objectId: string;
 }
 
 /**
@@ -403,12 +413,13 @@ export interface NotificationEventPayload extends BaseEventPayload {
 export interface EventPayloadMap {
   [Events.OBJECT_SELECTED]: ObjectSelectedPayload;
   [Events.OBJECT_DESELECTED]: ObjectSelectedPayload;
-  [Events.OBJECT_FOCUSED]: ObjectSelectedPayload;
+  [Events.OBJECT_FOCUSED]: ObjectFocusedPayload;
   [Events.OBJECT_UNFOCUSED]: ObjectSelectedPayload;
   [Events.OBJECT_HIGHLIGHTED]: ObjectInteractionPayload;
   [Events.OBJECT_UNHIGHLIGHTED]: ObjectInteractionPayload;
   [Events.OBJECT_HOVERED]: ObjectInteractionPayload;
   [Events.OBJECT_UNHOVERED]: ObjectInteractionPayload;
+  [Events.TOUR_REQUESTED]: BaseEventPayload;
 
   [Events.CAMERA_FOCUSED]: CameraEventPayload;
   [Events.CAMERA_MOVED]: CameraEventPayload;

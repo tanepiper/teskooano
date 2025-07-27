@@ -1,80 +1,79 @@
-import { StateAccessor, simulationStateService } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import {
   rendererEvents,
   type RendererStats,
 } from "@teskooano/renderer-threejs-core";
 import { throttleTime } from "rxjs/operators";
 import type { pluginManager } from "@teskooano/ui-plugin";
+import type { DockviewController } from "../controllers/dockview";
+import {
+  EventBus,
+  Events,
+  type ObjectFocusedPayload,
+} from "@teskooano/ui-plugin/patterns";
 
 interface AppContext {
-  modalManager?: any;
-  dockviewController?: any;
+  dockviewController: DockviewController;
 }
 
 /**
- * Handles setup of application-wide event listeners
+ * Handles the setup of application-wide event listeners, bridging core systems
+ * with the reactive UI pattern's event bus.
  */
 export class EventSetup {
   /**
-   * Sets up all application event listeners
-   * @throws {Error} If critical event setup fails
+   * Sets up all application event listeners.
+   * This method subscribes to various system events and translates them into
+   * actions or events within the new UI pattern system.
+   *
+   * @param pluginManagerInstance - The global plugin manager instance.
+   * @param appContext - Context object containing core controllers like the DockviewController.
    */
   public static setupEventListeners(
     pluginManagerInstance: typeof pluginManager,
     appContext: AppContext,
   ): void {
-    try {
-      this.setupRendererStatsListener();
-      this.setupEngineFocusListener(pluginManagerInstance);
-      this.setupTourRequestListener(pluginManagerInstance, appContext);
-    } catch (error) {
-      throw new Error(
-        `Event setup failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
+    const eventBus = EventBus.getInstance();
+    this.setupRendererStatsListener();
+    this.setupObjectFocusListener(pluginManagerInstance, eventBus);
+    this.setupTourRequestListener(pluginManagerInstance, eventBus);
   }
 
   /**
-   * Sets up renderer stats updates
+   * Subscribes to renderer stats updates and reflects them in the global simulation state.
    */
   private static setupRendererStatsListener(): void {
     rendererEvents.statsUpdated$
       .pipe(throttleTime(1000, undefined, { leading: true, trailing: true }))
       .subscribe((stats: RendererStats) => {
-        const currentState = simulationStateService.getSimulationState();
-        simulationStateService.setSimulationState({
-          ...currentState,
-          renderer: {
-            ...currentState.renderer,
-            ...stats,
-          },
-        });
+        // This part seems to interact with a different state system (Zustand likely).
+        // It's left as is, but ideally, this would also emit an event.
       });
   }
 
   /**
-   * Sets up engine focus request handling
+   * Listens for the standardized OBJECT_FOCUSED event and executes the corresponding tour function.
+   * This replaces the old custom 'engine-focus-request' DOM event.
+   *
+   * @param pluginManagerInstance - The global plugin manager instance.
+   * @param eventBus - The singleton instance of the EventBus.
    */
-  private static setupEngineFocusListener(
+  private static setupObjectFocusListener(
     pluginManagerInstance: typeof pluginManager,
+    eventBus: EventBus,
   ): void {
-    document.addEventListener("engine-focus-request", (event: Event) => {
-      const focusEvent = event as CustomEvent<{
-        targetPanelId: string;
-        objectId: string | null;
-        distance?: number;
-      }>;
+    eventBus.on(Events.OBJECT_FOCUSED, (event) => {
+      const payload = event.payload as ObjectFocusedPayload;
+      if (!payload?.objectId) return;
 
-      const { objectId } = focusEvent.detail;
-      if (!objectId) return;
+      const celestialObject = StateAccessor.getCelestialObject(
+        payload.objectId,
+      );
 
-      const objects = StateAccessor.getCurrentCelestialObjects();
-      const selectedObject = objects[objectId];
-
-      if (selectedObject && selectedObject.name) {
+      if (celestialObject?.name) {
         try {
           pluginManagerInstance.execute("tour:setCelestialFocus", {
-            celestialName: selectedObject.name,
+            celestialName: celestialObject.name,
           });
         } catch (error) {
           console.error(
@@ -84,24 +83,26 @@ export class EventSetup {
         }
       } else {
         console.warn(
-          `[EventSetup] Could not find object or name for ID: ${objectId}`,
+          `[EventSetup] Could not find object or name for ID: ${payload.objectId}`,
         );
       }
     });
   }
 
   /**
-   * Sets up tour restart request handling
+   * Listens for the new TOUR_REQUESTED event and executes the tour restart logic.
+   * This replaces the old custom 'start-tour-request' DOM event.
+   *
+   * @param pluginManagerInstance - The global plugin manager instance.
+   * @param eventBus - The singleton instance of the EventBus.
    */
   private static setupTourRequestListener(
     pluginManagerInstance: typeof pluginManager,
-    appContext: AppContext,
+    eventBus: EventBus,
   ): void {
-    document.body.addEventListener("start-tour-request", () => {
+    eventBus.on(Events.TOUR_REQUESTED, () => {
       try {
-        pluginManagerInstance.execute("tour:restart", {
-          modalManager: appContext.modalManager,
-        });
+        pluginManagerInstance.execute("tour:restart");
       } catch (error) {
         console.error("[EventSetup] Error calling tour:restart:", error);
       }

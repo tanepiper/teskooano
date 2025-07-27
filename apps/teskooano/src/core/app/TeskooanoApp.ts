@@ -256,7 +256,7 @@ export class TeskooanoApp {
     // Register panel components first
     console.debug("[Init] Registering panel components...");
     const panelRegistry = new PanelRegistry(pluginManager, dockviewController);
-    panelRegistry.registerPanelComponents();
+    panelRegistry.registerAllPanels();
 
     // Initialize modal manager
     console.debug("[Init] Initializing modal manager...");

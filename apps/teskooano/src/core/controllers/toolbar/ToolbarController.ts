@@ -1,11 +1,5 @@
-import {
-  fromEvent,
-  BehaviorSubject,
-  map,
-  startWith,
-  tap,
-  Subscription,
-} from "rxjs";
+import { fromEvent, Subscription } from "rxjs";
+import { map, startWith } from "rxjs/operators";
 import {
   type FunctionToolbarItemConfig,
   type PanelToolbarItemConfig,
@@ -14,8 +8,18 @@ import {
   type ToolbarWidgetConfig,
   pluginManager,
 } from "@teskooano/ui-plugin";
+import {
+  createComponentState,
+  type ReactiveState,
+} from "@teskooano/ui-plugin/patterns";
 import { template as toolbarTemplate } from "./ToolbarController.template.js";
 import { createToolbarButton } from "./ToolbarController.utils.js";
+
+interface ToolbarState {
+  items: ToolbarItemConfig[];
+  widgets: ToolbarWidgetConfig[];
+  isMobile: boolean;
+}
 
 /**
  * Controller for the main application toolbar.
@@ -28,8 +32,8 @@ export class ToolbarController {
   private _buttonContainer: HTMLElement;
   private _widgetContainer: HTMLElement;
   private _context: PluginExecutionContext;
-  private _isMobileDevice$: BehaviorSubject<boolean>;
-  private _pluginChangesSubscription: Subscription;
+  private _state: ReactiveState;
+  private _subscriptions: Subscription = new Subscription();
 
   /**
    * URL for the main Teskooano website.
@@ -55,57 +59,84 @@ export class ToolbarController {
       ".widget-area",
     )! as HTMLElement;
 
-    this._isMobileDevice$ = new BehaviorSubject<boolean>(
-      this.detectMobileDevice(),
-    );
-
-    fromEvent(window, "resize")
-      .pipe(
-        startWith(null),
-        map(() => this.detectMobileDevice()),
-        tap((isMobile) => this._isMobileDevice$.next(isMobile)),
-      )
-      .subscribe();
-
-    this.setupStaticListeners();
-    this.setupMobileAttributeToggle();
-
-    this._pluginChangesSubscription = pluginManager.pluginsChanged$.subscribe(
-      () => {
-        this.reRenderToolbars();
+    this._state = createComponentState<ToolbarState>(
+      {
+        items: [],
+        widgets: [],
+        isMobile: this.detectMobileDevice(),
       },
+      { componentName: "ToolbarController" },
     );
+
+    this.setupStateSubscriptions();
+    this.setupStateWatchers();
+    this.setupStaticListeners();
+
+    // Initial population
+    this.loadToolbarData();
   }
 
   /**
    * Cleans up subscriptions when the controller is no longer needed.
    */
   public destroy(): void {
-    this._pluginChangesSubscription.unsubscribe();
+    this._subscriptions.unsubscribe();
+    this._state.dispose();
   }
 
   /**
-   * Detects if the current device is a mobile device based on window width and device characteristics.
-   * @returns `true` if the device is mobile or tablet (including iPad), otherwise `false`.
+   * Detects if the current device is a mobile device based on window width.
+   * @returns `true` if the device's screen width is less than 768px, otherwise `false`.
    */
   public detectMobileDevice(): boolean {
-    // Check for touch capability and screen size
-    const hasTouchScreen =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    const isSmallScreen = window.innerWidth < 768;
-    const isMediumScreen = window.innerWidth < 1024;
+    return window.innerWidth < 768;
+  }
 
-    // Detect iPad specifically (including iPad Pro)
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isIpad =
-      userAgent.includes("ipad") ||
-      (userAgent.includes("macintosh") && hasTouchScreen);
+  /**
+   * Sets up subscriptions to global events and state changes.
+   * @private
+   */
+  private setupStateSubscriptions(): void {
+    const resizeSub = fromEvent(window, "resize")
+      .pipe(
+        startWith(null),
+        map(() => this.detectMobileDevice()),
+      )
+      .subscribe((isMobile) => this._state.set("isMobile", isMobile));
 
-    // Detect other tablets based on screen size and touch capability
-    const isTablet =
-      hasTouchScreen && window.innerWidth >= 768 && window.innerWidth <= 1024;
+    const pluginChangesSub = pluginManager.pluginsChanged$.subscribe(() => {
+      this.loadToolbarData();
+    });
 
-    return isSmallScreen || isIpad || isTablet;
+    this._subscriptions.add(resizeSub);
+    this._subscriptions.add(pluginChangesSub);
+  }
+
+  /**
+   * Sets up watchers that react to state changes and update the UI.
+   * @private
+   */
+  private setupStateWatchers(): void {
+    this._state.watch("items", (items: ToolbarItemConfig[]) =>
+      this.renderItems(items),
+    );
+    this._state.watch("widgets", (widgets: ToolbarWidgetConfig[]) =>
+      this.renderWidgets(widgets),
+    );
+    this._state.watch("isMobile", (isMobile: boolean) =>
+      this.updateMobileState(isMobile),
+    );
+  }
+
+  /**
+   * Loads the current toolbar items and widgets from the plugin manager into the state.
+   * @private
+   */
+  private loadToolbarData(): void {
+    this._state.update({
+      items: pluginManager.getToolbarItemsForTarget("main-toolbar"),
+      widgets: pluginManager.getToolbarWidgetsForTarget("main-toolbar"),
+    });
   }
 
   /**
@@ -122,128 +153,100 @@ export class ToolbarController {
   }
 
   /**
-   * Clears and re-populates the toolbar items and widgets.
-   * This is called initially and whenever plugins change.
+   * Clears and re-populates the toolbar buttons based on the current state.
+   * @param items The array of toolbar item configurations.
    * @private
    */
-  private reRenderToolbars(): void {
-    // Clear existing dynamic items
+  private renderItems(items: ToolbarItemConfig[]): void {
     this._buttonContainer.innerHTML = "";
-    this._widgetContainer.innerHTML = "";
+    items.forEach((item) => {
+      try {
+        const configAny = item as any;
+        const buttonOptions = {
+          title: item.title,
+          iconSvg: item.iconSvg,
+          tooltipText: configAny.tooltipText,
+          tooltipTitle: configAny.tooltipTitle,
+          tooltipIconSvg: configAny.tooltipIconSvg,
+          tooltipHorizontalAlign: configAny.tooltipHorizontalAlign,
+          mobileAware: item.id === "main-toolbar-add-view",
+        };
 
-    // Repopulate
-    this.populateItems(this._buttonContainer);
-    this.populateWidgets(this._widgetContainer);
-  }
+        let buttonElement: HTMLElement;
 
-  /**
-   * Dynamically populates toolbar buttons from plugin registrations.
-   * @param targetId The ID of the container element for the buttons.
-   * @private
-   */
-  private populateItems(buttonContainer: HTMLElement): void {
-    try {
-      const items: ToolbarItemConfig[] =
-        pluginManager.getToolbarItemsForTarget("main-toolbar");
-
-      items.forEach((item: ToolbarItemConfig) => {
-        try {
-          const configAny = item as any;
-          const buttonOptions = {
-            title: item.title,
-            iconSvg: item.iconSvg,
-            tooltipText: configAny.tooltipText,
-            tooltipTitle: configAny.tooltipTitle,
-            tooltipIconSvg: configAny.tooltipIconSvg,
-            tooltipHorizontalAlign: configAny.tooltipHorizontalAlign,
-            mobileAware: item.id === "main-toolbar-add-view",
-          };
-
-          if (item.type === "function") {
-            const buttonConfig = item as FunctionToolbarItemConfig;
-            const buttonElement = createToolbarButton(
-              buttonConfig.id,
-              buttonOptions,
-            );
-            fromEvent(buttonElement, "click").subscribe(async () => {
+        if (item.type === "function") {
+          const buttonConfig = item as FunctionToolbarItemConfig;
+          buttonElement = createToolbarButton(buttonConfig.id, buttonOptions);
+          this._subscriptions.add(
+            fromEvent(buttonElement, "click").subscribe(() => {
               this._context.pluginManager.execute(buttonConfig.functionId);
-            });
-            buttonContainer.appendChild(buttonElement);
-          } else if (item.type === "panel") {
-            const panelConfig = item as PanelToolbarItemConfig;
-            const buttonElement = createToolbarButton(
-              panelConfig.id,
-              buttonOptions,
-            );
+            }),
+          );
+        } else if (item.type === "panel") {
+          const panelConfig = item as PanelToolbarItemConfig;
+          buttonElement = createToolbarButton(panelConfig.id, buttonOptions);
+          this._subscriptions.add(
             fromEvent(buttonElement, "click").subscribe(() => {
               this._context.dockviewController.handlePanelToggleAction(
                 panelConfig,
               );
-            });
-            buttonContainer.appendChild(buttonElement);
-          }
-        } catch (error) {
-          console.error(`[ToolbarController] Error creating item '${item.id}'`);
-        }
-      });
-    } catch (error) {
-      console.error(
-        "[ToolbarController] Error populating toolbar items.",
-        error,
-      );
-    }
-  }
-
-  /**
-   * Dynamically populates toolbar widgets from plugin registrations.
-   * @param targetId The ID of the container element for the widgets.
-   * @private
-   */
-  private populateWidgets(widgetContainer: HTMLElement): void {
-    try {
-      const widgets: ToolbarWidgetConfig[] =
-        pluginManager.getToolbarWidgetsForTarget("main-toolbar");
-      widgets.forEach((widget: ToolbarWidgetConfig) => {
-        try {
-          const widgetElement = document.createElement(widget.componentName);
-          if (widget.id) widgetElement.id = widget.id;
-          if (widget.params) {
-            Object.entries(widget.params).forEach(([key, value]) => {
-              widgetElement.setAttribute(key, String(value));
-            });
-          }
-          widgetContainer.appendChild(widgetElement);
-
-          // After appending, check for and call setContext if it exists
-          if (typeof (widgetElement as any).setContext === "function") {
-            (widgetElement as any).setContext(this._context);
-          }
-        } catch (error) {
-          console.error(
-            `[ToolbarController] Error creating widget '${widget.id}'`,
+            }),
           );
-          throw error;
+        } else {
+          return;
         }
-      });
-    } catch (error) {
-      console.error("[ToolbarController] Error populating widgets.");
-      throw error;
-    }
+
+        this._buttonContainer.appendChild(buttonElement);
+      } catch (error) {
+        console.error(
+          `[ToolbarController] Error creating item '${item.id}'`,
+          error,
+        );
+      }
+    });
   }
 
   /**
-   * Subscribes to the mobile device state to toggle the 'mobile' attribute
-   * on designated buttons.
+   * Clears and re-populates the toolbar widgets based on the current state.
+   * @param widgets The array of toolbar widget configurations.
    * @private
    */
-  private setupMobileAttributeToggle(): void {
-    this._isMobileDevice$.subscribe((isMobile) => {
-      const mobileAwareButtons = this._element.querySelectorAll<HTMLElement>(
-        "[data-mobile-aware='true']",
-      );
-      mobileAwareButtons.forEach((button) => {
-        button.toggleAttribute("mobile", isMobile);
-      });
+  private renderWidgets(widgets: ToolbarWidgetConfig[]): void {
+    this._widgetContainer.innerHTML = "";
+    widgets.forEach((widget) => {
+      try {
+        const widgetElement = document.createElement(widget.componentName);
+        if (widget.id) widgetElement.id = widget.id;
+        if (widget.params) {
+          Object.entries(widget.params).forEach(([key, value]) => {
+            widgetElement.setAttribute(key, String(value));
+          });
+        }
+        this._widgetContainer.appendChild(widgetElement);
+
+        if (typeof (widgetElement as any).setContext === "function") {
+          (widgetElement as any).setContext(this._context);
+        }
+      } catch (error) {
+        console.error(
+          `[ToolbarController] Error creating widget '${widget.id}'`,
+          error,
+        );
+      }
+    });
+  }
+
+  /**
+   * Toggles the 'mobile' attribute on designated buttons based on the mobile state.
+   * @param isMobile The current mobile state.
+   * @private
+   */
+  private updateMobileState(isMobile: boolean): void {
+    const mobileAwareButtons = this._element.querySelectorAll<HTMLElement>(
+      "[data-mobile-aware='true']",
+    );
+    mobileAwareButtons.forEach((button) => {
+      button.toggleAttribute("mobile", isMobile);
     });
   }
 }
