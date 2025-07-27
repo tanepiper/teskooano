@@ -17,6 +17,7 @@ export class AuMarkerManager {
   private isVisible: boolean = true;
   private auMarkersData: Array<{ au: number; color: string }>;
   private ringInstances: THREE.InstancedMesh | null = null;
+  private auMarkerGroups: Map<number, THREE.Group> = new Map();
 
   /**
    * @param scene The main THREE.Scene to add the markers to.
@@ -92,14 +93,20 @@ export class AuMarkerManager {
         Zneg: new THREE.Vector3(0, 0, -radiusSceneUnits),
       };
 
-      for (const [dir, pos] of Object.entries(labelPositions)) {
-        let distanceGroup = this.scene.getObjectByName(`AU_MARKER_GROUP_${au}`);
-        if (!distanceGroup) {
-          distanceGroup = new THREE.Group();
-          distanceGroup.name = `AU_MARKER_GROUP_${au}`;
-          this.mainGroup.add(distanceGroup);
-        }
+      // Get or create the group for this AU distance
+      let distanceGroup = this.auMarkerGroups.get(au);
+      if (!distanceGroup) {
+        distanceGroup = new THREE.Group();
+        distanceGroup.name = `AU_MARKER_GROUP_${au}`;
+        // Store the scene distance in the group's user data for efficient access
+        distanceGroup.userData = {
+          sceneDistance: radiusSceneUnits,
+        };
+        this.auMarkerGroups.set(au, distanceGroup);
+        this.mainGroup.add(distanceGroup);
+      }
 
+      for (const [dir, pos] of Object.entries(labelPositions)) {
         const labelId = `au-marker-${au}-label-${dir}`;
         const css2dObject = auMarkerLayer.createLabel(
           labelId,
@@ -111,6 +118,9 @@ export class AuMarkerManager {
         distanceGroup.add(css2dObject);
       }
     });
+
+    // Pass the managed groups to the layer so it can control their visibility
+    auMarkerLayer.setManagedGroups(this.auMarkerGroups);
 
     // 5. Important: update the instance buffers
     this.ringInstances.instanceMatrix.needsUpdate = true;

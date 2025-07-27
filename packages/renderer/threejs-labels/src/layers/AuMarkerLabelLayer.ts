@@ -9,6 +9,8 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
  * Manages labels specifically for AU distance markers.
  */
 export class AuMarkerLabelLayer extends BaseLabelLayer {
+  private managedGroups: Map<number, THREE.Group> = new Map();
+
   constructor(scene: THREE.Scene) {
     super(scene);
   }
@@ -46,12 +48,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
     const labelElement = document.createElement(
       AuMarkerLabelComponent.TAG_NAME,
     );
-    // Store the AU value in scene units for direct comparison later.
-    const auValueInSceneUnits = this.auToSceneUnits(auValue);
-    labelElement.setAttribute(
-      "data-scene-distance",
-      auValueInSceneUnits.toString(),
-    );
+    // The scene distance is now stored on the parent group, so we don't need it here.
     labelElement.setAttribute("data-au-display-value", auValue.toString());
     labelElement.setAttribute("data-color", color);
 
@@ -67,59 +64,62 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
     return css2dObject;
   }
 
+  /**
+   * Receives the map of AU marker groups from the manager.
+   * @param groups A map where the key is the AU value and the value is the THREE.Group.
+   */
+  public setManagedGroups(groups: Map<number, THREE.Group>): void {
+    this.managedGroups = groups;
+  }
+
   public override update(
     camera: THREE.Camera,
     centralBody: OSVector3, // This is actually the origin point (0,0,0) for AU markers
     objectManager: ObjectManager,
   ): void {
-    if (!centralBody || !this.isVisible) {
+    if (!this.isVisible) {
+      // If the layer is globally hidden, ensure all groups are hidden.
+      this.managedGroups.forEach((group) => {
+        if (group.visible) {
+          group.visible = false;
+        }
+      });
       return;
     }
 
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
-    // AU markers are centered at the origin (0,0,0), not a moving central body
-    const cameraDistance = cameraPosition.distanceTo(centralBody.toThreeJS());
+    // AU markers are centered at the origin (0,0,0), so we measure from there directly
+    // instead of relying on the passed centralBody parameter.
+    const cameraDistance = cameraPosition.distanceTo(
+      new THREE.Vector3(0, 0, 0),
+    );
 
-    this.elements.forEach((label) => {
-      const markerAuValueScene = parseFloat(
-        label.element.getAttribute("data-scene-distance") || "0",
-      );
-
-      // Hide the label if the camera is 110% past the marker's distance
-      let visible = cameraDistance < markerAuValueScene * 10;
-
-      // Apply occlusion checking if the label would otherwise be visible
-      if (visible && objectManager) {
-        // Get the label's world position
-        const labelWorldPosition = new THREE.Vector3();
-        label.getWorldPosition(labelWorldPosition);
-
-        // Generate a unique ID for this AU marker label
-        const labelId =
-          label.element.getAttribute("data-au-display-value") +
-          "_" +
-          label.position.x.toFixed(0) +
-          "_" +
-          label.position.z.toFixed(0);
-
-        // Check if the label is occluded by any celestial objects
-        const isOccluded = this.isLabelOccludedOptimized(
-          labelId,
-          OSVector3.fromThreeJS(labelWorldPosition),
-          camera,
-          objectManager,
-          labelId,
-          // No labelObjectId for AU markers since they don't belong to a specific object
-        );
-
-        if (isOccluded) {
-          visible = false;
-        }
+    this.managedGroups.forEach((group, au) => {
+      // Retrieve the scene distance from the group's userData
+      const markerAuValueScene = group.userData.sceneDistance || 0;
+      if (markerAuValueScene === 0) {
+        // Hide the group if the distance is not set
+        group.visible = false;
+        return;
       }
 
-      // Use toggleAttribute for CSS animations
-      label.element.toggleAttribute("visible", visible);
+      // Hide the label group if the camera is 110% past the marker's distance
+      let visible = cameraDistance < markerAuValueScene * 5;
+
+      // The previous occlusion check was flawed as it used the group's origin (0,0,0)
+      // for the check, causing all groups to be incorrectly hidden.
+      // It has been removed to restore visibility. A new group-based occlusion
+      // strategy would require a more complex implementation.
+
+      group.visible = visible;
+      // Propagate the visibility state to the child labels every frame
+      // to ensure their initial state is set correctly.
+      group.children.forEach((child) => {
+        if (child instanceof CSS2DObject) {
+          child.element.toggleAttribute("visible", visible);
+        }
+      });
     });
   }
 }
