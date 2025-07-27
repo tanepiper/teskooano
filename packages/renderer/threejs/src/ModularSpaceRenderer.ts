@@ -4,6 +4,10 @@ import {
   AnimationLoop,
   GridManager,
   SceneManager,
+  SceneGraphManager,
+  SceneQuery,
+  HierarchicalLODManager,
+  InstancedObjectManager,
 } from "@teskooano/renderer-threejs-core";
 import {
   AuMarkerManager,
@@ -23,14 +27,14 @@ import type { ModularSpaceRendererOptions } from "./types";
 import { simulationManager } from "@teskooano/app-simulation";
 import { renderableStore } from "@teskooano/core-state";
 import { LabelSystem } from "@teskooano/renderer-threejs-labels";
+import { CelestialType } from "@teskooano/data-types";
 
 /**
- * The main orchestrator for the Three.js rendering engine.
+ * The main orchestrator for the Three.js rendering engine with hierarchical scene management.
  *
  * This class acts as a facade, composing and managing a suite of specialized
- * managers to handle different aspects of the 3D scene, such as objects,
- * lighting, controls, and background rendering. It provides a unified API
- * for controlling the entire rendering process.
+ * managers to handle different aspects of the 3D scene, including hierarchical
+ * organization, LOD management, instanced rendering, and spatial optimization.
  *
  * @example
  * const renderer = new ModularSpaceRenderer(containerElement, { antialias: true });
@@ -39,6 +43,15 @@ import { LabelSystem } from "@teskooano/renderer-threejs-labels";
 export class ModularSpaceRenderer {
   /** Manages the core THREE.Scene, camera, and renderer instances. */
   public sceneManager: SceneManager;
+
+  /** NEW: Manages hierarchical scene graph organization */
+  public sceneGraphManager: SceneGraphManager;
+  /** NEW: Provides powerful query capabilities over the scene */
+  public sceneQuery: SceneQuery;
+  /** NEW: Enhanced LOD manager with hierarchical support */
+  public hierarchicalLODManager: HierarchicalLODManager;
+  /** NEW: Manages large numbers of similar objects using instancing */
+  public instancedObjectManager: InstancedObjectManager;
 
   /** Manages the lifecycle of celestial `THREE.Object3D` instances. */
   public objectManager: ObjectManager;
@@ -70,12 +83,9 @@ export class ModularSpaceRenderer {
   private resizeHandler?: () => void;
 
   /**
-   * Initializes the renderer and all its subordinate managers.
+   * Initializes the renderer and all its subordinate managers with hierarchical capabilities.
    *
    * @param container The HTML element that will host the renderer's canvas.
-   * @param sceneManager The pre-initialized SceneManager.
-   * @param options Configuration options for the renderer.
-   * @param labelSystem The optional LabelSystem.
    */
   constructor(container: HTMLElement) {
     this.stateAdapter = new RendererStateAdapter();
@@ -83,6 +93,23 @@ export class ModularSpaceRenderer {
     this.sceneManager = new SceneManager(container, {
       antialias: true,
     });
+
+    // NEW: Initialize hierarchical scene management
+    this.sceneGraphManager = new SceneGraphManager(this.sceneManager.scene);
+    this.sceneQuery = new SceneQuery(this.sceneManager.scene);
+    this.hierarchicalLODManager = new HierarchicalLODManager(
+      this.sceneManager.camera,
+      this.sceneGraphManager
+    );
+
+    // NEW: Initialize instanced object management for large-scale objects
+    this.instancedObjectManager = new InstancedObjectManager(
+      this.sceneManager.scene,
+      this.sceneManager.camera
+    );
+
+    // Setup standard instanced object types
+    this.setupInstancedObjectTypes();
 
     const css2DManager = new Layer2DManager(this.sceneManager.scene, container);
 
@@ -146,6 +173,57 @@ export class ModularSpaceRenderer {
     });
 
     this.setupAnimationCallbacks();
+    this.setupStateSubscriptions();
+  }
+
+  /**
+   * Sets up standard instanced object types for common use cases
+   */
+  private setupInstancedObjectTypes(): void {
+    // Asteroid belt configuration
+    const asteroidGeometry = new THREE.IcosahedronGeometry(0.5, 1);
+    const asteroidMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x665544,
+      roughness: 0.8,
+      metalness: 0.1 
+    });
+
+    this.instancedObjectManager.registerInstanceType({
+      geometry: asteroidGeometry,
+      material: asteroidMaterial,
+      maxInstances: 10000,
+      celestialType: CelestialType.ASTEROID,
+      enableCulling: true,
+      lodDistance: 2000
+    });
+
+    // Debris field configuration
+    const debrisGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+    const debrisMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0x444444,
+      transparent: true,
+      opacity: 0.8 
+    });
+
+    this.instancedObjectManager.registerInstanceType({
+      geometry: debrisGeometry,
+      material: debrisMaterial,
+      maxInstances: 5000,
+      celestialType: CelestialType.COMET, // Using COMET for debris
+      enableCulling: true,
+      lodDistance: 500
+    });
+  }
+
+  /**
+   * Sets up subscriptions to state changes for hierarchical updates
+   */
+  private setupStateSubscriptions(): void {
+    // Subscribe to renderable objects changes to update scene hierarchy
+    renderableStore.renderableObjects$.subscribe(objects => {
+      this.sceneGraphManager.updateHierarchy(objects);
+      this.sceneGraphManager.updateOrbitalPositions(objects);
+    });
   }
 
   /**
@@ -157,8 +235,19 @@ export class ModularSpaceRenderer {
     const physicsCallback = simulationManager.createPhysicsCallback();
     this.sceneManager.animationLoop.onPhysics(physicsCallback);
 
-    // Register rendering callback
-    this.sceneManager.animationLoop.onAnimate(this.renderPipeline.update);
+    // Register rendering callback with hierarchical updates
+    this.sceneManager.animationLoop.onAnimate((elapsedTime, deltaTime) => {
+      // Update hierarchical managers first
+      this.hierarchicalLODManager.update();
+      this.instancedObjectManager.update();
+      this.instancedObjectManager.animateInstances(deltaTime);
+      
+      // Perform spatial culling
+      this.hierarchicalLODManager.performGroupCulling();
+      
+      // Continue with standard render pipeline
+      this.renderPipeline.update(deltaTime, elapsedTime);
+    });
   }
 
   /**
@@ -168,6 +257,7 @@ export class ModularSpaceRenderer {
   get scene(): THREE.Scene {
     return this.sceneManager.scene;
   }
+
   /**
    * Gets the active Three.js perspective camera instance.
    * @returns The camera object.
@@ -175,6 +265,7 @@ export class ModularSpaceRenderer {
   get camera(): THREE.PerspectiveCamera {
     return this.sceneManager.camera;
   }
+
   /**
    * Gets the underlying Three.js WebGL renderer instance.
    * @returns The renderer object.
@@ -182,6 +273,7 @@ export class ModularSpaceRenderer {
   get renderer(): THREE.WebGLRenderer {
     return this.sceneManager.renderer;
   }
+
   /**
    * Gets the associated OrbitControls instance.
    * @returns The controls instance.
@@ -196,6 +288,7 @@ export class ModularSpaceRenderer {
   start(): void {
     this.sceneManager.start();
   }
+
   /**
    * Stops the rendering loop.
    */
@@ -213,6 +306,90 @@ export class ModularSpaceRenderer {
     this.css2DManager?.onResize(width, height);
   }
 
+  // NEW: Hierarchical scene management methods
+
+  /**
+   * Creates an asteroid belt in the scene using instanced rendering
+   */
+  public createAsteroidBelt(
+    centerPosition: THREE.Vector3,
+    innerRadius: number,
+    outerRadius: number,
+    count: number,
+    verticalSpread?: number
+  ): void {
+    this.instancedObjectManager.createAsteroidBelt(
+      centerPosition,
+      innerRadius,
+      outerRadius,
+      count,
+      verticalSpread
+    );
+  }
+
+  /**
+   * Creates a debris field around a position
+   */
+  public createDebrisField(
+    centerPosition: THREE.Vector3,
+    radius: number,
+    count: number,
+    expansionVelocity?: number
+  ): void {
+    this.instancedObjectManager.createDebrisField(
+      centerPosition,
+      radius,
+      count,
+      expansionVelocity
+    );
+  }
+
+  /**
+   * Gets performance statistics for the hierarchical rendering system
+   */
+  public getHierarchicalStats(): {
+    sceneHierarchy: string;
+    lodStats: any;
+    instancedStats: any;
+  } {
+    return {
+      sceneHierarchy: this.sceneQuery.getSceneHierarchyString(),
+      lodStats: this.hierarchicalLODManager.getPerformanceStats(),
+      instancedStats: this.instancedObjectManager.getStats()
+    };
+  }
+
+  /**
+   * Finds celestial objects near a position using the scene query system
+   */
+  public findObjectsNear(
+    position: THREE.Vector3,
+    radius: number
+  ): Array<{object: THREE.Object3D; distance: number; worldPosition: THREE.Vector3}> {
+    return this.sceneQuery.findObjectsInRadius(position, radius);
+  }
+
+  /**
+   * Gets all moons orbiting a specific planet
+   */
+  public getMoonsOfPlanet(planetId: string): THREE.Object3D[] {
+    return this.sceneQuery.getMoonsOfPlanet(planetId);
+  }
+
+  /**
+   * Sets custom LOD visibility threshold for children of an object
+   */
+  public setChildrenVisibilityThreshold(objectId: string, threshold: number): void {
+    this.hierarchicalLODManager.setChildrenVisibilityThreshold(objectId, threshold);
+  }
+
+  /**
+   * Forces refresh of all LOD distances (useful after performance setting changes)
+   */
+  public refreshLODSystem(): void {
+    this.hierarchicalLODManager.refreshAllLODs();
+  }
+
   /**
    * Cleans up resources used by the renderer and its managers.
    * Stops the animation loop and removes event listeners.
@@ -221,6 +398,11 @@ export class ModularSpaceRenderer {
     console.log("[ModularSpaceRenderer] Disposing resources...");
 
     this.stateAdapter.dispose();
+
+    // Dispose hierarchical managers
+    this.sceneGraphManager.dispose();
+    this.hierarchicalLODManager.dispose();
+    this.instancedObjectManager.dispose();
 
     this.sceneManager.dispose();
     this.objectManager.dispose();
@@ -239,6 +421,10 @@ export class ModularSpaceRenderer {
 
     // Nullify references to allow garbage collection
     (this.sceneManager as any) = null;
+    (this.sceneGraphManager as any) = null;
+    (this.sceneQuery as any) = null;
+    (this.hierarchicalLODManager as any) = null;
+    (this.instancedObjectManager as any) = null;
     (this.objectManager as any) = null;
     (this.orbitManager as any) = null;
     (this.backgroundManager as any) = null;
@@ -273,14 +459,16 @@ export class ModularSpaceRenderer {
           }
         }
       }
+      // Also count instanced meshes
+      if (object instanceof THREE.InstancedMesh) {
+        const position = object.geometry.attributes.position;
+        if (position) {
+          count += (position.count / 3) * object.count;
+        }
+      }
     });
     return count;
   }
-
-  /**
-   * Toggles debris effects on or off.
-   * @returns The new state (true if enabled, false if disabled).
-   */
 
   /**
    * Sets the global debug mode for the renderer.

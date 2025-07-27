@@ -27,7 +27,9 @@
   },
   "dependencies": {
     "@teskooano/core-state": "file:../../core/state",
+    "@teskooano/core-math": "file:../../core/math",
     "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/renderer-threejs-helpers": "file:../threejs-helpers",
     "three": "0.178.0"
   },
   "devDependencies": {

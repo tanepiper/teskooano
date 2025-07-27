@@ -3,3 +3,7 @@ export * from "./SceneManager";
 export * from "./events";
 export * from "./helpers/GridManager";
 export * from "./helpers/DebugSphereManager";
+export * from "./SceneGraphManager";
+export * from "./SceneQuery";
+export * from "./HierarchicalLODManager";
+export * from "./InstancedObjectManager";

@@ -10,7 +10,9 @@
     "paths": {
       "@teskooano/core-physics": ["../../core/physics/src"],
       "@teskooano/core-state": ["../../core/state/src"],
-      "@teskooano/data-types": ["../../data/types/src"]
+      "@teskooano/core-math": ["../../core/math/src"],
+      "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/renderer-threejs-helpers": ["../threejs-helpers/src"]
     }
   },
   "include": ["src/**/*.ts"],
@@ -18,6 +20,8 @@
   "references": [
     { "path": "../../core/physics" },
     { "path": "../../core/state" },
-    { "path": "../../data/types" }
+    { "path": "../../core/math" },
+    { "path": "../../data/types" },
+    { "path": "../threejs-helpers" }
   ]
 }
