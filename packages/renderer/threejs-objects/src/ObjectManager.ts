@@ -169,6 +169,8 @@ export class ObjectManager extends StateSubscriptionMixin {
 
     // Use hierarchical LOD manager if provided, otherwise create standard LOD manager
     this.lodManager = hierarchicalLODManager || new LODManager(camera);
+    console.log(`[ObjectManager] 🔧 LOD Manager type: ${hierarchicalLODManager ? 'Hierarchical' : 'Standard'}`);
+    console.log(`[ObjectManager] 🔧 LOD Manager instance:`, this.lodManager.constructor.name);
     this.lightingManager = lightingManager || new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
       celestialRenderers: this.celestialRenderers,
@@ -177,17 +179,38 @@ export class ObjectManager extends StateSubscriptionMixin {
     // Create LOD callback adapter
     const createLodCallback = hierarchicalLODManager
       ? (object: RenderableCelestialObject, levels: LODLevel[]) => {
+          console.log(`[ObjectManager] 🎯 Creating hierarchical LOD for ${object.celestialObjectId} with ${levels.length} levels`);
+          
           // Convert LOD levels to mesh format for hierarchical manager
           const meshes: { [key: string]: THREE.Object3D } = {};
-          levels.forEach((level, index) => {
-            switch (index) {
-              case 0: meshes.high = level.object; break;
-              case 1: meshes.medium = level.object; break;
-              case 2: meshes.low = level.object; break;
-              case 3: meshes.billboard = level.object; break;
+          
+          // Sort levels by distance (closest first)
+          const sortedLevels = [...levels].sort((a, b) => a.distance - b.distance);
+          
+          // Map levels based on distance thresholds
+          sortedLevels.forEach((level, index) => {
+            console.log(`[ObjectManager]   Level ${index}: distance=${level.distance}, object=${level.object.type}`);
+            
+            if (level.distance === 0) {
+              // Highest detail (distance 0)
+              meshes.high = level.object;
+            } else if (level.distance < 1000) {
+              // Medium detail (close but not zero)
+              if (!meshes.medium) meshes.medium = level.object;
+            } else if (level.distance < 10000) {
+              // Low detail (medium distance)
+              if (!meshes.low) meshes.low = level.object;
+            } else {
+              // Billboard (far distance)
+              if (!meshes.billboard) meshes.billboard = level.object;
             }
           });
-          return hierarchicalLODManager.createAutoLOD(object, meshes);
+          
+          console.log(`[ObjectManager] 🏗️ Mesh mapping: high=${!!meshes.high}, medium=${!!meshes.medium}, low=${!!meshes.low}, billboard=${!!meshes.billboard}`);
+          
+          const lodObject = hierarchicalLODManager.createAutoLOD(object, meshes);
+          console.log(`[ObjectManager] ✅ Created hierarchical LOD object for ${object.celestialObjectId}`);
+          return lodObject;
         }
       : this.lodManager.createAndRegisterLOD.bind(this.lodManager);
 

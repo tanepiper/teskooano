@@ -2,7 +2,7 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-lod";
-import { HierarchicalLODManager } from "@teskooano/renderer-threejs-core";
+import { type HierarchicalLODManager } from "@teskooano/renderer-threejs-core";
 import { createOortCloudMesh } from "@teskooano/celestials-oort-cloud";
 import { createAsteroidFieldMesh } from "@teskooano/celestials-asteroid-field";
 import { createStarMesh } from "@teskooano/celestials-stars";
@@ -103,6 +103,9 @@ export class MeshFactory {
   public createObjectMesh(
     object: RenderableCelestialObject,
   ): THREE.Object3D | null {
+    console.log(`[MeshFactory] 🏭 Creating mesh for ${object.celestialObjectId} (${object.type})`);
+    console.log(`[MeshFactory] 🔧 Using hierarchical LOD: ${this.lodManager instanceof HierarchicalLODManager}`);
+    
     if (this.debugMode) {
       // Use the imported fallback function
       return createFallbackSphere(object);

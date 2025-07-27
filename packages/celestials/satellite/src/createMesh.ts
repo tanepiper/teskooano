@@ -72,9 +72,18 @@ export function createMesh(
   }
 
   if (renderer.getLODLevels) {
+    console.log(`[Satellite:createMesh] 📋 Getting LOD levels for ${object.celestialObjectId}`);
     const lodLevels = renderer.getLODLevels(object);
+    console.log(`[Satellite:createMesh] 📊 Got ${lodLevels?.length || 0} LOD levels`);
+    
     if (lodLevels && lodLevels.length > 0) {
+      lodLevels.forEach((level, i) => {
+        console.log(`[Satellite:createMesh]   Level ${i}: distance=${level.distance}, object=${level.object?.type || 'unknown'}`);
+      });
+      
+      console.log(`[Satellite:createMesh] 🏭 Calling createLodObject for ${object.celestialObjectId}`);
       const lod = createLodObject(object, lodLevels);
+      console.log(`[Satellite:createMesh] ✅ Created LOD object:`, lod?.type || 'unknown');
 
       if (debug) {
         console.debug(
