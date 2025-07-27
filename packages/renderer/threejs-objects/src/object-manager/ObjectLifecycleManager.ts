@@ -215,8 +215,7 @@ export class ObjectLifecycleManager {
       // Ring shadow casters are registered by the mesh creators after LOD creation
     }
 
-    // For comets, the mesh is an LOD object. The label should be added
-    // to the LOD object itself so it's not affected by level switching.
+    // Create celestial label
     const celestialLayer = this.css2DManager?.getLayer(
       CSS2DLayerType.CELESTIAL_LABELS,
     ) as CelestialLabelLayer;
@@ -228,9 +227,7 @@ export class ObjectLifecycleManager {
         );
       }
 
-      const label = celestialLayer.createInstance(object);
-      label.position.copy(mesh.position);
-      mesh.add(label);
+      celestialLayer.createLabel(object, mesh);
     }
 
     // Set up gravitational lensing effects if applicable
