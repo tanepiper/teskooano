@@ -1,23 +1,23 @@
 import {
   CelestialStatus,
   CelestialType,
+  StellarType,
   type RenderableCelestialObject,
+  type StarProperties,
 } from "@teskooano/data-types";
 import {
+  CelestialLabelLayer,
   CSS2DLayerType,
   type Layer2DManager,
-  CelestialLabelLayer,
 } from "@teskooano/renderer-threejs-labels";
 import {
-  type LightingManager,
   LightSourceComponent,
+  type LightingManager,
 } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
-import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";
-import { StellarType, type StarProperties } from "@teskooano/data-types";
 
 /**
  * @internal
@@ -127,6 +127,13 @@ export class ObjectLifecycleManager {
       return;
     }
 
+    let group = this.scene.getObjectByName(`GROUP_${objectId}`);
+    if (!group) {
+      group = new THREE.Group();
+      group.name = `GROUP_${objectId}`;
+      this.scene.add(group);
+    }
+
     // Debug logging for asteroids specifically
     if (object.type === CelestialType.ASTEROID) {
       console.log(
@@ -157,7 +164,7 @@ export class ObjectLifecycleManager {
       );
     }
 
-    this.scene.add(mesh);
+    group.add(mesh);
     this.objects.set(objectId, mesh);
 
     // Handle associated components (lights, labels, lensing)

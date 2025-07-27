@@ -1,12 +1,6 @@
-import { OSVector3, createSeededRandomSync } from "@teskooano/core-math";
-import {
-  calculateOrbitalPosition,
-  calculateOrbitalVelocity,
-} from "@teskooano/core-physics";
 import type {
   CelestialObject,
   OrbitalParameters,
-  PhysicsStateReal,
   PlanetAtmosphereProperties,
   StarProperties,
 } from "@teskooano/data-types";
@@ -16,9 +10,9 @@ import {
   CustomEvents,
 } from "@teskooano/data-types";
 import { renderableStore } from "../renderableStore";
+import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import { celestialStore } from "../stores/celestialStore";
 import { ClearStateOptions } from "../types";
-import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 
 /**
  * Type guard to check if an object is of type PlanetAtmosphereProperties.
@@ -248,27 +242,6 @@ export class CelestialManager {
         detail: { count: totalObjects, systemId },
       }),
     );
-  }
-
-  /**
-   * Pre-calculates physics states for all objects in the store.
-   * This ensures that all parent-child relationships are established before physics calculation.
-   */
-  private precalculatePhysicsStates(): void {
-    const allObjects = celestialStore.getObjects();
-
-    // Calculate physics states in dependency order
-    const sortedIds = this.sortByDependency(Object.values(allObjects)).map(
-      (obj) => obj.id,
-    );
-
-    for (const objectId of sortedIds) {
-      const object = allObjects[objectId];
-      if (object) {
-        // This will calculate and cache the physics state
-        PhysicsStateProvider.getPhysicsState(object);
-      }
-    }
   }
 
   /**

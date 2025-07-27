@@ -145,7 +145,15 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     css2dObject.name = `celestial-label-${object.celestialObjectId}`;
     css2dObject.position.copy(this.calculateLabelPosition(object, parentMesh));
 
-    this.celestialLabelsGroup.add(css2dObject);
+    const group = this.scene.getObjectByName(
+      `GROUP_${object.celestialObjectId}`,
+    );
+    if (group) {
+      group.add(css2dObject);
+    }
+    // Also add to the main celestial labels group for visibility
+    //this.celestialLabelsGroup.add(css2dObject);
+
     this.elements.set(object.celestialObjectId, css2dObject);
 
     // Initialize cache for this label
