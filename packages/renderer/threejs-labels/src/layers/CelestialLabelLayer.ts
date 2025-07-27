@@ -84,9 +84,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   private _tempPos1 = new THREE.Vector3();
   private _tempPos2 = new THREE.Vector3();
 
-  /** Group for all celestial labels to manage visibility and organization */
-  private celestialLabelsGroup: THREE.Group;
-
   constructor(scene: THREE.Scene, config: LabelVisibilityConfig = {}) {
     super(scene);
     this.visibilityConfig = {
@@ -101,13 +98,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       ejectedSatellite: config.ejectedSatellite ?? 200000000,
       asteroid: config.asteroid ?? 100, // Increase asteroid visibility to 100 AU for practical viewing
     };
-
-    // Create a dedicated group for all celestial labels
-    this.celestialLabelsGroup = new THREE.Group();
-    this.celestialLabelsGroup.name = "GROUP_CELESTIAL_LABELS";
-    if (this.scene) {
-      this.scene.add(this.celestialLabelsGroup);
-    }
   }
 
   /**
@@ -151,8 +141,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     if (group) {
       group.add(css2dObject);
     }
-    // Also add to the main celestial labels group for visibility
-    //this.celestialLabelsGroup.add(css2dObject);
 
     this.elements.set(object.celestialObjectId, css2dObject);
 

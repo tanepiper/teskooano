@@ -7,7 +7,8 @@ import { CSS2DLayerType } from "../types";
 
 /**
  * Manages the creation, visibility, and disposal of AU (Astronomical Unit) markers.
- * This class encapsulates both the 3D ring geometries and the 2D CSS labels.
+ * This class encapsulates both the 3D ring geometries and the 2D CSS labels,
+ * using an InstancedMesh for optimized rendering of the rings.
  */
 export class AuMarkerManager {
   private mainGroup: THREE.Group;
@@ -15,7 +16,7 @@ export class AuMarkerManager {
   private css2DManager: Layer2DManager;
   private isVisible: boolean = true;
   private auMarkersData: Array<{ au: number; color: string }>;
-  private auMarkerGroups: Map<number, THREE.Group> = new Map();
+  private ringInstances: THREE.InstancedMesh | null = null;
 
   /**
    * @param scene The main THREE.Scene to add the markers to.
@@ -32,71 +33,90 @@ export class AuMarkerManager {
     this.css2DManager = css2DManager;
     this.mainGroup = new THREE.Group();
     this.mainGroup.name = name;
+
     this.scene.add(this.mainGroup);
   }
 
   /**
-   * Creates the AU marker rings and their corresponding 2D labels.
+   * Creates the AU marker rings as a single InstancedMesh and their corresponding 2D labels.
    */
   public createMarkers(): void {
     // Register the dedicated layer for AU marker labels
     const auMarkerLayer = new AuMarkerLabelLayer(this.scene);
     this.css2DManager.registerLayer(CSS2DLayerType.AU_MARKERS, auMarkerLayer);
 
-    this.auMarkersData.forEach(({ au, color }) => {
+    const count = this.auMarkersData.length;
+    if (count === 0) return;
+
+    // 1. Create the base geometry and material for the instanced rings
+    // The geometry should be a "unit" ring, so its radius is 1.
+    // The InstancedMesh matrix will then scale it to the correct AU radius.
+    const ringGeometry = new THREE.RingGeometry(0.995, 1, 256);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.2,
+      toneMapped: false, // Set to false for UI elements to not be affected by scene lighting
+    });
+
+    this.ringInstances = new THREE.InstancedMesh(
+      ringGeometry,
+      ringMaterial,
+      count,
+    );
+    this.ringInstances.name = "au-rings-instanced";
+    this.mainGroup.add(this.ringInstances);
+
+    const dummy = new THREE.Object3D();
+    const color = new THREE.Color();
+
+    this.auMarkersData.forEach(({ au, color: hexColor }, i) => {
       const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
-      const ringThickness = radiusSceneUnits * 0.001;
 
-      // Create a group for this specific AU marker
-      const auMarkerGroup = new THREE.Group();
-      auMarkerGroup.name = `au-marker-group-${au}`;
-      this.auMarkerGroups.set(au, auMarkerGroup);
+      // 2. Set the transform for each instance (scale and rotation)
+      // Rings are on the XZ plane, so we rotate around the X-axis
+      dummy.rotation.x = Math.PI / 2;
+      dummy.scale.set(radiusSceneUnits, radiusSceneUnits, 1);
+      dummy.updateMatrix();
 
-      // Create material with required properties
-      const material = new THREE.MeshBasicMaterial({
-        color: parseInt(color.replace("#", "0x")),
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.5,
-        toneMapped: true,
-      });
+      if (this.ringInstances) {
+        this.ringInstances.setMatrixAt(i, dummy.matrix);
+        this.ringInstances.setColorAt(i, color.set(hexColor));
+      }
 
-      const circle = GeometryHelper.createRing({
-        x: 0,
-        y: 0,
-        z: 0,
-        size: 1,
-        color: 0xffffff, // ignored when material is provided
-        wireframe: false, // ignored when material is provided
-        innerRadius: radiusSceneUnits - ringThickness / 2,
-        outerRadius: radiusSceneUnits + ringThickness / 2,
-        segments: 256,
-        name: `AU_RING_${au}`,
-        material,
-      });
-
-      circle.rotation.x = Math.PI / 2;
-
+      // 4. Create the four labels for each ring at their world positions
       const labelPositions = {
         Xpos: new THREE.Vector3(radiusSceneUnits, 0, 0),
         Xneg: new THREE.Vector3(-radiusSceneUnits, 0, 0),
-        Ypos: new THREE.Vector3(0, radiusSceneUnits, 0),
-        Yneg: new THREE.Vector3(0, -radiusSceneUnits, 0),
+        Zpos: new THREE.Vector3(0, 0, radiusSceneUnits),
+        Zneg: new THREE.Vector3(0, 0, -radiusSceneUnits),
       };
 
       for (const [dir, pos] of Object.entries(labelPositions)) {
-        const labelId = `au-marker-group-${au}-label-${dir}`;
-        // Create the CSS2D label and add it directly to the circle mesh
-        const css2dObject = auMarkerLayer.createLabel(labelId, au, pos, color);
-        circle.add(css2dObject);
+        let distanceGroup = this.scene.getObjectByName(`AU_MARKER_GROUP_${au}`);
+        if (!distanceGroup) {
+          distanceGroup = new THREE.Group();
+          distanceGroup.name = `AU_MARKER_GROUP_${au}`;
+          this.mainGroup.add(distanceGroup);
+        }
+
+        const labelId = `au-marker-${au}-label-${dir}`;
+        const css2dObject = auMarkerLayer.createLabel(
+          labelId,
+          au,
+          pos,
+          hexColor,
+        );
+        // Add labels to their own group
+        distanceGroup.add(css2dObject);
       }
-
-      // Add the circle (with its labels) to the group
-      auMarkerGroup.add(circle);
-
-      // Add the AU marker group to the main group
-      this.mainGroup.add(auMarkerGroup);
     });
+
+    // 5. Important: update the instance buffers
+    this.ringInstances.instanceMatrix.needsUpdate = true;
+    if (this.ringInstances.instanceColor) {
+      this.ringInstances.instanceColor.needsUpdate = true;
+    }
   }
 
   /**
@@ -106,6 +126,7 @@ export class AuMarkerManager {
   public setVisible(visible: boolean): void {
     this.isVisible = visible;
     this.mainGroup.visible = this.isVisible;
+    // The layer visibility will handle the individual labels
     this.css2DManager.setLayerVisibility(
       CSS2DLayerType.AU_MARKERS,
       this.isVisible,
@@ -130,7 +151,7 @@ export class AuMarkerManager {
         object.geometry.dispose();
         if (Array.isArray(object.material)) {
           object.material.forEach((material) => material.dispose());
-        } else {
+        } else if (object.material) {
           object.material.dispose();
         }
       }
@@ -139,14 +160,14 @@ export class AuMarkerManager {
     while (this.mainGroup.children.length > 0) {
       this.mainGroup.remove(this.mainGroup.children[0]);
     }
+    this.ringInstances = null;
 
     this.css2DManager.clearLayer(CSS2DLayerType.AU_MARKERS);
   }
 
   /**
    * Generates AU marker data dynamically.
-   * Creates markers in groups of 10, where each tenth marker (0.1, 1, 10, 100, etc.) is green
-   * and the others are orange. Goes up to the specified maximum AU.
+   * Creates markers in powers of 10, with the first of each decade (0.1, 1, 10, etc.) as green.
    * @param maxAu The maximum AU value to generate markers for (default: 1,000,000)
    * @returns Array of AU marker data objects
    */
@@ -154,31 +175,28 @@ export class AuMarkerManager {
     maxAu: number = 1000000,
   ): Array<{ au: number; color: string }> {
     const markers: Array<{ au: number; color: string }> = [];
+    let powerOf10 = 0.1;
 
-    // Start with 0.1 AU and go up in groups of 10
-    let currentGroup = 0.1;
-
-    while (currentGroup <= maxAu) {
-      // Generate 10 markers for this group (0.1, 0.2, ..., 0.9, 1.0)
-      for (let i = 1; i <= 10; i++) {
-        let au = currentGroup * i;
-        if (au < 1) {
-          au = parseFloat(au.toFixed(1));
+    while (powerOf10 <= maxAu) {
+      for (let i = 1; i <= 9; i++) {
+        const au = i * powerOf10;
+        if (au > maxAu) {
+          break; // Stop if we exceed the max AU
         }
 
-        // Skip if we've exceeded the maximum
-        if (au > maxAu) break;
+        let displayAu = au;
+        if (powerOf10 < 1) {
+          // Handle floating point inaccuracies for decimals
+          displayAu = parseFloat(au.toFixed(1));
+        }
 
-        // Every 10th marker (i === 10) is green, others are orange
-        const color = i === 10 ? "#00ff00" : "#FFA500";
+        // The first marker of each "decade" (0.1, 1, 10, etc.) is green
+        const color = i === 1 ? "#00ff00" : "#FFA500";
 
-        markers.push({ au, color });
+        markers.push({ au: displayAu, color });
       }
-
-      // Move to the next group (multiply by 10)
-      currentGroup *= 10;
+      powerOf10 *= 10;
     }
-
     return markers;
   }
 }
