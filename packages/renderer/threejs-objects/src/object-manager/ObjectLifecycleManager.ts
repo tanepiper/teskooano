@@ -175,7 +175,12 @@ export class ObjectLifecycleManager {
         bodyGroup.add(mesh);
         console.log(`[ObjectLifecycleManager] ✅ Added ${objectId} (${object.type}) to hierarchical body group: ${bodyGroup.name}`);
       } else {
-        console.warn(`[ObjectLifecycleManager] ⚠️ No body group found for ${objectId}, adding to scene directly`);
+        // Debug: Let's see what nodes are available
+        const allNodes = Array.from(this.sceneGraphManager['systemNodes'].keys());
+        console.warn(`[ObjectLifecycleManager] ⚠️ No body group found for objectId: "${objectId}" (type: ${object.type})`);
+        console.warn(`[ObjectLifecycleManager] 🔍 Available nodes: [${allNodes.join(', ')}]`);
+        console.warn(`[ObjectLifecycleManager] 📝 Object name: "${object.name}"`);
+        console.warn(`[ObjectLifecycleManager] 🏗️ Adding to scene directly`);
         this.scene.add(mesh);
       }
     } else {

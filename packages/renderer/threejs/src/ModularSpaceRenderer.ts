@@ -225,22 +225,25 @@ export class ModularSpaceRenderer {
   private setupStateSubscriptions(): void {
     // Subscribe to renderable objects changes to update scene hierarchy
     renderableStore.renderableObjects$.subscribe(objects => {
+      console.log(`[ModularSpaceRenderer] 🏗️ Building hierarchy for ${Object.keys(objects).length} objects`);
+      
       // First, ensure the hierarchy is up to date
       this.sceneGraphManager.updateHierarchy(objects);
       
       // Then update orbital positions
       this.sceneGraphManager.updateOrbitalPositions(objects);
       
-      console.log(`[ModularSpaceRenderer] Updated hierarchy for ${Object.keys(objects).length} objects`);
+      console.log(`[ModularSpaceRenderer] ✅ Hierarchy updated for ${Object.keys(objects).length} objects`);
       
       // Debug: Print scene hierarchy
       if (Object.keys(objects).length > 0) {
         console.log("Scene hierarchy:", this.sceneQuery.getSceneHierarchyString(3));
       }
+      
+      // IMPORTANT: Trigger ObjectManager sync AFTER hierarchy is built
+      console.log(`[ModularSpaceRenderer] 🔄 Now syncing objects to hierarchy...`);
+      this.objectManager.syncToHierarchy(objects);
     });
-
-    // Start the ObjectManager's state subscription after hierarchy is set up
-    this.objectManager.startStateSubscription();
   }
 
   /**

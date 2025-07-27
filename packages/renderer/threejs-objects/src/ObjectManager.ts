@@ -248,6 +248,16 @@ export class ObjectManager extends StateSubscriptionMixin {
     }
   }
 
+  /**
+   * Manually syncs objects to the hierarchy.
+   * This is called after the hierarchy is built to ensure proper placement.
+   */
+  public syncToHierarchy(objects: Record<string, RenderableCelestialObject>): void {
+    console.log(`[ObjectManager] 🔄 Syncing ${Object.keys(objects).length} objects to hierarchy`);
+    this.latestRenderableObjects = objects;
+    this.objectLifecycleManager.syncObjectsWithState(objects);
+  }
+
   private isSubscribedToState: boolean = false;
 
   /**
