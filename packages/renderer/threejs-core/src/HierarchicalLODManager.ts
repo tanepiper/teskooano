@@ -72,6 +72,48 @@ const LOD_DISTANCE_MULTIPLIERS = {
     medium: { factor: 30, children: 60 },
     low: { factor: 60, children: 120 },
     billboard: { factor: 300, children: 600 }
+  },
+  [CelestialType.SATELLITE]: {
+    high: { factor: 5, children: 10 },
+    medium: { factor: 10, children: 20 },
+    low: { factor: 20, children: 40 },
+    billboard: { factor: 100, children: 200 }
+  },
+  [CelestialType.DWARF_PLANET]: {
+    high: { factor: 15, children: 30 },
+    medium: { factor: 30, children: 60 },
+    low: { factor: 60, children: 120 },
+    billboard: { factor: 300, children: 600 }
+  },
+  [CelestialType.ASTEROID_FIELD]: {
+    high: { factor: 20, children: 50 },
+    medium: { factor: 40, children: 100 },
+    low: { factor: 80, children: 200 },
+    billboard: { factor: 400, children: 800 }
+  },
+  [CelestialType.OORT_CLOUD]: {
+    high: { factor: 100, children: 500 },
+    medium: { factor: 200, children: 1000 },
+    low: { factor: 400, children: 2000 },
+    billboard: { factor: 2000, children: 4000 }
+  },
+  [CelestialType.RING_SYSTEM]: {
+    high: { factor: 8, children: 15 },
+    medium: { factor: 16, children: 30 },
+    low: { factor: 32, children: 60 },
+    billboard: { factor: 160, children: 320 }
+  },
+  [CelestialType.BARYCENTER]: {
+    high: { factor: 1, children: 1 },
+    medium: { factor: 1, children: 1 },
+    low: { factor: 1, children: 1 },
+    billboard: { factor: 1, children: 1 }
+  },
+  [CelestialType.OTHER]: {
+    high: { factor: 10, children: 20 },
+    medium: { factor: 20, children: 40 },
+    low: { factor: 40, children: 80 },
+    billboard: { factor: 200, children: 400 }
   }
 };
 
@@ -166,20 +208,45 @@ export class HierarchicalLODManager extends StateSubscriptionMixin {
     const distances = this.calculateLODDistances(config);
     const lod = new THREE.LOD();
 
-    // Add available LOD levels
+    // Determine the primary mesh to use
+    const primaryMesh = meshes.high || meshes.medium || meshes.low || meshes.billboard;
+    
+    if (!primaryMesh) {
+      console.warn(`[HierarchicalLODManager] No meshes provided for ${object.celestialObjectId}`);
+      return lod;
+    }
+
+    // Add high-detail level
     if (meshes.high) {
       lod.addLevel(meshes.high, 0);
       this.originalMeshes.set(object.celestialObjectId, meshes.high);
+    } else {
+      // Use primary mesh as high detail
+      lod.addLevel(primaryMesh, 0);
+      this.originalMeshes.set(object.celestialObjectId, primaryMesh);
     }
     
+    // Add medium-detail level
     if (meshes.medium) {
       lod.addLevel(meshes.medium, distances.medium);
+    } else if (primaryMesh) {
+      // Clone and slightly reduce detail for medium level
+      const mediumMesh = primaryMesh.clone();
+      mediumMesh.scale.multiplyScalar(0.8); // Slightly smaller for distance
+      lod.addLevel(mediumMesh, distances.medium);
     }
     
+    // Add low-detail level
     if (meshes.low) {
       lod.addLevel(meshes.low, distances.low);
+    } else if (primaryMesh) {
+      // Clone and reduce detail for low level
+      const lowMesh = primaryMesh.clone();
+      lowMesh.scale.multiplyScalar(0.6); // Smaller for distance
+      lod.addLevel(lowMesh, distances.low);
     }
     
+    // Add billboard level if provided
     if (meshes.billboard) {
       lod.addLevel(meshes.billboard, distances.billboard);
     }
@@ -217,7 +284,14 @@ export class HierarchicalLODManager extends StateSubscriptionMixin {
     billboard: number;
     childrenVisible: number;
   } {
-    const multipliers = LOD_DISTANCE_MULTIPLIERS[config.type];
+    let multipliers = LOD_DISTANCE_MULTIPLIERS[config.type];
+    
+    // Fallback to OTHER type if multipliers not found
+    if (!multipliers) {
+      console.warn(`[HierarchicalLODManager] No LOD multipliers defined for ${config.type}, using OTHER as fallback`);
+      multipliers = LOD_DISTANCE_MULTIPLIERS[CelestialType.OTHER];
+    }
+    
     const baseRadius = config.radius;
     
     // Apply performance tier adjustments
