@@ -115,7 +115,7 @@ export class LightingHelper {
       light.shadow.mapSize.width = shadowMapSize;
       light.shadow.mapSize.height = shadowMapSize;
       light.shadow.camera.near = 0.1;
-      light.shadow.camera.far = 100;
+      light.shadow.camera.far = 5000;
     }
 
     return light;
