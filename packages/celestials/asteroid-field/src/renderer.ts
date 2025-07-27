@@ -142,7 +142,11 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
         (distanceFromCenter - innerRadius) / (outerRadius - innerRadius);
       const baseSizeVariation =
         (5.0 - normalizedDistance * 0.3) * (0.7 + this.random() * 0.6);
-      const size = Math.max(0.1, baseSizeVariation * 0.3); // Adjust size for InstancedMesh (e.g., 0.000005 AU max radius)
+
+      // Scale asteroid size proportionally to belt dimensions
+      const beltWidth = outerRadius - innerRadius;
+      const sizeScaleFactor = Math.min(1.0, beltWidth / 1000); // Normalize to reasonable belt width
+      const size = Math.max(0.1, baseSizeVariation * 0.3 * sizeScaleFactor);
 
       const textureIndex = Math.floor(this.random() * 5);
       const initialRotation = this.random() * Math.PI * 2;
@@ -215,10 +219,10 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       );
       instancedMesh.name = `${object.celestialObjectId}-asteroidfield-lod-${i}`;
       instancedMesh.frustumCulled = true;
-
       // Pre-populate instance matrices and colors (will be updated dynamically)
       for (let j = 0; j < count; j++) {
         const asteroid = asteroidsToRender[j];
+
         this._tempPosition.copy(asteroid.position);
         this._tempScale.set(asteroid.size, asteroid.size, asteroid.size);
         this._tempRotation.set(0, asteroid.initialRotation, 0); // Apply initial rotation
@@ -323,7 +327,11 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
           );
 
           // Apply individual asteroid size and initial rotation (from generation)
-          this._tempScale.set(asteroid.size, asteroid.size, asteroid.size);
+          this._tempScale.set(
+            asteroid.size * this.renderScale,
+            asteroid.size * this.renderScale,
+            asteroid.size * this.renderScale,
+          );
           this._tempRotation.set(0, asteroid.initialRotation, 0);
 
           this._tempMatrix.compose(

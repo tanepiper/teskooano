@@ -107,7 +107,9 @@ export function generateAsteroidBelt(
     status: CelestialStatus.ACTIVE,
     parentId: parentStar.id,
     realMass_kg: beltMass_kg, // Now has realistic mass for gravitational effects
-    realRadius_m: beltDimensions.outerRadius * CONST.AU_TO_METERS,
+    realRadius_m:
+      (beltDimensions.outerRadius - beltDimensions.innerRadius) *
+      CONST.AU_TO_METERS,
     temperature: beltTemperature,
     orbit: beltOrbit,
     properties: beltProperties,
@@ -183,16 +185,18 @@ function calculateBeltDimensions(
   outerRadius: number;
   height: number;
 } {
-  // Belt width: typically 10-25% of the central distance (reduced from 20-40%)
-  const relativeWidth = 0.1 + random() * 0.15; // 10-25%
-  const halfWidth = centerDistanceAU * relativeWidth * 0.5;
+  // Belt width: Make it more substantial, like the Solar System's main belt (1.2 AU width)
+  // Scale proportionally with distance, but ensure minimum substantial width
+  const baseWidth = Math.max(0.8, centerDistanceAU * 0.4); // At least 0.8 AU width
+  const widthVariation = baseWidth * (0.8 + random() * 0.4); // ±20% variation
+  const halfWidth = widthVariation * 0.5;
 
   const innerRadius = Math.max(0.1, centerDistanceAU - halfWidth);
   const outerRadius = centerDistanceAU + halfWidth;
 
-  // Belt height: much smaller than width (disk-like structure)
-  // Typically 1-5% of the radial width
-  const height = halfWidth * 2 * (0.01 + random() * 0.04); // 1-5% of width
+  // Belt height: Make it more substantial like the Solar System (0.5 AU)
+  // Height should be roughly 30-60% of the width
+  const height = halfWidth * 2 * (0.3 + random() * 0.3); // 30-60% of width
 
   return {
     innerRadius,
@@ -209,23 +213,23 @@ function calculateRealisticParticleCount(
   distanceAU: number,
   random: () => number,
 ): number {
-  // Base count depends on belt volume and distance from star
+  // Base count should be more substantial, like the Solar System's 50,000
   const beltVolume =
     Math.PI *
     (dimensions.outerRadius * dimensions.outerRadius -
       dimensions.innerRadius * dimensions.innerRadius) *
     dimensions.height;
 
-  // Density decreases with distance (less material available)
-  const densityFactor = Math.pow(distanceAU, -1.5); // Inverse square-ish law
+  // Density decreases with distance but should still produce substantial counts
+  const densityFactor = Math.pow(distanceAU, -0.5); // Less steep decline
 
-  // Base particle density (particles per cubic AU)
-  const baseDensity = 500 + random() * 1500; // Increased from 100-500 to 500-2000 particles per cubic AU
+  // Increase base density to get counts closer to Solar System values
+  const baseDensity = 2000 + random() * 3000; // 2000-5000 particles per cubic AU
 
   const totalCount = Math.floor(beltVolume * baseDensity * densityFactor);
 
-  // Realistic range: 5,000 to 100,000 visible objects (increased from 1,000-50,000)
-  return Math.max(5000, Math.min(100000, totalCount));
+  // Target range: 15,000 to 75,000 visible objects (closer to Solar System's 50,000)
+  return Math.max(15000, Math.min(75000, totalCount));
 }
 
 /**
@@ -280,19 +284,16 @@ function calculateBeltMass(
       dimensions.innerRadius * dimensions.innerRadius) *
     dimensions.height;
 
-  // Density varies with distance from star
-  // Inner belts: higher density (more material)
-  // Outer belts: lower density (less material available)
-  const densityFactor = Math.pow(distanceAU, -1.5); // Inverse square-ish law
+  // Density varies with distance from star but should produce Solar System-like masses
+  const densityFactor = Math.pow(distanceAU, -0.5); // Less steep decline
 
-  // Base density in kg per cubic AU
-  // Asteroid belt density varies significantly, but we can estimate
-  const baseDensity = 1e12 + random() * 5e12; // 1-6 trillion kg per cubic AU
+  // Increase base density to get masses closer to Solar System's 3e21 kg
+  const baseDensity = 5e12 + random() * 1e13; // 5-15 trillion kg per cubic AU
 
   const totalMass = beltVolume * baseDensity * densityFactor;
 
-  // Realistic range: 1e18 to 1e22 kg (similar to real asteroid belts)
-  return Math.max(1e18, Math.min(1e22, totalMass));
+  // Target range: 1e21 to 1e22 kg (closer to Solar System's 3e21 kg)
+  return Math.max(1e21, Math.min(1e22, totalMass));
 }
 
 /**
