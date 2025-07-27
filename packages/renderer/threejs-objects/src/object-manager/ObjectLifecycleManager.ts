@@ -230,15 +230,22 @@ export class ObjectLifecycleManager {
       celestialLayer.createLabel(object, mesh);
     }
 
-    // Set up gravitational lensing effects if applicable
-    this.lensingHandler.addLensingToObject({
-      objectId,
-      mesh,
-      object,
-      renderer: this.renderer,
-      scene: this.scene,
-      camera: this.camera,
-    });
+    // Set up gravitational lensing effects if applicable (only for black holes and neutron stars)
+    if (this.lensingHandler.needsGravitationalLensing(object)) {
+      if (this.renderer) {
+        this.lensingHandler.applyGravitationalLensing(
+          object,
+          this.renderer,
+          this.scene,
+          this.camera,
+          mesh,
+        );
+      } else {
+        console.warn(
+          `[ObjectLifecycleManager] Cannot apply lensing for ${objectId}: Renderer instance not available.`,
+        );
+      }
+    }
   }
 
   /**
