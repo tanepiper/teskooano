@@ -13,7 +13,11 @@ import {
 import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-lod";
+import { LODManager, LODLevel } from "@teskooano/renderer-threejs-lod";
+import { 
+  SceneGraphManager, 
+  HierarchicalLODManager 
+} from "@teskooano/renderer-threejs-core";
 
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
@@ -139,6 +143,8 @@ export class ObjectManager extends StateSubscriptionMixin {
    * @param css2DManager - Optional manager for CSS2D labels and interactions.
    * @param acceleration$ - Optional observable stream for acceleration vectors.
    * @param lightingManager - Optional lighting manager to use. If not provided, creates its own.
+   * @param sceneGraphManager - Optional hierarchical scene graph manager.
+   * @param hierarchicalLODManager - Optional hierarchical LOD manager.
    */
   constructor(
     scene: THREE.Scene,
@@ -150,6 +156,8 @@ export class ObjectManager extends StateSubscriptionMixin {
       Record<string, OSVector3>
     > = StateAccessor.getAccelerationVectorsStream(),
     lightingManager?: LightingManager,
+    sceneGraphManager?: SceneGraphManager,
+    hierarchicalLODManager?: HierarchicalLODManager,
   ) {
     super();
     this.scene = scene;
@@ -159,11 +167,29 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.css2DManager = css2DManager;
     this.acceleration$ = acceleration$; // Assign the observable
 
-    this.lodManager = new LODManager(camera);
+    // Use hierarchical LOD manager if provided, otherwise create standard LOD manager
+    this.lodManager = hierarchicalLODManager || new LODManager(camera);
     this.lightingManager = lightingManager || new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
       celestialRenderers: this.celestialRenderers,
     });
+
+    // Create LOD callback adapter
+    const createLodCallback = hierarchicalLODManager
+      ? (object: RenderableCelestialObject, levels: LODLevel[]) => {
+          // Convert LOD levels to mesh format for hierarchical manager
+          const meshes: { [key: string]: THREE.Object3D } = {};
+          levels.forEach((level, index) => {
+            switch (index) {
+              case 0: meshes.high = level.object; break;
+              case 1: meshes.medium = level.object; break;
+              case 2: meshes.low = level.object; break;
+              case 3: meshes.billboard = level.object; break;
+            }
+          });
+          return hierarchicalLODManager.createAutoLOD(object, meshes);
+        }
+      : this.lodManager.createAndRegisterLOD.bind(this.lodManager);
 
     // Setup the MeshFactory with dependencies
     this.meshFactory = new MeshFactory({
@@ -171,12 +197,10 @@ export class ObjectManager extends StateSubscriptionMixin {
       lodManager: this.lodManager,
       lightingManager: this.lightingManager,
       camera: this.camera,
-      createLodCallback: this.lodManager.createAndRegisterLOD.bind(
-        this.lodManager,
-      ),
+      createLodCallback,
     });
 
-    // Setup the ObjectLifecycleManager with dependencies
+    // Setup the ObjectLifecycleManager with dependencies including hierarchical managers
     this.objectLifecycleManager = new ObjectLifecycleManager({
       objects: this.objects,
       scene: this.scene,
@@ -187,6 +211,8 @@ export class ObjectManager extends StateSubscriptionMixin {
       lensingHandler: this.lensingHandler,
       renderer: this.renderer,
       css2DManager: this.css2DManager,
+      sceneGraphManager: sceneGraphManager, // NEW: Pass scene graph manager
+      hierarchicalLODManager: hierarchicalLODManager, // NEW: Pass hierarchical LOD manager
     });
 
     // Setup other managers
@@ -200,10 +226,29 @@ export class ObjectManager extends StateSubscriptionMixin {
 
     this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
 
-    // Start listening to state changes and events
-    this.subscribeToStateChanges();
+    // Start listening to destruction events immediately
     this.subscribeToDestructionEvents();
+    
+    // Defer state subscription if hierarchical managers are provided
+    // This allows the hierarchy to be set up first
+    if (!sceneGraphManager && !hierarchicalLODManager) {
+      this.subscribeToStateChanges();
+      this.isSubscribedToState = true;
+    }
   }
+
+  /**
+   * Starts the state subscription for object synchronization.
+   * This can be called explicitly when using hierarchical managers.
+   */
+  public startStateSubscription(): void {
+    if (!this.isSubscribedToState) {
+      this.subscribeToStateChanges();
+      this.isSubscribedToState = true;
+    }
+  }
+
+  private isSubscribedToState: boolean = false;
 
   /**
    * @internal Subscribes to the renderable objects and acceleration vector streams from the core state.

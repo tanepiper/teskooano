@@ -13,6 +13,10 @@ import {
   LightSourceComponent,
 } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
+import { 
+  SceneGraphManager, 
+  HierarchicalLODManager 
+} from "@teskooano/renderer-threejs-core";
 import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
@@ -33,6 +37,8 @@ export interface ObjectLifecycleManagerConfig {
   renderer: THREE.WebGLRenderer | null;
   camera: THREE.PerspectiveCamera;
   css2DManager?: Layer2DManager;
+  sceneGraphManager?: SceneGraphManager;
+  hierarchicalLODManager?: HierarchicalLODManager;
 }
 
 /**
@@ -49,8 +55,11 @@ export class ObjectLifecycleManager {
   private lensingHandler: GravitationalLensingHandler;
   private css2DManager?: Layer2DManager;
   private renderer: THREE.WebGLRenderer | null;
-
-  private camera: THREE.PerspectiveCamera; // Add camera reference
+  private camera: THREE.PerspectiveCamera;
+  
+  // NEW: Hierarchical managers
+  private sceneGraphManager?: SceneGraphManager;
+  private hierarchicalLODManager?: HierarchicalLODManager;
 
   constructor(config: ObjectLifecycleManagerConfig) {
     this.objects = config.objects;
@@ -62,6 +71,8 @@ export class ObjectLifecycleManager {
     this.renderer = config.renderer;
     this.camera = config.camera;
     this.css2DManager = config.css2DManager;
+    this.sceneGraphManager = config.sceneGraphManager;
+    this.hierarchicalLODManager = config.hierarchicalLODManager;
   }
 
   /**
@@ -157,7 +168,22 @@ export class ObjectLifecycleManager {
       );
     }
 
-    this.scene.add(mesh);
+    // NEW: Add to hierarchical structure if available, otherwise add to scene directly
+    if (this.sceneGraphManager) {
+      const bodyGroup = this.sceneGraphManager.getBodyGroup(objectId);
+      if (bodyGroup) {
+        bodyGroup.add(mesh);
+        console.log(`[ObjectLifecycleManager] ✅ Added ${objectId} (${object.type}) to hierarchical body group: ${bodyGroup.name}`);
+      } else {
+        console.warn(`[ObjectLifecycleManager] ⚠️ No body group found for ${objectId}, adding to scene directly`);
+        this.scene.add(mesh);
+      }
+    } else {
+      // Fallback to original behavior
+      console.log(`[ObjectLifecycleManager] 📍 No SceneGraphManager, adding ${objectId} directly to scene`);
+      this.scene.add(mesh);
+    }
+
     this.objects.set(objectId, mesh);
 
     // Handle associated components (lights, labels, lensing)
@@ -202,40 +228,20 @@ export class ObjectLifecycleManager {
         );
       }
 
-      celestialLayer.createLabel(object, mesh);
-
-      if (object.type === CelestialType.ASTEROID) {
-        console.log(
-          `[ObjectLifecycleManager] Label creation completed for asteroid: ${objectId}`,
-        );
-      }
-    } else {
-      console.warn(
-        `[ObjectLifecycleManager] No celestial layer available for label creation`,
-      );
-
-      if (object.type === CelestialType.ASTEROID) {
-        console.error(
-          `[ObjectLifecycleManager] ASTEROID LABEL CREATION FAILED - No celestial layer for ${objectId}`,
-        );
-      }
+      const label = celestialLayer.createInstance(object);
+      label.position.copy(mesh.position);
+      mesh.add(label);
     }
 
-    if (this.lensingHandler.needsGravitationalLensing(object)) {
-      if (this.renderer) {
-        this.lensingHandler.applyGravitationalLensing(
-          object,
-          this.renderer,
-          this.scene,
-          this.camera, // Use stored camera reference
-          mesh,
-        );
-      } else {
-        console.warn(
-          `[ObjectLifecycleManager] Cannot apply lensing for ${objectId}: Renderer instance not available.`,
-        );
-      }
-    }
+    // Set up gravitational lensing effects if applicable
+    this.lensingHandler.addLensingToObject({
+      objectId,
+      mesh,
+      object,
+      renderer: this.renderer,
+      scene: this.scene,
+      camera: this.camera,
+    });
   }
 
   /**
@@ -283,14 +289,26 @@ export class ObjectLifecycleManager {
         objectId,
       );
     }
-    this.lodManager.remove(objectId); // Remove from LOD manager
+    
+    // Use hierarchical LOD manager if available, otherwise use standard LOD manager
+    if (this.hierarchicalLODManager) {
+      this.hierarchicalLODManager.removeLOD(objectId);
+    } else {
+      this.lodManager.remove(objectId);
+    }
+    
     this.lensingHandler.removeLensingObject(objectId); // Remove from lensing
     this.lightingManager.unregister(objectId); // Remove associated light
     this.lightingManager.unregisterShadowCaster(objectId); // Remove shadow caster registration
     this.lightingManager.unregisterRingShadowCasters(`${objectId}-rings`); // Remove ring shadow casters
 
-    // Remove the main mesh from the scene
-    this.scene.remove(mesh);
+    // Remove the mesh from its parent (either scene or hierarchical group)
+    if (mesh.parent) {
+      mesh.parent.remove(mesh);
+    } else {
+      // Fallback to scene removal
+      this.scene.remove(mesh);
+    }
 
     // Dispose of geometries and materials
     mesh.traverse((child) => {

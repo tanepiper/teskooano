@@ -2,6 +2,7 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-lod";
+import { HierarchicalLODManager } from "@teskooano/renderer-threejs-core";
 import { createOortCloudMesh } from "@teskooano/celestials-oort-cloud";
 import { createAsteroidFieldMesh } from "@teskooano/celestials-asteroid-field";
 import { createStarMesh } from "@teskooano/celestials-stars";
@@ -25,10 +26,9 @@ import * as THREE from "three";
  */
 export interface MeshFactoryConfig {
   celestialRenderers: Map<string, CelestialRenderer>;
-
-  lodManager: LODManager;
+  lodManager: LODManager | HierarchicalLODManager;
   lightingManager: LightingManager;
-  camera: THREE.PerspectiveCamera; // Needed for LOD registration?
+  camera: THREE.PerspectiveCamera;
   createLodCallback: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
@@ -43,8 +43,7 @@ export interface MeshFactoryConfig {
  */
 export class MeshFactory {
   private celestialRenderers: Map<string, CelestialRenderer>;
-
-  private lodManager: LODManager;
+  private lodManager: LODManager | HierarchicalLODManager;
   private lightingManager: LightingManager;
   private createLodCallback: (
     object: RenderableCelestialObject,
@@ -65,7 +64,6 @@ export class MeshFactory {
 
   constructor(config: MeshFactoryConfig) {
     this.celestialRenderers = config.celestialRenderers;
-
     this.lodManager = config.lodManager;
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
@@ -81,7 +79,6 @@ export class MeshFactory {
 
   /**
    * Gets the camera instance used by the factory.
-   * Potentially needed by other managers like ObjectLifecycleManager for lensing.
    */
   public getCamera(): THREE.PerspectiveCamera {
     return this.camera;
@@ -94,8 +91,6 @@ export class MeshFactory {
    */
   public setDebugMode(enabled: boolean): void {
     this.debugMode = enabled;
-    // Note: This only affects subsequently created meshes.
-    // Consider adding logic to recreate existing meshes if needed.
   }
 
   /**
@@ -162,6 +157,7 @@ export class MeshFactory {
         mesh.userData = {
           celestialId: object.celestialObjectId,
           type: object.type,
+          celestialObjectId: object.celestialObjectId, // Add for hierarchical system
         };
         // Set initial position and rotation
         mesh.position.copy(object.position);

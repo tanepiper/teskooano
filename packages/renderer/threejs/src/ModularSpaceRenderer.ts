@@ -141,6 +141,8 @@ export class ModularSpaceRenderer {
       this.css2DManager,
       undefined, // acceleration$ - use default
       this.lightingManager, // Pass the shared lighting manager
+      this.sceneGraphManager, // NEW: Pass scene graph manager
+      this.hierarchicalLODManager, // NEW: Pass hierarchical LOD manager
     );
 
     this.orbitManager = new OrbitsManager(
@@ -172,8 +174,10 @@ export class ModularSpaceRenderer {
       css2DManager: this.css2DManager,
     });
 
-    this.setupAnimationCallbacks();
+    // IMPORTANT: Setup state subscriptions before animation callbacks
+    // This ensures hierarchy is created before objects are processed
     this.setupStateSubscriptions();
+    this.setupAnimationCallbacks();
   }
 
   /**
@@ -221,9 +225,22 @@ export class ModularSpaceRenderer {
   private setupStateSubscriptions(): void {
     // Subscribe to renderable objects changes to update scene hierarchy
     renderableStore.renderableObjects$.subscribe(objects => {
+      // First, ensure the hierarchy is up to date
       this.sceneGraphManager.updateHierarchy(objects);
+      
+      // Then update orbital positions
       this.sceneGraphManager.updateOrbitalPositions(objects);
+      
+      console.log(`[ModularSpaceRenderer] Updated hierarchy for ${Object.keys(objects).length} objects`);
+      
+      // Debug: Print scene hierarchy
+      if (Object.keys(objects).length > 0) {
+        console.log("Scene hierarchy:", this.sceneQuery.getSceneHierarchyString(3));
+      }
     });
+
+    // Start the ObjectManager's state subscription after hierarchy is set up
+    this.objectManager.startStateSubscription();
   }
 
   /**

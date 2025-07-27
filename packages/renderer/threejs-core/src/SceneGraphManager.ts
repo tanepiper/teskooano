@@ -93,19 +93,33 @@ export class SceneGraphManager extends StateSubscriptionMixin {
    * Creates or updates the scene graph hierarchy for a set of celestial objects
    */
   public updateHierarchy(objects: Record<string, RenderableCelestialObject>): void {
-    // Clear existing hierarchy
-    this.clearHierarchy();
+    // Only rebuild hierarchy if the structure has changed significantly
+    const currentObjectIds = new Set(Object.keys(objects));
+    const existingNodeIds = new Set(this.systemNodes.keys());
     
-    // Group objects by solar system
-    const systemGroups = this.groupObjectsBySolarSystem(objects);
+    // Check if we need to rebuild the hierarchy
+    const needsRebuild = currentObjectIds.size !== existingNodeIds.size ||
+      ![...currentObjectIds].every(id => existingNodeIds.has(id));
     
-    // Create hierarchy for each solar system
-    systemGroups.forEach((systemObjects, systemId) => {
-      this.createSolarSystemHierarchy(systemId, systemObjects);
-    });
-    
-    // Update spatial partitioning
-    this.updateSpatialPartitioning(objects);
+    if (needsRebuild) {
+      console.log(`[SceneGraphManager] Rebuilding hierarchy for ${currentObjectIds.size} objects`);
+      
+      // Clear existing hierarchy
+      this.clearHierarchy();
+      
+      // Group objects by solar system
+      const systemGroups = this.groupObjectsBySolarSystem(objects);
+      
+      // Create hierarchy for each solar system
+      systemGroups.forEach((systemObjects, systemId) => {
+        this.createSolarSystemHierarchy(systemId, systemObjects);
+      });
+      
+      // Update spatial partitioning
+      this.updateSpatialPartitioning(objects);
+    } else {
+      console.log(`[SceneGraphManager] Hierarchy unchanged, skipping rebuild`);
+    }
   }
 
   /**
