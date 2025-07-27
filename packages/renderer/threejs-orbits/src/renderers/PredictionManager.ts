@@ -123,7 +123,6 @@ export class PredictionManager {
   private stateSubscription: Subscription | undefined;
 
   /** Group for all orbit-related lines (prediction, trail, etc.) */
-  private orbitLinesGroup: THREE.Group;
   /** Dedicated group for prediction lines within the orbit lines group */
   private predictionLinesGroup: THREE.Group;
 
@@ -136,30 +135,14 @@ export class PredictionManager {
    */
   constructor(
     objectManager: ObjectManager,
-    curveConfig?: TrailCurveConfig,
-    orbitLinesGroup?: THREE.Group,
+    curveConfig: TrailCurveConfig,
+    predictionLinesGroup: THREE.Group,
   ) {
     this.objectManager = objectManager;
+    this.curveConfig = curveConfig;
+    this.predictionLinesGroup = predictionLinesGroup;
+
     this.lineBuilder = new LineHelper();
-
-    if (curveConfig) {
-      this.curveConfig = { ...this.curveConfig, ...curveConfig };
-    }
-
-    // Use the shared orbit lines group if provided, otherwise create our own
-    if (orbitLinesGroup) {
-      this.orbitLinesGroup = orbitLinesGroup;
-    } else {
-      // Create a dedicated group for all orbit-related lines
-      this.orbitLinesGroup = new THREE.Group();
-      this.orbitLinesGroup.name = "GROUP_ORBIT_LINES";
-      this.objectManager.addRawObjectToScene(this.orbitLinesGroup);
-    }
-
-    // Create a dedicated group for prediction lines within the orbit lines group
-    this.predictionLinesGroup = new THREE.Group();
-    this.predictionLinesGroup.name = "GROUP_PREDICTION_LINES";
-    this.orbitLinesGroup.add(this.predictionLinesGroup);
 
     this.initializeWorker();
     this.initializeStateSubscriptions();
@@ -764,7 +747,6 @@ export class PredictionManager {
     this.clearAllPredictions();
     this.lineBuilder.clear();
     this.disposeLabels();
-    this.orbitLinesGroup.removeFromParent(); // Dispose the group
   }
 
   /**

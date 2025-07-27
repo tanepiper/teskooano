@@ -50,20 +50,18 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
    *
    * @param objectManager - The scene's ObjectManager for rendering operations
    * @param layer2DManager - Optional manager for 2D labels (used for prediction markers)
-   * @param orbitLinesGroup - Shared group for all orbit-related lines
+   * @param predictionLinesGroup - Shared group for all orbit-related lines
    * @param renderers - Maps of renderers for different celestial types
    */
   constructor(
     objectManager: ObjectManager,
     layer2DManager: Layer2DManager,
-    orbitLinesGroup: THREE.Group,
+    predictionLinesGroup: THREE.Group,
     celestialRenderers: Map<string, CelestialRenderer>,
   ) {
     // Create simple orbital renderer that uses PositionHistoryManager directly
-    this.orbitalRenderer = new SimpleOrbitalRenderer(
-      objectManager,
-      orbitLinesGroup,
-    );
+    // It no longer needs the shared group, as it attaches lines to each celestial's group.
+    this.orbitalRenderer = new SimpleOrbitalRenderer(objectManager);
 
     this.predictionManager = new PredictionManager(
       objectManager,
@@ -74,7 +72,7 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
         smoothing: 0.4,
         adaptiveThreshold: 8,
       },
-      orbitLinesGroup,
+      predictionLinesGroup,
     );
 
     // Store renderer maps for accessing PositionHistoryManager

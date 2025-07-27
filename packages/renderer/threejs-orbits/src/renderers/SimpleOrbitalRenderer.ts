@@ -35,28 +35,14 @@ export class SimpleOrbitalRenderer {
   /** Color used for highlighting */
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
 
-  /** Group for all orbital lines */
-  private orbitalLinesGroup: THREE.Group;
-
   /**
    * Creates a new SimpleOrbitalRenderer instance.
    *
    * @param objectManager - The scene's ObjectManager for adding/removing objects
-   * @param orbitalLinesGroup - Optional shared group for all orbital-related lines
    */
-  constructor(objectManager: ObjectManager, orbitalLinesGroup?: THREE.Group) {
+  constructor(objectManager: ObjectManager) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
-
-    // Use the shared orbital lines group if provided, otherwise create our own
-    if (orbitalLinesGroup) {
-      this.orbitalLinesGroup = orbitalLinesGroup;
-    } else {
-      // Create a dedicated group for all orbital-related lines
-      this.orbitalLinesGroup = new THREE.Group();
-      this.orbitalLinesGroup.name = "GROUP_ORBITAL_LINES";
-      this.objectManager.addRawObjectToScene(this.orbitalLinesGroup);
-    }
   }
 
   /**
@@ -121,6 +107,15 @@ export class SimpleOrbitalRenderer {
       return;
     }
 
+    // Get the celestial object's main mesh to find its parent group
+    const celestialMesh = this.objectManager.getObject(objectId);
+    if (!celestialMesh || !celestialMesh.parent) {
+      // If the object or its group doesn't exist, we can't attach the line.
+      this.removeOrbitalLine(objectId);
+      return;
+    }
+    const parentGroup = celestialMesh.parent;
+
     let line = this.orbitalLines.get(objectId);
     const pointCount = points.length;
 
@@ -135,10 +130,15 @@ export class SimpleOrbitalRenderer {
       );
       line.frustumCulled = false;
 
-      // Add orbital lines to the dedicated orbital lines group
-      this.orbitalLinesGroup.add(line);
+      // Add orbital line to the celestial's own group
+      parentGroup.add(line);
       this.orbitalLines.set(objectId, line);
     } else {
+      // Ensure the line is parented to the correct group, in case it has changed.
+      if (line.parent !== parentGroup) {
+        line.removeFromParent();
+        parentGroup.add(line);
+      }
       // Check if we need to resize the line buffer due to circular buffer wrapping
       const currentBufferSize = line.geometry.attributes.position.count;
       if (pointCount > currentBufferSize) {
@@ -152,7 +152,7 @@ export class SimpleOrbitalRenderer {
           `orbital-line-${objectId}`,
         );
         line.frustumCulled = false;
-        this.orbitalLinesGroup.add(line);
+        parentGroup.add(line);
         this.orbitalLines.set(objectId, line);
       }
     }
@@ -185,7 +185,7 @@ export class SimpleOrbitalRenderer {
   removeOrbitalLine(objectId: string): void {
     const line = this.orbitalLines.get(objectId);
     if (line) {
-      this.orbitalLinesGroup.remove(line);
+      line.removeFromParent();
       line.geometry.dispose();
       this.orbitalLines.delete(objectId);
     }
@@ -262,7 +262,7 @@ export class SimpleOrbitalRenderer {
    */
   clearAllOrbitalLines(): void {
     this.orbitalLines.forEach((line) => {
-      this.orbitalLinesGroup.remove(line);
+      line.removeFromParent();
       line.geometry.dispose();
     });
     this.orbitalLines.clear();

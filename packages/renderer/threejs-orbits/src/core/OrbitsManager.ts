@@ -79,7 +79,9 @@ export class OrbitsManager extends StateSubscriptionMixin {
   private layer2DManager?: Layer2DManager;
 
   /** Shared orbit lines group for all orbit-related visualizations */
-  private orbitLinesGroup: THREE.Group;
+  private idealOrbitLinesGroup: THREE.Group;
+  /** Shared group for all prediction line visualizations */
+  private predictionLinesGroup: THREE.Group;
 
   private celestialRenderers: Map<string, CelestialRenderer> = new Map();
 
@@ -103,10 +105,15 @@ export class OrbitsManager extends StateSubscriptionMixin {
     this.layer2DManager = layer2DManager;
     this.celestialRenderers = celestialRenderers;
 
-    // Create a shared orbit lines group for all orbit-related visualizations
-    this.orbitLinesGroup = new THREE.Group();
-    this.orbitLinesGroup.name = "GROUP_ORBIT_LINES";
-    objectManager.addRawObjectToScene(this.orbitLinesGroup);
+    // Create a shared group for ideal orbit lines
+    this.idealOrbitLinesGroup = new THREE.Group();
+    this.idealOrbitLinesGroup.name = "GROUP_IDEAL_ORBIT_LINES";
+    objectManager.addRawObjectToScene(this.idealOrbitLinesGroup);
+
+    // Create a shared group for prediction lines
+    this.predictionLinesGroup = new THREE.Group();
+    this.predictionLinesGroup.name = "GROUP_PREDICTION_LINES";
+    objectManager.addRawObjectToScene(this.predictionLinesGroup);
 
     // Subscribe to renderable objects stream
     this.subscribeToState(renderableObjects$, (objects) => {
@@ -185,14 +192,14 @@ export class OrbitsManager extends StateSubscriptionMixin {
       this.activeStrategy = new IdealStrategy(
         objectManager,
         renderableObjects$,
-        this.orbitLinesGroup,
+        this.idealOrbitLinesGroup,
       );
     } else {
       // N-Body mode uses the NBodyStrategy for all algorithms
       this.activeStrategy = new NBodyStrategy(
         objectManager,
         this.layer2DManager!,
-        this.orbitLinesGroup,
+        this.predictionLinesGroup,
         this.celestialRenderers,
       );
     }
