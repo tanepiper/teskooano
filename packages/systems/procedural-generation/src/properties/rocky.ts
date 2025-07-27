@@ -23,9 +23,9 @@ export function getRockyProperties(
     simplePeriod: utils.lerp(1.0, 3.0, random()),
     octaves: Math.floor(utils.lerp(9, 13, random())),
     bumpScale: utils.lerp(2, 3, random()),
-    roughness: utils.lerp(0.7, 0.95, random()),
-    specularStrength: utils.lerp(0.3, 0.6, random()),
-    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
+    roughness: utils.lerp(0.8, 0.95, random()),
+    specularStrength: utils.lerp(0.1, 0.2, random()),
+    ambientLightIntensity: 0.01,
     undulation: utils.lerp(0.2, 0.4, random()),
     terrainType: 2, // Sharp peaks for rugged terrain
     terrainAmplitude: utils.lerp(1.0, 1.5, random()),

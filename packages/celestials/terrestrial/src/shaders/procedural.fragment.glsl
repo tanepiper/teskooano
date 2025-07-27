@@ -169,6 +169,12 @@ void main() {
     // Use base normal for lighting
     vec3 finalColor = calculateLighting(baseColor, baseNormal, viewDir, shadowFactor);
 
+    // Clamp before gamma correction to prevent artifacts.
+    finalColor = clamp(finalColor, 0.0, 1.0);
+
+    // Apply basic gamma correction.
+    finalColor = pow(finalColor, vec3(1.0/2.2));
+
     // Output final lit color
-    gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
+    gl_FragColor = vec4(finalColor, 1.0);
 } 

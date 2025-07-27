@@ -22,9 +22,9 @@ export function getLavaProperties(
     simplePeriod: utils.lerp(1, 4, random()),
     octaves: Math.floor(utils.lerp(9, 13, random())), // Increased octaves
     bumpScale: utils.lerp(2, 3, random()),
-    roughness: utils.lerp(0.1, 1, random()),
-    specularStrength: utils.lerp(0.3, 0.6, random()),
-    ambientLightIntensity: utils.lerp(0.02, 0.03, random()), // Minimal ambient for dark space, slightly higher for lava glow
+    roughness: utils.lerp(0.4, 0.7, random()),
+    specularStrength: utils.lerp(0.2, 0.4, random()),
+    ambientLightIntensity: 0.01,
     undulation: utils.lerp(0.2, 0.3, random()), // Moderate undulation for lava flows
     terrainType: 2,
     terrainAmplitude: utils.lerp(1.2, 1.8, random()),

@@ -34,7 +34,7 @@ export const saturn: CelestialObject<GasGiantProperties> = {
   realMass_kg: 5.6834e26,
   realRadius_m: kmToM(58232),
   temperature: 134,
-  albedo: 0.342,
+  albedo: 0.47,
   orbit: createOrbitalElements({
     semiMajorAxisAU: 9.5826,
     eccentricity: 0.0565,
@@ -55,7 +55,7 @@ export const saturn: CelestialObject<GasGiantProperties> = {
     cloudSpeed: 80,
     stormSpeed: 50,
     emissiveColor: "#F0E68C20",
-    emissiveIntensity: 0.05,
+    emissiveIntensity: 0.03,
     // Enhanced ring system configuration with axial inclination controls
     ringSystem: {
       rings: [

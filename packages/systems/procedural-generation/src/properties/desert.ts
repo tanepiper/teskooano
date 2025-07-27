@@ -23,9 +23,9 @@ export function getDesertProperties(
     simplePeriod: utils.lerp(1.5, 4.0, random()), // Adjusted for finer details
     octaves: Math.floor(utils.lerp(8, 12, random())), // Increased octaves
     bumpScale: utils.lerp(0.01, 0.04, random()), // Lower bump for ice
-    roughness: utils.lerp(0.65, 0.9, random()),
-    specularStrength: utils.lerp(0.05, 0.15, random()), // Slightly higher than barren/rocky but still low
-    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
+    roughness: utils.lerp(0.8, 0.9, random()),
+    specularStrength: utils.lerp(0.02, 0.1, random()),
+    ambientLightIntensity: 0.01,
     undulation: utils.lerp(0.15, 0.25, random()), // Moderate undulation for desert dunes
     terrainType: 3,
     terrainAmplitude: utils.lerp(0.3, 0.6, random()),

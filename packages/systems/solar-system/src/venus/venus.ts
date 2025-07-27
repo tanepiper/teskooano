@@ -76,8 +76,8 @@ export const venus: CelestialObject<PlanetProperties> = {
       height3: 0.45,
       height4: 0.7,
       height5: 0.9,
-      shininess: 14,
-      specularStrength: 0.25,
+      shininess: 8,
+      specularStrength: 0.1,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.3,
       terrainType: 2,

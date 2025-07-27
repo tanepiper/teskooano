@@ -33,14 +33,14 @@ vec3 calculateLighting(
 
         // Diffuse
         float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = lightColor * diff;
+        vec3 diffuse = lightColor * diff * lightIntensity * 0.5; // MODIFIED: Reduced diffuse strength
 
         // Specular (Blinn-Phong)
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        vec3 specular = uSpecularStrength * spec * lightColor;
+        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
 
-        finalColor += albedo * (diffuse + specular) * lightIntensity * shadowFactor;
+        finalColor += (albedo * diffuse + specular) * shadowFactor;
     }
     
     return finalColor;

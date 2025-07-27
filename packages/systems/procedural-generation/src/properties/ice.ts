@@ -31,10 +31,10 @@ export function getIceProperties(
     height3: utils.lerp(0.4, 0.42, random()),
     height4: utils.lerp(0.43, 0.45, random()),
     height5: utils.lerp(0.43, 0.45, random()),
-    shininess: utils.lerp(23, 24, random()),
-    specularStrength: utils.lerp(0.47, 0.48, random()),
-    roughness: utils.lerp(0.11, 0.12, random()),
-    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
+    shininess: utils.lerp(25, 40, random()),
+    specularStrength: utils.lerp(0.2, 0.4, random()),
+    roughness: utils.lerp(0.2, 0.4, random()),
+    ambientLightIntensity: 0.01,
     undulation: utils.lerp(0.095, 0.105, random()),
   };
 }

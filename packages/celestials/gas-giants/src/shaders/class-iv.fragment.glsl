@@ -96,14 +96,14 @@ void main() {
             shadow = getShadow(vPosition, lightDir);
         }
 
-        totalDiffuse += baseColor * ndl * 0.1 * uLights[i].color * uLights[i].intensity * shadow; // Extremely low diffuse reflection
+        totalDiffuse += baseColor * ndl * 0.05 * uLights[i].color * uLights[i].intensity * shadow; // Extremely low diffuse reflection
 
         // Specular component - negligible
         vec3 halfAngle = normalize(viewDir + lightDir);
         float specComp = max(0.0, dot(normal, halfAngle));
         specComp = clamp01(specComp);
         specComp = pow(specComp, 100.0); // Very tight
-        totalSpecular += vec3(0.1) * specComp * uLights[i].color * uLights[i].intensity * shadow; // More pronounced specular
+        totalSpecular += vec3(0.08) * specComp * uLights[i].color * uLights[i].intensity * shadow; // More pronounced specular
     }
 
     // Rim Lighting (Class IV adjustments - more intense)
@@ -133,6 +133,9 @@ void main() {
         // Blend the storm with the procedural texture, use lower alpha for dark planets
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.5);
     }
+
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);
 } 

@@ -38,10 +38,10 @@ export function getOceanProperties(
     height3: utils.lerp(0.3, 0.32, random()),
     height4: utils.lerp(0.33, 0.35, random()),
     height5: utils.lerp(0.23, 0.25, random()),
-    shininess: utils.lerp(40, 50, random()),
-    specularStrength: utils.lerp(0.45, 0.55, random()),
-    roughness: utils.lerp(0.03, 0.05, random()),
-    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
+    shininess: utils.lerp(30, 50, random()),
+    specularStrength: utils.lerp(0.4, 0.6, random()),
+    roughness: utils.lerp(0.1, 0.3, random()),
+    ambientLightIntensity: 0.01,
     undulation: utils.lerp(0.3, 0.34, random()),
   };
 }

@@ -66,8 +66,8 @@ export const phoebe: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.7,
       height5: 0.9,
-      shininess: 10,
-      specularStrength: 0.2,
+      shininess: 2,
+      specularStrength: 0.01,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.3,
       terrainType: 2,

@@ -55,9 +55,9 @@ export function createProceduralSurfaceProperties(
     height4: utils.lerp(0.6, 0.8, random()),
     height5: utils.lerp(0.8, 1.0, random()),
     shininess: utils.lerp(8, 32, random()),
-    specularStrength: utils.lerp(0.1, 0.3, random()),
+    specularStrength: utils.lerp(0.05, 0.15, random()),
     roughness: utils.lerp(0.5, 0.9, random()),
-    ambientLightIntensity: 0.25, // System-wide minimum ambient for "just enough glow"
+    ambientLightIntensity: 0.01, // System-wide minimum ambient for "just enough glow"
     undulation: utils.lerp(0.1, 0.3, random()),
   };
 

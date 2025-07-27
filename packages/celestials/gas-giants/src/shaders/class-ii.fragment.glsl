@@ -258,7 +258,7 @@ void main() {
             shadow = getShadow(vPosition, lightDir);
         }
 
-        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow;
+        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.5;
     }
 
     // Dynamic ambient light based on nearby star luminosity
@@ -279,6 +279,9 @@ void main() {
         // Blend the storm with the procedural texture
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.8);
     }
+
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);
 } 

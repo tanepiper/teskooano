@@ -66,8 +66,8 @@ export const enceladus: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.75,
       height5: 0.9,
-      shininess: 40,
-      specularStrength: 0.9,
+      shininess: 60,
+      specularStrength: 0.4,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.12,
       terrainType: 3,

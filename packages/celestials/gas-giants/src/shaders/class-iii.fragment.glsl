@@ -95,14 +95,14 @@ void main() {
             shadow = getShadow(vPosition, lightDir);
         }
 
-        totalDiffuse += baseColor * diffuse * 0.85 * uLights[i].color * uLights[i].intensity * shadow;
+        totalDiffuse += baseColor * diffuse * 0.4 * uLights[i].color * uLights[i].intensity * shadow;
 
         // Specular component (basic Blinn-Phong) - Keep it very low
         vec3 halfAngle = normalize(viewDir + lightDir);
         float specComp = max(0.0, dot(normal, halfAngle));
         specComp = clamp01(specComp);
         specComp = pow(specComp, 40.0); // Sharper highlights for Class III
-        totalSpecular += vec3(0.08) * specComp * uLights[i].color * uLights[i].intensity * shadow;
+        totalSpecular += vec3(0.05) * specComp * uLights[i].color * uLights[i].intensity * shadow;
     }
 
     // Rim Lighting (Class III adjustments - potentially less pronounced)
@@ -128,6 +128,9 @@ void main() {
         // Blend the storm with the procedural texture
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.8);
     }
+
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);
 } 

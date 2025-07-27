@@ -42,7 +42,7 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
 
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },
-        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
+        uDynamicAmbientIntensity: { value: 0.03 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: classVVertexShader,
       fragmentShader: classVFragmentShader,

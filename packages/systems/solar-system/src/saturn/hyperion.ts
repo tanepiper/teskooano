@@ -56,8 +56,8 @@ export const hyperion: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.7,
       height5: 0.9,
-      shininess: 20,
-      specularStrength: 0.3,
+      shininess: 5,
+      specularStrength: 0.05,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.4,
       terrainType: 1,

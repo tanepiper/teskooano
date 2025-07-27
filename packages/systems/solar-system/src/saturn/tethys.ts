@@ -65,8 +65,8 @@ export const tethys: CelestialObject<PlanetProperties> = {
       height3: 0.45,
       height4: 0.7,
       height5: 0.9,
-      shininess: 36,
-      specularStrength: 0.8,
+      shininess: 50,
+      specularStrength: 0.3,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.15,
       terrainType: 3,

@@ -98,14 +98,14 @@ void main() {
             shadow = getShadow(vPosition, lightDir);
         }
 
-        totalDiffuse += baseColor * ndl * uLights[i].color * uLights[i].intensity * shadow; // Strong diffuse based on bright base color
+        totalDiffuse += baseColor * ndl * 0.5 * uLights[i].color * uLights[i].intensity * shadow; // Strong diffuse based on bright base color
 
         // Specular component - Noticeable reflection
         vec3 halfAngle = normalize(viewDir + lightDir);
         float specComp = max(0.0, dot(normal, halfAngle));
         specComp = clamp01(specComp);
         specComp = pow(specComp, 24.0); // Moderate shininess
-        totalSpecular += vec3(0.03) * specComp * uLights[i].color * uLights[i].intensity * shadow; // Low specular
+        totalSpecular += vec3(0.015) * specComp * uLights[i].color * uLights[i].intensity * shadow; // Low specular
     }
 
     // Rim Lighting (Class V - subtle blue/white glow)
@@ -134,6 +134,9 @@ void main() {
         // Blend the storm with the procedural texture, use higher alpha for hot jupiters
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 1.0);
     }
+
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);
 } 

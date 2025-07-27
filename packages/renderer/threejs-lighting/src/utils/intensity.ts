@@ -23,9 +23,10 @@ export function calculateVisualIntensity(luminosity_L_sun: number): number {
     Math.min(luminosity_L_sun, 500000),
   );
 
-  // Use a power function (sqrt) to compress the vast dynamic range.
+  // Use a more aggressive power function to compress the dynamic range further.
   // The multiplier is a magic number to scale the result to a visually pleasing range.
-  const intensity = Math.pow(clampedLuminosity, 0.4) * 2.5;
+  // A final clamp is added to prevent extreme blow-out from super-luminous stars.
+  const intensity = Math.pow(clampedLuminosity, 0.33) * 2.0;
 
-  return intensity;
+  return Math.min(intensity, 8.0);
 }

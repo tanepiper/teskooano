@@ -70,8 +70,8 @@ export const rhea: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.75,
       height5: 0.95,
-      shininess: 32,
-      specularStrength: 0.6,
+      shininess: 45,
+      specularStrength: 0.25,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.2,
       terrainType: 2,

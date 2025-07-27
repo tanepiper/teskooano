@@ -65,8 +65,8 @@ export const mimas: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.75,
       height5: 0.9,
-      shininess: 35,
-      specularStrength: 0.7,
+      shininess: 40,
+      specularStrength: 0.25,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.22,
       terrainType: 1, // Cratered terrain

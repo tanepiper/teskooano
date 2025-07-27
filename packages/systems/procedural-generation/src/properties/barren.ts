@@ -23,9 +23,9 @@ export function getBarrenProperties(
     simplePeriod: utils.lerp(1.0, 3.5, random()),
     octaves: Math.floor(utils.lerp(8, 12, random())),
     bumpScale: utils.lerp(2, 3, random()),
-    roughness: utils.lerp(0.6, 0.8, random()), // More matte/dusty
-    specularStrength: utils.lerp(0.3, 0.6, random()),
-    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
+    roughness: utils.lerp(0.8, 0.95, random()), // More matte/dusty
+    specularStrength: utils.lerp(0.05, 0.1, random()),
+    ambientLightIntensity: 0.01,
     undulation: utils.lerp(0.1, 0.2, random()),
     terrainType: 2, // Sharp peaks to catch light, not valleys
     terrainAmplitude: utils.lerp(0.5, 0.8, random()),

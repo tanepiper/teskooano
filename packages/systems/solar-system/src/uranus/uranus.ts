@@ -45,7 +45,7 @@ export const uranus: CelestialObject<GasGiantProperties> = {
     epoch: J2000_EPOCH,
   }),
   temperature: 76,
-  albedo: 0.3,
+  albedo: 0.51,
   properties: {
     type: CelestialType.GAS_GIANT,
     classType: GasGiantClass.CLASS_III,
@@ -54,7 +54,7 @@ export const uranus: CelestialObject<GasGiantProperties> = {
     cloudSpeed: 50,
     stormSpeed: 30,
     emissiveColor: "#B0E0E61A",
-    emissiveIntensity: 0.05,
+    emissiveIntensity: 0.02,
     // Enhanced ring system configuration with axial inclination controls
     ringSystem: {
       rings: [

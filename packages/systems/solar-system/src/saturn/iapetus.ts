@@ -65,8 +65,8 @@ export const iapetus: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.75,
       height5: 0.9,
-      shininess: 16,
-      specularStrength: 0.4,
+      shininess: 20,
+      specularStrength: 0.1,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.25,
       terrainType: 2,

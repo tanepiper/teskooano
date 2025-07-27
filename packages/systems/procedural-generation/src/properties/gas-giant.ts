@@ -9,11 +9,11 @@ export function getGasGiantProperties(
   gasGiantClass: GasGiantClass,
 ): Partial<ProceduralSurfaceProperties> {
   const baseProperties: Partial<ProceduralSurfaceProperties> = {
-    shininess: utils.lerp(2, 10, random()),
-    specularStrength: utils.lerp(0.05, 0.15, random()),
-    roughness: utils.lerp(0.8, 1.0, random()),
+    shininess: utils.lerp(2, 5, random()),
+    specularStrength: utils.lerp(0.01, 0.05, random()),
+    roughness: utils.lerp(0.9, 1.0, random()),
     undulation: utils.lerp(0.5, 1.0, random()),
-    ambientLightIntensity: 0.25, // System-wide minimum ambient for "just enough glow"
+    ambientLightIntensity: 0.01,
   };
 
   let specificProperties: Partial<ProceduralSurfaceProperties> = {};

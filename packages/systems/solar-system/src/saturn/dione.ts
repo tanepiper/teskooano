@@ -56,8 +56,8 @@ export const dione: CelestialObject<PlanetProperties> = {
       height3: 0.5,
       height4: 0.72,
       height5: 0.88,
-      shininess: 28,
-      specularStrength: 0.6,
+      shininess: 40,
+      specularStrength: 0.2,
       ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
       undulation: 0.18,
       terrainType: 3,

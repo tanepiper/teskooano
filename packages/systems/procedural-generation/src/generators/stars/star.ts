@@ -21,6 +21,7 @@ import {
 import * as CONST from "../../constants";
 import { generateCelestialName } from "../names/celestial-name";
 import * as UTIL from "../../utils";
+import { createOrbitalElements } from "@teskooano/core-physics";
 
 const G = 6.6743e-11;
 const C = 299792458;
@@ -124,15 +125,17 @@ function calculateSchwarzschildRadius(mass_kg: number): number {
   return (2 * G * mass_kg) / (C * C);
 }
 
-const defaultStarOrbit: OrbitalParameters = {
-  realSemiMajorAxis_m: 0,
+const defaultStarOrbit: OrbitalParameters = createOrbitalElements({
+  semiMajorAxisAU: 0,
   eccentricity: 0,
-  inclination: 0,
-  longitudeOfAscendingNode: 0,
-  argumentOfPeriapsis: 0,
-  meanAnomaly: 0,
+  siderealRotationPeriod_s: 0,
+  axialTiltDeg: 0,
+  inclinationDeg: 0,
+  longitudeOfAscendingNodeDeg: 0,
+  argumentOfPeriapsisDeg: 0,
+  meanAnomalyDeg: 0,
   period_s: 0,
-};
+});
 
 /**
  * More reasonable visual scale for stars to balance visibility with realism
@@ -322,15 +325,18 @@ export function generateStar(random: () => number): CelestialObject {
   }
 
   // Calculate realistic system lighting based on stellar properties
-  const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 10000));
-  // Increase light intensity for better visual lighting while keeping physics accurate
-  const starLightIntensity = Math.pow(clampedLuminosity, 0.5) * 2.0; // Square root with multiplier for better visual lighting
-  // Stars should not contribute ambient lighting in dark space
-  const ambientLightIntensity = 0;
+  const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 500000));
+  // Use the new, more aggressive formula for consistency and to prevent blow-out.
+  const starLightIntensity = Math.min(
+    Math.pow(clampedLuminosity, 0.33) * 2.0,
+    8.0,
+  );
+  // Stars should not contribute ambient lighting in dark space, but a minimum is needed for visuals
+  const ambientLightIntensity = 0.01;
 
   const systemLighting: SystemLightingProperties = {
     ambientLightColor: starColor,
-    ambientLightIntensity: 0, // No ambient light from stars in dark space
+    ambientLightIntensity: ambientLightIntensity,
     starLightIntensity: parseFloat(starLightIntensity.toFixed(2)),
   };
 
@@ -380,7 +386,7 @@ export function generateStar(random: () => number): CelestialObject {
     systemLighting,
   };
 
-  const starData: CelestialObject = {
+  const starData: CelestialObject<StarProperties> = {
     id: `${starProperties.spectralClass}-${starName}`,
     name: starName,
     type: CelestialType.STAR,
@@ -391,12 +397,6 @@ export function generateStar(random: () => number): CelestialObject {
     temperature: starTemperature,
     orbit: defaultStarOrbit,
     properties: starProperties,
-    physicsStateReal: {
-      id: `star-${starName.toLowerCase()}`,
-      mass_kg: starMass,
-      position_m: new OSVector3(0, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
-    },
   };
 
   return starData;

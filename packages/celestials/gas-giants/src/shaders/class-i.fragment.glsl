@@ -247,7 +247,7 @@ void main() {
                                           uShadowCasters[j].radius));
         }
         
-        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow;
+        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.5;
     }
 
     // Dynamic ambient light based on nearby star luminosity
