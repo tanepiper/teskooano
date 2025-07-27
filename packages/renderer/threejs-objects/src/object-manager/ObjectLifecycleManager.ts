@@ -296,8 +296,16 @@ export class ObjectLifecycleManager {
     this.lightingManager.unregisterShadowCaster(objectId); // Remove shadow caster registration
     this.lightingManager.unregisterRingShadowCasters(`${objectId}-rings`); // Remove ring shadow casters
 
-    // Remove the main mesh from the scene
-    this.scene.remove(mesh);
+    // Remove the entire object group from the scene. This is the correct way to
+    // remove the object, as it's contained within this group, not as a direct
+    // child of the scene.
+    const group = this.scene.getObjectByName(`GROUP_${objectId}`);
+    if (group) {
+      this.scene.remove(group);
+    } else {
+      // Fallback for objects that might not be in a group (legacy or other cases)
+      mesh.removeFromParent();
+    }
 
     // Dispose of geometries and materials
     mesh.traverse((child) => {
