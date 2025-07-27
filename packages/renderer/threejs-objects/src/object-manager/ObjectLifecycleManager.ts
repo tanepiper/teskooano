@@ -175,11 +175,13 @@ export class ObjectLifecycleManager {
         bodyGroup.add(mesh);
         console.log(`[ObjectLifecycleManager] ✅ Added ${objectId} (${object.type}) to hierarchical body group: ${bodyGroup.name}`);
       } else {
-        // Debug: Let's see what nodes are available
+        // Debug: Let's see what nodes are available and what IDs we're using
         const allNodes = Array.from(this.sceneGraphManager['systemNodes'].keys());
         console.warn(`[ObjectLifecycleManager] ⚠️ No body group found for objectId: "${objectId}" (type: ${object.type})`);
-        console.warn(`[ObjectLifecycleManager] 🔍 Available nodes: [${allNodes.join(', ')}]`);
+        console.warn(`[ObjectLifecycleManager] 🔍 Available nodes: [${allNodes.slice(0, 10).join(', ')}${allNodes.length > 10 ? '...' : ''}]`);
         console.warn(`[ObjectLifecycleManager] 📝 Object name: "${object.name}"`);
+        console.warn(`[ObjectLifecycleManager] 🆔 object.celestialObjectId: "${object.celestialObjectId}"`);
+        console.warn(`[ObjectLifecycleManager] 🔑 objectId used for lookup: "${objectId}"`);
         console.warn(`[ObjectLifecycleManager] 🏗️ Adding to scene directly`);
         this.scene.add(mesh);
       }

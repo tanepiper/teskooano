@@ -249,6 +249,8 @@ export class SceneGraphManager extends StateSubscriptionMixin {
 
       // Add moons to this planet
       const planetMoons = moons.filter(moon => moon.parentId === planet.celestialObjectId);
+      console.log(`[SceneGraphManager] 🌙 Planet ${planet.name} has ${planetMoons.length} moons: ${planetMoons.map(m => m.name).join(', ')}`);
+      
       planetMoons.forEach(moon => {
         const moonOrbitGroup = new THREE.Group();
         moonOrbitGroup.name = `${moon.name}_OrbitGroup`;
@@ -263,6 +265,7 @@ export class SceneGraphManager extends StateSubscriptionMixin {
         moonNode.parent = planetNode;
         planetNode.children.set(moon.celestialObjectId, moonNode);
         this.systemNodes.set(moon.celestialObjectId, moonNode);
+        console.log(`[SceneGraphManager] 🌙 Created moon node for "${moon.celestialObjectId}" under planet ${planet.name}`);
       });
     });
 
@@ -276,9 +279,10 @@ export class SceneGraphManager extends StateSubscriptionMixin {
       };
       systemGroup.add(objOrbitGroup);
 
-      const objNode = this.createCelestialNode(obj, objOrbitGroup);
-      objNode.orbitGroup = objOrbitGroup;
-      this.systemNodes.set(obj.celestialObjectId, objNode);
+          const objNode = this.createCelestialNode(obj, objOrbitGroup);
+    objNode.orbitGroup = objOrbitGroup;
+    this.systemNodes.set(obj.celestialObjectId, objNode);
+    console.log(`[SceneGraphManager] 📝 Stored node for ID: "${obj.celestialObjectId}" (${obj.type}, name: "${obj.name}")`);
     });
   }
 
