@@ -28,7 +28,7 @@ export interface LightManagerConfig {
   /** The Three.js scene to manage lights within. */
   scene: THREE.Scene;
   /** The Three.js camera. */
-  camera: THREE.Camera;
+  camera: THREE.PerspectiveCamera;
   /** Whether post-processing is enabled. */
   enablePostProcessing: boolean;
   /** An optional Observable stream of renderable objects. Defaults to `StateAccessor.getRenderableObjectsStream()`. */

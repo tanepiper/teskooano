@@ -145,7 +145,7 @@ export abstract class BaseCelestialRenderer<
     time: number;
     timeScale: number;
     lightSources: LightSourcesMap;
-    camera: THREE.Camera;
+    camera: THREE.PerspectiveCamera;
     allObjects?: Record<string, RenderableCelestialObject>;
     allMeshes?: Record<string, THREE.Object3D>;
   }): void;
@@ -158,7 +158,7 @@ export abstract class BaseCelestialRenderer<
     time: number;
     timeScale: number;
     lightSources: LightSourcesMap;
-    camera: THREE.Camera;
+    camera: THREE.PerspectiveCamera;
     allObjects?: Record<string, RenderableCelestialObject>;
     allMeshes?: Record<string, THREE.Object3D>;
   }): void;
@@ -180,7 +180,7 @@ export abstract class BaseCelestialRenderer<
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
@@ -226,7 +226,7 @@ export abstract class BaseCelestialRenderer<
    * @param objectId The ID of the object whose LOD should be updated.
    * @param camera The scene's main camera.
    */
-  updateLOD(objectId: string, camera: THREE.Camera): void {
+  updateLOD(objectId: string, camera: THREE.PerspectiveCamera): void {
     this.lodManager.updateLOD(objectId, camera);
   }
 

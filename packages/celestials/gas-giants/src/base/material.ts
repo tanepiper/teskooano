@@ -31,7 +31,7 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
     time: number,
     timeScale: number,
     lights: CalculatedLight[],
-    camera: THREE.Camera | undefined,
+    camera: THREE.PerspectiveCamera,
     shadowCasters: CalculatedShadowCaster[],
   ): void {
     if (this.uniforms.time) {

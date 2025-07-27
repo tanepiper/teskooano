@@ -67,7 +67,7 @@ export interface CelestialMeshOptions {
   /**
    * Optional reference to the main scene camera.
    */
-  camera?: THREE.Camera;
+  camera?: THREE.PerspectiveCamera;
 
   /**
    * Optional reference to the main THREE.js scene.

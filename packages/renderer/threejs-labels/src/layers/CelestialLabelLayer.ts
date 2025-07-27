@@ -154,7 +154,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   }
 
   public override update(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     centralBody: OSVector3, // Not used by celestial labels
     objectManager: ObjectManager,
   ): void {

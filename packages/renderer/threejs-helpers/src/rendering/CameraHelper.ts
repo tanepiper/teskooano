@@ -78,7 +78,7 @@ interface CameraAnimationState {
  */
 export class CameraHelper {
   private static animationStates = new Map<
-    THREE.Camera,
+    THREE.PerspectiveCamera,
     CameraAnimationState
   >();
 
@@ -247,7 +247,7 @@ export class CameraHelper {
    * @param config - Transition configuration
    */
   static transitionTo(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     targetPosition: THREE.Vector3,
     targetLookAt: THREE.Vector3,
     config: CameraTransitionConfig,
@@ -353,7 +353,7 @@ export class CameraHelper {
    *
    * @param camera - The camera to stop animating
    */
-  static stopAnimation(camera: THREE.Camera): void {
+  static stopAnimation(camera: THREE.PerspectiveCamera): void {
     this.animationStates.delete(camera);
   }
 
@@ -661,7 +661,7 @@ export class CameraHelper {
    *
    * @param camera - The camera to dispose
    */
-  static disposeCamera(camera: THREE.Camera): void {
+  static disposeCamera(camera: THREE.PerspectiveCamera): void {
     this.stopAnimation(camera);
 
     // Clear any stored data

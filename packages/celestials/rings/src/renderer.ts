@@ -463,7 +463,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);

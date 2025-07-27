@@ -127,8 +127,8 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
   update(
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
   ): void {
     this.uniforms.time.value = time;
   }
@@ -466,8 +466,9 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 

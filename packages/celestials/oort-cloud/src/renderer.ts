@@ -307,7 +307,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
     const material = this.getTypedMaterial(object.celestialObjectId);

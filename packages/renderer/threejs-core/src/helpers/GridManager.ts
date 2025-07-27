@@ -77,7 +77,7 @@ export class GridManager {
    * appropriate level of detail for the grid and recreates it if necessary.
    * @param camera The scene's active camera.
    */
-  public update(camera: THREE.Camera): void {
+  public update(camera: THREE.PerspectiveCamera): void {
     if (!this.isGridVisible) {
       if (this.gridHelper) {
         this.dispose();

@@ -12,7 +12,7 @@ describe("LODManager", () => {
   let lodManager: LODManager;
   let mockObject: RenderableCelestialObject;
   let mockLOD: THREE.LOD;
-  let mockCamera: THREE.Camera;
+  let mockCamera: THREE.PerspectiveCamera;
 
   beforeEach(() => {
     lodManager = new LODManager();

@@ -49,8 +49,10 @@ export class WolfRayetMaterial extends BaseStarMaterial {
   update(
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     super.update(time, timeScale, lightSources, camera);
   }

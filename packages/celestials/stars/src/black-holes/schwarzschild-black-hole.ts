@@ -75,8 +75,8 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
   update(
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
   ): void {
     if (this.uniforms.time !== undefined) {
       this.uniforms.time.value = time;
@@ -200,8 +200,9 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
-    allObjects: Record<string, RenderableCelestialObject>,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 

@@ -56,8 +56,15 @@ class NeutronStarMaterial extends BaseStarMaterial {
     this.subtype = subtype;
   }
 
-  update(time: number, timeScale: number): void {
-    super.update(time, timeScale);
+  update(
+    time: number,
+    timeScale: number,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
+  ): void {
+    super.update(time, timeScale, lightSources, camera, allObjects, allMeshes);
 
     // Update pulse phase for pulsars and magnetars
     if (
@@ -130,9 +137,19 @@ export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    super.update(object, time, timeScale, lightSources, camera);
+    super.update(
+      object,
+      time,
+      timeScale,
+      lightSources,
+      camera,
+      allObjects,
+      allMeshes,
+    );
     // this.gravitationalLensingHelper?.update(this camera);
   }
 

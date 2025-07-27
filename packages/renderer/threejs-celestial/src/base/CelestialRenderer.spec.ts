@@ -18,7 +18,7 @@ import { OSVector3 } from "@teskooano/core-math";
 
 describe("CelestialRenderer Interface", () => {
   let mockObject: RenderableCelestialObject;
-  let mockCamera: THREE.Camera;
+  let mockCamera: THREE.PerspectiveCamera;
   let mockLightSources: LightSourcesMap;
 
   beforeEach(() => {

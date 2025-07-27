@@ -282,7 +282,7 @@ export class CelestialAnimationHelper {
    * @returns Animation instance
    */
   static createFocusAnimation(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     targetObject: THREE.Object3D,
     distance: number = 10,
     config: CelestialAnimationConfig = {},

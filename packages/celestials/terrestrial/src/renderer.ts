@@ -280,8 +280,9 @@ export class BaseTerrestrialRenderer<
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
-    allObjects: Record<string, RenderableCelestialObject>,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 

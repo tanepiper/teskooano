@@ -104,7 +104,7 @@ export class GeometryUtilities {
    */
   private static getAdaptiveScalingFactor(
     object?: RenderableCelestialObject,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
   ): number {
     if (!this.performanceConfig.enableAdaptiveScaling || !object || !camera) {
       return 1.0;
@@ -138,7 +138,7 @@ export class GeometryUtilities {
     detailLevel?: DetailLevel | string,
     defaultSegments: number = 32,
     object?: RenderableCelestialObject,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
   ): number {
     if (!detailLevel) return defaultSegments;
 
@@ -183,7 +183,7 @@ export class GeometryUtilities {
     detailLevel?: DetailLevel | string,
     defaultSegments: number = 64,
     object?: RenderableCelestialObject,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
   ): number {
     if (!detailLevel) return defaultSegments;
 
@@ -227,7 +227,7 @@ export class GeometryUtilities {
     detailLevel?: DetailLevel | string,
     defaultSegments: number = 128,
     object?: RenderableCelestialObject,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
   ): number {
     if (!detailLevel) return defaultSegments;
 
@@ -271,7 +271,7 @@ export class GeometryUtilities {
     detailLevel?: DetailLevel | string,
     defaultSegments: number = 32,
     object?: RenderableCelestialObject,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
   ): number {
     if (!detailLevel) return defaultSegments;
 
@@ -315,7 +315,7 @@ export class GeometryUtilities {
     detailLevel?: DetailLevel | string,
     defaultSegments: number = 48,
     object?: RenderableCelestialObject,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
   ): number {
     if (!detailLevel) return defaultSegments;
 
@@ -500,27 +500,17 @@ export class GeometryUtilities {
    */
   public static isObjectInViewFrustum(
     object: RenderableCelestialObject,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     padding: number = 0,
   ): boolean {
     const frustum = new THREE.Frustum();
     const matrix = new THREE.Matrix4();
 
-    if (
-      camera instanceof THREE.PerspectiveCamera ||
-      camera instanceof THREE.OrthographicCamera
-    ) {
-      matrix.multiplyMatrices(
-        camera.projectionMatrix,
-        camera.matrixWorldInverse,
-      );
-      frustum.setFromProjectionMatrix(matrix);
+    matrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(matrix);
 
-      const sphere = this.createBoundingSphere(object, padding);
-      return frustum.intersectsSphere(sphere);
-    }
-
-    return true; // Default to visible for unknown camera types
+    const sphere = this.createBoundingSphere(object, padding);
+    return frustum.intersectsSphere(sphere);
   }
 
   /**
@@ -531,7 +521,7 @@ export class GeometryUtilities {
    */
   public static getApparentAngularSize(
     object: RenderableCelestialObject,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
   ): number {
     const distance = camera.position.distanceTo(object.position);
     const radius = object.radius || 1;

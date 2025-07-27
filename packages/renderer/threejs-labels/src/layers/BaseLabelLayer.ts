@@ -165,7 +165,7 @@ export abstract class BaseLabelLayer {
    * @param valueSelector - A function that extracts the numeric value to check from a label's HTML element.
    */
   protected updateVisibilityFromLevels(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     centralBody: OSVector3,
     sceneLevels: VisibilityLevel[],
     valueSelector: (element: HTMLElement) => number,
@@ -207,7 +207,7 @@ export abstract class BaseLabelLayer {
    * Subclasses should override this method to implement LOD or other updates.
    */
   public update(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     centralBody: OSVector3,
     objectManager: ObjectManager,
   ): void {}
@@ -226,7 +226,7 @@ export abstract class BaseLabelLayer {
   protected isLabelOccludedOptimized(
     labelId: string,
     labelPosition: OSVector3,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     objectManager: ObjectManager,
     labelObjectId: string,
   ): boolean {
@@ -303,7 +303,7 @@ export abstract class BaseLabelLayer {
    */
   private performOcclusionTest(
     labelPosition: THREE.Vector3, // Now expects a Three.js vector directly
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     objectManager: ObjectManager,
     labelObjectId: string,
   ): boolean {

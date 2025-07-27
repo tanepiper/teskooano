@@ -258,8 +258,10 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
   update(
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     if (this.uniforms.time !== undefined) {
       this.uniforms.time.value = time;
@@ -304,7 +306,14 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
   /**
    * Update the material with the current time
    */
-  update(time: number): void {
+  update(
+    time: number,
+    timeScale: number,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
+  ): void {
     this.uniforms.time.value = time;
   }
 
@@ -458,7 +467,7 @@ export abstract class BaseStarRenderer<
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
@@ -482,7 +491,7 @@ export abstract class BaseStarRenderer<
     const coronaMaterials = this.coronaMaterials.get(object.celestialObjectId);
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
-        material.update(time);
+        material.update(time, timeScale, lightSources, camera);
       });
     }
   }

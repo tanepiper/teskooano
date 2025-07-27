@@ -87,7 +87,7 @@ export class BillboardManager {
    * @param allMeshes A map of all THREE.Object3D meshes in the scene.
    */
   public update(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     allObjects: Record<string, RenderableCelestialObject>,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

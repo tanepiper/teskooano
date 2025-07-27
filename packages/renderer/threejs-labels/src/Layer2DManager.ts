@@ -91,7 +91,7 @@ export class Layer2DManager {
    * Update method to be called each frame
    */
   update(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     centralBody: OSVector3,
     objectManager: ObjectManager,
   ): void {
@@ -118,7 +118,7 @@ export class Layer2DManager {
    * Renders the CSS2D scene
    * @param camera The camera to use for rendering
    */
-  render(camera: THREE.Camera): void {
+  render(camera: THREE.PerspectiveCamera): void {
     // The update logic is now in the update method, so we just render here.
     this.renderer.render(this.scene, camera);
   }

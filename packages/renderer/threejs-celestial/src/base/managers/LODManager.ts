@@ -52,7 +52,7 @@ export class LODManager {
    * @param camera The scene's main camera.
    * @returns True if the LOD was found and updated, false otherwise.
    */
-  public updateLOD(objectId: string, camera: THREE.Camera): boolean {
+  public updateLOD(objectId: string, camera: THREE.PerspectiveCamera): boolean {
     const lod = this.lods.get(objectId);
     if (lod) {
       lod.update(camera);
@@ -70,7 +70,7 @@ export class LODManager {
    */
   public updateObjectLOD(
     object: RenderableCelestialObject,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
   ): boolean {
     const lod = this.lods.get(object.celestialObjectId);
 
@@ -106,7 +106,7 @@ export class LODManager {
    */
   public getCurrentLODLevel(
     object: RenderableCelestialObject,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
   ): number | null {
     const lod = this.lods.get(object.celestialObjectId);
     if (!lod) return null;

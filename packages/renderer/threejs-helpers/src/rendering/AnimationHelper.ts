@@ -201,7 +201,7 @@ export class AnimationHelper {
    * @returns GSAP tween instance
    */
   static animateCamera(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     targetPosition: THREE.Vector3,
     config: CameraAnimationConfig = {},
   ): gsap.core.Timeline {
@@ -631,7 +631,7 @@ export class AnimationHelper {
    * @returns GSAP tween instance
    */
   static createOrbitAnimation(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     target: THREE.Vector3,
     radius: number,
     startAngle: number = 0,
@@ -683,7 +683,7 @@ export class AnimationHelper {
    * @returns GSAP tween instance
    */
   static createDollyAnimation(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     target: THREE.Vector3,
     startDistance: number,
     endDistance: number,

@@ -12,7 +12,7 @@ import { OSVector3 } from "@teskooano/core-math";
 describe("BillboardManager", () => {
   let billboardManager: BillboardManager;
   let mockObject: RenderableCelestialObject;
-  let mockCamera: THREE.Camera;
+  let mockCamera: THREE.PerspectiveCamera;
   let mockAllObjects: Record<string, RenderableCelestialObject>;
   let mockAllMeshes: Record<string, THREE.Object3D>;
 

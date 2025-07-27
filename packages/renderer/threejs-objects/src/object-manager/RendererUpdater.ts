@@ -37,7 +37,7 @@ export class RendererUpdater {
   updateRenderers(
     time: number,
     timeScale: number,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     allMeshes: Map<string, THREE.Object3D>,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
@@ -76,7 +76,7 @@ export class RendererUpdater {
     context: {
       time: number;
       timeScale: number;
-      camera: THREE.Camera;
+      camera: THREE.PerspectiveCamera;
       allMeshes: Map<string, THREE.Object3D>;
       renderer?: THREE.WebGLRenderer;
       scene?: THREE.Scene;

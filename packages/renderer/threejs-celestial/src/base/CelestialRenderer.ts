@@ -565,7 +565,7 @@ export interface CelestialRenderer {
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void;
@@ -580,7 +580,7 @@ export interface CelestialRenderer {
    * @param objectId ID of the object to update
    * @param camera The camera object
    */
-  updateLOD?(objectId: string, camera: THREE.Camera): void;
+  updateLOD?(objectId: string, camera: THREE.PerspectiveCamera): void;
 
   /**
    * Clean up any resources used by the renderer

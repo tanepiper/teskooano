@@ -290,7 +290,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     time: number,
     timeScale: number,
     lightSources: LightSourcesMap,
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
     const material = this.getTypedMaterial(object.celestialObjectId);

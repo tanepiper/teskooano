@@ -40,7 +40,7 @@ export class SceneManager {
   /**
    * The primary camera for the scene.
    */
-  public camera: Camera;
+  public camera: PerspectiveCamera;
   /**
    * The `THREE.WebGLRenderer` instance.
    */
@@ -177,7 +177,7 @@ export class SceneManager {
    */
   private _createSceneWithHelper(container: HTMLElement): {
     scene: Scene;
-    camera: Camera;
+    camera: PerspectiveCamera;
     renderer: WebGLRenderer;
   } {
     // Determine power preference based on performance profile

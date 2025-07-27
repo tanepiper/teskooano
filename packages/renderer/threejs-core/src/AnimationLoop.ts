@@ -45,7 +45,7 @@ export class AnimationLoop {
   private onPhysicsCallbacks: ((time: number, delta: number) => void)[] = [];
 
   private renderer: THREE.WebGLRenderer | null = null;
-  private camera: THREE.Camera | null = null;
+  private camera: THREE.PerspectiveCamera | null = null;
 
   // --- Stats-related properties ---
   private fpsFrameCount = 0;
@@ -75,7 +75,7 @@ export class AnimationLoop {
    * This is required for collecting camera statistics.
    * @param camera The main Three.js camera.
    */
-  setCamera(camera: THREE.Camera): void {
+  setCamera(camera: THREE.PerspectiveCamera): void {
     this.camera = camera;
   }
 

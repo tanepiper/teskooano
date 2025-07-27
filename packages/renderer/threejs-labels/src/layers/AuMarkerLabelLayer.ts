@@ -73,7 +73,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
   }
 
   public override update(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     centralBody: OSVector3, // This is actually the origin point (0,0,0) for AU markers
     objectManager: ObjectManager,
   ): void {

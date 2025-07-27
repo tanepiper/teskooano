@@ -61,7 +61,7 @@ export class PredictionLabelLayer extends BaseLabelLayer {
   }
 
   public update(
-    camera: THREE.Camera,
+    camera: THREE.PerspectiveCamera,
     centralBody: OSVector3, // Not used by prediction labels
     objectManager: ObjectManager,
   ): void {

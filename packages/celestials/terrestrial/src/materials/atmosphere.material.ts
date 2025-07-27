@@ -111,7 +111,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
   update(
     time: number,
     timeScale: number,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
     lightSources?: Map<string, LightSourceData>,
   ): void {
     this.uniforms.uTime.value = time;

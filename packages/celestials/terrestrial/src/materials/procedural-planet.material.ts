@@ -123,7 +123,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     time: number,
     timeScale: number,
     lightSources?: Map<string, LightSourceData>,
-    camera?: THREE.Camera,
+    camera?: THREE.PerspectiveCamera,
     shadowCasters?: { position: THREE.Vector3; radius: number }[],
   ): void {
     this.uniforms.uTime.value = time;
