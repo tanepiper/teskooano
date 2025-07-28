@@ -31,7 +31,7 @@ export class OrbitControlsHandler {
     this.controls.dampingFactor = 0.5;
     this.controls.screenSpacePanning = false;
     this.controls.minDistance = 0.0001; // Use default value, will be updated dynamically
-    this.controls.maxDistance = 1e8; // Adjust as needed
+    this.controls.maxDistance = 1e6; // Adjust as needed
     this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 
     this.controls.addEventListener("start", this.handleControlsStart);

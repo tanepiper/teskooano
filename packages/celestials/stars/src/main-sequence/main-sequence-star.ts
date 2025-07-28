@@ -97,7 +97,9 @@ export class MainSequenceStarRenderer<
   protected getBillboardLODDistance(
     object: RenderableCelestialObject<StarProperties>,
   ): number {
-    return object.radius * 500;
+    // Make billboards much more distant to avoid occlusion issues
+    // Only use billboards when objects are truly far away
+    return object.radius * 2000; // Increased from 500
   }
 
   /**

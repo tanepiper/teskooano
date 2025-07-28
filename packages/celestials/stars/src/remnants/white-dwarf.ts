@@ -168,7 +168,8 @@ export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     // White dwarfs are small but very bright, so their billboard should appear from further away
-    return object.radius * 500;
+    // Increased distance to avoid occlusion issues
+    return object.radius * 2000; // Increased from 500
   }
 
   /**

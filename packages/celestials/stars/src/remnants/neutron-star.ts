@@ -129,7 +129,8 @@ export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
-    return object.radius * 2000;
+    // Keep neutron stars at high distance since they're already conservative
+    return object.radius * 3000; // Slightly increased from 2000
   }
 
   update(

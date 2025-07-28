@@ -1,123 +1,239 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
-**Project Teskooano (N-Body Sim):**
-*   **Core:** N-Body simulation with real physics & orbital mechanics.
-*   **Architecture:** Modular: Frontend, Backend (player/env state), Libraries. Supports web component plugins.
-*   **UI:** DockView for modular UI (toolbars, panels, buttons). Requires a new, consistent design system. Routing for different views (loading, settings).
-*   **3D Engine:** ThreeJS (Vanilla TypeScript). Requires abstractions for game/scene managers.
-*   **Workflow:** Follow game designer's guidance. Commit frequently (suggest commitizen-formatted messages). Keep library READMEs and CHANGELOGs updated.
+# Teskooano Coding Style Guide
 
-**Key Dev Rules & Tools:**
-*   **Monorepo:** Use `proto` and `moon`.
-*   **TypeScript:** Strict, linted, formatted for all code.
-*   **CSS:** Vanilla CSS ONLY. Create design system tokens (color, typography, layout, animation). No CSS frameworks.
-*   **Frontend/Libraries:** Vite, Vanilla TypeScript, Web Components.
-    *   **State Management:** RxJS (for mappable data interfaces and Observable I/O).
-    *   **Documentation:** Use well-typed TypeScript, export interfaces. Provide API docs and clear READMEs for libraries.
-*   **Shell Scripts:** Clean, portable bash.
+## Project Overview
 
-**AI Agent Behaviour:**
-*   **Accuracy:** No hallucination.
-*   **Scope:** Edit only requested code. No unprompted UI changes.
-*   **Conciseness:** Keep features minimal per request; avoid over-explaining.
-*   **Problem Solving:** After 3 failed attempts on a problem, ask user for help with suggestions.
-*   **Debugging:** Address one error at a time.
-*   **Configuration:** Respect user-modified settings (e.g., ports, names, config values).
-*   **Dependencies:** Verify NPM package existence before use.
-*   **Explanations:** Use Markdown for complex topics, Mermaid diagrams for visualizations.
+**Teskooano (N-Body Sim):**
+*   **Core:** N-Body simulation with real physics & orbital mechanics using ThreeJS
+*   **Architecture:** Modular monorepo with clear separation between core packages, renderers, and applications
+*   **UI:** DockView for modular UI with plugin system. Web Components for custom elements
+*   **3D Engine:** ThreeJS (Vanilla TypeScript) with custom renderer packages
+*   **Workflow:** Follow established patterns, commit frequently with conventional commits
+
+## Key Development Rules & Tools
+
+**Monorepo Management:**
+*   **`proto` (Dependency Management):** Use for local copies of system dependencies
+*   **`moon` (Repository Management):** Use for overall monorepo structure and tasks
+*   **Package Management:** Use `npm` exclusively with `file:` dependencies for inter-package references
+*   **Running TypeScript:** Use `tsx` (e.g., `npx tsx src/index.ts`)
+
+**TypeScript Standards:**
+*   **Strict Mode:** Always use strict TypeScript configuration
+*   **Type Safety:** Prefer explicit types over inference when clarity is needed
+*   **Interfaces:** Define dedicated TypeScript interfaces for constructor options instead of inline object types
+*   **JSDoc:** Include documentation but omit explicit type annotations (types are in TypeScript code)
 
 **Code Style & Structure:**
-*   **Cleanliness:** Remove dead code and large comment blocks. Use 2-space indentation.
-*   **Modularity:** Prefer small, composable files (target max 300-400 lines). Refactor larger files.
-    *   Extract long handlers/complex data processing into utility or library functions.
-    *   Decompose HTML into smaller, testable leaf components using props for data flow.
-*   **Frontend Pattern:** Apply Model-View-Controller (MVC) structure.
+*   **Indentation:** Use 2-space indentation
+*   **Cleanliness:** Remove dead code and large comment blocks
+*   **Modularity:** Prefer small, composable files (target max 300-400 lines)
+*   **File Organization:** Follow established patterns for each package type
 
-**Testing (TDD Approach):**
-*   **File Convention:** Test files (`<filename>.spec.ts`) adjacent to source files.
-*   **Unit Tests:** Use Vitest for both backend and frontend.
-*   **Frontend (Apps):**
-    *   Playwright for user story and integration testing (focus on practical UI/complex features).
-    *   Avoid testing DOM or library features directly.
-    *   If a unit test requires JSDOM, write it as a Playwright test instead.
-*   **Backend (Services):**
-    *   Playwright for API test cases (focus on practical tests).
+## Package Architecture Patterns
 
-**Monorepo Setup (`proto` & `moon`):**
-*   **Initial Check:** Verify if already working within a monorepo.
-*   **`proto` (Dependency Management):**
-    *   Use for local copies of system dependencies (node, npm).
-    *   `.protofile` content:
-        ```toml
-        jq = "1.7.1"
-        moon = "1.31.2"
-        node = "22.13.0"
-        npm = "11.0.0"
+### Core Packages (`@teskooano/core-*`)
+*   **Purpose:** Application-agnostic business logic and data structures
+*   **Dependencies:** No UI-specific dependencies (no DockView, ThreeJS, etc.)
+*   **Examples:** `core-math`, `core-physics`, `core-state`, `core-debug`
+*   **Pattern:** Pure functions, state management, mathematical operations
 
-        [plugins]
-        jq = "https://raw.githubusercontent.com/appthrust/proto-toml-plugins/main/jq/plugin.toml"
-        moon = "https://raw.githubusercontent.com/moonrepo/moon/master/proto-plugin.toml"
-        ```
-    *   After creating/updating `.protofile`, run `proto use`.
-*   **`moon` (Repository Management):**
-    *   Use for overall monorepo structure and tasks.
-    *   Project `moon.yml` files required in each project directory (`apps/`, `packages/`, `services/`).
-    *   No `moon.yml` in the root; initialize with `yes | moon init`.
-    *   **Example Monorepo Structure:**
-        ```
-        - monorepo-root
-            - README.md
-            - package.json # Root package.json with workspaces
-            - tsconfig.json # Monorepo-compatible tsconfig with paths
-            - apps/
-                - app1/
-                    - src/
-                    - package.json
-                    - moon.yml
-                    - tsconfig.json
-                    - vite.config.ts
-            - packages/
-                - library1/ # (similar structure to app1)
-            - services/
-                - rest-service-1/ # (similar structure)
-        ```
-    *   **Package Management:** Use `npm` exclusively.
-        *   Root `package.json` workspaces example: `"workspaces": ["./apps/*", "./package/*"]` (Note: `package` singular as per original example, while directories are `packages` plural).
-        *   Inter-package dependencies: Use `file:../../packages/<package_name>` format (NOT `workspace:*`).
-    *   **Running TypeScript:** Use `tsx` (e.g., `npx tsx src/index.ts`; for dev: `npx tsx watch src/index.ts`).
+### Data Packages (`@teskooano/data-*`)
+*   **Purpose:** Shared data types and interfaces used across packages
+*   **Dependencies:** Minimal, only core types
+*   **Examples:** `data-types` (RenderableCelestialObject, CelestialType, etc.)
+*   **Pattern:** Type definitions, enums, interfaces
 
-**Frontend Development Details:**
-*   **Applications (`apps/` directory):**
-    *   Run on port 3000.
-    *   Utilize RxJS for state management and building data pipelines with operators.
-    *   Components: Keep small and testable (max 400 lines). Encapsulate loops or complex logic in child components.
-    *   Structure: Use controller components for views, compose views from smaller components.
-    *   Testing: Vitest unit tests (`<filename>.spec.ts`).
-    *   **CSS:** STRICTLY NO Tailwind CSS. If encountered, offer to replace with Vanilla CSS (Sass is permissible if syntax remains vanilla-like). Implement the design system.
-    *   **Real-time:** Integrate WebSockets for frontend-backend communication.
-*   **Libraries (`packages/` directory):**
-    *   Ensure libraries are exportable with correct TypeScript and Vite configurations.
-    *   Write well-typed TypeScript; export types and provide comprehensive documentation.
-    *   **README:** Create a thorough README for each library (covering What, Why, Where, When, How).
-    *   **`package.json` for Direct TypeScript Export:**
-        ```json
-        {
-          "type": "module",
-          "main": "src/index.ts",
-          "types": "src/index.d.ts",
-          "exports": {
-            ".": {
-              "import": "./src/index.ts",
-              "types": "./src/index.d.ts"
-            },
-            "./styles.css": "./src/styles.css"
-          },
-          "files": [
-            "src",
-            "styles.css"
-          ]
-        }
-        ```
+### Renderer Packages (`@teskooano/renderer-*`)
+*   **Purpose:** ThreeJS-specific rendering implementations
+*   **Dependencies:** ThreeJS, core packages, data packages
+*   **Examples:** `renderer-threejs-celestial`, `renderer-threejs-labels`, `renderer-threejs-orbits`
+*   **Pattern:** Renderer classes, shader materials, GPU optimizations
+
+### Celestial Packages (`@teskooano/celestials-*`)
+*   **Purpose:** Celestial object definitions and factories
+*   **Dependencies:** Data packages, core packages
+*   **Examples:** `celestials-stars-main-sequence`, `celestials-terrestrial`
+*   **Pattern:** Factory functions, celestial object classes
+
+### System Packages (`@teskooano/systems-*`)
+*   **Purpose:** Complex system implementations (procedural generation, solar system)
+*   **Dependencies:** Core packages, data packages
+*   **Examples:** `systems-procedural-generation`, `systems-solar-system`
+*   **Pattern:** System managers, generators, complex business logic
+
+### App Packages (`@teskooano/app-*`)
+*   **Purpose:** Application-specific functionality
+*   **Dependencies:** All other package types
+*   **Examples:** `app-simulation`, `app-ui-plugin`, `app-design-system`
+*   **Pattern:** Application logic, UI components, design system
+
+## Frontend Development Patterns
+
+### MVC Architecture
+*   **View:** Custom elements (Web Components) responsible only for rendering
+*   **Controller:** Dedicated classes that handle business logic and state management
+*   **Model:** Data structures and state management (often RxJS Observables)
+
+### Component Structure
+```
+component-name/
+├── view/
+│   ├── component-name.component.ts    # Custom element class
+│   └── component-name.template.ts     # HTML template and CSS
+├── controller/
+│   ├── component-name.controller.ts    # Main controller
+│   ├── component-name.streams.ts       # RxJS streams
+│   ├── component-name.effects.ts       # Side effects
+│   └── component-name.utils.ts         # Utility functions
+└── services/                          # (if applicable)
+    └── service-name.ts                # Reusable services
+```
+
+### Plugin System
+*   **Plugin Registration:** Use `TeskooanoPlugin` interface with components, functions, panels
+*   **Dynamic Loading:** Plugins loaded via `PluginManager` with HMR support
+*   **Dependency Injection:** Pass `PluginExecutionContext` to plugin constructors
+*   **Custom Elements:** Register via `ComponentConfig` in plugin definition, not manually
+
+### State Management
+*   **RxJS:** Use for reactive state management and data pipelines
+*   **Observables:** Prefer `Observable<T>` over direct state access
+*   **Context Pattern:** Pass dependencies down through constructor injection
+*   **Global State:** Use `@teskooano/core-state` for shared application state
+
+## 3D Rendering Patterns
+
+### Renderer Architecture
+*   **Compositional Pattern:** Use layers, composite renderers, and component systems
+*   **LOD System:** Implement Level of Detail with distance-based switching
+*   **Material Separation:** Separate material logic into `material.ts` files
+*   **Shader Organization:** External `.glsl` files for complex shaders
+
+### Performance Optimization
+*   **Instanced Rendering:** Use `THREE.InstancedMesh` for large numbers of similar objects
+*   **GPU-Driven Culling:** Implement Hi-Z buffers and compute shaders for occlusion
+*   **Spatial Partitioning:** Use Octrees for broad-phase culling
+*   **Memory Management:** Proper disposal of ThreeJS resources
+
+### Coordinate Systems
+*   **Right-Handed:** Use right-handed coordinate system for 3D axes
+*   **Scene Units:** 1 scene unit = 1 AU of distance
+*   **Scaling:** Use `AU_METERS` constant across entire codebase
+*   **Vector Math:** Use `OSVector3` for physics, convert to `THREE.Vector3` for rendering
+
+## Testing Strategy
+
+### Test Organization
+*   **File Convention:** Test files (`<filename>.spec.ts`) adjacent to source files
+*   **Unit Tests:** Use Vitest for both backend and frontend
+*   **Integration Tests:** Use Playwright for complex UI features
+*   **Test Data:** Use fixed random values for deterministic tests
+
+### Test Patterns
+*   **MVC Testing:** Test controllers independently of views
+*   **State Testing:** Test state management with RxJS operators
+*   **Renderer Testing:** Test renderer logic without ThreeJS context
+*   **Plugin Testing:** Test plugin registration and lifecycle
+
+## Documentation Standards
+
+### Package Documentation
+*   **README.md:** What, Why, Where, When, How for each package
+*   **ARCHITECTURE.md:** Detailed technical architecture with Mermaid diagrams
+*   **CHANGELOG.md:** Follow "Keep a Changelog" format
+*   **API Documentation:** Export interfaces and provide JSDoc comments
+
+### Code Documentation
+*   **JSDoc:** Include functionality descriptions but omit type annotations
+*   **Architecture Comments:** Explain complex algorithms and design decisions
+*   **Performance Notes:** Document performance-critical sections
+*   **TODO Comments:** Use for future enhancements and known issues
+
+## Performance Guidelines
+
+### Rendering Performance
+*   **Draw Call Reduction:** Use instancing and batching
+*   **GPU Utilization:** Offload work to GPU with compute shaders
+*   **Memory Efficiency:** Reuse objects and minimize allocations
+*   **Caching:** Cache expensive calculations and results
+
+### JavaScript Performance
+*   **Object Reuse:** Pre-allocate vectors and matrices
+*   **Garbage Collection:** Minimize object creation in hot paths
+*   **Algorithm Efficiency:** Use appropriate data structures (Octrees, spatial hashing)
+*   **Async Processing:** Use Web Workers for heavy computations
+
+## Error Handling
+
+### Error Patterns
+*   **Graceful Degradation:** Provide fallbacks for missing features
+*   **User Feedback:** Show meaningful error messages
+*   **Logging:** Use structured logging for debugging
+*   **Recovery:** Implement automatic recovery where possible
+
+### Validation
+*   **Input Validation:** Validate all external inputs
+*   **Type Safety:** Use TypeScript for compile-time validation
+*   **Runtime Checks:** Add runtime checks for critical paths
+*   **Error Boundaries:** Implement error boundaries for UI components
+
+## Security Considerations
+
+### Web Security
+*   **Content Security Policy:** Implement CSP for XSS prevention
+*   **Input Sanitization:** Sanitize all user inputs
+*   **CORS:** Configure CORS properly for API calls
+*   **HTTPS:** Use HTTPS in production
+
+### Data Security
+*   **API Keys:** Never hardcode API keys in source code
+*   **Environment Variables:** Use environment variables for secrets
+*   **Data Validation:** Validate all data at boundaries
+*   **Access Control:** Implement proper access controls
+
+## Deployment & DevOps
+
+### Build Process
+*   **Vite:** Use Vite for frontend builds
+*   **TypeScript:** Compile with strict settings
+*   **Bundle Optimization:** Minimize bundle size
+*   **Asset Optimization:** Optimize textures and models
+
+### Environment Management
+*   **Environment Variables:** Use for configuration
+*   **Feature Flags:** Implement feature flags for gradual rollouts
+*   **Monitoring:** Add performance monitoring and error tracking
+*   **Logging:** Implement structured logging
+
+## Code Review Guidelines
+
+### Review Checklist
+*   **Type Safety:** All code properly typed
+*   **Performance:** No obvious performance issues
+*   **Security:** No security vulnerabilities
+*   **Documentation:** Code is self-documenting
+*   **Testing:** Adequate test coverage
+*   **Architecture:** Follows established patterns
+
+### Review Process
+*   **Small Changes:** Prefer small, focused changes
+*   **Clear Purpose:** Each change has a clear purpose
+*   **Backward Compatibility:** Maintain API compatibility
+*   **Migration Path:** Provide migration path for breaking changes
+
+## Common Patterns & Anti-Patterns
+
+### Recommended Patterns
+*   **Dependency Injection:** Pass dependencies through constructors
+*   **Factory Functions:** Use factories for complex object creation
+*   **Composition over Inheritance:** Prefer composition
+*   **Immutable Data:** Use immutable data structures where possible
+*   **Reactive Programming:** Use RxJS for data flow
+
+### Anti-Patterns to Avoid
+*   **Global State:** Avoid global variables and singletons
+*   **Tight Coupling:** Don't create tight dependencies between packages
+*   **Premature Optimization:** Don't optimize before measuring
+*   **Magic Numbers:** Use named constants instead of magic numbers
+*   **Deep Nesting:** Avoid deeply nested conditionals and loops

@@ -684,26 +684,29 @@ export class CameraHelper {
     celestialType?: string,
   ): void {
     if (!celestialType) {
-      // Default settings for general space viewing
-      camera.near = 0.0001;
+      // Default settings for general space viewing with logarithmic depth
+      camera.near = 0.00001; // 0.00000001 AU ≈ 1.5 km (ultra-close general viewing with log depth)
       camera.updateProjectionMatrix();
       return;
     }
 
-    // Dynamic camera settings based on celestial object type
+    // Dynamic camera settings optimized for logarithmic depth buffer
+    // With log depth, we can use much more aggressive near planes for close viewing
+    // while maintaining excellent precision across the entire distance range
     const nearPlanes: Record<string, number> = {
-      star: 0.01,
-      planet: 0.001,
-      gas_giant: 0.001,
-      dwarf_planet: 0.001,
-      moon: 0.001,
-      comet: 0.0000001,
-      satellite: 0.0000001,
-      oort_cloud: 0.0001,
-      asteroid_field: 0.0001,
+      star: 0.01, // 0.001 AU ≈ 150k km (very close to stellar surfaces with log depth)
+      planet: 0.01, // 0.00001 AU ≈ 1.5k km (extremely close to planetary surfaces)
+      gas_giant: 0.1, // 0.0001 AU ≈ 15k km (close to gas giant cloud tops)
+      dwarf_planet: 0.005, // 0.000005 AU ≈ 750 km (ultra-close dwarf planet viewing)
+      moon: 0.001, // 0.000001 AU ≈ 150 km (ultra-close moon viewing)
+      asteroid: 0.0000001, // 0.0000001 AU ≈ 15 km (very close individual asteroid inspection)
+      comet: 0.001, // 0.000001 AU ≈ 150 km (ultra-close comet viewing)
+      satellite: 0.0001, // 0.0000001 AU ≈ 15 km (extremely close satellite inspection)
+      oort_cloud: 0.1, // 0.0001 AU ≈ 15k km (close particle field viewing)
+      asteroid_field: 0.01, // 0.00001 AU ≈ 1.5k km (very close asteroid viewing)
     };
 
-    const nearPlane = nearPlanes[celestialType.toLowerCase()] ?? 0.0001;
+    const nearPlane = nearPlanes[celestialType.toLowerCase()] ?? 0.00001;
     camera.near = nearPlane;
     camera.updateProjectionMatrix();
   }
@@ -725,6 +728,7 @@ export class CameraHelper {
       gas_giant: 0.1,
       dwarf_planet: 0.01,
       moon: 0.01,
+      asteroid: 0.000001, // 150 m minimum - allows very close inspection of small asteroids
       comet: 0.000001,
       satellite: 0.000001,
       oort_cloud: 0.0001,

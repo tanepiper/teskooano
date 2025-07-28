@@ -2,6 +2,7 @@ import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import {
   AnimationLoop,
+  DepthBufferDebugger,
   GridManager,
   SceneManager,
 } from "@teskooano/renderer-threejs-core";
@@ -65,6 +66,9 @@ export class ModularSpaceRenderer {
   public stateAdapter: RendererStateAdapter;
   /** Orchestrates the per-frame update sequence. */
   public renderPipeline: RenderPipeline;
+
+  /** Debug tool for analyzing depth buffer and material issues. */
+  public depthDebugger: DepthBufferDebugger;
 
   private container?: HTMLElement;
   private resizeHandler?: () => void;
@@ -144,6 +148,20 @@ export class ModularSpaceRenderer {
       gridManager: this.gridManager,
       css2DManager: this.css2DManager,
     });
+
+    // Initialize depth buffer debugger
+    this.depthDebugger = new DepthBufferDebugger(this.sceneManager);
+
+    // Make debugger accessible globally during development
+    if (typeof window !== "undefined") {
+      if ((window as any).teskooano) {
+        (window as any).teskooano.debugger = this.depthDebugger;
+      } else {
+        (window as any).teskooano = {
+          debugger: this.depthDebugger,
+        };
+      }
+    }
 
     this.setupAnimationCallbacks();
   }
@@ -301,5 +319,19 @@ export class ModularSpaceRenderer {
    */
   public highlightPrediction(objectId: string | null): void {
     this.orbitManager.highlightPrediction(objectId);
+  }
+
+  /**
+   * Runs a comprehensive depth buffer analysis and logs results to console.
+   * Use this to debug occlusion and depth sorting issues.
+   *
+   * @example
+   * ```javascript
+   * // In browser console:
+   * renderer.runDepthAnalysis();
+   * ```
+   */
+  public runDepthAnalysis(): void {
+    this.depthDebugger.runFullAnalysis();
   }
 }

@@ -28,10 +28,10 @@ export function createBillboardSprite(
     color: finalColor,
     blending: THREE.NormalBlending,
     sizeAttenuation: false, // Size is in screen space
-    transparent: true, // Set to false so it writes to depth buffer properly
+    transparent: true,
     opacity: 0.8, // Start with opaque, actual opacity will be handled by billboardManager.update
-    depthWrite: true,
-    depthTest: true,
+    depthWrite: false, // Transparent sprites should not write to depth buffer
+    depthTest: true, // But should test against depth buffer for proper occlusion
     userData: {
       isBillboard: true,
       celestialObjectId: object.celestialObjectId,

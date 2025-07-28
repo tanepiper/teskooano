@@ -10,6 +10,7 @@ import {
   SceneHelper,
 } from "@teskooano/renderer-threejs-helpers";
 import { AnimationLoop } from "./AnimationLoop";
+import { LogarithmicDepthMaterial } from "./LogarithmicDepthMaterial";
 import { rendererEvents } from "./events";
 import { getPerformanceOptimization } from "./helpers/performance";
 import { Subscription } from "rxjs";
@@ -19,6 +20,7 @@ import {
   type Camera,
   type WebGLRenderer,
   type WebGLCapabilities,
+  Object3D,
   SRGBColorSpace,
   ACESFilmicToneMapping,
   PCFSoftShadowMap,
@@ -98,6 +100,9 @@ export class SceneManager {
     this.scene = sceneSetup.scene;
     this.camera = sceneSetup.camera;
     this.renderer = sceneSetup.renderer;
+
+    // Enable logarithmic depth buffer for superior space-scale precision
+    this.enableLogarithmicDepth();
 
     // Initialize capability detection and performance optimization
     this.webGLCapabilities = this.renderer.capabilities;
@@ -195,22 +200,29 @@ export class SceneManager {
         break;
     }
 
-    // Use CameraHelper to create optimized space camera
+    // Use CameraHelper to create optimized space camera with logarithmic depth
     const camera = CameraHelper.createCamera(CameraPreset.Space, {
       fov: this.fov,
-      near: 0.0001, // Default near plane for space scenes
-      far: 10000000, // Default far plane for space scenes
+      near: 0.00001, // With log depth, we can use aggressive near plane (0.000001 AU ≈ 150 km)
+      far: 1000000, // With log depth, we can use massive far plane (1000 AU - covers entire system)
       position: this.options.cameraPosition ?? [1500, 1500, 1500], // Default camera position
       aspect: this.width / this.height,
     });
 
-    // Use SceneHelper to create optimized space scene
+    // Configure camera for logarithmic depth buffer (only for perspective cameras)
+    if (camera instanceof PerspectiveCamera) {
+      LogarithmicDepthMaterial.configureCameraForLogDepth(
+        camera as PerspectiveCamera,
+      );
+    }
+
+    // Use SceneHelper to create optimized space scene with logarithmic depth
     const sceneSetup = SceneHelper.createScene({
       name: "Teskooano Space Engine",
       backgroundColor: 0x000011, // Dark blue space background
       fov: this.fov,
-      near: 0.0001, // Default near plane for space scenes
-      far: 10000000, // Default far plane for space scenes
+      near: 0.00001, // Logarithmic depth allows aggressive near plane
+      far: 1000000, // Logarithmic depth allows massive far plane
       aspectRatio: this.width / this.height,
       enableShadows: this.options.shadows ?? true,
       antialias: this.options.antialias ?? true,
@@ -241,6 +253,11 @@ export class SceneManager {
       sceneSetup.renderer.toneMappingExposure = 1.0; // Default exposure
     }
 
+    // Enable logarithmic depth buffer globally on the renderer
+    const gl = sceneSetup.renderer.getContext();
+    (sceneSetup.renderer as any).logarithmicDepthBuffer = true;
+    console.log("🚀 Logarithmic depth buffer enabled globally on renderer");
+
     return sceneSetup;
   }
 
@@ -260,6 +277,44 @@ export class SceneManager {
     if (this.animationLoop) {
       this.animationLoop.stop();
     }
+  }
+
+  /**
+   * Enables logarithmic depth buffer for superior precision across massive distance ranges.
+   * This is essential for space scenes where objects range from meters to astronomical units.
+   */
+  private enableLogarithmicDepth(): void {
+    // Log depth is enabled globally on the renderer, but we also need to
+    // apply it to any existing materials and set up auto-application for new ones
+    LogarithmicDepthMaterial.enableLogDepthForScene(this.scene);
+
+    // Set up auto-application for future materials
+    this.setupAutoLogDepthApplication();
+
+    console.log(
+      "🚀 Logarithmic depth buffer enabled - superior space-scale precision!",
+    );
+  }
+
+  /**
+   * Sets up automatic application of logarithmic depth to newly created materials.
+   */
+  private setupAutoLogDepthApplication(): void {
+    // Store reference to enable easier material patching
+    const originalScene = this.scene;
+
+    // We'll patch the scene's add method to auto-apply log depth to new objects
+    const originalAdd = originalScene.add.bind(originalScene);
+    originalScene.add = function (...objects: Object3D[]) {
+      const result = originalAdd(...objects);
+
+      // Apply log depth to any materials in the newly added objects
+      objects.forEach((obj) => {
+        LogarithmicDepthMaterial.enableLogDepthForScene(obj as any);
+      });
+
+      return result;
+    };
   }
 
   /**

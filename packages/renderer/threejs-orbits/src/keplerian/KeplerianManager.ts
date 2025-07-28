@@ -237,6 +237,10 @@ export class KeplerianManager extends StateSubscriptionMixin {
       newLine.visible = isVisible;
       newLine.frustumCulled = false;
 
+      // Apply correct render order for Keplerian orbits
+      newLine.renderOrder =
+        RenderOrderManager.getRenderOrderForOrbit("keplerian");
+
       // Orbit lines need to be positioned in absolute world space, not relative to celestial objects
       // So we add them directly to the scene
       this.keplerianLinesGroup.add(newLine);

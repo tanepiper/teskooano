@@ -15,6 +15,7 @@ import {
   type LightingManager,
 } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
+import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";
@@ -166,6 +167,9 @@ export class ObjectLifecycleManager {
 
     group.add(mesh);
     this.objects.set(objectId, mesh);
+
+    // Apply correct render order for proper depth sorting
+    RenderOrderManager.applyRenderOrder(group, object.type);
 
     // Handle associated components (lights, labels, lensing)
     if (object.type === CelestialType.STAR && object.position) {

@@ -6,6 +6,7 @@ import {
 } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
+import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import { BillboardLODConfig } from "./types";
 import { createBillboardSprite } from "./billboard-utils";
@@ -70,6 +71,9 @@ export class BillboardManager {
     billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
     billboardGroup.add(billboardInfo.sprite);
     billboardGroup.add(light);
+
+    // Apply correct render order for star billboards to ensure proper depth sorting
+    RenderOrderManager.applyRenderOrder(billboardGroup, "star-billboard");
 
     return {
       object: billboardGroup,

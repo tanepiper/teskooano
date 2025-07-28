@@ -21,6 +21,7 @@ export const SharedMaterials = {
     transparent: true,
     opacity: 1,
     depthTest: true,
+    depthWrite: false, // Trails should not write to depth buffer to avoid occlusion conflicts
   }),
 
   /**
@@ -36,6 +37,7 @@ export const SharedMaterials = {
     transparent: true,
     opacity: 0.7,
     depthTest: true,
+    depthWrite: false, // Prediction lines should not write to depth buffer
   }),
 
   /**
@@ -47,6 +49,7 @@ export const SharedMaterials = {
     transparent: true,
     opacity: 1,
     depthTest: true,
+    depthWrite: false, // Keplerian orbits should not write to depth buffer
   }),
 
   /**
@@ -58,6 +61,7 @@ export const SharedMaterials = {
     transparent: true,
     opacity: 0.5,
     depthTest: true,
+    depthWrite: false, // Moon orbits should not write to depth buffer
   }),
 
   /**

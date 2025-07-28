@@ -102,29 +102,37 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
       }
 
       // Basic visibility based on camera distance (e.g., markers too far disappear)
-      let visible = cameraPosition.distanceTo(group.position) < markerAuValueScene * 5;
+      let visible =
+        cameraPosition.distanceTo(group.position) < markerAuValueScene * 5;
 
       if (visible) {
         // Perform raycast from camera to marker's position
         const markerPosition = group.position.clone();
-        raycaster.set(cameraPosition, markerPosition.sub(cameraPosition).normalize());
+        raycaster.set(
+          cameraPosition,
+          markerPosition.sub(cameraPosition).normalize(),
+        );
 
         // Get all rendered meshes from the ObjectManager
         const allRenderedMeshes = objectManager.getAllRenderedMeshes();
 
         // Filter out the AU marker meshes themselves and ensure only valid, visible Meshes are occluders
-        const occluders = allRenderedMeshes.filter(mesh => 
-          mesh instanceof THREE.Mesh && 
-          mesh.visible && 
-          mesh.matrixWorld !== null && // Crucial: ensure matrixWorld is not null
-          !mesh.name.startsWith("au-marker-label")
+        const occluders = allRenderedMeshes.filter(
+          (mesh) =>
+            mesh instanceof THREE.Mesh &&
+            mesh.visible &&
+            mesh.matrixWorld !== null && // Crucial: ensure matrixWorld is not null
+            !mesh.name.startsWith("au-marker-label"),
         );
 
         const intersects = raycaster.intersectObjects(occluders, true);
 
         // If there's an intersection, and the intersection point is closer than the marker,
         // then the marker is occluded.
-        if (intersects.length > 0 && intersects[0].distance < cameraPosition.distanceTo(group.position)) {
+        if (
+          intersects.length > 0 &&
+          intersects[0].distance < cameraPosition.distanceTo(group.position)
+        ) {
           visible = false;
         }
       }

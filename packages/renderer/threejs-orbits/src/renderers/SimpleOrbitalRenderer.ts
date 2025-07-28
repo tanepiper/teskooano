@@ -5,6 +5,7 @@ import {
 } from "@teskooano/data-types";
 import { type ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
+import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { PositionHistoryManager } from "@teskooano/renderer-threejs-celestial";
 
@@ -129,6 +130,9 @@ export class SimpleOrbitalRenderer {
         `orbital-line-${objectId}`,
       );
       line.frustumCulled = false;
+
+      // Apply correct render order for trails
+      line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");
 
       // Add orbital line to the celestial's own group
       parentGroup.add(line);

@@ -26,8 +26,8 @@ describe("SceneManager", () => {
     expect(sceneManager.renderer).toBeInstanceOf(THREE.WebGLRenderer);
 
     expect(sceneManager.camera.aspect).toBe(800 / 600);
-    expect(sceneManager.camera.near).toBe(0.00001); // Updated to match new near plane setting
-    expect(sceneManager.camera.far).toBe(10000000);
+    expect(sceneManager.camera.near).toBe(0.00001); // Updated for ultra-aggressive logarithmic depth buffer
+    expect(sceneManager.camera.far).toBe(1000000); // Updated for logarithmic depth buffer
 
     expect(sceneManager.renderer.domElement).toBeInstanceOf(HTMLCanvasElement);
     expect(sceneManager.renderer.shadowMap.enabled).toBe(false);

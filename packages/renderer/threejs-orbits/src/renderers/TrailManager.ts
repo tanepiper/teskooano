@@ -1,5 +1,6 @@
 import { RenderableCelestialObject, TrailQuality } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
@@ -325,6 +326,9 @@ export class TrailManager {
       );
 
       line.frustumCulled = false;
+
+      // Apply correct render order for trail lines
+      line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");
 
       // Add trail lines to the dedicated orbit lines group
       this.trailLinesGroup.add(line);

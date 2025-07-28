@@ -12,8 +12,9 @@ import { StateAccessor } from "@teskooano/core-state";
 /**
  * Defines the base distance for star field layers, used as a reference
  * for creating parallax and depth effects.
+ * Optimized for logarithmic depth buffer with 1000 AU far plane.
  */
-const BASE_DISTANCE = 180000000;
+const BASE_DISTANCE = 1e8; // 900 AU - well within 1000 AU far plane
 
 /**
  * Manages the space background, which is composed of multiple `Field` layers.
@@ -71,8 +72,8 @@ export class BackgroundManager {
 
     const nebulaOptions: NebulaFieldOptions = {
       name: "deep-space-nebula",
-      baseDistance: BASE_DISTANCE * 2,
-      size: BASE_DISTANCE * 4,
+      baseDistance: BASE_DISTANCE * 0.8, // 720 AU - safely within 1000 AU far plane
+      size: BASE_DISTANCE * 0.5, // 450 AU size - reasonable nebula scale
       colors: selectedPalette.map((color) => new THREE.Color(color)),
       ...defaultOptions,
     };
@@ -92,7 +93,7 @@ export class BackgroundManager {
         {
           count: 10000,
           distanceMultiplier: 1,
-          distanceSpread: 400000,
+          distanceSpread: 50000, // Reduced to keep within 1000 AU far plane
           minBrightness: 0.9,
           maxBrightness: 1.0,
           size: 5.0,
@@ -100,8 +101,8 @@ export class BackgroundManager {
         },
         {
           count: 20000,
-          distanceMultiplier: 1.1,
-          distanceSpread: 500000,
+          distanceMultiplier: 1.05, // Slightly closer together
+          distanceSpread: 40000, // Reduced spread
           minBrightness: 0.7,
           maxBrightness: 0.9,
           size: 4.0,
@@ -109,8 +110,8 @@ export class BackgroundManager {
         },
         {
           count: 50000,
-          distanceMultiplier: 1.2,
-          distanceSpread: 600000,
+          distanceMultiplier: 1.08, // Safe multiplier to stay under 1000 AU
+          distanceSpread: 25000, // Conservative spread
           minBrightness: 0.5,
           maxBrightness: 0.7,
           size: 3.0,
