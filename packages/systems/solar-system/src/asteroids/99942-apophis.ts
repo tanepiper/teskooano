@@ -42,25 +42,23 @@ export const apophis: CelestialObject<AsteroidProperties> = {
   properties: {
     type: CelestialType.ASTEROID,
     classType: AsteroidClass.SHORT_PERIOD, // Aten-type NEO with short period
-    color: "#8b7355", // Brownish color typical for Sq-type asteroids
+    colors: ["#584933", "#69573e", "#7a6549", "#8b7355"],
+    heights: [0.0, 0.4, 0.6, 0.8],
     composition: "silicates, metals", // Sq spectral type indicates silicate-metal composition
     density: 3.2, // ~3.2 g/cm³ (range 2.6 g/cm³ assumed)
     temperature: 270, // 270 K
     activity: 0.0, // Asteroids are generally inactive
     visuals: {
-      darkColorMultiplier: 0.75,
-      lightColorMultiplier: 1.25,
-      fbmScale: 2.0, // Slightly larger scale for the smaller asteroid
-      fineFbmScale: 20.0,
-      fineFbmMix: 0.12,
+      noiseScale: 2.2,
+      blendSharpness: 1.0,
+      craterScale: 22.0,
+      craterStrength: 0.5,
+      simplePeriod: 2.0,
+      undulation: 0.15,
       ambientStrength: 0.025,
       metallicFactor: 0.25, // Sq-type has moderate metallic content
       roughness: 0.8, // Rough surface typical of small asteroids
       specularColor: new THREE.Color("#b8b8b8"), // Grayish specular highlights
-      shininess: 0.4,
-      undulation: 0.08, // Smaller undulations for smaller body
-      terrainType: 2, // Different terrain type from Eros
-      terrainAmplitude: 0.12, // Moderate terrain variation
     },
   },
 };

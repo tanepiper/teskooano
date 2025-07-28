@@ -197,8 +197,10 @@ export interface AsteroidProperties extends SpecificPropertiesBase {
   type: CelestialType.ASTEROID;
   /** The specific type classification of the asteroid (e.g., ROCKY, TERRESTRIAL). */
   classType?: AsteroidClass;
-  /** The color of the asteroid, usually a hex string. */
-  color: string;
+  /** An array of up to 4 colors for the asteroid's procedural texture. */
+  colors: string[];
+  /** An array of height thresholds (0-1) corresponding to each color. Must have the same length as `colors`. */
+  heights: number[];
   /** The composition of the asteroid, usually a string. */
   composition: string;
   /** The density of the asteroid, usually a number between 0 and 1. */
@@ -210,19 +212,16 @@ export interface AsteroidProperties extends SpecificPropertiesBase {
   activity: number;
 
   visuals: {
-    darkColorMultiplier?: number;
-    lightColorMultiplier?: number;
-    fbmScale?: number;
-    fineFbmScale?: number;
-    fineFbmMix?: number;
+    noiseScale?: number; // Scale for the base color layering noise
+    blendSharpness?: number; // How sharp the transitions between layers are
+    craterScale?: number; // Scale for the crater noise
+    craterStrength?: number; // How dark and prominent the craters are
+    simplePeriod?: number; // Base frequency for the noise generation
+    undulation?: number; // Controls the amount of surface undulation/waviness
     ambientStrength?: number;
     metallicFactor?: number;
     roughness?: number;
     specularColor?: THREE.Color;
-    shininess?: number; // Added from ProceduralSurfaceProperties
-    undulation?: number; // Added from ProceduralSurfaceProperties
-    terrainType?: number; // Added from ProceduralSurfaceProperties
-    terrainAmplitude?: number; // Added from ProceduralSurfaceProperties
   };
 }
 

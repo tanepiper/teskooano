@@ -179,18 +179,41 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
   ): AsteroidNucleusMaterial {
     const properties = object.properties as AsteroidProperties;
-    // An active comet has a brighter, icy-rock color.
-    let nucleusColorValue = "#5b7b96";
-
-    // An extinct comet (activity = 0) is a dark, inert, asteroid-like rock.
-    if (properties.activity === 0) {
-      nucleusColorValue = "#8e8b8b";
-    }
 
     return new AsteroidNucleusMaterial({
-      color: new THREE.Color(nucleusColorValue),
+      colors: properties.colors.map((c) => new THREE.Color(c)),
+      heights: properties.heights,
       ...(properties.visuals || {}),
     });
+  }
+
+  /**
+   * Generates a random palette of 2 to 4 colors suitable for a rocky asteroid.
+   * Colors will be variations of greys, browns, and dark reds.
+   * @returns An array of THREE.Color objects.
+   */
+  private generateColorPalette(): THREE.Color[] {
+    const palette: THREE.Color[] = [];
+    const numColors = Math.floor(this.random() * 3) + 2; // 2 to 4 colors
+
+    // Base color properties
+    const baseHue = this.random() * 0.1 + 0.02; // 0.02 (reddish) to 0.12 (brownish)
+    const baseSaturation = this.random() * 0.4; // 0% to 40% saturation
+    const baseLightness = this.random() * 0.3 + 0.2; // 20% to 50% lightness
+
+    for (let i = 0; i < numColors; i++) {
+      const color = new THREE.Color();
+      const h = baseHue + (this.random() - 0.5) * 0.05; // Small hue shift
+      const s = baseSaturation + (this.random() - 0.5) * 0.1;
+      const l = baseLightness + (this.random() - 0.5) * 0.15;
+      color.setHSL(
+        THREE.MathUtils.clamp(h, 0, 1),
+        THREE.MathUtils.clamp(s, 0, 1),
+        THREE.MathUtils.clamp(l, 0, 1),
+      );
+      palette.push(color);
+    }
+    return palette;
   }
 
   private updateNucleus(

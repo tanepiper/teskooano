@@ -6,6 +6,8 @@ import { StarFieldOptions } from "./fields/star-field/types";
 import { NebulaField } from "./fields/nebula-field/NebulaField";
 import { NebulaFieldOptions } from "./fields/nebula-field/types";
 import { NEBULA_PALETTES } from "./fields/nebula-field/palettes";
+import { GalaxyField } from "./fields/galaxy-field/GalaxyField";
+import { GalaxyFieldOptions } from "./fields/galaxy-field/types";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
 
@@ -14,7 +16,7 @@ import { StateAccessor } from "@teskooano/core-state";
  * for creating parallax and depth effects.
  * Optimized for logarithmic depth buffer with 1000 AU far plane.
  */
-const BASE_DISTANCE = 1e8; // 900 AU - well within 1000 AU far plane
+const BASE_DISTANCE = 1e9; // 900 AU - well within 1000 AU far plane
 
 /**
  * Manages the space background, which is composed of multiple `Field` layers.
@@ -47,8 +49,9 @@ export class BackgroundManager {
     }
     this.random = createSeededRandomSync(currentSeed);
 
-    this.createDefaultNebula();
     this.createDefaultStarField();
+    //this.createDefaultGalaxyField();
+    this.createDefaultNebula();
   }
 
   /**
@@ -62,7 +65,7 @@ export class BackgroundManager {
     const defaultOptions = {
       alpha: 0.9,
       noiseConfig: {
-        scale: 900000000,
+        scale: BASE_DISTANCE,
         octaves: 2,
         persistence: 0.5,
         lacunarity: 2.2,
@@ -72,8 +75,8 @@ export class BackgroundManager {
 
     const nebulaOptions: NebulaFieldOptions = {
       name: "deep-space-nebula",
-      baseDistance: BASE_DISTANCE * 0.8, // 720 AU - safely within 1000 AU far plane
-      size: BASE_DISTANCE * 0.5, // 450 AU size - reasonable nebula scale
+      baseDistance: BASE_DISTANCE, // 720 AU - safely within 1000 AU far plane
+      size: BASE_DISTANCE, // 450 AU size - reasonable nebula scale
       colors: selectedPalette.map((color) => new THREE.Color(color)),
       ...defaultOptions,
     };
@@ -101,7 +104,7 @@ export class BackgroundManager {
         },
         {
           count: 20000,
-          distanceMultiplier: 1.05, // Slightly closer together
+          distanceMultiplier: 1, // Slightly closer together
           distanceSpread: 40000, // Reduced spread
           minBrightness: 0.7,
           maxBrightness: 0.9,
@@ -110,7 +113,7 @@ export class BackgroundManager {
         },
         {
           count: 50000,
-          distanceMultiplier: 1.08, // Safe multiplier to stay under 1000 AU
+          distanceMultiplier: 1, // Safe multiplier to stay under 1000 AU
           distanceSpread: 25000, // Conservative spread
           minBrightness: 0.5,
           maxBrightness: 0.7,
@@ -122,6 +125,26 @@ export class BackgroundManager {
 
     const starField = new StarField(starFieldOptions);
     this.addField(starField);
+  }
+
+  /**
+   * Creates the default galaxy field and adds it to the manager.
+   */
+  private createDefaultGalaxyField(): void {
+    const galaxyFieldOptions: GalaxyFieldOptions = {
+      name: "background-galaxies",
+      count: 500,
+      baseDistance: BASE_DISTANCE,
+      distanceSpread: 20000, // Some variation in distance
+      minSize: 800, // Large enough to be visible at distance
+      maxSize: 2000,
+      minOpacity: 0.2,
+      maxOpacity: 0.5,
+      parallaxStrength: 0, // No parallax - static background texture
+    };
+
+    const galaxyField = new GalaxyField(galaxyFieldOptions);
+    this.addField(galaxyField);
   }
 
   /**

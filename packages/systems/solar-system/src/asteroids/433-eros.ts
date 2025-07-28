@@ -39,26 +39,23 @@ export const eros: CelestialObject<AsteroidProperties> = {
   properties: {
     type: CelestialType.ASTEROID,
     classType: AsteroidClass.SHORT_PERIOD,
-    // classType: AsteroidClass.S_TYPE, // S (Tholen), S (SMASS) - Removed, as AsteroidClass is for orbital, not spectral type.
-    color: "#a08060", // Brownish-red to yellowish for S-type
+    colors: ["#5a4a35", "#6f5b41", "#8a6e50", "#a08060"],
+    heights: [0.0, 0.45, 0.65, 0.85],
     composition: "silicates, iron",
     density: 2.67, // 2.67±0.03 g/cm3
     temperature: 200, // Placeholder, usually not specified for asteroids in this detail
     activity: 0.0, // Asteroids are generally inactive
     visuals: {
-      darkColorMultiplier: 0.7,
-      lightColorMultiplier: 1.3,
-      fbmScale: 1.5,
-      fineFbmScale: 15.0,
-      fineFbmMix: 0.15,
+      noiseScale: 1.8,
+      blendSharpness: 1.2,
+      craterScale: 18.0,
+      craterStrength: 0.6,
+      simplePeriod: 1.5,
+      undulation: 0.2,
       ambientStrength: 0.02,
       metallicFactor: 0.3, // S-type has some metallic content
       roughness: 0.7, // Moderately rough
       specularColor: new THREE.Color("#cccccc"), // Off-white/gray specular highlights
-      shininess: 0.5, // Added as a placeholder, adjust as needed
-      undulation: 0.1,
-      terrainType: 1,
-      terrainAmplitude: 0.15,
     },
   },
 };
