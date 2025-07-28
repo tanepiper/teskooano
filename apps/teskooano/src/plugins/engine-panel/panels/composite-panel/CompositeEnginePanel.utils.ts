@@ -35,29 +35,43 @@ export function applyViewStateToRenderer(
   if (!renderer) return;
 
   if (updates.showGrid !== undefined) {
-    renderer.gridManager.setVisible(updates.showGrid);
+    renderer.renderingOrchestrator
+      .getGridManager()
+      .setVisible(updates.showGrid);
   }
   if (updates.showCelestialLabels !== undefined) {
-    renderer.css2DManager.setLayerVisibility(
-      CSS2DLayerType.CELESTIAL_LABELS,
-      updates.showCelestialLabels,
-    );
+    renderer.interactionOrchestrator
+      .getLayer2DManager()
+      .setLayerVisibility(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        updates.showCelestialLabels,
+      );
   }
   if (updates.showAuMarkers !== undefined) {
-    renderer.auMarkerManager?.setVisible(updates.showAuMarkers);
+    renderer.interactionOrchestrator
+      .getAuMarkerManager()
+      ?.setVisible(updates.showAuMarkers);
   }
   if (updates.showDebrisEffects !== undefined) {
-    renderer.objectManager.setDebrisEffectsEnabled(updates.showDebrisEffects);
+    renderer.renderingOrchestrator
+      .getObjectManager()
+      .setDebrisEffectsEnabled(updates.showDebrisEffects);
   }
   if (updates.showOrbitLines !== undefined) {
-    renderer.orbitManager.setOrbitTrailsVisibility(updates.showOrbitLines);
+    renderer.renderingOrchestrator
+      .getOrbitManager()
+      .setOrbitTrailsVisibility(updates.showOrbitLines);
   }
   if (updates.showPredictionLines !== undefined) {
-    renderer.orbitManager.setPredictionVisibility(updates.showPredictionLines);
-    renderer.css2DManager.setLayerVisibility(
-      CSS2DLayerType.PREDICTION_LABELS,
-      updates.showPredictionLines,
-    );
+    renderer.renderingOrchestrator
+      .getOrbitManager()
+      .setPredictionVisibility(updates.showPredictionLines);
+    renderer.interactionOrchestrator
+      .getLayer2DManager()
+      .setLayerVisibility(
+        CSS2DLayerType.PREDICTION_LABELS,
+        updates.showPredictionLines,
+      );
   }
   if (updates.fov !== undefined) {
     renderer.camera.fov = updates.fov;

@@ -1,7 +1,6 @@
 import {
   celestialObjects$,
   StateAccessor,
-  renderableStore,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import {
@@ -10,17 +9,16 @@ import {
   CelestialType,
   CustomEvents,
   METERS_TO_SCENE_UNITS,
-  AU_METERS,
 } from "@teskooano/data-types";
-import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
+import * as THREE from "three";
+import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 import { FocusListManager } from "./FocusListManager.js";
 import {
   handleFocusRequest,
   handleFollowRequest,
 } from "./focus-interactions.js";
-import * as THREE from "three";
 
 /**
  * Calculates the distance from a point to the surface of a celestial object.
@@ -596,7 +594,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       if (!id) return;
 
       const celestialObj = allObjects[id];
-      const sceneObject = renderer.objectManager.getObject(id);
+      const sceneObject = renderer.renderingOrchestrator
+        .getObjectManager()
+        .getObject(id);
       if (!celestialObj) return;
 
       let distanceMeters = 0;
@@ -628,7 +628,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
         // Use the most current parent information
         const parentId = celestialObj.parentId;
         if (parentId && allObjects[parentId]) {
-          const parentSceneObject = renderer.objectManager.getObject(parentId);
+          const parentSceneObject = renderer.renderingOrchestrator
+            .getObjectManager()
+            .getObject(parentId);
           if (parentSceneObject) {
             parentSceneObject.getWorldPosition(parentWorldPosition);
             const parentObj = allObjects[parentId];
@@ -743,7 +745,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       if (!objectId) return;
 
       const celestialObj = allObjects[objectId];
-      const sceneObject = renderer.objectManager.getObject(objectId);
+      const sceneObject = renderer.renderingOrchestrator
+        .getObjectManager()
+        .getObject(objectId);
       if (!celestialObj) return;
 
       let distanceMeters = 0;
@@ -753,7 +757,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
 
         const parentId = celestialObj.parentId;
         if (parentId && allObjects[parentId]) {
-          const parentSceneObject = renderer.objectManager.getObject(parentId);
+          const parentSceneObject = renderer.renderingOrchestrator
+            .getObjectManager()
+            .getObject(parentId);
           if (parentSceneObject) {
             parentSceneObject.getWorldPosition(parentWorldPosition);
             const parentObj = allObjects[parentId];

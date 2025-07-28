@@ -19,7 +19,11 @@ import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
 import { RenderPipeline } from "./RenderPipeline";
-import type { ModularSpaceRendererOptions } from "./types";
+import {
+  RenderingOrchestrator,
+  InteractionOrchestrator,
+  DebugOrchestrator,
+} from "./orchestrators";
 
 import { simulationManager } from "@teskooano/app-simulation";
 import { renderableStore } from "@teskooano/core-state";
@@ -28,140 +32,136 @@ import { LabelSystem } from "@teskooano/renderer-threejs-labels";
 /**
  * The main orchestrator for the Three.js rendering engine.
  *
- * This class acts as a facade, composing and managing a suite of specialized
- * managers to handle different aspects of the 3D scene, such as objects,
- * lighting, controls, and background rendering. It provides a unified API
- * for controlling the entire rendering process.
+ * This class acts as a facade, composing and managing orchestrators that group
+ * related managers together. It provides a unified API for controlling the
+ * entire rendering process while maintaining a clean, modular architecture.
  *
  * @example
  * const renderer = new ModularSpaceRenderer(containerElement, { antialias: true });
  * renderer.startRenderLoop();
  */
 export class ModularSpaceRenderer {
-  /** Manages the core THREE.Scene, camera, and renderer instances. */
-  public sceneManager: SceneManager;
-
-  /** Manages the lifecycle of celestial `THREE.Object3D` instances. */
-  public objectManager: ObjectManager;
-  /** Manages the visualization of orbital paths. */
-  public orbitManager: OrbitsManager;
-  /** Manages the skybox and distant starfield. */
-  public backgroundManager: BackgroundManager;
-
-  /** Manages user interaction and camera controls (e.g., OrbitControls). */
-  public controlsManager: ControlsManager;
-  /** Manages the 2D HTML labels overlaid on the 3D scene. */
-  public css2DManager: Layer2DManager;
-
-  /** Manages scene lighting, including star-based light sources. */
-  public lightingManager: LightingManager;
-  /** Manages Level of Detail for objects to optimize performance. */
-  public lodManager: LODManager;
-  /** Manages the AU distance markers (rings and labels). */
-  public auMarkerManager?: AuMarkerManager;
-  /** Manages the grid helper for spatial reference. */
-  public gridManager: GridManager;
-
-  /** Bridges core application state to the renderer-consumable `renderableStore`. */
-  public stateAdapter: RendererStateAdapter;
-  /** Orchestrates the per-frame update sequence. */
-  public renderPipeline: RenderPipeline;
-
-  /** Debug tool for analyzing depth buffer and material issues. */
-  public depthDebugger: DepthBufferDebugger;
+  /** Orchestrates all rendering-related managers and operations. */
+  public renderingOrchestrator: RenderingOrchestrator;
+  /** Orchestrates all user interaction and interface-related managers. */
+  public interactionOrchestrator: InteractionOrchestrator;
+  /** Orchestrates debug and analysis tools. */
+  public debugOrchestrator: DebugOrchestrator;
 
   private container?: HTMLElement;
   private resizeHandler?: () => void;
 
   /**
-   * Initializes the renderer and all its subordinate managers.
+   * Initializes the renderer and all its subordinate orchestrators.
    *
    * @param container The HTML element that will host the renderer's canvas.
-   * @param sceneManager The pre-initialized SceneManager.
-   * @param options Configuration options for the renderer.
-   * @param labelSystem The optional LabelSystem.
    */
   constructor(container: HTMLElement) {
-    this.stateAdapter = new RendererStateAdapter();
+    this.container = container;
 
-    this.sceneManager = new SceneManager(container, {
+    // Initialize state adapter
+    const stateAdapter = new RendererStateAdapter();
+
+    // Initialize core scene manager
+    const sceneManager = new SceneManager(container, {
       antialias: true,
     });
 
-    const css2DManager = new Layer2DManager(this.sceneManager.scene, container);
-
-    const celestialLayer = new CelestialLabelLayer(this.sceneManager.scene);
+    // Initialize 2D layer manager
+    const css2DManager = new Layer2DManager(sceneManager.scene, container);
+    const celestialLayer = new CelestialLabelLayer(sceneManager.scene);
     css2DManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
 
+    // Initialize AU marker manager
     const auMarkerManager = new AuMarkerManager(
-      this.sceneManager.scene,
+      sceneManager.scene,
       css2DManager,
     );
     auMarkerManager.createMarkers();
 
-    this.css2DManager = css2DManager;
-    this.auMarkerManager = auMarkerManager;
-
-    this.lightingManager = new LightingManager(this.sceneManager.scene);
-    this.lodManager = new LODManager(this.sceneManager.camera);
-
-    this.controlsManager = new ControlsManager(
-      this.sceneManager.camera,
-      this.sceneManager.renderer.domElement,
+    // Initialize other managers
+    const lightingManager = new LightingManager(sceneManager.scene);
+    const lodManager = new LODManager(sceneManager.camera);
+    const controlsManager = new ControlsManager(
+      sceneManager.camera,
+      sceneManager.renderer.domElement,
     );
+    const gridManager = new GridManager(sceneManager.scene);
 
-    this.objectManager = new ObjectManager(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
+    // Initialize object manager
+    const objectManager = new ObjectManager(
+      sceneManager.scene,
+      sceneManager.camera,
       renderableStore.renderableObjects$,
-      this.sceneManager.renderer,
-      this.css2DManager,
+      sceneManager.renderer,
+      css2DManager,
       undefined, // acceleration$ - use default
-      this.lightingManager, // Pass the shared lighting manager
+      lightingManager, // Pass the shared lighting manager
     );
 
-    this.orbitManager = new OrbitsManager(
-      this.objectManager,
-      this.stateAdapter,
+    // Initialize orbit manager
+    const orbitManager = new OrbitsManager(
+      objectManager,
+      stateAdapter,
       renderableStore.renderableObjects$,
-      this.css2DManager,
-      this.objectManager.getCelestialRenderers(),
+      css2DManager,
+      objectManager.getCelestialRenderers(),
     );
 
-    this.backgroundManager = new BackgroundManager(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
+    // Initialize background manager
+    const backgroundManager = new BackgroundManager(
+      sceneManager.scene,
+      sceneManager.camera,
     );
-    this.backgroundManager.setCamera(this.sceneManager.camera);
+    backgroundManager.setCamera(sceneManager.camera);
 
-    // Initialize grid manager with visibility from options
-    this.gridManager = new GridManager(this.sceneManager.scene);
-
-    this.renderPipeline = new RenderPipeline({
-      sceneManager: this.sceneManager,
-      controlsManager: this.controlsManager,
-      orbitManager: this.orbitManager,
-      objectManager: this.objectManager,
-      backgroundManager: this.backgroundManager,
-      lightingManager: this.lightingManager,
-      lodManager: this.lodManager,
-      gridManager: this.gridManager,
-      css2DManager: this.css2DManager,
+    // Initialize render pipeline
+    const renderPipeline = new RenderPipeline({
+      sceneManager,
+      controlsManager,
+      orbitManager,
+      objectManager,
+      backgroundManager,
+      lightingManager,
+      lodManager,
+      gridManager,
+      css2DManager,
     });
 
-    // Initialize depth buffer debugger
-    this.depthDebugger = new DepthBufferDebugger(this.sceneManager);
+    // Initialize debug tools
+    const depthDebugger = new DepthBufferDebugger(sceneManager);
 
     // Make debugger accessible globally during development
     if (typeof window !== "undefined") {
       if ((window as any).teskooano) {
-        (window as any).teskooano.debugger = this.depthDebugger;
+        (window as any).teskooano.debugger = depthDebugger;
       } else {
         (window as any).teskooano = {
-          debugger: this.depthDebugger,
+          debugger: depthDebugger,
         };
       }
     }
+
+    // Initialize orchestrators
+    this.renderingOrchestrator = new RenderingOrchestrator(
+      sceneManager,
+      objectManager,
+      orbitManager,
+      backgroundManager,
+      lightingManager,
+      lodManager,
+      gridManager,
+      stateAdapter,
+      renderPipeline,
+    );
+
+    this.interactionOrchestrator = new InteractionOrchestrator(
+      controlsManager,
+      css2DManager,
+      auMarkerManager,
+    );
+
+    this.debugOrchestrator = new DebugOrchestrator(depthDebugger);
 
     this.setupAnimationCallbacks();
   }
@@ -173,10 +173,16 @@ export class ModularSpaceRenderer {
   private setupAnimationCallbacks(): void {
     // Register physics simulation callback first
     const physicsCallback = simulationManager.createPhysicsCallback();
-    this.sceneManager.animationLoop.onPhysics(physicsCallback);
+    this.renderingOrchestrator
+      .getSceneManager()
+      .animationLoop.onPhysics(physicsCallback);
 
     // Register rendering callback
-    this.sceneManager.animationLoop.onAnimate(this.renderPipeline.update);
+    this.renderingOrchestrator
+      .getSceneManager()
+      .animationLoop.onAnimate(
+        this.renderingOrchestrator.getRenderPipeline().update,
+      );
   }
 
   /**
@@ -184,41 +190,45 @@ export class ModularSpaceRenderer {
    * @returns The scene object.
    */
   get scene(): THREE.Scene {
-    return this.sceneManager.scene;
+    return this.renderingOrchestrator.getSceneManager().scene;
   }
+
   /**
    * Gets the active Three.js perspective camera instance.
    * @returns The camera object.
    */
   get camera(): THREE.PerspectiveCamera {
-    return this.sceneManager.camera;
+    return this.renderingOrchestrator.getSceneManager().camera;
   }
+
   /**
    * Gets the underlying Three.js WebGL renderer instance.
    * @returns The renderer object.
    */
   get renderer(): THREE.WebGLRenderer {
-    return this.sceneManager.renderer;
+    return this.renderingOrchestrator.getSceneManager().renderer;
   }
+
   /**
    * Gets the associated OrbitControls instance.
    * @returns The controls instance.
    */
   get controls() {
-    return this.controlsManager.controls;
+    return this.interactionOrchestrator.getControlsManager().controls;
   }
 
   /**
    * Starts the rendering loop.
    */
   start(): void {
-    this.sceneManager.start();
+    this.renderingOrchestrator.getSceneManager().start();
   }
+
   /**
    * Stops the rendering loop.
    */
   stop(): void {
-    this.sceneManager.stop();
+    this.renderingOrchestrator.getSceneManager().stop();
   }
 
   /**
@@ -227,47 +237,29 @@ export class ModularSpaceRenderer {
    * @param height - The new height of the viewport.
    */
   onResize(width: number, height: number): void {
-    this.sceneManager.onResize(width, height);
-    this.css2DManager?.onResize(width, height);
+    this.renderingOrchestrator.getSceneManager().onResize(width, height);
+    this.interactionOrchestrator.onResize(width, height);
   }
 
   /**
-   * Cleans up resources used by the renderer and its managers.
+   * Cleans up resources used by the renderer and its orchestrators.
    * Stops the animation loop and removes event listeners.
    */
   dispose(): void {
     console.log("[ModularSpaceRenderer] Disposing resources...");
 
-    this.stateAdapter.dispose();
-
-    this.sceneManager.dispose();
-    this.objectManager.dispose();
-    this.orbitManager.dispose();
-    this.backgroundManager.dispose();
-    this.controlsManager.dispose();
-    this.css2DManager?.dispose();
-    this.auMarkerManager?.dispose();
-    this.lightingManager.dispose();
-    this.lodManager.dispose();
-    this.gridManager.dispose();
+    this.renderingOrchestrator.dispose();
+    this.interactionOrchestrator.dispose();
+    this.debugOrchestrator.dispose();
 
     if (this.resizeHandler) {
       window.removeEventListener("resize", this.resizeHandler);
     }
 
     // Nullify references to allow garbage collection
-    (this.sceneManager as any) = null;
-    (this.objectManager as any) = null;
-    (this.orbitManager as any) = null;
-    (this.backgroundManager as any) = null;
-    (this.controlsManager as any) = null;
-    (this.css2DManager as any) = null;
-    (this.auMarkerManager as any) = null;
-    (this.lightingManager as any) = null;
-    (this.lodManager as any) = null;
-    (this.gridManager as any) = null;
-    (this.stateAdapter as any) = null;
-    (this.renderPipeline as any) = null;
+    (this.renderingOrchestrator as any) = null;
+    (this.interactionOrchestrator as any) = null;
+    (this.debugOrchestrator as any) = null;
     (this.container as any) = null;
     (this.resizeHandler as any) = null;
 
@@ -281,24 +273,8 @@ export class ModularSpaceRenderer {
    * @returns The total triangle count.
    */
   public getTriangleCount(): number {
-    let count = 0;
-    this.scene.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
-        if (object.geometry instanceof THREE.BufferGeometry) {
-          const position = object.geometry.attributes.position;
-          if (position) {
-            count += position.count / 3;
-          }
-        }
-      }
-    });
-    return count;
+    return this.renderingOrchestrator.getTriangleCount();
   }
-
-  /**
-   * Toggles debris effects on or off.
-   * @returns The new state (true if enabled, false if disabled).
-   */
 
   /**
    * Sets the global debug mode for the renderer.
@@ -308,9 +284,8 @@ export class ModularSpaceRenderer {
    * @param enabled - If true, enables debug mode.
    */
   public setDebugMode(enabled: boolean): void {
-    this.objectManager.setDebugMode(enabled);
-    this.objectManager.recreateAllMeshes();
-    this.controlsManager.setDebugMode(enabled);
+    this.renderingOrchestrator.setDebugMode(enabled);
+    this.interactionOrchestrator.setDebugMode(enabled);
   }
 
   /**
@@ -318,7 +293,7 @@ export class ModularSpaceRenderer {
    * @param objectId - ID of the object to show prediction for, or null to hide all
    */
   public highlightPrediction(objectId: string | null): void {
-    this.orbitManager.highlightPrediction(objectId);
+    this.renderingOrchestrator.highlightPrediction(objectId);
   }
 
   /**
@@ -332,6 +307,6 @@ export class ModularSpaceRenderer {
    * ```
    */
   public runDepthAnalysis(): void {
-    this.depthDebugger.runFullAnalysis();
+    this.debugOrchestrator.runDepthAnalysis();
   }
 }

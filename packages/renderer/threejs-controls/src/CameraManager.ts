@@ -11,7 +11,7 @@ import {
   DEFAULT_CAMERA_TARGET,
   DEFAULT_FOV,
 } from "./constants";
-import { Vector3 } from "three";
+import * as THREE from "three";
 import {
   CameraHelper,
   CameraPreset,
@@ -65,7 +65,7 @@ export class CameraManager {
   private _cleanupPriorRenderer(): void {
     if (this.renderer) {
       // Assuming controlsManager.dispose() handles OrbitControls cleanup and listener removal from its DOM element.
-      this.renderer.controlsManager?.dispose();
+      this.renderer.interactionOrchestrator.getControlsManager()?.dispose();
     }
     // Remove document-level listeners, they will be re-added if setDependencies completes.
     document.removeEventListener(
@@ -135,7 +135,7 @@ export class CameraManager {
     });
 
     // Ensure the new renderer's camera and controls are updated
-    this.renderer.sceneManager.setFov(initialFov);
+    this.renderer.renderingOrchestrator.getSceneManager().setFov(initialFov);
     // It's crucial that ModularSpaceRenderer's controlsManager re-initializes
     // its controls (e.g. OrbitControls) here if they were disposed or need to be
     // attached to a new camera/DOM element. We assume `initializeCameraPosition` will handle this.
@@ -168,7 +168,9 @@ export class CameraManager {
     }
     // This check for this.renderer.controlsManager.controls might be too early if controls are async
     // but for now, we assume it's available after renderer is set.
-    if (!this.renderer.controlsManager?.controls) {
+    const controlsManager =
+      this.renderer.interactionOrchestrator.getControlsManager();
+    if (!controlsManager?.controls) {
       console.warn(
         "[CameraManager] Cannot initialize camera position: controlsManager or controls not available on renderer.",
       );
@@ -179,10 +181,10 @@ export class CameraManager {
     this.renderer.camera.position.copy(
       initialState.currentPosition.toThreeJS(),
     );
-    this.renderer.controlsManager.controls.target.copy(
+    controlsManager.controls.target.copy(
       initialState.currentTarget.toThreeJS(),
     );
-    this.renderer.controlsManager.controls.update(); // Crucial for OrbitControls
+    controlsManager.controls.update(); // Crucial for OrbitControls
   }
 
   /**
@@ -260,7 +262,8 @@ export class CameraManager {
    * @param objectId The ID of the focused object, or null if no focus
    */
   private _updateDynamicCameraSettings(objectId: string | null): void {
-    if (!this.renderer?.sceneManager) {
+    const sceneManager = this.renderer?.renderingOrchestrator.getSceneManager();
+    if (!sceneManager) {
       return;
     }
 
@@ -279,15 +282,18 @@ export class CameraManager {
 
     // Update camera settings in the scene manager
     CameraHelper.updateCameraForCelestialType(
-      this.renderer.camera,
-      celestialType,
+      this.renderer?.renderingOrchestrator.getSceneManager()?.camera ??
+        new THREE.PerspectiveCamera(),
+      celestialType as CelestialType,
     );
 
     // Update orbit controls min distance
-    if (this.renderer.controlsManager) {
+    const controlsManager =
+      this.renderer?.interactionOrchestrator.getControlsManager();
+    if (controlsManager) {
       const minDistance =
         CameraHelper.getMinDistanceForCelestialType(celestialType);
-      this.renderer.controlsManager.updateMinDistance(minDistance);
+      controlsManager.updateMinDistance(minDistance);
     }
   }
 
@@ -299,7 +305,9 @@ export class CameraManager {
    * @param {number} [distance] - Optional distance multiplier. If not provided, `DEFAULT_CAMERA_DISTANCE` is used to calculate the offset.
    */
   public followObject(objectId: string | null, distance?: number): void {
-    if (!this.renderer?.controlsManager) {
+    const controlsManager =
+      this.renderer?.interactionOrchestrator.getControlsManager();
+    if (!controlsManager) {
       console.warn(
         "[CameraManager] Cannot focus on object: Manager or renderer components not initialized.",
       );
@@ -327,8 +335,8 @@ export class CameraManager {
     this._updateDynamicCameraSettings(objectId);
 
     if (objectId === null) {
-      this.renderer.controlsManager.stopFollowing();
-      this.renderer.controlsManager.moveToPosition(
+      controlsManager.stopFollowing();
+      controlsManager.moveToPosition(
         DEFAULT_CAMERA_POSITION,
         DEFAULT_CAMERA_TARGET,
         true,
@@ -353,7 +361,7 @@ export class CameraManager {
       // --- Logarithmic Distance Calculation ---
       const objectRadius = renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE;
       const objectVelocity =
-        renderableObject.velocity?.clone() ?? new Vector3();
+        renderableObject.velocity?.clone() ?? new THREE.Vector3();
 
       // Calculate reasonable viewing distance using logarithmic scale
       // This ensures good viewing distance for all object types (from satellites to stars)
@@ -370,8 +378,11 @@ export class CameraManager {
 
       // Get transition duration for this reasonable distance
       const transitionDuration =
-        this.renderer?.controlsManager?.calculateTransitionDuration(
-          OSVector3.fromThreeJS(this.renderer.camera.position),
+        controlsManager?.calculateTransitionDuration(
+          OSVector3.fromThreeJS(
+            this.renderer?.renderingOrchestrator.getSceneManager()?.camera
+              ?.position ?? new THREE.Vector3(),
+          ),
           OSVector3.fromThreeJS(initialCameraPos),
         ) ?? 2.0; // Default duration if calculation fails
 
@@ -391,25 +402,27 @@ export class CameraManager {
         .add(cameraOffsetVector);
       // --- End Logarithmic Distance & Prediction ---
 
-      if (this.renderer.controlsManager) {
+      if (controlsManager) {
         // Pause simulation during transition to prevent fast-moving objects
         this.pauseSimulationForTransition();
 
         // Set up follow BEFORE initiating transition for better continuity
         // Get the THREE.Object3D from the renderer that matches this objectId
-        const objectToFollow = this.renderer.objectManager.getObject(objectId);
+        const objectToFollow = this.renderer?.renderingOrchestrator
+          .getObjectManager()
+          .getObject(objectId);
 
         if (objectToFollow) {
           // Start following immediately with the calculated offset
           // This ensures we follow even during transition
-          this.renderer.controlsManager.startFollowing(
+          controlsManager.startFollowing(
             objectToFollow,
             cameraOffsetVector.toThreeJS(),
           );
         }
 
         // Use a two-stage transition: first turn to face the object, then move to it
-        this.renderer.controlsManager.transitionToWithLookAtFirst(
+        controlsManager.transitionToWithLookAtFirst(
           OSVector3.fromThreeJS(cameraPosition),
           OSVector3.fromThreeJS(predictedTargetPosition),
           { focusedObjectId: objectId },
@@ -432,14 +445,16 @@ export class CameraManager {
    *
    * @param {THREE.Vector3} targetPosition - The world coordinates to point the camera towards.
    */
-  public pointCameraAt(targetPosition: Vector3): void {
-    if (!this.renderer?.controlsManager) {
+  public pointCameraAt(targetPosition: THREE.Vector3): void {
+    const controlsManager =
+      this.renderer?.interactionOrchestrator.getControlsManager();
+    if (!controlsManager) {
       console.warn(
         "[CameraManager] Cannot point camera: Manager or renderer components not initialized.",
       );
       return;
     }
-    this.renderer.controlsManager.transitionTargetTo(
+    controlsManager.transitionTargetTo(
       OSVector3.fromThreeJS(targetPosition),
       true,
     );
@@ -450,7 +465,9 @@ export class CameraManager {
    * Uses a smooth transition.
    */
   public resetCameraView(): void {
-    if (!this.renderer?.controlsManager) {
+    const controlsManager =
+      this.renderer?.interactionOrchestrator.getControlsManager();
+    if (!controlsManager) {
       console.warn(
         "[CameraManager] Cannot reset camera view: Manager or renderer components not initialized.",
       );
@@ -473,7 +490,8 @@ export class CameraManager {
    * @param {number} fov - The desired field of view in degrees.
    */
   public setFov(fov: number): void {
-    if (!this.renderer?.sceneManager) {
+    const sceneManager = this.renderer?.renderingOrchestrator.getSceneManager();
+    if (!sceneManager) {
       console.warn(
         "[CameraManager] Cannot set FOV: Manager or renderer components not initialized.",
       );
@@ -486,7 +504,7 @@ export class CameraManager {
     }
 
     this.cameraStateSubject.next({ ...currentState, fov: fov });
-    this.renderer.sceneManager.setFov(fov);
+    sceneManager.setFov(fov);
   }
 
   /**
