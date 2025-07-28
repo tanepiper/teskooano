@@ -1,24 +1,5 @@
-import { BackgroundManager } from "@teskooano/renderer-threejs-background";
-import { ControlsManager } from "@teskooano/renderer-threejs-controls";
-import {
-  AnimationLoop,
-  DepthBufferDebugger,
-  GridManager,
-  SceneManager,
-} from "@teskooano/renderer-threejs-core";
-import {
-  AuMarkerManager,
-  CelestialLabelLayer,
-  CSS2DLayerType,
-  Layer2DManager,
-} from "@teskooano/renderer-threejs-labels";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-lod";
-import { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
+import { SceneManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
-import { RendererStateAdapter } from "./RendererStateAdapter";
-import { RenderPipeline } from "./RenderPipeline";
 import {
   RenderingOrchestrator,
   InteractionOrchestrator,
@@ -26,8 +7,6 @@ import {
 } from "./orchestrators";
 
 import { simulationManager } from "@teskooano/app-simulation";
-import { renderableStore } from "@teskooano/core-state";
-import { LabelSystem } from "@teskooano/renderer-threejs-labels";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -59,109 +38,30 @@ export class ModularSpaceRenderer {
   constructor(container: HTMLElement) {
     this.container = container;
 
-    // Initialize state adapter
-    const stateAdapter = new RendererStateAdapter();
+    // Initialize orchestrators in dependency order
+    // 1. Initialize RenderingOrchestrator first (creates the main scene manager)
+    this.renderingOrchestrator = new RenderingOrchestrator(container);
 
-    // Initialize core scene manager
-    const sceneManager = new SceneManager(container, {
-      antialias: true,
-    });
-
-    // Initialize 2D layer manager
-    const css2DManager = new Layer2DManager(sceneManager.scene, container);
-    const celestialLayer = new CelestialLabelLayer(sceneManager.scene);
-    css2DManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
-
-    // Initialize AU marker manager
-    const auMarkerManager = new AuMarkerManager(
-      sceneManager.scene,
-      css2DManager,
-    );
-    auMarkerManager.createMarkers();
-
-    // Initialize other managers
-    const lightingManager = new LightingManager(sceneManager.scene);
-    const lodManager = new LODManager(sceneManager.camera);
-    const controlsManager = new ControlsManager(
-      sceneManager.camera,
-      sceneManager.renderer.domElement,
-    );
-    const gridManager = new GridManager(sceneManager.scene);
-
-    // Initialize object manager
-    const objectManager = new ObjectManager(
-      sceneManager.scene,
-      sceneManager.camera,
-      renderableStore.renderableObjects$,
-      sceneManager.renderer,
-      css2DManager,
-      undefined, // acceleration$ - use default
-      lightingManager, // Pass the shared lighting manager
-    );
-
-    // Initialize orbit manager
-    const orbitManager = new OrbitsManager(
-      objectManager,
-      stateAdapter,
-      renderableStore.renderableObjects$,
-      css2DManager,
-      objectManager.getCelestialRenderers(),
-    );
-
-    // Initialize background manager
-    const backgroundManager = new BackgroundManager(
-      sceneManager.scene,
-      sceneManager.camera,
-    );
-    backgroundManager.setCamera(sceneManager.camera);
-
-    // Initialize render pipeline
-    const renderPipeline = new RenderPipeline({
-      sceneManager,
-      controlsManager,
-      orbitManager,
-      objectManager,
-      backgroundManager,
-      lightingManager,
-      lodManager,
-      gridManager,
-      css2DManager,
-    });
-
-    // Initialize debug tools
-    const depthDebugger = new DepthBufferDebugger(sceneManager);
-
-    // Make debugger accessible globally during development
-    if (typeof window !== "undefined") {
-      if ((window as any).teskooano) {
-        (window as any).teskooano.debugger = depthDebugger;
-      } else {
-        (window as any).teskooano = {
-          debugger: depthDebugger,
-        };
-      }
-    }
-
-    // Initialize orchestrators
-    this.renderingOrchestrator = new RenderingOrchestrator(
-      sceneManager,
-      objectManager,
-      orbitManager,
-      backgroundManager,
-      lightingManager,
-      lodManager,
-      gridManager,
-      stateAdapter,
-      renderPipeline,
-    );
-
+    // 2. Initialize InteractionOrchestrator (uses the scene manager from RenderingOrchestrator)
     this.interactionOrchestrator = new InteractionOrchestrator(
-      controlsManager,
-      css2DManager,
-      auMarkerManager,
+      container,
+      this.renderingOrchestrator.getSceneManager(),
     );
 
-    this.debugOrchestrator = new DebugOrchestrator(depthDebugger);
+    // 3. Initialize the managers in RenderingOrchestrator with the real css2DManager
+    this.renderingOrchestrator.initializeManagersWithCss2D(
+      this.interactionOrchestrator.getLayer2DManager(),
+    );
+
+    // 4. Set the controls manager in RenderingOrchestrator (circular dependency resolution)
+    this.renderingOrchestrator.setControlsManager(
+      this.interactionOrchestrator.getControlsManager(),
+    );
+
+    // 5. Initialize DebugOrchestrator (needs scene manager from RenderingOrchestrator)
+    this.debugOrchestrator = new DebugOrchestrator(
+      this.renderingOrchestrator.getSceneManager(),
+    );
 
     this.setupAnimationCallbacks();
   }

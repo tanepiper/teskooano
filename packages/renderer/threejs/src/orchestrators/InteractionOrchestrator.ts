@@ -1,7 +1,9 @@
-import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
-import type {
+import { ControlsManager } from "@teskooano/renderer-threejs-controls";
+import {
   Layer2DManager,
   AuMarkerManager,
+  CelestialLabelLayer,
+  CSS2DLayerType,
 } from "@teskooano/renderer-threejs-labels";
 
 /**
@@ -18,13 +20,29 @@ export class InteractionOrchestrator {
   private auMarkerManager?: AuMarkerManager;
 
   constructor(
-    controlsManager: ControlsManager,
-    css2DManager: Layer2DManager,
-    auMarkerManager?: AuMarkerManager,
+    container: HTMLElement,
+    sceneManager: any, // We'll need to pass this from RenderingOrchestrator
   ) {
-    this.controlsManager = controlsManager;
-    this.css2DManager = css2DManager;
-    this.auMarkerManager = auMarkerManager;
+    // Initialize 2D layer manager
+    this.css2DManager = new Layer2DManager(sceneManager.scene, container);
+    const celestialLayer = new CelestialLabelLayer(sceneManager.scene);
+    this.css2DManager.registerLayer(
+      CSS2DLayerType.CELESTIAL_LABELS,
+      celestialLayer,
+    );
+
+    // Initialize controls manager
+    this.controlsManager = new ControlsManager(
+      sceneManager.camera,
+      sceneManager.renderer.domElement,
+    );
+
+    // Initialize AU marker manager
+    this.auMarkerManager = new AuMarkerManager(
+      sceneManager.scene,
+      this.css2DManager,
+    );
+    this.auMarkerManager.createMarkers();
   }
 
   /**

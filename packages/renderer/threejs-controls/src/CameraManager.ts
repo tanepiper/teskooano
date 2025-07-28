@@ -63,7 +63,7 @@ export class CameraManager {
   }
 
   private _cleanupPriorRenderer(): void {
-    if (this.renderer) {
+    if (this.renderer?.interactionOrchestrator) {
       // Assuming controlsManager.dispose() handles OrbitControls cleanup and listener removal from its DOM element.
       this.renderer.interactionOrchestrator.getControlsManager()?.dispose();
     }
@@ -135,7 +135,7 @@ export class CameraManager {
     });
 
     // Ensure the new renderer's camera and controls are updated
-    this.renderer.renderingOrchestrator.getSceneManager().setFov(initialFov);
+    this.renderer?.renderingOrchestrator?.getSceneManager()?.setFov(initialFov);
     // It's crucial that ModularSpaceRenderer's controlsManager re-initializes
     // its controls (e.g. OrbitControls) here if they were disposed or need to be
     // attached to a new camera/DOM element. We assume `initializeCameraPosition` will handle this.
@@ -594,7 +594,7 @@ export class CameraManager {
    * Updates the internal state and clears any active semantic focus.
    */
   private handleUserCameraManipulation = (event: Event): void => {
-    if (!this.renderer) return;
+    if (!this.renderer?.interactionOrchestrator) return;
 
     const detail = (event as CustomEvent).detail;
     const newPosition = OSVector3.fromThreeJS(detail.position);

@@ -1,4 +1,4 @@
-import type { DepthBufferDebugger } from "@teskooano/renderer-threejs-core";
+import { DepthBufferDebugger } from "@teskooano/renderer-threejs-core";
 
 /**
  * Orchestrates debug and analysis tools.
@@ -11,8 +11,19 @@ import type { DepthBufferDebugger } from "@teskooano/renderer-threejs-core";
 export class DebugOrchestrator {
   private depthDebugger: DepthBufferDebugger;
 
-  constructor(depthDebugger: DepthBufferDebugger) {
-    this.depthDebugger = depthDebugger;
+  constructor(sceneManager: any) {
+    this.depthDebugger = new DepthBufferDebugger(sceneManager);
+
+    // Make debugger accessible globally during development
+    if (typeof window !== "undefined") {
+      if ((window as any).teskooano) {
+        (window as any).teskooano.debugger = this.depthDebugger;
+      } else {
+        (window as any).teskooano = {
+          debugger: this.depthDebugger,
+        };
+      }
+    }
   }
 
   /**
