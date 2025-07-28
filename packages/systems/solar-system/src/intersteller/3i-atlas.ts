@@ -52,6 +52,8 @@ export const atlas: CelestialObject<CometProperties> = {
     epoch: "JD 2460868.5", // Epoch from JPL data (Jul 12, 2025)
   }),
   properties: {
+    colors: ["#202020", "#333333", "#505050", "#787878"],
+    heights: [0.0, 0.35, 0.55, 0.8],
     type: CelestialType.COMET,
     classType: CometClass.INTERSTELLAR,
     discoveredDate: "2025-06-19",

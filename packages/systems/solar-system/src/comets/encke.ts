@@ -6,6 +6,7 @@ import {
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * Encke's Comet (2P/Encke)
@@ -38,6 +39,8 @@ export const encke: CelestialObject<CometProperties> = {
     classType: CometClass.SHORT_PERIOD,
     discoveredDate: "1805-03-13",
     composition: ["water ice", "CO2", "dust"],
+    colors: ["#3d3d3d", "#555555", "#6c6c6c", "#8e8e8e"],
+    heights: [0.0, 0.4, 0.6, 0.85],
     activity: 0.6, // Moderate activity
     visualComaRadius: 50000, // 50 km coma radius
     visualComaColor: "#98FB98",
@@ -45,5 +48,17 @@ export const encke: CelestialObject<CometProperties> = {
     visualMaxTailLength: 2000000, // 2 million km tail
     visualTailColor: "#F0E68C",
     visualTailOpacity: 0.5,
+    visuals: {
+      noiseScale: 2.0,
+      blendSharpness: 1.0,
+      craterScale: 25.0,
+      craterStrength: 0.7,
+      simplePeriod: 2.8,
+      undulation: 0.25,
+      ambientStrength: 0.015,
+      metallicFactor: 0.1,
+      roughness: 0.85,
+      specularColor: new THREE.Color("#c0c0c0"),
+    },
   },
 };

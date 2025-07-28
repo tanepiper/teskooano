@@ -71,6 +71,7 @@ export class CometRenderer extends BaseCelestialRenderer {
   private clock = new THREE.Clock();
   private noise = new SimplexNoise();
   private random: () => number = () => 0;
+  private camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
 
   constructor(object: RenderableCelestialObject) {
     super(object);
@@ -170,6 +171,8 @@ export class CometRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
+    this.camera.copy(camera);
+
     const attenuatedLightSources = this.applyLightAttenuation(
       object,
       lightSources,
@@ -254,17 +257,22 @@ export class CometRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
   ): CometNucleusMaterial {
     const properties = object.properties as CometProperties;
-    // An active comet has a brighter, icy-rock color.
-    let nucleusColorValue = "#5b7b96";
+    console.log(properties);
 
-    // An extinct comet (activity = 0) is a dark, inert, asteroid-like rock.
-    if (properties.activity === 0) {
-      nucleusColorValue = "#8e8b8b";
-    }
+    // Fallback for procedurally generated comets without explicit visual data.
+    const colors = properties.colors ?? [
+      "#2c3e50",
+      "#596a7a",
+      "#8c9baa",
+      "#d0d5da",
+    ];
+    const heights = properties.heights ?? [0.0, 0.4, 0.6, 0.85];
+    const visuals = properties.visuals ?? {};
 
     return new CometNucleusMaterial({
-      color: new THREE.Color(nucleusColorValue),
-      ...(properties.visuals || {}),
+      colors: colors.map((c) => new THREE.Color(c)),
+      heights: heights,
+      ...visuals,
     });
   }
 
@@ -369,6 +377,11 @@ export class CometRenderer extends BaseCelestialRenderer {
         nucleusMaterial.uniforms.uLights.value[i].intensity =
           lightData.intensity ?? 1.0;
         i++;
+      }
+      if (nucleusMaterial.uniforms.uCameraPosition) {
+        nucleusMaterial.uniforms.uCameraPosition.value.copy(
+          this.camera.position,
+        );
       }
     }
   }

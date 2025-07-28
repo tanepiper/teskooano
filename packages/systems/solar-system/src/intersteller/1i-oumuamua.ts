@@ -4,8 +4,11 @@ import {
   CelestialStatus,
   CelestialType,
   CometClass,
-  type CometProperties,
+  type AsteroidProperties,
+  RockyType,
+  AsteroidClass,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * 1I/'Oumuamua
@@ -14,10 +17,10 @@ import {
  * Discovered in 2017, it has a hyperbolic orbit indicating it came from outside our solar system.
  * No outgassing was observed, suggesting it may be an extinct comet or asteroid.
  */
-export const oumuamua: CelestialObject<CometProperties> = {
+export const oumuamua: CelestialObject<AsteroidProperties> = {
   id: "1i-oumuamua",
   name: "1I/'Oumuamua",
-  type: CelestialType.COMET,
+  type: CelestialType.ASTEROID,
   status: CelestialStatus.ACTIVE,
   parentId: "sun",
   realMass_kg: 2.3e8, // ~230 million tons
@@ -36,16 +39,25 @@ export const oumuamua: CelestialObject<CometProperties> = {
     isHyperbolic: true,
   }),
   properties: {
-    type: CelestialType.COMET,
-    classType: CometClass.INTERSTELLAR,
-    discoveredDate: "2017-10-19",
-    composition: ["rock", "metal"], // No ice detected
+    type: CelestialType.ASTEROID,
+    classType: AsteroidClass.INTERSTELLAR,
+    composition: "rock", // No ice detected
     activity: 0.0, // No outgassing observed
-    visualComaRadius: 0, // No coma
-    visualComaColor: "#8B4513",
-    visualComaOpacity: 0.0,
-    visualMaxTailLength: 0, // No tail
-    visualTailColor: "#8B4513",
-    visualTailOpacity: 0.0,
-  } as CometProperties,
+    colors: ["#8B4513", "#7A3F11", "#69390F", "#58330D"],
+    heights: [0.0, 0.4, 0.6, 0.8],
+    density: 3.2, // ~3.2 g/cm³ (range 2.6 g/cm³ assumed)
+    temperature: 270, // 270 K
+    visuals: {
+      noiseScale: 2.2,
+      blendSharpness: 1.0,
+      craterScale: 22.0,
+      craterStrength: 0.5,
+      simplePeriod: 2.0,
+      undulation: 0.15,
+      ambientStrength: 0.025,
+      metallicFactor: 0.25, // Sq-type has moderate metallic content
+      roughness: 0.8, // Rough surface typical of small asteroids
+      specularColor: new THREE.Color("#b8b8b8"), // Grayish specular highlights
+    },
+  },
 };

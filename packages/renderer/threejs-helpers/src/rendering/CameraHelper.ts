@@ -700,7 +700,7 @@ export class CameraHelper {
       dwarf_planet: 0.0001, // 0.000005 AU ≈ 750 km (ultra-close dwarf planet viewing)
       moon: 0.0001, // 0.000001 AU ≈ 150 km (ultra-close moon viewing)
       asteroid: 0.0000001, // 0.0000001 AU ≈ 15 km (very close individual asteroid inspection)
-      comet: 0.0001, // 0.000001 AU ≈ 150 km (ultra-close comet viewing)
+      comet: 0.0000001, // 0.000001 AU ≈ 150 km (ultra-close comet viewing)
       satellite: 0.0001, // 0.0000001 AU ≈ 15 km (extremely close satellite inspection)
       oort_cloud: 0.1, // 0.0001 AU ≈ 15k km (close particle field viewing)
       asteroid_field: 0.01, // 0.00001 AU ≈ 1.5k km (very close asteroid viewing)
@@ -729,7 +729,7 @@ export class CameraHelper {
       dwarf_planet: 0.001,
       moon: 0.0001,
       asteroid: 0.0000001, // 150 m minimum - allows very close inspection of small asteroids
-      comet: 0.000001,
+      comet: 0.0000001,
       satellite: 0.000001,
       oort_cloud: 0.0001,
       asteroid_field: 0.0001,

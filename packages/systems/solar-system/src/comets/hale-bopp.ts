@@ -6,6 +6,7 @@ import {
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * Hale-Bopp Comet (C/1995 O1)
@@ -39,6 +40,8 @@ export const haleBopp: CelestialObject = {
     classType: CometClass.LONG_PERIOD,
     discoveredDate: "1995-03-23",
     composition: ["water ice", "dust", "CO2"],
+    colors: ["#4a4a4a", "#666666", "#888888", "#aaaaaa"],
+    heights: [0.0, 0.3, 0.5, 0.75],
     activity: 0.9, // Very active
     visualComaRadius: 150000, // 150 km coma radius
     visualComaColor: "#FFFFE0",
@@ -46,5 +49,17 @@ export const haleBopp: CelestialObject = {
     visualMaxTailLength: 15000000, // 15 million km tail
     visualTailColor: "#FFFFE0",
     visualTailOpacity: 0.7,
+    visuals: {
+      noiseScale: 1.5,
+      blendSharpness: 1.5,
+      craterScale: 15.0,
+      craterStrength: 0.9,
+      simplePeriod: 1.8,
+      undulation: 0.15,
+      ambientStrength: 0.02,
+      metallicFactor: 0.0,
+      roughness: 0.95,
+      specularColor: new THREE.Color("#ffffff"),
+    },
   } as CometProperties,
 };

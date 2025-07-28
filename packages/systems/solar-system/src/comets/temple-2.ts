@@ -6,6 +6,7 @@ import {
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * Temple 2 Comet (10P/Tempel 2)
@@ -38,6 +39,8 @@ export const temple2: CelestialObject<CometProperties> = {
     classType: CometClass.SHORT_PERIOD,
     discoveredDate: "1867-03-13",
     composition: ["water ice", "dust"],
+    colors: ["#332211", "#4d331a", "#664422", "#80552b"],
+    heights: [0.0, 0.4, 0.65, 0.9],
     activity: 0.5, // Moderate activity
     visualComaRadius: 40000, // 40 km coma radius
     visualComaColor: "#E6E6FA",
@@ -45,5 +48,17 @@ export const temple2: CelestialObject<CometProperties> = {
     visualMaxTailLength: 1200000, // 1.2 million km tail
     visualTailColor: "#E6E6FA",
     visualTailOpacity: 0.4,
+    visuals: {
+      noiseScale: 2.5,
+      blendSharpness: 0.9,
+      craterScale: 28.0,
+      craterStrength: 0.65,
+      simplePeriod: 3.0,
+      undulation: 0.3,
+      ambientStrength: 0.018,
+      metallicFactor: 0.15,
+      roughness: 0.8,
+      specularColor: new THREE.Color("#d3b8a0"),
+    },
   },
 };

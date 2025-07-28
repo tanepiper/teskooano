@@ -6,6 +6,7 @@ import {
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 
 /**
@@ -41,6 +42,8 @@ export const halley: CelestialObject<CometProperties> = {
     classType: CometClass.LONG_PERIOD,
     discoveredDate: "240 BCE", // First recorded observation by Chinese astronomers
     composition: ["water ice", "CO2", "methane", "ammonia"],
+    colors: ["#1e1e1e", "#3a3a3a", "#5a5a5a", "#808080"],
+    heights: [0.0, 0.25, 0.5, 0.75],
     activity: 0.8, // Active when near perihelion
     visualComaRadius: 100000, // 100 km coma radius
     visualComaColor: "#87CEEB",
@@ -48,5 +51,17 @@ export const halley: CelestialObject<CometProperties> = {
     visualMaxTailLength: 10000000, // 10 million km tail
     visualTailColor: "#DCE6FF",
     visualTailOpacity: 0.6,
+    visuals: {
+      noiseScale: 1.9,
+      blendSharpness: 1.3,
+      craterScale: 17.0,
+      craterStrength: 0.85,
+      simplePeriod: 2.2,
+      undulation: 0.18,
+      ambientStrength: 0.012,
+      metallicFactor: 0.02,
+      roughness: 0.9,
+      specularColor: new THREE.Color("#dedede"),
+    },
   },
 };

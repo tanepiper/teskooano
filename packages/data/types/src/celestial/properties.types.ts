@@ -327,6 +327,10 @@ export interface CometProperties extends SpecificPropertiesBase {
   classType: CometClass;
   /** Array listing the primary chemical components (e.g., ["water ice", "CO2"]). */
   composition: string[];
+  /** An array of up to 4 colors for the comet's procedural texture. */
+  colors: string[];
+  /** An array of height thresholds (0-1) corresponding to each color. */
+  heights: number[];
   /** A measure of the comet's outgassing activity, affecting tail and coma visibility (0.0 = extinct, 1.0 = highly active). */
   activity: number;
   /** Visual radius of the coma (in scaled units). */
@@ -342,13 +346,17 @@ export interface CometProperties extends SpecificPropertiesBase {
   /** Opacity of the tail (0 to 1). */
   visualTailOpacity?: number;
   /** Optional container for detailed visual parameters of the nucleus shader. */
-  visuals: {
-    darkColorMultiplier?: number;
-    lightColorMultiplier?: number;
-    fbmScale?: number;
-    fineFbmScale?: number;
-    fineFbmMix?: number;
+  visuals?: {
+    noiseScale?: number;
+    blendSharpness?: number;
+    craterScale?: number;
+    craterStrength?: number;
+    simplePeriod?: number;
+    undulation?: number;
     ambientStrength?: number;
+    metallicFactor?: number;
+    roughness?: number;
+    specularColor?: THREE.Color;
   };
 }
 

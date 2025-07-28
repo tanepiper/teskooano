@@ -6,6 +6,7 @@ import {
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * Borrelly's Comet (19P/Borrelly)
@@ -38,6 +39,8 @@ export const borrelly: CelestialObject<CometProperties> = {
     classType: CometClass.SHORT_PERIOD,
     discoveredDate: "1892-03-12",
     composition: ["water ice", "dust"],
+    colors: ["#202020", "#333333", "#505050", "#787878"],
+    heights: [0.0, 0.35, 0.55, 0.8],
     activity: 0.6, // Moderate activity
     visualComaRadius: 45000, // 45 km coma radius
     visualComaColor: "#F0F8FF",
@@ -45,5 +48,17 @@ export const borrelly: CelestialObject<CometProperties> = {
     visualMaxTailLength: 1500000, // 1.5 million km tail
     visualTailColor: "#F0F8FF",
     visualTailOpacity: 0.5,
+    visuals: {
+      noiseScale: 2.2,
+      blendSharpness: 1.1,
+      craterScale: 20.0,
+      craterStrength: 0.8,
+      simplePeriod: 2.5,
+      undulation: 0.2,
+      ambientStrength: 0.01,
+      metallicFactor: 0.05,
+      roughness: 0.9,
+      specularColor: new THREE.Color("#bbbbbb"),
+    },
   },
 };

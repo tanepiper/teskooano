@@ -6,6 +6,7 @@ import {
   CometClass,
   type CometProperties,
 } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * Whipple Comet (36P/Whipple)
@@ -38,6 +39,8 @@ export const whipple: CelestialObject = {
     classType: CometClass.SHORT_PERIOD,
     discoveredDate: "1922-01-01",
     composition: ["water ice", "dust"],
+    colors: ["#2c2c2c", "#444444", "#606060", "#8e8e8e"],
+    heights: [0.0, 0.3, 0.55, 0.8],
     activity: 0.4, // Low activity
     visualComaRadius: 35000, // 35 km coma radius
     visualComaColor: "#E0FFFF",
@@ -45,5 +48,17 @@ export const whipple: CelestialObject = {
     visualMaxTailLength: 800000, // 800,000 km tail
     visualTailColor: "#E0FFFF",
     visualTailOpacity: 0.3,
+    visuals: {
+      noiseScale: 2.1,
+      blendSharpness: 1.2,
+      craterScale: 22.0,
+      craterStrength: 0.75,
+      simplePeriod: 2.4,
+      undulation: 0.22,
+      ambientStrength: 0.01,
+      metallicFactor: 0.08,
+      roughness: 0.9,
+      specularColor: new THREE.Color("#c5c5c5"),
+    },
   } as CometProperties,
 };

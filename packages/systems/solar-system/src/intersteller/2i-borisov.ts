@@ -52,6 +52,8 @@ export const borisov: CelestialObject<CometProperties> = {
     epoch: "JD 2458853.5", // Epoch from JPL data (2020-Jan-05.0)
   }),
   properties: {
+    colors: ["#202020", "#333333", "#505050", "#787878"],
+    heights: [0.0, 0.35, 0.55, 0.8],
     type: CelestialType.COMET,
     classType: CometClass.INTERSTELLAR,
     activity: 0.8,
