@@ -11,6 +11,7 @@ import {
   CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 const VENUS_MASS_KG = 4.8675e24;
 const VENUS_RADIUS_KM = 6051.8; // Mean radius
@@ -26,7 +27,7 @@ export const venus: CelestialObject<PlanetProperties> = {
   seed: "venus",
   type: CelestialType.PLANET,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Will be replaced during initialization
+  parentId: SolarSystemBodies.SUN, // Will be replaced during initialization
   realMass_kg: VENUS_MASS_KG,
   realRadius_m: kmToM(VENUS_RADIUS_KM),
   temperature: VENUS_TEMP_K,

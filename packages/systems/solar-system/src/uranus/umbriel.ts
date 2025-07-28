@@ -11,6 +11,7 @@ import {
   type PlanetProperties,
   CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 const UMBRIEL_REAL_RADIUS_KM = 584.7;
 
@@ -23,7 +24,7 @@ export const umbriel: CelestialObject<PlanetProperties> = {
   seed: "umbriel_seed_4144",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "uranus", // Will be replaced during initialization
+  parentId: SolarSystemBodies.URANUS, // Will be replaced during initialization
   realMass_kg: 1.172e21,
   realRadius_m: kmToM(UMBRIEL_REAL_RADIUS_KM),
   orbit: createOrbitalElements({

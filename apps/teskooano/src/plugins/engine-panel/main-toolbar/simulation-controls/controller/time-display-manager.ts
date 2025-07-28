@@ -1,23 +1,13 @@
 import {
-  StateAccessor,
   actions,
-  simulationStateService,
-  celestialManager,
   PhysicsStateProvider,
+  simulationStateService,
+  StateAccessor,
 } from "@teskooano/core-state";
-import { EditableDateInput } from "./editable-date-input";
 import { SimulationMode } from "@teskooano/data-types";
+import { finalize, of, Subject, switchMap, takeUntil, tap, timer } from "rxjs";
+import { EditableDateInput } from "./editable-date-input";
 import { SimpleDateCalculator } from "./simple-date-calculator";
-import {
-  Subject,
-  timer,
-  takeUntil,
-  switchMap,
-  tap,
-  finalize,
-  EMPTY,
-  of,
-} from "rxjs";
 
 export interface TimeDisplayConfig {
   element: HTMLElement;

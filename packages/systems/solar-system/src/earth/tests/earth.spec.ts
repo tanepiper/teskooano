@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { earthSystemBodies } from "./index";
-import { sun } from "../sol/star";
+import { earthSystemBodies } from "../index";
+import { sun } from "../../sol/star";
 import { celestialManager, celestial } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -134,7 +134,7 @@ describe("Earth System Objects", () => {
       celestialManager.addObjects([sun]);
 
       // Add Earth system
-      celestialManager.addObjects(earthSystemBodies);
+      celestialManager.addObjects(earthSystemBodies as any);
 
       // Get all objects
       const objects = celestial.getObjects();

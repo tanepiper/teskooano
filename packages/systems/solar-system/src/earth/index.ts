@@ -1,8 +1,92 @@
-import { earth } from "./earth";
-import { luna } from "./moon";
+import { moon } from "./moons/moon";
+import { allSatellites } from "./satellites";
+
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import {
+  CelestialStatus,
+  CelestialType,
+  PlanetType,
+  type PlanetProperties,
+  type CelestialObject,
+} from "@teskooano/data-types";
+
+/**
+ * Earth configuration object for modular solar system initialization.
+ */
+export const earth: CelestialObject<PlanetProperties> = {
+  id: "earth",
+  name: "Earth",
+  seed: "earth",
+  type: CelestialType.PLANET,
+  status: CelestialStatus.ACTIVE,
+  parentId: "sun",
+  realMass_kg: 5.972168e24,
+  realRadius_m: kmToM(6371.0),
+  temperature: 255,
+  albedo: 0.294,
+  orbit: createOrbitalElements({
+    semiMajorAxisAU: 1.0000010178,
+    eccentricity: 0.0167086,
+    inclinationDeg: 0.00005,
+    longitudeOfAscendingNodeDeg: -11.26064,
+    argumentOfPeriapsisDeg: 114.20783,
+    meanAnomalyDeg: 358.617,
+    period_s: 365.256363004 * 24 * 60 * 60,
+    siderealRotationPeriod_s: 86164.09054,
+    axialTiltDeg: 23.4392811,
+    aphelionAU: 1.0167,
+    perihelionAU: 0.98329,
+    averageOrbitalSpeedKmps: 29.7827,
+    timeOfPerihelion: "2023-01-04",
+    epoch: "J2000",
+  }),
+  properties: {
+    type: CelestialType.PLANET,
+    classType: PlanetType.TERRESTRIAL,
+    isMoon: false,
+    composition: [
+      "silicates",
+      "iron core",
+      "liquid water",
+      "nitrogen-oxygen atmosphere",
+    ],
+    atmosphere: {
+      glowColor: "#87CEEB",
+      intensity: 0.6,
+      power: 1.2,
+      thickness: 0.25,
+    },
+    surface: {
+      roughness: 0.12,
+      persistence: 0.54,
+      lacunarity: 2.2,
+      simplePeriod: 18,
+      octaves: 9,
+      bumpScale: 2.7,
+      color1: "#1E3A5F",
+      color2: "#3F7CAC",
+      color3: "#8FBC8F",
+      color4: "#9ACD32",
+      color5: "#FFFAFA",
+      height1: 0,
+      height2: 0.09,
+      height3: 0.26,
+      height4: 0.4,
+      height5: 0.67,
+      shininess: 20,
+      specularStrength: 0.15,
+      ambientLightIntensity: 0.01,
+      undulation: 0.8,
+      terrainType: 3,
+      terrainAmplitude: 0.8,
+      terrainSharpness: 1.7,
+      terrainOffset: -0.5,
+    },
+  },
+};
 
 /**
  * Earth system bodies that can be initialized in any order.
  * Each object should have a parentId that references an existing body.
  */
-export const earthSystemBodies = [earth, luna];
+export const earthSystemBodies = [earth, moon, ...allSatellites];

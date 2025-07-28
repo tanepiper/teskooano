@@ -11,6 +11,7 @@ import {
   type PlanetProperties,
   CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 const OBERON_REAL_RADIUS_KM = 761.4;
 
@@ -23,7 +24,7 @@ export const oberon: CelestialObject<PlanetProperties> = {
   seed: "oberon_seed_1346",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "uranus", // Will be replaced during initialization
+  parentId: SolarSystemBodies.URANUS, // Will be replaced during initialization
   realMass_kg: 3.014e21,
   realRadius_m: kmToM(OBERON_REAL_RADIUS_KM),
   orbit: createOrbitalElements({

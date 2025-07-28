@@ -15,12 +15,12 @@ import {
  * Luna (Moon) configuration object for modular solar system initialization.
  * Uses J2000 epoch orbital elements and physical properties.
  */
-export const luna: CelestialObject<PlanetProperties> = {
-  id: "luna",
+export const moon: CelestialObject<PlanetProperties> = {
+  id: "moon",
   name: "Moon",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  seed: "luna",
+  seed: "moon",
   parentId: "earth",
   realMass_kg: 7.346e22,
   realRadius_m: kmToM(1737.4),

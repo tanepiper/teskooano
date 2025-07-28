@@ -7,6 +7,7 @@ import {
   type PlanetProperties,
   CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 const MIRANDA_REAL_RADIUS_KM = 235.8;
 
@@ -19,7 +20,7 @@ export const miranda: CelestialObject<PlanetProperties> = {
   seed: "miranda_seed_1413",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "uranus", // Will be replaced during initialization
+  parentId: SolarSystemBodies.URANUS, // Will be replaced during initialization
   realMass_kg: 6.59e19,
   realRadius_m: kmToM(MIRANDA_REAL_RADIUS_KM),
   orbit: createOrbitalElements({

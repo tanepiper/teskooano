@@ -5,8 +5,7 @@
     "rootDir": "./src",
     "paths": {
       "@teskooano/data-types": ["../../data/types/src"],
-      "@teskooano/core-math": ["../../core/math/src"],
-      "@teskooano/core-state": ["../../core/state/src"]
+      "@teskooano/core-math": ["../../core/math/src"]
     },
     "noEmit": false
   },
@@ -18,9 +17,6 @@
     },
     {
       "path": "../../core/math"
-    },
-    {
-      "path": "../../core/state"
     }
   ]
 }

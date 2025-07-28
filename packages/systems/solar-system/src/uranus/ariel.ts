@@ -7,6 +7,7 @@ import {
   type PlanetProperties,
   CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 const ARIEL_REAL_RADIUS_KM = 578.9;
 
@@ -19,7 +20,7 @@ export const ariel: CelestialObject<PlanetProperties> = {
   seed: "ariel_seed_2520",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "uranus", // Will be replaced during initialization
+  parentId: SolarSystemBodies.URANUS, // Will be replaced during initialization
   realMass_kg: 1.353e21,
   realRadius_m: kmToM(ARIEL_REAL_RADIUS_KM),
   orbit: createOrbitalElements({

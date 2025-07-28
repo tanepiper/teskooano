@@ -7,7 +7,6 @@ import { eris, dysnomia } from "./eris";
 import { makemake, mk2 } from "./makemake";
 import { haumea, hiiaka, namaka } from "./haumea";
 import { sedna } from "./sedna"; // Import Sedna
-import { asteroidBelt } from "./asteroid-belt";
 import { ammonite } from "./ammonite";
 
 /**
@@ -30,6 +29,4 @@ export const minorBodies = [
   hiiaka,
   namaka,
   ammonite,
-  // Asteroid Belt (collective)
-  asteroidBelt,
 ];

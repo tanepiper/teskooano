@@ -11,6 +11,7 @@ import {
   type PlanetProperties,
   CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 const TITANIA_REAL_RADIUS_KM = 788.4;
 
@@ -23,7 +24,7 @@ export const titania: CelestialObject<PlanetProperties> = {
   seed: "titania_seed_8706",
   type: CelestialType.MOON,
   status: CelestialStatus.ACTIVE,
-  parentId: "uranus", // Will be replaced during initialization
+  parentId: SolarSystemBodies.URANUS, // Will be replaced during initialization
   realMass_kg: 3.527e21,
   realRadius_m: kmToM(TITANIA_REAL_RADIUS_KM),
   orbit: createOrbitalElements({

@@ -5,6 +5,7 @@ import {
   type OortCloudProperties,
   type CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 /**
  * Oort Cloud configuration object for modular solar system initialization.
@@ -14,7 +15,7 @@ export const oortCloud: CelestialObject<OortCloudProperties> = {
   name: "Oort Cloud",
   type: CelestialType.OORT_CLOUD,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun", // Oort cloud generally orbits the primary star
+  parentId: SolarSystemBodies.SUN, // Oort cloud generally orbits the primary star
   realMass_kg: 5e22, // Estimated mass (higher than asteroid belt)
   realRadius_m: 20000 * AU, // Use outer radius for the representative size
   orbit: createOrbitalElements({

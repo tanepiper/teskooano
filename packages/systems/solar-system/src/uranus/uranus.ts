@@ -13,6 +13,7 @@ import {
   type RingSystemConfiguration,
   type CelestialObject,
 } from "@teskooano/data-types";
+import { SolarSystemBodies } from "../shared/const";
 
 /**
  * Uranus configuration object for modular solar system initialization.
@@ -29,7 +30,7 @@ export const uranus: CelestialObject<GasGiantProperties> = {
   seed: "uranus_seed_84",
   type: CelestialType.GAS_GIANT,
   status: CelestialStatus.ACTIVE,
-  parentId: "sun",
+  parentId: SolarSystemBodies.SUN,
   realMass_kg: 8.681e25,
   realRadius_m: kmToM(25362),
   orbit: createOrbitalElements({
