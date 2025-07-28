@@ -10,6 +10,7 @@ import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
   type LightSourcesMap,
+  ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { AsteroidNucleusMaterial } from "./material";
@@ -18,21 +19,18 @@ const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds
 
 /**
- * Renderer for comet objects with nucleus, coma, particle tails, and jet effects.
+ * Renderer for asteroid objects with procedural nucleus geometry and advanced lighting.
  *
  * Features:
  * - Procedurally displaced nucleus geometry with noise-based surface detail
- * - Dynamic coma that scales with solar activity
- * - Particle-based tail system with realistic physics
- * - Multiple gas jets emanating from the nucleus surface
- * - LOD system with simplified tail for distant viewing
- * - Activity-based visual changes (extinct comets show no coma/tail)
+ * - Multi-color procedural surface texturing with height-based blending
+ * - Advanced lighting with dynamic ambient light calculation
+ * - Shadow casting support from other celestial bodies
+ * - LOD system with simplified geometry for distant viewing
  */
 export class AsteroidRenderer extends BaseCelestialRenderer {
   private nucleus?: THREE.Mesh;
-
   private nucleus_lod1?: THREE.Mesh;
-
   private clock = new THREE.Clock();
   private noise = new SimplexNoise();
   private random: () => number = () => 0;
@@ -50,7 +48,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    // Initialize seeded random for this comet
+    // Initialize seeded random for this asteroid
     this.random = createSeededRandomSync(
       object.seed ?? object.celestialObjectId,
     );
@@ -105,12 +103,27 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
+    // Apply centralized light attenuation
     const attenuatedLightSources = this.applyLightAttenuation(
       object,
       lightSources,
     );
 
-    this.updateNucleus(object, attenuatedLightSources);
+    // Calculate dynamic ambient light based on nearby stars
+    const dynamicAmbientIntensity =
+      this.lightingManager.calculateDynamicAmbientLightWithStarData(
+        object,
+        lightSources, // Use original light sources for ambient calculation, not attenuated
+        allObjects,
+      );
+
+    this.updateNucleus(
+      object,
+      attenuatedLightSources,
+      dynamicAmbientIntensity,
+      camera,
+      allObjects,
+    );
 
     const deltaTime = this.clock.getDelta();
     const activityFactor = this.calculateActivityFactor(
@@ -128,7 +141,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     this.nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
     this.nucleus.name = `${object.celestialObjectId}-nucleus`;
     this.registerMaterial(
-      `comet-nucleus-${object.celestialObjectId}`,
+      `asteroid-nucleus-${object.celestialObjectId}`,
       nucleusMaterial,
     );
   }
@@ -219,24 +232,40 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
   private updateNucleus(
     object: RenderableCelestialObject,
     attenuatedLightSources: Map<string, any>,
+    dynamicAmbientIntensity: number,
+    camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
     const nucleusMaterial = this.getMaterial(
-      `comet-nucleus-${object.celestialObjectId}`,
+      `asteroid-nucleus-${object.celestialObjectId}`,
     ) as AsteroidNucleusMaterial | undefined;
 
     if (nucleusMaterial) {
-      if (attenuatedLightSources) {
-        nucleusMaterial.uniforms.uNumLights.value = attenuatedLightSources.size;
-        let i = 0;
-        for (const lightData of attenuatedLightSources.values()) {
-          nucleusMaterial.uniforms.uLights.value[i].position.copy(
-            lightData.position,
-          );
-          nucleusMaterial.uniforms.uLights.value[i].color.copy(lightData.color);
-          nucleusMaterial.uniforms.uLights.value[i].intensity =
-            lightData.intensity ?? 1.0;
-          i++;
-        }
+      // Update dynamic ambient lighting directly
+      if (nucleusMaterial.uniforms.uAmbientStrength) {
+        nucleusMaterial.uniforms.uAmbientStrength.value =
+          dynamicAmbientIntensity;
+      }
+
+      // Find shadow casters using centralized utility
+      const shadowCasters = this.findShadowCasters(object, allObjects);
+
+      // Convert to shader format
+      const shadowCastersForShader =
+        ShadowCasterUtils.toShaderFormat(shadowCasters);
+
+      // Use the material's update method to handle all lighting calculations
+      if (
+        "update" in nucleusMaterial &&
+        typeof nucleusMaterial.update === "function"
+      ) {
+        nucleusMaterial.update(
+          0, // time - asteroids don't typically need animated time effects
+          1, // timeScale
+          attenuatedLightSources,
+          camera,
+          shadowCastersForShader,
+        );
       }
     }
   }
@@ -253,18 +282,15 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
 
     // Store light position in a dedicated vector to avoid temp vector conflicts
     const lightPosition = new THREE.Vector3().copy(primaryLightSource.position);
-    const cometPosition = this._tempVector1.copy(object.position);
-    const distanceToLight = cometPosition.distanceTo(lightPosition);
+    const asteroidPosition = this._tempVector1.copy(object.position);
+    const distanceToLight = asteroidPosition.distanceTo(lightPosition);
 
     const activityDistance = 2 * SCALE.RENDER_SCALE_AU;
     let activityFactor =
       1.0 - THREE.MathUtils.smoothstep(distanceToLight, 0, activityDistance);
 
-    // An extinct comet (activity = 0) has no activity, so no coma or tail.
+    // Asteroids don't have variable activity like comets
     const properties = object.properties as AsteroidProperties;
-    if (properties.activity === 0) {
-      activityFactor = 0.0;
-    }
 
     return activityFactor;
   }
@@ -275,12 +301,12 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     activityFactor: number,
   ): void {
     if (this.nucleus && object.orbit.siderealRotationPeriod_s) {
-      // Use the actual rotation period from the comet object
+      // Use the actual rotation period from the asteroid object
       const rotationSpeed =
         (2 * Math.PI) / object.orbit.siderealRotationPeriod_s;
 
       // Apply rotation to the group with the correct speed
-      // Comets tumble, so we rotate around multiple axes
+      // Asteroids tumble, so we rotate around multiple axes
       this.nucleus.rotation.y += rotationSpeed * deltaTime;
       this.nucleus.rotation.x += rotationSpeed * 0.25 * deltaTime; // Slight tilt for tumbling effect
 

@@ -30,6 +30,7 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
+    "@teskooano/core-math": "file:../../core/math",
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
     "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",

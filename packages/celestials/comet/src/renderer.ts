@@ -13,6 +13,7 @@ import {
   GeometryUtilities,
   type CelestialMeshOptions,
   type LightSourcesMap,
+  ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import {
@@ -173,12 +174,21 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     this.camera.copy(camera);
 
+    // Apply centralized light attenuation
     const attenuatedLightSources = this.applyLightAttenuation(
       object,
       lightSources,
     );
 
-    this.updateNucleus(object, attenuatedLightSources);
+    // Calculate dynamic ambient light based on nearby stars
+    const dynamicAmbientIntensity =
+      this.lightingManager.calculateDynamicAmbientLightWithStarData(
+        object,
+        lightSources, // Use original light sources for ambient calculation, not attenuated
+        allObjects,
+      );
+
+    this.updateNucleus(object, attenuatedLightSources, dynamicAmbientIntensity);
     this.updateParticleTail(object, attenuatedLightSources);
     this.updateJets(object, attenuatedLightSources);
 
@@ -361,12 +371,20 @@ export class CometRenderer extends BaseCelestialRenderer {
   private updateNucleus(
     object: RenderableCelestialObject,
     attenuatedLightSources: Map<string, any> | undefined,
+    dynamicAmbientIntensity: number,
   ): void {
     const nucleusMaterial = this.getMaterial(
       `comet-nucleus-${object.celestialObjectId}`,
     ) as CometNucleusMaterial | undefined;
 
     if (nucleusMaterial && attenuatedLightSources) {
+      // Update dynamic ambient lighting
+      if (nucleusMaterial.uniforms.uAmbientStrength) {
+        nucleusMaterial.uniforms.uAmbientStrength.value =
+          dynamicAmbientIntensity;
+      }
+
+      // Update lighting
       nucleusMaterial.uniforms.uNumLights.value = attenuatedLightSources.size;
       let i = 0;
       for (const lightData of attenuatedLightSources.values()) {

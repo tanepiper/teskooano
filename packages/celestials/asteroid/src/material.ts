@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
+import {
+  LightArrayUtils,
+  LightSourceData,
+} from "@teskooano/renderer-threejs-celestial";
 
 // Import shaders from external files
 import nucleusVertexShader from "./shaders/nucleus.vertex.glsl?raw";
@@ -7,6 +10,7 @@ import nucleusFragmentShader from "./shaders/nucleus.fragment.glsl?raw";
 
 const MAX_LIGHTS = 4;
 const MAX_COLORS = 4;
+const MAX_SHADOW_CASTERS = 4;
 
 export interface AsteroidNucleusMaterialOptions {
   colors: THREE.Color[]; // An array of colors for the palette
@@ -24,6 +28,9 @@ export interface AsteroidNucleusMaterialOptions {
 }
 
 export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
+  protected currentNumLights: number = 0;
+  protected currentNumShadowCasters: number = 0;
+
   constructor(options: AsteroidNucleusMaterialOptions) {
     if (options.colors.length > MAX_COLORS) {
       console.warn(
@@ -43,6 +50,7 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
         MAX_COLORS: MAX_COLORS,
+        MAX_SHADOW_CASTERS: MAX_SHADOW_CASTERS,
         NUM_COLORS: options.colors.length,
       },
       uniforms: {
@@ -52,6 +60,11 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
         uNumLights: { value: 0 },
         uLights: {
           value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
+        },
+        // Shadow casting uniforms
+        uNumShadowCasters: { value: 0 },
+        uShadowCasters: {
+          value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
         uNoiseScale: { value: options.noiseScale ?? 2.0 },
         uBlendSharpness: { value: options.blendSharpness ?? 1.0 },
@@ -65,9 +78,77 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
         uSpecularColor: {
           value: options.specularColor ?? new THREE.Color(0xffffff),
         },
+        uCameraPosition: { value: new THREE.Vector3() },
+        uTime: { value: 0.0 },
       },
       vertexShader: nucleusVertexShader,
       fragmentShader: nucleusFragmentShader,
     });
+
+    this.currentNumLights = MAX_LIGHTS;
+    this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
+  }
+
+  protected resizeLightArrays(newSize: number): void {
+    this.uniforms.uLights.value = LightArrayUtils.resizeLightArray(
+      this,
+      newSize,
+      this.uniforms.uLights.value,
+    );
+    this.currentNumLights = newSize;
+  }
+
+  protected resizeShadowCasterArrays(newSize: number): void {
+    this.uniforms.uShadowCasters.value =
+      LightArrayUtils.resizeShadowCasterArray(
+        this,
+        newSize,
+        this.uniforms.uShadowCasters.value,
+      );
+    this.currentNumShadowCasters = newSize;
+  }
+
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: Map<string, LightSourceData>,
+    camera?: THREE.PerspectiveCamera,
+    shadowCasters?: { position: THREE.Vector3; radius: number }[],
+  ): void {
+    this.uniforms.uTime.value = time;
+    if (camera) {
+      this.uniforms.uCameraPosition.value.copy(camera.position);
+    }
+
+    const numLights = lightSources?.size ?? 0;
+    if (numLights !== this.currentNumLights) {
+      this.resizeLightArrays(numLights);
+    }
+
+    this.uniforms.uNumLights.value = numLights;
+    if (lightSources) {
+      let i = 0;
+      for (const lightData of lightSources.values()) {
+        this.uniforms.uLights.value[i].position.copy(lightData.position);
+        this.uniforms.uLights.value[i].color.copy(lightData.color);
+        this.uniforms.uLights.value[i].intensity = lightData.intensity ?? 1.0;
+        i++;
+      }
+    }
+
+    const numShadowCasters = shadowCasters?.length ?? 0;
+    if (numShadowCasters !== this.currentNumShadowCasters) {
+      this.resizeShadowCasterArrays(numShadowCasters);
+    }
+
+    this.uniforms.uNumShadowCasters.value = numShadowCasters;
+    if (shadowCasters) {
+      for (let i = 0; i < numShadowCasters; i++) {
+        this.uniforms.uShadowCasters.value[i].position.copy(
+          shadowCasters[i].position,
+        );
+        this.uniforms.uShadowCasters.value[i].radius = shadowCasters[i].radius;
+      }
+    }
   }
 }

@@ -58,6 +58,7 @@ export class AuMarkerManager {
       transparent: true,
       opacity: 0.2,
       toneMapped: false, // Set to false for UI elements to not be affected by scene lighting
+      depthTest: false,
     });
 
     this.ringInstances = new THREE.InstancedMesh(
