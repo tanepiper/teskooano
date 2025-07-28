@@ -1,14 +1,13 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
 import { getDefaultConfiguration, isValidConfiguration } from "./types";
-import type {
-  SimulationState,
-  SimulationConfiguration,
+import { SimulationState, SimulationConfiguration } from "./types";
+import {
   AlgorithmType,
+  DeviceTier,
   IntegratorType,
   SimulationMode,
-} from "./types";
-import { DeviceTier } from "@teskooano/data-types";
+} from "@teskooano/data-types";
 
 /**
  * @class SimulationStateService
@@ -23,6 +22,7 @@ export class SimulationStateService {
   private readonly _initialState: SimulationState = {
     time: 0,
     timeScale: 1,
+    startDate: new Date(),
     paused: false,
     selectedObject: null,
     focusedObjectId: null,
@@ -114,12 +114,38 @@ export class SimulationStateService {
   /**
    * Resets the simulation clock to zero, sets the time scale to 1, and un-pauses.
    */
-  public resetTime(): void {
+  public resetTime(resetPaused: boolean = false): void {
     const currentState = this.getSimulationState();
     this.setSimulationState({
       ...currentState,
       time: 0,
       timeScale: 1,
+      // Logic is if it's currently paused, we don't want to un-pause it unless resetPaused is true
+      paused: currentState.paused && !resetPaused,
+    });
+  }
+
+  /**
+   * Sets the simulation start date.
+   */
+  public setStartDate(startDate: Date): void {
+    const currentState = this.getSimulationState();
+    this.setSimulationState({
+      ...currentState,
+      startDate: new Date(startDate),
+    });
+  }
+
+  /**
+   * Resets the simulation state to a new start date with time zero.
+   */
+  public resetToStartDate(startDate: Date): void {
+    const currentState = this.getSimulationState();
+    this.setSimulationState({
+      ...currentState,
+      time: 0,
+      timeScale: 1,
+      startDate: new Date(startDate),
       paused: false,
     });
   }
@@ -210,14 +236,14 @@ export class SimulationStateService {
     const currentConfig = currentState.simulationConfig;
 
     let newConfig: SimulationConfiguration;
-    if (mode === "ideal") {
-      newConfig = { mode: "ideal" };
+    if (mode === SimulationMode.IDEAL) {
+      newConfig = { mode: SimulationMode.IDEAL };
     } else {
       // For n-body mode, preserve existing algorithm/integrator or use defaults
       newConfig = {
-        mode: "nbody",
-        algorithm: currentConfig.algorithm || "tree-pm",
-        integrator: currentConfig.integrator || "pefrl",
+        mode: SimulationMode.NBODY,
+        algorithm: currentConfig.algorithm || AlgorithmType.TREE_PM,
+        integrator: currentConfig.integrator || IntegratorType.PEFRL,
       };
     }
 
@@ -232,14 +258,14 @@ export class SimulationStateService {
     const currentState = this.getSimulationState();
     const currentConfig = currentState.simulationConfig;
 
-    if (currentConfig.mode !== "nbody") {
+    if (currentConfig.mode !== SimulationMode.NBODY) {
       throw new Error("Cannot set N-Body algorithm when not in N-Body mode");
     }
 
     const newConfig: SimulationConfiguration = {
-      mode: "nbody",
+      mode: SimulationMode.NBODY,
       algorithm,
-      integrator: currentConfig.integrator || "pefrl",
+      integrator: currentConfig.integrator || IntegratorType.PEFRL,
     };
 
     this.setSimulationConfiguration(newConfig);
@@ -253,13 +279,13 @@ export class SimulationStateService {
     const currentState = this.getSimulationState();
     const currentConfig = currentState.simulationConfig;
 
-    if (currentConfig.mode !== "nbody") {
+    if (currentConfig.mode !== SimulationMode.NBODY) {
       throw new Error("Cannot set N-Body integrator when not in N-Body mode");
     }
 
     const newConfig: SimulationConfiguration = {
-      mode: "nbody",
-      algorithm: currentConfig.algorithm || "tree-pm",
+      mode: SimulationMode.NBODY,
+      algorithm: currentConfig.algorithm || AlgorithmType.TREE_PM,
       integrator,
     };
 

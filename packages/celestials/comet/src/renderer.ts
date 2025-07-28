@@ -267,7 +267,6 @@ export class CometRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
   ): CometNucleusMaterial {
     const properties = object.properties as CometProperties;
-    console.log(properties);
 
     // Fallback for procedurally generated comets without explicit visual data.
     const colors = properties.colors ?? [

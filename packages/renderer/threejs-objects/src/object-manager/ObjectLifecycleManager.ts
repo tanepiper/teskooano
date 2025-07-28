@@ -135,13 +135,6 @@ export class ObjectLifecycleManager {
       this.scene.add(group);
     }
 
-    // Debug logging for asteroids specifically
-    if (object.type === CelestialType.ASTEROID) {
-      console.log(
-        `[ObjectLifecycleManager] Processing asteroid: ${objectId} (${object.name})`,
-      );
-    }
-
     const mesh = this.meshFactory.createObjectMesh(object);
     if (!mesh) {
       console.warn(
@@ -156,13 +149,6 @@ export class ObjectLifecycleManager {
         );
       }
       return;
-    }
-
-    // Debug logging for successful asteroid mesh creation
-    if (object.type === CelestialType.ASTEROID) {
-      console.log(
-        `[ObjectLifecycleManager] Successfully created mesh for asteroid: ${objectId}`,
-      );
     }
 
     group.add(mesh);
@@ -206,30 +192,11 @@ export class ObjectLifecycleManager {
       CSS2DLayerType.CELESTIAL_LABELS,
     ) as CelestialLabelLayer;
     if (celestialLayer) {
-      // Debug logging for asteroid label creation
-      if (object.type === CelestialType.ASTEROID) {
-        console.log(
-          `[ObjectLifecycleManager] Creating label for asteroid: ${objectId}`,
-        );
-      }
-
       celestialLayer.createLabel(object, mesh);
-
-      if (object.type === CelestialType.ASTEROID) {
-        console.log(
-          `[ObjectLifecycleManager] Label creation completed for asteroid: ${objectId}`,
-        );
-      }
     } else {
       console.warn(
-        `[ObjectLifecycleManager] No celestial layer available for label creation`,
+        `[ObjectLifecycleManager] No celestial layer available for label creation for ${objectId}`,
       );
-
-      if (object.type === CelestialType.ASTEROID) {
-        console.error(
-          `[ObjectLifecycleManager] ASTEROID LABEL CREATION FAILED - No celestial layer for ${objectId}`,
-        );
-      }
     }
 
     if (this.lensingHandler.needsGravitationalLensing(object)) {

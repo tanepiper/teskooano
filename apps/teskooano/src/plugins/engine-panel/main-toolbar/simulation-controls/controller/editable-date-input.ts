@@ -71,13 +71,14 @@ export class EditableDateInput {
       z-index: 1000;
     `;
 
-    // Set current value - format for local timezone
+    // Set current value - format for local timezone (include seconds for precision)
     const year = this.currentDate.getFullYear();
     const month = String(this.currentDate.getMonth() + 1).padStart(2, "0");
     const day = String(this.currentDate.getDate()).padStart(2, "0");
     const hours = String(this.currentDate.getHours()).padStart(2, "0");
     const minutes = String(this.currentDate.getMinutes()).padStart(2, "0");
-    const dateString = `${year}-${month}-${day}T${hours}:${minutes}`;
+    const seconds = String(this.currentDate.getSeconds()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
     this.input.value = dateString;
 
     // Position the input over the display

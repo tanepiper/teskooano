@@ -125,11 +125,26 @@ export class PositionHistoryManager {
     // Get current time scale from state to scale sample collection
     const timeScale = this.getTimeScaleFromState();
 
-    // Scale sample rate based on time scale (1-10 range)
-    // Higher time scale = more samples collected
-    const scaledSampleRate = Math.max(1, Math.floor(timeScale / 10));
+    // Calculate frames between samples to achieve minimum 100 samples/second
+    // At 60fps, 100 samples/sec = 1 sample every 0.6 frames
+    const targetSamplesPerSecond = 100;
+    const assumedFPS = 60;
+    const framesPerSample = Math.max(
+      1,
+      Math.floor(assumedFPS / targetSamplesPerSecond),
+    );
 
-    if (this.lastUpdateIndex < this.sampleRateKm / scaledSampleRate) {
+    // Scale down further for higher time scales to capture more detail during fast motion
+    const timeScaleMultiplier = Math.max(
+      0.1,
+      Math.min(1.0, 1.0 / Math.sqrt(timeScale)),
+    );
+    const adjustedFramesPerSample = Math.max(
+      1,
+      Math.floor(framesPerSample * timeScaleMultiplier),
+    );
+
+    if (this.lastUpdateIndex < adjustedFramesPerSample) {
       this.lastUpdateIndex++;
       return;
     }

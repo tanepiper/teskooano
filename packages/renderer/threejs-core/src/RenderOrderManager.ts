@@ -157,10 +157,6 @@ export class RenderOrderManager {
     object.traverse((child) => {
       child.renderOrder = renderOrder;
     });
-
-    console.debug(
-      `[RenderOrderManager] Applied render order ${renderOrder} to ${object.name || "unnamed object"}`,
-    );
   }
 
   /**

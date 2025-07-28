@@ -256,7 +256,6 @@ export class SceneManager {
     // Enable logarithmic depth buffer globally on the renderer
     const gl = sceneSetup.renderer.getContext();
     (sceneSetup.renderer as any).logarithmicDepthBuffer = true;
-    console.log("🚀 Logarithmic depth buffer enabled globally on renderer");
 
     return sceneSetup;
   }
@@ -290,10 +289,6 @@ export class SceneManager {
 
     // Set up auto-application for future materials
     this.setupAutoLogDepthApplication();
-
-    console.log(
-      "🚀 Logarithmic depth buffer enabled - superior space-scale precision!",
-    );
   }
 
   /**

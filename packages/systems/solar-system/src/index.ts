@@ -1,4 +1,4 @@
-import { celestialManager } from "@teskooano/core-state";
+import { celestialManager, actions } from "@teskooano/core-state";
 import { earthSystemBodies } from "./earth";
 import { jupiterSystemBodies } from "./jupiter";
 import { marsSystemBodies } from "./mars";
@@ -45,9 +45,12 @@ const solarSystemBodies = [
  */
 export function initializeSolarSystem() {
   // Process all objects to calculate their current positions based on the actual current time
-  const currentPositionBodies = processSolarSystemToCurrentTime(
-    solarSystemBodies as any,
-  );
+  const currentPositionBodies =
+    processSolarSystemToCurrentTime(solarSystemBodies);
+
+  // CRITICAL: Set simulation start date to actual current time to match processed objects
+  // This ensures UI time calculations are synchronized with object positions
+  actions.setStartDate(new Date());
 
   // Use addObjects to ensure proper dependency sorting
   celestialManager.addObjects(currentPositionBodies as any);

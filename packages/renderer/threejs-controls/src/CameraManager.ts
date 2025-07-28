@@ -196,6 +196,65 @@ export class CameraManager {
   }
 
   /**
+   * Calculates a reasonable viewing distance using logarithmic scaling.
+   * This ensures appropriate camera distances for all object types, from satellites to stars.
+   *
+   * @param objectRadius The radius of the object in scene units
+   * @param objectType The type of celestial object (optional)
+   * @returns Reasonable viewing distance in scene units
+   */
+  private _calculateLogarithmicViewingDistance(
+    objectRadius: number,
+    objectType?: string,
+  ): number {
+    // Import scale constants - 1000 scene units = 1 AU
+    const RENDER_SCALE_AU = 1000;
+
+    // Different calculation strategies based on object size and type
+    let reasonableDistance: number;
+
+    // For very small objects (satellites, small asteroids/comets), use simple radius-based distances
+    if (objectType === "SATELLITE" || objectRadius < 0.01) {
+      // Satellites: reasonable viewing distance (e.g., JWST ~750m away)
+      // Use small multiplier for very small objects to get proper close viewing distance
+      reasonableDistance = objectRadius * 0.6; // 0.6x radius for satellites (~750m for 10m object)
+    } else if (
+      (objectType === "ASTEROID" || objectType === "COMET") &&
+      objectRadius < 1.0
+    ) {
+      // Small asteroids/comets: close viewing
+      reasonableDistance = objectRadius * 5.0; // 5x radius for small rocky objects
+    } else {
+      // For larger objects (planets, moons, large objects), use logarithmic scaling
+      const typeMultipliers = {
+        ASTEROID: 4.0, // Medium distance for larger asteroids
+        COMET: 4.0, // Medium distance for larger comets
+        MOON: 3.0, // Closer for moons
+        PLANET: 4.0, // Standard planetary distance
+        GAS_GIANT: 6.0, // Bit further for gas giants
+        STAR: 8.0, // Further for stars
+        default: 4.0, // Default multiplier
+      };
+
+      const multiplier =
+        typeMultipliers[objectType as keyof typeof typeMultipliers] ||
+        typeMultipliers.default;
+
+      // Use logarithmic scaling for larger objects to prevent excessive distances
+      const logBase = 10.0;
+      const logFactor = Math.log(objectRadius + logBase) / Math.log(logBase);
+      reasonableDistance = multiplier * objectRadius * Math.max(1.0, logFactor);
+    }
+
+    // Apply absolute constraints
+    const minDistance = 0.0001; // Very close minimum (0.1mm in scene units)
+    const maxDistance = RENDER_SCALE_AU * 10; // Maximum 10 AU distance
+
+    // Clamp the result within reasonable bounds
+    return Math.max(minDistance, Math.min(maxDistance, reasonableDistance));
+  }
+
+  /**
    * Updates dynamic camera settings based on the focused celestial object type
    * This prevents shader transparency issues while maintaining close viewing for satellites
    * @param objectId The ID of the focused object, or null if no focus
@@ -291,40 +350,46 @@ export class CameraManager {
         return;
       }
 
-      // --- Prediction Logic ---
+      // --- Logarithmic Distance Calculation ---
+      const objectRadius = renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE;
       const objectVelocity =
         renderableObject.velocity?.clone() ?? new Vector3();
 
-      // We need to know how long the transition will take to predict the final position.
-      // To do that, we first calculate the destination as if the object were static.
-      const initialTargetPos = renderableObject.position.clone();
-      const initialRadius = renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE;
-      const initialOffset = CAMERA_OFFSET.clone().multiplyScalar(
-        initialRadius * 3,
+      // Calculate reasonable viewing distance using logarithmic scale
+      // This ensures good viewing distance for all object types (from satellites to stars)
+      const reasonableDistance = this._calculateLogarithmicViewingDistance(
+        objectRadius,
+        renderableObject.type,
       );
+
+      // Use the reasonable distance for initial calculation
+      const initialTargetPos = renderableObject.position.clone();
+      const initialOffset =
+        CAMERA_OFFSET.clone().multiplyScalar(reasonableDistance);
       const initialCameraPos = initialTargetPos.clone().add(initialOffset);
 
-      // Now, get the duration for that "static" trip.
+      // Get transition duration for this reasonable distance
       const transitionDuration =
         this.renderer?.controlsManager?.calculateTransitionDuration(
           OSVector3.fromThreeJS(this.renderer.camera.position),
           OSVector3.fromThreeJS(initialCameraPos),
         ) ?? 2.0; // Default duration if calculation fails
 
-      // Predict the final position of the object after the transition.
+      // Predict object position after transition, accounting for velocity
+      const velocityOffset = objectVelocity
+        .clone()
+        .multiplyScalar(transitionDuration);
       const predictedTargetPosition = renderableObject.position
         .clone()
-        .add(objectVelocity.multiplyScalar(transitionDuration));
-      // --- End Prediction ---
+        .add(velocityOffset);
 
-      const calculatedDistance =
-        (renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE) * 3;
+      // Final camera position uses the reasonable distance from predicted position
       const cameraOffsetVector =
-        CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance);
-      // The final camera position is offset from the *predicted* target position.
+        CAMERA_OFFSET.clone().multiplyScalar(reasonableDistance);
       const cameraPosition = predictedTargetPosition
         .clone()
         .add(cameraOffsetVector);
+      // --- End Logarithmic Distance & Prediction ---
 
       if (this.renderer.controlsManager) {
         // Pause simulation during transition to prevent fast-moving objects

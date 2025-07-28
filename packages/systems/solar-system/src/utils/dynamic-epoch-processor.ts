@@ -1,15 +1,15 @@
 import {
-  getCurrentEpoch,
-  getCurrentPreciseEpoch,
-  getCurrentJulianDay,
-  getJulianDayForEpoch,
-  getEpochDifferenceYears,
-  updateOrbitalElementsToEpoch,
-  calculateCurrentPositionFromEpoch,
   calculateCurrentPositionPrecise,
-  J2000_EPOCH,
+  getCurrentJulianDay,
+  getCurrentPreciseEpoch,
+  getJulianDayForEpoch,
 } from "@teskooano/core-physics";
 import type { CelestialObject } from "@teskooano/data-types";
+import {
+  calculateProcessingStats,
+  logProcessingStats,
+  EpochProcessingStats,
+} from "./epoch-utilities";
 
 /**
  * Processes celestial objects to calculate their current positions based on the actual current time.
@@ -85,85 +85,18 @@ export class DynamicEpochProcessor {
   }
 
   /**
-   * Gets processing statistics for all objects.
+   * Gets processing statistics for all objects using shared utilities.
    */
-  getProcessingStats(): {
-    totalObjects: number;
-    currentEpoch: string;
-    epochTypes: Record<string, number>;
-    averageYearsDifference: number;
-    maxYearsDifference: number;
-    averageTimeDifferenceSeconds: number;
-    objectsWithLargeDifferences: Array<{
-      name: string;
-      yearsDifference: number;
-      timeDifferenceSeconds: number;
-      originalEpoch: string;
-    }>;
-  } {
-    const epochTypes: Record<string, number> = {};
-    let totalYearsDifference = 0;
-    let totalTimeDifferenceSeconds = 0;
-    let maxYearsDifference = 0;
-    const objectsWithLargeDifferences: Array<{
-      name: string;
-      yearsDifference: number;
-      timeDifferenceSeconds: number;
-      originalEpoch: string;
-    }> = [];
-
-    this.processedObjects.forEach((info, name) => {
-      // Count epoch types
-      epochTypes[info.originalEpoch] =
-        (epochTypes[info.originalEpoch] || 0) + 1;
-
-      // Track time differences
-      totalYearsDifference += Math.abs(info.yearsDifference);
-      totalTimeDifferenceSeconds += Math.abs(info.timeDifferenceSeconds);
-      if (Math.abs(info.yearsDifference) > maxYearsDifference) {
-        maxYearsDifference = Math.abs(info.yearsDifference);
-      }
-
-      // Flag objects with large time differences (more than 1 year)
-      if (Math.abs(info.yearsDifference) > 1) {
-        objectsWithLargeDifferences.push({
-          name,
-          yearsDifference: info.yearsDifference,
-          timeDifferenceSeconds: info.timeDifferenceSeconds,
-          originalEpoch: info.originalEpoch,
-        });
-      }
-    });
-
-    return {
-      totalObjects: this.processedObjects.size,
-      currentEpoch: this.currentPreciseEpoch,
-      epochTypes,
-      averageYearsDifference: totalYearsDifference / this.processedObjects.size,
-      maxYearsDifference,
-      averageTimeDifferenceSeconds:
-        totalTimeDifferenceSeconds / this.processedObjects.size,
-      objectsWithLargeDifferences,
-    };
+  getProcessingStats(): EpochProcessingStats {
+    return calculateProcessingStats(this.processedObjects);
   }
 
   /**
-   * Logs a detailed summary of the epoch processing.
+   * Logs a detailed summary of the epoch processing using shared utilities.
    */
   private logProcessingSummary(): void {
     const stats = this.getProcessingStats();
-
-    Object.entries(stats.epochTypes)
-      .sort(([, a], [, b]) => b - a)
-      .forEach(([epoch, count]) => {
-        const percentage = ((count / stats.totalObjects) * 100).toFixed(1);
-      });
-
-    if (stats.objectsWithLargeDifferences.length > 0) {
-      stats.objectsWithLargeDifferences.sort(
-        (a, b) => Math.abs(b.yearsDifference) - Math.abs(a.yearsDifference),
-      );
-    }
+    logProcessingStats(stats, "Dynamic Epoch Processing Results");
   }
 
   /**
@@ -191,7 +124,8 @@ export class DynamicEpochProcessor {
   }
 
   /**
-   * Validates that all objects have been processed to the current epoch.
+   * Validates that all objects have been processed correctly.
+   * Checks for epoch consistency and potential accuracy issues.
    */
   validateProcessing(): {
     isValid: boolean;
@@ -207,10 +141,16 @@ export class DynamicEpochProcessor {
         });
       }
 
-      if (Math.abs(info.yearsDifference) > 100) {
+      const absYearsDiff = Math.abs(info.yearsDifference);
+      if (absYearsDiff > 100) {
         issues.push({
           objectName: name,
-          issue: `Very large time difference (${info.yearsDifference.toFixed(1)} years) may affect accuracy`,
+          issue: `Very large time difference (${absYearsDiff.toFixed(1)} years) may significantly affect accuracy`,
+        });
+      } else if (absYearsDiff > 50) {
+        issues.push({
+          objectName: name,
+          issue: `Large time difference (${absYearsDiff.toFixed(1)} years) may affect accuracy`,
         });
       }
     });
@@ -220,17 +160,6 @@ export class DynamicEpochProcessor {
       issues,
     };
   }
-}
-
-/**
- * Convenience function to process all solar system objects to current positions.
- * This is the main entry point for dynamic epoch processing.
- */
-export function processSolarSystemToCurrentPositions<T>(
-  objects: CelestialObject<T>[],
-): CelestialObject<T>[] {
-  const processor = new DynamicEpochProcessor();
-  return processor.processObjects(objects);
 }
 
 /**
@@ -245,24 +174,6 @@ export function processSolarSystemToCurrentTime<T>(
 ): CelestialObject<T>[] {
   const processor = new DynamicEpochProcessor();
   const processedObjects = processor.processObjects(objects);
-
-  // Log the processing results for debugging
-  const stats = processor.getProcessingStats();
-  console.log(
-    `[DynamicEpochProcessor] Processed ${stats.totalObjects} objects to current time: ${stats.currentEpoch}`,
-  );
-  console.log(
-    `[DynamicEpochProcessor] Average time difference: ${(stats.averageTimeDifferenceSeconds / 3600).toFixed(2)} hours`,
-  );
-
-  if (stats.objectsWithLargeDifferences.length > 0) {
-    console.log(`[DynamicEpochProcessor] Objects with large time differences:`);
-    stats.objectsWithLargeDifferences.forEach((obj) => {
-      console.log(
-        `  - ${obj.name}: ${obj.yearsDifference.toFixed(2)} years (${(obj.timeDifferenceSeconds / 3600).toFixed(2)} hours)`,
-      );
-    });
-  }
 
   return processedObjects;
 }

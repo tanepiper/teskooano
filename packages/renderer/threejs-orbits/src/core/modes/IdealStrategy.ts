@@ -126,6 +126,21 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
   }
 
   /**
+   * Clears all orbital trails (Keplerian orbit lines).
+   */
+  clearAllTrails(): void {
+    this.keplerianManager.clearAll();
+  }
+
+  /**
+   * Clears all prediction lines.
+   * This is a no-op in the Ideal strategy as it doesn't use separate prediction lines.
+   */
+  clearAllPredictions(): void {
+    // This strategy does not have prediction lines.
+  }
+
+  /**
    * Cleans up resources used by this strategy.
    */
   dispose(): void {

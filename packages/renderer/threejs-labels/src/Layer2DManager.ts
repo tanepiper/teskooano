@@ -54,16 +54,8 @@ export class Layer2DManager {
 
     // Register components required by the layer
     layer.getRequiredComponents().forEach(({ tagName, componentClass }) => {
-      console.log(`[Layer2DManager] Registering custom element: ${tagName}`);
       if (!customElements.get(tagName)) {
         customElements.define(tagName, componentClass);
-        console.log(
-          `[Layer2DManager] Successfully registered custom element: ${tagName}`,
-        );
-      } else {
-        console.log(
-          `[Layer2DManager] Custom element already registered: ${tagName}`,
-        );
       }
     });
   }

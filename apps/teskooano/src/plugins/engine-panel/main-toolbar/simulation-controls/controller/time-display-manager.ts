@@ -2,10 +2,12 @@ import {
   StateAccessor,
   actions,
   simulationStateService,
+  celestialManager,
+  PhysicsStateProvider,
 } from "@teskooano/core-state";
 import { EditableDateInput } from "./editable-date-input";
-import { TimeStepCalculator } from "./time-step-calculator";
 import { SimulationMode } from "@teskooano/data-types";
+import { SimpleDateCalculator } from "./simple-date-calculator";
 import {
   Subject,
   timer,
@@ -30,7 +32,6 @@ export interface TimeDisplayConfig {
 export class TimeDisplayManager {
   private element: HTMLElement;
   private editableDateInput: EditableDateInput | null = null;
-  private simulationStartDate: Date = new Date();
   private config: TimeDisplayConfig;
   private lastDateChangeTime: number = 0;
   private readonly dateChangeDebounceMs: number = 1000; // 1 second debounce
@@ -65,9 +66,10 @@ export class TimeDisplayManager {
    * Resets the simulation start date to the current time
    */
   public resetStartDate(): void {
-    this.simulationStartDate = new Date();
+    const currentDate = new Date();
+    actions.setStartDate(currentDate);
     if (this.editableDateInput) {
-      this.editableDateInput.setDate(this.simulationStartDate);
+      this.editableDateInput.setDate(currentDate);
     }
   }
 
@@ -75,17 +77,90 @@ export class TimeDisplayManager {
    * Sets a custom start date for the simulation
    */
   public setStartDate(startDate: Date): void {
-    this.simulationStartDate = new Date(startDate);
+    console.log(
+      `[TimeDisplayManager] 🔄 Setting new start date: ${startDate.toISOString()} (${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()})`,
+    );
+
+    actions.setStartDate(startDate);
     if (this.editableDateInput) {
-      this.editableDateInput.setDate(this.simulationStartDate);
+      this.editableDateInput.setDate(startDate);
     }
   }
 
   /**
-   * Gets the current simulation date
+   * Gets the current simulation start date
    */
   public getCurrentDate(): Date {
-    return new Date(this.simulationStartDate);
+    const state = StateAccessor.getCurrentSimulationState();
+    return new Date(state.startDate);
+  }
+
+  /**
+   * Jumps directly to a target date and recalculates all planetary positions
+   */
+  private calculatePlanetaryPositionsForDate(targetDate: Date): void {
+    console.log(
+      `[TimeDisplayManager] Jumping to ${targetDate.toISOString()} and recalculating positions`,
+    );
+
+    // Pause simulation to prevent any interference
+    const currentState = StateAccessor.getCurrentSimulationState();
+    const wasPaused = currentState.paused;
+    if (!wasPaused) {
+      actions.togglePause();
+    }
+
+    // Get all current celestial objects
+    const celestialObjects = StateAccessor.getCurrentCelestialObjects();
+
+    // Use the simplified calculator to get new positions
+    const calculationResult = SimpleDateCalculator.calculatePositionsForDate(
+      targetDate,
+      celestialObjects,
+    );
+
+    // Update all objects with their new positions and orbital elements
+    calculationResult.results.forEach((result) => {
+      const object = celestialObjects[result.objectId];
+      if (object) {
+        const updatedObject = {
+          ...object,
+          orbit: result.updatedOrbitalElements,
+        };
+
+        // Update the object in the state
+        actions.updateCelestialObject(object.id, updatedObject);
+
+        // Clear the physics state cache to force recalculation with new orbital elements
+        console.log(
+          `[TimeDisplayManager] Updating physics state for ${object.id}:`,
+          {
+            newPosition: result.position.toArray(),
+            newVelocity: result.velocity.toArray(),
+          },
+        );
+
+        // Clear the physics state cache to force recalculation
+        PhysicsStateProvider.clearCache();
+      }
+    });
+
+    // Remove objects that shouldn't exist at the target date
+    calculationResult.objectsToRemove.forEach((objectId) => {
+      actions.removeCelestialObject(objectId);
+    });
+
+    // Set simulation baseline to target date with time=0
+    actions.resetToStartDate(targetDate);
+
+    // Resume if it wasn't originally paused
+    if (!wasPaused) {
+      actions.togglePause();
+    }
+
+    console.log(
+      `[TimeDisplayManager] Position calculation and date jump complete`,
+    );
   }
 
   /**
@@ -120,7 +195,7 @@ export class TimeDisplayManager {
     this.lastDateChangeTime = now;
 
     console.log(
-      `[TimeDisplayManager] Date change requested: ${newDate.toISOString()}`,
+      `[TimeDisplayManager] 🎯 Date change requested: ${newDate.toISOString()} (${newDate.toLocaleDateString()} ${newDate.toLocaleTimeString()})`,
     );
 
     // Cancel any ongoing date jump
@@ -131,8 +206,8 @@ export class TimeDisplayManager {
       const currentTime = currentState.time;
 
       // Validate the date change
-      const validation = TimeStepCalculator.validateDateChange(
-        this.simulationStartDate,
+      const validation = SimpleDateCalculator.validateDateChange(
+        StateAccessor.getCurrentSimulationState().startDate,
         newDate,
       );
 
@@ -146,7 +221,9 @@ export class TimeDisplayManager {
 
       // Calculate target time in seconds from original start date
       const targetTimeSeconds =
-        (newDate.getTime() - this.simulationStartDate.getTime()) / 1000;
+        (newDate.getTime() -
+          StateAccessor.getCurrentSimulationState().startDate.getTime()) /
+        1000;
       const currentTimeSeconds = currentTime;
       const timeDifference = targetTimeSeconds - currentTimeSeconds;
 
@@ -158,30 +235,40 @@ export class TimeDisplayManager {
         return;
       }
 
-      // Get optimal step size for the time jump
-      const stepSize = TimeStepCalculator.getOptimalStepSize(
-        Math.abs(timeDifference),
-      );
+      // For large time jumps (>1 hour), calculate positions directly without animation
+      if (Math.abs(timeDifference) > 3600) {
+        console.log(
+          `[TimeDisplayManager] Large time jump detected (${Math.abs(timeDifference)}s), calculating positions directly`,
+        );
 
-      const stepCalculation = TimeStepCalculator.calculateTimeSteps(
-        this.simulationStartDate,
-        currentTimeSeconds,
-        newDate,
-        stepSize,
-      );
+        this.calculatePlanetaryPositionsForDate(newDate);
+        this.config.onDateChange?.(newDate);
+        return;
+      }
 
+      // For large time jumps (>1 hour), calculate positions directly without animation
+      if (Math.abs(timeDifference) > 3600) {
+        console.log(
+          `[TimeDisplayManager] Large time jump detected (${Math.abs(timeDifference)}s), calculating positions directly`,
+        );
+
+        this.calculatePlanetaryPositionsForDate(newDate);
+        this.config.onDateChange?.(newDate);
+        return;
+      }
+
+      // For smaller jumps, use the existing animation system
       console.log(
-        `[TimeDisplayManager] Time step calculation:`,
-        stepCalculation,
+        `[TimeDisplayManager] Small time jump (${Math.abs(timeDifference)}s), using animation`,
       );
 
       // Start the RxJS-based date jump flow
-      this.performDateJump(targetTimeSeconds, timeDifference, stepCalculation)
+      this.performDateJump(newDate, timeDifference)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
             console.log(
-              `[TimeDisplayManager] Date jump completed to: ${newDate.toISOString()}`,
+              `[TimeDisplayManager] ✅ Date jump completed to: ${newDate.toISOString()} (${newDate.toLocaleDateString()} ${newDate.toLocaleTimeString()})`,
             );
             this.config.onDateChange?.(newDate);
           },
@@ -202,11 +289,7 @@ export class TimeDisplayManager {
   /**
    * Performs the date jump using RxJS flow to avoid race conditions
    */
-  private performDateJump(
-    targetTimeSeconds: number,
-    timeDifference: number,
-    stepCalculation: any,
-  ) {
+  private performDateJump(targetDate: Date, timeDifference: number) {
     // Store original simulation state
     const simulationState = StateAccessor.getCurrentSimulationState();
     const originalMode = simulationState.simulationConfig?.mode;
@@ -237,14 +320,20 @@ export class TimeDisplayManager {
           timeDifference >= 0 ? requiredTimeScale : -requiredTimeScale;
 
         console.log(
-          `[TimeDisplayManager] Setting time scale to ${timeScale} for ${stepCalculation.direction} time jump (${Math.abs(timeDifference)}s in ${jumpDurationSeconds}s)`,
+          `[TimeDisplayManager] Setting time scale to ${timeScale} for time jump (${Math.abs(timeDifference)}s in ${jumpDurationSeconds}s)`,
         );
 
         actions.setTimeScale(timeScale);
 
-        // Clear visualizations to prevent showing incorrect paths
+        // Clear visualizations to prevent showing incorrect paths during jump
+        console.log(
+          `[TimeDisplayManager] 🧹 Clearing orbit visualizations for date jump`,
+        );
         document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
         document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
+        document.dispatchEvent(
+          new CustomEvent("teskooano-clear-position-history"),
+        );
       }),
 
       // Step 3: Wait for the jump duration or monitor progress
@@ -259,20 +348,53 @@ export class TimeDisplayManager {
         );
       }),
 
-      // Step 4: Cleanup - reset time scale and restore mode
-      finalize(() => {
+      // Step 4: Update simulation base state with proper timing
+      switchMap(() => {
         console.log(
-          `[TimeDisplayManager] Finalizing date jump - resetting time scale and mode`,
+          `[TimeDisplayManager] Finalizing date jump - updating base state and resetting`,
         );
 
-        actions.setTimeScale(1); // Reset to normal speed
+        // Use the target date directly - no recalculation to avoid drift from animation
+        console.log(
+          `[TimeDisplayManager] Using target date directly: ${targetDate.toISOString()}`,
+        );
+        console.log(
+          `[TimeDisplayManager] Original start date: ${StateAccessor.getCurrentSimulationState().startDate.toISOString()}`,
+        );
 
+        // Use atomic resetToStartDate to eliminate race conditions
+        actions.resetToStartDate(targetDate);
+        console.log(
+          `[TimeDisplayManager] 🔄 Atomic reset to: ${targetDate.toISOString()}`,
+        );
+
+        // Clear all orbital visualizations after state reset for clean new timeline
+        console.log(
+          `[TimeDisplayManager] 🧹 Final cleanup - clearing all orbital visualizations`,
+        );
+        document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
+        document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
+        document.dispatchEvent(
+          new CustomEvent("teskooano-clear-position-history"),
+        );
+
+        // Restore original simulation mode if we switched it
         if (needsModeSwitch && originalMode) {
           console.log(
             `[TimeDisplayManager] Restoring original simulation mode: ${originalMode}`,
           );
           simulationStateService.setSimulationMode(originalMode);
         }
+
+        console.log(`[TimeDisplayManager] ✅ Date jump completed`);
+
+        // Short delay to ensure state propagates before completing
+        return timer(100);
+      }),
+
+      // Final cleanup
+      finalize(() => {
+        console.log(`[TimeDisplayManager] Date jump operation completed`);
       }),
     );
   }
@@ -303,10 +425,16 @@ export class TimeDisplayManager {
     }
 
     if (this.editableDateInput) {
-      // Fix: Calculate current date properly from start date + elapsed time
+      // Calculate current date from state start date + elapsed time
+      const state = StateAccessor.getCurrentSimulationState();
       const currentDate = new Date(
-        this.simulationStartDate.getTime() + timeSeconds * 1000,
+        state.startDate.getTime() + timeSeconds * 1000,
       );
+
+      console.log(
+        `[TimeDisplayManager] 📅 UI updating to display: ${currentDate.toISOString()} (${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}) | Elapsed: ${timeSeconds}s`,
+      );
+
       this.editableDateInput.setDate(currentDate);
     }
   }
@@ -320,7 +448,7 @@ export class TimeDisplayManager {
     this.element.textContent = "";
 
     this.editableDateInput = new EditableDateInput(this.element, {
-      initialDate: this.simulationStartDate,
+      initialDate: StateAccessor.getCurrentSimulationState().startDate,
       onDateChange: this.handleDateChange,
       compact: this.config.compact || false,
     });

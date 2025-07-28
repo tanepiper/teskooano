@@ -149,6 +149,8 @@ export interface SimulationState {
   time: number;
   /** The scaling factor for simulation time (e.g., 2 means simulation runs twice as fast as real-time). */
   timeScale: number;
+  /** The start date for the simulation (base date + time = current simulation date). */
+  startDate: Date;
   /** Indicates whether the simulation is currently paused. */
   paused: boolean;
   /** The ID of the currently selected celestial object, or null if none selected. */
