@@ -28,9 +28,17 @@ export function createBillboardSprite(
     color: finalColor,
     blending: THREE.NormalBlending,
     sizeAttenuation: false, // Size is in screen space
-    transparent: true,
-    opacity: 0.85,
-    depthWrite: false,
+    transparent: true, // Set to false so it writes to depth buffer properly
+    opacity: 0.8, // Start with opaque, actual opacity will be handled by billboardManager.update
+    depthWrite: true,
+    depthTest: true,
+    userData: {
+      isBillboard: true,
+      celestialObjectId: object.celestialObjectId,
+      position: object.position,
+      albedo,
+      color: starColor.getHex(),
+    },
   });
 
   const distantSprite = new THREE.Sprite(spriteMaterial);

@@ -16,7 +16,6 @@ uniform float uFbmScale;
 uniform float uFineFbmScale;
 uniform float uFineFbmMix;
 uniform float uAmbientStrength;
-uniform float uDynamicAmbientIntensity;
 uniform float uMetallicFactor; // Controls metallicness/shininess
 uniform float uRoughness; // Controls blurriness of specular highlight
 uniform vec3 uSpecularColor; // Color of the specular highlight
@@ -73,12 +72,16 @@ void main() {
     baseColor = mix(baseColor, baseColor * 0.8, fineNoise * uFineFbmMix);
 
     // --- Lighting Calculation ---
-    vec3 totalLighting = vec3(uAmbientStrength + uDynamicAmbientIntensity); // Start with minimal ambient light
+    vec3 totalLighting = vec3(uAmbientStrength); // Start with minimal ambient light
 
     for (int i = 0; i < uNumLights; i++) {
         vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
         float diffuse = max(dot(vNormal, lightDirection), 0.0);
-        totalLighting += uLights[i].color * diffuse * uLights[i].intensity;
+
+        // Apply a power to the diffuse term to increase falloff and create a sharper terminator
+        float diffuseFalloff = pow(diffuse, 1.5);
+
+        totalLighting += uLights[i].color * diffuseFalloff * uLights[i].intensity;
 
         // View-independent shininess: More like a 'sheen' or brighter diffuse
         // Higher metallicFactor increases shininess, lower roughness makes it sharper
@@ -88,5 +91,10 @@ void main() {
         totalLighting += metallicEffect;
     }
 
-    gl_FragColor = vec4(baseColor * totalLighting, 1.0);
+    vec3 finalColor = baseColor * totalLighting;
+
+    // Apply gamma correction for proper brightness
+    finalColor = pow(finalColor, vec3(1.0 / 2.2));
+
+    gl_FragColor = vec4(finalColor, 1.0);
 } 

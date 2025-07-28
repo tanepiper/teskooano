@@ -16,7 +16,6 @@ uniform float uFbmScale;
 uniform float uFineFbmScale;
 uniform float uFineFbmMix;
 uniform float uAmbientStrength;
-uniform float uDynamicAmbientIntensity;
 
 // Simplex noise function (as it was)
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -75,8 +74,15 @@ void main() {
     for (int i = 0; i < uNumLights; i++) {
         vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
         float diffuse = max(dot(vNormal, lightDirection), 0.0);
-        totalLighting += uLights[i].color * diffuse * uLights[i].intensity;
+
+        // Apply a power to the diffuse term to increase falloff and create a sharper terminator
+        float diffuseFalloff = pow(diffuse, 1.5);
+        
+        totalLighting += uLights[i].color * diffuseFalloff * uLights[i].intensity;
     }
 
-    gl_FragColor = vec4(finalColor * totalLighting, 1.0);
+    // Apply gamma correction for proper brightness
+    finalColor = pow(finalColor * totalLighting, vec3(1.0 / 2.2));
+
+    gl_FragColor = vec4(finalColor, 1.0);
 } 

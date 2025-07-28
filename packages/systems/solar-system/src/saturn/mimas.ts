@@ -32,7 +32,7 @@ export const mimas: CelestialObject<PlanetProperties> = {
   temperature: 63,
   albedo: MIMAS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.000151388,
+    semiMajorAxisAU: 0.00124, // Approximately 185,500 km
     eccentricity: MIMAS_ECC,
     inclinationDeg: MIMAS_INC_DEG,
     longitudeOfAscendingNodeDeg: MIMAS_LAN_DEG,

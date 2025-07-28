@@ -196,5 +196,8 @@ void main() {
     vec3 finalColor = uIsAccretionDisk ? diskColor : color;
     finalColor *= (totalLight + ambientIntensity) * diskVariation;
 
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0/2.2));
+
     gl_FragColor = vec4(finalColor, opacity);
 } 

@@ -23,7 +23,7 @@ export const hyperion: CelestialObject<PlanetProperties> = {
   temperature: 94,
   albedo: 0.3,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00237492,
+    semiMajorAxisAU: 0.0099, // Approximately 1,481,000 km (real value)
     eccentricity: 0.123,
     inclinationDeg: 0.648,
     longitudeOfAscendingNodeDeg: 161.4,

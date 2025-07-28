@@ -21,6 +21,14 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
   protected currentNumLights: number = 0;
   protected currentNumShadowCasters: number = 0;
 
+  constructor(parameters?: THREE.ShaderMaterialParameters) {
+    super({
+      ...parameters,
+      depthTest: true,
+      depthWrite: true, // Ensure gas giants write to the depth buffer for occlusion culling
+    });
+  }
+
   updateLOD(lodLevel: number): void {}
 
   /**

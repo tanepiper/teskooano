@@ -24,6 +24,10 @@ export class RingMaterial extends ShaderMaterial {
       axialInclination?: number;
       ringTilt?: number;
       inheritParentTilt?: boolean;
+      segmentDensity?: number;
+      segmentWidth?: number;
+      particleDetail?: number;
+      densityVariation?: number;
     } = {},
   ) {
     const detailLevel = options.detailLevel || "high";
@@ -52,7 +56,7 @@ export class RingMaterial extends ShaderMaterial {
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
+        uDynamicAmbientIntensity: { value: 0.01 }, // System-wide minimum ambient for "just enough glow"
 
         // Enhanced Axial Inclination Controls
         uAxialInclination: { value: options.axialInclination ?? 0.0 },
@@ -61,6 +65,12 @@ export class RingMaterial extends ShaderMaterial {
         uParentAxialTilt: { value: new Vector3(0, 1, 0) }, // Default Y-axis
         uPrecessionAngle: { value: 0.0 },
         uPrecessionRate: { value: 0.0 },
+
+        // Ring Segmentation Controls
+        uSegmentDensity: { value: options.segmentDensity ?? 50.0 }, // Number of segments per ring
+        uSegmentWidth: { value: options.segmentWidth ?? 0.8 }, // Width of each segment (0.0-1.0)
+        uParticleDetail: { value: options.particleDetail ?? 0.3 }, // Intensity of particle detail
+        uDensityVariation: { value: options.densityVariation ?? 0.4 }, // Intensity of density variations
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,
@@ -209,7 +219,7 @@ export class AccretionDiskMaterial extends ShaderMaterial {
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
+        uDynamicAmbientIntensity: { value: 0.01 }, // System-wide minimum ambient for "just enough glow"
 
         // Accretion Disk Specific Uniforms
         uIsAccretionDisk: { value: true },

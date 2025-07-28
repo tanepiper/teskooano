@@ -3,7 +3,7 @@ import { OSVector3 } from "@teskooano/core-math";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AuMarkerLabelComponent } from "../components/au-marker-label/AuMarkerLabelComponent";
-import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 /**
  * Manages labels specifically for AU distance markers.
@@ -75,7 +75,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
   public override update(
     camera: THREE.PerspectiveCamera,
     centralBody: OSVector3, // This is actually the origin point (0,0,0) for AU markers
-    objectManager: ObjectManager,
+    objectManager: ObjectManager, // Pass ObjectManager for raycasting
   ): void {
     if (!this.isVisible) {
       // If the layer is globally hidden, ensure all groups are hidden.
@@ -87,34 +87,49 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
       return;
     }
 
+    const raycaster = new THREE.Raycaster();
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
-    // AU markers are centered at the origin (0,0,0), so we measure from there directly
-    // instead of relying on the passed centralBody parameter.
-    const cameraDistance = cameraPosition.distanceTo(
-      new THREE.Vector3(0, 0, 0),
-    );
+
+    // Set the camera for the raycaster
+    raycaster.camera = camera;
 
     this.managedGroups.forEach((group, au) => {
-      // Retrieve the scene distance from the group's userData
       const markerAuValueScene = group.userData.sceneDistance || 0;
       if (markerAuValueScene === 0) {
-        // Hide the group if the distance is not set
         group.visible = false;
         return;
       }
 
-      // Hide the label group if the camera is 110% past the marker's distance
-      let visible = cameraDistance < markerAuValueScene * 5;
+      // Basic visibility based on camera distance (e.g., markers too far disappear)
+      let visible = cameraPosition.distanceTo(group.position) < markerAuValueScene * 5;
 
-      // The previous occlusion check was flawed as it used the group's origin (0,0,0)
-      // for the check, causing all groups to be incorrectly hidden.
-      // It has been removed to restore visibility. A new group-based occlusion
-      // strategy would require a more complex implementation.
+      if (visible) {
+        // Perform raycast from camera to marker's position
+        const markerPosition = group.position.clone();
+        raycaster.set(cameraPosition, markerPosition.sub(cameraPosition).normalize());
+
+        // Get all rendered meshes from the ObjectManager
+        const allRenderedMeshes = objectManager.getAllRenderedMeshes();
+
+        // Filter out the AU marker meshes themselves and ensure only valid, visible Meshes are occluders
+        const occluders = allRenderedMeshes.filter(mesh => 
+          mesh instanceof THREE.Mesh && 
+          mesh.visible && 
+          mesh.matrixWorld !== null && // Crucial: ensure matrixWorld is not null
+          !mesh.name.startsWith("au-marker-label")
+        );
+
+        const intersects = raycaster.intersectObjects(occluders, true);
+
+        // If there's an intersection, and the intersection point is closer than the marker,
+        // then the marker is occluded.
+        if (intersects.length > 0 && intersects[0].distance < cameraPosition.distanceTo(group.position)) {
+          visible = false;
+        }
+      }
 
       group.visible = visible;
-      // Propagate the visibility state to the child labels every frame
-      // to ensure their initial state is set correctly.
       group.children.forEach((child) => {
         if (child instanceof CSS2DObject) {
           child.element.toggleAttribute("visible", visible);

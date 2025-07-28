@@ -38,7 +38,6 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
         uFineFbmScale: { value: options.fineFbmScale ?? 8.0 },
         uFineFbmMix: { value: options.fineFbmMix ?? 0.2 },
         uAmbientStrength: { value: options.ambientStrength ?? 0.01 }, // Minimal ambient light
-        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
         uMetallicFactor: { value: options.metallicFactor ?? 0.0 }, // Default to non-metallic
         uRoughness: { value: options.roughness ?? 0.5 }, // Default roughness
         uSpecularColor: {

@@ -129,6 +129,16 @@ export interface RingProperties {
   isRelativistic?: boolean;
   /** Inner edge of the accretion disk (in gravitational radii for black holes). */
   innerEdgeRadius?: number;
+
+  // Ring Segmentation Controls
+  /** Number of segments per ring for enhanced visual detail (default: 50.0). */
+  segmentDensity?: number;
+  /** Width of each segment (0.0-1.0, default: 0.8). */
+  segmentWidth?: number;
+  /** Intensity of particle detail within segments (0.0-1.0, default: 0.3). */
+  particleDetail?: number;
+  /** Intensity of density variations within segments (0.0-1.0, default: 0.4). */
+  densityVariation?: number;
 }
 
 /**

@@ -1,6 +1,6 @@
 uniform vec3 uColor;
 uniform float uLightIntensity;
-uniform float uDynamicAmbientIntensity;
+uniform float uAmbientStrength;
 
 varying float vAlpha;
 varying float vDepth;
@@ -15,8 +15,10 @@ void main() {
 
     // The tail is emissive, its brightness depends on its own properties and general
     // light intensity, not direction. Minimal ambient term to prevent pure black.
-    float ambientStrength = uDynamicAmbientIntensity; // Use dynamic ambient for realistic star-based lighting
-    vec3 finalColor = uColor * (ambientStrength + uLightIntensity);
+    vec3 finalColor = uColor * (uAmbientStrength + uLightIntensity);
+
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0/2.2));
 
     gl_FragColor = vec4(finalColor, finalAlpha);
 } 

@@ -325,7 +325,9 @@ const findBodiesInRange = (
 export class Octree {
   private root: OctreeNode;
   private maxDepth: number;
-  private softeningFactorSquared: number = 0.1 * 0.1;
+  // Softening parameter for gravitational force calculations (in meters squared).
+  // This prevents singularities when bodies get very close. Set to 10,000 km^2.
+  private softeningFactorSquared: number = 1e10; // (100,000m)^2 = 10,000,000,000 m^2
   // Pre-allocate OSVector3 instances for performance
   private _tempForce: OSVector3 = new OSVector3();
   private _tempNodePointMass: PhysicsStateReal = {

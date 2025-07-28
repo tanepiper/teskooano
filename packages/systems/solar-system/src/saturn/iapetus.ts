@@ -32,7 +32,7 @@ export const iapetus: CelestialObject<PlanetProperties> = {
   temperature: 110,
   albedo: IAPETUS_ALBEDO,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00237492,
+    semiMajorAxisAU: 0.0238, // Approximately 3,561,000 km (real value)
     eccentricity: IAPETUS_ECC,
     inclinationDeg: IAPETUS_INC_DEG,
     longitudeOfAscendingNodeDeg: IAPETUS_LAN_DEG,

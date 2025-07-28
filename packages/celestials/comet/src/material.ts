@@ -43,7 +43,6 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
         uFineFbmScale: { value: options.fineFbmScale ?? 8.0 },
         uFineFbmMix: { value: options.fineFbmMix ?? 0.2 },
         uAmbientStrength: { value: options.ambientStrength ?? 0.01 }, // Minimal ambient light
-        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: nucleusVertexShader,
       fragmentShader: nucleusFragmentShader,
@@ -81,7 +80,7 @@ export class CometParticleMaterial extends THREE.ShaderMaterial {
       uniforms: {
         uColor: { value: options.color },
         uLightIntensity: { value: 1.0 },
-        uDynamicAmbientIntensity: { value: 0.25 },
+        uAmbientStrength: { value: 0.01 },
       },
       vertexShader: particleVertexShader,
       fragmentShader: particleFragmentShader,
@@ -100,7 +99,7 @@ export class CometJetMaterial extends THREE.ShaderMaterial {
         uLightPosition: { value: new THREE.Vector3() },
         uLightColor: { value: new THREE.Color(0xffffff) },
         uLightIntensity: { value: 1.0 },
-        uDynamicAmbientIntensity: { value: 0.25 },
+        uAmbientStrength: { value: 0.01 },
       },
       vertexShader: jetVertexShader,
       fragmentShader: jetFragmentShader,

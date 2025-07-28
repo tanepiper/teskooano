@@ -565,4 +565,13 @@ export class ObjectManager extends StateSubscriptionMixin {
   public toggleDebrisEffects(): boolean {
     return this.debrisEffectManager.toggleDebrisEffects();
   }
+
+  /**
+   * Returns an array of all currently rendered Three.js Object3D instances.
+   * This is primarily used for raycasting and occlusion tests by other systems (e.g., UI labels).
+   * @returns An array of THREE.Object3D instances.
+   */
+  public getAllRenderedMeshes(): THREE.Object3D[] {
+    return Array.from(this.objects.values());
+  }
 }

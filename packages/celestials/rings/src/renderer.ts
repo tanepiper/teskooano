@@ -354,7 +354,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
           );
         }
       } else {
-        // Create normal ring material with enhanced axial inclination controls
+        // Create normal ring material with enhanced axial inclination controls and segmentation
         ringMaterial = new RingMaterial(ringColor, {
           opacity: ringOpacity,
           rotationRate: rotationRate,
@@ -365,6 +365,11 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
           ringTilt: ringProps.ringTilt ?? 0.0,
           inheritParentTilt:
             ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
+          // Enhanced segmentation parameters
+          segmentDensity: ringProps.segmentDensity ?? 50.0,
+          segmentWidth: ringProps.segmentWidth ?? 0.8,
+          particleDetail: ringProps.particleDetail ?? 0.3,
+          densityVariation: ringProps.densityVariation ?? 0.4,
         });
       }
 

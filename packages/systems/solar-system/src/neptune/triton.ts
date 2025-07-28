@@ -19,7 +19,7 @@ export const triton: CelestialObject<PlanetProperties> = {
   temperature: 38,
   albedo: 0.76,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00002,
+    semiMajorAxisAU: 0.002371, // Approximately 354,800 km (real value)
     eccentricity: 0.000016,
     inclinationDeg: 156.885,
     longitudeOfAscendingNodeDeg: 249.7,

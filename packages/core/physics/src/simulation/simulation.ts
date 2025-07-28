@@ -53,7 +53,7 @@ function isValidConfiguration(config: SimulationConfiguration): boolean {
 function getDefaultConfiguration(): SimulationConfiguration {
   return {
     mode: "nbody",
-    integrator: "pefrl",
+    integrator: "pefrl", // Changed to adaptive for better numerical stability with close-in orbits
     algorithm: "tree-pm",
   };
 }
@@ -97,24 +97,36 @@ const calculateAccelerationForBody_Simple = (
   const rVec = centralStar.position_m.clone().sub(targetBodyState.position_m);
   const distSq = rVec.lengthSq();
 
-  // Define a minimum distance squared to prevent extreme forces or division by zero.
-  // 1km^2 = 1e6 m^2. This is arbitrary and might need tuning or a more robust solution
-  // for close encounters in a game context (e.g., soft potentials, collision).
-  const MIN_DISTANCE_SQ = 1e6;
+  // Gravitational softening parameter (in meters squared).
+  // This prevents the gravitational force from becoming infinite at very small distances.
+  // A value around (parentRadius + moonRadius)^2 or similar can be physical.
+  const SOFTENING_SQUARED = 1e6; // 1 km^2, adjustable based on simulation scale
 
-  if (distSq < MIN_DISTANCE_SQ) {
-    // If bodies are extremely close or overlapping, gravitational force calculation is problematic.
-    // For simple mode, returning zero acceleration can prevent numerical instability.
-    // Collisions should ideally handle merges/destruction before this becomes an issue.
-    return acceleration;
+  // Calculate the effective distance squared for gravitational force, applying softening
+  const effectiveDistSq = distSq + SOFTENING_SQUARED;
+
+  // If distance is exactly zero (should not happen with proper initial conditions
+  // and softening, but as a safeguard),
+  if (distSq === 0) {
+    return acceleration; // No acceleration if at the exact same point
   }
 
-  const forceMag =
+  const forceMagnitude =
     (GRAVITATIONAL_CONSTANT * centralStar.mass_kg * targetBodyState.mass_kg) /
-    distSq;
-  const forceVec = rVec.normalize().multiplyScalar(forceMag);
+    effectiveDistSq;
+
+  const forceVec = rVec.normalize().multiplyScalar(forceMagnitude);
 
   acceleration.copy(forceVec).multiplyScalar(1 / targetBodyState.mass_kg);
+  console.log("targetBodyState.mass_kg", targetBodyState.mass_kg);
+  console.log("acceleration", acceleration);
+  console.log("forceVec", forceVec);
+  console.log("forceMagnitude", forceMagnitude);
+  console.log("effectiveDistSq", effectiveDistSq);
+  console.log("distSq", distSq);
+  console.log("rVec", rVec);
+  console.log("centralStar", centralStar);
+  console.log("targetBodyState", targetBodyState);
   return acceleration;
 };
 

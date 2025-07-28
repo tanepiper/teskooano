@@ -1,6 +1,6 @@
 uniform vec3 uColor;
 uniform float uLightIntensity;
-uniform float uDynamicAmbientIntensity;
+uniform float uAmbientStrength;
 
 varying float vAlpha;
 varying float vDepth;
@@ -52,10 +52,12 @@ void main() {
     if (strength < 0.01) discard;
 
     // Simplified, non-directional lighting for glowing gas. Minimal ambient.
-    float ambientStrength = uDynamicAmbientIntensity; // Use dynamic ambient for realistic star-based lighting
-    vec3 finalColor = uColor * (ambientStrength + uLightIntensity * 0.5);
+    vec3 finalColor = uColor * (uAmbientStrength + uLightIntensity * 0.5);
 
     float finalAlpha = vAlpha * strength;
+
+    // Apply gamma correction
+    finalColor = pow(finalColor, vec3(1.0/2.2));
 
     gl_FragColor = vec4(finalColor, finalAlpha);
 } 

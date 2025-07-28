@@ -22,7 +22,7 @@ export const nereid: CelestialObject<PlanetProperties> = {
   temperature: 50,
   albedo: 0.14,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 0.00048,
+    semiMajorAxisAU: 0.03685, // Approximately 5,513,400 km (real value)
     eccentricity: 0.7507,
     inclinationDeg: 7.232,
     longitudeOfAscendingNodeDeg: 329.9,
