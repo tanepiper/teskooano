@@ -252,19 +252,6 @@ export class CameraTransitionManager {
     });
     this.activeTransitionNotificationId = notification.id;
 
-    const cameraForward = this.camera
-      .getWorldDirection(this.tempVector.clone())
-      .negate();
-    const targetDirection = endTarget.clone().sub(startPos).normalize();
-    const angle =
-      targetDirection.lengthSq() > 0.0001
-        ? cameraForward.angleTo(targetDirection.toThreeJS())
-        : 0;
-    const rotationPercent = 0.2;
-
-    const rotationDuration = totalDuration * rotationPercent;
-    const positionDuration = totalDuration * (1.0 - rotationPercent);
-
     const onTimelineComplete = () => {
       this.endTransition(
         endPos,
@@ -389,8 +376,8 @@ export class CameraTransitionManager {
     };
 
     // Stage 1: Turn to face the target (0.3 of total duration)
-    const turnDuration = totalDuration * 0.3;
-    const moveDuration = totalDuration * 0.7;
+    const turnDuration = totalDuration * 0.1;
+    const moveDuration = totalDuration * 0.9;
 
     // First, turn the camera to face the target
     this.activeAnimation = AnimationHelper.animateCamera(
@@ -453,12 +440,12 @@ export class CameraTransitionManager {
     // The base duration for a 1 AU trip.
     const BASE_DURATION_FACTOR = 3.0;
     // The exponent controls the curve's shape. < 1 means diminishing returns.
-    // 0.5 is a square root curve. 0.4 is a bit steeper.
-    const DISTANCE_EXPONENT = 0.4;
+    // 0.5 is a square root curve. 0.3 is even more aggressive for long distances.
+    const DISTANCE_EXPONENT = 0.3;
     // The absolute minimum duration for any transition, in seconds.
-    const MIN_DURATION_S = 1.5;
+    const MIN_DURATION_S = 1.0;
     // The absolute maximum duration for any transition, in seconds.
-    const MAX_DURATION_S = 30.0;
+    const MAX_DURATION_S = 10.0;
 
     const distance = startPos.distanceTo(endPos);
 
