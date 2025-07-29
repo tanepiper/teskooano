@@ -100,6 +100,54 @@ export abstract class BaseUniformsRenderer {
       );
       initialValueForInput = 0;
     }
+
+    // If we're trying to access materialParams and it doesn't exist or is undefined, initialize it
+    if (
+      propertyPathToUniform[0] === "materialParams" &&
+      currentCelestialObject.properties
+    ) {
+      const starProps = currentCelestialObject.properties as any;
+      const materialParams = starProps.materialParams;
+
+      // Check if materialParams is missing, undefined, or null
+      if (!materialParams || typeof materialParams !== "object") {
+        console.log(
+          `[Uniforms] Initializing missing materialParams for ${currentCelestialObject.id}`,
+        );
+        starProps.materialParams = {
+          noiseScale: 0.5,
+          noiseIntensity: 0.2,
+          plasmaTurbulence: 0.1,
+          lightingIntensity: 1.0,
+        };
+        // Update the object with the initialized materialParams
+        actions.updateCelestialObject(currentCelestialObject.id, {
+          properties: starProps,
+        });
+        // Re-read the value from the updated properties
+        initialValueForInput =
+          starProps.materialParams[propertyPathToUniform[1]];
+      } else if (materialParams[propertyPathToUniform[1]] === undefined) {
+        // If the specific material param is missing, initialize it with a default
+        const defaultValues = {
+          noiseScale: 0.5,
+          noiseIntensity: 0.2,
+          plasmaTurbulence: 0.1,
+          lightingIntensity: 1.0,
+        };
+        materialParams[propertyPathToUniform[1]] =
+          defaultValues[
+            propertyPathToUniform[1] as keyof typeof defaultValues
+          ] ?? 0;
+        // Update the object with the initialized materialParams
+        actions.updateCelestialObject(currentCelestialObject.id, {
+          properties: starProps,
+        });
+        // Re-read the value from the updated properties
+        initialValueForInput = materialParams[propertyPathToUniform[1]];
+      }
+    }
+
     const numericInitialValue = Number(initialValueForInput ?? 0);
     slider.setAttribute("value", String(numericInitialValue));
 
@@ -170,6 +218,48 @@ export abstract class BaseUniformsRenderer {
       );
       initialValueForInput = "#000000";
     }
+
+    // If we're trying to access color properties and they don't exist, initialize them with sensible defaults
+    if (
+      propertyPathToUniform.length === 1 &&
+      currentCelestialObject.properties
+    ) {
+      const starProps = currentCelestialObject.properties as any;
+      const colorProperty = propertyPathToUniform[0];
+
+      // Check if the color property is missing or undefined
+      if (
+        starProps[colorProperty] === undefined ||
+        starProps[colorProperty] === null
+      ) {
+        console.log(
+          `[Uniforms] Initializing missing color property ${colorProperty} for ${currentCelestialObject.id}`,
+        );
+
+        // Set sensible defaults based on the color property
+        if (colorProperty === "color") {
+          // Main star color - use a warm yellow-white
+          starProps[colorProperty] = "#FFF5E1";
+        } else if (colorProperty === "hotColor") {
+          // Hot color for plasma - use bright yellow-white
+          starProps[colorProperty] = "#FFFF99";
+        } else if (colorProperty === "surfaceColor") {
+          // Surface color - use main color or warm white
+          starProps[colorProperty] = starProps.color || "#FFF5E1";
+        } else if (colorProperty === "coolColor") {
+          // Cool color for sunspots - use darker orange-brown
+          starProps[colorProperty] = "#CC7700";
+        }
+
+        // Update the object with the initialized color
+        actions.updateCelestialObject(currentCelestialObject.id, {
+          properties: starProps,
+        });
+        // Re-read the value from the updated properties
+        initialValueForInput = starProps[colorProperty];
+      }
+    }
+
     input.value = String(initialValueForInput ?? "#000000");
 
     const subscription = fromEvent(input, "change")

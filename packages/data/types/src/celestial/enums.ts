@@ -165,6 +165,7 @@ export enum RockyType {
 /**
  * Classification of stars based on their spectral characteristics and evolutionary stage.
  * This represents the actual astrophysical type, not the renderer type.
+ * Based on stellar evolution theory from https://en.wikipedia.org/wiki/Stellar_evolution
  */
 export enum StellarType {
   /** Stars fusing hydrogen in their core, like the Sun. */
@@ -173,10 +174,28 @@ export enum StellarType {
   PROTOSTAR = "PROTOSTAR",
   /** Pre-main sequence stars that have become optically visible but haven't started hydrogen fusion. */
   PRE_MAIN_SEQUENCE = "PRE_MAIN_SEQUENCE",
+
+  // Mature Stars - Post-Main Sequence Evolution
+  /** Stars that have exhausted hydrogen in their core and are fusing hydrogen in a shell. */
+  SUBGIANT = "SUBGIANT",
+  /** Large, cool stars with hydrogen shell burning and convective envelopes. */
+  RED_GIANT = "RED_GIANT",
+  /** Stars with helium core burning, contracted from red giant phase. */
+  HORIZONTAL_BRANCH = "HORIZONTAL_BRANCH",
+  /** Stars with carbon/oxygen core and helium/hydrogen shell burning. */
+  ASYMPTOTIC_GIANT_BRANCH = "ASYMPTOTIC_GIANT_BRANCH",
+  /** Hot central stars of planetary nebulae, contracted from AGB phase. */
+  POST_AGB = "POST_AGB",
+  /** Massive, luminous stars in advanced fusion stages with strong stellar winds. */
+  SUPERGIANT = "SUPERGIANT",
+
+  // Special Types
   /** Massive, hot star losing mass via strong stellar winds. */
   WOLF_RAYET = "WOLF_RAYET",
   /** Very large, luminous evolved stars. */
   HYPERGIANT = "HYPERGIANT",
+
+  // Stellar Remnants
   /** Dense remnant of a low-to-medium mass star. */
   WHITE_DWARF = "WHITE_DWARF",
   /** Extremely dense remnant of a massive star's supernova. */

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseStarRenderer } from "../base/base-star";
-import { EnhancedStarMaterial } from "../materials/enhanced-star.material";
+import { BaseStarRenderer } from "../../base/base-star";
+import { EnhancedStarMaterial } from "../../materials/enhanced-star.material";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   BaseCelestialRendererOptions,
@@ -66,11 +66,7 @@ export class HypergiantMaterial extends EnhancedStarMaterial {
       enableSolarFlares: true,
     };
 
-    super(
-      object,
-      object.color ? new THREE.Color(object.color) : new THREE.Color(0x4488ff),
-      hypergiantDefaults,
-    );
+    super(object, new THREE.Color(0x4488ff), hypergiantDefaults);
   }
 
   /**

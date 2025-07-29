@@ -26,6 +26,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
 
   private _handleRendererFocusChange: (event: Event) => void;
   private _handleFocusRequestInitiated: (event: Event) => void;
+  private _handleFollowRequest: (event: Event) => void;
 
   /**
    * Creates an instance of CelestialUniformsController.
@@ -69,6 +70,19 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
         );
       }
     };
+
+    this._handleFollowRequest = (event: Event): void => {
+      const customEvent = event as CustomEvent<{ objectId: string }>;
+      if (customEvent.detail && customEvent.detail.objectId) {
+        if (this.currentSelectedId !== customEvent.detail.objectId) {
+          this.handleSelectionChange(customEvent.detail.objectId);
+        }
+      } else {
+        console.warn(
+          "[CelestialUniformsController] Received follow request with no objectId.",
+        );
+      }
+    };
   }
 
   /**
@@ -86,6 +100,8 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
       "focus-request-initiated",
       this._handleFocusRequestInitiated,
     );
+
+    document.addEventListener("follow-request", this._handleFollowRequest);
   }
 
   /**
@@ -105,6 +121,8 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
       "focus-request-initiated",
       this._handleFocusRequestInitiated,
     );
+
+    document.removeEventListener("follow-request", this._handleFollowRequest);
   }
 
   /**
@@ -112,7 +130,67 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
    * @param selectedId The ID of the initially focused object, if any.
    */
   public handleInitialSelection(selectedId: string | null): void {
+    // If no specific object is provided, check if there's a currently followed object
+    if (!selectedId) {
+      // Try to get the currently focused object from the camera manager
+      // This will work for both focused and followed objects since they both set focusedObjectId
+      const currentFocusedId = this._getCurrentFocusedObjectId();
+      if (currentFocusedId) {
+        selectedId = currentFocusedId;
+      }
+    }
+
     this.handleSelectionChange(selectedId);
+  }
+
+  /**
+   * Gets the currently focused object ID from the camera manager state.
+   * @returns The ID of the currently focused/followed object, or null if none.
+   */
+  private _getCurrentFocusedObjectId(): string | null {
+    // Try to get the focused object from the camera manager state
+    // We need to find the camera manager through the panel system
+    const panels = document.querySelectorAll("[data-panel-api-id]");
+    for (const panel of Array.from(panels)) {
+      const panelApiId = panel.getAttribute("data-panel-api-id");
+      if (panelApiId) {
+        // Try to access the camera manager through the panel
+        const panelElement = panel as any;
+        if (panelElement._cameraManager) {
+          const cameraState = panelElement._cameraManager
+            .getCameraState$?.()
+            ?.getValue?.();
+          if (cameraState?.focusedObjectId) {
+            return cameraState.focusedObjectId;
+          }
+        }
+      }
+    }
+
+    // Fallback: try to get from the global state
+    try {
+      const allCelestials = StateAccessor.getCurrentCelestialObjects();
+      // Look for any object that might be currently focused
+      // This is a heuristic - we'll check if there's only one object or if there's a clear "main" object
+      const celestialIds = Object.keys(allCelestials);
+      if (celestialIds.length === 1) {
+        return celestialIds[0];
+      }
+      // If there are multiple objects, look for the main star (usually the first one)
+      const mainStar = Object.values(allCelestials).find(
+        (obj) => obj.type === "STAR" && (obj.properties as any)?.isMainStar,
+      );
+      if (mainStar) {
+        return mainStar.id;
+      }
+    } catch (error) {
+      console.warn(
+        "[CelestialUniformsController] Could not determine current focused object:",
+        error,
+      );
+    }
+
+    return null;
   }
 
   private _cleanupSubscriptions(): void {

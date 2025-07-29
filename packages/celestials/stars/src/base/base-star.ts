@@ -315,9 +315,7 @@ export abstract class BaseStarRenderer<
         );
       }
 
-      console.log(material.uniforms.uTime.value);
-
-      // Update star colors from top-level properties
+      // Update star colors from top-level properties (only if uniforms exist)
       const starProps = object.properties as StarProperties;
       if (starProps?.color && material.uniforms.uStarColor) {
         if (typeof starProps.color === "string") {
@@ -348,7 +346,12 @@ export abstract class BaseStarRenderer<
         this._updateStarMaterialUniforms(material, starProps.materialParams);
       }
 
-      material.uniforms.uTime.value = (time * timeScale) / 100000000000;
+      // Update time uniform if it exists (different materials may have different time uniform names)
+      if (material.uniforms.uTime) {
+        material.uniforms.uTime.value = (time * timeScale) / 100000000000;
+      } else if (material.uniforms.time) {
+        material.uniforms.time.value = (time * timeScale) / 100000000000;
+      }
     }
   }
 

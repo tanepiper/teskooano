@@ -46,11 +46,10 @@ class NeutronStarMaterial extends BaseStarMaterial {
     }
 
     super(baseColor, {
-      coronaIntensity: 0.0,
-      pulseSpeed,
-      glowIntensity,
-      temperatureVariation: 0.0,
-      metallicEffect,
+      noiseScale: 0.5,
+      noiseIntensity: glowIntensity,
+      plasmaTurbulence: metallicEffect,
+      lightingIntensity: 1.0,
     });
 
     this.subtype = subtype;

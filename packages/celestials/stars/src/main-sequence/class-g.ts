@@ -181,10 +181,10 @@ export class ClassGStarMaterial extends EnhancedStarMaterial {
     // Create material with calculated colors
     super(object, surfaceColor, {
       // Adjust noise parameters based on stellar properties
-      noiseScale: 1.0 + (spectralData.luminosity - 1.0) * 0.3, // More active stars have more complex patterns
-      noiseIntensity: 0.15 + (spectralData.temperature - 5400) / 5000, // Hotter stars more active
-      plasmaTurbulence: 0.08 + (spectralData.mass - 0.9) * 0.2, // More massive stars more turbulent
-      lightingIntensity: 0.8 + spectralData.luminosity * 0.4, // Brighter stars emit more light
+      noiseScale: 0.03 + (spectralData.luminosity - 1.0) * 0.02, // More active stars have more complex patterns
+      noiseIntensity: 0.12 + (spectralData.temperature - 5400) / 8000, // Hotter stars more active
+      plasmaTurbulence: 0.6 + (spectralData.mass - 0.9) * 0.3, // More massive stars more turbulent
+      lightingIntensity: 1.0 + spectralData.luminosity * 0.2, // Brighter stars emit more light
     });
 
     // Override colors with our calculated values
@@ -267,19 +267,19 @@ export class ClassGStarRenderer extends MainSequenceStarRenderer<ClassGStarMater
     this.setMaterialUniforms(
       "noiseScale",
       new THREE.Uniform(
-        utils.lerp(1.0, 1.0 + (spectralData.luminosity - 1.0) * 0.3, 0.5),
+        utils.lerp(0.03, 0.03 + (spectralData.luminosity - 1.0) * 0.02, 0.5),
       ),
     );
     this.setMaterialUniforms(
       "noiseIntensity",
       new THREE.Uniform(
-        utils.lerp(0.15, 0.15 + (spectralData.temperature - 5400) / 5000, 0.5),
+        utils.lerp(0.12, 0.12 + (spectralData.temperature - 5400) / 8000, 0.5),
       ),
     );
     this.setMaterialUniforms(
       "plasmaTurbulence",
       new THREE.Uniform(
-        utils.lerp(0.08, 0.08 + (spectralData.mass - 0.9) * 0.2, 0.5),
+        utils.lerp(0.6, 0.6 + (spectralData.mass - 0.9) * 0.3, 0.5),
       ),
     );
   }

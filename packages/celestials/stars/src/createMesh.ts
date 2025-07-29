@@ -19,7 +19,17 @@ import { ClassKStarRenderer } from "./main-sequence/class-k";
 import { ClassMStarRenderer } from "./main-sequence/class-m";
 import { NeutronStarRenderer } from "./remnants/neutron-star";
 import { WhiteDwarfRenderer } from "./remnants/white-dwarf";
-import { WolfRayetRenderer } from "./post-main-sequence/wolf-rayet";
+
+// Mature Stars - Post-Main Sequence Evolution
+import { SubgiantRenderer } from "./mature-stars/subgiant/subgiant";
+import { RedGiantRenderer } from "./mature-stars/red-giant/red-giant";
+import { HorizontalBranchRenderer } from "./mature-stars/horizontal-branch/horizontal-branch";
+import { AGBRenderer } from "./mature-stars/asymptotic-giant-branch/agb";
+import { PostAGBRenderer } from "./mature-stars/post-agb/post-agb";
+import { SupergiantRenderer } from "./mature-stars/supergiant/supergiant";
+import { HypergiantRenderer } from "./mature-stars/supergiant/hypergiant";
+import { WolfRayetRenderer } from "./mature-stars/supergiant/wolf-rayet";
+
 import { SchwarzschildBlackHoleRenderer } from "./black-holes/schwarzschild-black-hole";
 import { KerrBlackHoleRenderer } from "./black-holes/kerr-black-hole";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
@@ -63,6 +73,7 @@ function createStarRenderer(
   if (stellarType) {
     const rendererOptions = { lightingManager };
     switch (stellarType) {
+      // Stellar Remnants
       case StellarType.NEUTRON_STAR:
         // Use subtype to determine neutron star renderer behavior
         return new NeutronStarRenderer(object, {
@@ -75,15 +86,6 @@ function createStarRenderer(
           ...rendererOptions,
           subtype: whiteDwarfSubtype,
         });
-      case StellarType.WOLF_RAYET:
-        return new WolfRayetRenderer(object, rendererOptions);
-      case StellarType.HYPERGIANT:
-        // For now, use main sequence renderer with enhanced parameters
-        return new MainSequenceStarRenderer(object, rendererOptions);
-      case StellarType.PROTOSTAR:
-      case StellarType.PRE_MAIN_SEQUENCE:
-        // Use main sequence renderer with special parameters for young stars
-        return new MainSequenceStarRenderer(object, rendererOptions);
       case StellarType.BLACK_HOLE:
         // Use subtype to determine which black hole renderer
         if (blackHoleSubtype === BlackHoleSubtype.KERR) {
@@ -91,6 +93,32 @@ function createStarRenderer(
         } else {
           return new SchwarzschildBlackHoleRenderer(object, rendererOptions);
         }
+
+      // Mature Stars - Post-Main Sequence Evolution
+      case StellarType.SUBGIANT:
+        return new SubgiantRenderer(object, rendererOptions);
+      case StellarType.RED_GIANT:
+        return new RedGiantRenderer(object, rendererOptions);
+      case StellarType.HORIZONTAL_BRANCH:
+        return new HorizontalBranchRenderer(object, rendererOptions);
+      case StellarType.ASYMPTOTIC_GIANT_BRANCH:
+        return new AGBRenderer(object, rendererOptions);
+      case StellarType.POST_AGB:
+        return new PostAGBRenderer(object, rendererOptions);
+      case StellarType.SUPERGIANT:
+        return new SupergiantRenderer(object, rendererOptions);
+
+      // Special Types
+      case StellarType.WOLF_RAYET:
+        return new WolfRayetRenderer(object, rendererOptions);
+      case StellarType.HYPERGIANT:
+        return new HypergiantRenderer(object, rendererOptions);
+
+      // Young Stars
+      case StellarType.PROTOSTAR:
+      case StellarType.PRE_MAIN_SEQUENCE:
+        // Use main sequence renderer with special parameters for young stars
+        return new MainSequenceStarRenderer(object, rendererOptions);
       case StellarType.MAIN_SEQUENCE:
         break;
     }

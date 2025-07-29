@@ -369,6 +369,18 @@ export function generateStar(random: () => number): CelestialObject {
       correctedRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
   }
 
+  // Generate material parameters within sensible ranges based on stellar properties
+  const materialParams = {
+    // noiseScale: 0 to 1.2 - based on stellar activity
+    noiseScale: Math.min(0.1 + starLuminosity / 100, 1.2),
+    // noiseIntensity: 0 to 0.5 - based on temperature and mass
+    noiseIntensity: Math.min(0.05 + starTemperature / 50000, 0.5),
+    // plasmaTurbulence: 0 to 2.0 - based on stellar winds and activity
+    plasmaTurbulence: Math.min(0.1 + starMass_Solar / 10, 2.0),
+    // lightingIntensity: 0 to 2.0 - based on luminosity
+    lightingIntensity: Math.min(0.5 + starLuminosity / 100, 2.0),
+  };
+
   const starProperties: StarProperties = {
     type: CelestialType.STAR,
     isMainStar: true,
@@ -384,6 +396,7 @@ export function generateStar(random: () => number): CelestialObject {
     whiteDwarfSubtype,
     protostarSubtype,
     systemLighting,
+    materialParams,
   };
 
   const starData: CelestialObject<StarProperties> = {

@@ -169,10 +169,10 @@ export class ClassMStarMaterial extends EnhancedStarMaterial {
     );
 
     super(object, surfaceColor, {
-      noiseScale: 0.8 + (spectralData.luminosity - 0.03) * 10,
-      noiseIntensity: 0.1 + (spectralData.temperature - 2500) / 20000,
-      plasmaTurbulence: 0.05 + (spectralData.mass - 0.15) * 0.3,
-      lightingIntensity: 0.5 + spectralData.luminosity * 8,
+      noiseScale: 0.04 + (spectralData.luminosity - 0.03) * 0.5,
+      noiseIntensity: 0.14 + (spectralData.temperature - 2500) / 25000,
+      plasmaTurbulence: 0.4 + (spectralData.mass - 0.15) * 0.6,
+      lightingIntensity: 0.6 + spectralData.luminosity * 4,
     });
 
     this.uniforms.uHotColor.value = hotColor;
@@ -244,19 +244,19 @@ export class ClassMStarRenderer extends MainSequenceStarRenderer<ClassMStarMater
     this.setMaterialUniforms(
       "noiseScale",
       new THREE.Uniform(
-        utils.lerp(0.8, 0.8 + (spectralData.luminosity - 0.03) * 10, 0.5),
+        utils.lerp(0.04, 0.04 + (spectralData.luminosity - 0.03) * 0.5, 0.5),
       ),
     );
     this.setMaterialUniforms(
       "noiseIntensity",
       new THREE.Uniform(
-        utils.lerp(0.1, 0.1 + (spectralData.temperature - 2500) / 20000, 0.5),
+        utils.lerp(0.14, 0.14 + (spectralData.temperature - 2500) / 25000, 0.5),
       ),
     );
     this.setMaterialUniforms(
       "plasmaTurbulence",
       new THREE.Uniform(
-        utils.lerp(0.05, 0.05 + (spectralData.mass - 0.15) * 0.3, 0.5),
+        utils.lerp(0.4, 0.4 + (spectralData.mass - 0.15) * 0.6, 0.5),
       ),
     );
   }

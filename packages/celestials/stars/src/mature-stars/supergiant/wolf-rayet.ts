@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
+import { BaseStarMaterial, BaseStarRenderer } from "../../base/base-star";
 
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
@@ -23,26 +23,21 @@ import {
  */
 export class WolfRayetMaterial extends BaseStarMaterial {
   constructor(
+    object: RenderableCelestialObject,
     options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
+      noiseScale?: number;
+      noiseIntensity?: number;
+      plasmaTurbulence?: number;
+      lightingIntensity?: number;
     } = {},
   ) {
     const blueWhiteColor = new THREE.Color(0xa0c8ff);
 
     super(blueWhiteColor, {
-      coronaIntensity: options.coronaIntensity ?? 1.2,
-
-      pulseSpeed: options.pulseSpeed ?? 1.0,
-
-      glowIntensity: options.glowIntensity ?? 1.0,
-
-      temperatureVariation: options.temperatureVariation ?? 0.25,
-
-      metallicEffect: options.metallicEffect ?? 0.5,
+      noiseScale: options.noiseScale ?? 1.5,
+      noiseIntensity: options.noiseIntensity ?? 0.6,
+      plasmaTurbulence: options.plasmaTurbulence ?? 0.4,
+      lightingIntensity: options.lightingIntensity ?? 1.2,
     });
   }
 
@@ -54,7 +49,7 @@ export class WolfRayetMaterial extends BaseStarMaterial {
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    super.update(time, timeScale, lightSources, camera);
+    super.update(time, timeScale, lightSources, camera, allObjects, allMeshes);
   }
 }
 
@@ -99,7 +94,7 @@ export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
   protected createMaterial(
     object: RenderableCelestialObject,
   ): WolfRayetMaterial {
-    return new WolfRayetMaterial();
+    return new WolfRayetMaterial(object);
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {

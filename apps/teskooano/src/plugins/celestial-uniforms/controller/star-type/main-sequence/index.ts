@@ -1,9 +1,6 @@
 import type { CelestialObject, StarProperties } from "@teskooano/data-types";
 import type { Subscription } from "rxjs";
 import { BaseUniformsRenderer } from "../../uniform-renderers/BaseUniformsRenderer";
-import { StateAccessor, actions } from "@teskooano/core-state";
-import { fromEvent } from "rxjs";
-import { map, distinctUntilChanged, tap } from "rxjs/operators";
 
 /**
  * Renders UI controls specifically for Main Sequence stars.
@@ -20,6 +17,9 @@ export class MainSequenceStarUniformsRenderer extends BaseUniformsRenderer {
     if (!starProps || !starProps.spectralClass) {
       return subscriptions;
     }
+
+    // Add padding to ensure all controls are visible
+    container.style.paddingBottom = "2rem";
 
     // Create sections for different types of controls
     this._createBasicPropertiesSection(container, celestial, subscriptions);
@@ -101,13 +101,95 @@ export class MainSequenceStarUniformsRenderer extends BaseUniformsRenderer {
     `;
     container.appendChild(plasmaHeader);
 
+    // Check spectral class for specialized ranges
+    const starProps = celestial.properties as StarProperties;
+    const spectralClass = starProps.spectralClass;
+    const isOClass = spectralClass?.startsWith("O");
+    const isBClass = spectralClass?.startsWith("B");
+    const isAClass = spectralClass?.startsWith("A");
+    const isFClass = spectralClass?.startsWith("F");
+    const isGClass = spectralClass?.startsWith("G");
+    const isKClass = spectralClass?.startsWith("K");
+    const isMClass = spectralClass?.startsWith("M");
+
+    // Get ranges based on spectral class
+    const getRanges = () => {
+      return {
+        noiseScale: { min: 0.01, max: 1.0, step: 1e-6 },
+        noiseIntensity: { min: 0.08, max: 0.2, step: 1e-6 },
+        plasmaTurbulence: { min: 1.6, max: 1.9, step: 1e-6 },
+        lightingIntensity: { min: 1, max: 5, step: 1e-6 },
+      };
+
+      // if (isOClass) {
+      //   return {
+      //     noiseScale: { min: 0.01, max: 0.04, step: 1e-6 },
+      //     noiseIntensity: { min: 0.08, max: 0.2, step: 1e-6 },
+      //     plasmaTurbulence: { min: 1.6, max: 1.9, step: 1e-6 },
+      //     lightingIntensity: { min: 1, max: 5, step: 1e-6 },
+      //   };
+      // } else if (isBClass) {
+      //   return {
+      //     noiseScale: { min: 0.015, max: 0.025, step: 1e-6 },
+      //     noiseIntensity: { min: 0.15, max: 0.25, step: 1e-6 },
+      //     plasmaTurbulence: { min: 1.2, max: 1.8, step: 1e-6 },
+      //     lightingIntensity: { min: 2, max: 4, step: 1e-6 },
+      //   };
+      // } else if (isAClass) {
+      //   return {
+      //     noiseScale: { min: 0.02, max: 0.03, step: 1e-6 },
+      //     noiseIntensity: { min: 0.1, max: 0.15, step: 1e-6 },
+      //     plasmaTurbulence: { min: 0.8, max: 1.2, step: 1e-6 },
+      //     lightingIntensity: { min: 1.5, max: 2.5, step: 1e-6 },
+      //   };
+      // } else if (isFClass) {
+      //   return {
+      //     noiseScale: { min: 0.025, max: 0.035, step: 1e-6 },
+      //     noiseIntensity: { min: 0.11, max: 0.16, step: 1e-6 },
+      //     plasmaTurbulence: { min: 0.7, max: 1.1, step: 1e-6 },
+      //     lightingIntensity: { min: 1.2, max: 2.0, step: 1e-6 },
+      //   };
+      // } else if (isGClass) {
+      //   return {
+      //     noiseScale: { min: 0.03, max: 0.04, step: 1e-6 },
+      //     noiseIntensity: { min: 0.12, max: 0.18, step: 1e-6 },
+      //     plasmaTurbulence: { min: 0.6, max: 1.0, step: 1e-6 },
+      //     lightingIntensity: { min: 1.0, max: 1.8, step: 1e-6 },
+      //   };
+      // } else if (isKClass) {
+      //   return {
+      //     noiseScale: { min: 0.035, max: 0.045, step: 1e-6 },
+      //     noiseIntensity: { min: 0.13, max: 0.19, step: 1e-6 },
+      //     plasmaTurbulence: { min: 0.5, max: 0.9, step: 1e-6 },
+      //     lightingIntensity: { min: 0.8, max: 1.5, step: 1e-6 },
+      //   };
+      // } else if (isMClass) {
+      //   return {
+      //     noiseScale: { min: 0.04, max: 0.05, step: 1e-6 },
+      //     noiseIntensity: { min: 0.14, max: 0.2, step: 1e-6 },
+      //     plasmaTurbulence: { min: 0.4, max: 0.8, step: 1e-6 },
+      //     lightingIntensity: { min: 0.6, max: 1.2, step: 1e-6 },
+      //   };
+      // } else {
+      //   // Default ranges for unknown spectral classes
+      //   return {
+      //     noiseScale: { min: 0, max: 1.2, step: 1e-6 },
+      //     noiseIntensity: { min: 0, max: 0.5, step: 1e-6 },
+      //     plasmaTurbulence: { min: 0, max: 2.0, step: 1e-6 },
+      //     lightingIntensity: { min: 0, max: 2.0, step: 1e-6 },
+      //   };
+      // }
+    };
+
+    const ranges = getRanges();
+
     // Noise Scale - controls the size of plasma patterns
     const noiseScaleControl = this._createNumericInput(
       "Noise Scale:",
       celestial.id,
       celestial,
       ["materialParams", "noiseScale"],
-      { min: 0.01, max: 2.0, step: 0.001 },
+      ranges.noiseScale,
     );
     container.appendChild(noiseScaleControl.element);
     subscriptions.push(noiseScaleControl.subscription);
@@ -118,7 +200,7 @@ export class MainSequenceStarUniformsRenderer extends BaseUniformsRenderer {
       celestial.id,
       celestial,
       ["materialParams", "noiseIntensity"],
-      { min: 0.0, max: 2.0, step: 0.05 },
+      ranges.noiseIntensity,
     );
     container.appendChild(noiseIntensityControl.element);
     subscriptions.push(noiseIntensityControl.subscription);
@@ -129,7 +211,7 @@ export class MainSequenceStarUniformsRenderer extends BaseUniformsRenderer {
       celestial.id,
       celestial,
       ["materialParams", "plasmaTurbulence"],
-      { min: 0.0, max: 1.0, step: 0.05 },
+      ranges.plasmaTurbulence,
     );
     container.appendChild(plasmaTurbulenceControl.element);
     subscriptions.push(plasmaTurbulenceControl.subscription);
@@ -140,7 +222,7 @@ export class MainSequenceStarUniformsRenderer extends BaseUniformsRenderer {
       celestial.id,
       celestial,
       ["materialParams", "lightingIntensity"],
-      { min: 0.1, max: 3.0, step: 0.05 },
+      ranges.lightingIntensity,
     );
     container.appendChild(lightingIntensityControl.element);
     subscriptions.push(lightingIntensityControl.subscription);

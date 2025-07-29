@@ -107,12 +107,10 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
     }
 
     super(baseColor, {
-      coronaIntensity: options.coronaIntensity ?? coronaIntensity,
-      pulseSpeed: options.pulseSpeed ?? pulseSpeed,
-      glowIntensity: options.glowIntensity ?? glowIntensity,
-      temperatureVariation:
-        options.temperatureVariation ?? temperatureVariation,
-      metallicEffect: options.metallicEffect ?? metallicEffect,
+      noiseScale: 0.3,
+      noiseIntensity: options.glowIntensity ?? glowIntensity,
+      plasmaTurbulence: options.metallicEffect ?? metallicEffect,
+      lightingIntensity: 1.0,
     });
 
     this.subtype = subtype;
