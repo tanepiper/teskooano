@@ -19,42 +19,51 @@ import * as THREE from "three";
  * - Background and environment
  * - Lighting and LOD systems
  * - Grid and spatial reference
+ *
+ * **Prediction Highlighting Delegation:**
+ *
+ * This orchestrator serves as a delegation point in the prediction highlighting system:
+ *
+ * - Receives highlighting requests from CameraManager (user interaction)
+ * - Routes requests to the appropriate specialized manager (OrbitsManager)
+ * - Provides a clean interface for camera controls to interact with orbit visualizations
+ * - Maintains separation of concerns between camera logic and orbit rendering
  */
 export class RenderingOrchestrator {
-  private sceneManager: SceneManager;
-  private objectManager!: ObjectManager;
-  private orbitManager!: OrbitsManager;
-  private backgroundManager: BackgroundManager;
-  private lightingManager: LightingManager;
-  private lodManager: LODManager;
-  private gridManager: GridManager;
-  private stateAdapter: RendererStateAdapter;
-  private renderPipeline!: RenderPipeline;
+  private _sceneManager: SceneManager;
+  private _objectManager!: ObjectManager;
+  private _orbitManager!: OrbitsManager;
+  private _backgroundManager: BackgroundManager;
+  private _lightingManager: LightingManager;
+  private _lodManager: LODManager;
+  private _gridManager: GridManager;
+  private _stateAdapter: RendererStateAdapter;
+  private _renderPipeline!: RenderPipeline;
 
   constructor(container: HTMLElement) {
     // Initialize state adapter
-    this.stateAdapter = new RendererStateAdapter();
+    this._stateAdapter = new RendererStateAdapter();
 
     // Initialize core scene manager
-    this.sceneManager = new SceneManager(container, {
+    this._sceneManager = new SceneManager(container, {
       antialias: true,
     });
 
     // Initialize lighting manager
-    this.lightingManager = new LightingManager(this.sceneManager.scene);
+    this._lightingManager = new LightingManager(this._sceneManager.scene);
 
     // Initialize LOD manager
-    this.lodManager = new LODManager(this.sceneManager.camera);
+    this._lodManager = new LODManager(this._sceneManager.camera);
 
     // Initialize grid manager
-    this.gridManager = new GridManager(this.sceneManager.scene);
+    this._gridManager = new GridManager(this._sceneManager.scene);
 
     // Initialize background manager
-    this.backgroundManager = new BackgroundManager(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
+    this._backgroundManager = new BackgroundManager(
+      this._sceneManager.scene,
+      this._sceneManager.camera,
     );
-    this.backgroundManager.setCamera(this.sceneManager.camera);
+    this._backgroundManager.setCamera(this._sceneManager.camera);
 
     // Note: objectManager and orbitManager will be initialized after css2DManager is available
     // to avoid the temporary object issue
@@ -66,35 +75,35 @@ export class RenderingOrchestrator {
    */
   initializeManagersWithCss2D(css2DManager: any): void {
     // Initialize object manager
-    this.objectManager = new ObjectManager(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
+    this._objectManager = new ObjectManager(
+      this._sceneManager.scene,
+      this._sceneManager.camera,
       renderableStore.renderableObjects$,
-      this.sceneManager.renderer,
+      this._sceneManager.renderer,
       css2DManager,
       undefined, // acceleration$ - use default
-      this.lightingManager, // Pass the shared lighting manager
+      this._lightingManager, // Pass the shared lighting manager
     );
 
     // Initialize orbit manager
-    this.orbitManager = new OrbitsManager(
-      this.objectManager,
-      this.stateAdapter,
+    this._orbitManager = new OrbitsManager(
+      this._objectManager,
+      this._stateAdapter,
       renderableStore.renderableObjects$,
       css2DManager,
-      this.objectManager.getCelestialRenderers(),
+      this._objectManager.getCelestialRenderers(),
     );
 
     // Initialize render pipeline (controlsManager will be set later)
-    this.renderPipeline = new RenderPipeline({
-      sceneManager: this.sceneManager,
+    this._renderPipeline = new RenderPipeline({
+      sceneManager: this._sceneManager,
       controlsManager: {} as any, // Temporary, will be set by setControlsManager
-      orbitManager: this.orbitManager,
-      objectManager: this.objectManager,
-      backgroundManager: this.backgroundManager,
-      lightingManager: this.lightingManager,
-      lodManager: this.lodManager,
-      gridManager: this.gridManager,
+      orbitManager: this._orbitManager,
+      objectManager: this._objectManager,
+      backgroundManager: this._backgroundManager,
+      lightingManager: this._lightingManager,
+      lodManager: this._lodManager,
+      gridManager: this._gridManager,
       css2DManager,
     });
   }
@@ -110,36 +119,36 @@ export class RenderingOrchestrator {
   /**
    * Gets the core scene manager for direct access when needed.
    */
-  getSceneManager(): SceneManager {
-    return this.sceneManager;
+  get sceneManager(): SceneManager {
+    return this._sceneManager;
   }
 
   /**
    * Gets the object manager for direct access when needed.
    */
-  getObjectManager(): ObjectManager {
-    return this.objectManager;
+  get objectManager(): ObjectManager {
+    return this._objectManager;
   }
 
   /**
    * Gets the orbit manager for direct access when needed.
    */
-  getOrbitManager(): OrbitsManager {
-    return this.orbitManager;
+  get orbitManager(): OrbitsManager {
+    return this._orbitManager;
   }
 
   /**
    * Gets the render pipeline for direct access when needed.
    */
-  getRenderPipeline(): RenderPipeline {
-    return this.renderPipeline;
+  get renderPipeline(): RenderPipeline {
+    return this._renderPipeline;
   }
 
   /**
    * Gets the grid manager for direct access when needed.
    */
-  getGridManager(): GridManager {
-    return this.gridManager;
+  get gridManager(): GridManager {
+    return this._gridManager;
   }
 
   /**
@@ -152,6 +161,15 @@ export class RenderingOrchestrator {
 
   /**
    * Highlights prediction lines for a specific object.
+   *
+   * This method is part of the prediction highlighting delegation chain:
+   * CameraManager → RenderingOrchestrator → OrbitsManager → PredictionManager
+   *
+   * It's typically called when a user focuses on a celestial object via camera controls.
+   * The highlighting will only have an effect when using N-Body simulation mode,
+   * as ideal orbits don't support prediction highlighting.
+   *
+   * @param objectId - ID of the object to highlight, or null to clear highlighting
    */
   highlightPrediction(objectId: string | null): void {
     this.orbitManager.highlightPrediction(objectId);
@@ -180,13 +198,13 @@ export class RenderingOrchestrator {
    * Disposes all rendering resources.
    */
   dispose(): void {
-    this.sceneManager.dispose();
-    this.objectManager.dispose();
-    this.orbitManager.dispose();
-    this.backgroundManager.dispose();
-    this.lightingManager.dispose();
-    this.lodManager.dispose();
-    this.gridManager.dispose();
-    this.stateAdapter.dispose();
+    this._sceneManager.dispose();
+    this._objectManager.dispose();
+    this._orbitManager.dispose();
+    this._backgroundManager.dispose();
+    this._lightingManager.dispose();
+    this._lodManager.dispose();
+    this._gridManager.dispose();
+    this._stateAdapter.dispose();
   }
 }

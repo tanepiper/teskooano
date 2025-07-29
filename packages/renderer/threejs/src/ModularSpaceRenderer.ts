@@ -42,25 +42,15 @@ export class ModularSpaceRenderer {
     // 1. Initialize RenderingOrchestrator first (creates the main scene manager)
     this.renderingOrchestrator = new RenderingOrchestrator(container);
 
-    // 2. Initialize InteractionOrchestrator (uses the scene manager from RenderingOrchestrator)
+    // 2. Initialize InteractionOrchestrator (passes the entire RenderingOrchestrator)
     this.interactionOrchestrator = new InteractionOrchestrator(
       container,
-      this.renderingOrchestrator.getSceneManager(),
+      this.renderingOrchestrator,
     );
 
-    // 3. Initialize the managers in RenderingOrchestrator with the real css2DManager
-    this.renderingOrchestrator.initializeManagersWithCss2D(
-      this.interactionOrchestrator.getLayer2DManager(),
-    );
-
-    // 4. Set the controls manager in RenderingOrchestrator (circular dependency resolution)
-    this.renderingOrchestrator.setControlsManager(
-      this.interactionOrchestrator.getControlsManager(),
-    );
-
-    // 5. Initialize DebugOrchestrator (needs scene manager from RenderingOrchestrator)
+    // 3. Initialize DebugOrchestrator (needs scene manager from RenderingOrchestrator)
     this.debugOrchestrator = new DebugOrchestrator(
-      this.renderingOrchestrator.getSceneManager(),
+      this.renderingOrchestrator.sceneManager,
     );
 
     this.setupAnimationCallbacks();
@@ -73,16 +63,14 @@ export class ModularSpaceRenderer {
   private setupAnimationCallbacks(): void {
     // Register physics simulation callback first
     const physicsCallback = simulationManager.createPhysicsCallback();
-    this.renderingOrchestrator
-      .getSceneManager()
-      .animationLoop.onPhysics(physicsCallback);
+    this.renderingOrchestrator.sceneManager.animationLoop.onPhysics(
+      physicsCallback,
+    );
 
     // Register rendering callback
-    this.renderingOrchestrator
-      .getSceneManager()
-      .animationLoop.onAnimate(
-        this.renderingOrchestrator.getRenderPipeline().update,
-      );
+    this.renderingOrchestrator.sceneManager.animationLoop.onAnimate(
+      this.renderingOrchestrator.renderPipeline.update,
+    );
   }
 
   /**
@@ -90,7 +78,7 @@ export class ModularSpaceRenderer {
    * @returns The scene object.
    */
   get scene(): THREE.Scene {
-    return this.renderingOrchestrator.getSceneManager().scene;
+    return this.renderingOrchestrator.sceneManager.scene;
   }
 
   /**
@@ -98,7 +86,7 @@ export class ModularSpaceRenderer {
    * @returns The camera object.
    */
   get camera(): THREE.PerspectiveCamera {
-    return this.renderingOrchestrator.getSceneManager().camera;
+    return this.renderingOrchestrator.sceneManager.camera;
   }
 
   /**
@@ -106,7 +94,7 @@ export class ModularSpaceRenderer {
    * @returns The renderer object.
    */
   get renderer(): THREE.WebGLRenderer {
-    return this.renderingOrchestrator.getSceneManager().renderer;
+    return this.renderingOrchestrator.sceneManager.renderer;
   }
 
   /**
@@ -121,14 +109,14 @@ export class ModularSpaceRenderer {
    * Starts the rendering loop.
    */
   start(): void {
-    this.renderingOrchestrator.getSceneManager().start();
+    this.renderingOrchestrator.sceneManager.start();
   }
 
   /**
    * Stops the rendering loop.
    */
   stop(): void {
-    this.renderingOrchestrator.getSceneManager().stop();
+    this.renderingOrchestrator.sceneManager.stop();
   }
 
   /**
@@ -137,7 +125,7 @@ export class ModularSpaceRenderer {
    * @param height - The new height of the viewport.
    */
   onResize(width: number, height: number): void {
-    this.renderingOrchestrator.getSceneManager().onResize(width, height);
+    this.renderingOrchestrator.sceneManager.onResize(width, height);
     this.interactionOrchestrator.onResize(width, height);
   }
 
@@ -186,27 +174,5 @@ export class ModularSpaceRenderer {
   public setDebugMode(enabled: boolean): void {
     this.renderingOrchestrator.setDebugMode(enabled);
     this.interactionOrchestrator.setDebugMode(enabled);
-  }
-
-  /**
-   * Highlights prediction lines for a specific object, hiding all others.
-   * @param objectId - ID of the object to show prediction for, or null to hide all
-   */
-  public highlightPrediction(objectId: string | null): void {
-    this.renderingOrchestrator.highlightPrediction(objectId);
-  }
-
-  /**
-   * Runs a comprehensive depth buffer analysis and logs results to console.
-   * Use this to debug occlusion and depth sorting issues.
-   *
-   * @example
-   * ```javascript
-   * // In browser console:
-   * renderer.runDepthAnalysis();
-   * ```
-   */
-  public runDepthAnalysis(): void {
-    this.debugOrchestrator.runDepthAnalysis();
   }
 }

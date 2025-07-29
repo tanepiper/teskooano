@@ -173,6 +173,23 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
   }
 
   /**
+   * Highlights prediction lines for a specific object, hiding all others.
+   *
+   * This method delegates to the PredictionManager to handle the actual
+   * prediction highlighting logic, and also sets the highlighted object ID
+   * so that prediction calculations are triggered in the update loop.
+   *
+   * @param objectId - ID of the object to show prediction for, or null to hide all predictions
+   */
+  highlightPrediction(objectId: string | null): void {
+    // Set the highlighted object ID so that prediction calculations are triggered
+    this.highlightedObjectId = objectId;
+
+    // Delegate to the prediction manager for highlighting logic
+    this.predictionManager.highlightPrediction(objectId);
+  }
+
+  /**
    * Sets the visibility of all visualizations.
    *
    * @param visible - Whether visualizations should be visible

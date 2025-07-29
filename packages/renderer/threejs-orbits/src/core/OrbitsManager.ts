@@ -41,6 +41,16 @@ export enum OrbitDisplayMode {
  *
  * The manager automatically selects the appropriate strategy based on the current
  * simulation configuration and provides a unified API for controlling visualizations.
+ *
+ * **Prediction Highlighting Delegation:**
+ *
+ * This manager acts as a delegation point in the prediction highlighting system:
+ *
+ * - Receives highlighting requests from RenderingOrchestrator
+ * - Delegates to the appropriate strategy based on simulation mode
+ * - Uses optional interface methods to avoid type casting
+ * - Only NBodyStrategy supports prediction highlighting (IdealStrategy does not)
+ * - Provides a unified interface regardless of the underlying strategy
  */
 export class OrbitsManager extends StateSubscriptionMixin {
   /** Current visualization mode */
@@ -423,17 +433,30 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /**
    * Highlights prediction lines for a specific object, hiding all others.
-   * @param objectId - ID of the object to show prediction for, or null to hide all
+   *
+   * This method delegates to the active visualization strategy using the optional
+   * `highlightPrediction` interface method. Only NBodyStrategy implements this method,
+   * so highlighting only works in N-Body simulation mode.
+   *
+   * The highlighting flow is:
+   * 1. User focuses on a celestial object (e.g., via camera controls)
+   * 2. CameraManager calls RenderingOrchestrator.highlightPrediction()
+   * 3. RenderingOrchestrator delegates to OrbitsManager.highlightPrediction()
+   * 4. OrbitsManager delegates to the active strategy's highlightPrediction method
+   * 5. PredictionManager handles the actual highlighting logic
+   *
+   * @param objectId - ID of the object to show prediction for, or null to hide all predictions
    */
   public highlightPrediction(objectId: string | null): void {
-    if (this.activeStrategy) {
-      // For NBody strategy, highlight specific prediction
-      if ("predictionManager" in this.activeStrategy) {
-        (this.activeStrategy as any).predictionManager.highlightPrediction(
-          objectId,
-        );
-      }
+    if (!this.activeStrategy) {
+      return; // No active strategy, nothing to highlight
     }
+
+    // Use the optional highlightPrediction method if available
+    if (this.activeStrategy.highlightPrediction) {
+      this.activeStrategy.highlightPrediction(objectId);
+    }
+    // Note: IdealStrategy doesn't implement highlightPrediction (uses static orbits)
   }
 
   /**

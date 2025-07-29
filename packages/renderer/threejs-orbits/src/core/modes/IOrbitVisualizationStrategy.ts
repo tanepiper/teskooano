@@ -49,6 +49,17 @@ export interface IOrbitVisualizationStrategy {
   setPredictionVisibility(visible: boolean): void;
 
   /**
+   * Highlights prediction lines for a specific object, hiding all others.
+   *
+   * This is an optional method that only N-Body strategies implement.
+   * Ideal strategies don't support prediction highlighting as they use
+   * static mathematical orbits rather than dynamic predictions.
+   *
+   * @param objectId - ID of the object to show prediction for, or null to hide all predictions
+   */
+  highlightPrediction?(objectId: string | null): void;
+
+  /**
    * Cleans up resources used by this strategy.
    * Called when switching to a different strategy or disposing the OrbitsManager.
    */

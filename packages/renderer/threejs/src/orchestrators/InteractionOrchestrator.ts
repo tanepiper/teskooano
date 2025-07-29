@@ -21,11 +21,16 @@ export class InteractionOrchestrator {
 
   constructor(
     container: HTMLElement,
-    sceneManager: any, // We'll need to pass this from RenderingOrchestrator
+    renderingOrchestrator: any, // Pass the entire orchestrator
   ) {
     // Initialize 2D layer manager
-    this.css2DManager = new Layer2DManager(sceneManager.scene, container);
-    const celestialLayer = new CelestialLabelLayer(sceneManager.scene);
+    this.css2DManager = new Layer2DManager(
+      renderingOrchestrator.sceneManager.scene,
+      container,
+    );
+    const celestialLayer = new CelestialLabelLayer(
+      renderingOrchestrator.sceneManager.scene,
+    );
     this.css2DManager.registerLayer(
       CSS2DLayerType.CELESTIAL_LABELS,
       celestialLayer,
@@ -33,16 +38,22 @@ export class InteractionOrchestrator {
 
     // Initialize controls manager
     this.controlsManager = new ControlsManager(
-      sceneManager.camera,
-      sceneManager.renderer.domElement,
+      renderingOrchestrator.sceneManager.camera,
+      renderingOrchestrator.sceneManager.renderer.domElement,
     );
 
     // Initialize AU marker manager
     this.auMarkerManager = new AuMarkerManager(
-      sceneManager.scene,
+      renderingOrchestrator.sceneManager.scene,
       this.css2DManager,
     );
     this.auMarkerManager.createMarkers();
+
+    // Initialize the managers in RenderingOrchestrator with the real css2DManager
+    renderingOrchestrator.initializeManagersWithCss2D(this.css2DManager);
+
+    // Set the controls manager in RenderingOrchestrator
+    renderingOrchestrator.setControlsManager(this.controlsManager);
   }
 
   /**

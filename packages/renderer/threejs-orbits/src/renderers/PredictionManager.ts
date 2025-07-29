@@ -58,6 +58,25 @@ function formatTimestamp(seconds: number): string {
  * the current physics state, simulated using the Verlet integration method.
  *
  * Enhanced with curved trail interpolation for more realistic orbital visualization.
+ *
+ * **Prediction Highlighting System:**
+ *
+ * This manager is part of a multi-level delegation system for highlighting predictions:
+ *
+ * 1. **CameraManager** (User Interaction) - Called when user focuses on an object
+ * 2. **RenderingOrchestrator** (Delegation) - Routes the request to the appropriate manager
+ * 3. **OrbitsManager** (Strategy Selection) - Delegates to the active visualization strategy
+ * 4. **PredictionManager** (Implementation) - Handles the actual highlighting logic
+ *
+ * **Highlighting Behavior:**
+ * - When an object is highlighted: Shows only that object's prediction line and labels
+ * - When no object is highlighted: Hides all prediction lines and labels
+ * - Only works in N-Body simulation mode (not available for ideal orbits)
+ *
+ * **Animation Support:**
+ * - Smooth transitions between prediction states using lerp interpolation
+ * - Animation progress is tracked per-frame in the update() method
+ * - Supports both instant and animated prediction line updates
  */
 export class PredictionManager {
   /** Map storing prediction lines, keyed by celestial object ID */
@@ -557,54 +576,105 @@ export class PredictionManager {
   }
 
   /**
-   * Hides prediction lines for all objects except the specified one.
+   * Highlights prediction lines for a specific object, hiding all others.
    *
-   * @param objectId - ID of the object to show prediction for, or null to hide all
+   * This method is called when a user focuses on a celestial object (e.g., via camera focus).
+   * It performs the following actions:
+   * 1. Updates the internal highlighted object ID
+   * 2. Configures prediction labels for the highlighted object
+   * 3. Hides all prediction lines except for the highlighted object
+   * 4. Shows the highlighted object's prediction line if it exists
+   *
+   * When objectId is null, all predictions and labels are hidden.
+   *
+   * @param objectId - ID of the object to show prediction for, or null to hide all predictions
    */
   highlightPrediction(objectId: string | null): void {
+    // Store the highlighted object ID for animation tracking
     this.highlightedObjectId = objectId;
 
+    // Get the prediction label layer for managing time markers
     const labelLayer = this.layer2DManager?.getLayer(
       CSS2DLayerType.PREDICTION_LABELS,
     ) as PredictionLabelLayer | undefined;
 
     if (objectId && labelLayer) {
-      const coreObject = StateAccessor.getCelestialObject(objectId);
-      const renderableObject =
-        StateAccessor.getCurrentRenderableObjects()[objectId];
-      const threeJsObject = this.objectManager.getObject(objectId);
-      const physicsState = coreObject
-        ? PhysicsStateProvider.getPhysicsState(coreObject)
-        : null;
-      const velocity = physicsState?.velocity_mps.length() || 0;
+      // Configure prediction labels for the highlighted object
+      this.configurePredictionLabels(objectId, labelLayer);
 
-      labelLayer.setActivePredictionObject(
-        renderableObject,
-        threeJsObject,
-        velocity,
-      );
-
-      // Hide all predictions except for the highlighted object
-      this.predictionLines.forEach((line, id) => {
-        if (id !== objectId) {
-          line.visible = false;
-        }
-      });
-
-      // Show prediction for highlighted object
-      const line = this.predictionLines.get(objectId);
-      if (line) {
-        line.visible = this.visualizationVisible;
-      }
+      // Update prediction line visibility
+      this.updatePredictionLineVisibility(objectId);
     } else {
-      // If no object is highlighted, clear the active prediction object
-      labelLayer?.setActivePredictionObject(null, null, null);
-      // Hide all predictions and all labels
-      this.predictionLines.forEach((line) => {
-        line.visible = false;
-      });
-      this.hideAllLabels();
+      // Clear all predictions and labels when no object is highlighted
+      this.clearAllPredictionHighlights(labelLayer);
     }
+  }
+
+  /**
+   * Configures prediction labels for a specific highlighted object.
+   *
+   * @param objectId - The ID of the object to configure labels for
+   * @param labelLayer - The prediction label layer to configure
+   */
+  private configurePredictionLabels(
+    objectId: string,
+    labelLayer: PredictionLabelLayer,
+  ): void {
+    const coreObject = StateAccessor.getCelestialObject(objectId);
+    const renderableObject =
+      StateAccessor.getCurrentRenderableObjects()[objectId];
+    const threeJsObject = this.objectManager.getObject(objectId);
+    const physicsState = coreObject
+      ? PhysicsStateProvider.getPhysicsState(coreObject)
+      : null;
+    const velocity = physicsState?.velocity_mps.length() || 0;
+
+    // Set the active prediction object in the label layer
+    labelLayer.setActivePredictionObject(
+      renderableObject,
+      threeJsObject,
+      velocity,
+    );
+  }
+
+  /**
+   * Updates the visibility of prediction lines based on highlighting.
+   *
+   * @param highlightedObjectId - The ID of the object whose prediction should be visible
+   */
+  private updatePredictionLineVisibility(highlightedObjectId: string): void {
+    // Hide all prediction lines except for the highlighted object
+    this.predictionLines.forEach((line, id) => {
+      if (id !== highlightedObjectId) {
+        line.visible = false;
+      }
+    });
+
+    // Show prediction for the highlighted object
+    const line = this.predictionLines.get(highlightedObjectId);
+    if (line) {
+      line.visible = this.visualizationVisible;
+    }
+  }
+
+  /**
+   * Clears all prediction highlights and labels.
+   *
+   * @param labelLayer - The prediction label layer to clear
+   */
+  private clearAllPredictionHighlights(
+    labelLayer?: PredictionLabelLayer,
+  ): void {
+    // Clear the active prediction object in the label layer
+    labelLayer?.setActivePredictionObject(null, null, null);
+
+    // Hide all prediction lines
+    this.predictionLines.forEach((line) => {
+      line.visible = false;
+    });
+
+    // Hide all prediction labels
+    this.hideAllLabels();
   }
 
   /**

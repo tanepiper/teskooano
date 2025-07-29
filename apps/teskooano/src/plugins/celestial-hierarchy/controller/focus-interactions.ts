@@ -110,9 +110,8 @@ export function handleFollowRequest(
     return false;
   }
 
-  const objectToFollow = renderer.renderingOrchestrator
-    .getObjectManager()
-    .getObject(objectId);
+  const objectToFollow =
+    renderer.renderingOrchestrator.objectManager.getObject(objectId);
   if (!objectToFollow) {
     console.warn(
       `[handleFollowRequest] Could not find THREE object with ID '${objectId}' in renderer.objectManager. The camera will attempt to follow it once it appears.`,

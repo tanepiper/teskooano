@@ -35,9 +35,7 @@ export function applyViewStateToRenderer(
   if (!renderer) return;
 
   if (updates.showGrid !== undefined) {
-    renderer.renderingOrchestrator
-      .getGridManager()
-      .setVisible(updates.showGrid);
+    renderer.renderingOrchestrator.gridManager.setVisible(updates.showGrid);
   }
   if (updates.showCelestialLabels !== undefined) {
     renderer.interactionOrchestrator
@@ -53,19 +51,19 @@ export function applyViewStateToRenderer(
       ?.setVisible(updates.showAuMarkers);
   }
   if (updates.showDebrisEffects !== undefined) {
-    renderer.renderingOrchestrator
-      .getObjectManager()
-      .setDebrisEffectsEnabled(updates.showDebrisEffects);
+    renderer.renderingOrchestrator.objectManager.setDebrisEffectsEnabled(
+      updates.showDebrisEffects,
+    );
   }
   if (updates.showOrbitLines !== undefined) {
-    renderer.renderingOrchestrator
-      .getOrbitManager()
-      .setOrbitTrailsVisibility(updates.showOrbitLines);
+    renderer.renderingOrchestrator.orbitManager.setOrbitTrailsVisibility(
+      updates.showOrbitLines,
+    );
   }
   if (updates.showPredictionLines !== undefined) {
-    renderer.renderingOrchestrator
-      .getOrbitManager()
-      .setPredictionVisibility(updates.showPredictionLines);
+    renderer.renderingOrchestrator.orbitManager.setPredictionVisibility(
+      updates.showPredictionLines,
+    );
     renderer.interactionOrchestrator
       .getLayer2DManager()
       .setLayerVisibility(
