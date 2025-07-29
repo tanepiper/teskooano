@@ -181,7 +181,7 @@ export class GeometryUtilities {
    */
   public static getOptimizedHighDetailSegments(
     detailLevel?: DetailLevel | string,
-    defaultSegments: number = 64,
+    defaultSegments: number = 128,
     object?: RenderableCelestialObject,
     camera?: THREE.PerspectiveCamera,
   ): number {
@@ -190,16 +190,16 @@ export class GeometryUtilities {
     let baseSegments: number;
     switch (detailLevel) {
       case "high":
-        baseSegments = 80; // Optimized from 96
+        baseSegments = 160; // Optimized from 96
         break;
       case "medium":
-        baseSegments = 40; // Optimized from 48
+        baseSegments = 80; // Optimized from 48
         break;
       case "low":
-        baseSegments = 20; // Optimized from 24
+        baseSegments = 40; // Optimized from 24
         break;
       case "very-low":
-        baseSegments = 10; // Optimized from 12
+        baseSegments = 20; // Optimized from 12
         break;
       default:
         baseSegments = defaultSegments;
