@@ -148,9 +148,6 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
     selectedId: string | null,
     potentiallyDestroyedObject?: CelestialObject,
   ): void {
-    console.log("handleSelectionChange", selectedId);
-    console.log("this.currentSelectedId", this.currentSelectedId);
-    console.log("this._lastRenderedObjectId", this._lastRenderedObjectId);
     if (
       selectedId === this.currentSelectedId &&
       selectedId === this._lastRenderedObjectId &&
@@ -166,9 +163,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
     ) {
       return;
     }
-    console.log("handleSelectionChange", selectedId);
-    console.log("this.currentSelectedId", this.currentSelectedId);
-    console.log("this._lastRenderedObjectId", this._lastRenderedObjectId);
+
     const oldSelectedId = this.currentSelectedId;
     this.currentSelectedId = selectedId;
 

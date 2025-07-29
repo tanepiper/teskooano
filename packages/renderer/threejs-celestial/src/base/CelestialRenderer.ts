@@ -592,8 +592,6 @@ export interface CelestialRenderer {
    */
   dispose(): void;
 
-  materials: Map<string, THREE.Material | THREE.Material[]>;
-
   initialize: (
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,

@@ -52,6 +52,12 @@ export interface StarProperties extends SpecificPropertiesBase {
   luminosity: number;
   /** The primary color tint of the star, usually represented as a hex string. */
   color: string;
+  /** Hot zone color for plasma, flares, and convection centers */
+  hotColor?: string;
+  /** Normal surface color (fallback to main color if not specified) */
+  surfaceColor?: string;
+  /** Cool zone color for sunspots and darker regions */
+  coolColor?: string;
   /** The primary stellar type (e.g., MAIN_SEQUENCE, NEUTRON_STAR, BLACK_HOLE). */
   stellarType?: StellarType;
   /** Optional array of partner star IDs, used for multi-star systems orbital calculations. */
@@ -72,6 +78,46 @@ export interface StarProperties extends SpecificPropertiesBase {
   protostarSubtype?: ProtostarSubtype;
   /** Optional system-wide lighting properties, only present on the primary star. */
   systemLighting?: SystemLightingProperties;
+  /** Stellar age in years - affects planet formation and atmospheric evolution */
+  age_years?: number;
+  /** Metallicity [Fe/H] - affects rocky planet formation probability */
+  metallicity?: number;
+  /** Material parameters for star rendering - can be modified by uniform editor */
+  materialParams?: {
+    // Plasma noise parameters for simple effects
+    noiseScale?: number;
+    noiseIntensity?: number;
+    plasmaTurbulence?: number;
+
+    // Uniform lighting
+    lightingIntensity?: number;
+  };
+
+  /** Enhanced visual effects configuration */
+  visualEffects?: {
+    // Dynamic surface features
+    enableGranulation?: boolean;
+    enableSunspots?: boolean;
+    enableProminences?: boolean;
+    enableSolarFlares?: boolean;
+    enableCoronalMassEjections?: boolean;
+
+    // Rotation and movement
+    rotationPeriod?: number; // Hours
+    differentialRotation?: boolean;
+    poleEquatorRatio?: number;
+
+    // Advanced effects
+    stellarPulsation?: boolean;
+    variableStarType?: "cepheid" | "rr_lyrae" | "delta_scuti" | "none";
+    pulsationPeriod?: number; // Days
+    pulsationAmplitude?: number;
+
+    // Magnetic field visualization
+    magneticFieldLines?: boolean;
+    coronalHoles?: boolean;
+    activeRegions?: boolean;
+  };
 }
 
 export interface PlanetAtmosphereProperties {
