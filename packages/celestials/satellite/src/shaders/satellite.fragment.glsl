@@ -52,6 +52,9 @@ varying vec2 vUv; // UV coordinates for texture mapping
 // Function to calculate shadow from a single spherical occluder
 // Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
 float getShadow(vec3 fragPos, vec3 lightDir) {
+  // Early exit if no shadow casters
+  if (uNumShadowCasters <= 0) return 1.0;
+  
   float finalShadow = 1.0;
 
   for (int i = 0; i < uNumShadowCasters; i++) {
@@ -63,26 +66,29 @@ float getShadow(vec3 fragPos, vec3 lightDir) {
     float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
     float discriminant = b * b - c;
 
-    // If the ray is potentially inside the shadow cone
-    if (discriminant > 0.0) {
-      float t = -b - sqrt(discriminant);
-      // Check if the intersection is in front of the fragment
-      if (t > 0.001) {
-        // Penumbra width is proportional to the occluder's radius.
-        // A larger multiplier makes the edge softer.
-        float penumbra = uShadowCasters[i].radius * 0.8;
-        float penumbraSq = penumbra * penumbra;
+    // If the ray intersects the shadow caster sphere
+    if (discriminant >= 0.0) {
+      float t1 = -b - sqrt(discriminant);
+      float t2 = -b + sqrt(discriminant);
+      
+      // Check if the shadow caster is between the light and the fragment
+      if (t1 > 0.001 || (t1 <= 0.001 && t2 > 0.001)) {
+        // Calculate distance from ray to sphere center for penumbra
+        float distToCenter = length(cross(oc, lightDir)) / length(lightDir);
+        float radius = uShadowCasters[i].radius;
         
-        // Calculate a smooth fade from lit to shadow based on how deep the ray is.
-        // 1.0 = lit edge, 0.0 = deep shadow.
-        float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
-        
-        // The final shadow is the darkest of all potential shadows.
-        finalShadow = min(finalShadow, currentShadow);
+        // Simple soft shadow calculation
+        if (distToCenter < radius) {
+          // Inside umbra/penumbra
+          float shadowStrength = 1.0 - smoothstep(radius * 0.8, radius * 1.2, distToCenter);
+          shadowStrength = clamp(shadowStrength, 0.0, 1.0);
+          float currentShadow = 1.0 - shadowStrength;
+          finalShadow = min(finalShadow, currentShadow);
+        }
       }
     }
   }
-  return finalShadow;
+  return clamp(finalShadow, 0.0, 1.0);
 }
 
 void main() {
