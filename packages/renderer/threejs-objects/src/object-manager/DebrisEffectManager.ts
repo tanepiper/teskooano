@@ -126,7 +126,7 @@ export class DebrisEffectManager {
       vertexShader: debrisVertexShader,
       fragmentShader: debrisFragmentShader,
       transparent: true,
-      depthWrite: false,
+      depthWrite: true,
       blending: THREE.AdditiveBlending,
       // vertexColors: true, // Handled by instanceColor attribute now
     });

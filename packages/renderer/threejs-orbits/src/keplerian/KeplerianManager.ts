@@ -236,7 +236,7 @@ export class KeplerianManager extends StateSubscriptionMixin {
 
       newLine.position.copy(parentWorldPosition);
       newLine.visible = isVisible;
-      newLine.frustumCulled = false;
+      newLine.frustumCulled = true;
 
       // Apply correct render order for Keplerian orbits
       newLine.renderOrder =

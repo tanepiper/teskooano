@@ -1,6 +1,9 @@
 // Corona Fragment Shader
 // Creates atmospheric corona effects around stars
 
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 uniform float uTime;
 uniform vec3 uStarColor;
 uniform float uOpacity;
@@ -51,4 +54,6 @@ void main() {
     finalColor = mix(finalColor, finalColor * (1.0 + pattern * 0.3), 0.4);
     
     gl_FragColor = vec4(finalColor, alpha);
+    
+    #include <logdepthbuf_fragment>
 }

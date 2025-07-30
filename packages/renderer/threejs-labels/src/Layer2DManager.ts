@@ -65,8 +65,11 @@ export class Layer2DManager {
     renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     renderer.domElement.style.position = "absolute";
     renderer.domElement.style.top = "0";
+    renderer.domElement.style.left = "0";
     renderer.domElement.style.zIndex = "1";
     renderer.domElement.style.pointerEvents = "none";
+    renderer.domElement.style.width = "100%";
+    renderer.domElement.style.height = "100%";
     return renderer;
   }
 

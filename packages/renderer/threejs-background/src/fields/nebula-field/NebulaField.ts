@@ -80,7 +80,8 @@ export class NebulaField extends Field {
         uNoiseSeed: { value: options.noiseConfig.seed * 100 },
       },
       transparent: true,
-      depthWrite: false,
+      depthWrite: false, // Transparent nebula should not write to depth buffer
+      depthTest: true,
       side: THREE.BackSide,
     });
   }

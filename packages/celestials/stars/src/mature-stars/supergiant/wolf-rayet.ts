@@ -137,7 +137,7 @@ export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
       opacity: 0.08,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
-      depthWrite: false,
+      depthWrite: true,
     });
 
     const stellarWindSphere = new THREE.Mesh(

@@ -54,6 +54,9 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
       },
       transparent: false,
       side: THREE.FrontSide,
+      depthTest: true,
+      depthWrite: true, // Ensure stars write to depth buffer for proper occlusion
+      blending: THREE.NormalBlending, // Use normal blending for opaque stars
     });
   }
 
@@ -104,7 +107,9 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
       fragmentShader: coronaFragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
-      depthWrite: false,
+      depthTest: true,
+      depthWrite: false, // Corona should not write to depth buffer to avoid interfering with main star
+      blending: THREE.AdditiveBlending, // Use additive blending for corona effect
     });
   }
 

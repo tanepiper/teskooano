@@ -271,6 +271,15 @@ export function generateStar(random: () => number): CelestialObject {
       random() < 0.7 ? ProtostarSubtype.T_TAURI : ProtostarSubtype.HERBIG_AE_BE;
   }
 
+  // Calculate luminosity in watts using Stefan-Boltzmann law
+  const luminosityWatts = UTIL.calculateStellarLuminosity(
+    realStarRadius,
+    starTemperature,
+  );
+
+  // Convert watts to solar luminosities (L☉)
+  const starLuminosity = luminosityWatts / CONST.SOLAR_LUMINOSITY;
+
   // Use the comprehensive thermal properties determination
   const thermalProps = UTIL.determineStarThermalProperties({
     mainSpectralClass: UTIL.getSpectralClass(starTemperature),
@@ -280,14 +289,12 @@ export function generateStar(random: () => number): CelestialObject {
     whiteDwarfSubtype,
     protostarSubtype,
     currentTemperature: starTemperature,
-    currentLuminosity: UTIL.calculateStellarLuminosity(
-      realStarRadius,
-      starTemperature,
-    ),
+    currentLuminosity: starLuminosity, // Now in solar units
     currentColor: UTIL.getStarColor(starTemperature),
   });
 
-  const starLuminosity = thermalProps.luminosity;
+  // Use the corrected luminosity from thermal properties
+  const finalStarLuminosity = thermalProps.luminosity;
   const starColor = thermalProps.color;
   let mainSpectralClass = UTIL.getSpectralClass(starTemperature);
   let specialSpectralClass: SpecialSpectralClass | undefined = undefined;
@@ -325,7 +332,10 @@ export function generateStar(random: () => number): CelestialObject {
   }
 
   // Calculate realistic system lighting based on stellar properties
-  const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 500000));
+  const clampedLuminosity = Math.max(
+    0.001,
+    Math.min(finalStarLuminosity, 500000),
+  );
   // Use the new, more aggressive formula for consistency and to prevent blow-out.
   const starLightIntensity = Math.min(
     Math.pow(clampedLuminosity, 0.33) * 2.0,
@@ -372,20 +382,20 @@ export function generateStar(random: () => number): CelestialObject {
   // Generate material parameters within sensible ranges based on stellar properties
   const materialParams = {
     // noiseScale: 0 to 1.2 - based on stellar activity
-    noiseScale: Math.min(0.1 + starLuminosity / 100, 1.2),
+    noiseScale: Math.min(0.1 + finalStarLuminosity / 100, 1.2),
     // noiseIntensity: 0 to 0.5 - based on temperature and mass
     noiseIntensity: Math.min(0.05 + starTemperature / 50000, 0.5),
     // plasmaTurbulence: 0 to 2.0 - based on stellar winds and activity
     plasmaTurbulence: Math.min(0.1 + starMass_Solar / 10, 2.0),
     // lightingIntensity: 0 to 2.0 - based on luminosity
-    lightingIntensity: Math.min(0.5 + starLuminosity / 100, 2.0),
+    lightingIntensity: Math.min(0.5 + finalStarLuminosity / 100, 2.0),
   };
 
   const starProperties: StarProperties = {
     type: CelestialType.STAR,
     isMainStar: true,
     spectralClass: spectralClassString,
-    luminosity: starLuminosity,
+    luminosity: finalStarLuminosity,
     color: starColor,
     stellarType: chosenType,
     mainSpectralClass: mainSpectralClass as SpectralClass,

@@ -96,9 +96,9 @@ export class RenderPipeline {
    * 3. Update 3D objects (position, rotation, materials).
    * 4. Update the background (parallax effect) - throttled.
    * 5. Update grid helper based on camera position - throttled.
-   * 6. Render 2D overlays (CSS2D).
-   * 7. Run custom callbacks.
-   * 8. Perform the main scene render.
+   * 6. Perform the main scene render FIRST.
+   * 7. Render 2D overlays (CSS2D) AFTER the main render to ensure proper depth isolation.
+   * 8. Run custom callbacks.
    *
    * @param deltaTime The time elapsed since the last frame, in seconds.
    * @param elapsedTime The total time elapsed since the loop started, in seconds.
@@ -131,13 +131,15 @@ export class RenderPipeline {
       this.gridManager.update(this.camera);
     }
 
-    // 6. Render the 2D overlay, which depends on final 3D positions.
-    // AU markers are positioned relative to origin (0,0,0), not a moving central body
+    // 6. Perform the main scene render FIRST to establish proper depth buffer.
+    this.sceneManager.render();
 
+    // 7. Render the 2D overlay AFTER the main render to ensure proper depth isolation.
+    // AU markers are positioned relative to origin (0,0,0), not a moving central body
     this.css2DManager.update(this.camera, this.origin, this.objectManager);
     this.css2DManager.render(this.camera);
 
-    // 7. Run any custom render callbacks injected into the loop.
+    // 8. Run any custom render callbacks injected into the loop.
     // Optimize callback execution by getting the array once
     const callbacks = this.sceneManager.animationLoop.getRenderCallbacks();
     if (callbacks.length > 0) {
@@ -145,9 +147,6 @@ export class RenderPipeline {
         callbacks[i]();
       }
     }
-
-    // 8. Perform the main scene render.
-    this.sceneManager.render();
   };
 
   /**

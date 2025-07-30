@@ -325,7 +325,7 @@ export class TrailManager {
         `trail-line-${objectId}`,
       );
 
-      line.frustumCulled = false;
+      line.frustumCulled = true;
 
       // Apply correct render order for trail lines
       line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");

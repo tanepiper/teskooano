@@ -77,6 +77,8 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
       },
       vertexShader: nucleusVertexShader,
       fragmentShader: nucleusFragmentShader,
+      depthWrite: true,
+      depthTest: true,
     });
   }
 }
@@ -100,7 +102,8 @@ export class CometComaMaterial extends THREE.ShaderMaterial {
       fragmentShader: comaFragmentShader,
       transparent: true,
       blending: THREE.NormalBlending,
-      depthWrite: false,
+      depthWrite: true,
+      depthTest: true,
     });
   }
 }
@@ -117,7 +120,8 @@ export class CometParticleMaterial extends THREE.ShaderMaterial {
       fragmentShader: particleFragmentShader,
       transparent: true,
       blending: THREE.AdditiveBlending, // Use additive for a brighter, glowing effect
-      depthWrite: false,
+      depthWrite: false, // Transparent particles should not write to depth buffer
+      depthTest: true,
     });
   }
 }
@@ -136,7 +140,8 @@ export class CometJetMaterial extends THREE.ShaderMaterial {
       fragmentShader: jetFragmentShader,
       transparent: true,
       blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      depthWrite: false, // Transparent jet effects should not write to depth buffer
+      depthTest: true,
     });
   }
 }
@@ -153,7 +158,8 @@ export class CometSimplifiedTailMaterial extends THREE.ShaderMaterial {
       fragmentShader: simplifiedTailFragmentShader,
       transparent: true,
       blending: THREE.NormalBlending,
-      depthWrite: false,
+      depthWrite: true,
+      depthTest: true,
     });
   }
 }

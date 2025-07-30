@@ -80,6 +80,7 @@ export class SceneHelper {
       alpha,
       powerPreference,
     });
+    renderer.sortObjects = false; // Disable automatic sorting to prevent interference with our custom render order
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 

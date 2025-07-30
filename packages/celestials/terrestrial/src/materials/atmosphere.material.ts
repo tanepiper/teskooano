@@ -70,7 +70,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       fragmentShader: atmosphereFragmentShaderSource,
       transparent: true,
       side: THREE.BackSide,
-      depthWrite: false,
+      depthWrite: true,
     });
 
     this.parentId = parentId;

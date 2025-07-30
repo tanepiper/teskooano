@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_vertex>
+
 attribute float size;
 attribute float textureIndex;
 attribute float initialRotation;
@@ -43,4 +46,6 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
 
   gl_Position = projectionMatrix * mvPosition;
+
+  #include <logdepthbuf_vertex>
 } 

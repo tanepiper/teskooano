@@ -43,7 +43,7 @@ export class LightSourcesCard extends BaseCelestialCard {
     }
 
     // Check lighting manager
-    const lightingManager = this.parentPanel.lightSourceManager;
+    const lightingManager = this.parentPanel?.lightSourceManager;
     if (!lightingManager) {
       contentDiv.innerHTML = "<p>Light source manager not found</p>";
       return;
@@ -71,8 +71,6 @@ export class LightSourcesCard extends BaseCelestialCard {
     celestial: CelestialObject,
     lightingManager: any,
   ): string {
-    if (!celestial.physicsStateReal || !lightingManager) return "";
-
     // Get the current renderable objects from the store
     const currentRenderableObjects = renderableStore.getRenderableObjects();
     const renderableObject = currentRenderableObjects[celestial.id];
@@ -139,7 +137,20 @@ export class LightSourcesCard extends BaseCelestialCard {
         // Format values
         const sourceName = lightComponent.celestialObject.name || "Unknown";
         const distanceStr = FormatUtils.formatDistanceAU(distanceMeters, 2);
-        const luminosityStr = `${stellarLuminosity.toFixed(2)} L☉`;
+
+        // Format luminosity with appropriate precision
+        let luminosityStr: string;
+        if (stellarLuminosity >= 1) {
+          luminosityStr = `${stellarLuminosity.toFixed(2)} L☉`;
+        } else if (stellarLuminosity >= 0.01) {
+          luminosityStr = `${stellarLuminosity.toFixed(3)} L☉`;
+        } else if (stellarLuminosity >= 0.001) {
+          luminosityStr = `${stellarLuminosity.toFixed(4)} L☉`;
+        } else {
+          // Use scientific notation for very small values
+          luminosityStr = `${stellarLuminosity.toExponential(2)} L☉`;
+        }
+
         const irradianceStr =
           irradiance >= 1000
             ? `${(irradiance / 1000).toFixed(1)}k W/m²`

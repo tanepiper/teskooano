@@ -319,7 +319,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
         `,
         transparent: true,
         side: THREE.DoubleSide,
-        depthWrite: false,
+        depthWrite: true,
         blending: THREE.AdditiveBlending,
       });
 
@@ -356,7 +356,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
       transparent: true,
       opacity: 0.05,
       side: THREE.DoubleSide,
-      depthWrite: false,
+      depthWrite: true,
       blending: THREE.AdditiveBlending,
     });
     const extraCorona = new THREE.Mesh(extraGeometry, extraMaterial);

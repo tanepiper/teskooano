@@ -116,7 +116,7 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
       fragmentShader: ergosphereShader.fragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
-      depthWrite: false,
+      depthWrite: true,
       blending: THREE.AdditiveBlending,
     });
   }

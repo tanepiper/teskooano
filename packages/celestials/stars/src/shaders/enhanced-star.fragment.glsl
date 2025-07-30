@@ -1,6 +1,9 @@
 // Enhanced Star Fragment Shader
 // Dynamic plasma, sunspots, coronal mass ejections, and stellar phenomena
 
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 uniform float uTime;
 uniform vec3 uStarColor;
 uniform vec3 uHotColor;
@@ -19,6 +22,8 @@ uniform float uLightingIntensity;
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
+
+
 
 // Improved noise function based on Shadertoy example
 float snoise(vec3 uv, float res) {
@@ -88,4 +93,6 @@ void main() {
     finalColor *= uLightingIntensity;
     
     gl_FragColor = vec4(finalColor, 1.0);
+    
+    #include <logdepthbuf_fragment>
 }

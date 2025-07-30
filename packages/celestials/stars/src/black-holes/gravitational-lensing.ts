@@ -114,7 +114,7 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
       fragmentShader: lensingShader.fragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
-      depthWrite: false,
+      depthWrite: false, // Transparent lensing effect should not write to depth buffer
       depthTest: true,
       blending: THREE.CustomBlending,
       blendSrc: THREE.SrcAlphaFactor,
@@ -171,7 +171,7 @@ function createBlurMaterial(fragmentShader: string): THREE.ShaderMaterial {
       }
     `,
     fragmentShader,
-    depthWrite: false,
+    depthWrite: true,
     depthTest: false,
     transparent: false,
   });

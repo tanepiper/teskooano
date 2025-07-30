@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_vertex>
+
 // Varyings to pass data to the fragment shader
 varying vec2 vUv;          // Texture coordinates (keep for now, might not be used)
 varying vec3 vNormal;      // Vertex normal in world space
@@ -41,4 +44,6 @@ void main() {
 
   // Calculate final vertex position in clip space
   gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);
+
+  #include <logdepthbuf_vertex>
 } 

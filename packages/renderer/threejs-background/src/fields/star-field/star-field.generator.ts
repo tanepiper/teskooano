@@ -84,7 +84,7 @@ export function createStarField(
     transparent: true,
     opacity: 0.8,
     sizeAttenuation: true,
-    depthWrite: false,
+    depthWrite: true,
     fog: false,
   });
 

@@ -22,6 +22,7 @@ export const SharedMaterials = {
     opacity: 1,
     depthTest: true,
     depthWrite: false, // Trails should not write to depth buffer to avoid occlusion conflicts
+    blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
 
   /**
@@ -38,6 +39,7 @@ export const SharedMaterials = {
     opacity: 0.7,
     depthTest: true,
     depthWrite: false, // Prediction lines should not write to depth buffer
+    blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
 
   /**
@@ -50,6 +52,7 @@ export const SharedMaterials = {
     opacity: 1,
     depthTest: true,
     depthWrite: false, // Keplerian orbits should not write to depth buffer
+    blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
 
   /**
@@ -62,6 +65,7 @@ export const SharedMaterials = {
     opacity: 0.5,
     depthTest: true,
     depthWrite: false, // Moon orbits should not write to depth buffer
+    blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
 
   /**
@@ -73,6 +77,8 @@ export const SharedMaterials = {
   clone(
     type: "TRAIL" | "PREDICTION" | "KEPLERIAN" | "KEPLERIAN_MOON",
   ): THREE.LineBasicMaterial | THREE.LineDashedMaterial {
+    // Built-in Three.js materials automatically inherit logarithmic depth
+    // from the renderer's logarithmicDepthBuffer setting
     return this[type].clone();
   },
 };

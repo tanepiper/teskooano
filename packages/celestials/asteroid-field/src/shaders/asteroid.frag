@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 varying vec3 vColor;
 varying float vTextureIndex;
 varying float vInitialRotation;
@@ -42,4 +45,6 @@ void main() {
   float finalAlpha = 1.0; // Slight edge falloff
   
   gl_FragColor = vec4(finalColor, finalAlpha);
+
+  #include <logdepthbuf_fragment>
 } 

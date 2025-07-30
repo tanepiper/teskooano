@@ -252,7 +252,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
         `,
         transparent: true,
         side: THREE.DoubleSide,
-        depthWrite: false,
+        depthWrite: true,
         blending: THREE.AdditiveBlending,
       });
 

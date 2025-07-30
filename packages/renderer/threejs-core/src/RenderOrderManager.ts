@@ -37,7 +37,7 @@ export class RenderOrderManager {
     ATMOSPHERIC_EFFECTS: 200,
     RING_SYSTEM: 300,
 
-    // Dynamic path visualizations
+    // Dynamic path visualizations (render AFTER celestial objects)
     ORBITAL_LINES_KEPLERIAN: 400,
     ORBITAL_LINES_TRAIL: 500,
     ORBITAL_LINES_PREDICTION: 600,
@@ -48,8 +48,8 @@ export class RenderOrderManager {
     ASTEROID_FIELD_PARTICLES: 900,
 
     // Billboards and sprites
-    STAR_BILLBOARD: 1000,
-    DISTANCE_MARKERS: 1100,
+    STAR_BILLBOARD: -1000,
+    DISTANCE_MARKERS: 1100, // Render AFTER celestial objects
 
     // UI and overlays (render last)
     DEBUG_HELPERS: 2000,

@@ -243,7 +243,7 @@ export class RedGiantRenderer extends BaseStarRenderer<RedGiantMaterial> {
         `,
         transparent: true,
         side: THREE.DoubleSide,
-        depthWrite: false,
+        depthWrite: true,
         blending: THREE.AdditiveBlending,
       });
 

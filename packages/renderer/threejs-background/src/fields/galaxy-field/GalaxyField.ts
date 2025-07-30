@@ -92,7 +92,7 @@ export class GalaxyField extends Field {
         color: new THREE.Color("#ff00ff"),
         transparent: true,
         opacity: 0.8,
-        depthWrite: false,
+        depthWrite: true,
         fog: false,
       });
       this.instancedMesh.material = debugMaterial;

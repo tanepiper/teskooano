@@ -94,6 +94,9 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       vertexShader: proceduralVertexShaderSource,
       fragmentShader: proceduralFragmentShaderSource,
       precision: "highp",
+      depthTest: true,
+      depthWrite: true, // Ensure planets write to depth buffer for proper occlusion
+      transparent: false, // Planets should be opaque
     });
 
     this.currentNumLights = MAX_LIGHTS;

@@ -129,7 +129,7 @@ export class SimpleOrbitalRenderer {
         material,
         `orbital-line-${objectId}`,
       );
-      line.frustumCulled = false;
+      line.frustumCulled = true;
 
       // Apply correct render order for trails
       line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");
@@ -155,7 +155,7 @@ export class SimpleOrbitalRenderer {
           material,
           `orbital-line-${objectId}`,
         );
-        line.frustumCulled = false;
+        line.frustumCulled = true;
         parentGroup.add(line);
         this.orbitalLines.set(objectId, line);
       }

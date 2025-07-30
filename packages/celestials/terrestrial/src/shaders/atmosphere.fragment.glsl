@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 uniform vec3 glowColor;
 uniform float intensity;
 uniform float power;
@@ -14,8 +17,6 @@ uniform vec3 uCameraPosition;
 
 varying vec3 vWorldPosition;
 varying vec3 vPlanetCenter;
-
-const float PI = 3.14159265359;
 
 // Rayleigh scattering function
 float rayleighPhase(float cosTheta) {
@@ -107,5 +108,7 @@ void main() {
   finalColor = clamp(finalColor, 0.0, 1.0);
 
   gl_FragColor = vec4(finalColor, alpha);
+
+  #include <logdepthbuf_fragment>
 }
 

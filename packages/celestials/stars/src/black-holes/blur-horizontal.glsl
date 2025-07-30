@@ -1,4 +1,6 @@
 // Horizontal Gaussian blur
+#include <common>
+#include <logdepthbuf_pars_fragment>
 
 uniform sampler2D tDiffuse;
 uniform float blurSize;
@@ -16,4 +18,6 @@ void main() {
   sum += texture2D(tDiffuse, vUv + vec2(3.0 * blurSize, 0.0)) * 0.09;
   sum += texture2D(tDiffuse, vUv + vec2(4.0 * blurSize, 0.0)) * 0.05;
   gl_FragColor = sum;
+
+  #include <logdepthbuf_fragment>
 } 

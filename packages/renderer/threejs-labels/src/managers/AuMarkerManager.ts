@@ -1,6 +1,7 @@
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
 import { GeometryHelper } from "@teskooano/renderer-threejs-helpers";
+import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import { Layer2DManager } from "../Layer2DManager";
 import { AuMarkerLabelLayer } from "../layers/AuMarkerLabelLayer";
 import { CSS2DLayerType } from "../types";
@@ -35,6 +36,10 @@ export class AuMarkerManager {
     this.mainGroup = new THREE.Group();
     this.mainGroup.name = name;
 
+    // Set render order to ensure AU markers are rendered behind celestial objects
+    this.mainGroup.renderOrder =
+      RenderOrderManager.getRenderOrderForEffect("distance-markers");
+
     this.scene.add(this.mainGroup);
   }
 
@@ -58,7 +63,9 @@ export class AuMarkerManager {
       transparent: true,
       opacity: 0.2,
       toneMapped: false, // Set to false for UI elements to not be affected by scene lighting
-      depthTest: false,
+      depthTest: true, // Enable depth testing so AU markers are occluded by celestial objects
+      depthWrite: false, // Don't write to depth buffer to avoid interfering with celestial objects
+      blending: THREE.NormalBlending, // Use normal blending for proper transparency
     });
 
     this.ringInstances = new THREE.InstancedMesh(

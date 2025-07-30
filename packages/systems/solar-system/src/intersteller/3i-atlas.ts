@@ -61,7 +61,7 @@ export const atlas: CelestialObject<CometProperties> = {
     composition: ["water ice", "dust"],
     visualComaRadius: 150000,
     visualComaColor: "#FFFFE0",
-    visualMaxTailLength: 10.0,
+    visualMaxTailLength: 1000.0,
     visualTailColor: "#FFFFE0",
     visualComaOpacity: 0.5,
   },

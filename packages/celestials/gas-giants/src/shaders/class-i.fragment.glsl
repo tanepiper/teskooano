@@ -1,5 +1,8 @@
 precision highp float;
 
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 struct Light {
   vec3 position;
   vec3 color;
@@ -273,4 +276,6 @@ void main() {
     vec3 gammaCorrectedColor = pow(finalColor, vec3(1.0 / 2.2));
     
     gl_FragColor = vec4(gammaCorrectedColor, 1.0);
+    
+    #include <logdepthbuf_fragment>
 } 

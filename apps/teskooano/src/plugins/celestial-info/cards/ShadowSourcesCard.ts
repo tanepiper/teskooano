@@ -77,8 +77,6 @@ export class ShadowSourcesCard extends BaseCelestialCard {
   private renderShadowSourcesFromCelestialManager(
     celestial: CelestialObject,
   ): string {
-    if (!celestial.physicsStateReal) return "";
-
     try {
       // Get the current renderable objects from the store (same as other cards)
       const currentRenderableObjects = renderableStore.getRenderableObjects();

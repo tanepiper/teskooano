@@ -15,10 +15,24 @@ import {
  * - AU markers and distance indicators
  */
 export class InteractionOrchestrator {
+  /**
+   * Handles the camera controls and user input.
+   */
   private controlsManager: ControlsManager;
-  private css2DManager: Layer2DManager;
-  private auMarkerManager?: AuMarkerManager;
 
+  /**
+   * Handles the 2D labels and overlays.
+   */
+  private css2DManager: Layer2DManager;
+
+  /**
+   * Handles the AU markers and distance indicators.
+   */
+  private auMarkerManager: AuMarkerManager;
+
+  /**
+   * Initializes the interaction orchestrator.
+   */
   constructor(
     container: HTMLElement,
     renderingOrchestrator: any, // Pass the entire orchestrator
@@ -54,6 +68,12 @@ export class InteractionOrchestrator {
 
     // Set the controls manager in RenderingOrchestrator
     renderingOrchestrator.setControlsManager(this.controlsManager);
+
+    // @ts-ignore
+    if (window.teskooano) {
+      // @ts-ignore
+      window.teskooano.interactionOrchestrator = this;
+    }
   }
 
   /**

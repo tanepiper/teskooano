@@ -1,5 +1,8 @@
 precision highp float;
 
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 #define HEIGHT_LEVELS 5
 
 // MODIFIED: Added varyings from vertex shader
@@ -177,4 +180,6 @@ void main() {
 
     // Output final lit color
     gl_FragColor = vec4(finalColor, 1.0);
+    
+    #include <logdepthbuf_fragment>
 } 

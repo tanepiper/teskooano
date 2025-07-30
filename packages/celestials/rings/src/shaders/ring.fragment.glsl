@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_fragment>
+
 uniform vec3 color;
 uniform float opacity;
 uniform vec3 uParentPosition; // World position of the parent body
@@ -223,4 +226,6 @@ void main() {
     finalColor = pow(finalColor, vec3(1.0/2.2));
 
     gl_FragColor = vec4(finalColor, opacity);
+    
+    #include <logdepthbuf_fragment>
 } 

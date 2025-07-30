@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_vertex>
+
 varying vec2 vUv;
 varying vec3 vWorldPosition;
 varying vec3 vWorldNormal;
@@ -16,4 +19,6 @@ void main() {
 
   // Standard MVP transformation
   gl_Position = projectionMatrix * modelViewMatrix * vec4(objectSpacePosition, 1.0);
+  
+  #include <logdepthbuf_vertex>
 } 

@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_vertex>
+
 uniform vec3 uParentPosition; // World position of the parent body
 uniform float rotationAngle; // Current rotation angle of the ring
 
@@ -109,4 +112,6 @@ void main() {
 
   // Final position for rendering
   gl_Position = projectionMatrix * modelViewMatrix * finalPosition;
+  
+  #include <logdepthbuf_vertex>
 } 

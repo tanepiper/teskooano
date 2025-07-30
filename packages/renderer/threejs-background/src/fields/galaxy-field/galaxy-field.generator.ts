@@ -408,7 +408,7 @@ export function createGalaxyField(options: GalaxyFieldOptions): THREE.Group {
     const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
-      depthWrite: false,
+      depthWrite: true,
       depthTest: false,
       fog: false,
       alphaTest: 0.01,

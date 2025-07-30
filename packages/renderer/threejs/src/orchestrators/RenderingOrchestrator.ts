@@ -30,14 +30,49 @@ import * as THREE from "three";
  * - Maintains separation of concerns between camera logic and orbit rendering
  */
 export class RenderingOrchestrator {
+  /**
+   * Handles the scene management and core Three.js objects.
+   */
   private _sceneManager: SceneManager;
+
+  /**
+   * Handles the object lifecycle and visual representation.
+   */
   private _objectManager!: ObjectManager;
+
+  /**
+   * Handles the orbital visualization.
+   */
   private _orbitManager!: OrbitsManager;
+
+  /**
+   * Handles the background and environment.
+   */
   private _backgroundManager: BackgroundManager;
+
+  /**
+   * Handles the lighting and LOD systems.
+   */
   private _lightingManager: LightingManager;
+
+  /**
+   * Handles the LOD system.
+   */
   private _lodManager: LODManager;
+
+  /**
+   * Handles the grid and spatial reference.
+   */
   private _gridManager: GridManager;
+
+  /**
+   * Handles the state adapter.
+   */
   private _stateAdapter: RendererStateAdapter;
+
+  /**
+   * Handles the render pipeline.
+   */
   private _renderPipeline!: RenderPipeline;
 
   constructor(container: HTMLElement) {
@@ -67,6 +102,12 @@ export class RenderingOrchestrator {
 
     // Note: objectManager and orbitManager will be initialized after css2DManager is available
     // to avoid the temporary object issue
+
+    // @ts-ignore
+    if (window.teskooano) {
+      // @ts-ignore
+      window.teskooano.renderingOrchestrator = this;
+    }
   }
 
   /**
@@ -152,27 +193,39 @@ export class RenderingOrchestrator {
   }
 
   /**
+   * Gets the state adapter for direct access when needed.
+   */
+  get stateAdapter(): RendererStateAdapter {
+    return this._stateAdapter;
+  }
+
+  /**
+   * Gets the background manager for direct access when needed.
+   */
+  get backgroundManager(): BackgroundManager {
+    return this._backgroundManager;
+  }
+
+  /**
+   * Gets the lighting manager for direct access when needed.
+   */
+  get lightingManager(): LightingManager {
+    return this._lightingManager;
+  }
+
+  /**
+   * Gets the LOD manager for direct access when needed.
+   */
+  get lodManager(): LODManager {
+    return this._lodManager;
+  }
+
+  /**
    * Sets debug mode for all rendering components.
    */
   setDebugMode(enabled: boolean): void {
     this.objectManager.setDebugMode(enabled);
     this.objectManager.recreateAllMeshes();
-  }
-
-  /**
-   * Highlights prediction lines for a specific object.
-   *
-   * This method is part of the prediction highlighting delegation chain:
-   * CameraManager → RenderingOrchestrator → OrbitsManager → PredictionManager
-   *
-   * It's typically called when a user focuses on a celestial object via camera controls.
-   * The highlighting will only have an effect when using N-Body simulation mode,
-   * as ideal orbits don't support prediction highlighting.
-   *
-   * @param objectId - ID of the object to highlight, or null to clear highlighting
-   */
-  highlightPrediction(objectId: string | null): void {
-    this.orbitManager.highlightPrediction(objectId);
   }
 
   /**

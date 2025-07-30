@@ -254,7 +254,7 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
         `,
         transparent: true,
         side: THREE.DoubleSide,
-        depthWrite: false,
+        depthWrite: true,
         blending: THREE.AdditiveBlending,
       });
 

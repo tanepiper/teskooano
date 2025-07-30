@@ -1,4 +1,6 @@
 precision highp float;
+#include <common>
+#include <logdepthbuf_pars_fragment>
 
 #define MAX_COLORS 4
 
@@ -206,4 +208,6 @@ void main() {
     }
 
     gl_FragColor = vec4(finalColor * lighting, 1.0);
+
+    #include <logdepthbuf_fragment>
 } 

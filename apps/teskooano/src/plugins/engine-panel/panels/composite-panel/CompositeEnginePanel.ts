@@ -203,8 +203,8 @@ export class CompositeEnginePanel
    * @returns An object containing stats like FPS, draw calls, etc., or null if unavailable.
    */
   public getRendererStats(): RendererStats | null {
-    if (this._renderer?.animationLoop) {
-      return this._renderer.animationLoop.getCurrentStats();
+    if (this._renderer?.renderingOrchestrator?.sceneManager?.animationLoop) {
+      return this._renderer.renderingOrchestrator.sceneManager.animationLoop.getCurrentStats();
     } else {
       return null;
     }
@@ -215,7 +215,7 @@ export class CompositeEnginePanel
    * Useful for direct manipulation or querying of orbit visualization data.
    */
   public get orbitManager(): OrbitsManager | undefined {
-    return this._renderer?.orbitManager;
+    return this._renderer?.renderingOrchestrator?.orbitManager;
   }
 
   /**
@@ -223,7 +223,7 @@ export class CompositeEnginePanel
    * Useful for direct manipulation or querying of lighting data.
    */
   public get lightSourceManager(): LightingManager | undefined {
-    return this._renderer?.lightingManager;
+    return this._renderer?.renderingOrchestrator?.lightingManager;
   }
 
   /**
@@ -367,6 +367,11 @@ export class CompositeEnginePanel
 
     // 3. Create the main renderer, injecting the dependencies.
     this._renderer = new ModularSpaceRenderer(this._engineContainer);
+    // @ts-ignore
+    if (window.teskooano) {
+      // @ts-ignore
+      window.teskooano.renderer = this._renderer;
+    }
 
     // 4. Finalize setup.
     this._cameraCoordinator = new PanelCameraCoordinator(
@@ -428,7 +433,7 @@ export class CompositeEnginePanel
    * @param newState The latest simulation state.
    */
   private handleSimulationStateChange = (_: SimulationState): void => {
-    if (!this._renderer?.orbitManager) return;
+    if (!this._renderer?.renderingOrchestrator?.orbitManager) return;
   };
 
   /**

@@ -325,7 +325,9 @@ export class CameraManager {
 
       // Highlight prediction lines for the focused object (or hide all if null)
       if (this.renderer) {
-        this.renderer.renderingOrchestrator.highlightPrediction(objectId);
+        this.renderer.renderingOrchestrator.orbitManager.highlightPrediction(
+          objectId,
+        );
       }
     } else if (objectId === null) {
       this.intendedFocusIdForTransition = null;

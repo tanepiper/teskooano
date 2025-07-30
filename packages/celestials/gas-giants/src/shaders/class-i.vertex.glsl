@@ -1,3 +1,6 @@
+#include <common>
+#include <logdepthbuf_pars_vertex>
+
 // Varyings to pass data to the fragment shader
 varying vec2 vUv;          // Texture coordinates (keep for now, might not be used)
 varying vec3 vNormal;      // Vertex normal in world space
@@ -42,4 +45,6 @@ void main() {
 
   vNormal = normalize(normalMatrix * normal);
   vUnitSamplePoint = normalize(position);
+  
+  #include <logdepthbuf_vertex>
 } 

@@ -469,7 +469,7 @@ export class PredictionManager {
         material,
         `prediction-line-${objectId}`,
       );
-      line.frustumCulled = false;
+      line.frustumCulled = true;
 
       // Add prediction lines to the dedicated orbit lines group
       this.predictionLinesGroup.add(line);
