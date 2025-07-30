@@ -75,6 +75,8 @@ export class CometGenerator {
           type: CelestialType.COMET,
           classType: classType,
           composition: this.generateComposition(random),
+          colors: this.generateCometColors(random),
+          heights: this.generateCometHeights(random),
           activity: activity,
           visualComaRadius: this.calculateComaRadius(activity, bodyDistanceAU),
           visualComaColor: this.generateComaColor(random),
@@ -86,12 +88,15 @@ export class CometGenerator {
           visualTailColor: this.generateTailColor(random),
           visualTailOpacity: Math.min(activity * 0.6 + 0.1, 1.0),
           visuals: {
-            darkColorMultiplier: 0.3 + random() * 0.4,
-            lightColorMultiplier: 0.6 + random() * 0.4,
-            fbmScale: 0.5 + random() * 1.0,
-            fineFbmScale: 2.0 + random() * 3.0,
-            fineFbmMix: 0.3 + random() * 0.4,
+            noiseScale: 1.5 + random() * 1.0,
+            blendSharpness: 0.8 + random() * 0.4,
+            craterScale: 15.0 + random() * 10.0,
+            craterStrength: 0.6 + random() * 0.3,
+            simplePeriod: 2.0 + random() * 1.0,
+            undulation: 0.2 + random() * 0.2,
             ambientStrength: 0.2 + random() * 0.3,
+            metallicFactor: 0.05 + random() * 0.1,
+            roughness: 0.8 + random() * 0.2,
           },
         };
 
@@ -348,8 +353,9 @@ export class CometGenerator {
    */
   private calculateTailLength(activity: number, distanceAU: number): number {
     // Tail length increases with activity and decreases with distance
-    const baseLength = 0.5 + activity * 1.5;
-    const distanceFactor = Math.max(0.1, 1.0 - distanceAU / 100);
+    // Base length is much longer (150,000+ units as requested)
+    const baseLength = 150000 + activity * 50000; // 150k to 200k base length
+    const distanceFactor = Math.max(0.3, 1.0 - distanceAU / 200); // Less aggressive distance falloff
     return baseLength * distanceFactor;
   }
 
@@ -359,6 +365,34 @@ export class CometGenerator {
   private generateTailColor(random: () => number): string {
     const colors = ["#87CEEB", "#98FB98", "#F0E68C", "#DDA0DD"];
     return UTIL.getRandomItem(colors, random);
+  }
+
+  /**
+   * Generate comet nucleus colors
+   */
+  private generateCometColors(random: () => number): string[] {
+    const colorSets = [
+      ["#2c2c2c", "#444444", "#606060", "#8e8e8e"],
+      ["#202020", "#333333", "#505050", "#787878"],
+      ["#3d3d3d", "#555555", "#6c6c6c", "#8e8e8e"],
+      ["#332211", "#4d331a", "#664422", "#80552b"],
+      ["#4a4a4a", "#666666", "#888888", "#aaaaaa"],
+    ];
+    return UTIL.getRandomItem(colorSets, random);
+  }
+
+  /**
+   * Generate comet nucleus height thresholds
+   */
+  private generateCometHeights(random: () => number): number[] {
+    const heightSets = [
+      [0.0, 0.3, 0.55, 0.8],
+      [0.0, 0.35, 0.55, 0.8],
+      [0.0, 0.4, 0.6, 0.85],
+      [0.0, 0.4, 0.65, 0.9],
+      [0.0, 0.3, 0.5, 0.75],
+    ];
+    return UTIL.getRandomItem(heightSets, random);
   }
 
   /**
