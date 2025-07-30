@@ -29,6 +29,6 @@
     { "path": "../../renderer/threejs-lighting" }
   ],
   "include": ["src/**/*"],
-  "files": ["src/vite-env.d.ts"],
+  "files": ["vite-env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
