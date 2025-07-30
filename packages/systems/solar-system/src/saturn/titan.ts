@@ -46,9 +46,10 @@ export const titan: CelestialObject<PlanetProperties> = {
     ],
     atmosphere: {
       glowColor: "#FFA500",
-      intensity: 0.85,
-      power: 2.0,
-      thickness: 0.3,
+      intensity: 1.0,
+      power: 20.0,
+      thickness: 1.0,
+      opacity: 1.0,
     },
     surface: {
       roughness: 0.6,

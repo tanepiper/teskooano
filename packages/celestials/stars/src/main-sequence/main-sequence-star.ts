@@ -7,6 +7,7 @@ import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
   GeometryUtilities,
+  LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -115,5 +116,15 @@ export class MainSequenceStarRenderer<
     }
 
     return new THREE.Color(0xffcc00);
+  }
+
+  public override update(
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources: LightSourcesMap,
+    camera: THREE.PerspectiveCamera,
+  ): void {
+    super.update(object, time, timeScale, lightSources, camera);
   }
 }

@@ -50,8 +50,8 @@ export const sun: CelestialObject<StarProperties> = {
     // Enhanced material parameters for realistic solar appearance
     materialParams: {
       // Plasma noise parameters for simple effects
-      noiseScale: 0.073,
-      noiseIntensity: 0.3,
+      noiseScale: 0.053,
+      noiseIntensity: 0.2,
       plasmaTurbulence: 1.0,
 
       // Uniform lighting

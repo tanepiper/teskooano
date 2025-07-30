@@ -414,7 +414,10 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
         if (material.uniforms && material.uniforms.time) {
-          material.uniforms.time.value = time;
+          // Create a much smaller time scale for visible animation cycles
+          // Use a very small scale to create fast, visible animation cycles
+          const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
+          material.uniforms.time.value = animationTime;
         }
       });
     }

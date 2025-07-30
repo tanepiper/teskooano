@@ -311,7 +311,10 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
         if (material.uniforms && material.uniforms.uTime) {
-          material.uniforms.uTime.value = time;
+          // Create a much smaller time scale for visible animation cycles
+          // Use a very small scale to create fast, visible animation cycles
+          const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
+          material.uniforms.uTime.value = animationTime;
         }
       });
     }

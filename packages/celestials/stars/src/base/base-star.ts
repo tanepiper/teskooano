@@ -72,7 +72,10 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     if (this.uniforms.uTime !== undefined) {
-      this.uniforms.uTime.value = time;
+      // Create a much smaller time scale for visible animation cycles
+      // Use a very small scale to create fast, visible animation cycles
+      const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
+      this.uniforms.uTime.value = animationTime;
     }
   }
 
@@ -124,7 +127,10 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    this.uniforms.uTime.value = time;
+    // Create a much smaller time scale for visible animation cycles
+    // Use a very small scale to create fast, visible animation cycles
+    const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
+    this.uniforms.uTime.value = animationTime;
   }
 
   /**
@@ -353,9 +359,15 @@ export abstract class BaseStarRenderer<
 
       // Update time uniform if it exists (different materials may have different time uniform names)
       if (material.uniforms.uTime) {
-        material.uniforms.uTime.value = (time * timeScale) / 100000000000;
+        // Create a much smaller time scale for visible animation cycles
+        // Use a very small scale to create fast, visible animation cycles
+        const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
+        material.uniforms.uTime.value = animationTime;
       } else if (material.uniforms.time) {
-        material.uniforms.time.value = (time * timeScale) / 100000000000;
+        // Create a much smaller time scale for visible animation cycles
+        // Use a very small scale to create fast, visible animation cycles
+        const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
+        material.uniforms.time.value = animationTime;
       }
     }
   }

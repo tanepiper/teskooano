@@ -130,7 +130,10 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
     lightSources: LightSourcesMap,
     camera: THREE.PerspectiveCamera,
   ): void {
-    this.uniforms.time.value = time;
+    // Create a much smaller time scale for visible animation cycles
+    // Use a very small scale to create fast, visible animation cycles
+    const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
+    this.uniforms.time.value = animationTime;
   }
 
   /**

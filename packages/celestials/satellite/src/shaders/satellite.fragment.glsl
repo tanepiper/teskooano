@@ -120,8 +120,8 @@ void main() {
     reflection = textureCube(envMap, reflectDir).rgb * envMapIntensity * finalMetalness;
   }
   
-  // Start with ambient lighting
-  vec3 ambient = diffuseColor * uDynamicAmbientIntensity;
+  // Start with very low ambient lighting for realistic space conditions
+  vec3 ambient = diffuseColor * (uDynamicAmbientIntensity * 0.02);
   
   // Calculate lighting from all light sources with proper terminator handling
   vec3 totalDiffuse = vec3(0.0);
@@ -139,10 +139,10 @@ void main() {
     float dotProduct = dot(normal, lightDir);
     float terminatorTransition = smoothstep(-0.15, 0.15, dotProduct);
     
+    // Calculate shadow factor for this light source (applies to both day and night side)
+    float shadowFactor = getShadow(vWorldPosition, lightDir);
+    
     if (dotProduct > 0.0) {
-      // Calculate shadow factor for this light source
-      float shadowFactor = getShadow(vWorldPosition, lightDir);
-      
       // Apply shadow factor to light intensity
       float effectiveIntensity = light.intensity * shadowFactor;
       
@@ -155,8 +155,8 @@ void main() {
       float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
       totalSpecular += light.color * spec * effectiveIntensity * 0.3 * terminatorTransition;
     } else {
-      // Night side - very low lighting with smooth transition
-      float nightLight = 0.05 * (1.0 - terminatorTransition);
+      // Night side - very low lighting with smooth transition, but also affected by shadows
+      float nightLight = 0.05 * (1.0 - terminatorTransition) * shadowFactor;
       totalDiffuse += light.color * nightLight;
     }
   }

@@ -129,6 +129,8 @@ export interface PlanetAtmosphereProperties {
   power: number;
   /** The thickness of the glow, usually a number between 0 and 1. */
   thickness: number;
+  /** The opacity of the atmosphere, usually a number between 0 and 1. */
+  opacity?: number;
 }
 
 /**

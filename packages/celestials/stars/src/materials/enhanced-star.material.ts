@@ -83,7 +83,10 @@ export class EnhancedStarMaterial extends THREE.ShaderMaterial {
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     // Update time uniform for animation
-    this.uniforms.uTime.value = time * timeScale;
+    // Create a much smaller time scale for visible animation cycles
+    // Use a very small scale to create fast, visible animation cycles
+    const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
+    this.uniforms.uTime.value = animationTime;
 
     // Update star colors from object properties
     this.updateStarColors(this.object.properties as StarProperties);

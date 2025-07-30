@@ -18,6 +18,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
   constructor(
     atmosphereProps: PlanetAtmosphereProperties & {
       aberrationIntensity?: number;
+      opacity?: number; // New opacity parameter
     },
     options: {
       planetRadius?: number;
@@ -30,6 +31,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       power = 2.0,
       thickness = 0.1,
       aberrationIntensity = 1,
+      opacity = 1.0, // Default to fully opaque
     } = atmosphereProps;
 
     const { planetRadius = 1.0, parentId = "unknown" } = options;
@@ -47,6 +49,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
         atmosphereThickness: { value: thickness },
         planetRadius: { value: planetRadius },
         aberrationIntensity: { value: aberrationIntensity },
+        opacity: { value: opacity }, // New opacity uniform
 
         // Light properties
         uNumLights: { value: 0 },
@@ -69,8 +72,8 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       vertexShader: atmosphereVertexShaderSource,
       fragmentShader: atmosphereFragmentShaderSource,
       transparent: true,
-      side: THREE.BackSide,
-      depthWrite: true,
+      side: THREE.DoubleSide,
+      depthWrite: false, // Disable depth write for transparent double-sided materials
     });
 
     this.parentId = parentId;

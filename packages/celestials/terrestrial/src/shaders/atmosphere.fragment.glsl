@@ -7,6 +7,7 @@ uniform float power;
 uniform float atmosphereThickness;
 uniform float planetRadius;
 uniform float aberrationIntensity;
+uniform float opacity; // New uniform for controlling overall opacity
 
 // Light properties
 uniform int uNumLights;
@@ -57,8 +58,11 @@ void main() {
   vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
   vec3 normalizedPos = normalize(vWorldPosition - vPlanetCenter);
 
+  // Handle double-sided rendering - flip normal for back faces
+  vec3 effectiveNormal = gl_FrontFacing ? normalizedPos : -normalizedPos;
+  
   // Density calculation based on view angle
-  float viewAngle = abs(dot(viewDirection, normalizedPos));
+  float viewAngle = abs(dot(viewDirection, effectiveNormal));
   float atmosphereDensity = pow(1.0 - viewAngle, power) * intensity;
   
   // Edge glow effect
@@ -71,38 +75,36 @@ void main() {
     vec3 lightDir = normalize(uLightPositions[i] - vWorldPosition);
     float scatterAngle = dot(viewDirection, lightDir) * 0.5 + 0.5;
 
-    // Only calculate scattering if the atmosphere is facing the light (day side)
-    // For atmospheres, we use a more lenient threshold since they're always visible
-    float dotProduct = dot(normalizedPos, lightDir);
-    if (dotProduct > -0.3) { // Allow some scattering on the night side for visibility
-      // Calculate optical depth for this light (used potentially for alpha, not direct attenuation)
-      float depth = opticalDepth(vWorldPosition, lightDir);
+    // Calculate optical depth for this light (used potentially for alpha, not direct attenuation)
+    float depth = opticalDepth(vWorldPosition, lightDir);
 
-      // Combine Rayleigh and Mie scattering using example's formula
-      vec3 lightScatter = uLightColors[i] * uLightIntensities[i] * (
-        rayleighPhase(scatterAngle) * vec3(0.3, 0.5, 1.0) + 
-        miePhase(scatterAngle, 0.76) * vec3(1.0)
-      );
+    // Combine Rayleigh and Mie scattering using example's formula
+    vec3 lightScatter = uLightColors[i] * uLightIntensities[i] * (
+      rayleighPhase(scatterAngle) * vec3(0.3, 0.5, 1.0) + 
+      miePhase(scatterAngle, 0.76) * vec3(1.0)
+    );
 
-      // Use smooth transition consistent with surface lighting
-      float atmosphereTransition = smoothstep(-0.3, 0.3, dotProduct);
-      scatter += lightScatter * max(atmosphereTransition, 0.2); // Consistent with surface terminator
-    }
+    // Remove view angle dependency - use consistent scattering regardless of view angle
+    scatter += lightScatter;
   }
 
   // Combine base scatter and glow effects
   vec3 baseAtmosphereColor = glowColor * scatter;
   baseAtmosphereColor += glowColor * edgeGlow; // Add edge glow
 
-  // Calculate alpha based on density and view depth
+  // Calculate alpha based on density and view depth, then apply opacity control
   float alpha = atmosphereDensity;
   // Add contribution from looking through atmosphere volume
   alpha = clamp(alpha + opticalDepth(vWorldPosition, viewDirection) * 0.2, 0.0, 1.0);
 
   // Add direct-look visibility boost
-  if (viewAngle < 0.3) {
-    alpha += (1.0 - viewAngle / 0.3) * 0.3;
-  }
+  // if (viewAngle < 0.3) {
+  //   alpha += (1.0 - viewAngle / 0.3) * 0.3;
+  // }
+  alpha += 0.1;
+  
+  // Apply the opacity uniform to control overall transparency
+  alpha *= opacity;
   alpha = clamp(alpha, 0.0, 1.0); // Clamp final alpha
 
   // --- Chromatic Aberration --- 

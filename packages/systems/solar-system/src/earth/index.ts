@@ -55,6 +55,7 @@ export const earth: CelestialObject<PlanetProperties> = {
       intensity: 0.6,
       power: 1.2,
       thickness: 0.25,
+      opacity: 0.7,
     },
     surface: {
       roughness: 0.12,
