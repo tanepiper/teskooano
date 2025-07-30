@@ -1,6 +1,4 @@
 import { ceres } from "./ceres";
-import { vesta } from "./vesta";
-import { pallas } from "./pallas";
 import { leleakuhonua } from "./leleakuhonua";
 import { vp113 } from "./vp113";
 import { eris, dysnomia } from "./eris";
@@ -16,8 +14,6 @@ import { ammonite } from "./ammonite";
 export const minorBodies = [
   // Dwarf Planets (in order of discovery/significance)
   ceres,
-  vesta,
-  pallas,
   sedna, // Added Sedna
   leleakuhonua, // 541132 Leleākūhonua (The Goblin) - extreme sednoid
   vp113, // 2012 VP113 (Biden) - early sednoid discovery
