@@ -131,9 +131,13 @@ void main() {
     if (i >= uNumLights) break;
     
     LightSource light = uLightSources[i];
-    if (light.intensity <= 0.0) continue;
+    // Clamp light intensity extremely aggressively to prevent flashes
+    float clampedIntensity = clamp(light.intensity, 0.0, 2.0);
+    if (clampedIntensity <= 0.0) continue;
     
     vec3 lightDir = normalize(light.position - vWorldPosition);
+    // Validate light direction to prevent NaN
+    if (length(lightDir) < 0.1) continue;
     
     // Create a smooth transition around the terminator
     float dotProduct = dot(normal, lightDir);
@@ -143,20 +147,22 @@ void main() {
     float shadowFactor = getShadow(vWorldPosition, lightDir);
     
     if (dotProduct > 0.0) {
-      // Apply shadow factor to light intensity
-      float effectiveIntensity = light.intensity * shadowFactor;
+      // Apply shadow factor to light intensity with extreme clamping
+      float effectiveIntensity = clamp(clampedIntensity * shadowFactor, 0.0, 1.0);
       
       // Diffuse lighting with reduced strength for better terminator definition
       float diff = max(dotProduct, 0.0);
-      totalDiffuse += light.color * diff * effectiveIntensity * 0.5 * terminatorTransition; // Reduced diffuse strength
+      vec3 diffuseContrib = light.color * diff * effectiveIntensity * 0.2 * terminatorTransition; // Further reduced
+      totalDiffuse += clamp(diffuseContrib, vec3(0.0), vec3(0.5)); // Even lower clamp
       
       // Specular lighting (Blinn-Phong)
       vec3 halfwayDir = normalize(lightDir + viewDir);
       float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-      totalSpecular += light.color * spec * effectiveIntensity * 0.3 * terminatorTransition;
+      vec3 specularContrib = light.color * spec * effectiveIntensity * 0.1 * terminatorTransition; // Further reduced
+      totalSpecular += clamp(specularContrib, vec3(0.0), vec3(0.2)); // Even lower clamp
     } else {
       // Night side - very low lighting with smooth transition, but also affected by shadows
-      float nightLight = 0.05 * (1.0 - terminatorTransition) * shadowFactor;
+      float nightLight = clamp(0.02 * (1.0 - terminatorTransition) * shadowFactor, 0.0, 0.05); // Reduced values
       totalDiffuse += light.color * nightLight;
     }
   }
@@ -168,13 +174,21 @@ void main() {
   // Add emissive lighting
   vec3 emissive = uEmissiveColor * uEmissiveIntensity;
   
-  // Final color with environment map reflection
-  vec3 finalColor = ambient + diffuse + specular + emissive + reflection;
+  // Final color with environment map reflection - clamp all components extremely aggressively
+  vec3 finalColor = clamp(ambient, vec3(0.0), vec3(1.0)) + 
+                   clamp(diffuse, vec3(0.0), vec3(1.0)) + 
+                   clamp(specular, vec3(0.0), vec3(1.0)) + 
+                   clamp(emissive, vec3(0.0), vec3(1.0)) + 
+                   clamp(reflection, vec3(0.0), vec3(1.0));
+  
+  // Final safety clamp before gamma correction - extremely aggressive
+  finalColor = clamp(finalColor, vec3(0.0), vec3(1.5));
   
   // Apply gamma correction
   finalColor = pow(finalColor, vec3(1.0 / 2.2));
   
-  gl_FragColor = vec4(finalColor, 1.0);
+  // Final output clamp to prevent any remaining wild values
+  gl_FragColor = vec4(clamp(finalColor, vec3(0.0), vec3(1.0)), 1.0);
 
   #include <logdepthbuf_fragment>
 } 
