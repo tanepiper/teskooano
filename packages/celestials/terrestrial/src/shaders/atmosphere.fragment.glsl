@@ -71,17 +71,22 @@ void main() {
     vec3 lightDir = normalize(uLightPositions[i] - vWorldPosition);
     float scatterAngle = dot(viewDirection, lightDir) * 0.5 + 0.5;
 
-    // Calculate optical depth for this light (used potentially for alpha, not direct attenuation)
-    float depth = opticalDepth(vWorldPosition, lightDir);
+    // Only calculate scattering if the atmosphere is facing the light (day side)
+    // For atmospheres, we use a more lenient threshold since they're always visible
+    float dotProduct = dot(normalizedPos, lightDir);
+    if (dotProduct > -0.3) { // Allow some scattering on the night side for visibility
+      // Calculate optical depth for this light (used potentially for alpha, not direct attenuation)
+      float depth = opticalDepth(vWorldPosition, lightDir);
 
-    // Combine Rayleigh and Mie scattering using example's formula
-    vec3 lightScatter = uLightColors[i] * uLightIntensities[i] * (
-      rayleighPhase(scatterAngle) * vec3(0.3, 0.5, 1.0) + 
-      miePhase(scatterAngle, 0.76) * vec3(1.0)
-    );
+      // Combine Rayleigh and Mie scattering using example's formula
+      vec3 lightScatter = uLightColors[i] * uLightIntensities[i] * (
+        rayleighPhase(scatterAngle) * vec3(0.3, 0.5, 1.0) + 
+        miePhase(scatterAngle, 0.76) * vec3(1.0)
+      );
 
-    // Accumulate raw scatter without depth attenuation here
-    scatter += lightScatter;
+      // Reduce scattering intensity for better terminator definition
+      scatter += lightScatter * (dotProduct > 0.0 ? 1.0 : 0.3); // Much less scattering on night side
+    }
   }
 
   // Combine base scatter and glow effects

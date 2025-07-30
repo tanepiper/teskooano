@@ -49,10 +49,10 @@ float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius)
 void main() {
   vec3 normal = normalize(vNormal);
   
-  // Dynamic ambient light based on nearby star luminosity
-  vec3 ambient = baseColor * uDynamicAmbientIntensity;
+  // Much darker ambient for proper night sides
+  vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1);
   
-  // Diffuse lighting
+  // Diffuse lighting with proper terminator handling
   vec3 diffuse = vec3(0.0);
   
   for (int i = 0; i < MAX_LIGHTS; i++) {
@@ -61,20 +61,25 @@ void main() {
     // Calculate direction from fragment to light
     vec3 lightDir = normalize(uLights[i].position - vPosition);
     
-    // Diffuse component
-    float diff = max(dot(normal, lightDir), 0.0);
-    
-    // Shadow calculation
-    float shadow = 1.0;
-    for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
-      if (j >= uNumShadowCasters) break;
-      shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
-                                    uShadowCasters[j].position, 
-                                    uShadowCasters[j].radius));
+    // Only calculate lighting if the surface is facing the light (day side)
+    float dotProduct = dot(normal, lightDir);
+    if (dotProduct > 0.0) {
+      // Diffuse component with reduced strength for sharper terminators
+      float diff = max(dotProduct, 0.0);
+      
+      // Shadow calculation
+      float shadow = 1.0;
+      for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
+        if (j >= uNumShadowCasters) break;
+        shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
+                                      uShadowCasters[j].position, 
+                                      uShadowCasters[j].radius));
+      }
+      
+      // Apply shadow to diffuse lighting with reduced strength
+      diffuse += shadow * diff * uLights[i].color * uLights[i].intensity * 0.4;
     }
-    
-    // Apply shadow to diffuse lighting
-    diffuse += shadow * diff * uLights[i].color * uLights[i].intensity;
+    // Night side gets no direct lighting, only the very low ambient
   }
   
   // Final color

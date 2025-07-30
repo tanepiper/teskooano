@@ -2,10 +2,17 @@ precision highp float;
 #include <common>
 #include <logdepthbuf_pars_fragment>
 
-struct Light {
+// Unified Light Source structure
+struct LightSource {
   vec3 position;
   vec3 color;
   float intensity;
+};
+
+// Shadow Caster structure (for moons and other celestial bodies)
+struct ShadowCaster {
+  vec3 position;
+  float radius;
 };
 
 uniform vec3 baseColor;
@@ -13,7 +20,6 @@ uniform float metalness;
 uniform float roughness;
 uniform float maxEmissiveIntensity;
 uniform float uDynamicAmbientIntensity;
-uniform float uShadowFactor; // Precalculated shadow factor (0.0 = full shadow, 1.0 = fully lit)
 uniform float uEmissiveIntensity; // Calculated emissive intensity
 uniform vec3 uEmissiveColor; // Emissive color
 
@@ -32,13 +38,52 @@ uniform samplerCube envMap; // Environment map for reflections
 uniform bool hasEnvMap; // Whether environment map exists
 uniform float envMapIntensity; // Environment map reflection intensity
 
-uniform Light uLights[MAX_LIGHTS];
+// Dynamic lighting and shadow arrays
 uniform int uNumLights;
+uniform LightSource uLightSources[MAX_LIGHTS];
+uniform int uNumShadowCasters;
+uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 
 varying vec3 vWorldPosition;
 varying vec3 vWorldNormal;
 varying vec3 vViewDirection;
 varying vec2 vUv; // UV coordinates for texture mapping
+
+// Function to calculate shadow from a single spherical occluder
+// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
+float getShadow(vec3 fragPos, vec3 lightDir) {
+  float finalShadow = 1.0;
+
+  for (int i = 0; i < uNumShadowCasters; i++) {
+    // This check is necessary because the array is padded with empty data
+    if (uShadowCasters[i].radius <= 0.0) continue;
+
+    vec3 oc = fragPos - uShadowCasters[i].position;
+    float b = dot(oc, lightDir);
+    float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
+    float discriminant = b * b - c;
+
+    // If the ray is potentially inside the shadow cone
+    if (discriminant > 0.0) {
+      float t = -b - sqrt(discriminant);
+      // Check if the intersection is in front of the fragment
+      if (t > 0.001) {
+        // Penumbra width is proportional to the occluder's radius.
+        // A larger multiplier makes the edge softer.
+        float penumbra = uShadowCasters[i].radius * 0.8;
+        float penumbraSq = penumbra * penumbra;
+        
+        // Calculate a smooth fade from lit to shadow based on how deep the ray is.
+        // 1.0 = lit edge, 0.0 = deep shadow.
+        float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
+        
+        // The final shadow is the darkest of all potential shadows.
+        finalShadow = min(finalShadow, currentShadow);
+      }
+    }
+  }
+  return finalShadow;
+}
 
 void main() {
   vec3 normal = normalize(vWorldNormal);
@@ -75,32 +120,40 @@ void main() {
     reflection = textureCube(envMap, reflectDir).rgb * envMapIntensity * finalMetalness;
   }
   
-  // Start with ambient lighting - also affected by shadow factor
-  vec3 ambient = diffuseColor * uDynamicAmbientIntensity * uShadowFactor;
+  // Start with ambient lighting
+  vec3 ambient = diffuseColor * uDynamicAmbientIntensity;
   
-  // Calculate lighting from all light sources
+  // Calculate lighting from all light sources with proper terminator handling
   vec3 totalDiffuse = vec3(0.0);
   vec3 totalSpecular = vec3(0.0);
   
   for (int i = 0; i < MAX_LIGHTS; i++) {
     if (i >= uNumLights) break;
     
-    Light light = uLights[i];
+    LightSource light = uLightSources[i];
     if (light.intensity <= 0.0) continue;
     
     vec3 lightDir = normalize(light.position - vWorldPosition);
     
-    // Apply shadow factor to light intensity
-    float effectiveIntensity = light.intensity * uShadowFactor;
-    
-    // Diffuse lighting
-    float diff = max(dot(normal, lightDir), 0.0);
-    totalDiffuse += light.color * diff * effectiveIntensity;
-    
-    // Specular lighting (Blinn-Phong)
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-    totalSpecular += light.color * spec * effectiveIntensity * 0.3;
+    // Only calculate lighting if the surface is facing the light (day side)
+    float dotProduct = dot(normal, lightDir);
+    if (dotProduct > 0.0) {
+      // Calculate shadow factor for this light source
+      float shadowFactor = getShadow(vWorldPosition, lightDir);
+      
+      // Apply shadow factor to light intensity
+      float effectiveIntensity = light.intensity * shadowFactor;
+      
+      // Diffuse lighting with reduced strength for better terminator definition
+      float diff = max(dotProduct, 0.0);
+      totalDiffuse += light.color * diff * effectiveIntensity * 0.5; // Reduced diffuse strength
+      
+      // Specular lighting (Blinn-Phong)
+      vec3 halfwayDir = normalize(lightDir + viewDir);
+      float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
+      totalSpecular += light.color * spec * effectiveIntensity * 0.3;
+    }
+    // Night side gets no direct lighting, only ambient and emissive
   }
   
   // Combine lighting components

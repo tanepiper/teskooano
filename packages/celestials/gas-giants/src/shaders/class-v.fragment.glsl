@@ -85,6 +85,8 @@ void main() {
     vec3 viewDir = normalize(vViewDirection);
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
+    // Much darker ambient for proper night sides
+    vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1); // Much darker ambient
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -92,23 +94,26 @@ void main() {
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
 
-        // Diffuse component - Strong reflection
-        float ndl = max(0.0, dot(diffuseNormal, lightDir));
-        ndl = clamp01(ndl);
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(diffuseNormal, lightDir);
+        if (dotProduct > 0.0) {
+            // Diffuse component - Strong reflection
+            float ndl = max(dotProduct, 0.0);
+            ndl = clamp01(ndl);
 
-        float shadow = 1.0;
-        if (ndl > 0.0) {
-            shadow = getShadow(vPosition, lightDir);
+            float shadow = getShadow(vPosition, lightDir);
+
+            // Reduced diffuse strength for sharper terminators
+            totalDiffuse += baseColor * ndl * 0.4 * uLights[i].color * uLights[i].intensity * shadow; // Reduced diffuse based on bright base color
+
+            // Specular component - Noticeable reflection
+            vec3 halfAngle = normalize(viewDir + lightDir);
+            float specComp = max(0.0, dot(normal, halfAngle));
+            specComp = clamp01(specComp);
+            specComp = pow(specComp, 24.0); // Moderate shininess
+            totalSpecular += vec3(0.015) * specComp * uLights[i].color * uLights[i].intensity * shadow; // Low specular
         }
-
-        totalDiffuse += baseColor * ndl * 0.5 * uLights[i].color * uLights[i].intensity * shadow; // Strong diffuse based on bright base color
-
-        // Specular component - Noticeable reflection
-        vec3 halfAngle = normalize(viewDir + lightDir);
-        float specComp = max(0.0, dot(normal, halfAngle));
-        specComp = clamp01(specComp);
-        specComp = pow(specComp, 24.0); // Moderate shininess
-        totalSpecular += vec3(0.015) * specComp * uLights[i].color * uLights[i].intensity * shadow; // Low specular
+        // Night side gets no direct lighting, only the very low ambient
     }
 
     // Rim Lighting (Class V - subtle blue/white glow)
@@ -121,8 +126,7 @@ void main() {
     // Emissive component for heat glow
     vec3 emission = emissiveColor * emissiveIntensity;
 
-    // Combine components - minimal ambient for dark space
-    vec3 ambient = baseColor * uDynamicAmbientIntensity; // Much reduced ambient for dark space
+    // Combine components
     vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim + emission;
 
     // Apply storm overlay if available

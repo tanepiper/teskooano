@@ -116,18 +116,24 @@ void main() {
     finalColor *= (1.0 - craters * uCraterStrength);
 
     // --- Lighting ---
-    vec3 lighting = vec3(uAmbientStrength);
+    vec3 lighting = vec3(uAmbientStrength * 0.1); // Much darker ambient
     vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
 
     for (int i = 0; i < uNumLights; i++) {
         vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
-        float diffuse = max(dot(vWorldNormal, lightDirection), 0.0);
-        lighting += uLights[i].color * diffuse * uLights[i].intensity;
+        
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(vWorldNormal, lightDirection);
+        if (dotProduct > 0.0) {
+            float diffuse = max(dotProduct, 0.0);
+            lighting += uLights[i].color * diffuse * uLights[i].intensity * 0.4; // Reduced diffuse strength
 
-        // Specular
-        vec3 halfwayDir = normalize(lightDirection + viewDirection);
-        float spec = pow(max(dot(vWorldNormal, halfwayDir), 0.0), 32.0);
-        lighting += uLights[i].color * spec * uRoughness * uLights[i].intensity;
+            // Specular - only on day side
+            vec3 halfwayDir = normalize(lightDirection + viewDirection);
+            float spec = pow(max(dot(vWorldNormal, halfwayDir), 0.0), 32.0);
+            lighting += uLights[i].color * spec * uRoughness * uLights[i].intensity;
+        }
+        // Night side gets no direct lighting, only the very low ambient
     }
 
     gl_FragColor = vec4(finalColor * lighting, 1.0);

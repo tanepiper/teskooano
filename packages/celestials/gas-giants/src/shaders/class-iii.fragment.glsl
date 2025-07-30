@@ -82,6 +82,8 @@ void main() {
     vec3 viewDir = normalize(vViewDirection);
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
+    // Much darker ambient for proper night sides
+    vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1); // Much darker ambient
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -90,21 +92,25 @@ void main() {
         
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
-        float diffuse = max(dot(diffuseNormal, lightDir), 0.0);
         
-        float shadow = 1.0;
-        if (diffuse > 0.0) {
-            shadow = getShadow(vPosition, lightDir);
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(diffuseNormal, lightDir);
+        if (dotProduct > 0.0) {
+            float diffuse = max(dotProduct, 0.0);
+            
+            float shadow = getShadow(vPosition, lightDir);
+
+            // Reduced diffuse strength for sharper terminators
+            totalDiffuse += baseColor * diffuse * 0.3 * uLights[i].color * uLights[i].intensity * shadow;
+
+            // Specular component (basic Blinn-Phong) - only on day side
+            vec3 halfAngle = normalize(viewDir + lightDir);
+            float specComp = max(0.0, dot(normal, halfAngle));
+            specComp = clamp01(specComp);
+            specComp = pow(specComp, 40.0); // Sharper highlights for Class III
+            totalSpecular += vec3(0.05) * specComp * uLights[i].color * uLights[i].intensity * shadow;
         }
-
-        totalDiffuse += baseColor * diffuse * 0.4 * uLights[i].color * uLights[i].intensity * shadow;
-
-        // Specular component (basic Blinn-Phong) - Keep it very low
-        vec3 halfAngle = normalize(viewDir + lightDir);
-        float specComp = max(0.0, dot(normal, halfAngle));
-        specComp = clamp01(specComp);
-        specComp = pow(specComp, 40.0); // Sharper highlights for Class III
-        totalSpecular += vec3(0.05) * specComp * uLights[i].color * uLights[i].intensity * shadow;
+        // Night side gets no direct lighting, only the very low ambient
     }
 
     // Rim Lighting (Class III adjustments - potentially less pronounced)
@@ -114,8 +120,7 @@ void main() {
     vec3 rimColor = mix(baseColor, vec3(1.0), 0.10); // Blend even less white (was 0.15)
     vec3 rim = rimColor * rimIntensity;
 
-    // Combine components - minimal ambient for dark space
-    vec3 ambient = baseColor * uDynamicAmbientIntensity; // Much reduced ambient for dark space
+    // Combine components
     vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim;
 
     // Apply storm overlay if available

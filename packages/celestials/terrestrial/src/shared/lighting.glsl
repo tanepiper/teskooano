@@ -15,14 +15,15 @@ vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity,
     return diffuse + specular;
 }
 
-// Simple lighting calculation (Blinn-Phongish)
+// Simple lighting calculation (Blinn-Phongish) with proper terminator handling
 vec3 calculateLighting(
     vec3 albedo, 
     vec3 normal, 
     vec3 viewDir, 
     float shadowFactor
 ) {
-    vec3 finalColor = albedo * uAmbientLightColor * uAmbientLightIntensity;
+    // Start with very low ambient for dark night sides
+    vec3 finalColor = albedo * uAmbientLightColor * (uAmbientLightIntensity * 0.1); // Much darker ambient
 
     for (int i = 0; i < uNumLights; i++) {
         vec3 lightPos = uLights[i].position;
@@ -31,16 +32,21 @@ vec3 calculateLighting(
 
         vec3 lightDir = normalize(lightPos - vWorldPosition);
 
-        // Diffuse
-        float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = lightColor * diff * lightIntensity * 0.5; // MODIFIED: Reduced diffuse strength
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(normal, lightDir);
+        if (dotProduct > 0.0) {
+            // Diffuse with reduced strength for better terminator definition
+            float diff = max(dotProduct, 0.0);
+            vec3 diffuse = lightColor * diff * lightIntensity * 0.4; // Further reduced for sharper terminators
 
-        // Specular (Blinn-Phong)
-        vec3 halfwayDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
+            // Specular (Blinn-Phong) - only on day side
+            vec3 halfwayDir = normalize(lightDir + viewDir);
+            float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
+            vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
 
-        finalColor += (albedo * diffuse + specular) * shadowFactor;
+            finalColor += (albedo * diffuse + specular) * shadowFactor;
+        }
+        // Night side gets no direct lighting, only the very low ambient
     }
     
     return finalColor;

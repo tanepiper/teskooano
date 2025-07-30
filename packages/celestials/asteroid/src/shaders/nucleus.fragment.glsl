@@ -192,19 +192,26 @@ void main() {
     float shadowFactor = calculateShadowFactor(vWorldPosition);
 
     // --- Lighting using modular lighting functions ---
-    vec3 lighting = vec3(uAmbientStrength);
+    vec3 lighting = vec3(uAmbientStrength * 0.1); // Much darker ambient
     vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
 
     for (int i = 0; i < uNumLights; i++) {
-        vec3 lightContribution = calculateLightContribution(
-            uLights[i].position,
-            uLights[i].color,
-            uLights[i].intensity,
-            vWorldNormal,
-            viewDirection,
-            vWorldPosition
-        );
-        lighting += lightContribution * shadowFactor;
+        vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
+        
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(vWorldNormal, lightDirection);
+        if (dotProduct > 0.0) {
+            vec3 lightContribution = calculateLightContribution(
+                uLights[i].position,
+                uLights[i].color,
+                uLights[i].intensity,
+                vWorldNormal,
+                viewDirection,
+                vWorldPosition
+            );
+            lighting += lightContribution * shadowFactor * 0.4; // Reduced diffuse strength
+        }
+        // Night side gets no direct lighting, only the very low ambient
     }
 
     gl_FragColor = vec4(finalColor * lighting, 1.0);

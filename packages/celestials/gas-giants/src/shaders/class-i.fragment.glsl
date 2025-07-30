@@ -228,33 +228,37 @@ void main() {
     noiseColor = lerp(noiseColor, mainColor2, smoothstep(0.2, 0.8, colorDecision2));
 
     // Now calculate lighting components using the noiseColor
-    vec3 totalDiffuse = vec3(0.0);
-    vec3 totalSpecular = vec3(0.0);
+    vec3 totalLight = vec3(0.0);
 
     // Use the smooth sphere normal for diffuse lighting to match the procedural texture
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
-    vec3 totalLight = vec3(0.0);
+    // Much darker ambient for proper night sides
+    totalLight += vec3(uDynamicAmbientIntensity * 0.1); // Much darker ambient
+
     for (int i = 0; i < uNumLights; i++) {
         if (uLights[i].intensity <= 0.0) continue;
 
         // Calculate direction from fragment to light
         vec3 lightDir = normalize(uLights[i].position - vPosition);
         
-        float diffuse = max(dot(diffuseNormal, lightDir), 0.0);
-        
-        float shadow = 1.0;
-        for (int j = 0; j < uNumShadowCasters; j++) {
-            shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
-                                          uShadowCasters[j].position, 
-                                          uShadowCasters[j].radius));
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(diffuseNormal, lightDir);
+        if (dotProduct > 0.0) {
+            float diffuse = max(dotProduct, 0.0);
+            
+            float shadow = 1.0;
+            for (int j = 0; j < uNumShadowCasters; j++) {
+                shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
+                                              uShadowCasters[j].position, 
+                                              uShadowCasters[j].radius));
+            }
+            
+            // Reduced diffuse strength for sharper terminators
+            totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.4;
         }
-        
-        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.5;
+        // Night side gets no direct lighting, only the very low ambient
     }
-
-    // Dynamic ambient light based on nearby star luminosity
-    totalLight += vec3(uDynamicAmbientIntensity); // Dynamic ambient for realistic star-based lighting
 
     // Final color is a mix based on the noise value
     vec3 finalColor = noiseColor * totalLight;

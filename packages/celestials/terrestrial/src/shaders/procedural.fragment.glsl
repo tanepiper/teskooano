@@ -163,9 +163,12 @@ void main() {
     float shadowFactor = 1.0;
     if (uNumLights > 0) {
         vec3 primaryLightDir = normalize(uLights[0].position - vWorldPosition);
-        // Only calculate shadow if the surface is facing the light
+        // Only calculate shadow if the surface is facing the light (day side)
         if (dot(baseNormal, primaryLightDir) > 0.0) {
             shadowFactor = getShadow(vWorldPosition, primaryLightDir);
+        } else {
+            // Night side gets no lighting, so shadow factor doesn't matter
+            shadowFactor = 0.0;
         }
     }
 

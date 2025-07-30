@@ -25,12 +25,16 @@ export interface SatelliteMaterialOptions {
   envMapIntensity?: number;
 }
 
+const MAX_LIGHTS = 4;
+const MAX_SHADOW_CASTERS = 4;
+
 /**
  * Custom shader material for satellite rendering that integrates with our engine's lighting system
  */
 export class SatelliteMaterial extends THREE.ShaderMaterial {
   private maxEmissiveIntensity: number;
   private currentNumLights: number = 0;
+  private currentNumShadowCasters: number = 0;
 
   constructor(options: SatelliteMaterialOptions = {}) {
     const baseColor = options.color ?? new THREE.Color(0xdddddd);
@@ -75,11 +79,17 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
         roughness: { value: roughness },
         maxEmissiveIntensity: { value: maxEmissiveIntensity },
         uDynamicAmbientIntensity: { value: 1.0 },
-        uShadowFactor: { value: 1.0 },
         uEmissiveIntensity: { value: 0.0 },
         uEmissiveColor: { value: new THREE.Color(0x111111) },
-        uLights: { value: LightArrayUtils.createLightSourceArray(4) },
+        // Dynamic lighting and shadow arrays
         uNumLights: { value: 0 },
+        uLightSources: {
+          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
+        },
+        uNumShadowCasters: { value: 0 },
+        uShadowCasters: {
+          value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
+        },
         // Texture uniforms
         map: { value: diffuseMap },
         normalMap: { value: normalMap },
@@ -95,7 +105,8 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
         envMapIntensity: { value: envMapIntensity },
       },
       defines: {
-        MAX_LIGHTS: 4,
+        MAX_LIGHTS: MAX_LIGHTS,
+        MAX_SHADOW_CASTERS: MAX_SHADOW_CASTERS,
       },
       vertexShader: satelliteVertexShader,
       fragmentShader: satelliteFragmentShader,
@@ -106,23 +117,43 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
     });
 
     this.maxEmissiveIntensity = maxEmissiveIntensity;
+    this.currentNumLights = MAX_LIGHTS;
+    this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
+  }
+
+  private resizeLightArrays(newSize: number): void {
+    this.uniforms.uLightSources.value = LightArrayUtils.resizeLightArray(
+      this,
+      newSize,
+      this.uniforms.uLightSources.value,
+    );
+    this.currentNumLights = newSize;
+  }
+
+  private resizeShadowCasterArrays(newSize: number): void {
+    this.uniforms.uShadowCasters.value =
+      LightArrayUtils.resizeShadowCasterArray(
+        this,
+        newSize,
+        this.uniforms.uShadowCasters.value,
+      );
+    this.currentNumShadowCasters = newSize;
   }
 
   /**
    * Updates the material with current lighting information
-   * This ensures the material responds to changes in light sources
+   * This ensures the material responds to changes in light sources and shadow casters
    */
   update(
     satellitePosition: THREE.Vector3,
     lightSources: LightSourcesMap,
     shadowCasters?: { position: THREE.Vector3; radius: number }[],
   ): void {
-    const numLights = Math.min(lightSources.size, 4);
+    const numLights = Math.min(lightSources.size, MAX_LIGHTS);
 
     // Resize light arrays if needed
     if (numLights !== this.currentNumLights) {
-      this.uniforms.uLights.value = LightArrayUtils.createLightSourceArray(4);
-      this.currentNumLights = numLights;
+      this.resizeLightArrays(numLights);
     }
 
     this.uniforms.uNumLights.value = numLights;
@@ -130,17 +161,37 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
     // Update light uniforms
     let i = 0;
     for (const lightData of lightSources.values()) {
-      if (i >= 4) break; // Max 4 lights
+      if (i >= MAX_LIGHTS) break; // Max MAX_LIGHTS lights
 
-      this.uniforms.uLights.value[i].position.copy(lightData.position);
-      this.uniforms.uLights.value[i].color.copy(lightData.color);
-      this.uniforms.uLights.value[i].intensity = lightData.intensity ?? 1.0;
+      this.uniforms.uLightSources.value[i].position.copy(lightData.position);
+      this.uniforms.uLightSources.value[i].color.copy(lightData.color);
+      this.uniforms.uLightSources.value[i].intensity =
+        lightData.intensity ?? 1.0;
       i++;
     }
 
-    // Calculate shadow factor (0.0 = full shadow, 1.0 = fully lit)
-    let shadowFactor = 1.0;
+    // Update shadow casters
+    const numShadowCasters = shadowCasters?.length ?? 0;
+    if (numShadowCasters !== this.currentNumShadowCasters) {
+      this.resizeShadowCasterArrays(numShadowCasters);
+    }
 
+    this.uniforms.uNumShadowCasters.value = numShadowCasters;
+    if (shadowCasters) {
+      for (let i = 0; i < numShadowCasters; i++) {
+        const uniformCaster = this.uniforms.uShadowCasters.value[i];
+        uniformCaster.position.copy(shadowCasters[i].position);
+        uniformCaster.radius = shadowCasters[i].radius;
+      }
+    }
+
+    // Calculate emissive intensity based on lighting conditions
+    // When in shadow, increase emissive to maintain visibility
+    // When fully lit, reduce emissive to avoid over-brightness
+    let emissiveIntensity = 0.0;
+
+    // Calculate overall shadow factor for emissive calculation
+    let overallShadowFactor = 1.0;
     if (shadowCasters && shadowCasters.length > 0 && lightSources.size > 0) {
       // Get the primary light source (usually the Sun)
       const primaryLight = Array.from(lightSources.values())[0];
@@ -168,27 +219,23 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
               1.0 - Math.min(1.0, discriminant / penumbraSq);
 
             // Apply the darkest shadow with more aggressive falloff
-            shadowFactor = Math.min(shadowFactor, shadowIntensity * 0.5);
+            overallShadowFactor = Math.min(
+              overallShadowFactor,
+              shadowIntensity * 0.5,
+            );
           }
         }
       }
     }
 
-    this.uniforms.uShadowFactor.value = shadowFactor;
-
-    // Calculate emissive intensity based on lighting conditions
-    // When in shadow, increase emissive to maintain visibility
-    // When fully lit, reduce emissive to avoid over-brightness
-    let emissiveIntensity = 0.0;
-
-    if (shadowFactor < 0.3) {
+    if (overallShadowFactor < 0.3) {
       // In deep shadow - strong emissive for visibility
       emissiveIntensity =
-        this.maxEmissiveIntensity * (1.0 - shadowFactor) * 1.5;
-    } else if (shadowFactor < 0.7) {
+        this.maxEmissiveIntensity * (1.0 - overallShadowFactor) * 1.5;
+    } else if (overallShadowFactor < 0.7) {
       // In partial shadow - moderate emissive
       emissiveIntensity =
-        this.maxEmissiveIntensity * (1.0 - shadowFactor) * 0.8;
+        this.maxEmissiveIntensity * (1.0 - overallShadowFactor) * 0.8;
     } else {
       // Well lit - minimal emissive
       emissiveIntensity = this.maxEmissiveIntensity * 0.05;

@@ -155,7 +155,7 @@ float createParticleDetail(vec2 uv, float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientIntensity = uDynamicAmbientIntensity; // Use dynamic ambient
+    float ambientIntensity = uDynamicAmbientIntensity * 0.1; // Much darker ambient
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
@@ -167,29 +167,34 @@ void main() {
         vec3 lightDir = normalize(light.position - vPosition);
         vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
 
-        // Lift the light direction slightly to illuminate both sides of the flat ring plane
-        vec3 lightLift = vWorldNormal * 0.15;
-        vec3 lightDirUp = normalize(lightDir + lightLift);
-        vec3 lightDirDown = normalize(lightDir - lightLift);
+        // Only calculate lighting if the ring surface is facing the light (day side)
+        float dotProduct = dot(faceNormal, lightDir);
+        if (dotProduct > 0.0) {
+            // Lift the light direction slightly to illuminate both sides of the flat ring plane
+            vec3 lightLift = vWorldNormal * 0.15;
+            vec3 lightDirUp = normalize(lightDir + lightLift);
+            vec3 lightDirDown = normalize(lightDir - lightLift);
 
-        float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
-        float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
-        float diffuse = (diffuseUp + diffuseDown) * 1.5;
+            float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
+            float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
+            float diffuse = (diffuseUp + diffuseDown) * 1.2; // Reduced for sharper terminators
 
-        // *** 2. Calculate Shadows ***
-        float shadow = 1.0;
-        
-        // Shadow from the parent planet
-        shadow = min(shadow, getShadow(vPosition, light.position, uParentPosition, uParentRadius));
+            // *** 2. Calculate Shadows ***
+            float shadow = 1.0;
+            
+            // Shadow from the parent planet
+            shadow = min(shadow, getShadow(vPosition, light.position, uParentPosition, uParentRadius));
 
-        // Shadows from moons
-        for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
-            if (j >= uNumShadowCasters) break;
-            shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
+            // Shadows from moons
+            for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
+                if (j >= uNumShadowCasters) break;
+                shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
+            }
+
+            // *** 3. Combine and Add to Total ***
+            totalLight += light.color * diffuse * light.intensity * shadow;
         }
-
-        // *** 3. Combine and Add to Total ***
-        totalLight += light.color * diffuse * light.intensity * shadow;
+        // Night side gets no direct lighting, only the very low ambient
     }
 
     // Calculate distance from center for radial patterns

@@ -249,23 +249,27 @@ void main() {
     // Use the smooth sphere normal for diffuse lighting to match the procedural texture
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
+    // Much darker ambient for proper night sides
+    totalLight += vec3(uDynamicAmbientIntensity * 0.1); // Much darker ambient
+
     for (int i = 0; i < uNumLights; i++) {
         if (uLights[i].intensity <= 0.0) continue;
 
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
-        float diffuse = max(dot(diffuseNormal, lightDir), 0.0);
         
-        float shadow = 1.0;
-        if (diffuse > 0.0) {
-            shadow = getShadow(vPosition, lightDir);
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(diffuseNormal, lightDir);
+        if (dotProduct > 0.0) {
+            float diffuse = max(dotProduct, 0.0);
+            
+            float shadow = getShadow(vPosition, lightDir);
+
+            // Reduced diffuse strength for sharper terminators
+            totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.4;
         }
-
-        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.5;
+        // Night side gets no direct lighting, only the very low ambient
     }
-
-    // Dynamic ambient light based on nearby star luminosity
-    totalLight += vec3(uDynamicAmbientIntensity); // Dynamic ambient for realistic star-based lighting
 
     // Final color is a mix based on the noise value
     vec3 finalColor = noiseColor * totalLight;

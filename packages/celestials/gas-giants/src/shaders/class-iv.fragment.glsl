@@ -83,6 +83,8 @@ void main() {
     vec3 viewDir = normalize(vViewDirection);
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
+    // Much darker ambient for proper night sides
+    vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1); // Much darker ambient
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -90,23 +92,26 @@ void main() {
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
 
-        // Diffuse component - very low contribution
-        float ndl = max(0.0, dot(diffuseNormal, lightDir));
-        ndl = clamp01(ndl);
-        
-        float shadow = 1.0;
-        if (ndl > 0.0) {
-            shadow = getShadow(vPosition, lightDir);
+        // Only calculate lighting if the surface is facing the light (day side)
+        float dotProduct = dot(diffuseNormal, lightDir);
+        if (dotProduct > 0.0) {
+            // Diffuse component - very low contribution
+            float ndl = max(dotProduct, 0.0);
+            ndl = clamp01(ndl);
+            
+            float shadow = getShadow(vPosition, lightDir);
+
+            // Reduced diffuse strength for sharper terminators
+            totalDiffuse += baseColor * ndl * 0.04 * uLights[i].color * uLights[i].intensity * shadow; // Even lower diffuse reflection
+
+            // Specular component - negligible
+            vec3 halfAngle = normalize(viewDir + lightDir);
+            float specComp = max(0.0, dot(normal, halfAngle));
+            specComp = clamp01(specComp);
+            specComp = pow(specComp, 100.0); // Very tight
+            totalSpecular += vec3(0.08) * specComp * uLights[i].color * uLights[i].intensity * shadow; // More pronounced specular
         }
-
-        totalDiffuse += baseColor * ndl * 0.05 * uLights[i].color * uLights[i].intensity * shadow; // Extremely low diffuse reflection
-
-        // Specular component - negligible
-        vec3 halfAngle = normalize(viewDir + lightDir);
-        float specComp = max(0.0, dot(normal, halfAngle));
-        specComp = clamp01(specComp);
-        specComp = pow(specComp, 100.0); // Very tight
-        totalSpecular += vec3(0.08) * specComp * uLights[i].color * uLights[i].intensity * shadow; // More pronounced specular
+        // Night side gets no direct lighting, only the very low ambient
     }
 
     // Rim Lighting (Class IV adjustments - more intense)
@@ -116,8 +121,7 @@ void main() {
     vec3 rimColor = mix(baseColor, vec3(1.0), 0.3) * 1.3; // Brighter rim color
     vec3 rim = rimColor * rimIntensity;
 
-    // Dynamic ambient light based on nearby star luminosity
-    vec3 ambient = baseColor * uDynamicAmbientIntensity; // Dynamic ambient for realistic star-based lighting
+    // Combine components
     vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim;
 
     // Optional: Add a very faint emissive component based on base color?
