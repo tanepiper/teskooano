@@ -84,8 +84,9 @@ void main() {
         miePhase(scatterAngle, 0.76) * vec3(1.0)
       );
 
-      // Reduce scattering intensity for better terminator definition
-      scatter += lightScatter * (dotProduct > 0.0 ? 1.0 : 0.3); // Much less scattering on night side
+      // Use smooth transition consistent with surface lighting
+      float atmosphereTransition = smoothstep(-0.3, 0.3, dotProduct);
+      scatter += lightScatter * max(atmosphereTransition, 0.2); // Consistent with surface terminator
     }
   }
 

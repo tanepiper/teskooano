@@ -82,8 +82,24 @@ void main() {
     vec3 viewDir = normalize(vViewDirection);
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
+    // Create atmospheric scattering effect for cloudless azure appearance
+    float viewAngle = dot(viewDir, normal);
+    float atmosphereIntensity = 1.0 - abs(viewAngle); // Stronger at edges
+    
+    // Create subtle atmospheric banding with better contrast
+    float latitude = vUnitSamplePoint.y * 1.0 + time * 0.0005; // Very slow movement
+    float longitude = atan(vUnitSamplePoint.z, vUnitSamplePoint.x) * 1.0;
+    
+    // Subtle atmospheric variations (much more subtle than previous)
+    float bands = sin(latitude * 3.0 + longitude * 1.5) * 0.05 + 0.5; // Very subtle banding
+    bands = smoothstep(0.45, 0.55, bands);
+    
+    // Subtle depth variations using the base color more conservatively
+    vec3 atmosphereColor = baseColor * (0.95 + bands * 0.1); // Very subtle variation
+    atmosphereColor = mix(baseColor, atmosphereColor, atmosphereIntensity * 0.2); // Much less mixing
+
     // Much darker ambient for proper night sides
-    vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1); // Much darker ambient
+    vec3 ambient = atmosphereColor * (uDynamicAmbientIntensity * 0.05); // Even darker ambient
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -93,24 +109,32 @@ void main() {
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
         
-        // Only calculate lighting if the surface is facing the light (day side)
+        // Create a much wider, smoother transition around the terminator
         float dotProduct = dot(diffuseNormal, lightDir);
-        if (dotProduct > 0.0) {
-            float diffuse = max(dotProduct, 0.0);
-            
-            float shadow = getShadow(vPosition, lightDir);
+        float terminatorTransition = smoothstep(-0.5, 0.5, dotProduct); // Wide 1.0 unit transition
+        
+        // Always calculate diffuse (no hard cutoff)
+        float diffuse = max(dotProduct, 0.0);
+        
+        float shadow = getShadow(vPosition, lightDir);
 
-            // Reduced diffuse strength for sharper terminators
-            totalDiffuse += baseColor * diffuse * 0.3 * uLights[i].color * uLights[i].intensity * shadow;
+        // Apply lighting with smooth terminator transition
+        float lightContribution = terminatorTransition * shadow;
+        totalDiffuse += atmosphereColor * diffuse * lightContribution * 0.25 * uLights[i].color * uLights[i].intensity;
 
-            // Specular component (basic Blinn-Phong) - only on day side
-            vec3 halfAngle = normalize(viewDir + lightDir);
-            float specComp = max(0.0, dot(normal, halfAngle));
-            specComp = clamp01(specComp);
-            specComp = pow(specComp, 40.0); // Sharper highlights for Class III
-            totalSpecular += vec3(0.05) * specComp * uLights[i].color * uLights[i].intensity * shadow;
-        }
-        // Night side gets no direct lighting, only the very low ambient
+        // Specular component (basic Blinn-Phong) with smooth falloff
+        vec3 halfAngle = normalize(viewDir + lightDir);
+        float specComp = max(0.0, dot(normal, halfAngle));
+        specComp = clamp01(specComp);
+        specComp = pow(specComp, 40.0); // Sharper highlights for Class III
+        
+        // Apply specular with smoother falloff
+        float specularFalloff = smoothstep(-0.2, 0.3, dotProduct); // Tighter falloff for specular
+        totalSpecular += vec3(0.05) * specComp * lightContribution * specularFalloff * uLights[i].color * uLights[i].intensity;
+        
+        // Add subtle night side illumination
+        float nightContribution = (1.0 - terminatorTransition) * 0.02; // Very subtle night glow
+        totalDiffuse += atmosphereColor * nightContribution * uLights[i].color * uLights[i].intensity;
     }
 
     // Rim Lighting (Class III adjustments - potentially less pronounced)
@@ -136,7 +160,10 @@ void main() {
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.8);
     }
 
-    // Apply gamma correction
+    // Clamp before gamma correction to prevent artifacts
+    finalColor = clamp(finalColor, 0.0, 1.0);
+
+    // Apply basic gamma correction
     finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);

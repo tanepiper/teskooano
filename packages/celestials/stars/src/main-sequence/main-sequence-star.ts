@@ -90,7 +90,7 @@ export class MainSequenceStarRenderer<
 
     return [
       { object: group, distance: 0 },
-      { object: mediumGroup, distance: object.radius * 10 },
+      { object: mediumGroup, distance: object.radius * 100 },
     ];
   }
 

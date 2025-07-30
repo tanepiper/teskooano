@@ -13,6 +13,7 @@ import classVVertexShader from "../shaders/class-v.vertex.glsl";
 export class ClassVMaterial extends BaseGasGiantMaterial {
   constructor(options: {
     baseColor: THREE.Color;
+    cloudColor: THREE.Color;
     emissiveColor: THREE.Color;
     emissiveIntensity: number;
     stormMap?: THREE.Texture;
@@ -30,6 +31,7 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
       },
       uniforms: {
         baseColor: { value: options.baseColor },
+        cloudColor: { value: options.cloudColor },
         emissiveColor: { value: options.emissiveColor },
         emissiveIntensity: { value: options.emissiveIntensity },
         time: { value: 0 },
@@ -42,7 +44,7 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
 
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },
-        uDynamicAmbientIntensity: { value: 0.03 }, // System-wide minimum ambient for "just enough glow"
+        uDynamicAmbientIntensity: { value: 0.08 }, // Increased ambient for better atmospheric visibility
       },
       vertexShader: classVVertexShader,
       fragmentShader: classVFragmentShader,

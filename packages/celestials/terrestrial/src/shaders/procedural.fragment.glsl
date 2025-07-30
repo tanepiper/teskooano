@@ -159,15 +159,17 @@ void main() {
         baseColor = mix(baseColor, colors[i], blendFactor);
     }
 
-    // Determine shadow factor before calculating lighting
+    // Calculate shadow factor for day side lighting only
     float shadowFactor = 1.0;
     if (uNumLights > 0) {
         vec3 primaryLightDir = normalize(uLights[0].position - vWorldPosition);
-        // Only calculate shadow if the surface is facing the light (day side)
-        if (dot(baseNormal, primaryLightDir) > 0.0) {
+        float dotProduct = dot(baseNormal, primaryLightDir);
+        
+        if (dotProduct > 0.0) {
+            // Day side - calculate shadows
             shadowFactor = getShadow(vWorldPosition, primaryLightDir);
         } else {
-            // Night side gets no lighting, so shadow factor doesn't matter
+            // Night side - no shadows needed
             shadowFactor = 0.0;
         }
     }

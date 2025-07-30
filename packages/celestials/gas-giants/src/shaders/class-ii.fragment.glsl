@@ -250,7 +250,7 @@ void main() {
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
     // Much darker ambient for proper night sides
-    totalLight += vec3(uDynamicAmbientIntensity * 0.1); // Much darker ambient
+    totalLight += vec3(uDynamicAmbientIntensity * 0.05); // Even darker ambient
 
     for (int i = 0; i < uNumLights; i++) {
         if (uLights[i].intensity <= 0.0) continue;
@@ -258,17 +258,22 @@ void main() {
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
         
-        // Only calculate lighting if the surface is facing the light (day side)
+        // Create a much wider, smoother transition around the terminator
         float dotProduct = dot(diffuseNormal, lightDir);
-        if (dotProduct > 0.0) {
-            float diffuse = max(dotProduct, 0.0);
-            
-            float shadow = getShadow(vPosition, lightDir);
+        float terminatorTransition = smoothstep(-0.5, 0.5, dotProduct); // Wide 1.0 unit transition
+        
+        // Always calculate diffuse (no hard cutoff)
+        float diffuse = max(dotProduct, 0.0);
+        
+        float shadow = getShadow(vPosition, lightDir);
 
-            // Reduced diffuse strength for sharper terminators
-            totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow * 0.4;
-        }
-        // Night side gets no direct lighting, only the very low ambient
+        // Apply lighting with smooth terminator transition
+        float lightContribution = terminatorTransition * shadow;
+        totalLight += uLights[i].color * uLights[i].intensity * diffuse * lightContribution * 0.3;
+        
+        // Add subtle night side illumination
+        float nightContribution = (1.0 - terminatorTransition) * 0.02; // Very subtle night glow
+        totalLight += uLights[i].color * uLights[i].intensity * nightContribution;
     }
 
     // Final color is a mix based on the noise value
@@ -287,7 +292,10 @@ void main() {
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.8);
     }
 
-    // Apply gamma correction
+    // Clamp before gamma correction to prevent artifacts
+    finalColor = clamp(finalColor, 0.0, 1.0);
+
+    // Apply basic gamma correction
     finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);

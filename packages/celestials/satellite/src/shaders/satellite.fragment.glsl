@@ -135,8 +135,10 @@ void main() {
     
     vec3 lightDir = normalize(light.position - vWorldPosition);
     
-    // Only calculate lighting if the surface is facing the light (day side)
+    // Create a smooth transition around the terminator
     float dotProduct = dot(normal, lightDir);
+    float terminatorTransition = smoothstep(-0.15, 0.15, dotProduct);
+    
     if (dotProduct > 0.0) {
       // Calculate shadow factor for this light source
       float shadowFactor = getShadow(vWorldPosition, lightDir);
@@ -146,14 +148,17 @@ void main() {
       
       // Diffuse lighting with reduced strength for better terminator definition
       float diff = max(dotProduct, 0.0);
-      totalDiffuse += light.color * diff * effectiveIntensity * 0.5; // Reduced diffuse strength
+      totalDiffuse += light.color * diff * effectiveIntensity * 0.5 * terminatorTransition; // Reduced diffuse strength
       
       // Specular lighting (Blinn-Phong)
       vec3 halfwayDir = normalize(lightDir + viewDir);
       float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-      totalSpecular += light.color * spec * effectiveIntensity * 0.3;
+      totalSpecular += light.color * spec * effectiveIntensity * 0.3 * terminatorTransition;
+    } else {
+      // Night side - very low lighting with smooth transition
+      float nightLight = 0.05 * (1.0 - terminatorTransition);
+      totalDiffuse += light.color * nightLight;
     }
-    // Night side gets no direct lighting, only ambient and emissive
   }
   
   // Combine lighting components

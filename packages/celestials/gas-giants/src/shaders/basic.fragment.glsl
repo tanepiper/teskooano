@@ -49,10 +49,10 @@ float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius)
 void main() {
   vec3 normal = normalize(vNormal);
   
-  // Much darker ambient for proper night sides
-  vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1);
+  // Much darker ambient for proper night sides  
+  vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.05); // Even darker ambient
   
-  // Diffuse lighting with proper terminator handling
+  // Diffuse lighting with smooth terminator handling
   vec3 diffuse = vec3(0.0);
   
   for (int i = 0; i < MAX_LIGHTS; i++) {
@@ -61,31 +61,40 @@ void main() {
     // Calculate direction from fragment to light
     vec3 lightDir = normalize(uLights[i].position - vPosition);
     
-    // Only calculate lighting if the surface is facing the light (day side)
+    // Calculate smooth terminator transition 
     float dotProduct = dot(normal, lightDir);
-    if (dotProduct > 0.0) {
-      // Diffuse component with reduced strength for sharper terminators
-      float diff = max(dotProduct, 0.0);
-      
-      // Shadow calculation
-      float shadow = 1.0;
-      for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
-        if (j >= uNumShadowCasters) break;
-        shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
-                                      uShadowCasters[j].position, 
-                                      uShadowCasters[j].radius));
-      }
-      
-      // Apply shadow to diffuse lighting with reduced strength
-      diffuse += shadow * diff * uLights[i].color * uLights[i].intensity * 0.4;
+    
+    // Create a much wider, smoother transition around the terminator
+    float terminatorTransition = smoothstep(-0.5, 0.5, dotProduct); // Wide 1.0 unit transition
+    
+    // Diffuse component
+    float diff = max(dotProduct, 0.0);
+    
+    // Shadow calculation
+    float shadow = 1.0;
+    for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
+      if (j >= uNumShadowCasters) break;
+      shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
+                                    uShadowCasters[j].position, 
+                                    uShadowCasters[j].radius));
     }
-    // Night side gets no direct lighting, only the very low ambient
+    
+    // Apply lighting with smooth terminator transition
+    float lightContribution = terminatorTransition * shadow;
+    diffuse += diff * uLights[i].color * uLights[i].intensity * lightContribution * 0.3;
+    
+    // Add subtle night side illumination
+    float nightContribution = (1.0 - terminatorTransition) * 0.02; // Very subtle night glow
+    diffuse += nightContribution * uLights[i].color * uLights[i].intensity;
   }
   
   // Final color
   vec3 finalColor = ambient + diffuse * baseColor;
   
-  // Gamma correction
+  // Clamp before gamma correction to prevent artifacts
+  finalColor = clamp(finalColor, 0.0, 1.0);
+  
+  // Apply basic gamma correction
   finalColor = pow(finalColor, vec3(1.0 / 2.2));
   
   gl_FragColor = vec4(finalColor, 1.0);

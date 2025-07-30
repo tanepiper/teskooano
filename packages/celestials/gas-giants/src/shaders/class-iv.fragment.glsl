@@ -83,8 +83,34 @@ void main() {
     vec3 viewDir = normalize(vViewDirection);
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
+    // Create alkali metal absorption patterns and hot atmospheric effects
+    float viewAngle = dot(viewDir, normal);
+    float atmosphereIntensity = 1.0 - abs(viewAngle);
+    
+    // Create hot atmospheric disturbances with alkali metal lines
+    float latitude = vUnitSamplePoint.y * 1.2 + time * 0.001; 
+    float longitude = atan(vUnitSamplePoint.z, vUnitSamplePoint.x) * 1.5 + time * 0.0008;
+    
+    // Alkali metal absorption bands (more subtle and detailed)
+    float sodiumBands = sin(latitude * 3.5) * sin(longitude * 2.0) * 0.15 + 0.5;
+    float potassiumBands = sin(longitude * 3.0 + latitude * 1.5) * 0.1 + 0.5;
+    float hotSpots = sin(latitude * 5.0) * sin(longitude * 4.0) * 0.08 + 0.5;
+    
+    sodiumBands = smoothstep(0.4, 0.6, sodiumBands);
+    potassiumBands = smoothstep(0.45, 0.55, potassiumBands);
+    hotSpots = smoothstep(0.6, 0.8, hotSpots);
+    
+    // Very subtle alkali effects, preserving base color detail
+    vec3 alkaliColor = baseColor;
+    alkaliColor *= (0.3 + sodiumBands * 0.4); // Darken with sodium absorption
+    alkaliColor *= (0.8 + potassiumBands * 0.2); // Slight potassium darkening
+    alkaliColor += vec3(0.2, 0.1, 0.05) * hotSpots * 0.3; // Subtle hot spots
+    
+    // Apply atmospheric effects much more subtly
+    alkaliColor = mix(baseColor * 0.5, alkaliColor, 0.8 + atmosphereIntensity * 0.2);
+
     // Much darker ambient for proper night sides
-    vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.1); // Much darker ambient
+    vec3 ambient = alkaliColor * (uDynamicAmbientIntensity * 0.03); // Extremely dark ambient for Class IV
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -92,26 +118,33 @@ void main() {
         // Calculate light direction from position
         vec3 lightDir = normalize(uLights[i].position - vPosition);
 
-        // Only calculate lighting if the surface is facing the light (day side)
+        // Create a much wider, smoother transition around the terminator
         float dotProduct = dot(diffuseNormal, lightDir);
-        if (dotProduct > 0.0) {
-            // Diffuse component - very low contribution
-            float ndl = max(dotProduct, 0.0);
-            ndl = clamp01(ndl);
-            
-            float shadow = getShadow(vPosition, lightDir);
+        float terminatorTransition = smoothstep(-0.5, 0.5, dotProduct); // Wide 1.0 unit transition
+        
+        // Always calculate diffuse (no hard cutoff)
+        float ndl = max(dotProduct, 0.0);
+        ndl = clamp01(ndl);
+        
+        float shadow = getShadow(vPosition, lightDir);
 
-            // Reduced diffuse strength for sharper terminators
-            totalDiffuse += baseColor * ndl * 0.04 * uLights[i].color * uLights[i].intensity * shadow; // Even lower diffuse reflection
+        // Apply lighting with smooth terminator transition
+        float lightContribution = terminatorTransition * shadow;
+        totalDiffuse += alkaliColor * ndl * lightContribution * 0.03 * uLights[i].color * uLights[i].intensity; // Very low diffuse
 
-            // Specular component - negligible
-            vec3 halfAngle = normalize(viewDir + lightDir);
-            float specComp = max(0.0, dot(normal, halfAngle));
-            specComp = clamp01(specComp);
-            specComp = pow(specComp, 100.0); // Very tight
-            totalSpecular += vec3(0.08) * specComp * uLights[i].color * uLights[i].intensity * shadow; // More pronounced specular
-        }
-        // Night side gets no direct lighting, only the very low ambient
+        // Specular component with smooth falloff
+        vec3 halfAngle = normalize(viewDir + lightDir);
+        float specComp = max(0.0, dot(normal, halfAngle));
+        specComp = clamp01(specComp);
+        specComp = pow(specComp, 100.0); // Very tight
+        
+        // Apply specular with smoother falloff
+        float specularFalloff = smoothstep(-0.1, 0.2, dotProduct); // Very tight falloff for specular
+        totalSpecular += vec3(0.08) * specComp * lightContribution * specularFalloff * uLights[i].color * uLights[i].intensity;
+        
+        // Add minimal night side illumination
+        float nightContribution = (1.0 - terminatorTransition) * 0.01; // Minimal night glow for dark planets
+        totalDiffuse += alkaliColor * nightContribution * uLights[i].color * uLights[i].intensity;
     }
 
     // Rim Lighting (Class IV adjustments - more intense)
@@ -141,7 +174,10 @@ void main() {
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.5);
     }
 
-    // Apply gamma correction
+    // Clamp before gamma correction to prevent artifacts
+    finalColor = clamp(finalColor, 0.0, 1.0);
+
+    // Apply basic gamma correction
     finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
     gl_FragColor = vec4(finalColor, 1.0);
