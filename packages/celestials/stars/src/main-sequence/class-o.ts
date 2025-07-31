@@ -228,6 +228,8 @@ export class ClassOStarRenderer extends MainSequenceStarRenderer<ClassOStarMater
       allMeshes,
     );
 
+    this.setMaterialUniforms("time", new THREE.Uniform(time));
+
     const starProps = object.properties as StarProperties;
     let subclass = 5;
     if (starProps.spectralClass) {

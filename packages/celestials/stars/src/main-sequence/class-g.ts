@@ -253,7 +253,7 @@ export class ClassGStarRenderer extends MainSequenceStarRenderer<ClassGStarMater
       allObjects,
       allMeshes,
     );
-    this.setMaterialUniforms("time", new THREE.Uniform(time * timeScale));
+    this.setMaterialUniforms("time", new THREE.Uniform(time));
 
     const starProps = object.properties as StarProperties;
     let subclass = 2; // Default to G2V

@@ -41,7 +41,7 @@ export const sun: CelestialObject<StarProperties> = {
     color: "#FFF5E1", // Slightly warmer solar white
     hotColor: "#FFFF99", // Bright yellow-white for hot plasma zones
     surfaceColor: "#FFF5E1", // Normal solar surface color
-    coolColor: "#CC7700", // Orange-brown for sunspots and cool areas
+    coolColor: "#8d5609", // Orange-brown for sunspots and cool areas
     stellarType: StellarType.MAIN_SEQUENCE,
     // Add required stellar properties for physics-based calculations
     age_years: 4.6e9, // 4.6 billion years (current solar age)
@@ -50,8 +50,8 @@ export const sun: CelestialObject<StarProperties> = {
     // Enhanced material parameters for realistic solar appearance
     materialParams: {
       // Plasma noise parameters for simple effects
-      noiseScale: 0.053,
-      noiseIntensity: 0.2,
+      noiseScale: 0.033,
+      noiseIntensity: 0.1,
       plasmaTurbulence: 1.0,
 
       // Uniform lighting

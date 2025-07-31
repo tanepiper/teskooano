@@ -72,11 +72,12 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     if (this.uniforms.uTime !== undefined) {
-      // Create a much smaller time scale for visible animation cycles
-      // Use a very small scale to create fast, visible animation cycles
-      const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
+      // Create a time scale for visible animation cycles
+      // Use a moderate scale to create visible animation cycles
+      const animationTime = ((time * timeScale) / 1000) * 0.01; // Scale for visible animation
       this.uniforms.uTime.value = animationTime;
     }
+    console.log("base star animationTime", this.uniforms.uTime.value);
   }
 
   /**
@@ -131,6 +132,7 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
     // Use a very small scale to create fast, visible animation cycles
     const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
     this.uniforms.uTime.value = animationTime;
+    console.log("corona animationTime", animationTime);
   }
 
   /**
@@ -358,17 +360,18 @@ export abstract class BaseStarRenderer<
       }
 
       // Update time uniform if it exists (different materials may have different time uniform names)
-      if (material.uniforms.uTime) {
-        // Create a much smaller time scale for visible animation cycles
-        // Use a very small scale to create fast, visible animation cycles
-        const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
-        material.uniforms.uTime.value = animationTime;
-      } else if (material.uniforms.time) {
-        // Create a much smaller time scale for visible animation cycles
-        // Use a very small scale to create fast, visible animation cycles
-        const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
-        material.uniforms.time.value = animationTime;
-      }
+      // Removed redundant uTime update here, as BaseStarMaterial's update method handles it.
+      // if (material.uniforms.uTime) {
+      //   // Create a much smaller time scale for visible animation cycles
+      //   // Use a very small scale to create fast, visible animation cycles
+      //   const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
+      //   material.uniforms.uTime.value = animationTime;
+      // } else if (material.uniforms.time) {
+      //   // Create a much smaller time scale for visible animation cycles
+      //   // Use a very small scale to create fast, visible animation cycles
+      //   const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
+      //   material.uniforms.time.value = animationTime;
+      // }
     }
   }
 

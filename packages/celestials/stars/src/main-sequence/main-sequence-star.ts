@@ -9,12 +9,18 @@ import {
   GeometryUtilities,
   LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
+import { EnhancedStarMaterial } from "../materials/enhanced-star.material";
 
 /**
  * Material for main sequence stars with shader effects
  */
-export class MainSequenceStarMaterial extends BaseStarMaterial {
-  // The constructor is inherited from BaseStarMaterial
+export class MainSequenceStarMaterial extends EnhancedStarMaterial {
+  constructor(
+    object: RenderableCelestialObject,
+    color: THREE.Color = new THREE.Color(0xffff00),
+  ) {
+    super(object, color);
+  }
 }
 
 /**
@@ -45,6 +51,7 @@ export class MainSequenceStarRenderer<
     }
     const color = this.getStarColor(object);
     const material = new MainSequenceStarMaterial(
+      object,
       color,
     ) as TMainSequenceMaterial;
     this.materialCache.set(object.celestialObjectId, material);
@@ -124,7 +131,17 @@ export class MainSequenceStarRenderer<
     timeScale: number,
     lightSources: LightSourcesMap,
     camera: THREE.PerspectiveCamera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    super.update(object, time, timeScale, lightSources, camera);
+    super.update(
+      object,
+      time,
+      timeScale,
+      lightSources,
+      camera,
+      allObjects,
+      allMeshes,
+    );
   }
 }
