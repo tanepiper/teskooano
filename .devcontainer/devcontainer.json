@@ -4,6 +4,14 @@
   "customizations": {
     "codespaces": {
       "openFiles": ["CODESPACE.md"]
+    },
+    "vscode": {
+      "extensions": [
+        "slevesque.shader",
+        "moonrepo.moon-console",
+        "OHZIInteractiveStudio.ohzi-vscode-glb-viewer",
+        "redhat.vscode-yaml"
+      ]
     }
   },
   "name": "Teskooano Sandbox",
