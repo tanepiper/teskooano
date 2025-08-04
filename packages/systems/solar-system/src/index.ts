@@ -14,6 +14,7 @@ import { allSatellites } from "./satellites";
 import { allComets } from "./comets";
 import { asteroids } from "./asteroids";
 import { interstellarObjects } from "./intersteller";
+import { planetNineSystemBodies } from "./planet-nine";
 import { processSolarSystemToCurrentTime } from "./utils/dynamic-epoch-processor";
 
 /**
@@ -31,6 +32,7 @@ const solarSystemBodies = [
   ...uranusSystemBodies,
   ...neptuneSystemBodies,
   ...plutoSystemBodies,
+  ...planetNineSystemBodies,
   ...allSatellites,
   ...allComets,
   ...minorBodies,
@@ -40,7 +42,7 @@ const solarSystemBodies = [
 
 /**
  * Initializes the complete Solar System by calling creation functions
- * for the star, planets, asteroid belt, and Oort cloud.
+ * for the star, planets (including hypothetical Planet Nine), asteroid belt, and Oort cloud.
  * All orbital elements are dynamically calculated to today's current positions.
  */
 export function initializeSolarSystem() {
