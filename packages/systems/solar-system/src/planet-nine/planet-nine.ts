@@ -13,7 +13,7 @@ import {
 
 /**
  * Planet Nine configuration object based on Batygin & Brown (2016) analysis.
- * 
+ *
  * This hypothetical planet is proposed to explain the clustering of distant
  * Kuiper Belt Objects' orbital elements. Key parameters from the paper:
  * - Mass: ~10 Earth masses (Neptune-like ice giant)
@@ -21,12 +21,12 @@ import {
  * - Eccentricity: ~0.6 (highly eccentric orbit)
  * - Inclination: ~30° (moderately inclined)
  * - Argument of perihelion: ~150° (anti-aligned with KBOs)
- * 
+ *
  * The planet's orbit explains:
  * - Clustering of distant KBO perihelia
  * - Existence of Sedna-like objects
  * - High-inclination outer solar system objects
- * 
+ *
  * Reference: "Evidence for a Distant Giant Planet in the Solar System"
  * Konstantin Batygin and Michael E. Brown, Astronomical Journal 151:22 (2016)
  */

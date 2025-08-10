@@ -26,7 +26,7 @@ The Batygin & Brown paper "Evidence for a Distant Giant Planet in the Solar Syst
 
 - **Mass**: ~10 Earth masses (6.0 × 10²⁵ kg)
 - **Semi-major axis**: ~700 AU (range: 400-1500 AU)
-- **Eccentricity**: ~0.6 (range: 0.4-0.8)  
+- **Eccentricity**: ~0.6 (range: 0.4-0.8)
 - **Inclination**: ~30° (moderately inclined)
 - **Argument of periapsis**: ~150° (anti-aligned with KBOs)
 - **Longitude of ascending node**: ~113° (from KBO clustering)
@@ -45,7 +45,7 @@ The Batygin & Brown paper "Evidence for a Distant Giant Planet in the Solar Syst
 The Planet Nine model successfully explains:
 
 1. **Sedna-like Objects**: High-perihelion detached objects like Sedna and 2012VP113
-2. **High-Inclination KBOs**: Objects with inclinations 60°-150° 
+2. **High-Inclination KBOs**: Objects with inclinations 60°-150°
 3. **Orbital Confinement**: Physical clustering of distant KBO orbits
 4. **Missing Population**: Predicts a population of high-perihelion objects with anti-aligned orbits
 
@@ -60,8 +60,8 @@ As of the implementation date, Planet Nine remains **hypothetical**. Detection e
 
 ## References
 
-- Batygin, K., & Brown, M. E. (2016). Evidence for a Distant Giant Planet in the Solar System. *The Astronomical Journal*, 151(22).
-- Trujillo, C. A., & Sheppard, S. S. (2014). A Sedna-like body with a perihelion of 80 astronomical units. *Nature*, 507(7493), 471-474.
+- Batygin, K., & Brown, M. E. (2016). Evidence for a Distant Giant Planet in the Solar System. _The Astronomical Journal_, 151(22).
+- Trujillo, C. A., & Sheppard, S. S. (2014). A Sedna-like body with a perihelion of 80 astronomical units. _Nature_, 507(7493), 471-474.
 
 ## Files
 

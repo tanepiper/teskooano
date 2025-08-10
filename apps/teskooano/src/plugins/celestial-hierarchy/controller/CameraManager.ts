@@ -1,0 +1,153 @@
+import { CelestialStatus, CustomEvents } from "@teskooano/data-types";
+import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
+import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
+import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
+import {
+  handleFocusRequest,
+  handleFollowRequest,
+} from "./focus-interactions.js";
+
+export interface CameraStateHandlers {
+  onFocusChanged: (focusedId: string | null) => void;
+  onFollowChanged: (followedId: string | null) => void;
+}
+
+/**
+ * Manages camera state, focus, and follow functionality for the celestial hierarchy.
+ */
+export class CameraManager {
+  private _view: CelestialHierarchy;
+  private _treeListContainer: HTMLUListElement;
+  private _parentPanel: CompositeEnginePanel | null = null;
+  private _currentFocusedId: string | null = null;
+  private _currentFollowedId: string | null = null;
+  private _cameraStateSubscription: any = null;
+  private _handlers: CameraStateHandlers;
+
+  constructor(
+    view: CelestialHierarchy,
+    treeListContainer: HTMLUListElement,
+    handlers: CameraStateHandlers,
+  ) {
+    this._view = view;
+    this._treeListContainer = treeListContainer;
+    this._handlers = handlers;
+  }
+
+  public setParentPanel(panel: CompositeEnginePanel): void {
+    this._parentPanel = panel;
+    this._setupCameraStateSubscription();
+  }
+
+  public getCurrentFocusedId(): string | null {
+    return this._currentFocusedId;
+  }
+
+  public getCurrentFollowedId(): string | null {
+    return this._currentFollowedId;
+  }
+
+  public requestFocus(objectId: string): boolean {
+    const success = handleFocusRequest(
+      this._parentPanel,
+      objectId,
+      this._view.dispatchEvent.bind(this._view),
+    );
+    if (!success) {
+      console.warn(`[CameraManager] handleFocusRequest failed for ${objectId}`);
+    }
+    return success;
+  }
+
+  public requestFollow(objectId: string): boolean {
+    const success = handleFollowRequest(this._parentPanel, objectId);
+
+    if (success) {
+      this._parentPanel?.orbitManager?.highlightVisualization(objectId);
+      this._currentFollowedId = objectId;
+      this._updateFollowUI(objectId);
+      this._handlers.onFollowChanged(objectId);
+    } else {
+      console.warn(
+        `[CameraManager] handleFollowRequest failed for ${objectId}`,
+      );
+    }
+    return success;
+  }
+
+  public publicFollowObject(objectId: string): boolean {
+    if (!objectId) {
+      console.warn(
+        "[CameraManager] publicFollowObject called with no objectId.",
+      );
+      return false;
+    }
+    console.debug(
+      `[CameraManager] Public follow object called for: ${objectId}`,
+    );
+    return this.requestFollow(objectId);
+  }
+
+  public clearFollow(): void {
+    this._parentPanel?.orbitManager?.highlightVisualization(null);
+    this._currentFollowedId = null;
+    this._clearFollowUI();
+    this._handlers.onFollowChanged(null);
+  }
+
+  public dispose(): void {
+    if (this._cameraStateSubscription) {
+      this._cameraStateSubscription.unsubscribe();
+      this._cameraStateSubscription = null;
+    }
+  }
+
+  private _setupCameraStateSubscription(): void {
+    if (this._parentPanel && this._parentPanel.engineCameraManager) {
+      this._cameraStateSubscription?.unsubscribe();
+
+      this._cameraStateSubscription = this._parentPanel.engineCameraManager
+        .getCameraState$()
+        .subscribe((state: CameraManagerState) => {
+          this._updateFocusInternal(state.focusedObjectId);
+
+          if (this._currentFollowedId && !state.focusedObjectId) {
+            this._parentPanel?.orbitManager?.highlightVisualization(null);
+          }
+        });
+
+      const initialState = this._parentPanel.engineCameraManager
+        .getCameraState$()
+        .getValue();
+      this._updateFocusInternal(initialState.focusedObjectId);
+    } else {
+      console.warn(
+        "[CameraManager] Parent panel or its EngineCameraManager not available.",
+      );
+      this._cameraStateSubscription?.unsubscribe();
+      this._cameraStateSubscription = null;
+    }
+  }
+
+  private _updateFocusInternal(focusedId: string | null): void {
+    if (this._currentFocusedId === focusedId) return;
+    this._currentFocusedId = focusedId;
+    this._handlers.onFocusChanged(focusedId);
+  }
+
+  private _updateFollowUI(objectId: string): void {
+    this._treeListContainer
+      ?.querySelectorAll(`celestial-row[following]`)
+      .forEach((el) => el.removeAttribute("following"));
+    const row = this._treeListContainer?.querySelector(
+      `celestial-row[object-id="${objectId}"]`,
+    );
+    row?.toggleAttribute("following", true);
+  }
+
+  private _clearFollowUI(): void {
+    this._treeListContainer
+      ?.querySelectorAll(`celestial-row[following]`)
+      .forEach((el) => el.removeAttribute("following"));
+  }
+}
