@@ -6,9 +6,9 @@ import {
   CelestialType,
   CelestialObject,
   CelestialStatus,
-  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import { type SimulationParameters } from "@teskooano/core-physics";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 import {
   StateAccessor,
   simulationStateService,

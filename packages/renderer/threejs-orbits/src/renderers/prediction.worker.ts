@@ -4,9 +4,9 @@ import {
   calculateKeplerianStateAtTime,
 } from "@teskooano/core-physics";
 import { OSVector3 } from "@teskooano/core-math";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
 import { PredictionDataPool } from "./PredictionDataPool.worker";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 const POOL_SIZE = 500; // Max number of physics bodies
 const dataPool = new PredictionDataPool(POOL_SIZE);

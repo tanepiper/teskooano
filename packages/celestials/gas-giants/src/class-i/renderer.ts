@@ -5,10 +5,8 @@ import {
   type GasGiantRendererDeps,
 } from "../base/renderer";
 
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { SCALE } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
-import { BaseGasGiantMaterial } from "../base/material";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIMaterial } from "./material";
 
 /**

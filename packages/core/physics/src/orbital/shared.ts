@@ -1,7 +1,6 @@
 import type { OrbitalParameters } from "@teskooano/data-types";
-import { AU_METERS } from "@teskooano/data-types";
+import { AU_METERS, GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
 import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
-import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
 /**
  * Calculate distance-based tolerance for Kepler equation solver

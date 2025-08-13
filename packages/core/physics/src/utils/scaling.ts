@@ -1,15 +1,12 @@
 /**
- * Unified scaling system for ensuring consistent physics and visualization
+ * Scaling utilities for converting between physics units and rendering units
  *
- * This scaling system helps normalize calculations between the internal physics
- * (which needs realistic values) and the visualization (which needs visually appropriate scales).
+ * This module provides functions to transform between real-world physics units
+ * (meters, kilograms, seconds) and the scaled units used for visualization.
  */
 
-import { CelestialType } from "./celestial";
-
-export const GRAVITATIONAL_CONSTANT = 6.6743e-11;
-
-export const AU_METERS = 149597870700;
+import { CelestialType } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT, AU_METERS } from "@teskooano/data-types";
 
 /**
  * Scaling constants for the simulation.

@@ -1,7 +1,6 @@
 import {
   AsteroidProperties,
   RenderableCelestialObject,
-  SCALE,
 } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
@@ -14,6 +13,7 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { AsteroidNucleusMaterial } from "./material";
+import { SCALE } from "@teskooano/core-physics";
 
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds

@@ -1,10 +1,10 @@
 import { Vector3 } from "three";
 import {
   CelestialType,
-  METERS_TO_SCENE_UNITS,
   AU_METERS,
   CelestialObject,
 } from "@teskooano/data-types";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 /**
  * Calculates the distance from a point to the surface of a celestial object.

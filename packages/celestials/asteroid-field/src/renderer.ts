@@ -1,7 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import {
   CelestialType,
-  SCALE,
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
@@ -16,6 +15,7 @@ import {
   AsteroidFieldMaterial,
   type AsteroidFieldMaterialOptions,
 } from "./material";
+import { SCALE } from "@teskooano/core-physics";
 
 /**
  * Configuration options specific to the asteroid field renderer.

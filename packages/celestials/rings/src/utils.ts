@@ -1,3 +1,10 @@
+import {
+  GRAVITATIONAL_CONSTANT,
+  SPEED_OF_LIGHT,
+  SOLAR_MASS,
+  STEFAN_BOLTZMANN_CONSTANT,
+} from "@teskooano/data-types";
+
 // Kepler's Third Law: orbital period is proportional to semi-major axis^(3/2)
 // For rings, we use the average radius as the semi-major axis
 export function calculateKeplerianRotationRate(
@@ -22,9 +29,9 @@ export function calculateKeplerianRotationRate(
  * @returns Schwarzschild radius in meters
  */
 export function calculateSchwarzschildRadius(mass_kg: number): number {
-  const G = 6.6743e-11; // Gravitational constant
-  const c = 299792458; // Speed of light
-  return (2 * G * mass_kg) / (c * c);
+  return (
+    (2 * GRAVITATIONAL_CONSTANT * mass_kg) / (SPEED_OF_LIGHT * SPEED_OF_LIGHT)
+  );
 }
 
 /**
@@ -37,9 +44,8 @@ export function calculateISCO(
   mass_kg: number,
   spinParameter: number = 0,
 ): number {
-  const G = 6.6743e-11;
-  const c = 299792458;
-  const R_g = (G * mass_kg) / (c * c);
+  const R_g =
+    (GRAVITATIONAL_CONSTANT * mass_kg) / (SPEED_OF_LIGHT * SPEED_OF_LIGHT);
 
   if (spinParameter === 0) {
     // Non-rotating black hole (Schwarzschild)
@@ -68,13 +74,8 @@ export function calculateAccretionDiskTemperature(
   accretionRate: number,
   radius: number,
 ): number {
-  const G = 6.6743e-11;
-  const c = 299792458;
-  const sigma = 5.670374419e-8; // Stefan-Boltzmann constant
-  const M_sun = 1.989e30; // Solar mass in kg
-
   // Convert accretion rate to kg/s
-  const accretionRate_kgs = (accretionRate * M_sun) / (365.25 * 24 * 3600);
+  const accretionRate_kgs = (accretionRate * SOLAR_MASS) / (365.25 * 24 * 3600);
 
   // Use a more realistic temperature calculation
   // For supermassive black holes, temperatures are typically 10^4 - 10^7 K
@@ -82,8 +83,8 @@ export function calculateAccretionDiskTemperature(
 
   // Calculate the raw temperature using the standard formula
   const rawTemperature = Math.pow(
-    (3 * G * mass_kg * accretionRate_kgs) /
-      (8 * Math.PI * sigma * Math.pow(radius, 3)),
+    (3 * GRAVITATIONAL_CONSTANT * mass_kg * accretionRate_kgs) /
+      (8 * Math.PI * STEFAN_BOLTZMANN_CONSTANT * Math.pow(radius, 3)),
     0.25,
   );
 
@@ -105,15 +106,12 @@ export function calculateAccretionDiskLuminosity(
   mass_kg: number,
   accretionRate: number,
 ): number {
-  const c = 299792458;
-  const M_sun = 1.989e30;
-
   // Convert accretion rate to kg/s
-  const accretionRate_kgs = (accretionRate * M_sun) / (365.25 * 24 * 3600);
+  const accretionRate_kgs = (accretionRate * SOLAR_MASS) / (365.25 * 24 * 3600);
 
   // Luminosity = η * Ṁ * c² where η is efficiency (typically 0.1 for thin disks)
   const efficiency = 0.1;
-  return efficiency * accretionRate_kgs * c * c;
+  return efficiency * accretionRate_kgs * SPEED_OF_LIGHT * SPEED_OF_LIGHT;
 }
 
 /**
@@ -139,13 +137,10 @@ export function generateAccretionDiskProperties(
   isRelativistic: boolean;
   innerEdgeRadius: number;
 } {
-  const G = 6.6743e-11;
-  const C = 299792458;
-  const SOLAR_MASS_KG = 1.989e30;
-  const SOLAR_RADIUS_M = 6.957e8;
-
   // Calculate Schwarzschild radius
-  const schwarzschildRadius = (2 * G * blackHoleMass_kg) / (C * C);
+  const schwarzschildRadius =
+    (2 * GRAVITATIONAL_CONSTANT * blackHoleMass_kg) /
+    (SPEED_OF_LIGHT * SPEED_OF_LIGHT);
 
   // Calculate innermost stable circular orbit (ISCO)
   // For Kerr black holes, ISCO depends on spin
@@ -167,7 +162,7 @@ export function generateAccretionDiskProperties(
 
   // Calculate realistic disk temperature using standard thin disk model
   const accretionRate_kgPerSecond =
-    (accretionRate_MsunPerYear * SOLAR_MASS_KG) / (365.25 * 24 * 3600);
+    (accretionRate_MsunPerYear * SOLAR_MASS) / (365.25 * 24 * 3600);
 
   // Use the standard thin disk temperature profile: T ∝ (M * Ṁ / r³)^(1/4)
   // Temperature at the inner edge (ISCO)
@@ -196,7 +191,11 @@ export function generateAccretionDiskProperties(
 
   // Calculate rotation rate (Keplerian orbital frequency at ISCO)
   const orbitalPeriod =
-    2 * Math.PI * Math.sqrt(Math.pow(iscoRadius, 3) / (G * blackHoleMass_kg));
+    2 *
+    Math.PI *
+    Math.sqrt(
+      Math.pow(iscoRadius, 3) / (GRAVITATIONAL_CONSTANT * blackHoleMass_kg),
+    );
   const rotationRate = 1 / orbitalPeriod;
 
   return {

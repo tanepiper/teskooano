@@ -4,10 +4,10 @@ import {
   CelestialType,
   CustomEvents,
   AU_METERS,
-  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
 import * as THREE from "three";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 /**
  * Handles the logic for requesting the camera to point at a specific object.

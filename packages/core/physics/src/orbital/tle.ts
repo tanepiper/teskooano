@@ -1,5 +1,10 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { AU_METERS, type OrbitalParameters } from "@teskooano/data-types";
+import {
+  AU_METERS,
+  EARTH_MASS,
+  EARTH_GRAVITATIONAL_PARAMETER,
+  type OrbitalParameters,
+} from "@teskooano/data-types";
 import { createOrbitalElements } from "./helpers";
 
 /**
@@ -97,12 +102,12 @@ export function parseTLE(line1: string, line2: string): TLEData {
  * Converts TLE data to orbital elements
  *
  * @param tle Parsed TLE data
- * @param parentMass_kg Mass of the parent body (Earth = 5.972e24 kg)
+ * @param parentMass_kg Mass of the parent body (Earth = EARTH_MASS kg)
  * @returns Orbital parameters
  */
 export function tleToOrbitalElements(
   tle: TLEData,
-  parentMass_kg: number = 5.972e24,
+  parentMass_kg: number = EARTH_MASS,
 ): OrbitalParameters {
   // Calculate epoch date
   const epochYear =
@@ -115,14 +120,11 @@ export function tleToOrbitalElements(
   // Calculate orbital period from mean motion
   const period_s = (24 * 60 * 60) / tle.meanMotion; // Convert revolutions per day to seconds
 
-  // For Earth satellites, use Earth's gravitational parameter directly
-  // μ = GM = 3.986e14 m³/s² for Earth
-  const EARTH_MU = 3.986e14; // m³/s²
-
   // Calculate semi-major axis using Kepler's third law: T = 2π * sqrt(a³/μ)
   // Solving for a: a = (T²μ/4π²)^(1/3)
   const semiMajorAxis_m = Math.pow(
-    (period_s * period_s * EARTH_MU) / (4 * Math.PI * Math.PI),
+    (period_s * period_s * EARTH_GRAVITATIONAL_PARAMETER) /
+      (4 * Math.PI * Math.PI),
     1 / 3,
   );
 
@@ -151,7 +153,7 @@ export function tleToOrbitalElements(
 export function createOrbitalElementsFromTLE(
   line1: string,
   line2: string,
-  parentMass_kg: number = 5.972e24,
+  parentMass_kg: number = EARTH_MASS,
 ): OrbitalParameters {
   const tle = parseTLE(line1, line2);
   return tleToOrbitalElements(tle, parentMass_kg);

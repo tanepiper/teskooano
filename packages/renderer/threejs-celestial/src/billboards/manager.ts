@@ -1,16 +1,10 @@
-import {
-  AU_METERS,
-  CelestialType,
-  RenderableCelestialObject,
-  SCALE,
-} from "@teskooano/data-types";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
+import { RenderableCelestialObject } from "@teskooano/data-types";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
+import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { BillboardLODConfig } from "./types";
 import { createBillboardSprite } from "./billboard-utils";
-import { BillboardInfo } from "./types";
+import { BillboardInfo, BillboardLODConfig } from "./types";
 
 /**
  * Manages the lifecycle and visibility of all billboard sprites in the scene.

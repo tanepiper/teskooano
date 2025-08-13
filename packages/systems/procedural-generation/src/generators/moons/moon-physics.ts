@@ -1,4 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
+import { EARTH_MASS } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
 
 /**
@@ -17,8 +18,6 @@ export function generateRealisticMoonMass(
   planetMass: number,
   formation: string,
 ): number {
-  const earthMass = 5.972e24;
-
   switch (formation) {
     case "co-accretion":
       // Co-accreted moons: 0.001% - 0.1% of planet mass (like Galilean moons)

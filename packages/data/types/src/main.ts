@@ -1,5 +1,4 @@
 export * from "./celestial";
-export * from "./scaling";
 
 import * as THREE from "three";
 import { PhysicsStateReal } from "./physics";

@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 /**
  * Defines the structure for a component that can be registered with the CSS2DManager.

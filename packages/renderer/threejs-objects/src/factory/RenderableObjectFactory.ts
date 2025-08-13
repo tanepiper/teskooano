@@ -3,12 +3,11 @@ import {
   CelestialObject,
   CelestialType,
   RenderableCelestialObject,
-  SCALE,
-  scaleSize,
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "../utils/coordinateUtils";
 import { PhysicsStateProvider } from "@teskooano/core-state";
+import { SCALE, scaleSize } from "@teskooano/core-physics";
 
 /**
  * A factory responsible for creating and updating `RenderableCelestialObject` instances.

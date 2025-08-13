@@ -5,7 +5,6 @@ import {
   type RenderableCelestialObject,
   CelestialType,
   AU_METERS,
-  SCALE,
 } from "@teskooano/data-types";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import {
@@ -13,6 +12,7 @@ import {
   CelestialLabelComponent,
 } from "../components/celestial-label/CelestialLabelComponent";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { SCALE } from "@teskooano/core-physics";
 
 export interface LabelVisibilityConfig {
   planet?: number;

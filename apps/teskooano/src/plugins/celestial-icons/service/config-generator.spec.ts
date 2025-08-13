@@ -8,6 +8,7 @@ import {
   BlackHoleSubtype,
   WhiteDwarfSubtype,
   ProtostarSubtype,
+  SOLAR_MASS,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import { generateIconConfig } from "./config-generator";
@@ -19,7 +20,7 @@ describe("Enhanced Star Icon Generation", () => {
     type: CelestialType.STAR,
     status: CelestialStatus.ACTIVE,
     realRadius_m: 696340000,
-    realMass_kg: 1.989e30,
+    realMass_kg: SOLAR_MASS,
     orbit: {
       realSemiMajorAxis_m: 0,
       eccentricity: 0,
@@ -32,7 +33,7 @@ describe("Enhanced Star Icon Generation", () => {
     temperature: 5778,
     physicsStateReal: {
       id: "test-star",
-      mass_kg: 1.989e30,
+      mass_kg: SOLAR_MASS,
       position_m: new OSVector3(0, 0, 0),
       velocity_mps: new OSVector3(0, 0, 0),
     },

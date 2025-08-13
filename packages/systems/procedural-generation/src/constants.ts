@@ -1,12 +1,5 @@
 import { AtmosphereType, RockyType } from "@teskooano/data-types";
 
-export const EARTH_MASS_KG = 5.972e24;
-export const EARTH_RADIUS_M = 6.371e6;
-export const SOLAR_MASS_KG = 1.989e30;
-export const SOLAR_RADIUS_M = 696340e3;
-export const SOLAR_LUMINOSITY = 3.828e26;
-export const STEFAN_BOLTZMANN = 5.670374e-8;
-
 // System boundary - maximum distance for any celestial object
 export const SYSTEM_MAX_DISTANCE_AU = 1000;
 

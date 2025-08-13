@@ -1,8 +1,4 @@
-import {
-  CustomEvents,
-  AU_METERS,
-  METERS_TO_SCENE_UNITS,
-} from "@teskooano/data-types";
+import { CustomEvents, AU_METERS } from "@teskooano/data-types";
 import { notificationManager } from "@teskooano/notifications";
 import {
   AnimationHelper,
@@ -12,6 +8,7 @@ import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
 import { StateAccessor } from "@teskooano/core-state";
 import { OSVector3 } from "@teskooano/core-math";
 import { PerspectiveCamera, Vector3 } from "three";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 /**
  * Manages smooth, animated camera transitions using GSAP.

@@ -1,7 +1,9 @@
-import { AU_METERS } from "@teskooano/data-types";
-export const SECONDS_PER_DAY = 86400;
-export const SECONDS_PER_HOUR = 3600;
-export const SECONDS_PER_YEAR = SECONDS_PER_DAY * 365.25;
+import {
+  AU_METERS,
+  SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_YEAR,
+} from "@teskooano/data-types";
 
 export class FormatUtils {
   static formatExp(val: number | undefined | null, digits = 3): string {

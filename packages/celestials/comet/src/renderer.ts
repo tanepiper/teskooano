@@ -1,8 +1,6 @@
 import {
   CometProperties,
   RenderableCelestialObject,
-  SCALE,
-  scaleSize,
 } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
@@ -22,6 +20,7 @@ import {
   CometNucleusMaterial,
   CometParticleMaterial,
 } from "./material";
+import { SCALE, scaleSize } from "@teskooano/core-physics";
 
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds

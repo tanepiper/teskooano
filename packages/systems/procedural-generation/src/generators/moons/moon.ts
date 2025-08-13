@@ -3,6 +3,7 @@ import {
   AU_METERS,
   CelestialStatus,
   CelestialType,
+  SOLAR_MASS,
 } from "@teskooano/data-types";
 import { generateCelestialName } from "../names/celestial-name";
 import {
@@ -84,7 +85,7 @@ export function generateMoon(
   // Check Hill sphere constraint for orbital stability
   const parentOrbitSMA =
     parentPlanetData.orbit?.realSemiMajorAxis_m || AU_METERS; // Default to 1 AU
-  const parentStarMass = 1.989e30; // Assume solar mass star for Hill sphere calc
+  const parentStarMass = SOLAR_MASS; // Assume solar mass star for Hill sphere calc
   const hillRadius = calculateHillRadius(
     parentOrbitSMA,
     parentPlanetMass,

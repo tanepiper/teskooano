@@ -1,5 +1,5 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { AU_METERS, CelestialType } from "@teskooano/data-types";
+import { AU_METERS, CelestialType, EARTH_MASS } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
 import { getCelestialTypeForPlanet } from "../../utils/celestials";
 import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory
@@ -103,8 +103,7 @@ function calculateRealisticMoonCount(
   planetMass_kg: number,
   distanceAU: number,
 ): number {
-  const earthMass = 5.972e24;
-  const planetMassRatio = planetMass_kg / earthMass;
+  const planetMassRatio = planetMass_kg / EARTH_MASS;
 
   // Get planet type from properties
   const classType = getCelestialTypeForPlanet(planetObject);
@@ -186,8 +185,7 @@ function calculateInitialMoonDistance(
   planetMass_kg: number,
 ): number {
   const celestialType = getCelestialTypeForPlanet(planetObject);
-  const earthMass = 5.972e24;
-  const massRatio = planetMass_kg / earthMass;
+  const massRatio = planetMass_kg / EARTH_MASS;
 
   switch (celestialType) {
     case CelestialType.GAS_GIANT:

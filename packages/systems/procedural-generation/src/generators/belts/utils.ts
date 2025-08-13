@@ -1,4 +1,5 @@
 import { SYSTEM_MAX_DISTANCE_AU } from "../../constants";
+import { SOLAR_MASS } from "@teskooano/data-types";
 
 /**
  * Validates if the given distance is appropriate for asteroid belt formation
@@ -12,8 +13,7 @@ export function isValidAsteroidBeltDistance(
     return false;
   }
 
-  const solarMass = 1.989e30;
-  const massRatio = starMass_kg / solarMass;
+  const massRatio = starMass_kg / SOLAR_MASS;
 
   // Scale frost line and belt formation zone with stellar mass
   const innerLimit = 1.5 * Math.sqrt(massRatio); // Too close for belt stability

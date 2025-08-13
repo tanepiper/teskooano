@@ -1,8 +1,10 @@
 import { OSVector3 } from "@teskooano/core-math";
 
-import { calculateNewtonianGravitationalForce as calculateGravitationalForce } from "../forces/gravity";
-import { PhysicsStateReal } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT } from "..";
+import { calculateNewtonianGravitationalForce } from "../forces/gravity";
+import {
+  GRAVITATIONAL_CONSTANT,
+  PhysicsStateReal,
+} from "@teskooano/data-types";
 
 /**
  * Represents a node in the octree
@@ -418,7 +420,7 @@ export class Octree {
       // velocity_mps can remain a dummy, as it's not used in gravitational force calculation
 
       // Pass _tempForce as the 'out' parameter to avoid new allocations
-      calculateGravitationalForce(
+      calculateNewtonianGravitationalForce(
         nodePointMass,
         targetBody,
         GRAVITATIONAL_CONSTANT,
@@ -432,7 +434,7 @@ export class Octree {
       for (const otherBody of node.bodies) {
         if (otherBody.id !== targetBody.id) {
           // Pass _tempForce as the 'out' parameter to avoid new allocations
-          calculateGravitationalForce(
+          calculateNewtonianGravitationalForce(
             otherBody,
             targetBody,
             GRAVITATIONAL_CONSTANT,

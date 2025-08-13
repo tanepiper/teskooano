@@ -1,5 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
 import type {
   IAlgorithmStrategy,
   SimulationParameters,
@@ -121,14 +122,23 @@ export class TreePMStrategy extends AlgorithmStrategy {
     const highDensityRegions = this.identifyHighDensityRegions(densityMap);
 
     // Step 4: Calculate PM forces for long-range interactions
-    const G = 6.6743e-11; // Gravitational constant (standard units)
-    this.calculatePMForces(bodies, forces, G);
+    this.calculatePMForces(bodies, forces, GRAVITATIONAL_CONSTANT);
 
     // Step 5: Calculate Tree forces for high-density regions
-    this.calculateTreeForces(bodies, forces, highDensityRegions, G);
+    this.calculateTreeForces(
+      bodies,
+      forces,
+      highDensityRegions,
+      GRAVITATIONAL_CONSTANT,
+    );
 
     // Step 6: Apply corrections to avoid double-counting
-    this.applyForceCorrections(bodies, forces, highDensityRegions, G);
+    this.applyForceCorrections(
+      bodies,
+      forces,
+      highDensityRegions,
+      GRAVITATIONAL_CONSTANT,
+    );
 
     return forces;
   }

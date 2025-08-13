@@ -1,5 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { GRAVITATIONAL_CONSTANT as G } from "../units/constants";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
 
 /**
  * Debug utility to test orbital conservation laws.
@@ -36,7 +36,7 @@ export class OrbitalValidationDebugger {
     energy: number;
     angularMomentumSquared: number;
   } {
-    const mu = G * parentMass_kg;
+    const mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
 
     // Calculate energy per unit mass: H = v²/2 - μ/r
     const velocitySquared = velocity_mps.lengthSq();
@@ -101,7 +101,7 @@ export class OrbitalValidationDebugger {
     eccentricityMagnitude: number;
     angularMomentumMagnitude: number;
   } {
-    const mu = G * parentMass_kg;
+    const mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
 
     // Calculate angular momentum: L = r × v
     const angularMomentum = new OSVector3();
@@ -181,7 +181,7 @@ export class OrbitalValidationDebugger {
     angularMomentum.copy(position_m).cross(velocity_mps);
     const angularMomentumMagnitude = angularMomentum.length();
 
-    const mu = G * parentMass_kg;
+    const mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
     const term1 = new OSVector3();
     term1
       .copy(velocity_mps)
@@ -227,7 +227,7 @@ export class OrbitalValidationDebugger {
     angularMomentumChange: number;
     eccentricityVectorChange: number;
   } {
-    const mu = G * parentMass_kg;
+    const mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
 
     // Calculate initial values
     const initialEnergy =

@@ -1,13 +1,8 @@
-import type {
-  CelestialStatus,
-  CelestialType,
-  OrbitalParameters,
-  CelestialSpecificPropertiesUnion,
-} from "./celestial";
-import type { CelestialObject } from "./celestial/core.types";
 import type { OSVector3 } from "@teskooano/core-math";
-import type { PhysicsStateReal } from "./physics";
 import type * as THREE from "three";
+import type { CelestialSpecificPropertiesUnion } from ".";
+import type { PhysicsStateReal } from "../physics";
+import type { CelestialObject } from "./core.types";
 
 /**
  * Defines the structure of a celestial object once it has been processed
@@ -59,4 +54,13 @@ export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
 
   /** The axial tilt of the object (copied from orbit.axialTilt for convenience). */
   axialTilt?: OSVector3 | number;
+}
+
+/**
+ * Defines the quality levels for trail rendering.
+ */
+export enum TrailQuality {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
 }

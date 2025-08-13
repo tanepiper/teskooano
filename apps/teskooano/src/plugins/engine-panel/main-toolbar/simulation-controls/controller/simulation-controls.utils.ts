@@ -12,25 +12,27 @@ import {
  * @param {number} seconds - The total number of seconds to format.
  * @returns {string} The formatted time string (e.g., "3.5 d", "12.0 h").
  */
+import {
+  SECONDS_PER_MINUTE,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_DAY,
+  SECONDS_PER_YEAR_GREGORIAN,
+} from "@teskooano/data-types";
+
 export function formatTime(seconds: number): string {
   if (seconds === 0) return "0.0 s";
 
-  const SECONDS_IN_MINUTE = 60;
-  const SECONDS_IN_HOUR = 3600;
-  const SECONDS_IN_DAY = 86400;
-  const SECONDS_IN_YEAR = 31536000;
-
-  if (Math.abs(seconds) >= SECONDS_IN_YEAR) {
-    return `${(seconds / SECONDS_IN_YEAR).toFixed(1)} y`;
+  if (Math.abs(seconds) >= SECONDS_PER_YEAR_GREGORIAN) {
+    return `${(seconds / SECONDS_PER_YEAR_GREGORIAN).toFixed(1)} y`;
   }
-  if (Math.abs(seconds) >= SECONDS_IN_DAY) {
-    return `${(seconds / SECONDS_IN_DAY).toFixed(1)} d`;
+  if (Math.abs(seconds) >= SECONDS_PER_DAY) {
+    return `${(seconds / SECONDS_PER_DAY).toFixed(1)} d`;
   }
-  if (Math.abs(seconds) >= SECONDS_IN_HOUR) {
-    return `${(seconds / SECONDS_IN_HOUR).toFixed(1)} h`;
+  if (Math.abs(seconds) >= SECONDS_PER_HOUR) {
+    return `${(seconds / SECONDS_PER_HOUR).toFixed(1)} h`;
   }
-  if (Math.abs(seconds) >= SECONDS_IN_MINUTE) {
-    return `${(seconds / SECONDS_IN_MINUTE).toFixed(1)} m`;
+  if (Math.abs(seconds) >= SECONDS_PER_MINUTE) {
+    return `${(seconds / SECONDS_PER_MINUTE).toFixed(1)} m`;
   }
   return `${seconds.toFixed(1)} s`;
 }

@@ -2,7 +2,6 @@ import {
   CelestialType,
   PlanetProperties,
   ProceduralSurfaceProperties,
-  SCALE,
 } from "@teskooano/data-types";
 import * as THREE from "three";
 

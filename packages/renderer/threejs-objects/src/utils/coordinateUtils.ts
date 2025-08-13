@@ -1,8 +1,6 @@
-import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
-import { AU_METERS, SCALE } from "@teskooano/data-types";
-
-const METERS_TO_SCENE_UNITS = SCALE.RENDER_SCALE_AU / AU_METERS;
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
+import * as THREE from "three";
 
 /**
  * Converts a physics position vector (OSVector3 in meters, Y-up)

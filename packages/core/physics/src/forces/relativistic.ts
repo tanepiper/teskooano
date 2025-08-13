@@ -1,10 +1,10 @@
 import { PhysicsStateReal } from "../types";
 import { OSVector3, EPSILON } from "@teskooano/core-math";
+import { SPEED_OF_LIGHT } from "@teskooano/data-types";
 
 /**
- * Speed of light in meters per second
+ * Speed of light squared for relativistic calculations
  */
-const SPEED_OF_LIGHT = 299792458;
 const SPEED_OF_LIGHT_SQ = SPEED_OF_LIGHT * SPEED_OF_LIGHT;
 
 /**

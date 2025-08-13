@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { EARTH_MASS, EARTH_RADIUS, AU_METERS } from "@teskooano/data-types";
 import {
   createOrbitalElements,
   calculateAphelionAU,
@@ -29,7 +30,7 @@ describe("Orbital Helpers", () => {
 
       const result = createOrbitalElements(input);
 
-      expect(result.realSemiMajorAxis_m).toBeCloseTo(1.496e11, 0); // 1 AU in meters
+      expect(result.realSemiMajorAxis_m).toBeCloseTo(AU_METERS, 0); // 1 AU in meters
       expect(result.eccentricity).toBe(0.0167086);
       expect(result.inclination).toBeCloseTo((0.00005 * Math.PI) / 180, 6); // Converted to radians
       expect(result.longitudeOfAscendingNode).toBeCloseTo(
@@ -45,8 +46,8 @@ describe("Orbital Helpers", () => {
       expect(result.siderealRotationPeriod_s).toBe(86164.09054);
       expect(result.axialTilt).toBeDefined();
       expect(result.axialTilt!.length()).toBeCloseTo(1, 6); // Should be normalized
-      expect(result.realAphelion_m).toBeCloseTo(1.0167086 * 1.496e11, 0);
-      expect(result.realPerihelion_m).toBeCloseTo(0.9832914 * 1.496e11, 0);
+      expect(result.realAphelion_m).toBeCloseTo(1.0167086 * AU_METERS, 0);
+      expect(result.realPerihelion_m).toBeCloseTo(0.9832914 * AU_METERS, 0);
       expect(result.averageOrbitalSpeed_mps).toBeCloseTo(29784.7, 0); // Use actual calculated value
       expect(result.epoch).toBe("J2000");
     });
@@ -73,10 +74,10 @@ describe("Orbital Helpers", () => {
 
       const result = createOrbitalElements(input);
 
-      expect(result.realSemiMajorAxis_m).toBeCloseTo(1.496e11, 0);
+      expect(result.realSemiMajorAxis_m).toBeCloseTo(AU_METERS, 0);
       expect(result.eccentricity).toBe(0.0167086);
-      expect(result.realAphelion_m).toBeCloseTo(1.0167 * 1.496e11, 0);
-      expect(result.realPerihelion_m).toBeCloseTo(0.9833 * 1.496e11, 0);
+      expect(result.realAphelion_m).toBeCloseTo(1.0167 * AU_METERS, 0);
+      expect(result.realPerihelion_m).toBeCloseTo(0.9833 * AU_METERS, 0);
       expect(result.averageOrbitalSpeed_mps).toBeCloseTo(29.7827 * 1000, 0);
       expect(result.epoch).toBe("J2000");
       expect(result.timeOfPerihelion).toBe("2023-01-04");
@@ -109,15 +110,15 @@ describe("Orbital Helpers", () => {
     });
 
     it("should convert AU to meters", () => {
-      expect(auToM(1.0)).toBeCloseTo(1.496e11, 0);
+      expect(auToM(1.0)).toBeCloseTo(AU_METERS, 0);
     });
 
     it("should convert Earth masses to kg", () => {
-      expect(earthMassesToKg(1.0)).toBeCloseTo(5.972e24, 0);
+      expect(earthMassesToKg(1.0)).toBeCloseTo(EARTH_MASS, 0);
     });
 
     it("should convert Earth radii to meters", () => {
-      expect(earthRadiiToM(1.0)).toBeCloseTo(6.371e6, 0);
+      expect(earthRadiiToM(1.0)).toBeCloseTo(EARTH_RADIUS, 0);
     });
   });
 });

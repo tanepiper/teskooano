@@ -5,6 +5,8 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
+  SOLAR_MASS,
+  GRAVITATIONAL_CONSTANT,
 } from "@teskooano/data-types";
 
 export interface DateCalculationResult {
@@ -118,9 +120,7 @@ export class SimpleDateCalculator {
 
         if (object.orbit.eccentricity > 1) {
           // Hyperbolic orbit - use hyperbolic mean motion
-          const SUN_MASS = 1.9885e30; // kg
-          const G = 6.6743e-11; // m³/kg/s²
-          const mu = G * SUN_MASS;
+          const mu = GRAVITATIONAL_CONSTANT * SOLAR_MASS;
           const absSemiMajorAxis = Math.abs(object.orbit.realSemiMajorAxis_m);
           const meanMotionHyperbolic = Math.sqrt(
             mu / Math.pow(absSemiMajorAxis, 3),

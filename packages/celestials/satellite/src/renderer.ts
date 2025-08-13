@@ -5,7 +5,6 @@ import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   RenderableCelestialObject,
   SatelliteProperties,
-  METERS_TO_SCENE_UNITS,
   CelestialType,
 } from "@teskooano/data-types";
 
@@ -16,6 +15,7 @@ import {
   createFallbackSphere,
 } from "@teskooano/renderer-threejs-celestial";
 import { SatelliteMaterial } from "./material";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 /**
  * Renderer for satellite objects using 3D models (GLB, GLTF, etc.)

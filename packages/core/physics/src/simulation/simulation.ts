@@ -1,10 +1,10 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   CelestialType,
+  GRAVITATIONAL_CONSTANT,
   type OrbitalParameters,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 import {
   handleCollisions,
   type DestructionEvent,

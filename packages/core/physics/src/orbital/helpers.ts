@@ -1,7 +1,12 @@
 import { OSVector3, utils } from "@teskooano/core-math";
 import type { LagrangePointType } from "@teskooano/data-types";
-import { AU_METERS, type OrbitalParameters } from "@teskooano/data-types";
-import { KM } from "../units/constants";
+import {
+  AU_METERS,
+  KM,
+  EARTH_MASS,
+  EARTH_RADIUS,
+  type OrbitalParameters,
+} from "@teskooano/data-types";
 import { J2000_EPOCH } from "./epoch";
 
 /**
@@ -257,14 +262,14 @@ export function auToM(au: number): number {
  * Converts mass from Earth masses to kilograms
  */
 export function earthMassesToKg(earthMasses: number): number {
-  return earthMasses * 5.972e24;
+  return earthMasses * EARTH_MASS;
 }
 
 /**
  * Converts radius from Earth radii to meters
  */
 export function earthRadiiToM(earthRadii: number): number {
-  return earthRadii * 6.371e6;
+  return earthRadii * EARTH_RADIUS;
 }
 
 /**

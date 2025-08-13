@@ -1,7 +1,10 @@
-import { type OrbitalParameters } from "@teskooano/data-types";
+import {
+  GRAVITATIONAL_CONSTANT,
+  type OrbitalParameters,
+} from "@teskooano/data-types";
 import { OSVector3, EPSILON } from "@teskooano/core-math";
-import { GRAVITATIONAL_CONSTANT as G } from "../units/constants";
 import { vectorPool } from "../utils/vectorPool";
+import { J2000_EPOCH } from "./epoch";
 
 /**
  * Calculates the eccentricity vector from position, velocity, and gravitational parameter.
@@ -224,7 +227,7 @@ export function calculateElementsFromStateVectors(
   relativePosition_m: OSVector3,
   relativeVelocity_mps: OSVector3,
   parentMass_kg: number,
-): Omit<OrbitalParameters, "period_s" | "meanAnomaly"> | null {
+): Omit<OrbitalParameters, "period_s" | "meanAnomaly" | "epoch"> | null {
   if (parentMass_kg <= 0) {
     console.error(
       "[calculateElementsFromStateVectors] Parent mass must be positive.",
@@ -232,7 +235,7 @@ export function calculateElementsFromStateVectors(
     return null;
   }
 
-  const mu = G * parentMass_kg;
+  const mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
 
   const positionVector = relativePosition_m;
   const velocityVector = relativeVelocity_mps;
@@ -382,5 +385,8 @@ export function calculateElementsFromStateVectors(
     inclination: inclination,
     longitudeOfAscendingNode: longitudeOfAscendingNode,
     argumentOfPeriapsis: argumentOfPeriapsis,
+    realAphelion_m: 0,
+    realPerihelion_m: 0,
+    averageOrbitalSpeed_mps: 0,
   };
 }

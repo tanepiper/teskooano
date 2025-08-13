@@ -1,7 +1,6 @@
 import {
   CelestialType,
   type OortCloudProperties as CentralOortCloudProperties,
-  SCALE,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
@@ -13,6 +12,7 @@ import {
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { AsteroidFieldMaterial } from "@teskooano/celestials-asteroid-field";
+import { SCALE } from "@teskooano/core-physics";
 
 /**
  * Configuration options specific to the Oort Cloud renderer.

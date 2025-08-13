@@ -1,22 +1,21 @@
+import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import type {
   GasGiantProperties,
   RenderableCelestialObject,
   RingSystemProperties,
 } from "@teskooano/data-types";
-import { SCALE } from "@teskooano/data-types";
+import {
+  BaseCelestialRenderer,
+  type CelestialMeshOptions,
+  type CelestialRenderer,
+  GeometryUtilities,
+  LightArrayUtils,
+  type LightSourcesMap,
+  ShadowCasterUtils,
+} from "@teskooano/renderer-threejs-celestial";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { BaseCelestialRenderer } from "@teskooano/renderer-threejs-celestial";
-import {
-  type CelestialRenderer,
-  type LightSourcesMap,
-  type CelestialMeshOptions,
-  LightArrayUtils,
-  ShadowCasterUtils,
-  GeometryUtilities,
-} from "@teskooano/renderer-threejs-celestial";
-import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
 export interface GasGiantRendererDeps {

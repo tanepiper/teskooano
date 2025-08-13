@@ -8,11 +8,12 @@ import {
   RingProperties,
   RingSystemConfiguration,
   AU_METERS,
+  EARTH_MASS,
 } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
-import * as CONST from "../../constants";
 import { generateCelestialName } from "../../generators/names/celestial-name";
 import * as UTIL from "../../utils";
+import { SYSTEM_MAX_DISTANCE_AU } from "../../constants";
 import { calculatePlanetOrbitAndInitialState } from "./planet-orbit";
 import {
   generateGasGiantSpecificProperties,
@@ -117,7 +118,7 @@ abstract class BasePlanetGenerator {
     if (!this.baseProps) return;
 
     const massMultiplier = this.getMassMultiplier();
-    this.planetMass_kg = massMultiplier * CONST.EARTH_MASS_KG;
+    this.planetMass_kg = massMultiplier * EARTH_MASS;
     this.planetRadius_m = UTIL.calculateRadius(
       this.planetMass_kg,
       this.baseProps.targetDensity_kg_m3,
@@ -448,10 +449,10 @@ export class RoguePlanetGenerator extends BasePlanetGenerator {
     let finalEccentricity = eccentricity;
     let finalSemiMajorAxisAU = semiMajorAxisAU;
 
-    if (approachDistanceAU > CONST.SYSTEM_MAX_DISTANCE_AU * 3) {
+    if (approachDistanceAU > SYSTEM_MAX_DISTANCE_AU * 3) {
       // Adjust eccentricity to keep approach distance reasonable
       const maxEccentricity =
-        (CONST.SYSTEM_MAX_DISTANCE_AU * 3) / Math.abs(semiMajorAxisAU) - 1;
+        (SYSTEM_MAX_DISTANCE_AU * 3) / Math.abs(semiMajorAxisAU) - 1;
       if (maxEccentricity > 1.1) {
         finalEccentricity = Math.min(eccentricity, maxEccentricity);
         finalSemiMajorAxisAU =

@@ -1,11 +1,13 @@
 import {
   AU_METERS,
-  SCALE,
   type RenderableCelestialObject,
   CelestialType,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
-import { calculateKeplerianPositionAtTrueAnomaly } from "@teskooano/core-physics";
+import {
+  calculateKeplerianPositionAtTrueAnomaly,
+  SCALE,
+} from "@teskooano/core-physics";
 import type { OrbitalParameters } from "@teskooano/data-types";
 
 /**

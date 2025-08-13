@@ -1,5 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { OrbitalParameters } from "@teskooano/data-types";
+import { SOLAR_MASS, GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
 import { calculateKeplerianStateAtTime } from "./ideal";
 
 /**
@@ -321,9 +322,7 @@ export function calculateCurrentPositionPrecise(
     // Hyperbolic orbit - use hyperbolic mean motion
     // The mean motion for hyperbolic orbits is: n = sqrt(μ / |a|³)
     // We need to calculate μ from the Sun's mass
-    const SUN_MASS = 1.9885e30; // kg
-    const G = 6.6743e-11; // m³/kg/s²
-    const mu = G * SUN_MASS;
+    const mu = GRAVITATIONAL_CONSTANT * SOLAR_MASS;
     const absSemiMajorAxis = Math.abs(orbitalElements.realSemiMajorAxis_m);
     const meanMotionHyperbolic = Math.sqrt(mu / Math.pow(absSemiMajorAxis, 3));
     updatedMeanAnomaly =

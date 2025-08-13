@@ -6,6 +6,8 @@
  * astronomical models.
  */
 
+import { EARTH_MASS } from "@teskooano/data-types";
+
 /**
  * Determine moon formation mechanism based on planet mass and realistic probabilities
  */
@@ -13,8 +15,7 @@ export function determineMoonFormation(
   random: () => number,
   planetMass: number,
 ): "co-accretion" | "capture" | "impact" {
-  const earthMass = 5.972e24;
-  const planetMassRatio = planetMass / earthMass;
+  const planetMassRatio = planetMass / EARTH_MASS;
 
   // Larger planets more likely to have co-accreted moons
   if (planetMassRatio > 10) {
