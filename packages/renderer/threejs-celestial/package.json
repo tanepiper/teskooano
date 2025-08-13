@@ -31,17 +31,17 @@
     "@teskooano/renderer-threejs-lighting": "file:../threejs-lighting",
     "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
     "@teskooano/web-apis": "file:../../web-apis",
-    "three": "0.178.0"
+    "three": "0.179.1"
   },
   "devDependencies": {
-    "@types/three": "0.178.1",
-    "@playwright/test": "1.54.1",
+    "@types/three": "0.179.0",
+    "@playwright/test": "1.54.2",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.31.0",
+    "eslint": "9.33.0",
     "happy-dom": "18.0.1",
-    "playwright": "1.54.1",
-    "typescript": "5.8.3",
+    "playwright": "1.54.2",
+    "typescript": "5.9.2",
     "vitest": "3.2.4"
   }
 }

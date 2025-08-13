@@ -28,7 +28,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "three": "0.178.0",
+    "three": "0.179.1",
     "@teskooano/core-state": "file:../../../core/state",
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/core-math": "file:../../../core/math",
@@ -39,7 +39,7 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@types/three": "0.178.1",
+    "@types/three": "0.179.0",
     "vitest": "3.2.4"
   }
 }

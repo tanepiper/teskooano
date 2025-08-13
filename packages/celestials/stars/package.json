@@ -21,17 +21,17 @@
     "@teskooano/renderer-threejs-celestial": "file:../../../renderer/threejs-celestial",
     "@teskooano/renderer-threejs-lighting": "file:../../../renderer/threejs-lighting",
     "@teskooano/renderer-threejs-lod": "file:../../../renderer/threejs-lod",
-    "three": "0.178.0"
+    "three": "0.179.1"
   },
   "devDependencies": {
-    "@playwright/test": "1.54.1",
-    "@types/node": "24.1.0",
+    "@playwright/test": "1.54.2",
+    "@types/node": "24.2.1",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.31.0",
+    "eslint": "9.33.0",
     "happy-dom": "18.0.1",
-    "playwright": "1.54.1",
-    "typescript": "5.8.3",
+    "playwright": "1.54.2",
+    "typescript": "5.9.2",
     "vitest": "3.2.4"
   }
 }
