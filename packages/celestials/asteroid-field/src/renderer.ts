@@ -15,7 +15,7 @@ import {
   AsteroidFieldMaterial,
   type AsteroidFieldMaterialOptions,
 } from "./material";
-import { SCALE } from "@teskooano/core-physics";
+import { SCALE } from "@teskooano/data-values";
 
 /**
  * Configuration options specific to the asteroid field renderer.

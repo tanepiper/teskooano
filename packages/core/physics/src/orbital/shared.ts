@@ -1,6 +1,16 @@
 import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
 import type { OrbitalParameters } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
+import {
+  GRAVITATIONAL_CONSTANT,
+  SOLAR_MASS,
+  BASE_KEPLER_TOLERANCE,
+  KEPLER_TOLERANCE_SCALING,
+  MAX_KEPLER_TOLERANCE,
+  MIN_KEPLER_TOLERANCE,
+  DEFAULT_KEPLER_TOLERANCE,
+  MAX_KEPLER_ITERATIONS,
+  COLLISION_RESTITUTION,
+} from "@teskooano/data-values";
 
 /**
  * Calculate distance-based tolerance for Kepler equation solver
@@ -8,13 +18,12 @@ import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
  * @returns Scaled tolerance value
  */
 export function calculateKeplerTolerance(distanceAU: number): number {
-  const baseTolerance = 1e-4;
-  const scalingFactor = 1e-3;
-  const maxTolerance = 1e-2;
-  const minTolerance = 1e-5;
-
-  const scaledTolerance = baseTolerance + distanceAU * scalingFactor;
-  return Math.max(minTolerance, Math.min(maxTolerance, scaledTolerance));
+  const scaledTolerance =
+    BASE_KEPLER_TOLERANCE + distanceAU * KEPLER_TOLERANCE_SCALING;
+  return Math.max(
+    MIN_KEPLER_TOLERANCE,
+    Math.min(MAX_KEPLER_TOLERANCE, scaledTolerance),
+  );
 }
 
 // Simple cache for hyperbolic Kepler solutions to ensure consistency
@@ -35,8 +44,8 @@ const hyperbolicCache = new Map<string, number>();
 export const solveKeplerEquation = (
   meanAnomaly: number,
   eccentricity: number,
-  tolerance: number = 1e-8, // Tighter tolerance for more consistent results
-  maxIterations: number = 100,
+  tolerance: number = DEFAULT_KEPLER_TOLERANCE, // Tighter tolerance for more consistent results
+  maxIterations: number = MAX_KEPLER_ITERATIONS,
   distanceAU?: number,
 ): number => {
   // Use a more precise tolerance for hyperbolic orbits
@@ -280,8 +289,7 @@ export function calculateOrbitalPlaneState(
       mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
     } else {
       // Fallback: use Sun's mass for solar system objects
-      const SUN_MASS = 1.9885e30; // kg
-      mu = GRAVITATIONAL_CONSTANT * SUN_MASS;
+      mu = GRAVITATIONAL_CONSTANT * SOLAR_MASS;
     }
   } else if (period_s > 0) {
     // For elliptical/parabolic orbits, derive from period
@@ -392,8 +400,7 @@ export const calculateKeplerianStateAtTime = (
       mu = GRAVITATIONAL_CONSTANT * parentMass_kg;
     } else {
       // Fallback: use Sun's mass for solar system objects
-      const SUN_MASS = 1.9885e30; // kg
-      mu = GRAVITATIONAL_CONSTANT * SUN_MASS;
+      mu = GRAVITATIONAL_CONSTANT * SOLAR_MASS;
     }
 
     const meanMotionHyperbolic = Math.sqrt(

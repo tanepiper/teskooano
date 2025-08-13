@@ -13,7 +13,7 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { AsteroidNucleusMaterial } from "./material";
-import { SCALE } from "@teskooano/core-physics";
+import { SCALE } from "@teskooano/data-values";
 
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds

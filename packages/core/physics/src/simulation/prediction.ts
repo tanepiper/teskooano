@@ -3,7 +3,7 @@ import { type PhysicsStateReal } from "@teskooano/data-types";
 import { Octree } from "../spatial/octree";
 import { velocityVerletIntegrate } from "../integrators";
 import { CelestialType } from "@teskooano/data-types";
-import { METERS_TO_SCENE_UNITS } from "../utils";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
 export type PredictedPoint = {
   point: OSVector3;

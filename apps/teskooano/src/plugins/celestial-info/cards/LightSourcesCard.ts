@@ -2,8 +2,7 @@ import { BaseCelestialCard } from "./BaseCelestialCard.js";
 import { renderableStore } from "@teskooano/core-state";
 import { CelestialObject } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters.js";
-import { SCALE } from "@teskooano/core-physics";
-import { AU_METERS } from "@teskooano/data-values";
+import { AU_METERS, SCALE } from "@teskooano/data-values";
 
 // Calculate the scale factor to convert scene units to meters
 const SCENE_UNITS_TO_METERS = AU_METERS / SCALE.RENDER_SCALE_AU;

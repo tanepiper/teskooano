@@ -20,7 +20,8 @@ import {
   CometNucleusMaterial,
   CometParticleMaterial,
 } from "./material";
-import { SCALE, scaleSize } from "@teskooano/core-physics";
+import { SCALE } from "@teskooano/data-values";
+import { scaleSize } from "@teskooano/core-physics";
 
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds

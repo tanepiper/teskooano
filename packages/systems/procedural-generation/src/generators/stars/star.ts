@@ -19,13 +19,14 @@ import {
 } from "@teskooano/data-types";
 import { generateCelestialName } from "../names/celestial-name";
 import * as UTIL from "../../utils";
-import { createOrbitalElements, SCALE } from "@teskooano/core-physics";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import {
   GRAVITATIONAL_CONSTANT,
   SPEED_OF_LIGHT,
   SOLAR_MASS,
   SOLAR_RADIUS,
   SOLAR_LUMINOSITY,
+  SCALE,
 } from "@teskooano/data-values";
 
 /**

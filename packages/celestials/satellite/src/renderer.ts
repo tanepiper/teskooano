@@ -15,7 +15,7 @@ import {
   createFallbackSphere,
 } from "@teskooano/renderer-threejs-celestial";
 import { SatelliteMaterial } from "./material";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
 /**
  * Renderer for satellite objects using 3D models (GLB, GLTF, etc.)

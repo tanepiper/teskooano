@@ -6,32 +6,19 @@
  */
 
 import { CelestialType } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT, AU_METERS } from "@teskooano/data-values";
+import {
+  GRAVITATIONAL_CONSTANT,
+  AU_METERS,
+  SCALE,
+  METERS_TO_SCENE_UNITS,
+} from "@teskooano/data-values";
 
 /**
  * Scaling constants for the simulation.
  *
- * These values help maintain consistent scaling across the simulation:
- * - DISTANCE_SCALE: Factor for scaling distances between objects (orbital radii)
- * - SIZE_SCALE: Factor for scaling physical size of objects (radii)
- * - MASS_SCALE: Factor for adjusting mass values to prevent numerical precision issues
- * - TIME_SCALE: Factor for time adjustments if needed
- * - RENDER_SCALE_AU: Units in the ThreeJS scene per Astronomical Unit (AU)
+ * These values help maintain consistent scaling across the simulation.
+ * The SCALE object and METERS_TO_SCENE_UNITS are now imported from @teskooano/data-values.
  */
-export const SCALE = {
-  DISTANCE: 1.0,
-  SIZE: 1.0,
-  TIME: 1.0,
-  MASS: 1.0e-20,
-
-  RENDER_SCALE_AU: 1000,
-
-  GAS_GIANT_SIZE: 1.0,
-  STAR_SIZE: 1.0,
-  MOON_DISTANCE: 50.0,
-};
-
-export const METERS_TO_SCENE_UNITS = SCALE.RENDER_SCALE_AU / AU_METERS;
 
 /**
  * Convert a physical distance to a visualization distance (in Scene Units)

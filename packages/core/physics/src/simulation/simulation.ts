@@ -28,7 +28,10 @@ import {
   SimulationStepResult,
   SimulationConfiguration,
 } from "./types";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
+import {
+  GRAVITATIONAL_CONSTANT,
+  GRAVITATIONAL_SOFTENING_SQUARED,
+} from "@teskooano/data-values";
 
 /**
  * Validates if a simulation configuration is valid.
@@ -100,10 +103,9 @@ const calculateAccelerationForBody_Simple = (
   // Gravitational softening parameter (in meters squared).
   // This prevents the gravitational force from becoming infinite at very small distances.
   // A value around (parentRadius + moonRadius)^2 or similar can be physical.
-  const SOFTENING_SQUARED = 1e6; // 1 km^2, adjustable based on simulation scale
 
   // Calculate the effective distance squared for gravitational force, applying softening
-  const effectiveDistSq = distSq + SOFTENING_SQUARED;
+  const effectiveDistSq = distSq + GRAVITATIONAL_SOFTENING_SQUARED;
 
   // If distance is exactly zero (should not happen with proper initial conditions
   // and softening, but as a safeguard),

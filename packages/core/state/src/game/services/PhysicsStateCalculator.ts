@@ -10,6 +10,7 @@ import type {
   RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
+import { AU_METERS, MIN_ROGUE_DISTANCE_AU } from "@teskooano/data-values";
 
 /**
  * Service responsible for calculating physics state from celestial objects
@@ -194,17 +195,15 @@ export class PhysicsStateCalculator {
       `rogue-${data.id}-${data.seed ?? "default"}`,
     );
     const baseDistance = data.orbit?.meanAnomaly || random() * 100 + 50;
-    const minRogueDistanceAU = 50;
-    const safeDistanceAU = Math.max(baseDistance, minRogueDistanceAU);
-    const AU_TO_METERS = 1.496e11;
+    const safeDistanceAU = Math.max(baseDistance, MIN_ROGUE_DISTANCE_AU);
 
     return {
       id: data.id,
       mass_kg: data.realMass_kg,
       position_m: new OSVector3().setFromArray([
-        safeDistanceAU * AU_TO_METERS,
-        (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
-        (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
+        safeDistanceAU * AU_METERS,
+        (random() - 0.5) * safeDistanceAU * AU_METERS * 0.1,
+        (random() - 0.5) * safeDistanceAU * AU_METERS * 0.1,
       ]),
       velocity_mps: new OSVector3().setFromArray([
         (random() - 0.5) * 500,

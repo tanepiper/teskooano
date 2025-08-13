@@ -11,8 +11,7 @@ import {
   CelestialLabelComponent,
 } from "../components/celestial-label/CelestialLabelComponent";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { SCALE } from "@teskooano/core-physics";
-import { AU_METERS } from "@teskooano/data-values";
+import { AU_METERS, SCALE } from "@teskooano/data-values";
 
 export interface LabelVisibilityConfig {
   planet?: number;

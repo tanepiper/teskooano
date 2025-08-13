@@ -1,11 +1,11 @@
 import { EPSILON, OSVector3 } from "@teskooano/core-math";
 import { CelestialType } from "@teskooano/data-types";
+import {
+  MASS_DIFF_THRESHOLD,
+  MUTUAL_DESTRUCTION_ID,
+  COLLISION_RESTITUTION,
+} from "@teskooano/data-values";
 import { PhysicsStateReal } from "../types";
-
-/** Threshold for mass difference to trigger inelastic collision (e.g., obj1 is < 10% mass of obj2) */
-const MASS_DIFF_THRESHOLD = 0.1;
-/** Special identifier for mutual destruction events */
-const MUTUAL_DESTRUCTION_ID = "MUTUAL_DESTRUCTION";
 
 /**
  * Represents detailed information about a detected collision between two physical bodies.
@@ -131,7 +131,7 @@ export const resolveCollision = (
     return [body1Real, body2Real];
   }
 
-  const restitution = 1.0;
+  const restitution = COLLISION_RESTITUTION;
 
   const j = (-(1 + restitution) * normalVelocity) / (1 / mass1 + 1 / mass2);
 

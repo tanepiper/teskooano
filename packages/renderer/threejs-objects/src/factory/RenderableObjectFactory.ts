@@ -7,7 +7,8 @@ import {
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "../utils/coordinateUtils";
 import { PhysicsStateProvider } from "@teskooano/core-state";
-import { SCALE, scaleSize } from "@teskooano/core-physics";
+import { scaleSize } from "@teskooano/core-physics";
+import { SCALE } from "@teskooano/data-values";
 
 /**
  * A factory responsible for creating and updating `RenderableCelestialObject` instances.

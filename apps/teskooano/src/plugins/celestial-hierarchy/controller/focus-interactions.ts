@@ -6,8 +6,7 @@ import {
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
 import * as THREE from "three";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
-import { AU_METERS } from "@teskooano/data-values";
+import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
 /**
  * Handles the logic for requesting the camera to point at a specific object.

@@ -7,7 +7,6 @@ import {
   CelestialStatus,
 } from "@teskooano/data-types";
 import { type SimulationParameters } from "@teskooano/core-physics";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 import {
   StateAccessor,
   simulationStateService,
@@ -33,6 +32,7 @@ import {
   SECONDS_PER_HOUR,
   SECONDS_PER_MINUTE,
   SECONDS_PER_YEAR,
+  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-values";
 const TIME_MARKERS = [
   SECONDS_PER_HOUR, // 1h

@@ -1,5 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 import * as THREE from "three";
 
 /**

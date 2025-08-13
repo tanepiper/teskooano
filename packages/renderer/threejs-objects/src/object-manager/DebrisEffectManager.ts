@@ -2,7 +2,7 @@ import type { DestructionEvent } from "@teskooano/core-physics";
 import * as THREE from "three";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
 // New structure for active debris effects using InstancedMesh
 interface ActiveInstancedDebris {

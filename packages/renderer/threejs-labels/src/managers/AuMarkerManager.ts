@@ -1,11 +1,9 @@
-import { AU_METERS } from "@teskooano/data-values";
-import * as THREE from "three";
-import { GeometryHelper } from "@teskooano/renderer-threejs-helpers";
+import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
+import * as THREE from "three";
 import { Layer2DManager } from "../Layer2DManager";
 import { AuMarkerLabelLayer } from "../layers/AuMarkerLabelLayer";
 import { CSS2DLayerType } from "../types";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
 
 /**
  * Manages the creation, visibility, and disposal of AU (Astronomical Unit) markers.

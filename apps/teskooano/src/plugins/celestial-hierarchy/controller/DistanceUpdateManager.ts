@@ -1,4 +1,4 @@
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 import { CelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";

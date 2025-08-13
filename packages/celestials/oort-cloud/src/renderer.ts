@@ -12,7 +12,7 @@ import {
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { AsteroidFieldMaterial } from "@teskooano/celestials-asteroid-field";
-import { SCALE } from "@teskooano/core-physics";
+import { SCALE } from "@teskooano/data-values";
 
 /**
  * Configuration options specific to the Oort Cloud renderer.

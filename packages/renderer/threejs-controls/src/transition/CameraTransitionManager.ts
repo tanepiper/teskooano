@@ -8,8 +8,7 @@ import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
 import { StateAccessor } from "@teskooano/core-state";
 import { OSVector3 } from "@teskooano/core-math";
 import { PerspectiveCamera, Vector3 } from "three";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
-import { AU_METERS } from "@teskooano/data-values";
+import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
 /**
  * Manages smooth, animated camera transitions using GSAP.

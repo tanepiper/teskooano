@@ -1,7 +1,6 @@
 import { Vector3 } from "three";
 import { CelestialType, CelestialObject } from "@teskooano/data-types";
-import { METERS_TO_SCENE_UNITS } from "@teskooano/core-physics";
-import { AU_METERS } from "@teskooano/data-values";
+import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 /**
  * Calculates the distance from a point to the surface of a celestial object.
  * For solid bodies (planets, moons, etc.), this subtracts the object's radius.
