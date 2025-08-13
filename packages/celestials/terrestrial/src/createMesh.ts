@@ -36,19 +36,19 @@ export function createMesh(
 
   if (debug) {
     console.debug(
-      `[Terrestrial:createMesh] Creating mesh for ${object.type} ${object.celestialObjectId}`,
+      `[Terrestrial:createMesh] Creating mesh for ${object.type} ${object.id}`,
     );
   }
 
   // Force fallback if debug mode is enabled
   if (debug) {
     console.debug(
-      `[Terrestrial:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+      `[Terrestrial:createMesh] Debug mode enabled, using fallback for ${object.id}`,
     );
     return createFallbackSphere(object);
   }
 
-  let renderer = celestialRenderers.get(object.celestialObjectId) as
+  let renderer = celestialRenderers.get(object.id) as
     | BaseTerrestrialRenderer
     | undefined;
 
@@ -57,16 +57,16 @@ export function createMesh(
       renderer = new BaseTerrestrialRenderer(object, {
         renderers: celestialRenderers,
       });
-      celestialRenderers.set(object.celestialObjectId, renderer);
+      celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[Terrestrial:createMesh] Created new renderer for ${object.type} ${object.celestialObjectId}`,
+          `[Terrestrial:createMesh] Created new renderer for ${object.type} ${object.id}`,
         );
       }
     } catch (error) {
       console.error(
-        `[Terrestrial:createMesh] Failed to create default BaseTerrestrialRenderer for ${object.celestialObjectId}:`,
+        `[Terrestrial:createMesh] Failed to create default BaseTerrestrialRenderer for ${object.id}:`,
         error,
       );
       return createFallbackSphere(object);
@@ -75,7 +75,7 @@ export function createMesh(
 
   if (!renderer) {
     console.error(
-      `[Terrestrial:createMesh] Failed to find or create renderer for ${object.celestialObjectId}.`,
+      `[Terrestrial:createMesh] Failed to find or create renderer for ${object.id}.`,
     );
     return createFallbackSphere(object);
   }
@@ -92,19 +92,19 @@ export function createMesh(
 
       if (debug) {
         console.debug(
-          `[Terrestrial:createMesh] Created LOD with ${lodLevels.length} levels for ${object.type} ${object.celestialObjectId}`,
+          `[Terrestrial:createMesh] Created LOD with ${lodLevels.length} levels for ${object.type} ${object.id}`,
         );
       }
 
       return lod;
     } else {
       console.warn(
-        `[Terrestrial:createMesh] Renderer for ${object.type} ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[Terrestrial:createMesh] Renderer for ${object.type} ${object.id} provided invalid LOD levels.`,
       );
     }
   } else {
     console.warn(
-      `[Terrestrial:createMesh] Renderer for ${object.type} ${object.celestialObjectId} does not have getLODLevels.`,
+      `[Terrestrial:createMesh] Renderer for ${object.type} ${object.id} does not have getLODLevels.`,
     );
   }
 

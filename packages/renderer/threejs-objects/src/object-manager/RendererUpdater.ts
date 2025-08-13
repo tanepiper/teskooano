@@ -62,7 +62,7 @@ export class RendererUpdater {
     const map: LightSourcesMap = new Map();
     lights.forEach((comp) => {
       const light = comp.light as THREE.PointLight;
-      map.set(comp.celestialObject.celestialObjectId, {
+      map.set(comp.celestialObject.id, {
         position: light.position,
         color: light.color,
         intensity: light.intensity,

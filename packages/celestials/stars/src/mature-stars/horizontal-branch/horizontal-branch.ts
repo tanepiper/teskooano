@@ -93,7 +93,7 @@ export class HorizontalBranchRenderer extends BaseStarRenderer<HorizontalBranchM
 
     // High detail level (LOD 0) - Full horizontal branch star
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-horizontal-branch-high`;
+    highDetailGroup.name = `${object.id}-horizontal-branch-high`;
 
     // Create main star body
     const starSegments = GeometryUtilities.getOptimizedStarSegments("high", 64);
@@ -103,7 +103,7 @@ export class HorizontalBranchRenderer extends BaseStarRenderer<HorizontalBranchM
       starSegments,
     );
     const starMesh = new THREE.Mesh(starGeometry, material);
-    starMesh.name = `${object.celestialObjectId}-horizontal-branch-body`;
+    starMesh.name = `${object.id}-horizontal-branch-body`;
     highDetailGroup.add(starMesh);
 
     // Create stable corona system
@@ -113,7 +113,7 @@ export class HorizontalBranchRenderer extends BaseStarRenderer<HorizontalBranchM
 
     // Medium detail level (LOD 1) - Simplified horizontal branch star
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-horizontal-branch-medium`;
+    mediumDetailGroup.name = `${object.id}-horizontal-branch-medium`;
 
     const mediumStarMesh = new THREE.Mesh(starGeometry, material);
     mediumDetailGroup.add(mediumStarMesh);

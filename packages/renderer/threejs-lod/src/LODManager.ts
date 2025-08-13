@@ -74,7 +74,7 @@ export class LODManager extends StateSubscriptionMixin {
       lod.addLevel(level.object, level.distance);
     });
 
-    this.objectLODs.set(object.celestialObjectId, lod);
+    this.objectLODs.set(object.id, lod);
     return lod;
   }
 

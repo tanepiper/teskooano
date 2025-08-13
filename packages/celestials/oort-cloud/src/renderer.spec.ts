@@ -53,7 +53,6 @@ describe("OortCloudRenderer", () => {
     };
 
     mockObject = {
-      celestialObjectId: "test-oort-cloud",
       id: "test-oort-cloud",
       name: "Test Oort Cloud",
       type: CelestialType.OORT_CLOUD,

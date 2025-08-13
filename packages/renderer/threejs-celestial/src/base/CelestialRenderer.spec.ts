@@ -24,7 +24,6 @@ describe("CelestialRenderer Interface", () => {
   beforeEach(() => {
     mockObject = {
       id: "test-object",
-      celestialObjectId: "test-object",
       name: "Test Object",
       type: CelestialType.PLANET,
       status: CelestialStatus.ACTIVE,
@@ -192,12 +191,10 @@ describe("CelestialRenderer Interface", () => {
       allObjects = {
         planet: {
           ...mockObject,
-          celestialObjectId: "planet",
           type: CelestialType.PLANET,
         },
         moon1: {
           ...mockObject,
-          celestialObjectId: "moon1",
           type: CelestialType.MOON,
           parentId: "planet",
           position: new THREE.Vector3(100, 0, 0),
@@ -205,7 +202,6 @@ describe("CelestialRenderer Interface", () => {
         },
         moon2: {
           ...mockObject,
-          celestialObjectId: "moon2",
           type: CelestialType.MOON,
           parentId: "planet",
           position: new THREE.Vector3(-100, 0, 0),

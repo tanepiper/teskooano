@@ -49,7 +49,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
   constructor(object: RenderableCelestialObject) {
     super(object);
-    this.objectId = object.celestialObjectId;
+    this.objectId = object.id;
     this.dracoLoader = new DRACOLoader();
     // Set the path to the Draco decoder files (relative to your public directory)
     // this.dracoLoader.setDecoderPath('/draco/'); // You must copy the decoder files to public/draco/
@@ -74,7 +74,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     const properties = object.properties as SatelliteProperties;
     if (!properties?.modelPath) {
       console.warn(
-        `[SatelliteRenderer] No modelPath provided for ${object.celestialObjectId}`,
+        `[SatelliteRenderer] No modelPath provided for ${object.id}`,
       );
       this._cachedLODLevels = this.createFallbackLOD(object);
       return this._cachedLODLevels;
@@ -83,7 +83,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     // Create the main group that will hold either the model or fallback
     if (!this.satelliteGroup) {
       this.satelliteGroup = new THREE.Group();
-      this.satelliteGroup.name = `satellite-group-${object.celestialObjectId}`;
+      this.satelliteGroup.name = `satellite-group-${object.id}`;
 
       // Start with fallback mesh
       this.createFallbackMesh(object);
@@ -264,7 +264,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     this.model.scale.setScalar(finalScale);
 
     // Set name for debugging
-    this.model.name = `satellite_${object.celestialObjectId}`;
+    this.model.name = `satellite_${object.id}`;
 
     // Ensure shadow settings and names are correct for enhanced materials
     this.model.traverse((child) => {
@@ -277,7 +277,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
         child.renderOrder = 0;
 
         // Set name for debugging
-        child.name = `${object.celestialObjectId}_mesh_${child.name || "unnamed"}`;
+        child.name = `${object.id}_mesh_${child.name || "unnamed"}`;
       }
     });
   }
@@ -331,7 +331,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       this.calculateSatelliteScale(object, properties) * 0.1; // 10% of model size
     this.billboard.scale.setScalar(billboardScale);
 
-    this.billboard.name = `satellite_billboard_${object.celestialObjectId}`;
+    this.billboard.name = `satellite_billboard_${object.id}`;
     this.billboard.renderOrder = 0; // Ensure satellites render before transparent objects
   }
 
@@ -354,12 +354,12 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     const material = this.createSatelliteMaterial();
 
     const mediumDetailMesh = new THREE.Mesh(boxGeometry, material);
-    mediumDetailMesh.name = `satellite_medium_${object.celestialObjectId}`;
+    mediumDetailMesh.name = `satellite_medium_${object.id}`;
     mediumDetailMesh.renderOrder = 0; // Ensure satellites render before transparent objects
 
     // Create a group to hold the medium detail mesh
     this.mediumDetailModel = new THREE.Group();
-    this.mediumDetailModel.name = `satellite-medium-group-${object.celestialObjectId}`;
+    this.mediumDetailModel.name = `satellite-medium-group-${object.id}`;
     this.mediumDetailModel.add(mediumDetailMesh);
 
     // Apply the same scale as the original model

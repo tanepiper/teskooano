@@ -227,7 +227,7 @@ export abstract class BaseStarRenderer<
    */
   protected _createCoronaGroup(object: RenderableCelestialObject): THREE.Group {
     const coronaGroup = new THREE.Group();
-    coronaGroup.name = `${object.celestialObjectId}-corona-group`;
+    coronaGroup.name = `${object.id}-corona-group`;
     this._addCoronaToGroup(object, coronaGroup);
     return coronaGroup;
   }
@@ -243,7 +243,7 @@ export abstract class BaseStarRenderer<
     const starColor = this.getStarColor(object);
     const coronaMaterials: CoronaMaterial[] = [];
 
-    this.coronaMaterials.set(object.celestialObjectId, coronaMaterials);
+    this.coronaMaterials.set(object.id, coronaMaterials);
 
     const coronaScales = [1.1, 1.2];
     const opacities = [0.1, 0.05];
@@ -267,7 +267,7 @@ export abstract class BaseStarRenderer<
       });
       coronaMaterials.push(coronaMaterial);
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      coronaMesh.name = `${object.celestialObjectId}-corona-${index}`;
+      coronaMesh.name = `${object.id}-corona-${index}`;
       coronaMesh.material.depthWrite = false;
       coronaMesh.material.side = THREE.DoubleSide;
       group.add(coronaMesh);
@@ -312,9 +312,7 @@ export abstract class BaseStarRenderer<
       allMeshes,
     );
 
-    const material = this.getMaterial(
-      object.celestialObjectId,
-    ) as TStarMaterial;
+    const material = this.getMaterial(object.id) as TStarMaterial;
     if (material) {
       // Update material with current time
       if (material.update) {

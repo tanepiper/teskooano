@@ -131,13 +131,13 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
 
     // Level 0: High detail (Horizon only)
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-lod-high`;
+    highDetailGroup.name = `${object.id}-lod-high`;
     highDetailGroup.add(eventHorizon.clone());
     const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
 
     // Level 1: Low detail (Horizon only)
     const lowDetailGroup = new THREE.Group();
-    lowDetailGroup.name = `${object.celestialObjectId}-lod-low`;
+    lowDetailGroup.name = `${object.id}-lod-low`;
     lowDetailGroup.add(eventHorizon);
     const lod1: LODLevel = { object: lowDetailGroup, distance: 10000 };
 
@@ -157,12 +157,9 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
     const segments = GeometryUtilities.getOptimizedStarSegments("high", 64);
     const geometry = new THREE.SphereGeometry(radius, segments, segments);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
-    this.materials.set(
-      object.celestialObjectId,
-      this.eventHorizonMaterial as any,
-    ); // Cast needed as it's not a BaseStarMaterial
+    this.materials.set(object.id, this.eventHorizonMaterial as any); // Cast needed as it's not a BaseStarMaterial
     const eventHorizon = new THREE.Mesh(geometry, this.eventHorizonMaterial);
-    eventHorizon.name = `${object.celestialObjectId}-event-horizon`;
+    eventHorizon.name = `${object.id}-event-horizon`;
     return eventHorizon;
   }
 
@@ -192,7 +189,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
       },
     );
 
-    this.lensingHelpers.set(object.celestialObjectId, lensHelper);
+    this.lensingHelpers.set(object.id, lensHelper);
   }
 
   /**

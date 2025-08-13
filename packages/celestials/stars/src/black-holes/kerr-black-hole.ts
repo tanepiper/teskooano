@@ -198,7 +198,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
 
     // High detail level (LOD 0) - Full black hole with accretion disk
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-kerr-high`;
+    highDetailGroup.name = `${object.id}-kerr-high`;
 
     // Create event horizon
     const eventHorizonSegments = GeometryUtilities.getOptimizedStarSegments(
@@ -215,7 +215,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       eventHorizonGeometry,
       this.eventHorizonMaterial,
     );
-    eventHorizonMesh.name = `${object.celestialObjectId}-event-horizon`;
+    eventHorizonMesh.name = `${object.id}-event-horizon`;
     highDetailGroup.add(eventHorizonMesh);
 
     // Create ergosphere (rotating space-time region)
@@ -234,15 +234,12 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       ergosphereGeometry,
       this.ergosphereMaterial,
     );
-    ergosphereMesh.name = `${object.celestialObjectId}-ergosphere`;
+    ergosphereMesh.name = `${object.id}-ergosphere`;
     highDetailGroup.add(ergosphereMesh);
 
     // Create accretion disk using the rings system
-    if (
-      object.mass &&
-      !this.createdAccretionDisks.has(object.celestialObjectId)
-    ) {
-      this.createdAccretionDisks.add(object.celestialObjectId);
+    if (object.mass && !this.createdAccretionDisks.has(object.id)) {
+      this.createdAccretionDisks.add(object.id);
 
       const accretionDiskProps = generateAccretionDiskProperties(
         object.mass,
@@ -289,12 +286,12 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       // Add the highest detail ring level (index 0) to the high detail group
       if (ringLODLevels.length > 0) {
         const highDetailRing = ringLODLevels[0].object;
-        highDetailRing.name = `${object.celestialObjectId}-accretion-disk-high`;
+        highDetailRing.name = `${object.id}-accretion-disk-high`;
         highDetailGroup.add(highDetailRing);
       }
 
       console.log(
-        `[KerrBlackHoleRenderer] Created accretion disk for ${object.celestialObjectId}, ` +
+        `[KerrBlackHoleRenderer] Created accretion disk for ${object.id}, ` +
           `temperature: ${accretionDiskProps.temperature.toFixed(0)}K, ` +
           `accretion rate: ${accretionDiskProps.accretionRate} M☉/year`,
       );
@@ -304,7 +301,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
 
     // Medium detail level (LOD 1) - Simplified black hole with accretion disk
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-kerr-medium`;
+    mediumDetailGroup.name = `${object.id}-kerr-medium`;
 
     const mediumEventHorizonMesh = new THREE.Mesh(
       eventHorizonGeometry,
@@ -342,7 +339,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
         mediumDiskGeometry,
         mediumDiskMaterial,
       );
-      mediumDiskMesh.name = `${object.celestialObjectId}-accretion-disk-medium`;
+      mediumDiskMesh.name = `${object.id}-accretion-disk-medium`;
       mediumDiskMesh.rotation.x = -Math.PI / 2;
       mediumDetailGroup.add(mediumDiskMesh);
     }
@@ -351,7 +348,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
 
     // Low detail level (LOD 2) - Event horizon with simple accretion disk
     const lowDetailGroup = new THREE.Group();
-    lowDetailGroup.name = `${object.celestialObjectId}-kerr-low`;
+    lowDetailGroup.name = `${object.id}-kerr-low`;
 
     const lowEventHorizonMesh = new THREE.Mesh(
       eventHorizonGeometry,
@@ -378,7 +375,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
         side: THREE.DoubleSide,
       });
       const lowDiskMesh = new THREE.Mesh(lowDiskGeometry, lowDiskMaterial);
-      lowDiskMesh.name = `${object.celestialObjectId}-accretion-disk-low`;
+      lowDiskMesh.name = `${object.id}-accretion-disk-low`;
       lowDiskMesh.rotation.x = -Math.PI / 2;
       lowDetailGroup.add(lowDiskMesh);
     }
@@ -401,12 +398,9 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     const segments = GeometryUtilities.getOptimizedStarSegments("high", 64);
     const geometry = new THREE.SphereGeometry(radius, segments, segments);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
-    this.materials.set(
-      object.celestialObjectId,
-      this.eventHorizonMaterial as any,
-    );
+    this.materials.set(object.id, this.eventHorizonMaterial as any);
     const eventHorizon = new THREE.Mesh(geometry, this.eventHorizonMaterial);
-    eventHorizon.name = `${object.celestialObjectId}-event-horizon`;
+    eventHorizon.name = `${object.id}-event-horizon`;
     return eventHorizon;
   }
 
@@ -425,7 +419,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     this.ergosphereMaterial.setRotationSpeed(this.rotationSpeed);
 
     const ergosphere = new THREE.Mesh(geometry, this.ergosphereMaterial);
-    ergosphere.name = `${object.celestialObjectId}-ergosphere`;
+    ergosphere.name = `${object.id}-ergosphere`;
     return ergosphere;
   }
 
@@ -458,7 +452,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       },
     );
 
-    this.lensingHelpers.set(object.celestialObjectId, lensHelper);
+    this.lensingHelpers.set(object.id, lensHelper);
   }
 
   /**

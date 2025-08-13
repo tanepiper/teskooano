@@ -49,20 +49,18 @@ export function createMesh(
   } = options;
 
   if (debug) {
-    console.debug(
-      `[GasGiant:createMesh] Creating mesh for ${object.celestialObjectId}`,
-    );
+    console.debug(`[GasGiant:createMesh] Creating mesh for ${object.id}`);
   }
 
   // Force fallback if debug mode is enabled
   if (debug) {
     console.debug(
-      `[GasGiant:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+      `[GasGiant:createMesh] Debug mode enabled, using fallback for ${object.id}`,
     );
     return createFallbackSphere(object);
   }
 
-  let renderer = celestialRenderers.get(object.celestialObjectId) as
+  let renderer = celestialRenderers.get(object.id) as
     | BaseGasGiantRenderer
     | undefined;
 
@@ -95,22 +93,22 @@ export function createMesh(
           break;
         default:
           console.warn(
-            `[GasGiant:createMesh] Unknown gasGiantClass: ${gasGiantClass} for ${object.celestialObjectId}. Using fallback.`,
+            `[GasGiant:createMesh] Unknown gasGiantClass: ${gasGiantClass} for ${object.id}. Using fallback.`,
           );
           return createFallbackSphere(object);
       }
 
       renderer = newRenderer;
-      celestialRenderers.set(object.celestialObjectId, renderer);
+      celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[GasGiant:createMesh] Created new ${gasGiantClass} renderer for ${object.celestialObjectId}`,
+          `[GasGiant:createMesh] Created new ${gasGiantClass} renderer for ${object.id}`,
         );
       }
     } catch (error) {
       console.error(
-        `[GasGiant:createMesh] Failed to create renderer for ${object.celestialObjectId}:`,
+        `[GasGiant:createMesh] Failed to create renderer for ${object.id}:`,
         error,
       );
       return createFallbackSphere(object);
@@ -128,7 +126,7 @@ export function createMesh(
 
     if (debug) {
       console.debug(
-        `[GasGiant:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+        `[GasGiant:createMesh] Created LOD with ${lodLevels.length} levels for ${object.id}`,
       );
     }
 
@@ -136,7 +134,7 @@ export function createMesh(
   }
 
   console.warn(
-    `[GasGiant:createMesh] Renderer for ${object.celestialObjectId} provided no valid LOD levels. Using fallback.`,
+    `[GasGiant:createMesh] Renderer for ${object.id} provided no valid LOD levels. Using fallback.`,
   );
   return createFallbackSphere(object);
 }

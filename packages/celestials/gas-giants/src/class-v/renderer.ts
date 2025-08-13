@@ -23,12 +23,10 @@ export class ClassVGasGiantRenderer extends BaseGasGiantRenderer<ClassVMaterial>
     const properties = object.properties as GasGiantProperties;
 
     // Initialize seeded random for this gas giant
-    const random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    const random = createSeededRandomSync(object.seed ?? object.id);
 
-    const seed = object.celestialObjectId
-      ? object.celestialObjectId
+    const seed = object.id
+      ? object.id
           .split("")
           .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
       : random() * 10000;

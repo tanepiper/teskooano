@@ -38,7 +38,7 @@ describe("LODManager", () => {
     lodManager = new LODManager(camera);
 
     testObject = {
-      celestialObjectId: "test-planet",
+      id: "test-planet",
       type: CelestialType.PLANET,
       name: "Test Planet",
       mass: 1e24,

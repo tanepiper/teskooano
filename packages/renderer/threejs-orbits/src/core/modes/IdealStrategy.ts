@@ -74,15 +74,15 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
     Object.values(objects).forEach((obj) => {
       if (obj.orbit && obj.parentId) {
         this.keplerianManager.createOrUpdate(
-          obj.celestialObjectId,
+          obj.id,
           obj.orbit,
           obj.parentId,
           this.isVisible,
           this.highlightedObjectId,
           this.highlightColor,
         );
-      } else if (this.keplerianManager.hasLine(obj.celestialObjectId)) {
-        this.keplerianManager.remove(obj.celestialObjectId);
+      } else if (this.keplerianManager.hasLine(obj.id)) {
+        this.keplerianManager.remove(obj.id);
       }
     });
   }

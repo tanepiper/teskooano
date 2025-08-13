@@ -95,26 +95,14 @@ export abstract class BaseCelestialRenderer<
     this.timeManager = new TimeManager();
     this.billboardManager = new BillboardManager();
 
-    // Handle both constructor signatures for backward compatibility
-    if ("celestialObjectId" in objectOrOptions) {
-      // First parameter is a RenderableCelestialObject
-      const object = objectOrOptions as RenderableCelestialObject;
-      this.positionHistoryManager = new PositionHistoryManager(
-        object.celestialObjectId,
-        options.orbitalConfig,
-        this,
-      );
-      this.billboardDisabled = options.disableBillboard ?? false;
-    } else {
-      // First parameter is BaseCelestialRendererOptions (legacy constructor)
-      const legacyOptions = objectOrOptions as BaseCelestialRendererOptions;
-      this.positionHistoryManager = new PositionHistoryManager(
-        "unknown",
-        legacyOptions.orbitalConfig,
-        this,
-      );
-      this.billboardDisabled = legacyOptions.disableBillboard ?? false;
-    }
+    // First parameter is a RenderableCelestialObject
+    const object = objectOrOptions as RenderableCelestialObject;
+    this.positionHistoryManager = new PositionHistoryManager(
+      object.id,
+      options.orbitalConfig,
+      this,
+    );
+    this.billboardDisabled = options.disableBillboard ?? false;
   }
 
   /**
@@ -337,7 +325,7 @@ export abstract class BaseCelestialRenderer<
   ): TMaterial | undefined {
     if (this.createMaterial) {
       const material = this.createMaterial(object);
-      this.registerMaterial(object.celestialObjectId, material);
+      this.registerMaterial(object.id, material);
       return material;
     }
     return undefined;
@@ -590,7 +578,7 @@ export abstract class BaseCelestialRenderer<
     // Update orbital manager with correct object ID if it was initialized with 'unknown'
     if (this.positionHistoryManager.getObjectId() === "unknown") {
       this.positionHistoryManager = new PositionHistoryManager(
-        object.celestialObjectId,
+        object.id,
         this.positionHistoryManager.getConfig(),
         this,
       );

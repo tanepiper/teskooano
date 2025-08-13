@@ -155,7 +155,7 @@ export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
       segments,
     );
     const mesh = new THREE.Mesh(geometry, this.material);
-    mesh.name = `${object.celestialObjectId}-body`;
+    mesh.name = `${object.id}-body`;
 
     const group = new THREE.Group();
     group.add(mesh);

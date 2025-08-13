@@ -93,7 +93,7 @@ export class RedGiantRenderer extends BaseStarRenderer<RedGiantMaterial> {
 
     // High detail level (LOD 0) - Full red giant with large corona
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-red-giant-high`;
+    highDetailGroup.name = `${object.id}-red-giant-high`;
 
     // Create main star body
     const starSegments = GeometryUtilities.getOptimizedStarSegments("high", 64);
@@ -103,7 +103,7 @@ export class RedGiantRenderer extends BaseStarRenderer<RedGiantMaterial> {
       starSegments,
     );
     const starMesh = new THREE.Mesh(starGeometry, material);
-    starMesh.name = `${object.celestialObjectId}-red-giant-body`;
+    starMesh.name = `${object.id}-red-giant-body`;
     highDetailGroup.add(starMesh);
 
     // Create large corona system for red giants
@@ -113,7 +113,7 @@ export class RedGiantRenderer extends BaseStarRenderer<RedGiantMaterial> {
 
     // Medium detail level (LOD 1) - Simplified red giant
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-red-giant-medium`;
+    mediumDetailGroup.name = `${object.id}-red-giant-medium`;
 
     const mediumStarMesh = new THREE.Mesh(starGeometry, material);
     mediumDetailGroup.add(mediumStarMesh);
@@ -248,16 +248,14 @@ export class RedGiantRenderer extends BaseStarRenderer<RedGiantMaterial> {
       });
 
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      coronaMesh.name = `${object.celestialObjectId}-red-giant-corona-${index}`;
+      coronaMesh.name = `${object.id}-red-giant-corona-${index}`;
       group.add(coronaMesh);
 
       // Store material for updates
-      if (!this.coronaMaterials.has(object.celestialObjectId)) {
-        this.coronaMaterials.set(object.celestialObjectId, []);
+      if (!this.coronaMaterials.has(object.id)) {
+        this.coronaMaterials.set(object.id, []);
       }
-      this.coronaMaterials
-        .get(object.celestialObjectId)!
-        .push(coronaMaterial as any);
+      this.coronaMaterials.get(object.id)!.push(coronaMaterial as any);
     });
   }
 
@@ -296,7 +294,7 @@ export class RedGiantRenderer extends BaseStarRenderer<RedGiantMaterial> {
     }
 
     // Update corona materials
-    const coronaMaterials = this.coronaMaterials.get(object.celestialObjectId);
+    const coronaMaterials = this.coronaMaterials.get(object.id);
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
         if (material.uniforms && material.uniforms.uTime) {

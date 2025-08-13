@@ -87,7 +87,7 @@ export class OrbitCalculator {
       orbitalParameters.realSemiMajorAxis_m === 0
     ) {
       console.warn(
-        `[OrbitCalc] Invalid orbital parameters for ${object.celestialObjectId}. Cannot calculate orbit points.`,
+        `[OrbitCalc] Invalid orbital parameters for ${object.id}. Cannot calculate orbit points.`,
       );
       return [];
     }
@@ -99,7 +99,7 @@ export class OrbitCalculator {
         orbitalParameters.period_s === 0)
     ) {
       console.warn(
-        `[OrbitCalc] Invalid orbital parameters for ${object.celestialObjectId}. Elliptical/parabolic orbits must have a period.`,
+        `[OrbitCalc] Invalid orbital parameters for ${object.id}. Elliptical/parabolic orbits must have a period.`,
       );
       return [];
     }
@@ -139,7 +139,7 @@ export class OrbitCalculator {
           points.push(scaledRelativePosition);
         } else {
           console.warn(
-            `[OrbitCalc] Skipping NaN/Infinite position for ${object.celestialObjectId} at trueAnomaly_rad: ${trueAnomaly_rad}`,
+            `[OrbitCalc] Skipping NaN/Infinite position for ${object.id} at trueAnomaly_rad: ${trueAnomaly_rad}`,
           );
         }
       }

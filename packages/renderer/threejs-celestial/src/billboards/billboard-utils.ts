@@ -34,7 +34,7 @@ export function createBillboardSprite(
     depthTest: true, // But should test against depth buffer for proper occlusion
     userData: {
       isBillboard: true,
-      celestialObjectId: object.celestialObjectId,
+      id: object.id,
       position: object.position,
       albedo,
       color: starColor.getHex(),
@@ -42,7 +42,7 @@ export function createBillboardSprite(
   });
 
   const distantSprite = new THREE.Sprite(spriteMaterial);
-  distantSprite.name = `${object.celestialObjectId}-distant-sprite`;
+  distantSprite.name = `${object.id}-distant-sprite`;
   distantSprite.scale.set(size / 2, size / 2, 1.0);
 
   return {
@@ -79,7 +79,7 @@ export function createBillboardPointLight(
     intensity: lightIntensity,
     decay: 2,
     distance: 0,
-    name: `${object.celestialObjectId}-low-lod-light`,
+    name: `${object.id}-low-lod-light`,
     castShadow: false,
   });
   // Store the original intensity for fading calculations
@@ -103,7 +103,7 @@ export function createBillboardLODLevel(
   billboardDistance: number,
 ): LODLevel {
   const billboardGroup = new THREE.Group();
-  billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
+  billboardGroup.name = `${object.id}-billboard-lod`;
   billboardGroup.add(sprite);
   billboardGroup.add(pointLight);
 

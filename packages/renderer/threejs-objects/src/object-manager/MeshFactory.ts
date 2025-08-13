@@ -151,16 +151,16 @@ export class MeshFactory {
           break;
         default:
           console.warn(
-            `[MeshFactory] No mesh creation logic for type: ${object.type} (${object.celestialObjectId}). Creating fallback sphere.`,
+            `[MeshFactory] No mesh creation logic for type: ${object.type} (${object.id}). Creating fallback sphere.`,
           );
           // Use imported fallback function
           mesh = createFallbackSphere(object);
       }
 
       if (mesh) {
-        mesh.name = `${object.type}_${object.celestialObjectId}`;
+        mesh.name = `${object.type}_${object.id}`;
         mesh.userData = {
-          celestialId: object.celestialObjectId,
+          celestialId: object.id,
           type: object.type,
         };
         // Set initial position and rotation
@@ -171,7 +171,7 @@ export class MeshFactory {
       return mesh;
     } catch (error) {
       console.error(
-        `[MeshFactory] Error creating mesh for ${object.celestialObjectId} (${object.type}):`,
+        `[MeshFactory] Error creating mesh for ${object.id} (${object.type}):`,
         error,
       );
       // Use imported fallback function

@@ -35,36 +35,34 @@ export function createMesh(
   const { celestialRenderers, createLodObject, debug = false } = options;
 
   if (debug) {
-    console.debug(
-      `[AsteroidField:createMesh] Creating mesh for ${object.celestialObjectId}`,
-    );
+    console.debug(`[AsteroidField:createMesh] Creating mesh for ${object.id}`);
   }
 
   // Force fallback if debug mode is enabled
   if (debug) {
     console.debug(
-      `[AsteroidField:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+      `[AsteroidField:createMesh] Debug mode enabled, using fallback for ${object.id}`,
     );
     return createFallbackSphere(object);
   }
 
-  let renderer = celestialRenderers.get(object.celestialObjectId) as
+  let renderer = celestialRenderers.get(object.id) as
     | AsteroidFieldRenderer
     | undefined;
 
   if (!renderer) {
     try {
       renderer = new AsteroidFieldRenderer(object);
-      celestialRenderers.set(object.celestialObjectId, renderer);
+      celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[AsteroidField:createMesh] Created new renderer for ${object.celestialObjectId}`,
+          `[AsteroidField:createMesh] Created new renderer for ${object.id}`,
         );
       }
     } catch (error) {
       console.error(
-        `[AsteroidField:createMesh] Failed to create renderer for ${object.celestialObjectId}:`,
+        `[AsteroidField:createMesh] Failed to create renderer for ${object.id}:`,
         error,
       );
       return createFallbackSphere(object);
@@ -77,7 +75,7 @@ export function createMesh(
 
     if (debug) {
       console.debug(
-        `[AsteroidField:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+        `[AsteroidField:createMesh] Created LOD with ${lodLevels.length} levels for ${object.id}`,
       );
     }
 
@@ -85,7 +83,7 @@ export function createMesh(
   }
 
   console.warn(
-    `[AsteroidField:createMesh] Renderer for ${object.celestialObjectId} provided no valid LOD levels. Using fallback.`,
+    `[AsteroidField:createMesh] Renderer for ${object.id} provided no valid LOD levels. Using fallback.`,
   );
   return createFallbackSphere(object);
 }

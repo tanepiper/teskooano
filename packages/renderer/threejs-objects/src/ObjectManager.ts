@@ -235,7 +235,7 @@ export class ObjectManager extends StateSubscriptionMixin {
 
         // The manager has its own internal check for whether effects are enabled.
         this.debrisEffectManager.createDebrisEffect({
-          destroyedId: fullObject.celestialObjectId,
+          destroyedId: fullObject.id,
           survivorId: fullObject.parentId ?? "unknown",
           impactPosition: OSVector3.fromThreeJS(fullObject.position),
           relativeVelocity: new OSVector3().setZero(), // Placeholder

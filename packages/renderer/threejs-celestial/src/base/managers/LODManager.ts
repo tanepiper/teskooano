@@ -43,7 +43,7 @@ export class LODManager {
   public getLODForObject(
     object: RenderableCelestialObject,
   ): THREE.LOD | undefined {
-    return this.lods.get(object.celestialObjectId);
+    return this.lods.get(object.id);
   }
 
   /**
@@ -72,7 +72,7 @@ export class LODManager {
     object: RenderableCelestialObject,
     camera: THREE.PerspectiveCamera,
   ): boolean {
-    const lod = this.lods.get(object.celestialObjectId);
+    const lod = this.lods.get(object.id);
 
     if (lod) {
       // Always update the LOD's position from the object's state.
@@ -108,7 +108,7 @@ export class LODManager {
     object: RenderableCelestialObject,
     camera: THREE.PerspectiveCamera,
   ): number | null {
-    const lod = this.lods.get(object.celestialObjectId);
+    const lod = this.lods.get(object.id);
     if (!lod) return null;
 
     const distance = camera.position.distanceTo(object.position);

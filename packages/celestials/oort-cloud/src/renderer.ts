@@ -75,7 +75,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
       ...options,
       disableBillboard: options.disableBillboard ?? true,
     });
-    this.objectId = object.celestialObjectId;
+    this.objectId = object.id;
     this.baseGeometry = new THREE.SphereGeometry(1, 8, 8); // Simple sphere for instance
     this.baseGeometry.name = "OortCloudBaseGeometry";
   }
@@ -113,9 +113,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
     count: number,
   ): typeof this.oortCloudData {
     if (!this.random) {
-      this.random = createSeededRandomSync(
-        object.seed ?? object.celestialObjectId,
-      );
+      this.random = createSeededRandomSync(object.seed ?? object.id);
     }
 
     const data: typeof this.oortCloudData = [];
@@ -178,9 +176,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
   ): LODLevel[] {
     this.instancedMeshes = []; // Clear previous meshes
 
-    this.random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    this.random = createSeededRandomSync(object.seed ?? object.id);
     this.particleRotationSpeed = 0.5 + this.random() * 1.0; // Slightly faster for Oort Cloud
 
     if (options?.cloudRotationSpeed !== undefined) {
@@ -190,7 +186,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
       this.renderScale = options.renderScale;
     }
 
-    let material = this.getTypedMaterial(object.celestialObjectId);
+    let material = this.getTypedMaterial(object.id);
     if (!material) {
       material = this.createAndRegisterMaterial(object);
     }
@@ -231,7 +227,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
         material,
         count,
       );
-      instancedMesh.name = `${object.celestialObjectId}-oortcloud-lod-${i}`;
+      instancedMesh.name = `${object.id}-oortcloud-lod-${i}`;
       instancedMesh.frustumCulled = true;
 
       // Pre-populate instance matrices and colors
@@ -265,7 +261,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
         this.baseGeometry,
         this.createMaterial(object),
       );
-      fallbackMesh.name = `${object.celestialObjectId}-oortcloud-fallback`;
+      fallbackMesh.name = `${object.id}-oortcloud-fallback`;
       return [{ object: fallbackMesh, distance: 0 }];
     }
 
@@ -310,7 +306,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<AsteroidFieldMateri
     camera: THREE.PerspectiveCamera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    const material = this.getTypedMaterial(object.celestialObjectId);
+    const material = this.getTypedMaterial(object.id);
 
     if (material && material.isMaterialReady()) {
       const deltaTime = (time - this.previousSimTime) * timeScale;

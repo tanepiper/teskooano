@@ -79,7 +79,7 @@ export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
       segments,
     );
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = `${object.celestialObjectId}-body`;
+    mesh.name = `${object.id}-body`;
 
     const group = new THREE.Group();
     group.add(mesh);
@@ -144,7 +144,7 @@ export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
       sphereGeometry,
       stellarWindMaterial,
     );
-    stellarWindSphere.name = `${object.celestialObjectId}-stellar-wind`;
+    stellarWindSphere.name = `${object.id}-stellar-wind`;
     group.add(stellarWindSphere);
   }
 }

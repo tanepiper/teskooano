@@ -65,10 +65,10 @@ export class BillboardManager {
     billboardInfo.activationDistance = config.distance;
     billboardInfo.maxFadeDistance = config.distance * 4;
 
-    this.billboardsInfo.set(object.celestialObjectId, billboardInfo);
+    this.billboardsInfo.set(object.id, billboardInfo);
 
     const billboardGroup = new THREE.Group();
-    billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
+    billboardGroup.name = `${object.id}-billboard-lod`;
     billboardGroup.add(billboardInfo.sprite);
     billboardGroup.add(light);
 
@@ -231,7 +231,7 @@ export class BillboardManager {
       intensity: lightIntensity,
       decay: 2,
       distance: 0,
-      name: `${object.celestialObjectId}-billboard-lod-light`,
+      name: `${object.id}-billboard-lod-light`,
     });
     // Store the original intensity for fading calculations
     pointLight.userData.originalIntensity = lightIntensity;

@@ -58,7 +58,7 @@ class RenderableStore {
     const currentObjects = this._renderableObjectsStore.getValue();
     this._renderableObjectsStore.next({
       ...currentObjects,
-      [object.celestialObjectId]: object,
+      [object.id]: object,
     });
   }
 

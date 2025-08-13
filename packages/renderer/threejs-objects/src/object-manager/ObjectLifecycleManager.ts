@@ -119,7 +119,7 @@ export class ObjectLifecycleManager {
    * @param object - The data for the new celestial object.
    */
   addObject(object: RenderableCelestialObject): void {
-    const objectId = object.celestialObjectId;
+    const objectId = object.id;
     if (this.objects.has(objectId)) {
       console.warn(
         `[ObjectLifecycleManager] Attempted to add existing object ${objectId}. Updating instead.`,
@@ -221,7 +221,7 @@ export class ObjectLifecycleManager {
    * @param object - The updated data for the celestial object.
    */
   updateObject(object: RenderableCelestialObject): void {
-    const objectId = object.celestialObjectId;
+    const objectId = object.id;
     const existingMesh = this.objects.get(objectId);
 
     if (!existingMesh) {

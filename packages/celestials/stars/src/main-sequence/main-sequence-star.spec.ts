@@ -19,8 +19,6 @@ describe("MainSequenceStarRenderer", () => {
   let mockStar: RenderableCelestialObject;
 
   beforeEach(() => {
-    renderer = new MainSequenceStarRenderer();
-
     const starProperties: StarProperties = {
       type: CelestialType.STAR,
       color: "#ffcc00",
@@ -51,7 +49,6 @@ describe("MainSequenceStarRenderer", () => {
     };
 
     mockStar = {
-      celestialObjectId: "star-1",
       id: "star-1",
       name: "Test Star",
       type: CelestialType.STAR,
@@ -77,6 +74,7 @@ describe("MainSequenceStarRenderer", () => {
       isSelected: false,
       isFocused: false,
     } as RenderableCelestialObject<StarProperties>;
+    renderer = new MainSequenceStarRenderer(mockStar);
   });
 
   it("should create LOD levels with star and corona meshes", () => {
@@ -94,8 +92,7 @@ describe("MainSequenceStarRenderer", () => {
 
     const starMesh = group.children.find(
       (child) =>
-        child.name.includes("body") ||
-        child.name === `${mockStar.celestialObjectId}-body`,
+        child.name.includes("body") || child.name === `${mockStar.id}-body`,
     );
     expect(starMesh).toBeDefined();
     expect(starMesh).toBeInstanceOf(THREE.Mesh);

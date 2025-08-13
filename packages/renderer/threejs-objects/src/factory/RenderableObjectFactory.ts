@@ -127,7 +127,6 @@ export class RenderableObjectFactory {
 
     const target = {
       ...obj, // Spread all properties from the original object
-      celestialObjectId: obj.id,
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
       velocityMagnitude_mps: 0, // Raw velocity magnitude in m/s for display
@@ -187,7 +186,6 @@ export class RenderableObjectFactory {
 
     const target = {
       ...obj, // Spread all properties from the original object
-      celestialObjectId: obj.id,
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
       velocityMagnitude_mps: 0, // Raw velocity magnitude in m/s for display

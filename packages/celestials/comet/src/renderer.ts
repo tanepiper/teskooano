@@ -76,9 +76,7 @@ export class CometRenderer extends BaseCelestialRenderer {
 
   constructor(object: RenderableCelestialObject) {
     super(object);
-    this.random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    this.random = createSeededRandomSync(object.seed ?? object.id);
 
     this.createNucleus(object);
     this.createComa(object);
@@ -91,15 +89,13 @@ export class CometRenderer extends BaseCelestialRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     // Initialize seeded random for this comet
-    this.random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    this.random = createSeededRandomSync(object.seed ?? object.id);
 
     // LOD 0: High detail with particle tail
     const lod0_container = new THREE.Group();
-    lod0_container.name = `${object.celestialObjectId}-comet-lod0-container`;
+    lod0_container.name = `${object.id}-comet-lod0-container`;
     this.nucleusAndComaGroup = new THREE.Group(); // Initialize the group
-    this.nucleusAndComaGroup.name = `${object.celestialObjectId}-nucleus-coma-group`;
+    this.nucleusAndComaGroup.name = `${object.id}-nucleus-coma-group`;
 
     // Add nucleus (should always exist)
     if (this.nucleus) {
@@ -123,9 +119,9 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     // LOD 1: Lower detail with simplified mesh tail
     const lod1_container = new THREE.Group();
-    lod1_container.name = `${object.celestialObjectId}-comet-lod1-container`;
+    lod1_container.name = `${object.id}-comet-lod1-container`;
     this.nucleusAndComaGroup_lod1 = new THREE.Group(); // Initialize the LOD 1 group
-    this.nucleusAndComaGroup_lod1.name = `${object.celestialObjectId}-nucleus-coma-group-lod1`;
+    this.nucleusAndComaGroup_lod1.name = `${object.id}-nucleus-coma-group-lod1`;
 
     // Clone nucleus for LOD 1 (only if it exists)
     if (this.nucleus) {
@@ -214,11 +210,8 @@ export class CometRenderer extends BaseCelestialRenderer {
     const nucleusMaterial = this.createNucleusMaterial(object);
 
     this.nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
-    this.nucleus.name = `${object.celestialObjectId}-nucleus`;
-    this.registerMaterial(
-      `comet-nucleus-${object.celestialObjectId}`,
-      nucleusMaterial,
-    );
+    this.nucleus.name = `${object.id}-nucleus`;
+    this.registerMaterial(`comet-nucleus-${object.id}`, nucleusMaterial);
   }
 
   private createNucleusGeometry(
@@ -293,10 +286,7 @@ export class CometRenderer extends BaseCelestialRenderer {
         opacity: properties.visualComaOpacity || 0.5,
       });
       this.comaMaterial.transparent = true;
-      this.registerMaterial(
-        `comet-coma-${object.celestialObjectId}`,
-        this.comaMaterial,
-      );
+      this.registerMaterial(`comet-coma-${object.id}`, this.comaMaterial);
 
       const comaSegments = GeometryUtilities.getOptimizedStarSegments(
         "medium",
@@ -312,7 +302,7 @@ export class CometRenderer extends BaseCelestialRenderer {
         comaSegments,
       );
       this.coma = new THREE.Mesh(comaGeometry, this.comaMaterial);
-      this.coma.name = `${object.celestialObjectId}-coma`;
+      this.coma.name = `${object.id}-coma`;
     }
   }
 
@@ -359,11 +349,8 @@ export class CometRenderer extends BaseCelestialRenderer {
         this.particleGeometry,
         particleMaterial,
       );
-      this.particleTail.name = `${object.celestialObjectId}-tail`;
-      this.registerMaterial(
-        `comet-tail-${object.celestialObjectId}`,
-        particleMaterial,
-      );
+      this.particleTail.name = `${object.id}-tail`;
+      this.registerMaterial(`comet-tail-${object.id}`, particleMaterial);
     }
   }
 
@@ -372,9 +359,9 @@ export class CometRenderer extends BaseCelestialRenderer {
     attenuatedLightSources: Map<string, any> | undefined,
     dynamicAmbientIntensity: number,
   ): void {
-    const nucleusMaterial = this.getMaterial(
-      `comet-nucleus-${object.celestialObjectId}`,
-    ) as CometNucleusMaterial | undefined;
+    const nucleusMaterial = this.getMaterial(`comet-nucleus-${object.id}`) as
+      | CometNucleusMaterial
+      | undefined;
 
     if (nucleusMaterial && attenuatedLightSources) {
       // Update dynamic ambient lighting
@@ -792,13 +779,10 @@ export class CometRenderer extends BaseCelestialRenderer {
           (object.properties as CometProperties).visualTailColor || "#ffffff",
         ),
       });
-      this.registerMaterial(
-        `comet-jet-${i}-${object.celestialObjectId}`,
-        particleMaterial,
-      );
+      this.registerMaterial(`comet-jet-${i}-${object.id}`, particleMaterial);
 
       const points = new THREE.Points(geometry, particleMaterial);
-      points.name = `comet-jet-${i}`;
+      points.name = `comet-jet-${i}-${object.id}-points`;
 
       this.jets.push({
         points,

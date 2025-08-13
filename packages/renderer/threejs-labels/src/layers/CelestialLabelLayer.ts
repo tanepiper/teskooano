@@ -124,7 +124,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     }
 
     const labelElement = document.createElement(CELESTIAL_LABEL_TAG);
-    labelElement.setAttribute("data-object-id", object.celestialObjectId);
+    labelElement.setAttribute("data-object-id", object.id);
     labelElement.setAttribute("data-object-type", object.type);
     labelElement.setAttribute("data-name", object.name);
     if (object.parentId) {
@@ -132,20 +132,18 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     }
 
     const css2dObject = new CSS2DObject(labelElement);
-    css2dObject.name = `celestial-label-${object.celestialObjectId}`;
+    css2dObject.name = `celestial-label-${object.id}`;
     css2dObject.position.copy(this.calculateLabelPosition(object, parentMesh));
 
-    const group = this.scene.getObjectByName(
-      `GROUP_${object.celestialObjectId}`,
-    );
+    const group = this.scene.getObjectByName(`GROUP_${object.id}`);
     if (group) {
       group.add(css2dObject);
     }
 
-    this.elements.set(object.celestialObjectId, css2dObject);
+    this.elements.set(object.id, css2dObject);
 
     // Initialize cache for this label
-    this.labelCache.set(object.celestialObjectId, {
+    this.labelCache.set(object.id, {
       lastDistance: "",
       lastSpeed: "",
       lastVisible: false,
@@ -168,7 +166,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     const allObjects = objectManager.getLatestRenderableObjects();
     const mainStarId = Object.values(allObjects).find(
       (obj) => obj.type === CelestialType.STAR && !obj.parentId,
-    )?.celestialObjectId;
+    )?.id;
 
     this.elements.forEach((label) => {
       const type = label.element.getAttribute(

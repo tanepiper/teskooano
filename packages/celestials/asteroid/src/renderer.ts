@@ -37,9 +37,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
 
   constructor(object: RenderableCelestialObject) {
     super(object);
-    this.random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    this.random = createSeededRandomSync(object.seed ?? object.id);
 
     this.createNucleus(object);
   }
@@ -49,13 +47,11 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     // Initialize seeded random for this asteroid
-    this.random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    this.random = createSeededRandomSync(object.seed ?? object.id);
 
     // LOD 0: High detail with nucleus
     const lod0_container = new THREE.Group();
-    lod0_container.name = `${object.celestialObjectId}-asteroid-lod0-container`;
+    lod0_container.name = `${object.id}-asteroid-lod0-container`;
 
     // Add nucleus (should always exist)
     if (this.nucleus) {
@@ -64,7 +60,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
 
     // LOD 1: Lower detail with simplified mesh nucleus
     const lod1_container = new THREE.Group();
-    lod1_container.name = `${object.celestialObjectId}-asteroid-lod1-container`;
+    lod1_container.name = `${object.id}-asteroid-lod1-container`;
 
     // Clone nucleus for LOD 1 (only if it exists)
     this.nucleus_lod1 = this.nucleus?.clone(false); // Clone geometry/material but not children
@@ -139,11 +135,8 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     const nucleusMaterial = this.createNucleusMaterial(object);
 
     this.nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
-    this.nucleus.name = `${object.celestialObjectId}-nucleus`;
-    this.registerMaterial(
-      `asteroid-nucleus-${object.celestialObjectId}`,
-      nucleusMaterial,
-    );
+    this.nucleus.name = `${object.id}-nucleus`;
+    this.registerMaterial(`asteroid-nucleus-${object.id}`, nucleusMaterial);
   }
 
   private createNucleusGeometry(
@@ -237,7 +230,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
     const nucleusMaterial = this.getMaterial(
-      `asteroid-nucleus-${object.celestialObjectId}`,
+      `asteroid-nucleus-${object.id}`,
     ) as AsteroidNucleusMaterial | undefined;
 
     if (nucleusMaterial) {

@@ -92,7 +92,7 @@ export class SubgiantRenderer extends BaseStarRenderer<SubgiantMaterial> {
 
     // High detail level (LOD 0) - Full subgiant with moderate corona
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-subgiant-high`;
+    highDetailGroup.name = `${object.id}-subgiant-high`;
 
     // Create main star body
     const starSegments = GeometryUtilities.getOptimizedStarSegments("high", 64);
@@ -102,7 +102,7 @@ export class SubgiantRenderer extends BaseStarRenderer<SubgiantMaterial> {
       starSegments,
     );
     const starMesh = new THREE.Mesh(starGeometry, material);
-    starMesh.name = `${object.celestialObjectId}-subgiant-body`;
+    starMesh.name = `${object.id}-subgiant-body`;
     highDetailGroup.add(starMesh);
 
     // Create moderate corona system
@@ -112,7 +112,7 @@ export class SubgiantRenderer extends BaseStarRenderer<SubgiantMaterial> {
 
     // Medium detail level (LOD 1) - Simplified subgiant
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-subgiant-medium`;
+    mediumDetailGroup.name = `${object.id}-subgiant-medium`;
 
     const mediumStarMesh = new THREE.Mesh(starGeometry, material);
     mediumDetailGroup.add(mediumStarMesh);

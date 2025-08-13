@@ -62,7 +62,7 @@ export class BaseTerrestrialRenderer<
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
-    deps.renderers.set(object.celestialObjectId, this);
+    deps.renderers.set(object.id, this);
   }
 
   /**
@@ -111,7 +111,7 @@ export class BaseTerrestrialRenderer<
 
         const ringLOD = ringLODs[index] || ringLODs[ringLODs.length - 1]; // Fallback to last ring LOD
         const combinedGroup = new THREE.Group();
-        combinedGroup.name = `${object.celestialObjectId}-lod-${index}-combined`;
+        combinedGroup.name = `${object.id}-lod-${index}-combined`;
         combinedGroup.add(planetLOD.object);
         if (ringLOD && ringLOD.object) {
           combinedGroup.add(ringLOD.object);
@@ -184,7 +184,7 @@ export class BaseTerrestrialRenderer<
     baseRadius: number,
   ): THREE.Group {
     const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-high-lod-group`;
+    group.name = `${object.id}-high-lod-group`;
     const segments =
       options?.segments ??
       GeometryUtilities.getOptimizedHighDetailSegments(
@@ -196,9 +196,7 @@ export class BaseTerrestrialRenderer<
     try {
       const bodyMaterial = this.createAndRegisterMaterial(object);
       if (!bodyMaterial) {
-        throw new Error(
-          `Failed to create material for ${object.celestialObjectId}`,
-        );
+        throw new Error(`Failed to create material for ${object.id}`);
       }
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
@@ -209,7 +207,7 @@ export class BaseTerrestrialRenderer<
       bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
     } catch (error) {
       console.error(
-        `[BaseTerrestrialRenderer] Error creating procedural material for ${object.celestialObjectId}:`,
+        `[BaseTerrestrialRenderer] Error creating procedural material for ${object.id}:`,
         error,
       );
       const fallbackMaterial = new THREE.MeshStandardMaterial({
@@ -217,7 +215,7 @@ export class BaseTerrestrialRenderer<
         roughness: 0.8,
         metalness: 0.1,
       });
-      this.registerMaterial(object.celestialObjectId, fallbackMaterial);
+      this.registerMaterial(object.id, fallbackMaterial);
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
         segments,
@@ -225,7 +223,7 @@ export class BaseTerrestrialRenderer<
       );
       bodyMesh = new THREE.Mesh(bodyGeometry, fallbackMaterial);
     }
-    bodyMesh.name = `${object.celestialObjectId}-body`;
+    bodyMesh.name = `${object.id}-body`;
     group.add(bodyMesh);
 
     const planetProps = object.properties as PlanetProperties;
@@ -234,10 +232,7 @@ export class BaseTerrestrialRenderer<
       this.atmosphereService.createAtmosphereMesh(object, segments, baseRadius);
     if (atmosphereResult) {
       group.add(atmosphereResult.mesh);
-      this.atmosphereMaterials.set(
-        object.celestialObjectId,
-        atmosphereResult.material,
-      );
+      this.atmosphereMaterials.set(object.id, atmosphereResult.material);
     }
     return group;
   }
@@ -265,9 +260,9 @@ export class BaseTerrestrialRenderer<
       metalness: 0.1,
     });
     const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
-    mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
+    mediumMesh.name = `${object.id}-medium-lod`;
     const level1Group = new THREE.Group();
-    level1Group.name = `${object.celestialObjectId}-medium-lod-group`;
+    level1Group.name = `${object.id}-medium-lod-group`;
     level1Group.add(mediumMesh);
     return level1Group;
   }
@@ -300,7 +295,7 @@ export class BaseTerrestrialRenderer<
         allObjects,
       );
 
-    const bodyMaterial = this.getMaterial(object.celestialObjectId);
+    const bodyMaterial = this.getMaterial(object.id);
     if (
       bodyMaterial &&
       bodyMaterial instanceof ProceduralPlanetMaterial &&
@@ -337,9 +332,7 @@ export class BaseTerrestrialRenderer<
       );
     }
 
-    const atmosphereMaterial = this.atmosphereMaterials.get(
-      object.celestialObjectId,
-    );
+    const atmosphereMaterial = this.atmosphereMaterials.get(object.id);
     if (atmosphereMaterial) {
       atmosphereMaterial.update(
         time,

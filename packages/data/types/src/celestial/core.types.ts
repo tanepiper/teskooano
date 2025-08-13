@@ -1,6 +1,4 @@
-import type * as THREE from "three";
 import type { OSVector3 } from "@teskooano/core-math";
-import type { PhysicsStateReal } from "../physics";
 import type {
   CelestialStatus,
   CelestialType,

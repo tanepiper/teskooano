@@ -18,9 +18,6 @@ import type * as THREE from "three";
  */
 export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
   extends CelestialObject<T> {
-  /** The unique identifier linking back to the original `CelestialObject` (alias for id). */
-  celestialObjectId: string;
-
   /** The scaled radius of the object in renderer units (computed from realRadius_m). */
   radius: number;
 

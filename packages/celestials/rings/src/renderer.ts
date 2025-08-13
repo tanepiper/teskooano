@@ -99,11 +99,9 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     const ringData = this.getRingData(object);
 
     if (!ringData?.rings || ringData.rings.length === 0) {
-      console.warn(
-        `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
-      );
+      console.warn(`[RingSystemRenderer] No ring data found for ${object.id}`);
       const emptyGroup = new THREE.Group();
-      emptyGroup.name = `${object.celestialObjectId}-no-rings-empty`;
+      emptyGroup.name = `${object.id}-no-rings-empty`;
       return [{ object: emptyGroup, distance: 0 }];
     }
 
@@ -173,25 +171,21 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       options.parentLODDistances.forEach((distance, index) => {
         if (distance > 0) {
           const emptyGroup = new THREE.Group();
-          emptyGroup.name = `${object.celestialObjectId}-ring-lod-${
-            index + 1
-          }-empty`;
+          emptyGroup.name = `${object.id}-ring-lod-${index + 1}-empty`;
           lodLevels.push({ object: emptyGroup, distance: distance });
         } else if (index > 0) {
           console.warn(
             `[RingSystemRenderer] Parent LOD distance ${index} is 0, creating empty group anyway.`,
           );
           const emptyGroup = new THREE.Group();
-          emptyGroup.name = `${object.celestialObjectId}-ring-lod-${
-            index + 1
-          }-empty`;
+          emptyGroup.name = `${object.id}-ring-lod-${index + 1}-empty`;
 
           lodLevels.push({ object: emptyGroup, distance: 0.001 * (index + 1) });
         }
       });
     } else {
       console.warn(
-        `[RingSystemRenderer] No parentLODDistances provided for ${object.celestialObjectId}. Rings will always render at high detail.`,
+        `[RingSystemRenderer] No parentLODDistances provided for ${object.id}. Rings will always render at high detail.`,
       );
     }
 
@@ -213,7 +207,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
 
     // Create THREE.LOD object
     const lod = new THREE.LOD();
-    lod.name = `${object.celestialObjectId}-rings-lod`;
+    lod.name = `${object.id}-rings-lod`;
 
     // Add LOD levels
     lodLevels.forEach((level) => {
@@ -225,7 +219,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     lod.addLevel(emptyGroup, 20000 * (object.radius ?? 1));
 
     // Store LOD object
-    this.lodManager.registerLOD(object.celestialObjectId, lod);
+    this.lodManager.registerLOD(object.id, lod);
     // The LOD object itself is not returned because the levels are managed internally.
     // The LOD object needs to be added to the scene, which is handled by the consumer
     // of this renderer. This method simply prepares the LOD object.
@@ -244,20 +238,18 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     options?: CelestialMeshOptions,
   ): THREE.Group {
     const ringGroup = new THREE.Group();
-    ringGroup.name = `${object.celestialObjectId}-rings`;
+    ringGroup.name = `${object.id}-rings`;
 
     const ringData = this.getRingData(object);
     if (!ringData?.rings || ringData.rings.length === 0) {
-      console.warn(
-        `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
-      );
+      console.warn(`[RingSystemRenderer] No ring data found for ${object.id}`);
       return ringGroup;
     }
 
     const parentRadius = object.realRadius_m;
     if (!parentRadius) {
       console.warn(
-        `[RingSystemRenderer] Cannot create rings for ${object.celestialObjectId} because it has no 'realRadius_m' property for scaling.`,
+        `[RingSystemRenderer] Cannot create rings for ${object.id} because it has no 'realRadius_m' property for scaling.`,
       );
       return ringGroup;
     }
@@ -298,7 +290,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
 
       if (scaledOuterRadius <= scaledInnerRadius) {
         console.warn(
-          `[RingSystemRenderer] Invalid ring dimensions for ${object.celestialObjectId}, ring ${index}: Outer radius must be greater than inner radius.`,
+          `[RingSystemRenderer] Invalid ring dimensions for ${object.id}, ring ${index}: Outer radius must be greater than inner radius.`,
         );
         return;
       }
@@ -335,11 +327,11 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
         });
 
         // Only log once per accretion disk creation
-        const logKey = `${object.celestialObjectId}-accretion-disk`;
+        const logKey = `${object.id}-accretion-disk`;
         if (!this.loggedAccretionDisks.has(logKey)) {
           this.loggedAccretionDisks.add(logKey);
           console.log(
-            `[RingSystemRenderer] Created accretion disk for ${object.celestialObjectId}, ` +
+            `[RingSystemRenderer] Created accretion disk for ${object.id}, ` +
               `temperature: ${ringProps.temperature ?? 10000}K, ` +
               `accretion rate: ${ringProps.accretionRate ?? 1e-8} M☉/year`,
           );
@@ -364,7 +356,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
         });
       }
 
-      const materialKey = `${object.celestialObjectId}-ring-${index}`;
+      const materialKey = `${object.id}-ring-${index}`;
       this.ringMaterials.set(materialKey, ringMaterial);
 
       // Register material with parent renderer if available, otherwise with this renderer
@@ -375,7 +367,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       }
 
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-      ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
+      ringMesh.name = `${object.id}-ring-${index}`;
       ringMesh.rotation.x = -Math.PI / 2;
       ringGroup.add(ringMesh);
 
@@ -384,7 +376,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     });
 
     // Store ring meshes for this object
-    const objectKey = `${object.celestialObjectId}-${options?.detailLevel || "high"}`;
+    const objectKey = `${object.id}-${options?.detailLevel || "high"}`;
     this.ringMeshes.set(objectKey, meshesForThisGroup);
 
     return ringGroup;
@@ -421,10 +413,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     parentObject: RenderableCelestialObject,
     detailLevel: string = "high",
   ): void {
-    const ringMeshes = this.getRingMeshes(
-      object.celestialObjectId,
-      detailLevel,
-    );
+    const ringMeshes = this.getRingMeshes(object.id, detailLevel);
 
     if (!ringMeshes || ringMeshes.length === 0) {
       return;
@@ -435,7 +424,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       typeof lightingManager.registerRingShadowCasters === "function"
     ) {
       lightingManager.registerRingShadowCasters(
-        `${object.celestialObjectId}-rings`,
+        `${object.id}-rings`,
         ringMeshes,
         object,
         parentObject,

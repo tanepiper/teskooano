@@ -23,7 +23,6 @@ describe("BillboardManager", () => {
 
     mockObject = {
       id: "test-object",
-      celestialObjectId: "test-object",
       name: "Test Object",
       type: CelestialType.PLANET,
       status: CelestialStatus.ACTIVE,

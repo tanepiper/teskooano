@@ -31,7 +31,7 @@ export class AtmosphereService {
   ): AtmosphereMeshResult | null {
     const props = object.properties as PlanetProperties | undefined;
     const atmosphereProps = props?.atmosphere;
-    if (!atmosphereProps || !object.celestialObjectId) return null;
+    if (!atmosphereProps || !object.id) return null;
 
     const baseRadius =
       baseRadiusInput ?? object.realRadius_m ?? object.radius ?? 1;
@@ -56,14 +56,14 @@ export class AtmosphereService {
 
     const atmosphereMaterial = new AtmosphereMaterial(atmosphereProps, {
       planetRadius: baseRadius,
-      parentId: object.celestialObjectId,
+      parentId: object.id,
     });
 
     const atmosphereMesh = new THREE.Mesh(
       atmosphereGeometry,
       atmosphereMaterial,
     );
-    atmosphereMesh.name = `${object.celestialObjectId}-atmosphere`;
+    atmosphereMesh.name = `${object.id}-atmosphere`;
     atmosphereMesh.renderOrder = 2; // Render atmosphere after clouds
 
     return { mesh: atmosphereMesh, material: atmosphereMaterial };

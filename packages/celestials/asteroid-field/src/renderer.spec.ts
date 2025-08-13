@@ -50,7 +50,6 @@ describe("AsteroidFieldRenderer", () => {
     };
 
     mockObject = {
-      celestialObjectId: "test-asteroid-field",
       id: "test-asteroid-field",
       name: "Test Asteroid Field",
       type: CelestialType.ASTEROID_FIELD,

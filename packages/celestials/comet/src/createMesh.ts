@@ -35,36 +35,32 @@ export function createMesh(
   const { celestialRenderers, createLodObject, debug = false } = options;
 
   if (debug) {
-    console.debug(
-      `[Comet:createMesh] Creating mesh for ${object.celestialObjectId}`,
-    );
+    console.debug(`[Comet:createMesh] Creating mesh for ${object.id}`);
   }
 
   // Force fallback if debug mode is enabled
   if (debug) {
     console.debug(
-      `[Comet:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+      `[Comet:createMesh] Debug mode enabled, using fallback for ${object.id}`,
     );
     return createFallbackSphere(object);
   }
 
-  let renderer = celestialRenderers.get(object.celestialObjectId) as
-    | CometRenderer
-    | undefined;
+  let renderer = celestialRenderers.get(object.id) as CometRenderer | undefined;
 
   if (!renderer) {
     try {
       renderer = new CometRenderer(object);
-      celestialRenderers.set(object.celestialObjectId, renderer);
+      celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[Comet:createMesh] Created new renderer for ${object.celestialObjectId}`,
+          `[Comet:createMesh] Created new renderer for ${object.id}`,
         );
       }
     } catch (error) {
       console.error(
-        `[Comet:createMesh] Failed to create renderer for ${object.celestialObjectId}:`,
+        `[Comet:createMesh] Failed to create renderer for ${object.id}:`,
         error,
       );
       return createFallbackSphere(object);
@@ -78,19 +74,19 @@ export function createMesh(
 
       if (debug) {
         console.debug(
-          `[Comet:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+          `[Comet:createMesh] Created LOD with ${lodLevels.length} levels for ${object.id}`,
         );
       }
 
       return lod;
     } else {
       console.warn(
-        `[Comet:createMesh] Renderer for ${object.type} ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[Comet:createMesh] Renderer for ${object.type} ${object.id} provided invalid LOD levels.`,
       );
     }
   } else {
     console.warn(
-      `[Comet:createMesh] Renderer for ${object.type} ${object.celestialObjectId} does not have getLODLevels.`,
+      `[Comet:createMesh] Renderer for ${object.type} ${object.id} does not have getLODLevels.`,
     );
   }
 

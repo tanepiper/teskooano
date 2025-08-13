@@ -44,14 +44,11 @@ export class LightingManager {
     component: LightSourceComponent,
     meshGroup?: THREE.Object3D,
   ): void {
-    if (this.lightSources.has(component.celestialObject.celestialObjectId)) {
-      this.unregister(component.celestialObject.celestialObjectId);
+    if (this.lightSources.has(component.celestialObject.id)) {
+      this.unregister(component.celestialObject.id);
     }
 
-    this.lightSources.set(
-      component.celestialObject.celestialObjectId,
-      component,
-    );
+    this.lightSources.set(component.celestialObject.id, component);
 
     // Add the light to the mesh group if provided, otherwise add to scene
     if (meshGroup) {
@@ -180,8 +177,7 @@ export class LightingManager {
       // Check all potential shadow caster combinations
       this.shadowCasters.forEach(
         ({ mesh: casterMesh, object: casterObject }, casterId) => {
-          if (casterId === lightComponent.celestialObject.celestialObjectId)
-            return; // Can't cast shadow on itself
+          if (casterId === lightComponent.celestialObject.id) return; // Can't cast shadow on itself
 
           // Check if this caster blocks light to any other object
           let shouldCastShadow = false;
@@ -189,8 +185,7 @@ export class LightingManager {
           this.shadowCasters.forEach(
             ({ mesh: targetMesh, object: targetObject }, targetId) => {
               if (casterId === targetId) return; // Same object
-              if (targetId === lightComponent.celestialObject.celestialObjectId)
-                return; // Target is the light source
+              if (targetId === lightComponent.celestialObject.id) return; // Target is the light source
 
               const isBlocking = this.isObjectBlockingLight(
                 lightPos,
@@ -240,9 +235,8 @@ export class LightingManager {
           let shouldCastShadowOnOthers = false;
           this.shadowCasters.forEach(
             ({ mesh: targetMesh, object: targetObject }, targetId) => {
-              if (targetId === lightComponent.celestialObject.celestialObjectId)
-                return; // Target is the light source
-              if (targetId === parentObject.celestialObjectId) return; // Already checked parent above
+              if (targetId === lightComponent.celestialObject.id) return; // Target is the light source
+              if (targetId === parentObject.id) return; // Already checked parent above
 
               if (
                 this.isRingBlockingLightToObject(
@@ -431,7 +425,7 @@ export class LightingManager {
 
     this.lightSources.forEach((sourceComponent, lightSourceId) => {
       // An object cannot light itself.
-      if (lightSourceId === targetObject.celestialObjectId) {
+      if (lightSourceId === targetObject.id) {
         return;
       }
 

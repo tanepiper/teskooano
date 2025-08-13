@@ -73,7 +73,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       ...options,
       disableBillboard: options.disableBillboard ?? true,
     });
-    this.objectId = object.celestialObjectId;
+    this.objectId = object.id;
     this.baseGeometry = new THREE.SphereGeometry(1, 8, 8); // Simple sphere for instance
     this.baseGeometry.name = "AsteroidBaseGeometry";
   }
@@ -107,9 +107,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     count: number,
   ): typeof this.asteroidData {
     if (!this.random) {
-      this.random = createSeededRandomSync(
-        object.seed ?? object.celestialObjectId,
-      );
+      this.random = createSeededRandomSync(object.seed ?? object.id);
     }
 
     const data: typeof this.asteroidData = [];
@@ -172,9 +170,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   ): LODLevel[] {
     this.instancedMeshes = []; // Clear previous meshes
 
-    this.random = createSeededRandomSync(
-      object.seed ?? object.celestialObjectId,
-    );
+    this.random = createSeededRandomSync(object.seed ?? object.id);
     this.particleRotationSpeed = 1.0 + this.random() * 2;
 
     if (options?.beltRotationSpeed !== undefined) {
@@ -184,7 +180,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       this.renderScale = options.renderScale;
     }
 
-    let material = this.getTypedMaterial(object.celestialObjectId);
+    let material = this.getTypedMaterial(object.id);
     if (!material) {
       material = this.createAndRegisterMaterial(object);
     }
@@ -217,7 +213,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
         material,
         count,
       );
-      instancedMesh.name = `${object.celestialObjectId}-asteroidfield-lod-${i}`;
+      instancedMesh.name = `${object.id}-asteroidfield-lod-${i}`;
       instancedMesh.frustumCulled = true;
       // Pre-populate instance matrices and colors (will be updated dynamically)
       for (let j = 0; j < count; j++) {
@@ -251,7 +247,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
         this.baseGeometry,
         this.createMaterial(object),
       );
-      fallbackMesh.name = `${object.celestialObjectId}-asteroidfield-fallback`;
+      fallbackMesh.name = `${object.id}-asteroidfield-fallback`;
       return [{ object: fallbackMesh, distance: 0 }];
     }
 
@@ -293,7 +289,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     camera: THREE.PerspectiveCamera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    const material = this.getTypedMaterial(object.celestialObjectId);
+    const material = this.getTypedMaterial(object.id);
 
     if (material && material.isMaterialReady()) {
       const deltaTime = (time - this.previousSimTime) * timeScale;

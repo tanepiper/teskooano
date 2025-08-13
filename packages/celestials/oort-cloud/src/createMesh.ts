@@ -35,36 +35,34 @@ export function createMesh(
   const { celestialRenderers, createLodObject, debug = false } = options;
 
   if (debug) {
-    console.debug(
-      `[OortCloud:createMesh] Creating mesh for ${object.celestialObjectId}`,
-    );
+    console.debug(`[OortCloud:createMesh] Creating mesh for ${object.id}`);
   }
 
   // Force fallback if debug mode is enabled
   if (debug) {
     console.debug(
-      `[OortCloud:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+      `[OortCloud:createMesh] Debug mode enabled, using fallback for ${object.id}`,
     );
     return createFallbackSphere(object);
   }
 
-  let renderer = celestialRenderers.get(object.celestialObjectId) as
+  let renderer = celestialRenderers.get(object.id) as
     | OortCloudRenderer
     | undefined;
 
   if (!renderer) {
     try {
       renderer = new OortCloudRenderer(object);
-      celestialRenderers.set(object.celestialObjectId, renderer);
+      celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[OortCloud:createMesh] Created new renderer for ${object.celestialObjectId}`,
+          `[OortCloud:createMesh] Created new renderer for ${object.id}`,
         );
       }
     } catch (error) {
       console.error(
-        `[OortCloud:createMesh] Failed to create renderer for ${object.celestialObjectId}:`,
+        `[OortCloud:createMesh] Failed to create renderer for ${object.id}:`,
         error,
       );
       return createFallbackSphere(object);
@@ -77,7 +75,7 @@ export function createMesh(
 
     if (debug) {
       console.debug(
-        `[OortCloud:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+        `[OortCloud:createMesh] Created LOD with ${lodLevels.length} levels for ${object.id}`,
       );
     }
 
@@ -85,7 +83,7 @@ export function createMesh(
   }
 
   console.warn(
-    `[OortCloud:createMesh] Renderer for ${object.celestialObjectId} provided no valid LOD levels. Using fallback.`,
+    `[OortCloud:createMesh] Renderer for ${object.id} provided no valid LOD levels. Using fallback.`,
   );
   return createFallbackSphere(object);
 }

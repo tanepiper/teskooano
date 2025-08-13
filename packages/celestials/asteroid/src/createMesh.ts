@@ -35,36 +35,34 @@ export function createMesh(
   const { celestialRenderers, createLodObject, debug = false } = options;
 
   if (debug) {
-    console.debug(
-      `[Asteroid:createMesh] Creating mesh for ${object.celestialObjectId}`,
-    );
+    console.debug(`[Asteroid:createMesh] Creating mesh for ${object.id}`);
   }
 
   // Force fallback if debug mode is enabled
   if (debug) {
     console.debug(
-      `[Asteroid:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+      `[Asteroid:createMesh] Debug mode enabled, using fallback for ${object.id}`,
     );
     return createFallbackSphere(object);
   }
 
-  let renderer = celestialRenderers.get(object.celestialObjectId) as
+  let renderer = celestialRenderers.get(object.id) as
     | AsteroidRenderer
     | undefined;
 
   if (!renderer) {
     try {
       renderer = new AsteroidRenderer(object);
-      celestialRenderers.set(object.celestialObjectId, renderer);
+      celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[Asteroid:createMesh] Created new renderer for ${object.celestialObjectId}`,
+          `[Asteroid:createMesh] Created new renderer for ${object.id}`,
         );
       }
     } catch (error) {
       console.error(
-        `[Asteroid:createMesh] Failed to create renderer for ${object.celestialObjectId}:`,
+        `[Asteroid:createMesh] Failed to create renderer for ${object.id}:`,
         error,
       );
       return createFallbackSphere(object);
@@ -78,19 +76,19 @@ export function createMesh(
 
       if (debug) {
         console.debug(
-          `[Asteroid:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+          `[Asteroid:createMesh] Created LOD with ${lodLevels.length} levels for ${object.id}`,
         );
       }
 
       return lod;
     } else {
       console.warn(
-        `[Asteroid:createMesh] Renderer for ${object.type} ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[Asteroid:createMesh] Renderer for ${object.type} ${object.id} provided invalid LOD levels.`,
       );
     }
   } else {
     console.warn(
-      `[Asteroid:createMesh] Renderer for ${object.type} ${object.celestialObjectId} does not have getLODLevels.`,
+      `[Asteroid:createMesh] Renderer for ${object.type} ${object.id} does not have getLODLevels.`,
     );
   }
 

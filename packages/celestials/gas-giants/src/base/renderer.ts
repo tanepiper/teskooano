@@ -37,7 +37,7 @@ export abstract class BaseGasGiantRenderer<
 
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, { lightingManager: deps.lightingManager });
-    deps.celestialRenderers.set(object.celestialObjectId, this);
+    deps.celestialRenderers.set(object.id, this);
   }
 
   /**
@@ -80,7 +80,7 @@ export abstract class BaseGasGiantRenderer<
       finalLODs = planetLODs.map((planetLOD, index) => {
         const ringLOD = ringLODs[index] || ringLODs[ringLODs.length - 1];
         const combinedGroup = new THREE.Group();
-        combinedGroup.name = `${object.celestialObjectId}-lod-${index}-combined`;
+        combinedGroup.name = `${object.id}-lod-${index}-combined`;
         combinedGroup.add(planetLOD.object);
         if (ringLOD?.object) {
           combinedGroup.add(ringLOD.object);
@@ -118,18 +118,16 @@ export abstract class BaseGasGiantRenderer<
     );
     const highDetailMaterial = this.createAndRegisterMaterial(object);
     if (!highDetailMaterial) {
-      throw new Error(
-        `Failed to create material for gas giant ${object.celestialObjectId}`,
-      );
+      throw new Error(`Failed to create material for gas giant ${object.id}`);
     }
 
     const highDetailMesh = new THREE.Mesh(
       highDetailGeometry,
       highDetailMaterial,
     );
-    highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
+    highDetailMesh.name = `${object.id}-high-lod`;
     const level0Group = new THREE.Group();
-    level0Group.name = `${object.celestialObjectId}-high-lod-group`;
+    level0Group.name = `${object.id}-high-lod-group`;
     level0Group.add(highDetailMesh);
 
     const level0: LODLevel = { object: level0Group, distance: 0 };
@@ -146,11 +144,11 @@ export abstract class BaseGasGiantRenderer<
     const mediumMaterial = new BasicGasGiantMaterial(
       this._getBaseGasGiantColor(object),
     );
-    this.registerMaterial(`${object.celestialObjectId}-medium`, mediumMaterial);
+    this.registerMaterial(`${object.id}-medium`, mediumMaterial);
     const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
-    mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
+    mediumMesh.name = `${object.id}-medium-lod`;
     const level1Group = new THREE.Group();
-    level1Group.name = `${object.celestialObjectId}-medium-lod-group`;
+    level1Group.name = `${object.id}-medium-lod-group`;
     level1Group.add(mediumMesh);
     const level1: LODLevel = {
       object: level1Group,
@@ -185,7 +183,7 @@ export abstract class BaseGasGiantRenderer<
       }
     } catch (e) {
       console.warn(
-        `[BaseGasGiantRenderer] Invalid atmosphereColor property for ${object.celestialObjectId}:`,
+        `[BaseGasGiantRenderer] Invalid atmosphereColor property for ${object.id}:`,
         properties?.atmosphereColor,
       );
     }
@@ -234,9 +232,7 @@ export abstract class BaseGasGiantRenderer<
       ShadowCasterUtils.toShaderFormat(shadowCasters);
 
     // --- Update High-Detail Material ---
-    const material = this.getMaterial(
-      object.celestialObjectId,
-    ) as TGasGiantMaterial;
+    const material = this.getMaterial(object.id) as TGasGiantMaterial;
 
     if (material) {
       // Update dynamic ambient lighting if the uniform exists
@@ -256,7 +252,7 @@ export abstract class BaseGasGiantRenderer<
 
     // --- Update Medium-Detail Material ---
     const mediumMaterial = this.getMaterial(
-      `${object.celestialObjectId}-medium`,
+      `${object.id}-medium`,
     ) as TGasGiantMaterial;
 
     if (mediumMaterial) {

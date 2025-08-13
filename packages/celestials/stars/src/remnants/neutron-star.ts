@@ -123,7 +123,7 @@ export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
       segments,
     );
     const highDetailMesh = new THREE.Mesh(highDetailGeometry, this.material);
-    highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
+    highDetailMesh.name = `${object.id}-high-lod`;
     return [{ object: highDetailMesh, distance: 0 }];
   }
 

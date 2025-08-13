@@ -130,13 +130,13 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
 
     // Update orbital lines for all objects using their PositionHistoryManager
     Object.values(objects).forEach((obj) => {
-      const renderer = this.getRenderer(obj.celestialObjectId);
+      const renderer = this.getRenderer(obj.id);
       if (renderer && renderer.positionHistoryManager) {
         // For now, use a simple distance calculation based on object position
         // In a real implementation, we'd need to pass the camera as a parameter
         const distance = obj.position.length(); // Simple distance from origin
         this.orbitalRenderer.updateOrbitalLine(
-          obj.celestialObjectId,
+          obj.id,
           renderer.positionHistoryManager,
           distance,
         );

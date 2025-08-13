@@ -71,7 +71,7 @@ export class LightSourceComponent {
         distance: 0,
         castShadow: options.castShadow ?? false,
         shadowMapSize: 1024,
-        name: `${object.celestialObjectId}-light`,
+        name: `${object.id}-light`,
       });
     }
 
@@ -85,11 +85,9 @@ export class LightSourceComponent {
    */
   public update(): void {
     const objects = StateAccessor.getRenderableObjectsByIds([
-      this.celestialObject.celestialObjectId,
+      this.celestialObject.id,
     ]);
-    const freshObject = objects.find(
-      (o) => o.celestialObjectId === this.celestialObject.celestialObjectId,
-    );
+    const freshObject = objects.find((o) => o.id === this.celestialObject.id);
 
     if (freshObject) {
       this.celestialObject = freshObject; // Keep our reference fresh

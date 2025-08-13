@@ -17,7 +17,6 @@ const createMockRenderableStar = (
 ): RenderableCelestialObject => {
   return {
     id: id,
-    celestialObjectId: id,
     name: `Test Star ${id}`,
     type: CelestialType.STAR,
     status: CelestialStatus.ACTIVE,

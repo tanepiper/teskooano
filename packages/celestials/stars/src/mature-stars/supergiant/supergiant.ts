@@ -97,7 +97,7 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
 
     // High detail level (LOD 0) - Full supergiant with massive corona
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-supergiant-high`;
+    highDetailGroup.name = `${object.id}-supergiant-high`;
 
     // Create main star body
     const starSegments = GeometryUtilities.getOptimizedStarSegments("high", 64);
@@ -107,7 +107,7 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
       starSegments,
     );
     const starMesh = new THREE.Mesh(starGeometry, material);
-    starMesh.name = `${object.celestialObjectId}-supergiant-body`;
+    starMesh.name = `${object.id}-supergiant-body`;
     highDetailGroup.add(starMesh);
 
     // Create massive corona system for supergiants
@@ -117,7 +117,7 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
 
     // Medium detail level (LOD 1) - Simplified supergiant
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-supergiant-medium`;
+    mediumDetailGroup.name = `${object.id}-supergiant-medium`;
 
     const mediumStarMesh = new THREE.Mesh(starGeometry, material);
     mediumDetailGroup.add(mediumStarMesh);
@@ -259,16 +259,14 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
       });
 
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      coronaMesh.name = `${object.celestialObjectId}-supergiant-corona-${index}`;
+      coronaMesh.name = `${object.id}-supergiant-corona-${index}`;
       group.add(coronaMesh);
 
       // Store material for updates
-      if (!this.coronaMaterials.has(object.celestialObjectId)) {
-        this.coronaMaterials.set(object.celestialObjectId, []);
+      if (!this.coronaMaterials.has(object.id)) {
+        this.coronaMaterials.set(object.id, []);
       }
-      this.coronaMaterials
-        .get(object.celestialObjectId)!
-        .push(coronaMaterial as any);
+      this.coronaMaterials.get(object.id)!.push(coronaMaterial as any);
     });
   }
 
@@ -307,7 +305,7 @@ export class SupergiantRenderer extends BaseStarRenderer<SupergiantMaterial> {
     }
 
     // Update corona materials
-    const coronaMaterials = this.coronaMaterials.get(object.celestialObjectId);
+    const coronaMaterials = this.coronaMaterials.get(object.id);
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
         if (material.uniforms && material.uniforms.uTime) {

@@ -152,7 +152,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
 
     // High detail level (LOD 0) - Full hypergiant with massive corona
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-hypergiant-high`;
+    highDetailGroup.name = `${object.id}-hypergiant-high`;
 
     // Create main star body
     const starSegments = GeometryUtilities.getOptimizedStarSegments(
@@ -165,7 +165,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
       starSegments,
     );
     const starMesh = new THREE.Mesh(starGeometry, material);
-    starMesh.name = `${object.celestialObjectId}-hypergiant-body`;
+    starMesh.name = `${object.id}-hypergiant-body`;
     highDetailGroup.add(starMesh);
 
     // Create massive multi-layer corona system
@@ -175,7 +175,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
 
     // Medium detail level (LOD 1) - Simplified hypergiant
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-hypergiant-medium`;
+    mediumDetailGroup.name = `${object.id}-hypergiant-medium`;
 
     const mediumStarMesh = new THREE.Mesh(starGeometry, material);
     mediumDetailGroup.add(mediumStarMesh);
@@ -187,7 +187,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
 
     // Low detail level (LOD 2) - Basic hypergiant
     const lowDetailGroup = new THREE.Group();
-    lowDetailGroup.name = `${object.celestialObjectId}-hypergiant-low`;
+    lowDetailGroup.name = `${object.id}-hypergiant-low`;
 
     const lowStarMesh = new THREE.Mesh(starGeometry, material);
     lowDetailGroup.add(lowStarMesh);
@@ -324,16 +324,14 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
       });
 
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      coronaMesh.name = `${object.celestialObjectId}-hypergiant-corona-${index}`;
+      coronaMesh.name = `${object.id}-hypergiant-corona-${index}`;
       group.add(coronaMesh);
 
       // Store material for updates
-      if (!this.coronaMaterials.has(object.celestialObjectId)) {
-        this.coronaMaterials.set(object.celestialObjectId, []);
+      if (!this.coronaMaterials.has(object.id)) {
+        this.coronaMaterials.set(object.id, []);
       }
-      this.coronaMaterials
-        .get(object.celestialObjectId)!
-        .push(coronaMaterial as any);
+      this.coronaMaterials.get(object.id)!.push(coronaMaterial as any);
     });
   }
 
@@ -360,7 +358,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
       blending: THREE.AdditiveBlending,
     });
     const extraCorona = new THREE.Mesh(extraGeometry, extraMaterial);
-    extraCorona.name = `${object.celestialObjectId}-hypergiant-extra-corona`;
+    extraCorona.name = `${object.id}-hypergiant-extra-corona`;
     group.add(extraCorona);
   }
 
@@ -410,7 +408,7 @@ export class HypergiantRenderer extends BaseStarRenderer<HypergiantMaterial> {
     }
 
     // Update corona materials
-    const coronaMaterials = this.coronaMaterials.get(object.celestialObjectId);
+    const coronaMaterials = this.coronaMaterials.get(object.id);
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
         if (material.uniforms && material.uniforms.time) {

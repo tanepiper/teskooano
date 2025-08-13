@@ -95,7 +95,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
 
     // High detail level (LOD 0) - Full AGB star with complex corona
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-agb-high`;
+    highDetailGroup.name = `${object.id}-agb-high`;
 
     // Create main star body
     const starSegments = GeometryUtilities.getOptimizedStarSegments("high", 64);
@@ -105,7 +105,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
       starSegments,
     );
     const starMesh = new THREE.Mesh(starGeometry, material);
-    starMesh.name = `${object.celestialObjectId}-agb-body`;
+    starMesh.name = `${object.id}-agb-body`;
     highDetailGroup.add(starMesh);
 
     // Create complex corona system for AGB stars
@@ -115,7 +115,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
 
     // Medium detail level (LOD 1) - Simplified AGB star
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-agb-medium`;
+    mediumDetailGroup.name = `${object.id}-agb-medium`;
 
     const mediumStarMesh = new THREE.Mesh(starGeometry, material);
     mediumDetailGroup.add(mediumStarMesh);
@@ -257,16 +257,14 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
       });
 
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      coronaMesh.name = `${object.celestialObjectId}-agb-corona-${index}`;
+      coronaMesh.name = `${object.id}-agb-corona-${index}`;
       group.add(coronaMesh);
 
       // Store material for updates
-      if (!this.coronaMaterials.has(object.celestialObjectId)) {
-        this.coronaMaterials.set(object.celestialObjectId, []);
+      if (!this.coronaMaterials.has(object.id)) {
+        this.coronaMaterials.set(object.id, []);
       }
-      this.coronaMaterials
-        .get(object.celestialObjectId)!
-        .push(coronaMaterial as any);
+      this.coronaMaterials.get(object.id)!.push(coronaMaterial as any);
     });
   }
 
@@ -305,7 +303,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
     }
 
     // Update corona materials
-    const coronaMaterials = this.coronaMaterials.get(object.celestialObjectId);
+    const coronaMaterials = this.coronaMaterials.get(object.id);
     if (coronaMaterials) {
       coronaMaterials.forEach((material) => {
         if (material.uniforms && material.uniforms.uTime) {

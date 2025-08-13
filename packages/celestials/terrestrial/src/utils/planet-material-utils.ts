@@ -15,7 +15,7 @@ export class PlanetMaterialService {
    * Creates a procedural planet material based on object properties.
    */
   createMaterial(object: RenderableCelestialObject): ProceduralPlanetMaterial {
-    if (!object.celestialObjectId) {
+    if (!object.id) {
       throw new Error(
         "[PlanetMaterialService.createMaterial] CelestialObject must have an id.",
       );

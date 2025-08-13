@@ -16,7 +16,6 @@ describe("SatelliteRenderer", () => {
 
   beforeEach(() => {
     const mockObject: RenderableCelestialObject<SatelliteProperties> = {
-      celestialObjectId: "test-satellite",
       id: "test-satellite",
       name: "Test Satellite",
       type: CelestialType.SATELLITE,
@@ -59,7 +58,6 @@ describe("SatelliteRenderer", () => {
   describe("scaling calculations", () => {
     it("should scale large satellites (ISS) appropriately", () => {
       const issObject: RenderableCelestialObject<SatelliteProperties> = {
-        celestialObjectId: "iss",
         id: "iss",
         name: "International Space Station",
         type: CelestialType.SATELLITE,
@@ -111,7 +109,6 @@ describe("SatelliteRenderer", () => {
 
     it("should scale medium satellites (Hubble) appropriately", () => {
       const hubbleObject: RenderableCelestialObject<SatelliteProperties> = {
-        celestialObjectId: "hubble",
         id: "hubble",
         name: "Hubble Space Telescope",
         type: CelestialType.SATELLITE,
@@ -162,7 +159,6 @@ describe("SatelliteRenderer", () => {
 
     it("should scale small satellites (cubesats) appropriately", () => {
       const cubesatObject: RenderableCelestialObject<SatelliteProperties> = {
-        celestialObjectId: "cubesat",
         id: "cubesat",
         name: "CubeSat",
         type: CelestialType.SATELLITE,
@@ -213,7 +209,6 @@ describe("SatelliteRenderer", () => {
 
     it("should respect custom modelScale property", () => {
       const object: RenderableCelestialObject<SatelliteProperties> = {
-        celestialObjectId: "custom",
         id: "custom",
         name: "Custom Satellite",
         type: CelestialType.SATELLITE,
@@ -267,7 +262,6 @@ describe("SatelliteRenderer", () => {
   describe("LOD creation", () => {
     it("should create LOD levels with correct distances", () => {
       const mockObject: RenderableCelestialObject<SatelliteProperties> = {
-        celestialObjectId: "lod-test",
         id: "lod-test",
         name: "LOD Test",
         type: CelestialType.SATELLITE,

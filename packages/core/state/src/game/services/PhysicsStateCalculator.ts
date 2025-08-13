@@ -122,7 +122,6 @@ export class PhysicsStateCalculator {
     // Create renderable object with calculated physics state
     const renderable: RenderableCelestialObject<T> = {
       ...data,
-      celestialObjectId: data.id,
       radius: data.realRadius_m, // Will be scaled by renderer
       mass: data.realMass_kg,
       position: new Vector3(

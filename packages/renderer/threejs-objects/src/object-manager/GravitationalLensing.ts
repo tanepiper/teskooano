@@ -61,7 +61,7 @@ export class GravitationalLensingHandler {
     camera: THREE.PerspectiveCamera,
     mesh: THREE.Object3D,
   ): void {
-    if (this.lensingHelpers.has(object.celestialObjectId)) {
+    if (this.lensingHelpers.has(object.id)) {
       return; // Already has a lensing helper
     }
 
@@ -71,7 +71,7 @@ export class GravitationalLensingHandler {
       camera,
       mesh,
     );
-    this.lensingHelpers.set(object.celestialObjectId, helper);
+    this.lensingHelpers.set(object.id, helper);
   }
 
   /**

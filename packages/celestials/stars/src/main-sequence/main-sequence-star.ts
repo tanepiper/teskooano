@@ -46,15 +46,15 @@ export class MainSequenceStarRenderer<
   protected createMaterial(
     object: RenderableCelestialObject<StarProperties>,
   ): TMainSequenceMaterial {
-    if (this.materialCache.has(object.celestialObjectId)) {
-      return this.materialCache.get(object.celestialObjectId)!;
+    if (this.materialCache.has(object.id)) {
+      return this.materialCache.get(object.id)!;
     }
     const color = this.getStarColor(object);
     const material = new MainSequenceStarMaterial(
       object,
       color,
     ) as TMainSequenceMaterial;
-    this.materialCache.set(object.celestialObjectId, material);
+    this.materialCache.set(object.id, material);
     return material;
   }
 
@@ -73,10 +73,10 @@ export class MainSequenceStarRenderer<
       segments,
     );
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = `${object.celestialObjectId}-body`;
+    mesh.name = `${object.id}-body`;
 
     const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-high-lod-group`;
+    group.name = `${object.id}-high-lod-group`;
     group.add(mesh);
     this._addCoronaToGroup(object, group);
 
@@ -91,9 +91,9 @@ export class MainSequenceStarRenderer<
       mediumSegments,
     );
     const mediumMesh = new THREE.Mesh(mediumGeometry, material);
-    mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
+    mediumMesh.name = `${object.id}-medium-lod`;
     const mediumGroup = new THREE.Group();
-    mediumGroup.name = `${object.celestialObjectId}-medium-lod-group`;
+    mediumGroup.name = `${object.id}-medium-lod-group`;
     mediumGroup.add(mediumMesh);
 
     return [

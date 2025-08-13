@@ -290,9 +290,7 @@ export class ShadowCasterUtils {
       object.type === CelestialType.GAS_GIANT
     ) {
       const moons = Object.values(allObjects).filter(
-        (obj) =>
-          obj.type === CelestialType.MOON &&
-          obj.parentId === object.celestialObjectId,
+        (obj) => obj.type === CelestialType.MOON && obj.parentId === object.id,
       );
 
       for (const moon of moons) {
@@ -341,10 +339,7 @@ export class ShadowCasterUtils {
 
     // Find moons of the parent object to act as additional shadow casters
     for (const other of Object.values(allObjects)) {
-      if (
-        other.parentId === object.celestialObjectId &&
-        other.type === CelestialType.MOON
-      ) {
+      if (other.parentId === object.id && other.type === CelestialType.MOON) {
         shadowCasters.push({
           position: other.position.clone(),
           radius: other.radius ?? 0,
