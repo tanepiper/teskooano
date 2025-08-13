@@ -1,6 +1,6 @@
 import { PhysicsStateReal } from "../types";
 import { OSVector3, EPSILON } from "@teskooano/core-math";
-import { SPEED_OF_LIGHT } from "@teskooano/data-types";
+import { SPEED_OF_LIGHT } from "@teskooano/data-values";
 
 /**
  * Speed of light squared for relativistic calculations

@@ -1,14 +1,14 @@
-import {
-  AU_METERS,
-  type RenderableCelestialObject,
-  CelestialType,
-} from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   calculateKeplerianPositionAtTrueAnomaly,
   SCALE,
 } from "@teskooano/core-physics";
 import type { OrbitalParameters } from "@teskooano/data-types";
+import {
+  type RenderableCelestialObject,
+  CelestialType,
+} from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Utility class for calculating orbital paths using Keplerian orbital mechanics.

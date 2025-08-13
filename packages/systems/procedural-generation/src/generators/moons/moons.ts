@@ -1,5 +1,6 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { AU_METERS, CelestialType, EARTH_MASS } from "@teskooano/data-types";
+import { CelestialType } from "@teskooano/data-types";
+import { AU_METERS, EARTH_MASS } from "@teskooano/data-values";
 import { Observable, Subscriber } from "rxjs";
 import { getCelestialTypeForPlanet } from "../../utils/celestials";
 import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory

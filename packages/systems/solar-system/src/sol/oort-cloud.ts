@@ -4,9 +4,9 @@ import {
   CelestialStatus,
   type OortCloudProperties,
   type CelestialObject,
-  AU_METERS,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Oort Cloud configuration object for modular solar system initialization.

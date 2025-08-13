@@ -1,6 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { OrbitalParameters } from "@teskooano/data-types";
-import { SOLAR_MASS, GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT, SOLAR_MASS } from "@teskooano/data-values";
 import { calculateKeplerianStateAtTime } from "./ideal";
 
 /**

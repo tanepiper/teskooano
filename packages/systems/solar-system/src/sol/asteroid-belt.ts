@@ -4,8 +4,8 @@ import {
   CelestialStatus,
   type AsteroidFieldProperties,
   type CelestialObject,
-  AU_METERS,
 } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Main asteroid belt configuration object for modular solar system initialization.

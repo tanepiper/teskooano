@@ -5,10 +5,10 @@ import {
   createOrbitalElements,
 } from "@teskooano/core-physics";
 import {
-  AU_METERS,
   type CelestialObject,
   type PhysicsStateReal,
 } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 import * as UTIL from "../utils";
 
 /**

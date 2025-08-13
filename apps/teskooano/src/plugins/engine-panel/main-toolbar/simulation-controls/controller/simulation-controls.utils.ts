@@ -17,7 +17,7 @@ import {
   SECONDS_PER_HOUR,
   SECONDS_PER_DAY,
   SECONDS_PER_YEAR_GREGORIAN,
-} from "@teskooano/data-types";
+} from "@teskooano/data-values";
 
 export function formatTime(seconds: number): string {
   if (seconds === 0) return "0.0 s";

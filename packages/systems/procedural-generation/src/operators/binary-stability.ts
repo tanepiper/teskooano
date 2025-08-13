@@ -1,4 +1,5 @@
-import { AU_METERS, type CelestialObject } from "@teskooano/data-types";
+import { type CelestialObject } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 import * as CONST from "../constants";
 
 /**

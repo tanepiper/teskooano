@@ -1,5 +1,6 @@
-import { AU_METERS, PhysicsStateReal } from "@teskooano/data-types";
+import { PhysicsStateReal } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Distance-based tolerance scaling for adaptive integration

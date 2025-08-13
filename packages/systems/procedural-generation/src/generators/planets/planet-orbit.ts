@@ -1,10 +1,6 @@
-import {
-  calculateOrbitalPosition,
-  calculateOrbitalVelocity,
-  createOrbitalElements,
-} from "@teskooano/core-physics";
-import { AU_METERS, type OrbitalParameters } from "@teskooano/data-types";
-import * as CONST from "../../constants";
+import { createOrbitalElements } from "@teskooano/core-physics";
+import { type OrbitalParameters } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 import * as UTIL from "../../utils";
 
 /**

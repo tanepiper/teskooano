@@ -1,9 +1,7 @@
 import {
-  AU_METERS,
   BlackHoleSubtype,
   CelestiaClassType,
   CelestialType,
-  GRAVITATIONAL_CONSTANT,
   GasGiantClass,
   NeutronStarSubtype,
   PlanetType,
@@ -13,6 +11,12 @@ import {
   WhiteDwarfSubtype,
 } from "@teskooano/data-types";
 import * as CONST from "./constants";
+import {
+  AU_METERS,
+  GRAVITATIONAL_CONSTANT,
+  SOLAR_LUMINOSITY,
+  STEFAN_BOLTZMANN_CONSTANT,
+} from "@teskooano/data-values";
 
 /**
  * Retrieves a random item from an array using a seeded random function.
@@ -117,7 +121,7 @@ export function calculateStellarLuminosity(
   }
   const surfaceArea = 4 * Math.PI * radius_m * radius_m;
   const temperatureToFourth = Math.pow(temperature_k, 4);
-  return surfaceArea * CONST.STEFAN_BOLTZMANN * temperatureToFourth;
+  return surfaceArea * STEFAN_BOLTZMANN_CONSTANT * temperatureToFourth;
 }
 
 /**
@@ -182,11 +186,11 @@ export function estimateTemperature(
 ): number {
   if (distanceAU <= 0) return 10000;
 
-  const luminosityWatts = starLuminosity * CONST.SOLAR_LUMINOSITY;
+  const luminosityWatts = starLuminosity * SOLAR_LUMINOSITY;
   const distanceMeters = distanceAU * AU_METERS;
 
   const denominator =
-    16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceMeters ** 2;
+    16 * Math.PI * STEFAN_BOLTZMANN_CONSTANT * distanceMeters ** 2;
   if (denominator <= 0) return 0;
 
   const tempKelvin = Math.pow(luminosityWatts / denominator, 0.25);

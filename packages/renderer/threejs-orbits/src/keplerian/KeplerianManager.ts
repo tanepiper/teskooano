@@ -8,7 +8,7 @@ import { OrbitCalculator } from "./OrbitCalculator";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
-import { ThreeVector3Converter } from "@teskooano/data-types"; // Corrected import
+import { ThreeVector3Converter } from "@teskooano/data-values"; // Corrected import
 import { type OSVector3 } from "@teskooano/core-math";
 import { TrailCurveInterpolator } from "../renderers/TrailCurveInterpolator";
 import {

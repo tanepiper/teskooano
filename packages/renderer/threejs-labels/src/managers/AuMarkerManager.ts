@@ -1,4 +1,4 @@
-import { AU_METERS } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 import * as THREE from "three";
 import { GeometryHelper } from "@teskooano/renderer-threejs-helpers";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";

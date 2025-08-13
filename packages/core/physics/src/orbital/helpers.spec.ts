@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { EARTH_MASS, EARTH_RADIUS, AU_METERS } from "@teskooano/data-types";
+import { EARTH_MASS, EARTH_RADIUS, AU_METERS } from "@teskooano/data-values";
 import {
   createOrbitalElements,
   calculateAphelionAU,

@@ -6,7 +6,7 @@
  * astronomical models.
  */
 
-import { EARTH_MASS } from "@teskooano/data-types";
+import { EARTH_MASS } from "@teskooano/data-values";
 
 /**
  * Determine moon formation mechanism based on planet mass and realistic probabilities

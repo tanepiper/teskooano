@@ -5,9 +5,8 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  SOLAR_MASS,
-  GRAVITATIONAL_CONSTANT,
 } from "@teskooano/data-types";
+import { SOLAR_MASS, GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 export interface DateCalculationResult {
   objectId: string;

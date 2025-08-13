@@ -1,5 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { EARTH_MASS } from "@teskooano/data-types";
+import { EARTH_MASS } from "@teskooano/data-values";
 import * as UTIL from "../../utils";
 
 /**

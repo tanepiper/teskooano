@@ -1,10 +1,10 @@
 import { OSVector3 } from "@teskooano/core-math";
+import { type OrbitalParameters } from "@teskooano/data-types";
 import {
   AU_METERS,
   EARTH_MASS,
   EARTH_GRAVITATIONAL_PARAMETER,
-  type OrbitalParameters,
-} from "@teskooano/data-types";
+} from "@teskooano/data-values";
 import { createOrbitalElements } from "./helpers";
 
 /**

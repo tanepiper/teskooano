@@ -22,6 +22,7 @@
     "@teskooano/core-math": "file:../math",
     "@teskooano/core-state": "file:../state",
     "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/data-values": "file:../../data/values",
     "rxjs": "7.8.2",
     "three": "0.179.1"
   },

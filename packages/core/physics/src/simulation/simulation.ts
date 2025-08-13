@@ -1,7 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   CelestialType,
-  GRAVITATIONAL_CONSTANT,
   type OrbitalParameters,
   PhysicsStateReal,
 } from "@teskooano/data-types";
@@ -29,6 +28,7 @@ import {
   SimulationStepResult,
   SimulationConfiguration,
 } from "./types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 /**
  * Validates if a simulation configuration is valid.

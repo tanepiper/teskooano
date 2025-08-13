@@ -2,7 +2,7 @@
  * Unit conversion constants and functions for the physics engine
  */
 import { OSVector3 } from "@teskooano/core-math";
-import { AU_METERS } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 
 export const SI = {
   METER: 1,

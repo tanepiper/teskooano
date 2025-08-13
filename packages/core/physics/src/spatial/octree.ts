@@ -1,10 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
 
 import { calculateNewtonianGravitationalForce } from "../forces/gravity";
-import {
-  GRAVITATIONAL_CONSTANT,
-  PhysicsStateReal,
-} from "@teskooano/data-types";
+import { PhysicsStateReal } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 /**
  * Represents a node in the octree

@@ -1,6 +1,5 @@
 import { createOrbitalElements } from "@teskooano/core-physics";
 import {
-  AU_METERS,
   CelestialObject,
   CelestialStatus,
   CelestialType,
@@ -9,11 +8,15 @@ import {
   type OrbitalParameters,
   type StarProperties,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
+import {
+  AU_METERS,
+  SOLAR_MASS,
+  STEFAN_BOLTZMANN_CONSTANT,
+} from "@teskooano/data-values";
+import { Observable } from "rxjs";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import { generateCelestialName } from "../names/celestial-name";
-import { Observable } from "rxjs";
 
 /**
  * Configuration for comet generation
@@ -67,7 +70,7 @@ export class CometGenerator {
         // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
         const temperature = Math.pow(
           starLuminosity /
-            (16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceM * distanceM),
+            (16 * Math.PI * STEFAN_BOLTZMANN_CONSTANT * distanceM * distanceM),
           0.25,
         );
 
@@ -154,7 +157,7 @@ export class CometGenerator {
   ): OrbitalParameters {
     const { parentStar } = this.config;
     const starProps = parentStar.properties as StarProperties;
-    const starMass = parentStar.realMass_kg || CONST.SOLAR_MASS_KG;
+    const starMass = parentStar.realMass_kg || SOLAR_MASS;
 
     switch (cometType) {
       case CometClass.INTERSTELLAR:

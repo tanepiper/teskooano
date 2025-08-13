@@ -1,9 +1,7 @@
-import { CelestialType } from "@teskooano/data-types";
-import { template, iconStyles } from "./CelestialRow.template.js";
 import { CustomEvents } from "@teskooano/data-types";
 import { CelestialIconComponent } from "../../../celestial-icons";
-import { AU_METERS } from "@teskooano/data-types";
 import { FormatUtils } from "../../../celestial-info/utils/formatters";
+import { template } from "./CelestialRow.template.js";
 
 /**
  * A custom element to display a single row in the focus control list.

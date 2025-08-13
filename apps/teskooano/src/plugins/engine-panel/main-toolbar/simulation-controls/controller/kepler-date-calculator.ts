@@ -3,7 +3,6 @@ import {
   calculateKeplerianStateAtTime,
   calculateOrbitalPosition,
   getJulianDayForEpoch,
-  dateToJulianDay,
 } from "@teskooano/core-physics";
 import {
   CelestialObject,

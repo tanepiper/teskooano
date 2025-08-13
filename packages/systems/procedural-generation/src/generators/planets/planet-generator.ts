@@ -7,9 +7,8 @@ import {
   PlanetProperties,
   RingProperties,
   RingSystemConfiguration,
-  AU_METERS,
-  EARTH_MASS,
 } from "@teskooano/data-types";
+import { AU_METERS, EARTH_MASS } from "@teskooano/data-values";
 import { Observable, Subscriber } from "rxjs";
 import { generateCelestialName } from "../../generators/names/celestial-name";
 import * as UTIL from "../../utils";

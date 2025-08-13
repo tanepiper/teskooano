@@ -1,5 +1,5 @@
 import { SYSTEM_MAX_DISTANCE_AU } from "../../constants";
-import { SOLAR_MASS } from "@teskooano/data-types";
+import { SOLAR_MASS } from "@teskooano/data-values";
 
 /**
  * Validates if the given distance is appropriate for asteroid belt formation

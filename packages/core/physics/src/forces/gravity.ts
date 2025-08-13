@@ -1,5 +1,5 @@
 import { PhysicsStateReal, PairForceCalculator } from "../types";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 import { OSVector3, EPSILON } from "@teskooano/core-math";
 
 /**

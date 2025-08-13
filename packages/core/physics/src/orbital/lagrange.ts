@@ -6,10 +6,8 @@ import type {
   LagrangeCalculationOptions,
   OrbitalParameters,
 } from "@teskooano/data-types";
-import {
-  GRAVITATIONAL_CONSTANT,
-  LagrangePointType,
-} from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
+import { LagrangePointType } from "@teskooano/data-types";
 
 /**
  * Default calculation options

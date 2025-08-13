@@ -1,11 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
-import type {
-  IAlgorithmStrategy,
-  SimulationParameters,
-} from "../interfaces/simulation-strategy";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 import { AlgorithmStrategy } from "../interfaces/algorithm-strategy";
+import type { SimulationParameters } from "../interfaces/simulation-strategy";
 
 /**
  * Configuration for Tree-PM hybrid algorithm

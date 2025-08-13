@@ -1,13 +1,15 @@
 import {
+  celestialManager,
+  physicsSystemAdapter,
+  StateAccessor,
+} from "@teskooano/core-state";
+import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { AU_METERS } from "@teskooano/data-types";
-import { physicsSystemAdapter, StateAccessor } from "@teskooano/core-state";
-import { celestialManager } from "@teskooano/core-state";
-import { calculateGravitationalForce } from "@teskooano/core-physics";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Manages the dynamic hierarchy of celestial objects within the simulation.

@@ -26,7 +26,7 @@ import {
   SOLAR_MASS,
   SOLAR_RADIUS,
   SOLAR_LUMINOSITY,
-} from "@teskooano/data-types";
+} from "@teskooano/data-values";
 
 /**
  * Realistic stellar type distribution based on Milky Way statistics

@@ -1,10 +1,7 @@
-import {
-  OrbitalParameters,
-  GRAVITATIONAL_CONSTANT,
-  PhysicsStateReal,
-} from "@teskooano/data-types";
+import { OrbitalParameters, PhysicsStateReal } from "@teskooano/data-types";
 import { OSVector3, OSQuaternion } from "@teskooano/core-math";
 import { calculateKeplerianStateAtTime as sharedCalculateKeplerianStateAtTime } from "./shared";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 /**
  * Calculates the position of an object based on its orbital parameters around a parent object (REAL units).

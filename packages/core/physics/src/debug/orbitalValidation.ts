@@ -1,5 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 /**
  * Debug utility to test orbital conservation laws.

@@ -1,10 +1,7 @@
-import {
-  GRAVITATIONAL_CONSTANT,
-  type OrbitalParameters,
-} from "@teskooano/data-types";
-import { OSVector3, EPSILON } from "@teskooano/core-math";
+import { EPSILON, OSVector3 } from "@teskooano/core-math";
+import { type OrbitalParameters } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 import { vectorPool } from "../utils/vectorPool";
-import { J2000_EPOCH } from "./epoch";
 
 /**
  * Calculates the eccentricity vector from position, velocity, and gravitational parameter.

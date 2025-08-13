@@ -3,7 +3,7 @@ import {
   SECONDS_PER_DAY,
   SECONDS_PER_HOUR,
   SECONDS_PER_YEAR,
-} from "@teskooano/data-types";
+} from "@teskooano/data-values";
 
 export class FormatUtils {
   static formatExp(val: number | undefined | null, digits = 3): string {

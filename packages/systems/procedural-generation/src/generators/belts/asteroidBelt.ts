@@ -6,7 +6,12 @@ import type {
   PhysicsStateReal,
   StarProperties,
 } from "@teskooano/data-types";
-import { AU_METERS } from "@teskooano/data-types";
+import {
+  AU_METERS,
+  SOLAR_LUMINOSITY,
+  SOLAR_MASS,
+  STEFAN_BOLTZMANN_CONSTANT,
+} from "@teskooano/data-values";
 import {
   CelestialStatus,
   CelestialType,
@@ -312,22 +317,16 @@ function calculateBeltTemperature(
   ) {
     const starProps = parentStar.properties as StarProperties;
     if (starProps.luminosity && starProps.luminosity > 0) {
-      starLuminosity = starProps.luminosity * CONST.SOLAR_LUMINOSITY;
+      starLuminosity = starProps.luminosity * SOLAR_LUMINOSITY;
     } else {
       // Fallback to mass-based calculation if luminosity is missing or invalid
-      const massRatio = Math.max(
-        0.01,
-        parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
-      );
-      starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
+      const massRatio = Math.max(0.01, parentStar.realMass_kg / SOLAR_MASS);
+      starLuminosity = SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
     }
   } else {
     // Fallback to mass-based calculation if star properties aren't available
-    const massRatio = Math.max(
-      0.01,
-      parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
-    );
-    starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
+    const massRatio = Math.max(0.01, parentStar.realMass_kg / SOLAR_MASS);
+    starLuminosity = SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
   }
 
   // Ensure we have a valid luminosity
@@ -335,7 +334,7 @@ function calculateBeltTemperature(
     console.warn(
       "[calculateBeltTemperature] Invalid star luminosity, using default",
     );
-    starLuminosity = CONST.SOLAR_LUMINOSITY; // Default to solar luminosity
+    starLuminosity = SOLAR_LUMINOSITY; // Default to solar luminosity
   }
 
   // Calculate equilibrium temperature at distance
@@ -344,7 +343,7 @@ function calculateBeltTemperature(
   // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
   const temperature = Math.pow(
     starLuminosity /
-      (16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceM * distanceM),
+      (16 * Math.PI * STEFAN_BOLTZMANN_CONSTANT * distanceM * distanceM),
     0.25,
   );
 

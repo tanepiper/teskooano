@@ -1,9 +1,10 @@
 import { utils } from "@teskooano/core-math";
-import { type CelestialObject, AU_METERS } from "@teskooano/data-types";
+import { type CelestialObject } from "@teskooano/data-types";
 import type { CelestialZone, OrbitalArrangement } from "../zones";
 import { OrbitalConfiguration } from "../zones";
 import { getRandomItem } from "../utils";
 import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Represents a single body placement with its orbital configuration

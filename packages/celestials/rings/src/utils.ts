@@ -3,7 +3,7 @@ import {
   SPEED_OF_LIGHT,
   SOLAR_MASS,
   STEFAN_BOLTZMANN_CONSTANT,
-} from "@teskooano/data-types";
+} from "@teskooano/data-values";
 
 // Kepler's Third Law: orbital period is proportional to semi-major axis^(3/2)
 // For rings, we use the average radius as the semi-major axis

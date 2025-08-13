@@ -1,4 +1,3 @@
-import { CelestialStatus, CustomEvents } from "@teskooano/data-types";
 import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";

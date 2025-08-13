@@ -1,12 +1,12 @@
 import { OSVector3, utils } from "@teskooano/core-math";
 import type { LagrangePointType } from "@teskooano/data-types";
+import { type OrbitalParameters } from "@teskooano/data-types";
 import {
   AU_METERS,
   KM,
   EARTH_MASS,
   EARTH_RADIUS,
-  type OrbitalParameters,
-} from "@teskooano/data-types";
+} from "@teskooano/data-values";
 import { J2000_EPOCH } from "./epoch";
 
 /**

@@ -1,7 +1,8 @@
 import { BaseCelestialCard } from "./BaseCelestialCard.js";
 import { StateAccessor, PhysicsStateProvider } from "@teskooano/core-state";
-import { CelestialObject, GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
+import { CelestialObject } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters.js";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 export class GravitationalForcesCard extends BaseCelestialCard {
   static componentName = "gravitational-forces-card";

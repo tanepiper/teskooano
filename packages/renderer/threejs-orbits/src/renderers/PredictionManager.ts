@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import {
   type PhysicsStateReal,
-  AU_METERS,
   type RenderableCelestialObject,
   CelestialType,
   CelestialObject,
@@ -28,6 +27,7 @@ import {
 } from "@teskooano/renderer-threejs-labels";
 import { PredictionLabelLayer } from "@teskooano/renderer-threejs-labels";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
+import { AU_METERS } from "@teskooano/data-values";
 
 const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
 const TIME_MARKERS = [

@@ -1,10 +1,6 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import {
-  AU_METERS,
-  CelestialStatus,
-  CelestialType,
-  SOLAR_MASS,
-} from "@teskooano/data-types";
+import { CelestialStatus, CelestialType } from "@teskooano/data-types";
+import { AU_METERS, SOLAR_MASS } from "@teskooano/data-values";
 import { generateCelestialName } from "../names/celestial-name";
 import {
   determineMoonFormation,

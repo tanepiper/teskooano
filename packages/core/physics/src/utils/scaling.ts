@@ -6,7 +6,7 @@
  */
 
 import { CelestialType } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT, AU_METERS } from "@teskooano/data-types";
+import { GRAVITATIONAL_CONSTANT, AU_METERS } from "@teskooano/data-values";
 
 /**
  * Scaling constants for the simulation.

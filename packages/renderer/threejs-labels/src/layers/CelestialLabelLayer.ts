@@ -4,7 +4,6 @@ import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import {
   type RenderableCelestialObject,
   CelestialType,
-  AU_METERS,
 } from "@teskooano/data-types";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import {
@@ -13,6 +12,7 @@ import {
 } from "../components/celestial-label/CelestialLabelComponent";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SCALE } from "@teskooano/core-physics";
+import { AU_METERS } from "@teskooano/data-values";
 
 export interface LabelVisibilityConfig {
   planet?: number;

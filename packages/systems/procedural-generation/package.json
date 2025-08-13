@@ -16,6 +16,7 @@
   ],
   "dependencies": {
     "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/data-values": "file:../../data/values",
     "@teskooano/core-math": "file:../../core/math",
     "rxjs": "7.8.2"
   },
