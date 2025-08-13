@@ -27,28 +27,35 @@ import {
 } from "@teskooano/renderer-threejs-labels";
 import { PredictionLabelLayer } from "@teskooano/renderer-threejs-labels";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
-import { AU_METERS } from "@teskooano/data-values";
-
-const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
+import {
+  AU_METERS,
+  SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_MINUTE,
+  SECONDS_PER_YEAR,
+} from "@teskooano/data-values";
 const TIME_MARKERS = [
-  3600, // 1h
-  3600 * 6, // 6h
-  3600 * 12, // 12h
-  86400, // 1d
-  86400 * 7, // 7d
-  86400 * 30, // 30d
-  86400 * 60, // 60d
-  86400 * 90, // 90d
-  86400 * 180, // 180d
+  SECONDS_PER_HOUR, // 1h
+  SECONDS_PER_HOUR * 6, // 6h
+  SECONDS_PER_HOUR * 12, // 12h
+  SECONDS_PER_DAY, // 1d
+  SECONDS_PER_DAY * 7, // 7d
+  SECONDS_PER_DAY * 30, // 30d
+  SECONDS_PER_DAY * 60, // 60d
+  SECONDS_PER_DAY * 90, // 90d
+  SECONDS_PER_DAY * 180, // 180d
   SECONDS_PER_YEAR, // 1y
 ];
 
 function formatTimestamp(seconds: number): string {
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
-  if (seconds < 31536000) return `${Math.round(seconds / 86400)}d`;
-  return `${(seconds / 31536000).toFixed(1)}y`;
+  if (seconds < SECONDS_PER_MINUTE) return `${Math.round(seconds)}s`;
+  if (seconds < SECONDS_PER_HOUR)
+    return `${Math.round(seconds / SECONDS_PER_MINUTE)}m`;
+  if (seconds < SECONDS_PER_DAY)
+    return `${Math.round(seconds / SECONDS_PER_HOUR)}h`;
+  if (seconds < SECONDS_PER_YEAR)
+    return `${Math.round(seconds / SECONDS_PER_DAY)}d`;
+  return `${(seconds / SECONDS_PER_YEAR).toFixed(1)}y`;
 }
 
 /**
