@@ -1,4 +1,4 @@
-export const AU_IN_METERS = 149597870700;
+import { AU_METERS } from "@teskooano/data-types";
 export const SECONDS_PER_DAY = 86400;
 export const SECONDS_PER_HOUR = 3600;
 export const SECONDS_PER_YEAR = SECONDS_PER_DAY * 365.25;
@@ -28,7 +28,7 @@ export class FormatUtils {
     digits = 3,
   ): string {
     return meters != null && Number.isFinite(meters)
-      ? (meters / AU_IN_METERS).toFixed(digits) + " AU"
+      ? (meters / AU_METERS).toFixed(digits) + " AU"
       : "N/A";
   }
 
@@ -39,7 +39,7 @@ export class FormatUtils {
   ): string {
     if (meters == null || !Number.isFinite(meters)) return "N/A";
 
-    const au = meters / AU_IN_METERS;
+    const au = meters / AU_METERS;
 
     if (au >= 0.1) {
       return au.toFixed(auDigits) + " AU";

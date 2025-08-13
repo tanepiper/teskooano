@@ -17,6 +17,6 @@ export function createFallbackSphere(
     wireframe: true,
   });
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = `fallback-sphere-${object.celestialObjectId}`;
+  mesh.name = `fallback-sphere-${object.id}`;
   return mesh;
 }

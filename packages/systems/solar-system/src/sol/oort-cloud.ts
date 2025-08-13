@@ -1,9 +1,10 @@
-import { AU, createOrbitalElements } from "@teskooano/core-physics";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
   type OortCloudProperties,
   type CelestialObject,
+  AU_METERS,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";
 
@@ -17,7 +18,7 @@ export const oortCloud: CelestialObject<OortCloudProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: SolarSystemBodies.SUN, // Oort cloud generally orbits the primary star
   realMass_kg: 5e22, // Estimated mass (higher than asteroid belt)
-  realRadius_m: 20000 * AU, // Use outer radius for the representative size
+  realRadius_m: 20000 * AU_METERS, // Use outer radius for the representative size
   orbit: createOrbitalElements({
     semiMajorAxisAU: 10000, // Very distant, average orbital distance
     eccentricity: 0.0, // Assumed near-circular for the cloud center

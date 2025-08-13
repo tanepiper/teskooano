@@ -1,5 +1,4 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
-import { AU, KM } from "@teskooano/core-physics/src/units/constants";
 import {
   CelestialType,
   PlanetType,

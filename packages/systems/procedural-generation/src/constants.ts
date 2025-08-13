@@ -1,6 +1,5 @@
 import { AtmosphereType, RockyType } from "@teskooano/data-types";
 
-export const AU_TO_METERS = 1.496e11;
 export const EARTH_MASS_KG = 5.972e24;
 export const EARTH_RADIUS_M = 6.371e6;
 export const SOLAR_MASS_KG = 1.989e30;

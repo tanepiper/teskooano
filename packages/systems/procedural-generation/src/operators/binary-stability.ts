@@ -1,4 +1,4 @@
-import type { CelestialObject } from "@teskooano/data-types";
+import { AU_METERS, type CelestialObject } from "@teskooano/data-types";
 import * as CONST from "../constants";
 
 /**
@@ -22,8 +22,8 @@ export function calculateBinaryStability(
   const warnings: string[] = [];
 
   // Convert stellar radii to AU for calculations
-  const star1RadiusAU = star1.realRadius_m / CONST.AU_TO_METERS;
-  const star2RadiusAU = star2.realRadius_m / CONST.AU_TO_METERS;
+  const star1RadiusAU = star1.realRadius_m / AU_METERS;
+  const star2RadiusAU = star2.realRadius_m / AU_METERS;
 
   // Minimum separation: must be outside both stellar photospheres with safety margin
   const minSeparationAU = (star1RadiusAU + star2RadiusAU) * 3.0; // 3x safety margin

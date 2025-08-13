@@ -1,5 +1,6 @@
 import { createOrbitalElements } from "@teskooano/core-physics";
 import {
+  AU_METERS,
   CelestialObject,
   CelestialStatus,
   CelestialType,
@@ -61,7 +62,7 @@ export class CometGenerator {
         // Calculate temperature based on distance from star
         const starProps = parentStar.properties as StarProperties;
         const starLuminosity = starProps?.luminosity || 1.0;
-        const distanceM = bodyDistanceAU * CONST.AU_TO_METERS;
+        const distanceM = bodyDistanceAU * AU_METERS;
 
         // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
         const temperature = Math.pow(
@@ -224,7 +225,7 @@ export class CometGenerator {
     // Calculate orbital period
     const period_s = UTIL.calculateOrbitalPeriod_s(
       starMass,
-      semiMajorAxisAU * CONST.AU_TO_METERS,
+      semiMajorAxisAU * AU_METERS,
       1e12,
     );
 
@@ -261,7 +262,7 @@ export class CometGenerator {
     // Calculate orbital period
     const period_s = UTIL.calculateOrbitalPeriod_s(
       starMass,
-      semiMajorAxisAU * CONST.AU_TO_METERS,
+      semiMajorAxisAU * AU_METERS,
       1e12,
     );
 

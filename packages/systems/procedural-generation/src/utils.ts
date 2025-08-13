@@ -1,16 +1,16 @@
 import {
+  AU_METERS,
+  BlackHoleSubtype,
   CelestiaClassType,
   CelestialType,
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
+  NeutronStarSubtype,
   PlanetType,
-  ProceduralSurfaceProperties,
+  ProtostarSubtype,
   SpectralClass,
   StellarType,
-  NeutronStarSubtype,
-  BlackHoleSubtype,
   WhiteDwarfSubtype,
-  ProtostarSubtype,
 } from "@teskooano/data-types";
 import * as CONST from "./constants";
 
@@ -183,7 +183,7 @@ export function estimateTemperature(
   if (distanceAU <= 0) return 10000;
 
   const luminosityWatts = starLuminosity * CONST.SOLAR_LUMINOSITY;
-  const distanceMeters = distanceAU * CONST.AU_TO_METERS;
+  const distanceMeters = distanceAU * AU_METERS;
 
   const denominator =
     16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceMeters ** 2;

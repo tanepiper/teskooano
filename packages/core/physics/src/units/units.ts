@@ -2,6 +2,7 @@
  * Unit conversion constants and functions for the physics engine
  */
 import { OSVector3 } from "@teskooano/core-math";
+import { AU_METERS } from "@teskooano/data-types";
 
 export const SI = {
   METER: 1,
@@ -11,14 +12,13 @@ export const SI = {
 } as const;
 
 export const GAME = {
-  AU: 149597870700,
   DAY: 86400,
   KM_PER_S: 1000,
 } as const;
 
 export const CONVERSION = {
-  M_TO_AU: 1 / GAME.AU,
-  AU_TO_M: GAME.AU,
+  M_TO_AU: 1 / AU_METERS,
+  AU_TO_M: AU_METERS,
   KM_TO_M: 1000,
   M_TO_KM: 1 / 1000,
 
@@ -27,8 +27,8 @@ export const CONVERSION = {
   HOURS_TO_S: 3600,
   S_TO_HOURS: 1 / 3600,
 
-  M_S_TO_AU_DAY: (1 / GAME.AU) * GAME.DAY,
-  AU_DAY_TO_M_S: GAME.AU / GAME.DAY,
+  M_S_TO_AU_DAY: (1 / AU_METERS) * GAME.DAY,
+  AU_DAY_TO_M_S: AU_METERS / GAME.DAY,
   KM_S_TO_M_S: GAME.KM_PER_S,
   M_S_TO_KM_S: 1 / GAME.KM_PER_S,
 } as const;

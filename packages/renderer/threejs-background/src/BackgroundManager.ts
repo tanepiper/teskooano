@@ -43,10 +43,8 @@ export class BackgroundManager {
     scene.add(this.group);
 
     // Get seed from state instead of constructor parameter
-    let currentSeed = StateAccessor.getCurrentSeed();
-    if (currentSeed === "sol") {
-      currentSeed = "1752769136832";
-    }
+    const currentSeed = StateAccessor.getCurrentSeed();
+
     this.random = createSeededRandomSync(currentSeed);
 
     this.createDefaultStarField();

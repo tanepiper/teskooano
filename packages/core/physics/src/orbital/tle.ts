@@ -1,7 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
-import type { OrbitalParameters } from "@teskooano/data-types";
+import { AU_METERS, type OrbitalParameters } from "@teskooano/data-types";
 import { createOrbitalElements } from "./helpers";
-import { AU } from "../units/constants";
 
 /**
  * Parsed TLE data structure
@@ -128,7 +127,7 @@ export function tleToOrbitalElements(
   );
 
   return createOrbitalElements({
-    semiMajorAxisAU: semiMajorAxis_m / AU, // Convert m to km, then to AU
+    semiMajorAxisAU: semiMajorAxis_m / AU_METERS, // Convert m to km, then to AU
     eccentricity: tle.eccentricity,
     inclinationDeg: tle.inclination,
     longitudeOfAscendingNodeDeg: tle.raan,

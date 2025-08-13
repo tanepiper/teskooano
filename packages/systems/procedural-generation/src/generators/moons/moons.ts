@@ -1,18 +1,8 @@
-import type {
-  CelestialObject,
-  PlanetProperties,
-  GasGiantProperties,
-  CelestiaClassType,
-} from "@teskooano/data-types";
+import type { CelestialObject } from "@teskooano/data-types";
+import { AU_METERS, CelestialType } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
-import {
-  CelestialType,
-  GasGiantClass,
-  PlanetType,
-} from "@teskooano/data-types";
-import * as CONST_PROC_GEN from "../../constants"; // Aliasing to avoid conflict if CONST is used locally
-import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory
 import { getCelestialTypeForPlanet } from "../../utils/celestials";
+import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory
 
 /**
  * Creates an RxJS Observable that generates scientifically realistic numbers of moons
@@ -43,7 +33,7 @@ export function generateMoonsObservable(
     // Check if moon generation is appropriate based on distance
     const parentOrbit = planetObject.orbit;
     const parentDistanceAU =
-      (parentOrbit?.realSemiMajorAxis_m ?? 0) / CONST_PROC_GEN.AU_TO_METERS;
+      (parentOrbit?.realSemiMajorAxis_m ?? 0) / AU_METERS;
 
     // Very close planets (< 0.2 AU) have difficulty retaining moons due to stellar tides
     if (parentDistanceAU < 0.2) {

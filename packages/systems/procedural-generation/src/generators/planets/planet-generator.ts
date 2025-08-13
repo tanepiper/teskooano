@@ -7,6 +7,7 @@ import {
   PlanetProperties,
   RingProperties,
   RingSystemConfiguration,
+  AU_METERS,
 } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
 import * as CONST from "../../constants";
@@ -479,7 +480,7 @@ export class RoguePlanetGenerator extends BasePlanetGenerator {
 
     return {
       ...orbit,
-      realSemiMajorAxis_m: finalSemiMajorAxisAU * CONST.AU_TO_METERS,
+      realSemiMajorAxis_m: finalSemiMajorAxisAU * AU_METERS,
       eccentricity: finalEccentricity, // Override with hyperbolic eccentricity
       period_s: 0, // No period for hyperbolic orbits
       siderealRotationPeriod_s: rotationPeriod_s,

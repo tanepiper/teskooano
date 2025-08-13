@@ -1,9 +1,10 @@
-import { StateAccessor, renderableStore, actions } from "@teskooano/core-state";
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import { BehaviorSubject } from "rxjs";
-import type { CameraManagerOptions, CameraManagerState } from "./types";
-import { CustomEvents, CelestialType } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
+import { StateAccessor, actions, renderableStore } from "@teskooano/core-state";
+import { CelestialType } from "@teskooano/data-types";
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+import { CameraHelper } from "@teskooano/renderer-threejs-helpers";
+import { BehaviorSubject } from "rxjs";
+import * as THREE from "three";
 import {
   CAMERA_OFFSET,
   DEFAULT_CAMERA_DISTANCE,
@@ -11,13 +12,7 @@ import {
   DEFAULT_CAMERA_TARGET,
   DEFAULT_FOV,
 } from "./constants";
-import * as THREE from "three";
-import {
-  CameraHelper,
-  CameraPreset,
-  AnimationHelper,
-  AnimationEase,
-} from "@teskooano/renderer-threejs-helpers";
+import type { CameraManagerOptions, CameraManagerState } from "./types";
 
 /**
  * Manages camera operations within a Teskooano engine view.

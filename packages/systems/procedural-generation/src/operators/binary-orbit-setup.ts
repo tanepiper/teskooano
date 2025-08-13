@@ -4,8 +4,11 @@ import {
   calculateOrbitalVelocity,
   createOrbitalElements,
 } from "@teskooano/core-physics";
-import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
-import * as CONST from "../constants";
+import {
+  AU_METERS,
+  type CelestialObject,
+  type PhysicsStateReal,
+} from "@teskooano/data-types";
 import * as UTIL from "../utils";
 
 /**
@@ -23,7 +26,7 @@ export function setupBinaryOrbit(
   const M2 = companionStar.realMass_kg;
   const totalMass = M1 + M2;
 
-  const separationMeters = separationAU * CONST.AU_TO_METERS;
+  const separationMeters = separationAU * AU_METERS;
 
   // Calculate semi-major axes for both stars around barycenter
   const primarySMA = (M2 / totalMass) * separationMeters;
@@ -45,7 +48,7 @@ export function setupBinaryOrbit(
 
   // Primary orbit (around barycenter)
   const primaryOrbit = createOrbitalElements({
-    semiMajorAxisAU: primarySMA / CONST.AU_TO_METERS,
+    semiMajorAxisAU: primarySMA / AU_METERS,
     eccentricity: eccentricity,
     inclinationDeg: inclination * (180 / Math.PI),
     longitudeOfAscendingNodeDeg: longitudeOfAscendingNode * (180 / Math.PI),
@@ -58,7 +61,7 @@ export function setupBinaryOrbit(
 
   // Companion orbit (180° out of phase for stability)
   const companionOrbit = createOrbitalElements({
-    semiMajorAxisAU: companionSMA / CONST.AU_TO_METERS,
+    semiMajorAxisAU: companionSMA / AU_METERS,
     eccentricity: eccentricity,
     inclinationDeg: inclination * (180 / Math.PI),
     longitudeOfAscendingNodeDeg: longitudeOfAscendingNode * (180 / Math.PI),

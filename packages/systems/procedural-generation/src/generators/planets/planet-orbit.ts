@@ -3,10 +3,7 @@ import {
   calculateOrbitalVelocity,
   createOrbitalElements,
 } from "@teskooano/core-physics";
-import type {
-  OrbitalParameters,
-  PhysicsStateReal,
-} from "@teskooano/data-types";
+import { AU_METERS, type OrbitalParameters } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 
@@ -37,7 +34,7 @@ export function calculatePlanetOrbitAndInitialState(
 } {
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
-    bodyDistanceAU * CONST.AU_TO_METERS,
+    bodyDistanceAU * AU_METERS,
     planetMass_kg,
   );
 

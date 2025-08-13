@@ -1,14 +1,8 @@
 import { OSVector3, utils } from "@teskooano/core-math";
-import { AU, KM, GRAVITATIONAL_CONSTANT } from "../units/constants";
-import type { OrbitalParameters } from "@teskooano/data-types";
-import { getCurrentEpoch, J2000_EPOCH } from "./epoch";
 import type { LagrangePointType } from "@teskooano/data-types";
-import type { PhysicsStateReal } from "@teskooano/data-types";
-import {
-  calculateAllLagrangePoints,
-  createTwoBodySystem,
-  createOrbitalElementsFromLagrangePoint,
-} from "./lagrange";
+import { AU_METERS, type OrbitalParameters } from "@teskooano/data-types";
+import { KM } from "../units/constants";
+import { J2000_EPOCH } from "./epoch";
 
 /**
  * Creates orbital elements from human-readable parameters.
@@ -75,7 +69,7 @@ export function createOrbitalElements(
   // If lagrangePointType is set, it means its position/velocity will be overridden later.
   // For now, set nominal Keplerian values that allow the object to be initialized.
   if (input.lagrangePointType) {
-    semiMajorAxis_m = (input.semiMajorAxisAU ?? 1) * AU; // Default to 1 AU if not provided
+    semiMajorAxis_m = (input.semiMajorAxisAU ?? 1) * AU_METERS; // Default to 1 AU if not provided
     period_s = input.period_s ?? 365.25 * 24 * 3600; // Default to Earth's period if not provided
 
     eccentricity = 0;
@@ -109,18 +103,18 @@ export function createOrbitalElements(
       // Calculate semi-major axis from perihelion distance and eccentricity
       // a = rp / (e - 1), where rp is perihelion distance
       if (input.perihelionAU !== undefined) {
-        realPerihelion_m = input.perihelionAU * AU;
+        realPerihelion_m = input.perihelionAU * AU_METERS;
         semiMajorAxis_m = realPerihelion_m / (eccentricity - 1);
         semiMajorAxis_m = -Math.abs(semiMajorAxis_m); // Ensure it's negative for hyperbolic
       } else if (input.semiMajorAxisAU !== undefined) {
         // If semiMajorAxisAU is provided for hyperbolic, assume it's the intended
         // absolute value of semi-major axis, and make it negative.
-        semiMajorAxis_m = -Math.abs(input.semiMajorAxisAU * AU);
+        semiMajorAxis_m = -Math.abs(input.semiMajorAxisAU * AU_METERS);
         realPerihelion_m = Math.abs(semiMajorAxis_m) * (eccentricity - 1);
       } else {
         // Fallback if neither perihelionAU nor semiMajorAxisAU is provided for hyperbolic
         // Use a default perihelion distance of 0.5 AU
-        realPerihelion_m = 0.5 * AU;
+        realPerihelion_m = 0.5 * AU_METERS;
         semiMajorAxis_m = realPerihelion_m / (eccentricity - 1);
         semiMajorAxis_m = -Math.abs(semiMajorAxis_m); // Ensure it's negative
       }
@@ -131,7 +125,7 @@ export function createOrbitalElements(
       averageOrbitalSpeed_mps = 0;
     } else {
       // Regular elliptical/parabolic orbits
-      semiMajorAxis_m = input.semiMajorAxisAU * AU;
+      semiMajorAxis_m = input.semiMajorAxisAU * AU_METERS;
       period_s = input.period_s;
 
       // Handle hyperbolic orbits (eccentricity > 1) for non-isHyperbolic case
@@ -148,10 +142,12 @@ export function createOrbitalElements(
         // Elliptical/parabolic orbits
         realAphelion_m =
           (input.aphelionAU ??
-            calculateAphelionAU(input.semiMajorAxisAU, eccentricity)) * AU;
+            calculateAphelionAU(input.semiMajorAxisAU, eccentricity)) *
+          AU_METERS;
         realPerihelion_m =
           (input.perihelionAU ??
-            calculatePerihelionAU(input.semiMajorAxisAU, eccentricity)) * AU;
+            calculatePerihelionAU(input.semiMajorAxisAU, eccentricity)) *
+          AU_METERS;
         averageOrbitalSpeed_mps =
           (input.averageOrbitalSpeedKmps ??
             calculateAverageOrbitalSpeedKmps(period_s, input.semiMajorAxisAU)) *
@@ -254,7 +250,7 @@ export function kmToM(km: number): number {
  * Converts distance from AU to meters
  */
 export function auToM(au: number): number {
-  return au * AU;
+  return au * AU_METERS;
 }
 
 /**
@@ -299,7 +295,7 @@ export function calculateAverageOrbitalSpeedKmps(
   semiMajorAxisAU: number,
 ): number {
   const circumferenceAU = 2 * Math.PI * semiMajorAxisAU;
-  const circumferenceKm = (circumferenceAU * AU) / KM; // AU to km using AU constant
+  const circumferenceKm = (circumferenceAU * AU_METERS) / KM; // AU to km using AU constant
   const periodDays = period_s / (24 * 60 * 60);
   return circumferenceKm / (periodDays * 24 * 60 * 60);
 }

@@ -1,6 +1,5 @@
-import { PhysicsStateReal } from "@teskooano/data-types";
+import { AU_METERS, PhysicsStateReal } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
-import { AU } from "..";
 
 /**
  * Distance-based tolerance scaling for adaptive integration
@@ -419,7 +418,7 @@ function dormandPrinceStep(
 
   // Calculate distance-based scales for error estimation
 
-  const distanceAU = pos0.length() / AU; // Convert meters to AU
+  const distanceAU = pos0.length() / AU_METERS; // Convert meters to AU
 
   // Scale position tolerance based on distance - closer objects need higher precision
   const posScale = Math.max(

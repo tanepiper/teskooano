@@ -1,9 +1,10 @@
-import { AU, createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialType,
   CelestialStatus,
   type AsteroidFieldProperties,
   type CelestialObject,
+  AU_METERS,
 } from "@teskooano/data-types";
 
 /**
@@ -16,7 +17,7 @@ export const asteroidBelt: CelestialObject<AsteroidFieldProperties> = {
   status: CelestialStatus.ACTIVE,
   parentId: "sun",
   realMass_kg: 3e21,
-  realRadius_m: (3.3 - 2.1) * AU,
+  realRadius_m: (3.3 - 2.1) * AU_METERS,
   orbit: createOrbitalElements({
     semiMajorAxisAU: 2.7,
     eccentricity: 0.079,

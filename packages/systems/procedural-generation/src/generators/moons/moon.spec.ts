@@ -6,6 +6,7 @@ import {
   PlanetType,
   type PlanetProperties,
   type CelestialObject,
+  AU_METERS,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 
@@ -29,7 +30,7 @@ describe("Moon Generator", () => {
       temperature: 255,
       albedo: 0.3,
       orbit: {
-        realSemiMajorAxis_m: CONST.AU_TO_METERS, // 1 AU
+        realSemiMajorAxis_m: AU_METERS, // 1 AU
         eccentricity: 0.0167,
         inclination: 0,
         longitudeOfAscendingNode: 0,
@@ -37,8 +38,8 @@ describe("Moon Generator", () => {
         meanAnomaly: 0,
         period_s: 365.25 * 24 * 60 * 60,
         siderealRotationPeriod_s: 24 * 60 * 60,
-        realAphelion_m: CONST.AU_TO_METERS * 1.0167,
-        realPerihelion_m: CONST.AU_TO_METERS * 0.9833,
+        realAphelion_m: AU_METERS * 1.0167,
+        realPerihelion_m: AU_METERS * 0.9833,
         averageOrbitalSpeed_mps: 29780,
         epoch: "J2000",
       },

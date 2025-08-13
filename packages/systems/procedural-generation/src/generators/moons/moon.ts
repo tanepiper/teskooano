@@ -1,5 +1,9 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
+import {
+  AU_METERS,
+  CelestialStatus,
+  CelestialType,
+} from "@teskooano/data-types";
 import { generateCelestialName } from "../names/celestial-name";
 import {
   determineMoonFormation,
@@ -79,7 +83,7 @@ export function generateMoon(
 
   // Check Hill sphere constraint for orbital stability
   const parentOrbitSMA =
-    parentPlanetData.orbit?.realSemiMajorAxis_m || 1.496e11; // Default to 1 AU
+    parentPlanetData.orbit?.realSemiMajorAxis_m || AU_METERS; // Default to 1 AU
   const parentStarMass = 1.989e30; // Assume solar mass star for Hill sphere calc
   const hillRadius = calculateHillRadius(
     parentOrbitSMA,

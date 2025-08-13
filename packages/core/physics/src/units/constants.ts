@@ -6,8 +6,6 @@ export const GRAVITATIONAL_CONSTANT = 6.6743e-11;
 
 export const SOLAR_MASS = 1.989e30;
 
-export const AU = 1.496e11;
-
 export const KM = 1000;
 
 export const SOLAR_RADIUS = 6.957e8;

@@ -6,6 +6,7 @@ import type {
   PhysicsStateReal,
   StarProperties,
 } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-types";
 import {
   CelestialStatus,
   CelestialType,
@@ -108,8 +109,7 @@ export function generateAsteroidBelt(
     parentId: parentStar.id,
     realMass_kg: beltMass_kg, // Now has realistic mass for gravitational effects
     realRadius_m:
-      (beltDimensions.outerRadius - beltDimensions.innerRadius) *
-      CONST.AU_TO_METERS,
+      (beltDimensions.outerRadius - beltDimensions.innerRadius) * AU_METERS,
     temperature: beltTemperature,
     orbit: beltOrbit,
     properties: beltProperties,
@@ -242,7 +242,7 @@ function generateBeltOrbit(
 ): OrbitalParameters {
   const period_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
-    distanceAU * CONST.AU_TO_METERS,
+    distanceAU * AU_METERS,
     0,
   );
 
@@ -339,7 +339,7 @@ function calculateBeltTemperature(
   }
 
   // Calculate equilibrium temperature at distance
-  const distanceM = distanceAU * CONST.AU_TO_METERS;
+  const distanceM = distanceAU * AU_METERS;
 
   // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
   const temperature = Math.pow(

@@ -8,6 +8,7 @@ import {
   type PlanetProperties,
   type GasGiantProperties,
   type CelestialObject,
+  AU_METERS,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 
@@ -32,7 +33,7 @@ describe("Moon System Generator", () => {
       temperature: 255,
       albedo: 0.3,
       orbit: {
-        realSemiMajorAxis_m: CONST.AU_TO_METERS, // 1 AU
+        realSemiMajorAxis_m: AU_METERS, // 1 AU
         eccentricity: 0.0167,
         inclination: 0,
         longitudeOfAscendingNode: 0,
@@ -40,8 +41,8 @@ describe("Moon System Generator", () => {
         meanAnomaly: 0,
         period_s: 365.25 * 24 * 60 * 60,
         siderealRotationPeriod_s: 24 * 60 * 60,
-        realAphelion_m: CONST.AU_TO_METERS * 1.0167,
-        realPerihelion_m: CONST.AU_TO_METERS * 0.9833,
+        realAphelion_m: AU_METERS * 1.0167,
+        realPerihelion_m: AU_METERS * 0.9833,
         averageOrbitalSpeed_mps: 29780,
         epoch: "J2000",
       },
@@ -65,7 +66,7 @@ describe("Moon System Generator", () => {
       temperature: 165,
       albedo: 0.5,
       orbit: {
-        realSemiMajorAxis_m: CONST.AU_TO_METERS * 5, // 5 AU
+        realSemiMajorAxis_m: AU_METERS * 5, // 5 AU
         eccentricity: 0.048,
         inclination: 0,
         longitudeOfAscendingNode: 0,
@@ -73,8 +74,8 @@ describe("Moon System Generator", () => {
         meanAnomaly: 0,
         period_s: 365.25 * 24 * 60 * 60 * 11.86, // Jupiter period
         siderealRotationPeriod_s: 9.9 * 60 * 60, // Jupiter rotation
-        realAphelion_m: CONST.AU_TO_METERS * 5.24,
-        realPerihelion_m: CONST.AU_TO_METERS * 4.76,
+        realAphelion_m: AU_METERS * 5.24,
+        realPerihelion_m: AU_METERS * 4.76,
         averageOrbitalSpeed_mps: 13100,
         epoch: "J2000",
       },
@@ -154,7 +155,7 @@ describe("Moon System Generator", () => {
         ...mockTerrestrialPlanet,
         orbit: {
           ...mockTerrestrialPlanet.orbit,
-          realSemiMajorAxis_m: CONST.AU_TO_METERS * 0.1, // 0.1 AU - very close
+          realSemiMajorAxis_m: AU_METERS * 0.1, // 0.1 AU - very close
         },
       };
 
@@ -272,7 +273,7 @@ describe("Moon System Generator", () => {
         ...mockTerrestrialPlanet,
         orbit: {
           ...mockTerrestrialPlanet.orbit,
-          realSemiMajorAxis_m: CONST.AU_TO_METERS * 0.5, // 0.5 AU
+          realSemiMajorAxis_m: AU_METERS * 0.5, // 0.5 AU
         },
       };
 
@@ -280,7 +281,7 @@ describe("Moon System Generator", () => {
         ...mockTerrestrialPlanet,
         orbit: {
           ...mockTerrestrialPlanet.orbit,
-          realSemiMajorAxis_m: CONST.AU_TO_METERS * 10, // 10 AU
+          realSemiMajorAxis_m: AU_METERS * 10, // 10 AU
         },
       };
 
@@ -374,7 +375,7 @@ describe("Moon System Generator", () => {
           ...mockTerrestrialPlanet,
           orbit: {
             ...mockTerrestrialPlanet.orbit,
-            realSemiMajorAxis_m: CONST.AU_TO_METERS * 0.2, // Just above the 0.2 AU limit
+            realSemiMajorAxis_m: AU_METERS * 0.2, // Just above the 0.2 AU limit
           },
         },
       ];

@@ -3,6 +3,7 @@ import {
   CelestialStatus,
   CelestialType,
   CustomEvents,
+  AU_METERS,
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
@@ -131,7 +132,6 @@ export function handleFollowRequest(
     targetObject.type === CelestialType.ASTEROID_FIELD ||
     targetObject.type === CelestialType.OORT_CLOUD
   ) {
-    const AU_TO_METERS = 149597870700; // 1 AU in meters
     let innerRadiusMeters = 0;
     let innerRadiusAU = 0;
 
@@ -139,7 +139,7 @@ export function handleFollowRequest(
       const props = targetObject.properties as any;
       if (props.innerRadiusAU !== undefined) {
         innerRadiusAU = props.innerRadiusAU;
-        innerRadiusMeters = props.innerRadiusAU * AU_TO_METERS;
+        innerRadiusMeters = props.innerRadiusAU * AU_METERS;
       }
     }
 
