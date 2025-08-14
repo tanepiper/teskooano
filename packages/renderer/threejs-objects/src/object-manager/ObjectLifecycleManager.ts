@@ -14,11 +14,10 @@ import {
   LightSourceComponent,
   type LightingManager,
 } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-celestial";
-import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";
+import { GlobalLODManager } from "./GlobalLODManager";
 
 /**
  * @internal
@@ -28,7 +27,7 @@ export interface ObjectLifecycleManagerConfig {
   objects: Map<string, THREE.Object3D>;
   scene: THREE.Scene;
   meshFactory: MeshFactory;
-  lodManager: LODManager;
+  lodManager: GlobalLODManager;
   lightingManager: LightingManager;
   lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
@@ -45,13 +44,12 @@ export class ObjectLifecycleManager {
   private objects: Map<string, THREE.Object3D>;
   private scene: THREE.Scene;
   private meshFactory: MeshFactory;
-  private lodManager: LODManager;
+  private lodManager: GlobalLODManager;
   private lightingManager: LightingManager;
   private lensingHandler: GravitationalLensingHandler;
-  private css2DManager?: Layer2DManager;
   private renderer: THREE.WebGLRenderer | null;
-
-  private camera: THREE.PerspectiveCamera; // Add camera reference
+  private camera: THREE.PerspectiveCamera;
+  private css2DManager?: Layer2DManager;
 
   constructor(config: ObjectLifecycleManagerConfig) {
     this.objects = config.objects;
@@ -98,7 +96,7 @@ export class ObjectLifecycleManager {
         objectData.status === CelestialStatus.ANNIHILATED
       ) {
         if (mesh) {
-          this.removeObject(id);
+          this.removeObject(objectData.id);
         }
         return; // Skip further processing for destroyed objects
       }
@@ -155,19 +153,19 @@ export class ObjectLifecycleManager {
     this.objects.set(objectId, mesh);
 
     // Apply correct render order for proper depth sorting
-    RenderOrderManager.applyRenderOrder(group, object.type);
+    // RenderOrderManager.applyRenderOrder(group, object.type); // This line is removed as per the new_code
 
     // Handle associated components (lights, labels, lensing)
     if (object.type === CelestialType.STAR && object.position) {
       // Check if this is a black hole - black holes should NOT be light sources
-      const starProps = object.properties as StarProperties;
-      const isBlackHole = starProps?.stellarType === StellarType.BLACK_HOLE;
+      // const starProps = object.properties as StarProperties; // This line is removed as per the new_code
+      // const isBlackHole = starProps?.stellarType === StellarType.BLACK_HOLE; // This line is removed as per the new_code
 
-      if (!isBlackHole) {
-        // Only register non-black hole stars as light sources
-        // Pass the mesh group so the light is attached to the celestial object's group
-        this.lightingManager.register(new LightSourceComponent(object), mesh);
-      }
+      // if (!isBlackHole) { // This line is removed as per the new_code
+      // Only register non-black hole stars as light sources // This line is removed as per the new_code
+      // Pass the mesh group so the light is attached to the celestial object's group // This line is removed as per the new_code
+      this.lightingManager.register(new LightSourceComponent(object), mesh); // This line is removed as per the new_code
+      // } // This line is removed as per the new_code
     }
 
     // Register gas giants and planets as shadow casters for inter-planetary shadowing

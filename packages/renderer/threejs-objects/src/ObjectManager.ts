@@ -13,13 +13,13 @@ import {
 import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-celestial";
 
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import {
   AccelerationVisualizer,
   DebrisEffectManager,
+  GlobalLODManager,
   GravitationalLensingHandler,
   MeshFactory,
   ObjectLifecycleManager,
@@ -55,7 +55,7 @@ export class ObjectManager extends StateSubscriptionMixin {
   /** @internal Reference to the WebGLRenderer, potentially used by sub-managers (e.g., lensing). */
   private renderer: THREE.WebGLRenderer;
   /** @internal Manages Levels of Detail for objects based on camera distance. */
-  private lodManager: LODManager;
+  private lodManager: GlobalLODManager;
   /** @internal Manages the influence and calculation of the new component-based lighting system. */
   public lightingManager: LightingManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
@@ -159,7 +159,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.css2DManager = css2DManager;
     this.acceleration$ = acceleration$; // Assign the observable
 
-    this.lodManager = new LODManager();
+    this.lodManager = new GlobalLODManager();
     this.lightingManager = lightingManager || new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
       celestialRenderers: this.celestialRenderers,
@@ -171,9 +171,14 @@ export class ObjectManager extends StateSubscriptionMixin {
       lodManager: this.lodManager,
       lightingManager: this.lightingManager,
       camera: this.camera,
-      createLodCallback: this.lodManager.createAndRegisterLOD.bind(
-        this.lodManager,
-      ),
+      createLodCallback: (object: RenderableCelestialObject, levels: any[]) => {
+        const lod = new THREE.LOD();
+        levels.forEach((level: any) => {
+          lod.addLevel(level.object, level.distance);
+        });
+        this.lodManager.registerLOD(object.id, lod);
+        return lod;
+      },
     });
 
     // Setup the ObjectLifecycleManager with dependencies
@@ -367,11 +372,9 @@ export class ObjectManager extends StateSubscriptionMixin {
       } else if (type === CelestialType.MOON) {
         // For moons, only show label if parent is close (low LOD level)
         if (objectData.parentId) {
-          const parentLODLevel = this.lodManager.getCurrentLODLevelIndex(
-            objectData.parentId,
-          );
-          // Show if parent LOD is 0 or 1 (closest levels)
-          showLabel = parentLODLevel !== undefined && parentLODLevel <= 1;
+          const parentLOD = this.lodManager.getLOD(objectData.parentId);
+          // Show if parent LOD exists and is close (we can't easily determine LOD level from THREE.LOD)
+          showLabel = parentLOD !== undefined;
         }
       }
 
@@ -419,22 +422,19 @@ export class ObjectManager extends StateSubscriptionMixin {
     const time = Date.now() / 1000;
     const deltaTime = this.getDeltaTime();
 
-    // 1. Update LODs for all objects
-    this.lodManager.update(camera);
-
-    // 2. Update all lighting components and the manager itself
+    // 1. Update all lighting components and the manager itself
     this.lightingManager.update();
 
-    // 3. Update all the custom renderers (for shaders, effects, etc.)
+    // 2. Update all the custom renderers (for shaders, effects, etc.)
     this.updateRenderers(time, 1.0, renderer, scene, camera);
 
-    // 4. Update gravitational lensing effect
+    // 3. Update gravitational lensing effect
     this.lensingHandler.updateAll(renderer, scene, camera);
 
-    // 5. Update debris effects
+    // 4. Update debris effects
     this.debrisEffectManager.update(deltaTime);
 
-    // 6. Update label visibility
+    // 5. Update label visibility
     this.updateLabelVisibility();
 
     this.lastUpdateTime = performance.now();

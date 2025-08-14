@@ -16,9 +16,18 @@ import {
   type CelestialRenderer,
   createFallbackSphere,
   type LODLevel,
-  type LODManager,
 } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
+
+/**
+ * @internal Interface for global LOD management that MeshFactory expects.
+ */
+interface GlobalLODManagerInterface {
+  createAndRegisterLOD(
+    object: RenderableCelestialObject,
+    levels: LODLevel[],
+  ): THREE.LOD;
+}
 
 /**
  * @internal
@@ -27,7 +36,7 @@ import * as THREE from "three";
 export interface MeshFactoryConfig {
   celestialRenderers: Map<string, CelestialRenderer>;
 
-  lodManager: LODManager;
+  lodManager: GlobalLODManagerInterface;
   lightingManager: LightingManager;
   camera: THREE.PerspectiveCamera; // Needed for LOD registration?
   createLodCallback: (
@@ -45,7 +54,7 @@ export interface MeshFactoryConfig {
 export class MeshFactory {
   private celestialRenderers: Map<string, CelestialRenderer>;
 
-  private lodManager: LODManager;
+  private lodManager: GlobalLODManagerInterface;
   private lightingManager: LightingManager;
   private createLodCallback: (
     object: RenderableCelestialObject,
