@@ -15,14 +15,12 @@
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-celestial": [
         "../../renderer/threejs-celestial/src"
-      ],
-      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"]
+      ]
     }
   },
   "references": [
     { "path": "../../data/types" },
-    { "path": "../../renderer/threejs-celestial" },
-    { "path": "../../renderer/threejs-lod" }
+    { "path": "../../renderer/threejs-celestial" }
   ],
   "include": ["src/**/*"],
   "files": ["src/vite-env.d.ts"],

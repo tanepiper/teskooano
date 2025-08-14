@@ -3,7 +3,7 @@ import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-lod";
+import { LODManager } from "@teskooano/renderer-threejs-celestial";
 import { RendererStateAdapter } from "../RendererStateAdapter";
 import { RenderPipeline } from "../RenderPipeline";
 import { renderableStore } from "@teskooano/core-state";
@@ -88,7 +88,7 @@ export class RenderingOrchestrator {
     this._lightingManager = new LightingManager(this._sceneManager.scene);
 
     // Initialize LOD manager
-    this._lodManager = new LODManager(this._sceneManager.camera);
+    this._lodManager = new LODManager();
 
     // Initialize grid manager
     this._gridManager = new GridManager(this._sceneManager.scene);

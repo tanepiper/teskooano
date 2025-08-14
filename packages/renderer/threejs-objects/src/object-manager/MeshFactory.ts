@@ -1,7 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-lod";
 import { createOortCloudMesh } from "@teskooano/celestials-oort-cloud";
 import { createAsteroidFieldMesh } from "@teskooano/celestials-asteroid-field";
 import { createStarMesh } from "@teskooano/celestials-stars";
@@ -16,6 +15,8 @@ import { createMesh as createAsteroidMesh } from "@teskooano/celestials-asteroid
 import {
   type CelestialRenderer,
   createFallbackSphere,
+  type LODLevel,
+  type LODManager,
 } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 

@@ -1,21 +1,21 @@
-import {
-  GasGiantClass,
+import type {
   GasGiantProperties,
-  type RenderableCelestialObject,
+  RenderableCelestialObject,
 } from "@teskooano/data-types";
-import { type LODLevel } from "@teskooano/renderer-threejs-lod";
+import { CelestialType, GasGiantClass } from "@teskooano/data-types";
+import {
+  type LODLevel,
+  createFallbackSphere,
+  type CelestialRenderer,
+} from "@teskooano/renderer-threejs-celestial";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
-import type { BaseGasGiantRenderer } from "./base";
 import { ClassIGasGiantRenderer } from "./class-i";
 import { ClassIIGasGiantRenderer } from "./class-ii";
 import { ClassIIIGasGiantRenderer } from "./class-iii";
 import { ClassIVGasGiantRenderer } from "./class-iv";
 import { ClassVGasGiantRenderer } from "./class-v";
-import {
-  createFallbackSphere,
-  type CelestialRenderer,
-} from "@teskooano/renderer-threejs-celestial";
+import { BaseGasGiantRenderer } from "./base";
 
 /**
  * Unified interface for celestial mesh creation dependencies

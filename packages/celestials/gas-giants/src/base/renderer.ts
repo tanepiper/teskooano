@@ -14,7 +14,7 @@ import {
   ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 

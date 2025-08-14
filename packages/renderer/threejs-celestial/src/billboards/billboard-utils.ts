@@ -1,5 +1,5 @@
+import type { LODLevel } from "../base/managers/LODManager";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
 import * as THREE from "three";
 import { BillboardInfo } from "./types";

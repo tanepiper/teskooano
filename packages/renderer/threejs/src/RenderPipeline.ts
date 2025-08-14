@@ -13,6 +13,14 @@ import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import type { RenderPipelineOptions } from "./types";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { StateAccessor } from "@teskooano/core-state";
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
+import { BackgroundManager } from "@teskooano/renderer-threejs-background";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import { LODManager } from "@teskooano/renderer-threejs-celestial";
+import { GridManager } from "@teskooano/renderer-threejs-core";
 
 /**
  * Orchestrates the sequence of updates for each frame in the rendering loop.

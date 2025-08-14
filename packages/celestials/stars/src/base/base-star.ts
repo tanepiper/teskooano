@@ -8,7 +8,7 @@ import {
   GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import enhancedStarVertexShader from "../shaders/enhanced-star.vertex.glsl?raw";
 import enhancedStarFragmentShader from "../shaders/enhanced-star.fragment.glsl?raw";

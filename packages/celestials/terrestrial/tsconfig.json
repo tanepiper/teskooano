@@ -16,14 +16,12 @@
       "@teskooano/renderer-threejs-celestial": [
         "../../renderer/threejs-celestial/src"
       ],
-      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
       "@teskooano/celestials-rings": ["../rings/src"]
     }
   },
   "references": [
     { "path": "../../data/types" },
     { "path": "../../renderer/threejs-celestial" },
-    { "path": "../../renderer/threejs-lod" },
     { "path": "../rings" }
   ],
   "include": ["src/**/*", "src/shims-glsl.d.ts"],

@@ -2,7 +2,6 @@ import {
   CometProperties,
   RenderableCelestialObject,
 } from "@teskooano/data-types";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 
 import { createSeededRandomSync } from "@teskooano/core-math";
@@ -12,6 +11,7 @@ import {
   type CelestialMeshOptions,
   type LightSourcesMap,
   ShadowCasterUtils,
+  LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import {

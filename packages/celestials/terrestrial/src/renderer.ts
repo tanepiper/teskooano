@@ -9,7 +9,6 @@ import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
@@ -17,6 +16,7 @@ import {
   type CelestialRenderer,
   ShadowCasterUtils,
   GeometryUtilities,
+  LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import {

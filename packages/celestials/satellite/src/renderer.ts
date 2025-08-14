@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   RenderableCelestialObject,
   SatelliteProperties,
@@ -13,6 +12,7 @@ import {
   type CelestialMeshOptions,
   type LightSourcesMap,
   createFallbackSphere,
+  LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
 import { SatelliteMaterial } from "./material";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";

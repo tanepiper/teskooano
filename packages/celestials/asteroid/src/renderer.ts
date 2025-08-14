@@ -3,13 +3,13 @@ import {
   RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
   type LightSourcesMap,
   ShadowCasterUtils,
+  LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { AsteroidNucleusMaterial } from "./material";

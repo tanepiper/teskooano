@@ -3,7 +3,6 @@ import {
   CelestialType,
 } from "@teskooano/data-types";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import { BillboardManager } from "../billboards";
@@ -23,6 +22,7 @@ import {
   TimeManager,
   PositionHistoryManager,
   type OrbitalConfig,
+  type LODLevel,
 } from "./managers";
 
 /**

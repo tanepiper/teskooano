@@ -13,7 +13,7 @@ import {
 import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-lod";
+import { LODManager } from "@teskooano/renderer-threejs-celestial";
 
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
@@ -159,7 +159,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.css2DManager = css2DManager;
     this.acceleration$ = acceleration$; // Assign the observable
 
-    this.lodManager = new LODManager(camera);
+    this.lodManager = new LODManager();
     this.lightingManager = lightingManager || new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
       celestialRenderers: this.celestialRenderers,
@@ -367,7 +367,7 @@ export class ObjectManager extends StateSubscriptionMixin {
       } else if (type === CelestialType.MOON) {
         // For moons, only show label if parent is close (low LOD level)
         if (objectData.parentId) {
-          const parentLODLevel = this.lodManager.getCurrentLODLevel(
+          const parentLODLevel = this.lodManager.getCurrentLODLevelIndex(
             objectData.parentId,
           );
           // Show if parent LOD is 0 or 1 (closest levels)
@@ -420,7 +420,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     const deltaTime = this.getDeltaTime();
 
     // 1. Update LODs for all objects
-    this.lodManager.update();
+    this.lodManager.update(camera);
 
     // 2. Update all lighting components and the manager itself
     this.lightingManager.update();
@@ -467,14 +467,6 @@ export class ObjectManager extends StateSubscriptionMixin {
     // Don't nullify managers that are reused (objectLifecycleManager, lodManager, etc.)
     (this.accelerationSubscription as any) = null;
     (this.latestRenderableObjects as any) = null;
-  }
-
-  /**
-   * Toggles debug visualization for the LOD manager.
-   * @param enabled - True to show LOD debug helpers, false to hide.
-   */
-  toggleLODDebug(enabled: boolean): void {
-    this.lodManager.setDebugMode(enabled);
   }
 
   /**

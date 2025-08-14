@@ -32,13 +32,13 @@ import { WolfRayetRenderer } from "./mature-stars/supergiant/wolf-rayet";
 
 import { SchwarzschildBlackHoleRenderer } from "./black-holes/schwarzschild-black-hole";
 import { KerrBlackHoleRenderer } from "./black-holes/kerr-black-hole";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import * as THREE from "three";
 import {
-  CelestialRenderer,
+  type LODLevel,
+  type CelestialRenderer,
   createFallbackSphere,
 } from "@teskooano/renderer-threejs-celestial";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import * as THREE from "three";
 
 /**
  * Unified interface for celestial mesh creation dependencies

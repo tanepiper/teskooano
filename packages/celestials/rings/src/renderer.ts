@@ -7,8 +7,8 @@ import {
   type CelestialMeshOptions,
   GeometryUtilities,
   type LightSourcesMap,
+  LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { AccretionDiskMaterial, RingMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
 

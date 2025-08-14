@@ -1,7 +1,7 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LODLevel } from "./managers/LODManager";
 import * as THREE from "three";
 import { CelestialMeshOptions } from "./types";
 

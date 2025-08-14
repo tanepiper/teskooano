@@ -15,7 +15,6 @@
       "@teskooano/renderer-threejs-lighting": [
         "../threejs-lighting/src/index.ts"
       ],
-      "@teskooano/renderer-threejs-lod": ["../threejs-lod/src/index.ts"],
       "@teskooano/web-apis": ["../../web-apis/src/index.ts"]
     }
   },
@@ -25,7 +24,6 @@
     { "path": "../../core/state" },
     { "path": "../../data/types" },
     { "path": "../threejs-lighting" },
-    { "path": "../threejs-lod" },
     { "path": "../../app/web-apis" }
   ]
 }

@@ -1,12 +1,12 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import * as THREE from "three";
+import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import {
   createFallbackSphere,
-  type CelestialRenderer,
+  LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { BaseTerrestrialRenderer } from "./renderer";
+import * as THREE from "three";
 
 /**
  * Unified interface for celestial mesh creation dependencies

@@ -1,21 +1,20 @@
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
-import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import type { LODManager } from "@teskooano/renderer-threejs-celestial";
 import type {
-  AnimationLoop,
-  SceneManager,
   GridManager,
+  SceneManager,
 } from "@teskooano/renderer-threejs-core";
+import * as THREE from "three";
+import { WebGLRendererParameters } from "three";
+import { SimulationConfiguration } from "@teskooano/core-state";
 import {
   LabelVisibilityConfig,
   Layer2DManager,
 } from "@teskooano/renderer-threejs-labels";
-import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODManager } from "@teskooano/renderer-threejs-lod";
-import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import type * as THREE from "three";
-import { WebGLRendererParameters } from "three";
-import { SimulationConfiguration } from "@teskooano/core-state";
+import { ControlsManager } from "@teskooano/renderer-threejs-controls";
 
 /**
  * Defines a collection of values intended to be passed as uniforms to shaders.

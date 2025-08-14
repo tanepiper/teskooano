@@ -14,7 +14,7 @@ import {
   LightSourceComponent,
   type LightingManager,
 } from "@teskooano/renderer-threejs-lighting";
-import type { LODManager } from "@teskooano/renderer-threejs-lod";
+import { LODManager } from "@teskooano/renderer-threejs-celestial";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";

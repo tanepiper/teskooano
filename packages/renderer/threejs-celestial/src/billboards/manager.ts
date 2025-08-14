@@ -1,7 +1,7 @@
-import { RenderableCelestialObject } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type { LODLevel } from "../base/managers/LODManager";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import { LightingHelper } from "@teskooano/renderer-threejs-helpers";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { createBillboardSprite } from "./billboard-utils";
 import { BillboardInfo, BillboardLODConfig } from "./types";

@@ -1,8 +1,8 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
 import {
+  LODLevel,
   createFallbackSphere,
   type CelestialRenderer,
 } from "@teskooano/renderer-threejs-celestial";
