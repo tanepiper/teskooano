@@ -1,9 +1,10 @@
-import { StateAccessor } from "@teskooano/core-state";
+import { StateAccessor, StateSubscriptionMixin } from "@teskooano/core-state";
 import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import type * as THREE from "three";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LightSourceComponent } from "@teskooano/renderer-threejs-lighting";
-import type { RenderableCelestialObject } from "@teskooano/data-types"; // Corrected import path
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type { Observable } from "rxjs";
 
 type LightSourcesMap = Map<
   string,
@@ -17,23 +18,82 @@ type LightSourcesMap = Map<
 export interface RendererUpdaterConfig {
   celestialRenderers: Map<string, CelestialRenderer>;
   lightingManager: LightingManager;
+  renderableObjects$: Observable<Record<string, RenderableCelestialObject>>;
+  camera: THREE.PerspectiveCamera;
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  allMeshes: Map<string, THREE.Object3D>;
 }
 
 /**
- * Helper class responsible for iterating through different categories of celestial renderers
- * and calling their respective `update` methods. This centralizes the update logic.
+ * Helper class responsible for updating celestial renderers reactively based on state changes.
+ * This class subscribes to renderable objects state changes and automatically updates
+ * renderers when the state changes, rather than being called manually every frame.
  */
-export class RendererUpdater {
+export class RendererUpdater extends StateSubscriptionMixin {
   private celestialRenderers: Map<string, CelestialRenderer>;
-
   private lightingManager: LightingManager;
+  private camera: THREE.PerspectiveCamera;
+  private renderer: THREE.WebGLRenderer;
+  private scene: THREE.Scene;
+  private allMeshes: Map<string, THREE.Object3D>;
+  private renderableObjects$: Observable<
+    Record<string, RenderableCelestialObject>
+  >;
   private loggedIds = new Set<string>();
+  private lastUpdateTime = 0;
 
   constructor(config: RendererUpdaterConfig) {
+    super();
     this.celestialRenderers = config.celestialRenderers;
     this.lightingManager = config.lightingManager;
+    this.camera = config.camera;
+    this.renderer = config.renderer;
+    this.scene = config.scene;
+    this.allMeshes = config.allMeshes;
+    this.renderableObjects$ = config.renderableObjects$;
+
+    // Subscribe to state changes
+    this.subscribeToStateChanges();
   }
 
+  /**
+   * @internal Subscribes to renderable objects state changes to trigger renderer updates.
+   */
+  private subscribeToStateChanges(): void {
+    this.subscribeToState(
+      this.renderableObjects$,
+      (objects: Record<string, RenderableCelestialObject>) => {
+        this.updateRenderersReactive(objects);
+      },
+    );
+  }
+
+  /**
+   * @internal Updates all renderers reactively when state changes.
+   */
+  private updateRenderersReactive(
+    allRenderableObjects: Record<string, RenderableCelestialObject>,
+  ): void {
+    const time = Date.now() / 1000;
+    const timeScale = 1.0;
+
+    const context = {
+      time,
+      timeScale,
+      camera: this.camera,
+      renderer: this.renderer,
+      scene: this.scene,
+      allMeshes: this.allMeshes,
+      allRenderableObjects,
+    };
+
+    this.processRendererMap(this.celestialRenderers, context);
+  }
+
+  /**
+   * @deprecated Use reactive updates instead. This method is kept for backward compatibility.
+   */
   updateRenderers(
     time: number,
     timeScale: number,
@@ -47,8 +107,8 @@ export class RendererUpdater {
       time,
       timeScale,
       camera,
-      renderer,
-      scene,
+      renderer: renderer || this.renderer,
+      scene: scene || this.scene,
       allMeshes,
       allRenderableObjects,
     };

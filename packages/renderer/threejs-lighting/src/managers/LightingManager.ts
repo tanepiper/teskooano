@@ -1,5 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import * as THREE from "three";
 import type { LightSourceComponent } from "../components/LightSourceComponent";
 
@@ -13,8 +14,11 @@ const SHADOW_UPDATE_INTERVAL = 500; // Update shadows every 500ms instead of eve
  * Manages the calculation of light influence within the scene.
  * This manager holds a registry of all light sources and provides methods to
  * determine which lights should affect a given object based on distance and intensity.
+ *
+ * The LightingManager subscribes to state changes and automatically updates
+ * light sources and shadow casting when the scene changes.
  */
-export class LightingManager {
+export class LightingManager extends StateSubscriptionMixin {
   private lightSources: Map<string, LightSourceComponent> = new Map();
   private shadowCasters: Map<
     string,
@@ -30,9 +34,42 @@ export class LightingManager {
   > = new Map();
   private scene: THREE.Scene;
   private lastShadowUpdate: number = 0;
+  private renderableObjects$: any; // Observable for renderable objects
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, renderableObjects$?: any) {
+    super();
     this.scene = scene;
+    this.renderableObjects$ = renderableObjects$;
+
+    // Subscribe to state changes if provided
+    if (this.renderableObjects$) {
+      this.subscribeToStateChanges();
+    }
+  }
+
+  /**
+   * @internal Subscribes to renderable objects state changes to trigger updates.
+   */
+  private subscribeToStateChanges(): void {
+    this.subscribeToState(
+      this.renderableObjects$,
+      (objects: Record<string, RenderableCelestialObject>) => {
+        this.updateLightSources(objects);
+        this.updateShadowCasting();
+      },
+    );
+  }
+
+  /**
+   * @internal Updates all registered light source components.
+   */
+  private updateLightSources(
+    objects: Record<string, RenderableCelestialObject>,
+  ): void {
+    this.lightSources.forEach((component) => {
+      // Update the component - it will fetch fresh data from state internally
+      component.update();
+    });
   }
 
   /**
@@ -140,10 +177,10 @@ export class LightingManager {
   }
 
   /**
-   * Updates all registered light source components and shadow casting.
-   * This should be called once per frame.
+   * @internal Updates all registered light source components and shadow casting.
+   * This is now called automatically when state changes.
    */
-  public update(): void {
+  private update(): void {
     this.lightSources.forEach((component) => {
       component.update();
     });

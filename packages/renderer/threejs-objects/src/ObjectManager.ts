@@ -88,11 +88,7 @@ export class ObjectManager extends StateSubscriptionMixin {
   private objectLifecycleManager: ObjectLifecycleManager;
   private debrisEffectManager: DebrisEffectManager;
 
-  private debugMode: boolean = false;
   private lastUpdateTime: number = 0;
-
-  /** @internal Reusable vector to avoid allocations in loops. */
-  private tempVector3 = new THREE.Vector3();
 
   /**
    * Public accessor for the camera.
@@ -145,11 +141,11 @@ export class ObjectManager extends StateSubscriptionMixin {
     camera: THREE.PerspectiveCamera,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     renderer: THREE.WebGLRenderer,
-    css2DManager?: LabelVisibilityManager & Layer2DManager,
+    css2DManager: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<
       Record<string, OSVector3>
     > = StateAccessor.getAccelerationVectorsStream(),
-    lightingManager?: LightingManager,
+    lightingManager: LightingManager,
   ) {
     super();
     this.scene = scene;
@@ -157,15 +153,22 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.renderableObjects$ = renderableObjects$;
     this.renderer = renderer;
     this.css2DManager = css2DManager;
-    this.acceleration$ = acceleration$; // Assign the observable
+    this.acceleration$ = acceleration$;
 
+    // Initialize managers
     this.lodManager = new GlobalLODManager();
-    this.lightingManager = lightingManager || new LightingManager(this.scene);
+    this.lightingManager =
+      lightingManager ||
+      new LightingManager(this.scene, this.renderableObjects$);
     this.lensingHandler = new GravitationalLensingHandler({
       celestialRenderers: this.celestialRenderers,
     });
+    this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
+    this.accelerationVisualizer = new AccelerationVisualizer({
+      objects: this.objects,
+    });
 
-    // Setup the MeshFactory with dependencies
+    // Setup MeshFactory with LOD callback
     this.meshFactory = new MeshFactory({
       celestialRenderers: this.celestialRenderers,
       lodManager: this.lodManager,
@@ -181,7 +184,7 @@ export class ObjectManager extends StateSubscriptionMixin {
       },
     });
 
-    // Setup the ObjectLifecycleManager with dependencies
+    // Setup ObjectLifecycleManager
     this.objectLifecycleManager = new ObjectLifecycleManager({
       objects: this.objects,
       scene: this.scene,
@@ -194,27 +197,26 @@ export class ObjectManager extends StateSubscriptionMixin {
       css2DManager: this.css2DManager,
     });
 
-    // Setup other managers
-    this.accelerationVisualizer = new AccelerationVisualizer({
-      objects: this.objects,
-    });
+    // Setup reactive RendererUpdater
     this.rendererUpdater = new RendererUpdater({
       celestialRenderers: this.celestialRenderers,
       lightingManager: this.lightingManager,
+      renderableObjects$: this.renderableObjects$,
+      camera: this.camera,
+      renderer: this.renderer,
+      scene: this.scene,
+      allMeshes: this.objects,
     });
 
-    this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
-
-    // Start listening to state changes and events
+    // Subscribe to state changes and events
     this.subscribeToStateChanges();
     this.subscribeToDestructionEvents();
   }
 
   /**
-   * @internal Subscribes to the renderable objects and acceleration vector streams from the core state.
+   * @internal Subscribes to the renderable objects stream from the core state.
    */
   private subscribeToStateChanges(): void {
-    // Subscribe to renderable objects and sync the scene via ObjectLifecycleManager
     this.subscribeToState(
       this.renderableObjects$,
       (objects: Record<string, RenderableCelestialObject>) => {
@@ -222,10 +224,9 @@ export class ObjectManager extends StateSubscriptionMixin {
         this.objectLifecycleManager.syncObjectsWithState(
           this.latestRenderableObjects,
         );
+        this.updateLabelVisibility();
       },
     );
-
-    // No longer subscribe to acceleration here unconditionally
   }
 
   /**
@@ -307,6 +308,7 @@ export class ObjectManager extends StateSubscriptionMixin {
    * @param renderer - The WebGLRenderer instance.
    * @param scene - The main Three.js scene.
    * @param camera - The main perspective camera.
+   * @deprecated Use reactive renderer updates instead. This method is kept for backward compatibility.
    */
   public updateRenderers(
     time: number,
@@ -410,7 +412,10 @@ export class ObjectManager extends StateSubscriptionMixin {
   }
 
   /**
-   * @internal Manages the visibility of object labels based on camera distance and LOD.
+   * Updates visual effects that require per-frame updates for smooth animation.
+   * Renderer updates are now handled reactively via state subscriptions.
+   *
+   * @param renderer - The WebGLRenderer instance.
    * @param scene - The main Three.js scene.
    * @param camera - The main perspective camera.
    */
@@ -419,30 +424,15 @@ export class ObjectManager extends StateSubscriptionMixin {
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
   ): void {
-    const time = Date.now() / 1000;
     const deltaTime = this.getDeltaTime();
 
-    // 1. Update all lighting components and the manager itself
-    this.lightingManager.update();
-
-    // 2. Update all the custom renderers (for shaders, effects, etc.)
-    this.updateRenderers(time, 1.0, renderer, scene, camera);
-
-    // 3. Update gravitational lensing effect
+    // Update visual effects that need per-frame updates for smooth animation
     this.lensingHandler.updateAll(renderer, scene, camera);
-
-    // 4. Update debris effects
     this.debrisEffectManager.update(deltaTime);
-
-    // 5. Update label visibility
-    this.updateLabelVisibility();
-
-    this.lastUpdateTime = performance.now();
   }
 
   /**
    * Cleans up all resources managed by this ObjectManager and its sub-managers.
-   * Unsubscribes from observables, disposes objects, clears maps.
    */
   dispose(): void {
     if (this.accelerationSubscription) {
@@ -450,21 +440,18 @@ export class ObjectManager extends StateSubscriptionMixin {
     }
     super.dispose();
 
-    // Dispose sub-managers in logical order (e.g., lifecycle last?)
-    this.objectLifecycleManager.dispose(); // Disposes individual objects and their resources
-    this.accelerationVisualizer.clear(); // Clear arrows
-
-    // Dispose renderers and clear their maps
+    // Dispose sub-managers
+    this.objectLifecycleManager.dispose();
     this.rendererUpdater.dispose();
     this.lodManager.dispose();
     this.lensingHandler.clear();
+    this.accelerationVisualizer.clear();
 
+    // Clear maps
     this.celestialRenderers.clear();
-    // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();
 
-    // Only nullify properties that won't be reused
-    // Don't nullify managers that are reused (objectLifecycleManager, lodManager, etc.)
+    // Clean up references
     (this.accelerationSubscription as any) = null;
     (this.latestRenderableObjects as any) = null;
   }
