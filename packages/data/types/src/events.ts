@@ -26,7 +26,6 @@ export const CustomEvents = {
   CELESTIAL_OBJECT_DESTROYED: "celestial-object-destroyed",
   FOCUS_REQUEST: "focus-request",
   FOLLOW_REQUEST: "follow-request",
-  FOCUS_REQUEST_INITIATED: "focus-request-initiated",
   TRANSITION_COMPLETE: "transitioncomplete",
 
   TOGGLE: "toggle",

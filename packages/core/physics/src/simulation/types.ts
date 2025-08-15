@@ -1,21 +1,16 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   CelestialType,
-  PhysicsStateReal,
   OrbitalParameters,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
-import {
-  handleCollisions,
-  type DestructionEvent,
-} from "../collision/collision";
 /**
  * Define a return type that includes both states and accelerations
  */
 export interface SimulationStepResult {
   states: PhysicsStateReal[];
   accelerations: Map<string, OSVector3>;
-  destroyedIds: Set<string | number>;
-  destructionEvents: DestructionEvent[];
+  destroyedIds: Set<string>;
 }
 
 /**

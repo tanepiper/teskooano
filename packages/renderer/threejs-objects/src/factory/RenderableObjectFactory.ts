@@ -9,6 +9,20 @@ import { physicsToThreeJSPosition } from "../utils/coordinateUtils";
 import { PhysicsStateProvider } from "@teskooano/core-state";
 import { scaleSize } from "@teskooano/core-physics";
 import { SCALE } from "@teskooano/data-values";
+import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
+
+/**
+ * Cache entry for renderable object properties that don't change frequently
+ */
+interface RenderableCacheEntry {
+  radius: number;
+  mass: number;
+  primaryLightSourceId: string | undefined;
+  axialTilt: OSVector3 | number | undefined;
+  siderealPeriod: number | undefined;
+  objectType: CelestialType;
+  parentId?: string;
+}
 
 /**
  * A factory responsible for creating and updating `RenderableCelestialObject` instances.
@@ -24,6 +38,11 @@ export class RenderableObjectFactory {
   private spinQuaternion = new OSQuaternion();
   private finalRotation = new OSQuaternion();
   private zAxis = new OSVector3().setFromArray([0, 0, 1]);
+
+  // --- Caching system ---
+  private cache = new Map<string, RenderableCacheEntry>();
+  private lastLightSourceMap: Record<string, string | undefined> = {};
+  private lastObjectKeys: string[] = [];
 
   /**
    * Calculates the final orientation of a celestial object.
@@ -102,6 +121,30 @@ export class RenderableObjectFactory {
   }
 
   /**
+   * Gets or creates a cache entry for an object's static properties
+   */
+  private getCachedProperties(obj: CelestialObject): RenderableCacheEntry {
+    const cacheKey = `${obj.id}-${obj.type}-${obj.realRadius_m}-${obj.realMass_kg}-${obj.parentId || "none"}`;
+
+    let cached = this.cache.get(cacheKey);
+    if (!cached) {
+      const realRadius = obj.realRadius_m ?? 0;
+      cached = {
+        radius: scaleSize(realRadius, obj.type),
+        mass: (obj.realMass_kg ?? 0) * SCALE.MASS,
+        primaryLightSourceId: undefined, // Will be set later
+        axialTilt: obj.orbit.axialTilt,
+        siderealPeriod: obj.orbit.siderealRotationPeriod_s,
+        objectType: obj.type,
+        parentId: obj.parentId,
+      };
+      this.cache.set(cacheKey, cached);
+    }
+
+    return cached;
+  }
+
+  /**
    * Creates or updates a renderable representation of a standard celestial object.
    *
    * @param obj The raw celestial object from the core state.
@@ -114,7 +157,9 @@ export class RenderableObjectFactory {
     lightSourceId: string | undefined,
     simulationTime: number,
   ): RenderableCelestialObject | null {
-    const realRadius = obj.realRadius_m ?? 0;
+    // Get cached properties
+    const cached = this.getCachedProperties(obj);
+    cached.primaryLightSourceId = lightSourceId;
 
     // Get physics state from the provider
     const physicsState = PhysicsStateProvider.getPhysicsState(obj);
@@ -136,10 +181,10 @@ export class RenderableObjectFactory {
       isSelected: false,
       isFocused: false,
       uniforms: {},
-      radius: scaleSize(realRadius, obj.type),
-      mass: (obj.realMass_kg ?? 0) * SCALE.MASS,
-      primaryLightSourceId: lightSourceId,
-      axialTilt: obj.orbit.axialTilt ?? 0,
+      radius: cached.radius,
+      mass: cached.mass,
+      primaryLightSourceId: cached.primaryLightSourceId,
+      axialTilt: cached.axialTilt,
       physicsStateReal: physicsState, // Add the calculated physics state
     };
 
@@ -155,8 +200,8 @@ export class RenderableObjectFactory {
     }
     target.rotation.copy(
       this.calculateRotation(
-        obj.orbit.axialTilt,
-        obj.orbit.siderealRotationPeriod_s,
+        cached.axialTilt,
+        cached.siderealPeriod,
         simulationTime,
       ).toThreeJS(),
     );
@@ -184,6 +229,10 @@ export class RenderableObjectFactory {
     const parentPhysicsState = PhysicsStateProvider.getPhysicsState(parent);
     if (!parentPhysicsState?.position_m) return null;
 
+    // Get cached properties
+    const cached = this.getCachedProperties(obj);
+    cached.primaryLightSourceId = lightSourceId;
+
     const target = {
       ...obj, // Spread all properties from the original object
       position: new THREE.Vector3(),
@@ -197,7 +246,7 @@ export class RenderableObjectFactory {
       uniforms: {},
       radius: 0,
       mass: 0,
-      primaryLightSourceId: lightSourceId,
+      primaryLightSourceId: cached.primaryLightSourceId,
       axialTilt: parent.orbit.axialTilt ?? 0,
       physicsStateReal: parentPhysicsState, // Use parent's physics state
     };
@@ -227,15 +276,39 @@ export class RenderableObjectFactory {
    * Creates a complete map of renderable objects from the core celestial object data.
    *
    * @param objects The complete record of celestial objects from the core state.
-   * @param lightSourceMap A map linking object IDs to their primary light source IDs.
    * @param simulationTime The current simulation time.
    * @returns A record of `RenderableCelestialObject`s, keyed by their ID.
    */
   public createRenderableObjects(
     objects: Record<string, CelestialObject>,
-    lightSourceMap: Record<string, string | undefined>,
     simulationTime: number,
   ): Record<string, RenderableCelestialObject> {
+    const objectKeys = Object.keys(objects);
+
+    // Check if we need to recalculate light source maps
+    const needsLightRecalculation =
+      objectKeys.length !== this.lastObjectKeys.length ||
+      !objectKeys.every((key) => this.lastObjectKeys.includes(key)) ||
+      objectKeys.some((key) => {
+        const obj = objects[key];
+        const lastObj = this.lastObjectKeys.includes(key) ? objects[key] : null;
+        return (
+          !lastObj ||
+          obj.type !== lastObj.type ||
+          obj.parentId !== lastObj.parentId
+        );
+      });
+
+    // Only recalculate light source maps when object hierarchy changes
+    let lightSourceMap: Record<string, string | undefined>;
+    if (needsLightRecalculation) {
+      lightSourceMap = calculateLightSourceMaps(objects);
+      this.lastLightSourceMap = lightSourceMap;
+      this.lastObjectKeys = objectKeys;
+    } else {
+      lightSourceMap = this.lastLightSourceMap;
+    }
+
     const renderableMap: Record<string, RenderableCelestialObject> = {};
 
     for (const id in objects) {
@@ -278,5 +351,14 @@ export class RenderableObjectFactory {
       }
     }
     return renderableMap;
+  }
+
+  /**
+   * Clears the cache when objects are added/removed or properties change significantly
+   */
+  public clearCache(): void {
+    this.cache.clear();
+    this.lastLightSourceMap = {};
+    this.lastObjectKeys = [];
   }
 }

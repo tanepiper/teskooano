@@ -1,13 +1,12 @@
 import {
   StateAccessor,
+  StateSubscriptionMixin,
   renderableStore,
   type SimulationState,
-  StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import { CelestialObject } from "@teskooano/data-types";
-import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
-import { BehaviorSubject } from "rxjs";
 import { RenderableObjectFactory } from "@teskooano/renderer-threejs-objects";
+import { BehaviorSubject } from "rxjs";
 import type { RendererVisualSettings } from "./types";
 
 /**
@@ -31,6 +30,9 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
 
   /** The factory for creating renderable object instances. */
   private factory: RenderableObjectFactory;
+
+  /** Cache of last processed objects for change detection */
+  private lastProcessedObjects?: Record<string, CelestialObject>;
 
   /**
    * Initializes the adapter and subscribes to the core state.
@@ -66,22 +68,45 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
   ): void {
     if (Object.keys(objects).length === 0) {
       renderableStore.setAllRenderableObjects({});
+      this.factory.clearCache(); // Clear cache when no objects
       return;
     }
-
+    // console.log('processCelestialObjectsUpdateNow', objects)
     try {
-      // 1. Determine the lighting hierarchy for all objects.
-      const lightSourceMap = calculateLightSourceMaps(objects);
+      // Check if we need to clear cache (new objects added/removed)
+      const currentKeys = Object.keys(objects);
+      const lastKeys = Object.keys(this.lastProcessedObjects || {});
+
+      const needsCacheClear =
+        currentKeys.length !== lastKeys.length ||
+        !currentKeys.every((key) => lastKeys.includes(key)) ||
+        currentKeys.some((key) => {
+          const currentObj = objects[key];
+          const lastObj = this.lastProcessedObjects?.[key];
+          return (
+            !lastObj ||
+            currentObj.type !== lastObj.type ||
+            currentObj.parentId !== lastObj.parentId ||
+            currentObj.realRadius_m !== lastObj.realRadius_m ||
+            currentObj.realMass_kg !== lastObj.realMass_kg
+          );
+        });
+
+      if (needsCacheClear) {
+        this.factory.clearCache();
+      }
 
       // 2. Delegate creation of renderable objects to the factory.
       const renderableMap = this.factory.createRenderableObjects(
         objects,
-        lightSourceMap,
         this.currentSimulationTime,
       );
-
+      // console.log('renderableMap', renderableMap)
       // 3. Update the central store with the new set of objects.
       renderableStore.setAllRenderableObjects(renderableMap);
+
+      // Store current objects for next comparison
+      this.lastProcessedObjects = objects;
     } catch (error) {
       console.error(
         "[RendererStateAdapter] Error during object processing loop:",

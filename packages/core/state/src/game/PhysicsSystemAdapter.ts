@@ -86,10 +86,8 @@ class PhysicsSystemAdapter {
   }
 
   /**
-   * Updates the game state from the results of a physics simulation step.
-   * This includes updating positions, velocities, handling destroyed objects,
-   * and updating acceleration vectors.
-   * @param result - The SimulationStepResult from the physics engine.
+   * Updates the global state with the results from a physics simulation step.
+   * This includes updating object positions and handling simple destruction.
    */
   public updateStateFromResult(result: SimulationStepResult): void {
     const currentCelestialObjects = celestialStore.getObjects();
@@ -97,12 +95,24 @@ class PhysicsSystemAdapter {
       ...currentCelestialObjects,
     };
 
-    // Update the physics state cache with the new states
+    this.updatePhysicsStates(result, newCelestialObjectsMap);
+    this.processDestructionEvents(result, newCelestialObjectsMap);
+
+    celestialStore.setAllObjects(newCelestialObjectsMap);
+    physicsStore.updateAccelerationVectors(result.accelerations);
+  }
+
+  /**
+   * Updates the physics state cache with simulation results for all objects.
+   */
+  private updatePhysicsStates(
+    result: SimulationStepResult,
+    newCelestialObjectsMap: Record<string, CelestialObject>,
+  ): void {
     result.states.forEach((updatedState) => {
-      const id = String(updatedState.id);
+      const id = updatedState.id;
       const existingObject = newCelestialObjectsMap[id];
       if (existingObject) {
-        // Update the physics state cache with the simulation results
         PhysicsStateProvider.updateCacheWithSimulationResult(id, updatedState);
       } else {
         console.warn(
@@ -110,103 +120,65 @@ class PhysicsSystemAdapter {
         );
       }
     });
+  }
 
-    // Handle destroyed objects, including cascading destruction for ring systems
-    const allIdsToDestroy = new Set<string>(
-      Array.from(result.destroyedIds).map(String),
-    );
-
-    result.destroyedIds.forEach((id) => {
-      const destroyedIdStr = String(id);
-      const parentObject = currentCelestialObjects[destroyedIdStr]; // Check against the original map before it's potentially altered
-
-      if (parentObject) {
-        // Check if the destroyed object is a type that can have rings
-        const canHaveRings =
-          parentObject.type === CelestialType.PLANET ||
-          parentObject.type === CelestialType.DWARF_PLANET ||
-          parentObject.type === CelestialType.GAS_GIANT;
-
-        if (canHaveRings) {
-          const ringSystemId = `ring-system-${parentObject.id}`;
-          const ringSystemObject = currentCelestialObjects[ringSystemId];
-          if (
-            ringSystemObject &&
-            ringSystemObject.type === CelestialType.RING_SYSTEM
-          ) {
-            allIdsToDestroy.add(ringSystemId);
-            console.debug(
-              `[PhysicsSystemAdapter] Cascading destruction to ring system: ${ringSystemId} for parent ${parentObject.id}`,
-            );
-          }
-        }
-      }
-    });
-
-    allIdsToDestroy.forEach((idToDestroy) => {
-      const existingObject = newCelestialObjectsMap[idToDestroy]; // Use the map that's being updated
+  /**
+   * Processes destruction events and updates object statuses.
+   * Ring systems automatically destroy themselves if their parent is destroyed.
+   */
+  private processDestructionEvents(
+    result: SimulationStepResult,
+    newCelestialObjectsMap: Record<string, CelestialObject>,
+  ): void {
+    // Process direct destruction events first
+    result.destroyedIds.forEach((idToDestroy) => {
+      const idToDestroyStr = String(idToDestroy);
+      const existingObject = newCelestialObjectsMap[idToDestroyStr];
       if (
         existingObject &&
         existingObject.status !== CelestialStatus.DESTROYED &&
         existingObject.status !== CelestialStatus.ANNIHILATED
       ) {
-        let finalStatus = CelestialStatus.DESTROYED;
-        // Try to find if there's a specific destruction event for this ID (original or cascaded)
-        const destructionEvent = result.destructionEvents.find(
-          (event) => String(event.destroyedId) === idToDestroy,
-        );
-
-        if (destructionEvent) {
-          const survivorIdStr = String(destructionEvent.survivorId);
-          const survivorObject = currentCelestialObjects[survivorIdStr]; // Check original map for survivor type
-          if (survivorObject && survivorObject.type === CelestialType.STAR) {
-            finalStatus = CelestialStatus.ANNIHILATED;
-          } else if (destructionEvent.survivorId === "MUTUAL_DESTRUCTION") {
-            finalStatus = CelestialStatus.ANNIHILATED;
-          }
-        } else if (
-          existingObject.type === CelestialType.RING_SYSTEM &&
-          result.destroyedIds.has(existingObject.parentId as string)
-        ) {
-          // If it's a ring system and its parent was in the original destroyedIds, it's a cascaded destruction.
-          // No specific event for the ring system itself, but parent had one (or was generically destroyed)
-          // Default to DESTROYED, unless parent was annihilated by a star.
-          const parentDestroyEvent = result.destructionEvents.find(
-            (event) => String(event.destroyedId) === existingObject.parentId,
-          );
-          if (parentDestroyEvent) {
-            const parentSurvivor =
-              currentCelestialObjects[String(parentDestroyEvent.survivorId)];
-            if (parentSurvivor && parentSurvivor.type === CelestialType.STAR) {
-              finalStatus = CelestialStatus.ANNIHILATED;
-            } else if (parentDestroyEvent.survivorId === "MUTUAL_DESTRUCTION") {
-              finalStatus = CelestialStatus.ANNIHILATED;
-            }
-          }
-          // If no parent event, or parent just "destroyed", ring system is also "destroyed".
-        } else {
-          console.warn(
-            `[PhysicsSystemAdapter] No specific destruction event found for destroyed ID: ${idToDestroy}. Defaulting to DESTROYED status.`,
-          );
-        }
-
-        newCelestialObjectsMap[idToDestroy] = {
+        // Simple destruction - all destroyed objects get DESTROYED status
+        newCelestialObjectsMap[idToDestroyStr] = {
           ...existingObject,
-          status: finalStatus,
+          status: CelestialStatus.DESTROYED,
         };
-      } else if (
-        existingObject &&
-        (existingObject.status === CelestialStatus.DESTROYED ||
-          existingObject.status === CelestialStatus.ANNIHILATED)
-      ) {
-        // Already marked, possibly by an earlier step in a multi-destruction event. Log if needed.
-        // console.debug(`[PhysicsSystemAdapter] Object ${idToDestroy} already marked as ${existingObject.status}.`);
       }
     });
 
-    celestialStore.setAllObjects(newCelestialObjectsMap);
-    physicsStore.updateAccelerationVectors(result.accelerations);
+    // Now handle reactive ring system destruction
+    Object.values(newCelestialObjectsMap).forEach((object) => {
+      if (
+        object.type === CelestialType.RING_SYSTEM &&
+        object.parentId &&
+        object.status !== CelestialStatus.DESTROYED &&
+        object.status !== CelestialStatus.ANNIHILATED
+      ) {
+        const parent = newCelestialObjectsMap[object.parentId];
+        if (
+          parent &&
+          (parent.status === CelestialStatus.DESTROYED ||
+            parent.status === CelestialStatus.ANNIHILATED)
+        ) {
+          // Ring system automatically destroys itself when parent is destroyed
+          newCelestialObjectsMap[object.id] = {
+            ...object,
+            status: parent.status, // Inherit parent's destruction status
+          };
+          console.debug(
+            `[PhysicsSystemAdapter] Ring system ${object.id} auto-destroyed due to parent ${object.parentId} destruction`,
+          );
+        }
+      }
+    });
   }
 }
 
 export const physicsSystemAdapter = PhysicsSystemAdapter.getInstance();
+
+// @ts-ignore
+if (window.teskooano) {
+  // @ts-ignore
+  window.teskooano.PhysicsSystemAdapter = PhysicsSystemAdapter.getInstance();
+}

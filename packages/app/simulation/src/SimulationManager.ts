@@ -1,7 +1,6 @@
 import {
   updateSimulation,
   vectorPool,
-  type DestructionEvent,
   type SimulationParameters,
   type SimulationStepResult,
 } from "@teskooano/core-physics";
@@ -39,7 +38,6 @@ export class SimulationManager {
   // Event Subjects
   private readonly _resetTime$ = new Subject<void>();
   private readonly _orbitUpdate$ = new Subject<OrbitUpdatePayload>();
-  private readonly _destructionOccurred$ = new Subject<DestructionEvent>();
 
   /**
    * Private constructor to enforce the singleton pattern.
@@ -73,13 +71,6 @@ export class SimulationManager {
    */
   public get onOrbitUpdate(): Observable<OrbitUpdatePayload> {
     return this._orbitUpdate$.asObservable();
-  }
-
-  /**
-   * Observable that emits details of a destruction event (e.g., collision) when it occurs.
-   */
-  public get onDestructionOccurred(): Observable<DestructionEvent> {
-    return this._destructionOccurred$.asObservable();
   }
 
   /**
@@ -214,12 +205,6 @@ export class SimulationManager {
             simParams,
           );
 
-          if (result.destructionEvents && result.destructionEvents.length > 0) {
-            result.destructionEvents.forEach((event: DestructionEvent) => {
-              this._destructionOccurred$.next(event);
-            });
-          }
-
           physicsSystemAdapter.updateStateFromResult(result);
 
           // After physics, check for hierarchy changes (orphans, escapes)
@@ -299,7 +284,6 @@ export class SimulationManager {
     this.stopLoop();
     this._resetTime$.complete();
     this._orbitUpdate$.complete();
-    this._destructionOccurred$.complete();
     this.subscriptionManager.dispose();
   }
 }

@@ -1,10 +1,7 @@
 import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
-import {
-  handleFocusRequest,
-  handleFollowRequest,
-} from "./focus-interactions.js";
+import { FocusInteractionManager } from "./focus-interactions.js";
 
 export interface CameraStateHandlers {
   onFocusChanged: (focusedId: string | null) => void;
@@ -22,6 +19,7 @@ export class CameraManager {
   private _currentFollowedId: string | null = null;
   private _cameraStateSubscription: any = null;
   private _handlers: CameraStateHandlers;
+  private _focusInteractionManager: FocusInteractionManager;
 
   constructor(
     view: CelestialHierarchy,
@@ -31,10 +29,12 @@ export class CameraManager {
     this._view = view;
     this._treeListContainer = treeListContainer;
     this._handlers = handlers;
+    this._focusInteractionManager = new FocusInteractionManager(null);
   }
 
   public setParentPanel(panel: CompositeEnginePanel): void {
     this._parentPanel = panel;
+    this._focusInteractionManager = new FocusInteractionManager(panel);
     this._setupCameraStateSubscription();
   }
 
@@ -47,11 +47,7 @@ export class CameraManager {
   }
 
   public requestFocus(objectId: string): boolean {
-    const success = handleFocusRequest(
-      this._parentPanel,
-      objectId,
-      this._view.dispatchEvent.bind(this._view),
-    );
+    const success = this._focusInteractionManager.handleFocusRequest(objectId);
     if (!success) {
       console.warn(`[CameraManager] handleFocusRequest failed for ${objectId}`);
     }
@@ -59,7 +55,7 @@ export class CameraManager {
   }
 
   public requestFollow(objectId: string): boolean {
-    const success = handleFollowRequest(this._parentPanel, objectId);
+    const success = this._focusInteractionManager.handleFollowRequest(objectId);
 
     if (success) {
       this._parentPanel?.orbitManager?.highlightVisualization(objectId);

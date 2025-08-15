@@ -4,10 +4,7 @@ import {
   type OrbitalParameters,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import {
-  handleCollisions,
-  type DestructionEvent,
-} from "../collision/collision";
+import { handleCollisions } from "../collision/collision";
 import {
   velocityVerletIntegrate,
   standardEuler,
@@ -203,7 +200,6 @@ export const updateSimulation = (
         states: bodies,
         accelerations: new Map(),
         destroyedIds: new Set(),
-        destructionEvents: [],
       };
     }
 
@@ -258,7 +254,6 @@ export const updateSimulation = (
       states: Object.values(updatedStates),
       accelerations: new Map(),
       destroyedIds: new Set(),
-      destructionEvents: [],
     };
   }
 
@@ -451,7 +446,7 @@ export const updateSimulation = (
     return integratedState;
   });
 
-  const [finalStates, destroyedIds, destructionEvents] = handleCollisions(
+  const [finalStates, destroyedIds] = handleCollisions(
     integratedStates,
     radii,
     isStar,
@@ -463,6 +458,5 @@ export const updateSimulation = (
     states: finalStates,
     accelerations,
     destroyedIds,
-    destructionEvents,
   };
 };
