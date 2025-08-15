@@ -122,29 +122,49 @@ export class PositionHistoryManager {
    * @param time Current simulation time
    */
   update(object: RenderableCelestialObject, time: number): void {
+    // Check if simulation is paused - don't add new samples when paused
+    if (this.isSimulationPaused()) {
+      return;
+    }
+
     // Get current time scale from state to scale sample collection
     const timeScale = this.getTimeScaleFromState();
 
-    // Calculate frames between samples to achieve minimum 100 samples/second
-    // At 60fps, 100 samples/sec = 1 sample every 0.6 frames
-    const targetSamplesPerSecond = 100;
+    // Dynamic sampling rate based on time scale
+    // At lower speeds (x1): Less frequent sampling for smooth curves (every 5 seconds)
+    // At higher speeds (x10+): More frequent sampling to capture large movements while maintaining smooth curves
+    const baseSamplesPerSecond = 0.2; // Base rate: 1 sample every 5 seconds at x1
     const assumedFPS = 60;
+
+    // Calculate adaptive sampling rate
+    // Lower time scales = fewer samples (smoother curves)
+    // Higher time scales = more samples (capture large movements + smooth curves)
+    let adaptiveSamplesPerSecond = baseSamplesPerSecond;
+
+    if (timeScale <= 1) {
+      // At x1 or slower: Fewer samples for smooth curves
+      adaptiveSamplesPerSecond = Math.max(
+        0.1,
+        baseSamplesPerSecond / timeScale,
+      );
+    } else if (timeScale <= 10) {
+      // At x1-x10: Gradual increase
+      adaptiveSamplesPerSecond = baseSamplesPerSecond * Math.sqrt(timeScale);
+    } else {
+      // At x10+: More samples to capture large movements AND maintain smooth curves
+      // We need at least 10-20 samples per orbit to avoid polygons
+      adaptiveSamplesPerSecond = Math.max(
+        5.0,
+        baseSamplesPerSecond * timeScale,
+      );
+    }
+
     const framesPerSample = Math.max(
       1,
-      Math.floor(assumedFPS / targetSamplesPerSecond),
+      Math.floor(assumedFPS / adaptiveSamplesPerSecond),
     );
 
-    // Scale down further for higher time scales to capture more detail during fast motion
-    const timeScaleMultiplier = Math.max(
-      0.1,
-      Math.min(1.0, 1.0 / Math.sqrt(timeScale)),
-    );
-    const adjustedFramesPerSample = Math.max(
-      1,
-      Math.floor(framesPerSample * timeScaleMultiplier),
-    );
-
-    if (this.lastUpdateIndex < adjustedFramesPerSample) {
+    if (this.lastUpdateIndex < framesPerSample) {
       this.lastUpdateIndex++;
       return;
     }
@@ -363,6 +383,20 @@ export class PositionHistoryManager {
    */
   dispose(): void {
     this.clearHistory();
+  }
+
+  /**
+   * Checks if the simulation is currently paused
+   * @returns Whether the simulation is paused
+   */
+  private isSimulationPaused(): boolean {
+    try {
+      const simulationState = StateAccessor.getCurrentSimulationState();
+      return simulationState.paused || false;
+    } catch (error) {
+      console.warn("Could not get simulation pause state, assuming not paused");
+      return false;
+    }
   }
 
   /**

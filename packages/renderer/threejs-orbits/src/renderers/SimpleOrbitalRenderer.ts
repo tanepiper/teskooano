@@ -1,17 +1,13 @@
-import * as THREE from "three";
-import {
-  type RenderableCelestialObject,
-  CelestialType,
-} from "@teskooano/data-types";
-import { type ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { LineHelper } from "@teskooano/renderer-threejs-helpers";
-import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
-import { SharedMaterials } from "../core/SharedMaterials";
-import { PositionHistoryManager } from "@teskooano/renderer-threejs-celestial";
 import {
   simulationState$,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
+import { PositionHistoryManager } from "@teskooano/renderer-threejs-celestial";
+import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
+import { LineHelper } from "@teskooano/renderer-threejs-helpers";
+import { type ObjectManager } from "@teskooano/renderer-threejs-objects";
+import * as THREE from "three";
+import { SharedMaterials } from "../core/SharedMaterials";
 
 /**
  * Simple orbital renderer that draws lines between position history points.
@@ -50,6 +46,12 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
 
   /** Cached effective max trail points to avoid recalculation */
   private cachedEffectiveMaxTrailPoints: number = 2000; // 1000 * 2
+
+  /** Number of points to skip when sampling for interpolation */
+  private readonly samplingInterval: number = 2;
+
+  /** Current simulation state to check if paused */
+  private currentSimulationState: any = null;
 
   /** Base material template for creating individual line materials */
   private baseTrailMaterial: THREE.Material | null = null;
@@ -94,6 +96,12 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       return;
     }
 
+    // Check if simulation is paused - don't update orbital lines when paused
+    const simulationState = this.getCurrentSimulationState();
+    if (simulationState?.isPaused) {
+      return;
+    }
+
     // Get position history from the manager
     const positionHistory = positionHistoryManager.getPositionHistory();
 
@@ -109,9 +117,20 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     );
 
     // Convert OSVector3 positions to THREE.Vector3 for rendering
-    const points = this.convertPositionsToVectors(positionHistory, startIndex);
+    const rawPoints = this.convertPositionsToVectors(
+      positionHistory,
+      startIndex,
+    );
 
-    this.drawOrbitalLine(objectId, points);
+    // Only sample and interpolate if simulation is not paused
+    if (!this.currentSimulationState?.paused) {
+      // Sample and interpolate points for smooth curves
+      const interpolatedPoints = this.sampleAndInterpolatePoints(rawPoints);
+      this.drawOrbitalLine(objectId, interpolatedPoints);
+    } else {
+      // When paused, just draw the raw points without interpolation
+      this.drawOrbitalLine(objectId, rawPoints);
+    }
   }
 
   /**
@@ -268,6 +287,71 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
+   * Samples points at regular intervals and interpolates between them for smooth curves.
+   * This reduces the number of line segments while maintaining visual quality.
+   *
+   * @param rawPoints - Array of all position points
+   * @returns Array of interpolated points for smooth rendering
+   */
+  private sampleAndInterpolatePoints(
+    rawPoints: THREE.Vector3[],
+  ): THREE.Vector3[] {
+    if (rawPoints.length < 2) {
+      return rawPoints;
+    }
+
+    // If we have few points, no need for sampling
+    if (rawPoints.length <= this.samplingInterval) {
+      return rawPoints;
+    }
+
+    const interpolatedPoints: THREE.Vector3[] = [];
+
+    // Sample points at regular intervals
+    for (let i = 0; i < rawPoints.length; i += this.samplingInterval) {
+      interpolatedPoints.push(rawPoints[i].clone());
+
+      // If this isn't the last sampled point, interpolate to the next one
+      if (i + this.samplingInterval < rawPoints.length) {
+        const nextIndex = Math.min(
+          i + this.samplingInterval,
+          rawPoints.length - 1,
+        );
+        const currentPoint = rawPoints[i];
+        const nextPoint = rawPoints[nextIndex];
+
+        // Add interpolated points between current and next sampled point
+        for (
+          let j = 1;
+          j < this.samplingInterval && i + j < rawPoints.length;
+          j++
+        ) {
+          const t = j / this.samplingInterval;
+          const interpolatedPoint = new THREE.Vector3().lerpVectors(
+            currentPoint,
+            nextPoint,
+            t,
+          );
+          interpolatedPoints.push(interpolatedPoint);
+        }
+      }
+    }
+
+    // Always include the last point if it wasn't already included
+    if (rawPoints.length > 0 && interpolatedPoints.length > 0) {
+      const lastRawPoint = rawPoints[rawPoints.length - 1];
+      const lastInterpolatedPoint =
+        interpolatedPoints[interpolatedPoints.length - 1];
+
+      if (lastRawPoint.distanceTo(lastInterpolatedPoint) > 0.001) {
+        interpolatedPoints.push(lastRawPoint.clone());
+      }
+    }
+
+    return interpolatedPoints;
+  }
+
+  /**
    * Removes the orbital line for a specific object.
    *
    * @param objectId - ID of the object to remove orbital line for
@@ -351,9 +435,19 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
+   * Gets the current simulation state to check if simulation is paused.
+   */
+  private getCurrentSimulationState(): any {
+    return this.currentSimulationState;
+  }
+
+  /**
    * Handles simulation state changes to update trail length multiplier.
    */
   private handleStateChange = (state: any): void => {
+    // Store current simulation state for pause checking
+    this.currentSimulationState = state;
+
     const newMultiplier = state.visualSettings?.trailLengthMultiplier;
     if (
       newMultiplier !== undefined &&
@@ -362,32 +456,8 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       this.trailLengthMultiplier = newMultiplier;
       this.cachedEffectiveMaxTrailPoints =
         this.baseMaxTrailPoints * this.trailLengthMultiplier;
-      console.debug(
-        `[SimpleOrbitalRenderer] Trail multiplier updated to: ${newMultiplier}x (${this.cachedEffectiveMaxTrailPoints} points)`,
-      );
     }
   };
-
-  /**
-   * Sets the maximum number of points to render in orbital trails.
-   *
-   * @param maxPoints - Maximum number of points (default: 2000 with 2x multiplier)
-   * @deprecated Use trail length multiplier in settings instead
-   */
-  setMaxTrailPoints(maxPoints: number): void {
-    if (maxPoints < 2) {
-      console.warn(
-        "[SimpleOrbitalRenderer] Max trail points must be at least 2",
-      );
-      return;
-    }
-
-    // Calculate what multiplier this would be
-    const multiplier = maxPoints / this.baseMaxTrailPoints;
-    console.warn(
-      `[SimpleOrbitalRenderer] setMaxTrailPoints is deprecated. Use trail length multiplier (${multiplier.toFixed(1)}x) in settings instead.`,
-    );
-  }
 
   /**
    * Gets the fixed buffer size for orbital lines.
