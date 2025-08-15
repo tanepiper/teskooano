@@ -3,14 +3,16 @@ import {
   simulationState$,
   simulationStateService,
   type SimulationConfiguration,
-  type SimulationMode,
-  type AlgorithmType,
-  type IntegratorType,
   StateSubscriptionMixin,
   getConfigurationDisplayName,
   getConfigurationShortName,
 } from "@teskooano/core-state";
-import type { DeviceTier } from "@teskooano/data-types";
+import type {
+  AlgorithmType,
+  DeviceTier,
+  IntegratorType,
+  SimulationMode,
+} from "@teskooano/data-types";
 
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";

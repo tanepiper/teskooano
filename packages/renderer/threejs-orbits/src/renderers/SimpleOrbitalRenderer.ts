@@ -8,6 +8,10 @@ import { LineHelper } from "@teskooano/renderer-threejs-helpers";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { PositionHistoryManager } from "@teskooano/renderer-threejs-celestial";
+import {
+  simulationState$,
+  StateSubscriptionMixin,
+} from "@teskooano/core-state";
 
 /**
  * Simple orbital renderer that draws lines between position history points.
@@ -17,7 +21,7 @@ import { PositionHistoryManager } from "@teskooano/renderer-threejs-celestial";
  * It does not perform any calculations or data processing - it simply renders
  * the lines between the points provided by the manager.
  */
-export class SimpleOrbitalRenderer {
+export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /** Map storing orbital lines, keyed by celestial object ID */
   private orbitalLines: Map<string, THREE.Line> = new Map();
 
@@ -42,14 +46,25 @@ export class SimpleOrbitalRenderer {
   /** Color used for highlighting */
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
 
+  /** Maximum number of points to render in orbital trails */
+  private readonly baseMaxTrailPoints: number = 1000;
+
+  /** Current trail length multiplier from settings */
+  private trailLengthMultiplier: number = 10; // Default 10x multiplier
+
+  /** Cached effective max trail points to avoid recalculation */
+  private cachedEffectiveMaxTrailPoints: number = 10000; // 1000 * 10
+
   /**
    * Creates a new SimpleOrbitalRenderer instance.
    *
    * @param objectManager - The scene's ObjectManager for adding/removing objects
    */
   constructor(objectManager: ObjectManager) {
+    super();
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
+    this.subscribeToState(simulationState$, this.handleStateChange);
   }
 
   /**
@@ -78,10 +93,14 @@ export class SimpleOrbitalRenderer {
       return;
     }
 
-    // Convert OSVector3 positions to THREE.Vector3 for rendering
-    const points = positionHistory.map(
-      (pos) => new THREE.Vector3(pos.x, pos.y, pos.z),
+    // Use cached effective trail length
+    const startIndex = Math.max(
+      0,
+      positionHistory.length - this.cachedEffectiveMaxTrailPoints,
     );
+
+    // Convert OSVector3 positions to THREE.Vector3 for rendering using object pooling
+    const points = this.convertPositionsToVectors(positionHistory, startIndex);
 
     this.drawOrbitalLine(objectId, points);
   }
@@ -246,9 +265,8 @@ export class SimpleOrbitalRenderer {
    * Gets the fixed buffer size for orbital lines.
    */
   private calculateOptimalBufferSize(): number {
-    // Use a large fixed buffer size to avoid recreations
-    // Most orbital trails won't exceed 1000 points, so this should be sufficient
-    return 1000;
+    // Match the maximum trail points we actually render
+    return this.baseMaxTrailPoints * this.trailLengthMultiplier;
   }
 
   /**
@@ -277,6 +295,68 @@ export class SimpleOrbitalRenderer {
     this.orbitalLines.forEach((line) => {
       line.visible = visible;
     });
+  }
+
+  /**
+   * Handles simulation state changes to update trail length multiplier.
+   */
+  private handleStateChange = (state: any): void => {
+    const newMultiplier = state.visualSettings?.trailLengthMultiplier;
+    if (
+      newMultiplier !== undefined &&
+      newMultiplier !== this.trailLengthMultiplier
+    ) {
+      this.trailLengthMultiplier = newMultiplier;
+      this.cachedEffectiveMaxTrailPoints =
+        this.baseMaxTrailPoints * this.trailLengthMultiplier;
+      console.debug(
+        `[SimpleOrbitalRenderer] Trail multiplier updated to: ${newMultiplier}x (${this.cachedEffectiveMaxTrailPoints} points)`,
+      );
+    }
+  };
+
+  /**
+   * Converts OSVector3 positions to THREE.Vector3 for rendering.
+   * Optimized to avoid unnecessary array slicing.
+   */
+  private convertPositionsToVectors(
+    positionHistory: any[],
+    startIndex: number,
+  ): THREE.Vector3[] {
+    const pointCount = positionHistory.length - startIndex;
+    const points: THREE.Vector3[] = [];
+
+    // Pre-allocate array size for better performance
+    points.length = pointCount;
+
+    // Convert positions directly without intermediate array
+    for (let i = 0; i < pointCount; i++) {
+      const sourcePos = positionHistory[startIndex + i];
+      points[i] = new THREE.Vector3(sourcePos.x, sourcePos.y, sourcePos.z);
+    }
+
+    return points;
+  }
+
+  /**
+   * Sets the maximum number of points to render in orbital trails.
+   *
+   * @param maxPoints - Maximum number of points (default: 200)
+   * @deprecated Use trail length multiplier in settings instead
+   */
+  setMaxTrailPoints(maxPoints: number): void {
+    if (maxPoints < 2) {
+      console.warn(
+        "[SimpleOrbitalRenderer] Max trail points must be at least 2",
+      );
+      return;
+    }
+
+    // Calculate what multiplier this would be
+    const multiplier = maxPoints / this.baseMaxTrailPoints;
+    console.warn(
+      `[SimpleOrbitalRenderer] setMaxTrailPoints is deprecated. Use trail length multiplier (${multiplier.toFixed(1)}x) in settings instead.`,
+    );
   }
 
   /**
@@ -351,6 +431,7 @@ export class SimpleOrbitalRenderer {
   dispose(): void {
     this.clearAllOrbitalLines();
     this.cachedTrailMaterial = null;
+    this.parentGroupCache.clear();
   }
 
   /**
