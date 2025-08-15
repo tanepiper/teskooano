@@ -28,9 +28,6 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /** Cache for parent groups to avoid repeated lookups */
   private parentGroupCache: Map<string, THREE.Object3D> = new Map();
 
-  /** Cached trail material to avoid repeated cloning */
-  private cachedTrailMaterial: THREE.Material | null = null;
-
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineHelper;
 
@@ -50,10 +47,10 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   private readonly baseMaxTrailPoints: number = 1000;
 
   /** Current trail length multiplier from settings */
-  private trailLengthMultiplier: number = 10; // Default 10x multiplier
+  private trailLengthMultiplier: number = 2; // Default 2x multiplier
 
   /** Cached effective max trail points to avoid recalculation */
-  private cachedEffectiveMaxTrailPoints: number = 10000; // 1000 * 10
+  private cachedEffectiveMaxTrailPoints: number = 2000; // 1000 * 2
 
   /**
    * Creates a new SimpleOrbitalRenderer instance.
@@ -72,15 +69,13 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
    *
    * @param objectId - ID of the object to update
    * @param positionHistoryManager - The PositionHistoryManager for the object
-   * @param cameraDistance - Distance from camera to object for LOD calculations
    */
   updateOrbitalLine(
     objectId: string,
     positionHistoryManager: PositionHistoryManager,
-    cameraDistance: number,
   ): void {
-    // Check if orbital lines should be visible based on LOD
-    if (!this.shouldShowOrbitalLines(cameraDistance, positionHistoryManager)) {
+    // Only update if orbital lines are enabled
+    if (!this.visualizationVisible) {
       this.removeOrbitalLine(objectId);
       return;
     }
@@ -99,26 +94,10 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       positionHistory.length - this.cachedEffectiveMaxTrailPoints,
     );
 
-    // Convert OSVector3 positions to THREE.Vector3 for rendering using object pooling
+    // Convert OSVector3 positions to THREE.Vector3 for rendering
     const points = this.convertPositionsToVectors(positionHistory, startIndex);
 
     this.drawOrbitalLine(objectId, points);
-  }
-
-  /**
-   * Determines if orbital lines should be visible based on LOD and manager configuration.
-   *
-   * @param cameraDistance - Distance from camera to object
-   * @param positionHistoryManager - The PositionHistoryManager for the object
-   * @returns Whether orbital lines should be visible
-   */
-  private shouldShowOrbitalLines(
-    cameraDistance: number,
-    positionHistoryManager: PositionHistoryManager,
-  ): boolean {
-    // For now, always show orbital lines when visualization is enabled
-    // TODO: Implement proper LOD distance checking
-    return this.visualizationVisible;
   }
 
   /**
@@ -150,7 +129,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
 
     this.updateLineGeometry(line, points, pointCount);
     this.setupLineHighlighting(line);
-    this.applyVisibilityAndHighlighting(line, objectId);
+    this.applyHighlighting(line, objectId);
   }
 
   /**
@@ -178,7 +157,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     objectId: string,
     parentGroup: THREE.Object3D,
   ): THREE.Line {
-    const material = this.getOrCreateTrailMaterial();
+    const material = this.createTrailMaterial();
     const bufferSize = this.calculateOptimalBufferSize();
 
     const line = this.lineBuilder.createLine(
@@ -187,7 +166,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       `orbital-line-${objectId}`,
     );
 
-    line.frustumCulled = true;
+    line.frustumCulled = false; // Disable frustum culling to prevent disappearing
     line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");
     parentGroup.add(line);
     this.orbitalLines.set(objectId, line);
@@ -238,27 +217,19 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
-   * Applies visibility and highlighting to a line.
+   * Applies highlighting to a line.
    */
-  private applyVisibilityAndHighlighting(
-    line: THREE.Line,
-    objectId: string,
-  ): void {
-    line.visible = this.visualizationVisible;
-
+  private applyHighlighting(line: THREE.Line, objectId: string): void {
     if (this.highlightedObjectId === objectId) {
       this.applyHighlight(objectId, line);
     }
   }
 
   /**
-   * Gets or creates the cached trail material.
+   * Creates a new trail material for each line to avoid color conflicts.
    */
-  private getOrCreateTrailMaterial(): THREE.Material {
-    if (!this.cachedTrailMaterial) {
-      this.cachedTrailMaterial = SharedMaterials.clone("TRAIL");
-    }
-    return this.cachedTrailMaterial;
+  private createTrailMaterial(): THREE.Material {
+    return SharedMaterials.clone("TRAIL");
   }
 
   /**
@@ -292,9 +263,18 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
    */
   setVisibility(visible: boolean): void {
     this.visualizationVisible = visible;
-    this.orbitalLines.forEach((line) => {
-      line.visible = visible;
-    });
+
+    if (visible) {
+      // When enabling, ensure all existing lines are visible
+      this.orbitalLines.forEach((line) => {
+        line.visible = true;
+      });
+    } else {
+      // When disabling, hide all lines
+      this.orbitalLines.forEach((line) => {
+        line.visible = false;
+      });
+    }
   }
 
   /**
@@ -341,7 +321,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /**
    * Sets the maximum number of points to render in orbital trails.
    *
-   * @param maxPoints - Maximum number of points (default: 200)
+   * @param maxPoints - Maximum number of points (default: 2000 with 2x multiplier)
    * @deprecated Use trail length multiplier in settings instead
    */
   setMaxTrailPoints(maxPoints: number): void {
@@ -430,7 +410,6 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
    */
   dispose(): void {
     this.clearAllOrbitalLines();
-    this.cachedTrailMaterial = null;
     this.parentGroupCache.clear();
   }
 

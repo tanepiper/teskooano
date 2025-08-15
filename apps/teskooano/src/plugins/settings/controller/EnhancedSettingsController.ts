@@ -32,6 +32,7 @@ const PERFORMANCE_PROFILE_OPTIONS: {
  */
 export interface IEnhancedSettingsPanelElements {
   formElement: HTMLFormElement;
+  /** Slider for trail length multiplier (e.g., 2x = twice as long trails) */
   trailSliderElement: TeskooanoSlider;
 
   // Mode selection
@@ -197,7 +198,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   }
 
   /**
-   * Updates the trail length slider value.
+   * Updates the trail length multiplier slider value.
    * @private
    */
   private updateTrailSlider(value: number): void {
@@ -311,23 +312,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   }
 
   /**
-   * Populates a select element with options.
-   * @private
-   */
-  private populateSelect(
-    selectElement: HTMLSelectElement,
-    options: { value: string; label: string }[],
-  ): void {
-    selectElement.innerHTML = "";
-    options.forEach((option) => {
-      const optionElement = document.createElement("option");
-      optionElement.value = option.value;
-      optionElement.textContent = option.label;
-      selectElement.appendChild(optionElement);
-    });
-  }
-
-  /**
    * Shows a validation message to the user.
    * @private
    */
@@ -368,7 +352,8 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private handleFormSubmit = (e: Event) => e.preventDefault();
 
   /**
-   * Handles trail length slider changes.
+   * Handles trail length multiplier slider changes.
+   * The slider value represents a multiplier (e.g., 2x = twice as long trails).
    * @private
    */
   private handleTrailChange = (
@@ -376,7 +361,9 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   ): void => {
     const value = event.detail.value;
     if (typeof value === "number" && !isNaN(value)) {
-      simulationStateService.setTrailLengthMultiplier(value);
+      // Ensure the value is non-negative (validation is also done in the service)
+      const multiplier = Math.max(0, value);
+      simulationStateService.setTrailLengthMultiplier(multiplier);
     }
   };
 
