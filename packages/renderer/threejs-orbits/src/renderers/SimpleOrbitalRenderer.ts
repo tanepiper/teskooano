@@ -21,6 +21,12 @@ export class SimpleOrbitalRenderer {
   /** Map storing orbital lines, keyed by celestial object ID */
   private orbitalLines: Map<string, THREE.Line> = new Map();
 
+  /** Cache for parent groups to avoid repeated lookups */
+  private parentGroupCache: Map<string, THREE.Object3D> = new Map();
+
+  /** Cached trail material to avoid repeated cloning */
+  private cachedTrailMaterial: THREE.Material | null = null;
+
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineHelper;
 
@@ -108,63 +114,101 @@ export class SimpleOrbitalRenderer {
       return;
     }
 
-    // Get the celestial object's main mesh to find its parent group
-    const celestialMesh = this.objectManager.getObject(objectId);
-    if (!celestialMesh || !celestialMesh.parent) {
-      // If the object or its group doesn't exist, we can't attach the line.
+    const parentGroup = this.getOrCacheParentGroup(objectId);
+    if (!parentGroup) {
       this.removeOrbitalLine(objectId);
       return;
     }
-    const parentGroup = celestialMesh.parent;
 
     let line = this.orbitalLines.get(objectId);
     const pointCount = points.length;
 
     if (!line) {
-      const material = SharedMaterials.clone("TRAIL");
-      // Create line with a larger buffer to accommodate growing position history
-      const bufferSize = Math.max(pointCount * 2, 100); // At least 100 points or double current
-      line = this.lineBuilder.createLine(
-        bufferSize,
-        material,
-        `orbital-line-${objectId}`,
-      );
-      line.frustumCulled = true;
-
-      // Apply correct render order for trails
-      line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");
-
-      // Add orbital line to the celestial's own group
-      parentGroup.add(line);
-      this.orbitalLines.set(objectId, line);
+      line = this.createNewOrbitalLine(objectId, parentGroup);
     } else {
-      // Ensure the line is parented to the correct group, in case it has changed.
-      if (line.parent !== parentGroup) {
-        line.removeFromParent();
-        parentGroup.add(line);
-      }
-      // Check if we need to resize the line buffer due to circular buffer wrapping
-      const currentBufferSize = line.geometry.attributes.position.count;
-      if (pointCount > currentBufferSize) {
-        // Need to recreate the line with a larger buffer
-        this.removeOrbitalLine(objectId);
-        const material = SharedMaterials.clone("TRAIL");
-        const bufferSize = Math.max(pointCount * 2, 100);
-        line = this.lineBuilder.createLine(
-          bufferSize,
-          material,
-          `orbital-line-${objectId}`,
-        );
-        line.frustumCulled = true;
-        parentGroup.add(line);
-        this.orbitalLines.set(objectId, line);
-      }
+      this.ensureCorrectParenting(line, parentGroup);
     }
 
-    this.lineBuilder.updateLine(line, points, pointCount);
-    line.computeLineDistances();
+    this.updateLineGeometry(line, points, pointCount);
+    this.setupLineHighlighting(line);
+    this.applyVisibilityAndHighlighting(line, objectId);
+  }
 
-    // Store default color for highlighting
+  /**
+   * Gets or caches the parent group for an object to avoid repeated lookups.
+   */
+  private getOrCacheParentGroup(objectId: string): THREE.Object3D | null {
+    let parentGroup = this.parentGroupCache.get(objectId);
+
+    if (!parentGroup) {
+      const celestialMesh = this.objectManager.getObject(objectId);
+      if (!celestialMesh?.parent) {
+        return null;
+      }
+      parentGroup = celestialMesh.parent;
+      this.parentGroupCache.set(objectId, parentGroup);
+    }
+
+    return parentGroup;
+  }
+
+  /**
+   * Creates a new orbital line with fixed buffer size.
+   */
+  private createNewOrbitalLine(
+    objectId: string,
+    parentGroup: THREE.Object3D,
+  ): THREE.Line {
+    const material = this.getOrCreateTrailMaterial();
+    const bufferSize = this.calculateOptimalBufferSize();
+
+    const line = this.lineBuilder.createLine(
+      bufferSize,
+      material,
+      `orbital-line-${objectId}`,
+    );
+
+    line.frustumCulled = true;
+    line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");
+    parentGroup.add(line);
+    this.orbitalLines.set(objectId, line);
+
+    return line;
+  }
+
+  /**
+   * Ensures the line is parented to the correct group.
+   */
+  private ensureCorrectParenting(
+    line: THREE.Line,
+    parentGroup: THREE.Object3D,
+  ): void {
+    if (line.parent !== parentGroup) {
+      line.removeFromParent();
+      parentGroup.add(line);
+    }
+  }
+
+  /**
+   * Updates the line geometry with new points.
+   */
+  private updateLineGeometry(
+    line: THREE.Line,
+    points: THREE.Vector3[],
+    pointCount: number,
+  ): void {
+    this.lineBuilder.updateLine(line, points, pointCount);
+
+    // Only compute line distances for dashed materials
+    if (line.material instanceof THREE.LineDashedMaterial) {
+      line.computeLineDistances();
+    }
+  }
+
+  /**
+   * Sets up highlighting for a line by storing its default color.
+   */
+  private setupLineHighlighting(line: THREE.Line): void {
     if (
       (line.material instanceof THREE.LineBasicMaterial ||
         line.material instanceof THREE.LineDashedMaterial) &&
@@ -172,13 +216,39 @@ export class SimpleOrbitalRenderer {
     ) {
       line.userData.defaultColor = line.material.color.clone();
     }
+  }
 
+  /**
+   * Applies visibility and highlighting to a line.
+   */
+  private applyVisibilityAndHighlighting(
+    line: THREE.Line,
+    objectId: string,
+  ): void {
     line.visible = this.visualizationVisible;
 
-    // Apply highlighting if this object is highlighted
     if (this.highlightedObjectId === objectId) {
       this.applyHighlight(objectId, line);
     }
+  }
+
+  /**
+   * Gets or creates the cached trail material.
+   */
+  private getOrCreateTrailMaterial(): THREE.Material {
+    if (!this.cachedTrailMaterial) {
+      this.cachedTrailMaterial = SharedMaterials.clone("TRAIL");
+    }
+    return this.cachedTrailMaterial;
+  }
+
+  /**
+   * Gets the fixed buffer size for orbital lines.
+   */
+  private calculateOptimalBufferSize(): number {
+    // Use a large fixed buffer size to avoid recreations
+    // Most orbital trails won't exceed 1000 points, so this should be sufficient
+    return 1000;
   }
 
   /**
@@ -193,6 +263,8 @@ export class SimpleOrbitalRenderer {
       line.geometry.dispose();
       this.orbitalLines.delete(objectId);
     }
+    // Clear the parent group cache for this object
+    this.parentGroupCache.delete(objectId);
   }
 
   /**
@@ -270,6 +342,7 @@ export class SimpleOrbitalRenderer {
       line.geometry.dispose();
     });
     this.orbitalLines.clear();
+    this.parentGroupCache.clear();
   }
 
   /**
@@ -277,6 +350,7 @@ export class SimpleOrbitalRenderer {
    */
   dispose(): void {
     this.clearAllOrbitalLines();
+    this.cachedTrailMaterial = null;
   }
 
   /**
