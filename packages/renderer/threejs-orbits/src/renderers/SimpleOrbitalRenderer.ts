@@ -18,8 +18,7 @@ import {
  *
  * This renderer is designed to be lightweight and performant, focusing only
  * on rendering lines between the position points collected by the PositionHistoryManager.
- * It does not perform any calculations or data processing - it simply renders
- * the lines between the points provided by the manager.
+ * It uses individual THREE.Line objects with shared materials for optimal performance.
  */
 export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /** Map storing orbital lines, keyed by celestial object ID */
@@ -52,6 +51,9 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /** Cached effective max trail points to avoid recalculation */
   private cachedEffectiveMaxTrailPoints: number = 2000; // 1000 * 2
 
+  /** Base material template for creating individual line materials */
+  private baseTrailMaterial: THREE.Material | null = null;
+
   /**
    * Creates a new SimpleOrbitalRenderer instance.
    *
@@ -62,6 +64,18 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     this.objectManager = objectManager;
     this.lineBuilder = new LineHelper();
     this.subscribeToState(simulationState$, this.handleStateChange);
+    this.initializeBaseMaterial();
+  }
+
+  /**
+   * Initializes the base material template for creating individual line materials.
+   */
+  private initializeBaseMaterial(): void {
+    this.baseTrailMaterial = SharedMaterials.clone("TRAIL");
+    if (this.baseTrailMaterial instanceof THREE.LineBasicMaterial) {
+      this.baseTrailMaterial.transparent = true;
+      this.baseTrailMaterial.opacity = 0.8;
+    }
   }
 
   /**
@@ -151,18 +165,23 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
-   * Creates a new orbital line with fixed buffer size.
+   * Creates a new orbital line with its own material instance.
    */
   private createNewOrbitalLine(
     objectId: string,
     parentGroup: THREE.Object3D,
   ): THREE.Line {
-    const material = this.createTrailMaterial();
-    const bufferSize = this.calculateOptimalBufferSize();
+    if (!this.baseTrailMaterial) {
+      this.initializeBaseMaterial();
+    }
 
+    // Clone the base material to create a unique instance for this line
+    const lineMaterial = this.baseTrailMaterial!.clone();
+
+    const bufferSize = this.calculateOptimalBufferSize();
     const line = this.lineBuilder.createLine(
       bufferSize,
-      material,
+      lineMaterial,
       `orbital-line-${objectId}`,
     );
 
@@ -226,18 +245,26 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
-   * Creates a new trail material for each line to avoid color conflicts.
+   * Converts OSVector3 positions to THREE.Vector3 for rendering.
+   * Optimized to avoid unnecessary array slicing.
    */
-  private createTrailMaterial(): THREE.Material {
-    return SharedMaterials.clone("TRAIL");
-  }
+  private convertPositionsToVectors(
+    positionHistory: any[],
+    startIndex: number,
+  ): THREE.Vector3[] {
+    const pointCount = positionHistory.length - startIndex;
+    const points: THREE.Vector3[] = [];
 
-  /**
-   * Gets the fixed buffer size for orbital lines.
-   */
-  private calculateOptimalBufferSize(): number {
-    // Match the maximum trail points we actually render
-    return this.baseMaxTrailPoints * this.trailLengthMultiplier;
+    // Pre-allocate array size for better performance
+    points.length = pointCount;
+
+    // Convert positions directly without intermediate array
+    for (let i = 0; i < pointCount; i++) {
+      const sourcePos = positionHistory[startIndex + i];
+      points[i] = new THREE.Vector3(sourcePos.x, sourcePos.y, sourcePos.z);
+    }
+
+    return points;
   }
 
   /**
@@ -264,79 +291,9 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   setVisibility(visible: boolean): void {
     this.visualizationVisible = visible;
 
-    if (visible) {
-      // When enabling, ensure all existing lines are visible
-      this.orbitalLines.forEach((line) => {
-        line.visible = true;
-      });
-    } else {
-      // When disabling, hide all lines
-      this.orbitalLines.forEach((line) => {
-        line.visible = false;
-      });
-    }
-  }
-
-  /**
-   * Handles simulation state changes to update trail length multiplier.
-   */
-  private handleStateChange = (state: any): void => {
-    const newMultiplier = state.visualSettings?.trailLengthMultiplier;
-    if (
-      newMultiplier !== undefined &&
-      newMultiplier !== this.trailLengthMultiplier
-    ) {
-      this.trailLengthMultiplier = newMultiplier;
-      this.cachedEffectiveMaxTrailPoints =
-        this.baseMaxTrailPoints * this.trailLengthMultiplier;
-      console.debug(
-        `[SimpleOrbitalRenderer] Trail multiplier updated to: ${newMultiplier}x (${this.cachedEffectiveMaxTrailPoints} points)`,
-      );
-    }
-  };
-
-  /**
-   * Converts OSVector3 positions to THREE.Vector3 for rendering.
-   * Optimized to avoid unnecessary array slicing.
-   */
-  private convertPositionsToVectors(
-    positionHistory: any[],
-    startIndex: number,
-  ): THREE.Vector3[] {
-    const pointCount = positionHistory.length - startIndex;
-    const points: THREE.Vector3[] = [];
-
-    // Pre-allocate array size for better performance
-    points.length = pointCount;
-
-    // Convert positions directly without intermediate array
-    for (let i = 0; i < pointCount; i++) {
-      const sourcePos = positionHistory[startIndex + i];
-      points[i] = new THREE.Vector3(sourcePos.x, sourcePos.y, sourcePos.z);
-    }
-
-    return points;
-  }
-
-  /**
-   * Sets the maximum number of points to render in orbital trails.
-   *
-   * @param maxPoints - Maximum number of points (default: 2000 with 2x multiplier)
-   * @deprecated Use trail length multiplier in settings instead
-   */
-  setMaxTrailPoints(maxPoints: number): void {
-    if (maxPoints < 2) {
-      console.warn(
-        "[SimpleOrbitalRenderer] Max trail points must be at least 2",
-      );
-      return;
-    }
-
-    // Calculate what multiplier this would be
-    const multiplier = maxPoints / this.baseMaxTrailPoints;
-    console.warn(
-      `[SimpleOrbitalRenderer] setMaxTrailPoints is deprecated. Use trail length multiplier (${multiplier.toFixed(1)}x) in settings instead.`,
-    );
+    this.orbitalLines.forEach((line) => {
+      line.visible = visible;
+    });
   }
 
   /**
@@ -394,6 +351,53 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
+   * Handles simulation state changes to update trail length multiplier.
+   */
+  private handleStateChange = (state: any): void => {
+    const newMultiplier = state.visualSettings?.trailLengthMultiplier;
+    if (
+      newMultiplier !== undefined &&
+      newMultiplier !== this.trailLengthMultiplier
+    ) {
+      this.trailLengthMultiplier = newMultiplier;
+      this.cachedEffectiveMaxTrailPoints =
+        this.baseMaxTrailPoints * this.trailLengthMultiplier;
+      console.debug(
+        `[SimpleOrbitalRenderer] Trail multiplier updated to: ${newMultiplier}x (${this.cachedEffectiveMaxTrailPoints} points)`,
+      );
+    }
+  };
+
+  /**
+   * Sets the maximum number of points to render in orbital trails.
+   *
+   * @param maxPoints - Maximum number of points (default: 2000 with 2x multiplier)
+   * @deprecated Use trail length multiplier in settings instead
+   */
+  setMaxTrailPoints(maxPoints: number): void {
+    if (maxPoints < 2) {
+      console.warn(
+        "[SimpleOrbitalRenderer] Max trail points must be at least 2",
+      );
+      return;
+    }
+
+    // Calculate what multiplier this would be
+    const multiplier = maxPoints / this.baseMaxTrailPoints;
+    console.warn(
+      `[SimpleOrbitalRenderer] setMaxTrailPoints is deprecated. Use trail length multiplier (${multiplier.toFixed(1)}x) in settings instead.`,
+    );
+  }
+
+  /**
+   * Gets the fixed buffer size for orbital lines.
+   */
+  private calculateOptimalBufferSize(): number {
+    // Match the maximum trail points we actually render
+    return this.baseMaxTrailPoints * this.trailLengthMultiplier;
+  }
+
+  /**
    * Clears all orbital lines.
    */
   clearAllOrbitalLines(): void {
@@ -411,6 +415,11 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   dispose(): void {
     this.clearAllOrbitalLines();
     this.parentGroupCache.clear();
+
+    if (this.baseTrailMaterial) {
+      this.baseTrailMaterial.dispose();
+      this.baseTrailMaterial = null;
+    }
   }
 
   /**
