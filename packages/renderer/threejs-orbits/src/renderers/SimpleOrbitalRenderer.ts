@@ -96,11 +96,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       return;
     }
 
-    // Check if simulation is paused - don't update orbital lines when paused
-    const simulationState = this.getCurrentSimulationState();
-    if (simulationState?.isPaused) {
-      return;
-    }
+    // Note: We now update orbital lines even when paused to maintain smooth visualization
 
     // Get position history from the manager
     const positionHistory = positionHistoryManager.getPositionHistory();
@@ -122,15 +118,9 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       startIndex,
     );
 
-    // Only sample and interpolate if simulation is not paused
-    if (!this.currentSimulationState?.paused) {
-      // Sample and interpolate points for smooth curves
-      const interpolatedPoints = this.sampleAndInterpolatePoints(rawPoints);
-      this.drawOrbitalLine(objectId, interpolatedPoints);
-    } else {
-      // When paused, just draw the raw points without interpolation
-      this.drawOrbitalLine(objectId, rawPoints);
-    }
+    // Always apply smooth interpolation for consistent visualization
+    const interpolatedPoints = this.sampleAndInterpolatePoints(rawPoints);
+    this.drawOrbitalLine(objectId, interpolatedPoints);
   }
 
   /**

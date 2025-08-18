@@ -23,7 +23,7 @@ export type PredictedPoint = {
  * @param options - Optional parameters for the prediction.
  * @returns An array of OSVector3 points representing the predicted trajectory in meters.
  */
-export function predictTrajectory(
+export async function predictTrajectory(
   targetBodyId: string | number,
   allBodiesInitialStates: PhysicsStateReal[],
   duration_s: number,
@@ -37,7 +37,7 @@ export function predictTrajectory(
     bodyTypes?: Map<string | number, CelestialType>;
     radii?: Map<string | number, number>;
   } = {},
-): PredictedPoint[] {
+): Promise<PredictedPoint[]> {
   const {
     relativeToBodyId,
     octreeSize = 5e13,
@@ -60,8 +60,18 @@ export function predictTrajectory(
   const predictedPoints: PredictedPoint[] = [];
   const relativeObjectPath: OSVector3[] = [];
 
-  // Initialize WASM spatial partitioning
-  const wasmSpatialPartitioning = new WasmSpatialPartitioning(1e12); // 1 trillion meters
+  // Initialize WASM spatial partitioning with fallback
+  let wasmSpatialPartitioning: WasmSpatialPartitioning | null = null;
+  try {
+    wasmSpatialPartitioning = new WasmSpatialPartitioning(1e12); // 1 trillion meters
+    await wasmSpatialPartitioning.initialize();
+  } catch (error) {
+    console.warn(
+      "WASM spatial partitioning failed to initialize, using traditional method:",
+      error,
+    );
+    wasmSpatialPartitioning = null;
+  }
 
   // Make a deep copy of the initial states to avoid modifying the original data
   let currentStates: PhysicsStateReal[] = allBodiesInitialStates.map(
@@ -111,41 +121,66 @@ export function predictTrajectory(
 
   // Simulation loop
   for (let i = 0; i < steps; i++) {
-    // Update WASM spatial partitioning with current states
-    wasmSpatialPartitioning.update(currentStates);
-
-    // Calculate accelerations using WASM spatial partitioning
+    // Calculate accelerations using WASM spatial partitioning or traditional method
     accelerations.clear();
-    for (const body of currentStates) {
-      const neighborIds = wasmSpatialPartitioning.findNeighbors(body.id);
-      const netForce = new OSVector3(0, 0, 0);
 
-      // Create a map for fast body lookup
-      const bodyMap = new Map<string | number, PhysicsStateReal>();
-      for (const b of currentStates) {
-        bodyMap.set(b.id, b);
+    if (wasmSpatialPartitioning) {
+      // Use WASM spatial partitioning
+      wasmSpatialPartitioning.update(currentStates);
+
+      for (const body of currentStates) {
+        const neighborIds = wasmSpatialPartitioning.findNeighbors(body.id);
+        const netForce = new OSVector3(0, 0, 0);
+
+        // Create a map for fast body lookup
+        const bodyMap = new Map<string | number, PhysicsStateReal>();
+        for (const b of currentStates) {
+          bodyMap.set(b.id, b);
+        }
+
+        // Calculate forces from all neighboring bodies
+        for (const neighborId of neighborIds) {
+          if (neighborId === body.id) continue; // Skip self-interaction
+
+          const neighborBody = bodyMap.get(neighborId);
+          if (!neighborBody) continue;
+
+          const force = calculateNewtonianGravitationalForce(
+            neighborBody,
+            body,
+            GRAVITATIONAL_CONSTANT,
+          );
+          netForce.add(force);
+        }
+
+        reusableAccVector.set(0, 0, 0);
+        if (body.mass_kg !== 0) {
+          reusableAccVector.copy(netForce).multiplyScalar(1 / body.mass_kg);
+        }
+        accelerations.set(body.id, reusableAccVector.clone());
       }
+    } else {
+      // Use traditional O(n²) method when WASM is not available
+      for (const body of currentStates) {
+        const netForce = new OSVector3(0, 0, 0);
 
-      // Calculate forces from all neighboring bodies
-      for (const neighborId of neighborIds) {
-        if (neighborId === body.id) continue; // Skip self-interaction
+        for (const otherBody of currentStates) {
+          if (otherBody.id === body.id) continue; // Skip self-interaction
 
-        const neighborBody = bodyMap.get(neighborId);
-        if (!neighborBody) continue;
+          const force = calculateNewtonianGravitationalForce(
+            otherBody,
+            body,
+            GRAVITATIONAL_CONSTANT,
+          );
+          netForce.add(force);
+        }
 
-        const force = calculateNewtonianGravitationalForce(
-          neighborBody,
-          body,
-          GRAVITATIONAL_CONSTANT,
-        );
-        netForce.add(force);
+        reusableAccVector.set(0, 0, 0);
+        if (body.mass_kg !== 0) {
+          reusableAccVector.copy(netForce).multiplyScalar(1 / body.mass_kg);
+        }
+        accelerations.set(body.id, reusableAccVector.clone());
       }
-
-      reusableAccVector.set(0, 0, 0);
-      if (body.mass_kg !== 0) {
-        reusableAccVector.copy(netForce).multiplyScalar(1 / body.mass_kg);
-      }
-      accelerations.set(body.id, reusableAccVector.clone());
     }
 
     // Integration
@@ -165,30 +200,46 @@ export function predictTrajectory(
       const calculateNewAcceleration = (
         stateGuess: PhysicsStateReal,
       ): OSVector3 => {
-        const neighborIds = wasmSpatialPartitioning.findNeighbors(
-          stateGuess.id,
-        );
         const netForce = new OSVector3(0, 0, 0);
 
-        // Create a map for fast body lookup
-        const bodyMap = new Map<string | number, PhysicsStateReal>();
-        for (const b of currentStates) {
-          bodyMap.set(b.id, b);
-        }
-
-        // Calculate forces from all neighboring bodies
-        for (const neighborId of neighborIds) {
-          if (neighborId === stateGuess.id) continue; // Skip self-interaction
-
-          const neighborBody = bodyMap.get(neighborId);
-          if (!neighborBody) continue;
-
-          const force = calculateNewtonianGravitationalForce(
-            neighborBody,
-            stateGuess,
-            GRAVITATIONAL_CONSTANT,
+        if (wasmSpatialPartitioning) {
+          // Use WASM spatial partitioning
+          const neighborIds = wasmSpatialPartitioning.findNeighbors(
+            stateGuess.id,
           );
-          netForce.add(force);
+
+          // Create a map for fast body lookup
+          const bodyMap = new Map<string | number, PhysicsStateReal>();
+          for (const b of currentStates) {
+            bodyMap.set(b.id, b);
+          }
+
+          // Calculate forces from all neighboring bodies
+          for (const neighborId of neighborIds) {
+            if (neighborId === stateGuess.id) continue; // Skip self-interaction
+
+            const neighborBody = bodyMap.get(neighborId);
+            if (!neighborBody) continue;
+
+            const force = calculateNewtonianGravitationalForce(
+              neighborBody,
+              stateGuess,
+              GRAVITATIONAL_CONSTANT,
+            );
+            netForce.add(force);
+          }
+        } else {
+          // Use traditional O(n²) method when WASM is not available
+          for (const otherBody of currentStates) {
+            if (otherBody.id === stateGuess.id) continue; // Skip self-interaction
+
+            const force = calculateNewtonianGravitationalForce(
+              otherBody,
+              stateGuess,
+              GRAVITATIONAL_CONSTANT,
+            );
+            netForce.add(force);
+          }
         }
 
         reusableAccVector.set(0, 0, 0);
