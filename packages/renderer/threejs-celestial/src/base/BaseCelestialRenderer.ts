@@ -6,13 +6,9 @@ import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import { BillboardManager } from "../billboards";
-import {
-  CelestialRenderer,
-  LightSourceData,
-  LightSourcesMap,
-  ShadowCasterData,
-  LightingConfig,
-} from "./CelestialRenderer";
+import { CelestialRenderer } from "./CelestialRenderer";
+import { LightSourceData, LightSourcesMap, LightingConfig } from "./lighting";
+import type { ShadowCasterData } from "./lighting/ShadowCasterUtils";
 import { BaseCelestialRendererOptions, CelestialMeshOptions } from "./types";
 import {
   MaterialManager,
@@ -95,6 +91,9 @@ export abstract class BaseCelestialRenderer<
     this.timeManager = new TimeManager();
     this.billboardManager = new BillboardManager();
 
+    // Set up the lighting manager with a reference to this renderer
+    this.lightingManager.setRenderer(this);
+
     // First parameter is a RenderableCelestialObject
     const object = objectOrOptions as RenderableCelestialObject;
     this.positionHistoryManager = new PositionHistoryManager(
@@ -102,6 +101,7 @@ export abstract class BaseCelestialRenderer<
       options.orbitalConfig,
       this,
     );
+    this.lightingManager.initializeLightingCalculator(object);
     this.billboardDisabled = options.disableBillboard ?? false;
   }
 
@@ -189,6 +189,9 @@ export abstract class BaseCelestialRenderer<
     // Update orbital data and position history
     this.positionHistoryManager.update(object, time);
 
+    // Update lighting manager with current object and all objects
+    this.lightingManager.updateLightingCalculator(object, allObjects);
+
     // Update LOD position and level
     this.lodManager.updateObjectLOD(object, camera);
 
@@ -221,61 +224,55 @@ export abstract class BaseCelestialRenderer<
   // === Lighting Delegation Methods ===
 
   /**
+   * Updates the lighting manager's light sources.
+   * @param lightSources Map of light sources to store
+   */
+  protected updateLightSources(lightSources: LightSourcesMap): void {
+    this.lightingManager.updateLightSources(lightSources);
+  }
+
+  /**
    * Applies distance-based attenuation to light sources for this celestial object.
-   * @param object The celestial object
-   * @param lightSources Map of light sources to attenuate
    * @param config Optional configuration for attenuation
+   * @param forceRefresh Whether to force a cache refresh
    * @returns The attenuated light sources
    */
   protected applyLightAttenuation(
-    object: RenderableCelestialObject,
-    lightSources: LightSourcesMap,
     config?: LightingConfig,
+    forceRefresh: boolean = false,
   ): LightSourcesMap {
-    return this.lightingManager.applyLightAttenuation(
-      object,
-      lightSources,
-      config,
-    );
+    return this.lightingManager.applyLightAttenuation(config, forceRefresh);
   }
 
   /**
    * Finds all shadow casters that can affect this celestial object.
-   * @param object The celestial object
-   * @param allObjects Map of all objects in the scene
+   * @param forceRefresh Whether to force a cache refresh
    * @returns Array of shadow caster data
    */
-  protected findShadowCasters(
-    object: RenderableCelestialObject,
-    allObjects?: Record<string, RenderableCelestialObject>,
-  ): ShadowCasterData[] {
-    return this.lightingManager.findShadowCasters(object, allObjects);
+  public findShadowCasters(forceRefresh: boolean = false): ShadowCasterData[] {
+    return this.lightingManager.findShadowCasters(forceRefresh);
   }
 
   /**
    * Finds shadow casters specifically for ring systems.
-   * @param object The object that owns the ring system
-   * @param allObjects Map of all objects in the scene
+   * @param forceRefresh Whether to force a cache refresh
    * @returns Array of shadow caster data
    */
-  protected findRingShadowCasters(
-    object: RenderableCelestialObject,
-    allObjects?: Record<string, RenderableCelestialObject>,
+  public findRingShadowCasters(
+    forceRefresh: boolean = false,
   ): ShadowCasterData[] {
-    return this.lightingManager.findRingShadowCasters(object, allObjects);
+    return this.lightingManager.findRingShadowCasters(forceRefresh);
   }
 
   /**
    * Finds the closest light source to this celestial object.
-   * @param object The celestial object
-   * @param lightSources Map of available light sources
+   * @param forceRefresh Whether to force a cache refresh
    * @returns The closest light source, or null if none available
    */
   protected findClosestLightSource(
-    object: RenderableCelestialObject,
-    lightSources?: LightSourcesMap,
+    forceRefresh: boolean = false,
   ): LightSourceData | null {
-    return this.lightingManager.findClosestLightSource(object, lightSources);
+    return this.lightingManager.findClosestLightSource(forceRefresh);
   }
 
   // === Material Delegation Methods ===
@@ -503,6 +500,14 @@ export abstract class BaseCelestialRenderer<
   }
 
   /**
+   * Gets shadow caster cache statistics for debugging.
+   * @returns Cache statistics
+   */
+  protected getShadowCasterCacheStats() {
+    return this.lightingManager.getShadowCasterCacheStats();
+  }
+
+  /**
    * Updates the orbital configuration.
    * @param newConfig New configuration values
    */
@@ -595,6 +600,7 @@ export abstract class BaseCelestialRenderer<
     this.lodManager.dispose();
     this.billboardManager.dispose();
     this.positionHistoryManager.dispose();
+    this.lightingManager.dispose();
     // Note: lighting and time managers don't require disposal
   }
 }

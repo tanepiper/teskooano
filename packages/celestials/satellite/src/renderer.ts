@@ -423,11 +423,11 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
+    // Update lighting manager with current light sources
+    this.updateLightSources(lightSources);
+
     // Apply centralized light attenuation like other renderers
-    let attenuatedLightSources = this.applyLightAttenuation(
-      object,
-      lightSources,
-    );
+    let attenuatedLightSources = this.applyLightAttenuation();
 
     // Special handling for rogue objects (satellites without parents)
     // These objects are often very far from stars and need minimum lighting to remain visible
@@ -442,14 +442,10 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
     // Calculate dynamic ambient light based on nearby stars
     const dynamicAmbientIntensity =
-      this.lightingManager.calculateDynamicAmbientLightWithStarData(
-        object,
-        lightSources, // Use original light sources for ambient calculation, not attenuated
-        allObjects,
-      );
+      this.lightingManager.calculateDynamicAmbientLight();
 
     // Find shadow casters using centralized utility
-    const shadowCasters = this.findShadowCasters(object, allObjects);
+    const shadowCasters = this.findShadowCasters();
 
     // Update the satellite material with lighting information
     if (this.material && attenuatedLightSources.size > 0) {

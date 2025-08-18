@@ -55,7 +55,7 @@ export class WasmSimulationManager {
 
   constructor(config: Partial<WasmSimulationConfig> = {}) {
     this.config = {
-      neighborDistance: 1e9, // 1 billion meters for neighbor finding
+      neighborDistance: 1e12, // 1 trillion meters (~6700 AU) for neighbor finding
       collisionDistance: 1e6, // 1 million meters for collision detection
       ...config,
     };
@@ -216,14 +216,13 @@ export class WasmSimulationManager {
       });
 
       bodies.forEach((body) => {
-        if (nBodyOctree) {
-          const acc = calculateAccelerationForBody_NBody(
-            body,
-            nBodyOctree,
-            barnesHutTheta,
-          );
-          accelerations.set(body.id, acc);
-        }
+        const acc = calculateAccelerationForBody_NBody(
+          body,
+          this.wasmSpatialPartitioning,
+          bodies,
+          barnesHutTheta,
+        );
+        accelerations.set(body.id, acc);
       });
     } else {
       // Direct or simplified physics calculation
@@ -250,7 +249,8 @@ export class WasmSimulationManager {
         if (nBodyOctree) {
           return calculateAccelerationForBody_NBody(
             stateGuess,
-            nBodyOctree,
+            this.wasmSpatialPartitioning,
+            bodies,
             barnesHutTheta,
           );
         } else {
@@ -429,10 +429,49 @@ function getDefaultConfiguration(): SimulationConfiguration {
 
 const calculateAccelerationForBody_NBody = (
   targetBodyState: PhysicsStateReal,
-  octree: Octree,
+  wasmSpatialPartitioning: WasmSpatialPartitioning,
+  allBodies: PhysicsStateReal[],
   theta: number = 0.7,
 ): OSVector3 => {
-  const netForce = octree.calculateForceOn(targetBodyState, theta);
+  // Use WASM spatial partitioning for neighbor finding, then calculate forces
+  const neighborIds = wasmSpatialPartitioning.findNeighbors(targetBodyState.id);
+
+  const netForce = new OSVector3(0, 0, 0);
+
+  // Create a map for fast body lookup
+  const bodyMap = new Map<string | number, PhysicsStateReal>();
+  for (const body of allBodies) {
+    bodyMap.set(body.id, body);
+  }
+
+  // Calculate forces from all neighboring bodies
+  for (const neighborId of neighborIds) {
+    // Skip self-interaction
+    if (neighborId === targetBodyState.id) continue;
+
+    // Get neighbor body from the bodies array
+    const neighborBody = bodyMap.get(neighborId);
+    if (!neighborBody) continue;
+
+    // Calculate gravitational force
+    const rVec = neighborBody.position_m
+      .clone()
+      .sub(targetBodyState.position_m);
+    const distSq = rVec.lengthSq();
+
+    if (distSq < GRAVITATIONAL_SOFTENING_SQUARED) continue; // Too close, apply softening
+
+    const dist = Math.sqrt(distSq);
+    const forceMagnitude =
+      (GRAVITATIONAL_CONSTANT *
+        neighborBody.mass_kg *
+        targetBodyState.mass_kg) /
+      distSq;
+    const forceVector = rVec.clone().multiplyScalar(forceMagnitude / dist);
+
+    netForce.add(forceVector);
+  }
+
   const acceleration = new OSVector3(0, 0, 0);
   if (targetBodyState.mass_kg !== 0) {
     acceleration.copy(netForce).multiplyScalar(1 / targetBodyState.mass_kg);

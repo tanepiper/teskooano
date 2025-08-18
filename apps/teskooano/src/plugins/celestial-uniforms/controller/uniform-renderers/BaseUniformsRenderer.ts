@@ -111,9 +111,6 @@ export abstract class BaseUniformsRenderer {
 
       // Check if materialParams is missing, undefined, or null
       if (!materialParams || typeof materialParams !== "object") {
-        console.log(
-          `[Uniforms] Initializing missing materialParams for ${currentCelestialObject.id}`,
-        );
         starProps.materialParams = {
           noiseScale: 0.5,
           noiseIntensity: 0.2,
@@ -169,16 +166,7 @@ export abstract class BaseUniformsRenderer {
               propertyPathToUniform,
               newValue,
             );
-            console.log(
-              `[Uniforms] Updating ${celestialId} property ${propertyPathToUniform.join(
-                ".",
-              )} to:`,
-              newValue,
-            );
-            console.log(
-              "[Uniforms] Dispatching new properties:",
-              updatedProperties,
-            );
+
             actions.updateCelestialObject(celestialId, {
               properties: updatedProperties,
             });
@@ -232,10 +220,6 @@ export abstract class BaseUniformsRenderer {
         starProps[colorProperty] === undefined ||
         starProps[colorProperty] === null
       ) {
-        console.log(
-          `[Uniforms] Initializing missing color property ${colorProperty} for ${currentCelestialObject.id}`,
-        );
-
         // Set sensible defaults based on the color property
         if (colorProperty === "color") {
           // Main star color - use a warm yellow-white
@@ -277,16 +261,7 @@ export abstract class BaseUniformsRenderer {
               propertyPathToUniform,
               newColor,
             );
-            console.log(
-              `[Uniforms] Updating ${celestialId} property ${propertyPathToUniform.join(
-                ".",
-              )} to:`,
-              newColor,
-            );
-            console.log(
-              "[Uniforms] Dispatching new properties:",
-              updatedProperties,
-            );
+
             actions.updateCelestialObject(celestialId, {
               properties: updatedProperties,
             });

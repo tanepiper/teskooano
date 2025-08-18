@@ -1,11 +1,10 @@
-import { CelestialObject, LagrangePointType } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 import {
   PhysicsStateReal,
-  createTwoBodySystem,
   calculateAllLagrangePoints,
-  createOrbitalElementsFromLagrangePoint,
+  createTwoBodySystem,
 } from "@teskooano/core-physics";
-import { OSVector3 } from "@teskooano/core-math";
+import { CelestialObject } from "@teskooano/data-types";
 
 /**
  * Processes celestial objects that are designated to be at Lagrange points.
@@ -23,11 +22,11 @@ export function processLagrangeObjects(
   physicsStates: Map<string, PhysicsStateReal>,
 ): void {
   celestialObjects.forEach((obj) => {
-    if (
-      obj.orbit.lagrangePointType &&
-      obj.parentId &&
-      obj.lagrangePointTargetId
-    ) {
+    if (!obj.orbit.lagrangePointType) {
+      return;
+    }
+
+    if (obj.parentId && obj.lagrangePointTargetId) {
       const primaryObject = celestialObjects.get(obj.parentId);
       const secondaryObject = celestialObjects.get(obj.lagrangePointTargetId);
 
@@ -55,59 +54,30 @@ export function processLagrangeObjects(
         return;
       }
 
-      try {
-        // Calculate Lagrange point orbital parameters using static properties
-        const lagrangeOrbitalParams = createOrbitalElementsFromLagrangePoint(
-          obj.orbit.lagrangePointType,
-          primaryObject.realMass_kg,
-          secondaryObject.realMass_kg,
-          // Calculate current separation based on their initial positions
-          primaryPhysicsState.position_m.distanceTo(
-            secondaryPhysicsState.position_m,
-          ),
-        );
+      const realTwoBodySystem = createTwoBodySystem(
+        primaryPhysicsState,
+        secondaryPhysicsState,
+      );
+      const realLagrangePoints = calculateAllLagrangePoints(realTwoBodySystem);
+      const realLPoint = realLagrangePoints.find(
+        (lp) => lp.id === obj.orbit.lagrangePointType,
+      );
 
-        // The calculated Lagrange point's realSemiMajorAxis_m is its distance from the primary.
-        // Its period_s and averageOrbitalSpeed_mps are also calculated in that function.
-        // The most important parts here are the position_m and velocity_mps from the LagrangePoint object.
-
-        // To get the actual Lagrange point position in the global inertial frame:
-        // 1. Get the current primary and secondary positions in the inertial frame.
-        // 2. Re-create the two-body system with these real-time positions.
-        // 3. Calculate all Lagrange points using the real-time positions.
-        // 4. Extract the target Lagrange point's actual position and velocity vector.
-
-        const realTwoBodySystem = createTwoBodySystem(
-          primaryPhysicsState,
-          secondaryPhysicsState,
-        );
-        const realLagrangePoints =
-          calculateAllLagrangePoints(realTwoBodySystem);
-        const realLPoint = realLagrangePoints.find(
-          (lp) => lp.id === obj.orbit.lagrangePointType,
-        );
-
-        if (realLPoint) {
-          // Update the object's initial physics state with the Lagrange point data
-          const targetPhysicsState = physicsStates.get(obj.id);
-          if (targetPhysicsState) {
-            targetPhysicsState.position_m = realLPoint.position_m.clone();
-            targetPhysicsState.velocity_mps =
-              realLPoint.velocity_mps?.clone() ?? new OSVector3(0, 0, 0);
-          } else {
-            console.warn(
-              `[LagrangeProcessor] PhysicsStateReal for '${obj.id}' not found. Cannot apply Lagrange point.`,
-            );
-          }
+      if (realLPoint) {
+        // Update the object's initial physics state with the Lagrange point data
+        const targetPhysicsState = physicsStates.get(obj.id);
+        if (targetPhysicsState) {
+          targetPhysicsState.position_m = realLPoint.position_m.clone();
+          targetPhysicsState.velocity_mps =
+            realLPoint.velocity_mps?.clone() ?? new OSVector3(0, 0, 0);
         } else {
           console.warn(
-            `[LagrangeProcessor] Lagrange point '${obj.orbit.lagrangePointType}' not calculated for '${obj.id}'.`,
+            `[LagrangeProcessor] PhysicsStateReal for '${obj.id}' not found. Cannot apply Lagrange point.`,
           );
         }
-      } catch (error) {
-        console.error(
-          `[LagrangeProcessor] Error calculating Lagrange point for '${obj.id}':`,
-          error,
+      } else {
+        console.warn(
+          `[LagrangeProcessor] Lagrange point '${obj.orbit.lagrangePointType}' not calculated for '${obj.id}'.`,
         );
       }
     }

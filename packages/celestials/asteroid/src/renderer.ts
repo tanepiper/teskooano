@@ -99,19 +99,15 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
+    // Update lighting manager with current light sources
+    this.updateLightSources(lightSources);
+
     // Apply centralized light attenuation
-    const attenuatedLightSources = this.applyLightAttenuation(
-      object,
-      lightSources,
-    );
+    const attenuatedLightSources = this.applyLightAttenuation();
 
     // Calculate dynamic ambient light based on nearby stars
     const dynamicAmbientIntensity =
-      this.lightingManager.calculateDynamicAmbientLightWithStarData(
-        object,
-        lightSources, // Use original light sources for ambient calculation, not attenuated
-        allObjects,
-      );
+      this.lightingManager.calculateDynamicAmbientLight();
 
     this.updateNucleus(
       object,
@@ -122,10 +118,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     );
 
     const deltaTime = this.clock.getDelta();
-    const activityFactor = this.calculateActivityFactor(
-      object,
-      attenuatedLightSources,
-    );
+    const activityFactor = this.calculateActivityFactor(object);
 
     this.updateNucleusRotation(object, deltaTime, activityFactor);
   }
@@ -241,7 +234,7 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
       }
 
       // Find shadow casters using centralized utility
-      const shadowCasters = this.findShadowCasters(object, allObjects);
+      const shadowCasters = this.findShadowCasters();
 
       // Convert to shader format
       const shadowCastersForShader =
@@ -263,14 +256,8 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
     }
   }
 
-  private calculateActivityFactor(
-    object: RenderableCelestialObject,
-    attenuatedLightSources: Map<string, any> | undefined,
-  ): number {
-    const primaryLightSource = this.findClosestLightSource(
-      object,
-      attenuatedLightSources,
-    );
+  private calculateActivityFactor(object: RenderableCelestialObject): number {
+    const primaryLightSource = this.findClosestLightSource();
     if (!primaryLightSource) return 0;
 
     // Store light position in a dedicated vector to avoid temp vector conflicts

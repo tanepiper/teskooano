@@ -204,19 +204,15 @@ export abstract class BaseGasGiantRenderer<
   ): void {
     super.update(object, time, timeScale, lightSources, camera, allObjects);
 
+    // Update lighting manager with current light sources
+    this.updateLightSources(lightSources);
+
     // Apply centralized light attenuation
-    const attenuatedLightSources = this.applyLightAttenuation(
-      object,
-      lightSources,
-    );
+    const attenuatedLightSources = this.applyLightAttenuation();
 
     // Calculate dynamic ambient light based on nearby stars
     const dynamicAmbientIntensity =
-      this.lightingManager.calculateDynamicAmbientLightWithStarData(
-        object,
-        lightSources, // Use original light sources for ambient calculation, not attenuated
-        allObjects,
-      );
+      this.lightingManager.calculateDynamicAmbientLight();
 
     // Convert light sources to shader format
     const lightsForShader = LightArrayUtils.toShaderFormat(
@@ -224,7 +220,7 @@ export abstract class BaseGasGiantRenderer<
     );
 
     // Find shadow casters using centralized utility
-    const shadowCasters = this.findShadowCasters(object, allObjects);
+    const shadowCasters = this.findShadowCasters();
 
     // Convert shadow casters to shader format
     const shadowCastersForShader =

@@ -287,11 +287,11 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   }
 
   /**
-   * Samples points at regular intervals and interpolates between them for smooth curves.
-   * This reduces the number of line segments while maintaining visual quality.
+   * Simple point sampling to reduce the number of line segments for performance.
+   * Just takes every Nth point instead of complex interpolation.
    *
    * @param rawPoints - Array of all position points
-   * @returns Array of interpolated points for smooth rendering
+   * @returns Array of sampled points for rendering
    */
   private sampleAndInterpolatePoints(
     rawPoints: THREE.Vector3[],
@@ -305,50 +305,24 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
       return rawPoints;
     }
 
-    const interpolatedPoints: THREE.Vector3[] = [];
+    // Simple sampling: take every Nth point
+    const sampledPoints: THREE.Vector3[] = [];
 
-    // Sample points at regular intervals
     for (let i = 0; i < rawPoints.length; i += this.samplingInterval) {
-      interpolatedPoints.push(rawPoints[i].clone());
-
-      // If this isn't the last sampled point, interpolate to the next one
-      if (i + this.samplingInterval < rawPoints.length) {
-        const nextIndex = Math.min(
-          i + this.samplingInterval,
-          rawPoints.length - 1,
-        );
-        const currentPoint = rawPoints[i];
-        const nextPoint = rawPoints[nextIndex];
-
-        // Add interpolated points between current and next sampled point
-        for (
-          let j = 1;
-          j < this.samplingInterval && i + j < rawPoints.length;
-          j++
-        ) {
-          const t = j / this.samplingInterval;
-          const interpolatedPoint = new THREE.Vector3().lerpVectors(
-            currentPoint,
-            nextPoint,
-            t,
-          );
-          interpolatedPoints.push(interpolatedPoint);
-        }
-      }
+      sampledPoints.push(rawPoints[i]);
     }
 
     // Always include the last point if it wasn't already included
-    if (rawPoints.length > 0 && interpolatedPoints.length > 0) {
+    if (rawPoints.length > 0 && sampledPoints.length > 0) {
       const lastRawPoint = rawPoints[rawPoints.length - 1];
-      const lastInterpolatedPoint =
-        interpolatedPoints[interpolatedPoints.length - 1];
+      const lastSampledPoint = sampledPoints[sampledPoints.length - 1];
 
-      if (lastRawPoint.distanceTo(lastInterpolatedPoint) > 0.001) {
-        interpolatedPoints.push(lastRawPoint.clone());
+      if (lastRawPoint !== lastSampledPoint) {
+        sampledPoints.push(lastRawPoint);
       }
     }
 
-    return interpolatedPoints;
+    return sampledPoints;
   }
 
   /**

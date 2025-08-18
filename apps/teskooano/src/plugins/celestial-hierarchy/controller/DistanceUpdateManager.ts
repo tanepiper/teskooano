@@ -104,13 +104,15 @@ export class DistanceUpdateManager {
       // Calculate distances from each object to its parent
       const distances = new Map<string | number, number>();
 
-      physicsBodies.forEach(body => {
+      physicsBodies.forEach((body) => {
         const celestialObj = allObjects[body.id];
         if (!celestialObj) return;
 
         if (celestialObj.parentId) {
           // Object has a parent - calculate distance to parent
-          const parentBody = physicsBodies.find(p => p.id === celestialObj.parentId);
+          const parentBody = physicsBodies.find(
+            (p) => p.id === celestialObj.parentId,
+          );
           if (parentBody) {
             const distance = body.position_m.distanceTo(parentBody.position_m);
             distances.set(body.id, distance);

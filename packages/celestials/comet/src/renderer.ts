@@ -170,38 +170,31 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     this.camera.copy(camera);
 
+    // Update lighting manager with current light sources
+    this.updateLightSources(lightSources);
+
     // Apply centralized light attenuation
-    const attenuatedLightSources = this.applyLightAttenuation(
-      object,
-      lightSources,
-    );
+    const attenuatedLightSources = this.applyLightAttenuation();
 
     // Calculate dynamic ambient light based on nearby stars
     const dynamicAmbientIntensity =
-      this.lightingManager.calculateDynamicAmbientLightWithStarData(
-        object,
-        lightSources, // Use original light sources for ambient calculation, not attenuated
-        allObjects,
-      );
+      this.lightingManager.calculateDynamicAmbientLight();
 
-    this.updateNucleus(object, attenuatedLightSources, dynamicAmbientIntensity);
-    this.updateParticleTail(object, attenuatedLightSources);
-    this.updateJets(object, attenuatedLightSources);
+    this.updateNucleus(object, dynamicAmbientIntensity);
+    this.updateParticleTail(object);
+    this.updateJets(object);
 
     const deltaTime = this.clock.getDelta();
-    const activityFactor = this.calculateActivityFactor(
-      object,
-      attenuatedLightSources,
-    );
+    const activityFactor = this.calculateActivityFactor(object);
 
     this.updateNucleusRotation(object, deltaTime, activityFactor);
-    this.updateComa(object, time, attenuatedLightSources, activityFactor);
-    this.updateParticleTailPhysics(
-      deltaTime,
-      activityFactor,
+    this.updateComa(
       object,
-      attenuatedLightSources,
+      time,
+      this.lightingManager.getLightSources(),
+      activityFactor,
     );
+    this.updateParticleTailPhysics(deltaTime, activityFactor, object);
     this.updateJetsPhysics(deltaTime, activityFactor, object);
   }
 
@@ -356,14 +349,13 @@ export class CometRenderer extends BaseCelestialRenderer {
 
   private updateNucleus(
     object: RenderableCelestialObject,
-    attenuatedLightSources: Map<string, any> | undefined,
     dynamicAmbientIntensity: number,
   ): void {
     const nucleusMaterial = this.getMaterial(`comet-nucleus-${object.id}`) as
       | CometNucleusMaterial
       | undefined;
 
-    if (nucleusMaterial && attenuatedLightSources) {
+    if (nucleusMaterial) {
       // Update dynamic ambient lighting
       if (nucleusMaterial.uniforms.uAmbientStrength) {
         nucleusMaterial.uniforms.uAmbientStrength.value =
@@ -371,9 +363,10 @@ export class CometRenderer extends BaseCelestialRenderer {
       }
 
       // Update lighting
-      nucleusMaterial.uniforms.uNumLights.value = attenuatedLightSources.size;
+      nucleusMaterial.uniforms.uNumLights.value =
+        this.lightingManager.getLightSources().size;
       let i = 0;
-      for (const lightData of attenuatedLightSources.values()) {
+      for (const lightData of this.lightingManager.getLightSources().values()) {
         nucleusMaterial.uniforms.uLights.value[i].position.copy(
           lightData.position,
         );
@@ -390,30 +383,18 @@ export class CometRenderer extends BaseCelestialRenderer {
     }
   }
 
-  private updateParticleTail(
-    object: RenderableCelestialObject,
-    attenuatedLightSources: Map<string, any> | undefined,
-  ): void {
+  private updateParticleTail(object: RenderableCelestialObject): void {
     if (this.particleTail) {
       const material = this.particleTail.material as CometParticleMaterial;
-      const primaryLightSource = this.findClosestLightSource(
-        object,
-        attenuatedLightSources,
-      );
+      const primaryLightSource = this.findClosestLightSource();
       if (primaryLightSource) {
         material.uniforms.uLightIntensity.value = primaryLightSource.intensity;
       }
     }
   }
 
-  private updateJets(
-    object: RenderableCelestialObject,
-    attenuatedLightSources: Map<string, any> | undefined,
-  ): void {
-    const primaryLightSourceForJets = this.findClosestLightSource(
-      object,
-      attenuatedLightSources,
-    );
+  private updateJets(object: RenderableCelestialObject): void {
+    const primaryLightSourceForJets = this.findClosestLightSource();
     if (primaryLightSourceForJets) {
       this.jets.forEach((jet) => {
         const material = jet.points.material as CometJetMaterial;
@@ -429,14 +410,8 @@ export class CometRenderer extends BaseCelestialRenderer {
     }
   }
 
-  private calculateActivityFactor(
-    object: RenderableCelestialObject,
-    attenuatedLightSources: Map<string, any> | undefined,
-  ): number {
-    const primaryLightSource = this.findClosestLightSource(
-      object,
-      attenuatedLightSources,
-    );
+  private calculateActivityFactor(object: RenderableCelestialObject): number {
+    const primaryLightSource = this.findClosestLightSource();
     if (!primaryLightSource) return 0;
 
     // Store light position in a dedicated vector to avoid temp vector conflicts
@@ -528,7 +503,6 @@ export class CometRenderer extends BaseCelestialRenderer {
     deltaTime: number,
     activityFactor: number,
     object: RenderableCelestialObject,
-    attenuatedLightSources: Map<string, any> | undefined,
   ): void {
     if (
       !this.particleTail ||
@@ -545,10 +519,7 @@ export class CometRenderer extends BaseCelestialRenderer {
     }
 
     const properties = object.properties as CometProperties;
-    const primaryLightSource = this.findClosestLightSource(
-      object,
-      attenuatedLightSources,
-    );
+    const primaryLightSource = this.findClosestLightSource();
     if (!primaryLightSource) return;
 
     const lightPosition = new THREE.Vector3().copy(primaryLightSource.position);

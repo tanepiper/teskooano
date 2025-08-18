@@ -5,11 +5,8 @@ import { init, createNearByGraph } from "@robertaron/spacial-partitioning";
  */
 export async function testWasmLibrary(): Promise<boolean> {
   try {
-    console.log("Testing WASM library initialization...");
-
     // Test initialization
     await init();
-    console.log("WASM library initialized successfully");
 
     // Test basic functionality
     const positions = new Float32Array([
@@ -27,12 +24,8 @@ export async function testWasmLibrary(): Promise<boolean> {
     const distance = 2;
     const neighborGraph = createNearByGraph(positions, distance);
 
-    console.log("WASM neighbor graph result:", neighborGraph);
-    console.log("WASM library test passed!");
-
-    return true;
+    return neighborGraph.length > 0;
   } catch (error) {
-    console.error("WASM library test failed:", error);
     return false;
   }
 }

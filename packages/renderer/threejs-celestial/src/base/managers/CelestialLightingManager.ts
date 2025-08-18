@@ -1,14 +1,9 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import {
-  LightSourceData,
-  LightSourcesMap,
-  LightingCalculator,
-  ShadowCasterUtils,
-  ShadowCasterData,
-  LightingConfig,
-} from "../CelestialRenderer";
-import { CelestialType } from "@teskooano/data-types";
+import { LightSourceData, LightSourcesMap, LightingConfig } from "../lighting";
+import { LightingCalculator } from "../lighting/LightingCalculator";
+import { ShadowCasterUtils } from "../lighting/ShadowCasterUtils";
+import type { ShadowCasterData } from "../lighting/ShadowCasterUtils";
+import { BaseCelestialRenderer } from "../BaseCelestialRenderer";
 
 /**
  * Manages lighting functionality for celestial renderers.
@@ -16,37 +11,75 @@ import { CelestialType } from "@teskooano/data-types";
  */
 export class CelestialLightingManager {
   /**
-   * Optional reference to the scene's lighting manager.
+   * Reference to the base celestial renderer that owns this manager.
    */
-  private lightingManager?: LightingManager;
+  private renderer?: BaseCelestialRenderer;
+
+  /**
+   * Instance-based lighting calculator for this manager.
+   */
+  private lightingCalculator?: LightingCalculator;
+
+  /**
+   * Instance-based shadow caster utility for this manager.
+   */
+  private shadowCasterUtils?: ShadowCasterUtils;
+
+  /**
+   * Internal light sources map managed by this lighting manager.
+   */
+  private lightSources: LightSourcesMap = new Map();
 
   /**
    * Creates a new CelestialLightingManager.
-   * @param lightingManager Optional reference to the scene's lighting manager.
+   * @param renderer Optional reference to the base celestial renderer.
    */
-  constructor(lightingManager?: LightingManager) {
-    this.lightingManager = lightingManager;
+  constructor(renderer?: BaseCelestialRenderer) {
+    this.renderer = renderer;
   }
 
   /**
-   * Applies distance-based attenuation to light sources for a celestial object.
+   * Updates the internal light sources map.
+   * @param lightSources Map of light sources to store
+   */
+  public updateLightSources(lightSources: LightSourcesMap): void {
+    if (!lightSources || !(lightSources instanceof Map)) {
+      console.warn(
+        "CelestialLightingManager: lightSources is not a Map in updateLightSources",
+      );
+      return;
+    }
+    this.lightSources = new Map(lightSources);
+  }
+
+  /**
+   * Gets the current light sources map.
+   * @returns The current light sources map
+   */
+  public getLightSources(): LightSourcesMap {
+    return this.lightSources;
+  }
+
+  /**
+   * Applies distance-based attenuation to the internal light sources.
    * This is a common operation that should be performed by most renderers to ensure
    * physically accurate lighting falloff.
    *
-   * @param object The celestial object
-   * @param lightSources Map of light sources to attenuate
    * @param config Optional configuration for attenuation
+   * @param forceRefresh Whether to force a cache refresh
    * @returns The attenuated light sources
    */
   public applyLightAttenuation(
-    object: RenderableCelestialObject,
-    lightSources: LightSourcesMap,
     config?: LightingConfig,
+    forceRefresh: boolean = false,
   ): LightSourcesMap {
-    return LightingCalculator.applyDistanceAttenuation(
-      object,
-      lightSources,
+    if (!this.lightingCalculator) {
+      return this.lightSources;
+    }
+    return this.lightingCalculator.applyDistanceAttenuation(
+      this.lightSources,
       config,
+      forceRefresh,
     );
   }
 
@@ -54,54 +87,49 @@ export class CelestialLightingManager {
    * Finds all shadow casters that can affect a celestial object.
    * This includes moons for planets, or parent planets for moons.
    *
-   * @param object The celestial object
-   * @param allObjects Map of all objects in the scene
+   * @param forceRefresh Whether to force a cache refresh
    * @returns Array of shadow caster data
    */
-  public findShadowCasters(
-    object: RenderableCelestialObject,
-    allObjects?: Record<string, RenderableCelestialObject>,
-  ): ShadowCasterData[] {
-    if (!allObjects) {
+  public findShadowCasters(forceRefresh: boolean = false): ShadowCasterData[] {
+    if (!this.shadowCasterUtils) {
       return [];
     }
-    return ShadowCasterUtils.findShadowCasters(object, allObjects);
+    return this.shadowCasterUtils.findShadowCasters(forceRefresh);
   }
 
   /**
    * Finds shadow casters specifically for ring systems.
    * This includes the parent body and any moons.
    *
-   * @param object The object that owns the ring system
-   * @param allObjects Map of all objects in the scene
+   * @param forceRefresh Whether to force a cache refresh
    * @returns Array of shadow caster data
    */
   public findRingShadowCasters(
-    object: RenderableCelestialObject,
-    allObjects?: Record<string, RenderableCelestialObject>,
+    forceRefresh: boolean = false,
   ): ShadowCasterData[] {
-    if (!allObjects) {
+    if (!this.shadowCasterUtils) {
       return [];
     }
-    return ShadowCasterUtils.findRingShadowCasters(object, allObjects);
+    return this.shadowCasterUtils.findRingShadowCasters(forceRefresh);
   }
 
   /**
    * Finds the closest light source to a celestial object.
    * This is useful for effects that need to respond to a single primary light source.
    *
-   * @param object The celestial object
-   * @param lightSources Map of available light sources
+   * @param forceRefresh Whether to force a cache refresh
    * @returns The closest light source, or null if none available
    */
   public findClosestLightSource(
-    object: RenderableCelestialObject,
-    lightSources?: LightSourcesMap,
+    forceRefresh: boolean = false,
   ): LightSourceData | null {
-    if (!lightSources) {
+    if (!this.lightingCalculator) {
       return null;
     }
-    return LightingCalculator.findClosestLightSource(object, lightSources);
+    return this.lightingCalculator.findClosestLightSource(
+      this.lightSources,
+      forceRefresh,
+    );
   }
 
   /**
@@ -142,7 +170,10 @@ export class CelestialLightingManager {
     distance: number,
     falloffFactor?: number,
   ): number {
-    return LightingCalculator.calculateLightIntensityAtDistance(
+    if (!this.lightingCalculator) {
+      return lightSource.intensity ?? 1.0;
+    }
+    return this.lightingCalculator.calculateLightIntensityAtDistance(
       lightSource,
       distance,
       falloffFactor,
@@ -153,61 +184,80 @@ export class CelestialLightingManager {
    * Calculates dynamic ambient lighting based on nearby stars and their luminosity.
    * This replaces hardcoded ambient values with realistic distance-based ambient light.
    *
-   * @param object The celestial object receiving ambient light
-   * @param lightSources Map of light sources (stars) to calculate ambient from
+   * @param forceRefresh Whether to force a cache refresh
    * @returns Dynamic ambient light intensity based on star proximity and luminosity
    */
-  public calculateDynamicAmbientLight(
-    object: RenderableCelestialObject,
-    lightSources: LightSourcesMap,
-  ): number {
-    return LightingCalculator.calculateDynamicAmbientLight(
-      object,
-      lightSources,
+  public calculateDynamicAmbientLight(forceRefresh: boolean = false): number {
+    if (!this.lightingCalculator) {
+      return 0.25; // Default minimum ambient
+    }
+    return this.lightingCalculator.calculateDynamicAmbientLight(
+      this.lightSources,
+      forceRefresh,
     );
   }
 
   /**
-   * Calculates dynamic ambient lighting with access to full star data for accurate luminosity.
-   *
-   * @param object The celestial object receiving ambient light
-   * @param lightSources Map of light sources to calculate ambient from
-   * @param allObjects Map of all objects to access star properties
-   * @returns Dynamic ambient light intensity based on star luminosity and distance
+   * Sets the base celestial renderer reference.
+   * @param renderer The renderer to set.
    */
-  public calculateDynamicAmbientLightWithStarData(
+  public setRenderer(renderer: BaseCelestialRenderer): void {
+    this.renderer = renderer;
+  }
+
+  /**
+   * Initializes the lighting calculator and shadow caster utils with a celestial object.
+   * @param object The celestial object to initialize with.
+   */
+  public initializeLightingCalculator(object: RenderableCelestialObject): void {
+    this.lightingCalculator = new LightingCalculator(object);
+    this.shadowCasterUtils = new ShadowCasterUtils(object);
+  }
+
+  /**
+   * Updates the lighting calculator and shadow caster utils with new object data.
+   * @param object The updated celestial object.
+   * @param allObjects Optional map of all objects for enhanced calculations.
+   */
+  public updateLightingCalculator(
     object: RenderableCelestialObject,
-    lightSources: LightSourcesMap,
     allObjects?: Record<string, RenderableCelestialObject>,
-  ): number {
-    return LightingCalculator.calculateDynamicAmbientLightWithStarData(
-      object,
-      lightSources,
-      allObjects,
-    );
+  ): void {
+    if (this.lightingCalculator) {
+      this.lightingCalculator.updateObject(object);
+      if (allObjects) {
+        this.lightingCalculator.updateAllObjects(allObjects);
+      }
+    }
+
+    if (this.shadowCasterUtils) {
+      this.shadowCasterUtils.updateObject(object);
+      if (allObjects) {
+        this.shadowCasterUtils.updateAllObjects(allObjects);
+      }
+    }
   }
 
   /**
-   * Gets the scene's lighting manager if available.
-   * @returns The lighting manager, or undefined if not set.
+   * Gets lighting calculator cache statistics for debugging.
+   * @returns Cache statistics or null if calculator not initialized.
    */
-  public getLightingManager(): LightingManager | undefined {
-    return this.lightingManager;
+  public getLightingCacheStats() {
+    return this.lightingCalculator?.getCacheStats() || null;
   }
 
   /**
-   * Sets the scene's lighting manager.
-   * @param lightingManager The lighting manager to set.
+   * Gets shadow caster cache statistics for debugging.
+   * @returns Cache statistics or null if shadow caster utils not initialized.
    */
-  public setLightingManager(lightingManager: LightingManager): void {
-    this.lightingManager = lightingManager;
+  public getShadowCasterCacheStats() {
+    return this.shadowCasterUtils?.getCacheStats() || null;
   }
 
   /**
-   * Checks if a lighting manager is available.
-   * @returns True if a lighting manager is set.
+   * Clears the shadow caster cache.
    */
-  public hasLightingManager(): boolean {
-    return this.lightingManager !== undefined;
+  public dispose(): void {
+    this.shadowCasterUtils?.dispose();
   }
 }

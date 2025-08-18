@@ -61,19 +61,11 @@ export class WasmSpatialService {
     config: Partial<WasmPartitioningConfig>,
   ): Promise<boolean> {
     try {
-      console.log(
-        "[WasmSpatialService] Initializing centralized WASM spatial partitioning...",
-      );
-
       this.spatialPartitioning = new WasmSpatialPartitioning(
-        config.neighborDistance || 1e9, // Default to 1 billion meters
+        config.neighborDistance || 1e12, // Default to 1 trillion meters (~6700 AU)
       );
-
       await this.spatialPartitioning.initialize();
-
-      console.log(
-        "[WasmSpatialService] WASM spatial partitioning initialized successfully",
-      );
+      // console.log(this.spatialPartitioning.getStats());
       return true;
     } catch (error) {
       console.error(
@@ -111,6 +103,7 @@ export class WasmSpatialService {
       );
       return;
     }
+    // console.log(`[WasmSpatialService] Updating with ${bodies.length} bodies`);
     this.spatialPartitioning!.update(bodies);
   }
 
@@ -126,7 +119,8 @@ export class WasmSpatialService {
       );
       return [];
     }
-    return this.spatialPartitioning!.findNeighbors(bodyId);
+    const neighbors = this.spatialPartitioning!.findNeighbors(bodyId);
+    return neighbors;
   }
 
   /**
@@ -142,7 +136,12 @@ export class WasmSpatialService {
       );
       return [];
     }
-    return this.spatialPartitioning!.findBodiesInRange(point, distance);
+    const bodiesInRange = this.spatialPartitioning!.findBodiesInRange(
+      point,
+      distance,
+    );
+    // console.log(`[WasmSpatialService] Found ${bodiesInRange.length} bodies in range ${distance}m from point`, point);
+    return bodiesInRange;
   }
 
   /**
@@ -156,7 +155,10 @@ export class WasmSpatialService {
       );
       return [];
     }
-    return this.spatialPartitioning!.getPotentialCollisionPairs();
+    const collisionPairs =
+      this.spatialPartitioning!.getPotentialCollisionPairs();
+    // console.log(`[WasmSpatialService] Found ${collisionPairs.length} potential collision pairs`);
+    return collisionPairs;
   }
 
   /**

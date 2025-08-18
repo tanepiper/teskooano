@@ -50,7 +50,7 @@ export class SimulationManager {
     // Private constructor for singleton
     this.hierarchyManager = new HierarchyManager();
     this.wasmSimulationManager = new WasmSimulationManager({
-      neighborDistance: 1e9, // 1 billion meters
+      neighborDistance: 1e12, // 1 trillion meters (~6700 AU)
       collisionDistance: 1e6, // 1 million meters
     });
     this.wasmSpatialService = WasmSpatialService.getInstance();
@@ -98,11 +98,8 @@ export class SimulationManager {
     // Initialize centralized WASM spatial service
     try {
       await this.wasmSpatialService.initialize({
-        neighborDistance: 1e9, // 1 billion meters
+        neighborDistance: 1e12, // 1 trillion meters (~6700 AU)
       });
-      console.log(
-        "[SimulationManager] Centralized WASM spatial service initialized",
-      );
     } catch (error) {
       console.warn(
         "Failed to initialize centralized WASM spatial service:",

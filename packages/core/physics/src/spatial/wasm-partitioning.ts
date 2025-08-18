@@ -1,6 +1,7 @@
 import { init, createNearByGraph } from "@robertaron/spacial-partitioning";
 import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Configuration for the WASM spatial partitioning system
@@ -91,6 +92,11 @@ export class WasmSpatialPartitioning {
       this.positions[index + 1] = body.position_m.y;
       this.positions[index + 2] = body.position_m.z;
       this.bodyIds[i] = body.id;
+
+      // Debug: Log first few positions to see the scale
+      // if (i < 3) {
+      //   console.log(`[WasmSpatialPartitioning] Body ${body.id} position: (${body.position_m.x.toFixed(2)}, ${body.position_m.y.toFixed(2)}, ${body.position_m.z.toFixed(2)}) meters`);
+      // }
     }
 
     // Generate neighbor graph using WASM
@@ -129,14 +135,39 @@ export class WasmSpatialPartitioning {
       return [];
     }
 
-    // Create a temporary array with the search point
-    const searchPositions = new Float32Array([point.x, point.y, point.z]);
+    // console.log(`[WasmSpatialPartitioning] Search point: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)}) meters`);
+    // console.log(`[WasmSpatialPartitioning] Search distance: ${distance} meters`);
 
-    // Use the WASM library to find neighbors
-    const neighborGraph = createNearByGraph(searchPositions, distance);
+    const bodiesInRange: (string | number)[] = [];
+    const distances: number[] = [];
 
-    // The first (and only) element contains indices of bodies within range
-    return neighborGraph[0]?.map((index) => this.bodyIds[index]) || [];
+    // Calculate distances to all stored bodies
+    for (let i = 0; i < this.bodyIds.length; i++) {
+      const index = i * 3;
+      const bodyX = this.positions[index];
+      const bodyY = this.positions[index + 1];
+      const bodyZ = this.positions[index + 2];
+
+      const dx = point.x - bodyX;
+      const dy = point.y - bodyY;
+      const dz = point.z - bodyZ;
+      const distanceSq = dx * dx + dy * dy + dz * dz;
+      const actualDistance = Math.sqrt(distanceSq);
+
+      if (distanceSq <= distance * distance) {
+        bodiesInRange.push(this.bodyIds[i]);
+        distances.push(actualDistance);
+      }
+    }
+
+    // Debug: Log the first few results to see what's happening
+    // if (bodiesInRange.length > 0) {
+    //   console.log(`[WasmSpatialPartitioning] Found ${bodiesInRange.length} bodies in range ${distance} meters from point (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)}) meters`);
+    //   console.log(`[WasmSpatialPartitioning] Body IDs: ${bodiesInRange.slice(0, 5).join(', ')}`);
+    //   console.log(`[WasmSpatialPartitioning] Distances: ${distances.slice(0, 5).map(d => d.toFixed(2)).join(', ')} meters`);
+    // }
+
+    return bodiesInRange;
   }
 
   /**

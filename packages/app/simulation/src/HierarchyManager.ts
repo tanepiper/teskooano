@@ -337,23 +337,25 @@ export class HierarchyManager {
 
   /**
    * Gets appropriate search distance based on object type
+   * Returns distance in scene units (1 unit = 1 AU)
+   * Increased for extremely large-scale simulations with escaping objects
    */
   private getSearchDistance(obj: CelestialObject): number {
     switch (obj.type) {
       case CelestialType.MOON:
-        return 1e9; // 1 million km
+        return 1000000; // 100,000 AU - moons can escape very far from parent
       case CelestialType.SATELLITE:
-        return 5e8; // 500,000 km
+        return 500000; // 50,000 AU - satellites can escape
       case CelestialType.DWARF_PLANET:
-        return 5e10; // 50 million km
+        return 5000000; // 500,000 AU - dwarf planets can escape
       case CelestialType.PLANET:
-        return 1e11; // 100 million km
+        return 10000000; // 1M AU - planets can escape to interstellar space
       case CelestialType.COMET:
-        return 2e11; // 200 million km
+        return 100000000; // 10M AU - comets can escape to deep space
       case CelestialType.ASTEROID:
-        return 1e10; // 10 million km
+        return 1000000; // 100,000 AU - asteroids can escape
       default:
-        return 1e10; // 10 million km default
+        return 10000000; // 1M AU default
     }
   }
 }

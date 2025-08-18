@@ -455,15 +455,11 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
 
     // Calculate dynamic ambient light based on nearby stars
     const dynamicAmbientIntensity =
-      this.lightingManager.calculateDynamicAmbientLightWithStarData(
-        object,
-        lightSources, // Use original light sources for ambient calculation
-        allObjects,
-      );
+      this.lightingManager.calculateDynamicAmbientLight();
 
     if (this.ringMaterials && this.ringMaterials.size > 0) {
       // Find shadow casters using centralized utility
-      const shadowCasters = this.findRingShadowCasters(object, allObjects);
+      const shadowCasters = this.findRingShadowCasters();
 
       // Get parent axial tilt if available
       let parentAxialTilt: THREE.Vector3 | undefined;
