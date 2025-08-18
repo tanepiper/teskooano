@@ -5,6 +5,7 @@ import { BehaviorSubject, Subscription } from "rxjs";
 import { EngineCameraManager } from "../../camera-manager";
 import type { CompositeEngineState } from "../../types";
 import type { CompositeEnginePanel } from "../CompositeEnginePanel";
+import { engineRegistry } from "../../../../../core/controllers/engine/engine-registry.service";
 
 /**
  * Coordinates the creation, configuration, and state synchronization of camera-related
@@ -98,6 +99,14 @@ export class PanelCameraCoordinator {
         `[PanelCameraCoordinator for ${this._panelApiId}] Failed to create camera management instances.`,
       );
       return false;
+    }
+
+    // Register camera manager in engine registry for lookup by other components
+    if (this._panelApiId && this._cameraManagerInstance) {
+      engineRegistry.registerCameraManager(
+        this._panelApiId,
+        this._cameraManagerInstance,
+      );
     }
     return true;
   }

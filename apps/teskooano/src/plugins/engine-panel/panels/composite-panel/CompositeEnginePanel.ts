@@ -33,6 +33,7 @@ import {
   PanelEventManager,
   PanelLifecycleManager,
 } from "./managers";
+import { engineRegistry } from "../../../../core/controllers/engine/engine-registry.service";
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
@@ -291,6 +292,10 @@ export class CompositeEnginePanel
     };
     this._context = parameters.context;
 
+    // Register panel instance and mark it active for engine-wide lookups
+    panelService.registerPanelInstance(this._api.id, this);
+    panelService.setActivePanelApi(this._api);
+
     this.setupSubscriptions();
 
     this._isInitialized = true;
@@ -311,6 +316,10 @@ export class CompositeEnginePanel
     this._placeholderManager?.dispose();
 
     panelService.unregisterPanelInstance(this._api?.id ?? "unknown");
+    // Clear active panel if this panel was active
+    if (panelService.getActivePanelApi()?.id === this._api?.id) {
+      panelService.setActivePanelApi(null);
+    }
   }
 
   /**
@@ -367,6 +376,10 @@ export class CompositeEnginePanel
 
     // 3. Create the main renderer, injecting the dependencies.
     this._renderer = new ModularSpaceRenderer(this._engineContainer);
+    // Register renderer in the shared engine registry for this panel
+    if (this._api?.id) {
+      engineRegistry.registerRenderer(this._api.id, this._renderer);
+    }
     // @ts-ignore
     if (window.teskooano) {
       // @ts-ignore
@@ -418,6 +431,15 @@ export class CompositeEnginePanel
     }
 
     this._renderer.start();
+
+    // After start, register sub-managers that are available via orchestrators
+    if (this._api?.id) {
+      const orbits = this._renderer.renderingOrchestrator?.orbitManager;
+      const lighting = this._renderer.renderingOrchestrator?.lightingManager;
+      if (orbits) engineRegistry.registerOrbitsManager(this._api.id, orbits);
+      if (lighting)
+        engineRegistry.registerLightingManager(this._api.id, lighting);
+    }
 
     // Start performance monitoring after renderer is ready
     PerformanceMonitor.getInstance().startMonitoring();
@@ -481,6 +503,11 @@ export class CompositeEnginePanel
   private disposeRendererAndUI(): void {
     // Stop performance monitoring first
     PerformanceMonitor.getInstance().stopMonitoring();
+
+    // Unregister all instances tied to this panel from the engine registry
+    if (this._api?.id) {
+      engineRegistry.unregisterPanel(this._api.id);
+    }
 
     // Dispose renderer (this should handle most cleanup)
     this._renderer?.dispose?.();
