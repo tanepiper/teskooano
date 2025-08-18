@@ -39,7 +39,7 @@ export interface SimulationParameters {
   isStar: Map<string | number, boolean>;
   bodyTypes: Map<string | number, CelestialType>;
   ignoreCollisions?: Map<string | number, boolean>;
-  parentIds?: Map<string | number, string | undefined>;
+  parentIds?: Map<string, string | undefined>;
   octreeSize?: number;
   barnesHutTheta?: number;
   simulationConfig: SimulationConfiguration;

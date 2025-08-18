@@ -1,13 +1,16 @@
 import {
-  updateSimulation,
   vectorPool,
+  WasmSimulationManager,
+  WasmSpatialService,
   type SimulationParameters,
   type SimulationStepResult,
 } from "@teskooano/core-physics";
+
+import { OSVector3 } from "@teskooano/core-math";
 import {
-  simulationStateService,
   celestialManager,
   physicsSystemAdapter,
+  simulationStateService,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import {
@@ -17,7 +20,6 @@ import {
   OrbitUpdatePayload,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
 import { Observable, Subject } from "rxjs";
 import { HierarchyManager } from "./HierarchyManager";
 import { processLagrangeObjects } from "./LagrangeProcessor";
@@ -34,6 +36,8 @@ export class SimulationManager {
   private accumulatedTime = 0;
   private subscriptionManager = new StateSubscriptionMixin();
   private hierarchyManager: HierarchyManager;
+  private wasmSimulationManager: WasmSimulationManager;
+  private wasmSpatialService: WasmSpatialService;
 
   // Event Subjects
   private readonly _resetTime$ = new Subject<void>();
@@ -45,6 +49,11 @@ export class SimulationManager {
   private constructor() {
     // Private constructor for singleton
     this.hierarchyManager = new HierarchyManager();
+    this.wasmSimulationManager = new WasmSimulationManager({
+      neighborDistance: 1e9, // 1 billion meters
+      collisionDistance: 1e6, // 1 million meters
+    });
+    this.wasmSpatialService = WasmSpatialService.getInstance();
   }
 
   /**
@@ -78,16 +87,42 @@ export class SimulationManager {
    * The loop will only advance the simulation if it is not paused.
    * It is safe to call this multiple times; it will not start a second loop.
    */
-  public startLoop(): void {
+  public async startLoop(): Promise<void> {
     if (this.isRunning) {
       console.warn("Simulation loop is already running.");
       return;
+    }
+    this.wasmSimulationManager.dispose();
+    this.subscriptionManager.dispose(); // Clear any existing subscriptions
+
+    // Initialize centralized WASM spatial service
+    try {
+      await this.wasmSpatialService.initialize({
+        neighborDistance: 1e9, // 1 billion meters
+      });
+      console.log(
+        "[SimulationManager] Centralized WASM spatial service initialized",
+      );
+    } catch (error) {
+      console.warn(
+        "Failed to initialize centralized WASM spatial service:",
+        error,
+      );
+    }
+
+    // Initialize WASM simulation manager if not already initialized
+    try {
+      await this.wasmSimulationManager.initialize();
+    } catch (error) {
+      console.warn(
+        "Failed to initialize WASM simulation manager, falling back to traditional methods:",
+        error,
+      );
     }
 
     this.isRunning = true;
     this.accumulatedTime = simulationStateService.getSimulationState().time; // Sync with current state time
 
-    this.subscriptionManager.dispose(); // Clear any existing subscriptions
     this.subscriptionManager.subscribeToStateComposition(
       this._resetTime$,
       () => {
@@ -169,7 +204,7 @@ export class SimulationManager {
           const isStar = new Map<string | number, boolean>();
           const bodyTypes = new Map<string | number, CelestialType>();
           const ignoreCollisions = new Map<string | number, boolean>();
-          const parentIds = new Map<string | number, string | undefined>();
+          const parentIds = new Map<string, string | undefined>();
 
           Object.values(allCelestialObjectsForParams)
             .filter(
@@ -199,11 +234,13 @@ export class SimulationManager {
             currentTime_s: this.accumulatedTime,
           };
 
-          const result: SimulationStepResult = updateSimulation(
-            activeBodiesArray,
-            scaledDeltaTime,
-            simParams,
-          );
+          // Use WASM simulation as the primary method
+          const result: SimulationStepResult =
+            this.wasmSimulationManager.updateSimulation(
+              activeBodiesArray,
+              scaledDeltaTime,
+              simParams,
+            );
 
           physicsSystemAdapter.updateStateFromResult(result);
 

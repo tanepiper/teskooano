@@ -4,9 +4,11 @@ import { FormatUtils } from "../../../celestial-info/utils/formatters";
 import { template } from "./CelestialRow.template.js";
 
 /**
- * A custom element to display a single row in the focus control list.
- * It shows the object's name, an icon representing its type, and
- * buttons to focus or follow the object.
+ * A custom element to display a single row in the celestial hierarchy list.
+ *
+ * This component shows the object's name, an icon representing its type, distance from origin,
+ * and buttons to focus or follow the object. It's designed to be used within the celestial
+ * hierarchy tree structure.
  *
  * @fires CustomEvents.FOCUS_REQUEST - Dispatched when the focus button is clicked.
  * @fires CustomEvents.FOLLOW_REQUEST - Dispatched when the follow button is clicked.
@@ -20,6 +22,7 @@ import { template } from "./CelestialRow.template.js";
  * @attr {boolean} following - When present, indicates the camera is following this object.
  */
 export class CelestialRowComponent extends HTMLElement {
+  /** Observed attributes for automatic updates */
   static observedAttributes = [
     "object-id",
     "object-name",
@@ -30,14 +33,22 @@ export class CelestialRowComponent extends HTMLElement {
     "following",
   ];
 
+  /** The unique identifier of the celestial object */
   private _objectId: string | null = null;
+  /** Whether the row is currently inactive/disabled */
   private _isInactive: boolean = false;
+  /** Whether this object is currently focused */
   private _isFocused: boolean = false;
 
+  /** Reference to the celestial icon component */
   private iconEl: CelestialIconComponent | null = null;
+  /** Reference to the name display element */
   private nameEl: HTMLElement | null = null;
+  /** Reference to the distance display element */
   private distanceEl: HTMLElement | null = null;
+  /** Reference to the focus button */
   private focusBtn: HTMLElement | null = null;
+  /** Reference to the follow button */
   private followBtn: HTMLElement | null = null;
 
   /**
@@ -48,6 +59,7 @@ export class CelestialRowComponent extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
+    // Cache element references
     this.iconEl = this.shadowRoot!.getElementById(
       "icon",
     ) as CelestialIconComponent;
@@ -57,7 +69,6 @@ export class CelestialRowComponent extends HTMLElement {
   }
 
   /**
-   * Standard lifecycle callback.
    * Called when the element is added to the DOM.
    * Caches element references and attaches event listeners.
    */
@@ -67,23 +78,15 @@ export class CelestialRowComponent extends HTMLElement {
 
     if (this.focusBtn) {
       this.focusBtn.addEventListener("click", this.handleFocusClick);
-    } else {
-      console.error(
-        `[CelestialRowComponent connectedCallback] focusBtn NOT FOUND for ${this.getAttribute("object-id")}`,
-      );
     }
     if (this.followBtn) {
       this.followBtn.addEventListener("click", this.handleFollowClick);
-    } else {
-      console.error(
-        `[CelestialRowComponent connectedCallback] followBtn NOT FOUND for ${this.getAttribute("object-id")}`,
-      );
     }
+
     this.updateButtonTitles();
   }
 
   /**
-   * Standard lifecycle callback.
    * Called when the element is removed from the DOM.
    * Removes event listeners to prevent memory leaks.
    */
@@ -95,6 +98,10 @@ export class CelestialRowComponent extends HTMLElement {
   /**
    * Handles changes to observed attributes.
    * Updates the component's UI to reflect the new attribute values.
+   *
+   * @param name - The name of the attribute that changed
+   * @param oldValue - The previous value of the attribute
+   * @param newValue - The new value of the attribute
    */
   attributeChangedCallback(
     name: string,
@@ -132,40 +139,36 @@ export class CelestialRowComponent extends HTMLElement {
   }
 
   /**
-   * Updates the button titles based on the 'following' state.
+   * Updates the button titles based on the current object name and following state.
    */
   private updateButtonTitles() {
     const objectName = this.getAttribute("object-name");
     const id = this._objectId;
+    const displayName = objectName || id || "Unknown";
 
     if (this.focusBtn) {
-      this.focusBtn.setAttribute(
-        "title",
-        `Focus ${objectName || id || "Unknown"}`,
-      );
+      this.focusBtn.setAttribute("title", `Focus ${displayName}`);
     }
     if (this.followBtn) {
-      this.followBtn.setAttribute(
-        "title",
-        `Follow ${objectName || id || "Unknown"}`,
-      );
+      this.followBtn.setAttribute("title", `Follow ${displayName}`);
     }
   }
 
   /**
    * Updates the displayed name of the object.
-   * @param name The new name to display.
+   *
+   * @param name - The new name to display
    */
   private updateName(name: string | null) {
-    const nameEl = this.shadowRoot!.getElementById("name");
-    if (nameEl) {
-      nameEl.textContent = name ?? "Unknown";
+    if (this.nameEl) {
+      this.nameEl.textContent = name ?? "Unknown";
     }
   }
 
   /**
    * Updates the icon by passing the config to the celestial-icon component.
-   * @param configJson The celestial icon configuration as a JSON string.
+   *
+   * @param configJson - The celestial icon configuration as a JSON string
    */
   private updateIcon(configJson: string | null) {
     if (this.iconEl && configJson) {
@@ -175,7 +178,9 @@ export class CelestialRowComponent extends HTMLElement {
 
   /**
    * Handles the click event for the focus button.
-   * Dispatches a `focus-request` custom event.
+   * Dispatches a `focus-request` custom event if the object is active.
+   *
+   * @param event - The click event
    */
   private handleFocusClick = (event: MouseEvent) => {
     event.stopPropagation();
@@ -192,7 +197,9 @@ export class CelestialRowComponent extends HTMLElement {
 
   /**
    * Handles the click event for the follow button.
-   * Dispatches a `follow-request` custom event.
+   * Dispatches a `follow-request` custom event if the object is active.
+   *
+   * @param event - The click event
    */
   private handleFollowClick = (event: MouseEvent) => {
     event.stopPropagation();
@@ -209,7 +216,8 @@ export class CelestialRowComponent extends HTMLElement {
 
   /**
    * Updates the displayed distance from the system origin.
-   * @param distanceInMeters The distance in meters.
+   *
+   * @param distanceInMeters - The distance in meters
    */
   public updateDistance(distanceInMeters: number) {
     if (this.distanceEl) {
@@ -218,12 +226,29 @@ export class CelestialRowComponent extends HTMLElement {
     }
   }
 
+  /**
+   * Gets the unique identifier of the celestial object.
+   *
+   * @returns The object ID or null if not set
+   */
   get objectId(): string | null {
     return this._objectId;
   }
+
+  /**
+   * Gets whether the row is currently inactive/disabled.
+   *
+   * @returns True if the row is inactive
+   */
   get isInactive(): boolean {
     return this._isInactive;
   }
+
+  /**
+   * Gets whether this object is currently focused.
+   *
+   * @returns True if the object is focused
+   */
   get isFocused(): boolean {
     return this._isFocused;
   }

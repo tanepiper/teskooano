@@ -129,7 +129,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       onObjectDestroyed: this._populateListInternal.bind(this),
       onObjectStatusChanged: this._updateObjectStatusInternal.bind(this),
       onInfluencesChanged: this._populateListInternal.bind(this),
-      onHierarchyChanged: this._handleHierarchyChanged.bind(this),
+      onHierarchyChanged: this._populateListInternal.bind(this), // Simplified - just re-render
       onTreeInteraction: this._handleTreeInteraction.bind(this),
     };
   }
@@ -193,7 +193,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   }
 
   private _handleHierarchyChanged(): void {
+    // Hierarchy changed - update distances and re-render
     this._distanceManager.forceDistanceUpdate();
+    this._populateListInternal();
   }
 
   private _handleTreeInteraction(event: Event): void {

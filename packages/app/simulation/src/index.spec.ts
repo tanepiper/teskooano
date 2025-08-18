@@ -57,8 +57,8 @@ describe("SimulationManager", () => {
   });
 
   describe("loop control", () => {
-    it("should start and stop the simulation loop", () => {
-      simulationManager.startLoop();
+    it("should start and stop the simulation loop", async () => {
+      await simulationManager.startLoop();
       expect(simulationManager.isLoopRunning).toBe(true);
 
       simulationManager.stopLoop();
@@ -186,7 +186,7 @@ describe("SimulationManager", () => {
       });
 
       // Start the simulation loop to trigger physics updates
-      simulationManager.startLoop();
+      await simulationManager.startLoop();
 
       // Wait a bit for physics to run
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -227,7 +227,7 @@ describe("SimulationManager", () => {
         paused: true,
       });
 
-      simulationManager.startLoop();
+      await simulationManager.startLoop();
       expect(simulationManager.isLoopRunning).toBe(true);
 
       // The simulation should be running but paused

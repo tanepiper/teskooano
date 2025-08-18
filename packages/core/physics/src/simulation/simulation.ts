@@ -5,6 +5,7 @@ import {
   PhysicsStateReal,
 } from "@teskooano/data-types";
 import { handleCollisions } from "../collision/collision";
+import { WasmCollisionDetection } from "../collision/wasm-collision";
 import {
   velocityVerletIntegrate,
   standardEuler,

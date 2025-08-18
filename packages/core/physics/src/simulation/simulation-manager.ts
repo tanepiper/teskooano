@@ -1,7 +1,10 @@
 import { OSVector3 } from "@teskooano/core-math";
-import type {
-  PhysicsStateReal,
-  OrbitalParameters,
+import {
+  type PhysicsStateReal,
+  type OrbitalParameters,
+  SimulationMode,
+  AlgorithmType,
+  IntegratorType,
 } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
 import { AlgorithmFactory } from "../algorithms/algorithm-factory";
@@ -23,7 +26,7 @@ export interface EnhancedSimulationResult {
   destroyedIds: Set<string>;
   destructionEvents: any[];
   metadata: {
-    mode: "ideal" | "nbody";
+    mode: SimulationMode;
     algorithm?: string;
     integrator?: string;
     executionTime: number;
@@ -96,7 +99,7 @@ export class SimulationManager {
 
     let result: EnhancedSimulationResult;
 
-    if (configuration.mode === "ideal") {
+    if (configuration.mode === SimulationMode.IDEAL) {
       result = this.executeIdealMode(params, startTime);
     } else {
       result = this.executeNBodyMode(params, startTime);
@@ -114,18 +117,9 @@ export class SimulationManager {
   createOptimalConfiguration(
     params: SimulationManagerParams,
   ): SimulationConfiguration {
-    const bodyCount = params.bodies.length;
-    const hasOrbitalData = params.orbitalParameters && params.parentIds;
-
-    // If orbital data is available and body count is reasonable for ideal mode, suggest ideal
-    if (hasOrbitalData && bodyCount <= 1000) {
-      return { mode: "ideal" };
-    }
-
-    // Otherwise use N-body with algorithm factory
     return AlgorithmFactory.createOptimalConfiguration(
-      bodyCount,
-      "nbody",
+      params.bodies.length,
+      SimulationMode.NBODY,
       params.performancePreferences,
     );
   }
@@ -172,23 +166,28 @@ export class SimulationManager {
     }
 
     // Generate estimates for all N-body configurations
-    const algorithms = ["barnes-hut", "fmm", "p3m", "tree-pm"] as const;
+    const algorithms = [
+      AlgorithmType.BARNES_HUT,
+      AlgorithmType.FMM,
+      AlgorithmType.P3M,
+      AlgorithmType.TREE_PM,
+    ] as const;
     const integrators = [
-      "euler",
-      "symplectic",
-      "verlet",
-      "rk4",
-      "adaptive",
-      "yoshida4",
-      "forest-ruth",
-      "pefrl",
-      "leapfrog",
+      IntegratorType.EULER,
+      IntegratorType.SYMPLECTIC,
+      IntegratorType.VERLET,
+      IntegratorType.RK4,
+      IntegratorType.ADAPTIVE,
+      IntegratorType.YOSHIDA4,
+      IntegratorType.FOREST_RUTH,
+      IntegratorType.PEFRL,
+      IntegratorType.LEAPFROG,
     ] as const;
 
     for (const algorithm of algorithms) {
       for (const integrator of integrators) {
         const config: SimulationConfiguration = {
-          mode: "nbody",
+          mode: SimulationMode.NBODY,
           algorithm,
           integrator,
         };
@@ -233,7 +232,7 @@ export class SimulationManager {
       errors.push("Simulation mode is required");
     }
 
-    if (config.mode === "ideal") {
+    if (config.mode === SimulationMode.IDEAL) {
       if (!params.orbitalParameters) {
         errors.push("Orbital parameters required for ideal mode");
       }
@@ -245,7 +244,7 @@ export class SimulationManager {
       }
     }
 
-    if (config.mode === "nbody") {
+    if (config.mode === SimulationMode.NBODY) {
       if (!config.algorithm) {
         errors.push("Algorithm required for N-body mode");
       }
@@ -265,7 +264,7 @@ export class SimulationManager {
     }
 
     // Algorithm-specific validation
-    if (config.mode === "nbody" && config.algorithm) {
+    if (config.mode === SimulationMode.NBODY && config.algorithm) {
       const validation = AlgorithmFactory.validateAlgorithmChoice(
         config.algorithm,
         params.bodies.length,
@@ -308,7 +307,7 @@ export class SimulationManager {
       destroyedIds: new Set(), // No collisions in ideal mode
       destructionEvents: [],
       metadata: {
-        mode: "ideal",
+        mode: SimulationMode.IDEAL,
         executionTime: endTime - startTime,
         bodyCount: params.bodies.length,
         performanceProfile: {
@@ -330,7 +329,7 @@ export class SimulationManager {
   ): EnhancedSimulationResult {
     // Auto-select algorithm if requested
     let config = params.configuration;
-    if (params.autoSelectAlgorithm && config.mode === "nbody") {
+    if (params.autoSelectAlgorithm && config.mode === SimulationMode.NBODY) {
       const optimalAlgorithm = AlgorithmFactory.selectOptimalAlgorithm(
         params.bodies.length,
         params.performancePreferences,
@@ -378,9 +377,9 @@ export class SimulationManager {
       states: result.states,
       accelerations: result.accelerations,
       destroyedIds: new Set(Array.from(result.destroyedIds).map(String)),
-      destructionEvents: result.destructionEvents,
+      destructionEvents: Array.from(result.destroyedIds),
       metadata: {
-        mode: "nbody",
+        mode: SimulationMode.NBODY,
         algorithm: config.algorithm,
         integrator: config.integrator,
         executionTime: endTime - startTime,
@@ -401,7 +400,10 @@ export class SimulationManager {
     const warnings: string[] = [];
 
     // Performance analysis
-    if (result.metadata.mode === "nbody" && result.metadata.algorithm) {
+    if (
+      result.metadata.mode === SimulationMode.NBODY &&
+      result.metadata.algorithm
+    ) {
       const validation = AlgorithmFactory.validateAlgorithmChoice(
         result.metadata.algorithm as any,
         params.bodies.length,
@@ -417,7 +419,7 @@ export class SimulationManager {
         `Simulation step took ${result.metadata.executionTime.toFixed(1)}ms - consider optimizing`,
       );
 
-      if (result.metadata.mode === "nbody") {
+      if (result.metadata.mode === SimulationMode.NBODY) {
         recommendations.push(
           "Consider using a faster algorithm or reducing time step",
         );
@@ -426,7 +428,7 @@ export class SimulationManager {
 
     // Mode recommendations
     if (
-      result.metadata.mode === "nbody" &&
+      result.metadata.mode === SimulationMode.NBODY &&
       params.orbitalParameters &&
       params.bodies.length < 100
     ) {

@@ -4,6 +4,7 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AU_METERS } from "@teskooano/data-values";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
+import { WasmSpatialService } from "@teskooano/core-physics";
 
 /**
  * Defines the structure for a component that can be registered with the CSS2DManager.
@@ -38,6 +39,9 @@ export abstract class BaseLabelLayer {
   /** Performance optimization: throttle occlusion checks */
   private occlusionCheckCounter = 0;
 
+  /** WASM spatial partitioning for optimized occlusion testing */
+  private wasmSpatialService: WasmSpatialService;
+
   /** Public occlusion configuration options */
   public occlusionConfig = {
     /** Check frequency: how often to perform occlusion tests (in frames) */
@@ -54,6 +58,9 @@ export abstract class BaseLabelLayer {
 
     /** Whether occlusion checking is enabled */
     enabled: true,
+
+    /** Whether to use WASM optimization for occlusion testing */
+    useWasmOptimization: true,
   };
 
   private labelCheckQueue: string[] = [];
@@ -68,36 +75,15 @@ export abstract class BaseLabelLayer {
    */
   constructor(
     scene?: THREE.Scene,
-    occlusionOptions?: {
-      checkFrequency?: number;
-      maxTestsPerFrame?: number;
-      cacheDuration?: number;
-      nearbyDistanceThreshold?: number;
-      enabled?: boolean;
-    },
+    occlusionOptions?: Partial<typeof BaseLabelLayer.prototype.occlusionConfig>,
   ) {
     this.scene = scene;
-
-    // Apply occlusion options if provided
     if (occlusionOptions) {
-      if (occlusionOptions.checkFrequency !== undefined) {
-        this.occlusionConfig.checkFrequency = occlusionOptions.checkFrequency;
-      }
-      if (occlusionOptions.maxTestsPerFrame !== undefined) {
-        this.occlusionConfig.maxTestsPerFrame =
-          occlusionOptions.maxTestsPerFrame;
-      }
-      if (occlusionOptions.cacheDuration !== undefined) {
-        this.occlusionConfig.cacheDuration = occlusionOptions.cacheDuration;
-      }
-      if (occlusionOptions.nearbyDistanceThreshold !== undefined) {
-        this.occlusionConfig.nearbyDistanceThreshold =
-          occlusionOptions.nearbyDistanceThreshold;
-      }
-      if (occlusionOptions.enabled !== undefined) {
-        this.occlusionConfig.enabled = occlusionOptions.enabled;
-      }
+      this.occlusionConfig = { ...this.occlusionConfig, ...occlusionOptions };
     }
+
+    // Initialize WASM spatial service for occlusion optimization
+    this.wasmSpatialService = WasmSpatialService.getInstance();
 
     // Configure raycaster for better performance
     this.raycaster.far = Infinity;

@@ -7,6 +7,7 @@ import { ManagerInitializer } from "../initialization/ManagerInitializer";
 import { PanelRegistry } from "../initialization/PanelRegistry";
 import { EventSetup } from "../initialization/EventSetup";
 import { SimulationLoopManager } from "../state/SimulationLoopManager";
+import { WasmInitializer } from "../initialization/WasmInitializer";
 import { DockviewController, OverlayManager } from "../controllers/dockview";
 import { TeskooanoAppOptions } from "./types";
 
@@ -114,6 +115,16 @@ export class TeskooanoApp {
   private async initialize(): Promise<void> {
     const { appElement, toolbarElement } =
       EnvironmentValidator.validateRequiredElements();
+
+    // Step 1: Initialize WASM (must happen before simulation components)
+    console.debug("[Init] Initializing WASM libraries...");
+    const wasmInitializer = WasmInitializer.getInstance();
+    const wasmInitialized = await wasmInitializer.initialize();
+    if (!wasmInitialized) {
+      console.warn(
+        "[Init] WASM initialization failed, simulation will use fallback methods",
+      );
+    }
 
     // Step 2: Plugin System (can run in parallel with performance monitor)
     const [{ dockviewController, dockviewApi }, performanceMonitor] =

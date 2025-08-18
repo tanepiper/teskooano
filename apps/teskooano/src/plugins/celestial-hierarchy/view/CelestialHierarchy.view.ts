@@ -38,17 +38,10 @@ export class CelestialHierarchy
     const destroyedListContainer = this.shadowRoot!.getElementById(
       "destroyed-list",
     ) as HTMLUListElement;
-    const resetButton = this.shadowRoot!.getElementById("reset-view")!;
-    const clearButton = this.shadowRoot!.getElementById("clear-focus")!;
     this.connectedWindowElement =
       this.shadowRoot!.getElementById("connected-window");
 
-    if (
-      !treeListContainer ||
-      !destroyedListContainer ||
-      !resetButton ||
-      !clearButton
-    ) {
+    if (!treeListContainer || !destroyedListContainer) {
       console.error(
         "[CelestialHierarchy] Critical elements not found in shadow DOM.",
       );
@@ -60,8 +53,6 @@ export class CelestialHierarchy
       this,
       treeListContainer,
       destroyedListContainer,
-      resetButton,
-      clearButton,
     );
   }
 
@@ -194,15 +185,4 @@ export class CelestialHierarchy
   get element(): HTMLElement {
     return this;
   }
-
-  /**
-   * A public method that provides a clear API for external components
-   * to request that an object be followed.
-   * Delegates the call directly to the controller.
-   * @param objectId The ID of the object to follow.
-   * @returns True if the follow request was successfully initiated.
-   */
-  public publicFollowObject = (objectId: string): boolean => {
-    return this.controller?.publicFollowObject(objectId) ?? false;
-  };
 }

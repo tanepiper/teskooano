@@ -32,9 +32,9 @@ export class SimulationLoopManager {
         map((objects) => Object.keys(objects).length > 0),
         distinctUntilChanged(),
       )
-      .subscribe((hasObjects: boolean) => {
+      .subscribe(async (hasObjects: boolean) => {
         if (hasObjects) {
-          this.ensureSimulationLoopStarted();
+          await this.ensureSimulationLoopStarted();
         } else {
           if (simulationManager.isLoopRunning) {
             simulationManager.stopLoop();
@@ -51,10 +51,10 @@ export class SimulationLoopManager {
    * Ensures that the simulation state is started if it hasn't been already.
    * This also updates the `simulationLoopStarted$` observable.
    */
-  private ensureSimulationLoopStarted(): void {
+  private async ensureSimulationLoopStarted(): Promise<void> {
     if (!simulationManager.isLoopRunning) {
       try {
-        simulationManager.startLoop();
+        await simulationManager.startLoop();
         this.simulationLoopStartedSubject.next(true);
         console.log(
           "[SimulationLoopManager] Simulation state initiated by ensureSimulationLoopStarted via SimulationManager.",
@@ -84,9 +84,9 @@ export class SimulationLoopManager {
   /**
    * Manually starts the simulation loop.
    */
-  startSimulation(): void {
+  async startSimulation(): Promise<void> {
     if (!simulationManager.isLoopRunning) {
-      simulationManager.startLoop();
+      await simulationManager.startLoop();
       this.simulationLoopStartedSubject.next(true);
     }
   }
