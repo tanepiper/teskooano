@@ -47,14 +47,20 @@ export class CameraManager {
   /**
    * Constructs the CameraManager.
    * Initializes the camera state with default values.
+   * If options are provided, dependencies are injected at construction time.
    */
-  constructor() {
+  constructor(options?: CameraManagerOptions) {
     this.cameraStateSubject = new BehaviorSubject<CameraManagerState>({
       fov: DEFAULT_FOV,
       focusedObjectId: null,
       currentPosition: DEFAULT_CAMERA_POSITION.clone(),
       currentTarget: DEFAULT_CAMERA_TARGET.clone(),
     });
+
+    if (options) {
+      // Support constructor-based dependency injection to reduce post-construction API passing
+      this.setDependencies(options);
+    }
   }
 
   private _cleanupPriorRenderer(): void {

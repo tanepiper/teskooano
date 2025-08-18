@@ -87,7 +87,18 @@ export class PanelCameraCoordinator {
    * Initializes the main CameraManager and the panel-specific EngineCameraManager.
    */
   private _initializeSystems(): boolean {
-    this._cameraManagerInstance = new CameraManager();
+    // Constructor-level dependency injection: renderer and initial view state
+    const initialViewState = this._viewState$.getValue();
+    this._cameraManagerInstance = new CameraManager({
+      renderer: this._renderer,
+      initialFov: initialViewState.fov,
+      initialFocusedObjectId: initialViewState.focusedObjectId,
+      initialCameraPosition: initialViewState.cameraPosition,
+      initialCameraTarget: initialViewState.cameraTarget,
+      onFocusChangeCallback: (focusedId: string | null) => {
+        this._panel.updateViewState({ focusedObjectId: focusedId });
+      },
+    });
     this._engineCameraManager = new EngineCameraManager(
       this._panel,
       this._cameraManagerInstance,
@@ -118,19 +129,7 @@ export class PanelCameraCoordinator {
   private _configureAndLinkState(): boolean {
     if (!this._cameraManagerInstance) return false;
 
-    const initialViewState = this._viewState$.getValue();
     try {
-      this._cameraManagerInstance.setDependencies({
-        renderer: this._renderer,
-        initialFov: initialViewState.fov,
-        initialFocusedObjectId: initialViewState.focusedObjectId,
-        initialCameraPosition: initialViewState.cameraPosition,
-        initialCameraTarget: initialViewState.cameraTarget,
-        onFocusChangeCallback: (focusedId: string | null) => {
-          this._panel.updateViewState({ focusedObjectId: focusedId });
-        },
-      });
-
       this._cameraManagerInstance.initializeCameraPosition();
 
       this._subscription.add(
