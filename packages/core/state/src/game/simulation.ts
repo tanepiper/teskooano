@@ -1,7 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
-import { getDefaultConfiguration, isValidConfiguration } from "./types";
 import { SimulationState, SimulationConfiguration } from "./types";
+import { getDefaultConfiguration, isValidConfiguration } from "./utils";
 import {
   AlgorithmType,
   DeviceTier,

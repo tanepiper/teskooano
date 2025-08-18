@@ -4,8 +4,6 @@ import {
   simulationStateService,
   type SimulationConfiguration,
   StateSubscriptionMixin,
-  getConfigurationDisplayName,
-  getConfigurationShortName,
 } from "@teskooano/core-state";
 import type {
   AlgorithmType,
@@ -16,6 +14,10 @@ import type {
 
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
+import {
+  getConfigurationDisplayName,
+  getConfigurationShortName,
+} from "../../../plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.utils";
 
 const PERFORMANCE_PROFILE_OPTIONS: {
   value: DeviceTier;

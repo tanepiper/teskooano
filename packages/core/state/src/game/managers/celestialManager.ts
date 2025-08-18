@@ -1,5 +1,6 @@
 import type {
   CelestialObject,
+  CelestialSpecificPropertiesUnion,
   OrbitalParameters,
   PlanetAtmosphereProperties,
   StarProperties,
@@ -13,6 +14,30 @@ import { renderableStore } from "../renderableStore";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import { celestialStore } from "../stores/celestialStore";
 import { ClearStateOptions } from "../types";
+
+// Cache for frequently accessed data
+const ROOT_OBJECT_TYPES = new Set([
+  CelestialType.STAR,
+  CelestialType.PLANET,
+  CelestialType.GAS_GIANT,
+  CelestialType.SATELLITE,
+]);
+
+// Pre-allocated objects to reduce garbage collection
+const DEFAULT_STAR_PROPERTIES: StarProperties = {
+  type: CelestialType.STAR,
+  isMainStar: true,
+  spectralClass: "G2V",
+  luminosity: 1.0,
+  color: "#FFF9E5",
+};
+
+const DEFAULT_CELESTIAL_PROPERTIES = {
+  status: CelestialStatus.ACTIVE,
+  temperature: 100,
+  albedo: 0.3,
+  seed: "",
+};
 
 /**
  * Type guard to check if an object is of type PlanetAtmosphereProperties.
@@ -47,23 +72,22 @@ export class CelestialManager {
    * Adds a celestial object to the store and updates hierarchy.
    * Dispatches events for UI updates.
    */
-  public addObject<
-    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
-  >(object: CelestialObject<T>): void {
+  public addObject<T extends CelestialSpecificPropertiesUnion>(
+    object: CelestialObject<T>,
+  ): void {
     try {
       celestialStore.setObject(object.id, object);
 
-      // Update hierarchy
+      // Update hierarchy efficiently
       if (object.parentId) {
         celestialStore.addChild(object.parentId, object.id);
       } else if (object.type === CelestialType.STAR) {
         // Root stars get their own hierarchy entry
         const hierarchy = celestialStore.getHierarchy();
         if (!(object.id in hierarchy)) {
-          celestialStore.setHierarchy({
-            ...hierarchy,
-            [object.id]: [],
-          });
+          const newHierarchy = { ...hierarchy };
+          newHierarchy[object.id] = [];
+          celestialStore.setHierarchy(newHierarchy);
         }
       }
 
@@ -76,13 +100,23 @@ export class CelestialManager {
   /**
    * Updates properties of an existing celestial object.
    */
-  public updateObject<
-    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
-  >(id: string, updates: Partial<CelestialObject<T>>): void {
+  public updateObject<T extends CelestialSpecificPropertiesUnion>(
+    id: string,
+    updates: Partial<CelestialObject<T>>,
+  ): void {
     const object = celestialStore.getObject(id);
     if (object) {
-      const updatedObject = { ...object, ...updates };
-      celestialStore.setObject(id, updatedObject);
+      // Only update if there are actual changes
+      const hasChanges = Object.keys(updates).some(
+        (key) =>
+          object[key as keyof CelestialObject<T>] !==
+          updates[key as keyof CelestialObject<T>],
+      );
+
+      if (hasChanges) {
+        const updatedObject = { ...object, ...updates };
+        celestialStore.setObject(id, updatedObject);
+      }
     } else {
       console.warn(`[CelestialManager] Object ${id} not found for update.`);
     }
@@ -161,9 +195,10 @@ export class CelestialManager {
   /**
    * Creates a solar system with a primary star.
    */
-  public createSolarSystem<
-    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
-  >(data: CelestialObject<T>, clearStateFirst = true): string {
+  public createSolarSystem<T extends CelestialSpecificPropertiesUnion>(
+    data: CelestialObject<T>,
+    clearStateFirst = true,
+  ): string {
     if (data.type !== CelestialType.STAR) {
       console.error(
         `[CelestialManager] createSolarSystem called with non-star type: ${data.type}`,
@@ -197,9 +232,11 @@ export class CelestialManager {
   /**
    * Adds multiple celestial objects with dependency-aware sorting.
    */
-  public addObjects<
-    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
-  >(data: CelestialObject<T>[]): void {
+  public addObjects<T extends CelestialSpecificPropertiesUnion>(
+    data: CelestialObject<T>[],
+  ): void {
+    if (data.length === 0) return;
+
     const sortedData = this.sortByDependency(data);
 
     // Build the complete objects map first
@@ -208,21 +245,39 @@ export class CelestialManager {
     const hierarchy = celestialStore.getHierarchy();
     const newHierarchy: Record<string, string[]> = { ...hierarchy };
 
+    // Pre-allocate arrays for better performance
+    const parentIds = new Set<string>();
+    const starIds = new Set<string>();
+
+    // First pass: collect all parent IDs and star IDs
+    for (const objectData of sortedData) {
+      if (objectData.parentId) {
+        parentIds.add(objectData.parentId);
+      }
+      if (objectData.type === CelestialType.STAR) {
+        starIds.add(objectData.id);
+      }
+    }
+
+    // Pre-allocate hierarchy entries
+    for (const parentId of parentIds) {
+      if (!newHierarchy[parentId]) {
+        newHierarchy[parentId] = [];
+      }
+    }
+    for (const starId of starIds) {
+      if (!newHierarchy[starId]) {
+        newHierarchy[starId] = [];
+      }
+    }
+
     // Add all objects to the map without triggering store updates
     for (const objectData of sortedData) {
       newObjectsMap[objectData.id] = objectData;
 
       // Update hierarchy
       if (objectData.parentId) {
-        if (!newHierarchy[objectData.parentId]) {
-          newHierarchy[objectData.parentId] = [];
-        }
         newHierarchy[objectData.parentId].push(objectData.id);
-      } else if (objectData.type === CelestialType.STAR) {
-        // Root stars get their own hierarchy entry
-        if (!newHierarchy[objectData.id]) {
-          newHierarchy[objectData.id] = [];
-        }
       }
     }
 
@@ -247,9 +302,9 @@ export class CelestialManager {
   /**
    * Adds a single celestial object with proper physics state calculation.
    */
-  public addCelestial<
-    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
-  >(data: CelestialObject<T>): void {
+  public addCelestial<T extends CelestialSpecificPropertiesUnion>(
+    data: CelestialObject<T>,
+  ): void {
     const processedObject = this.processCelestialData(data);
     if (processedObject) {
       this.addObject(processedObject);
@@ -264,8 +319,9 @@ export class CelestialManager {
         ? data.properties
         : undefined;
 
+    // Use pre-allocated default properties to reduce object creation
     const processedProperties: StarProperties = {
-      type: CelestialType.STAR,
+      ...DEFAULT_STAR_PROPERTIES,
       isMainStar: inputStarProps?.isMainStar ?? true,
       spectralClass: inputStarProps?.spectralClass || "G2V",
       luminosity: inputStarProps?.luminosity ?? 1.0,
@@ -291,13 +347,16 @@ export class CelestialManager {
     };
   }
 
-  private processCelestialData<
-    T extends import("@teskooano/data-types").CelestialSpecificPropertiesUnion,
-  >(data: CelestialObject<T>): CelestialObject<T> | null {
+  private processCelestialData<T extends CelestialSpecificPropertiesUnion>(
+    data: CelestialObject<T>,
+  ): CelestialObject<T> | null {
     // Validate basic requirements
     if (!this.validateCelestialData(data)) {
       return null;
     }
+
+    // Generate seed once to avoid multiple Date.now() calls
+    const seed = data.seed ?? `${Math.floor(Date.now() % 1000000)}`;
 
     return {
       ...data,
@@ -307,7 +366,7 @@ export class CelestialManager {
       atmosphere: isPlanetAtmosphere(data.atmosphere)
         ? data.atmosphere
         : undefined,
-      seed: data.seed ?? `${Math.floor(Date.now() % 1000000)}`,
+      seed,
       parentId: data.parentId,
     };
   }
@@ -331,15 +390,12 @@ export class CelestialManager {
   }
 
   private isValidRootObject(type: CelestialType): boolean {
-    return [
-      CelestialType.STAR,
-      CelestialType.PLANET,
-      CelestialType.GAS_GIANT,
-      CelestialType.SATELLITE,
-    ].includes(type);
+    return ROOT_OBJECT_TYPES.has(type);
   }
 
   private sortByDependency(objects: CelestialObject[]): CelestialObject[] {
+    if (objects.length <= 1) return objects;
+
     const objectMap = new Map(objects.map((obj) => [obj.id, obj]));
     const sorted: CelestialObject[] = [];
     const visited = new Set<string>();

@@ -1,9 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  AlgorithmType,
   CelestialObject,
   DeviceTier,
-  IntegratorType,
   SimulationMode,
 } from "@teskooano/data-types";
 
@@ -24,103 +22,19 @@ export interface CameraState {
  * Supports both ideal (Keplerian) and N-body physics modes.
  */
 export interface SimulationConfiguration {
+  /**
+   * The mode of the simulation.
+   */
   mode: SimulationMode;
-  integrator?: IntegratorType; // Only required for N-Body mode
-  algorithm?: AlgorithmType; // Only required for N-Body mode
+  /**
+   * The integrator type to use for the simulation.
+   */
+  integrator?: string;
+  /**
+   * The algorithm type to use for the simulation.
+   */
+  algorithm?: string;
 }
-
-/**
- * Validates if a simulation configuration is valid.
- */
-export function isValidConfiguration(config: SimulationConfiguration): boolean {
-  if (config.mode === SimulationMode.IDEAL) {
-    // Ideal mode doesn't need integrator or algorithm
-    return config.integrator === undefined && config.algorithm === undefined;
-  }
-
-  if (config.mode === SimulationMode.NBODY) {
-    // N-Body mode requires both integrator and algorithm
-    return config.integrator !== undefined && config.algorithm !== undefined;
-  }
-
-  return false;
-}
-
-/**
- * Returns the default simulation configuration.
- */
-export function getDefaultConfiguration(): SimulationConfiguration {
-  return {
-    mode: SimulationMode.NBODY,
-    integrator: IntegratorType.PEFRL,
-    algorithm: AlgorithmType.TREE_PM,
-  };
-}
-
-/**
- * Gets a user-friendly display name for a configuration.
- */
-export function getConfigurationDisplayName(
-  config: SimulationConfiguration,
-): string {
-  if (config.mode === SimulationMode.IDEAL) {
-    return "Ideal Orrery";
-  }
-
-  const integrator = config.integrator
-    ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1)
-    : "Unknown";
-  const algorithm = config.algorithm
-    ? config.algorithm
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join("-")
-    : "Unknown";
-
-  return `N-Body (${algorithm} + ${integrator})`;
-}
-
-/**
- * Gets a short name for display in constrained UI spaces.
- */
-export function getConfigurationShortName(
-  config: SimulationConfiguration,
-): string {
-  if (config.mode === SimulationMode.IDEAL) {
-    return "Ideal";
-  }
-
-  let algorithmShort: string;
-  switch (config.algorithm) {
-    case AlgorithmType.BARNES_HUT:
-      algorithmShort = "BH";
-      break;
-    case AlgorithmType.FMM:
-      algorithmShort = "FMM";
-      break;
-    case AlgorithmType.P3M:
-      algorithmShort = "P3M";
-      break;
-    default:
-      algorithmShort = "TPM"; // tree-pm is the default
-      break;
-  }
-
-  const integratorShort = config.integrator
-    ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3)
-    : "Unk";
-
-  return `${algorithmShort}-${integratorShort}`;
-}
-
-/**
- * Defines the performance profile settings for the simulation.
- * These can be used to adjust quality vs. performance trade-offs.
- * - `low`: Prioritizes performance, may reduce visual fidelity or simulation accuracy.
- * - `medium`: A balance between performance and quality.
- * - `high`: Prioritizes quality/accuracy, may impact performance.
- * - `cosmic`: Maximum quality/accuracy, potentially very demanding.
- */
 
 /**
  * Defines settings related to visual aspects of the simulation, like trails.

@@ -337,25 +337,28 @@ export class HierarchyManager {
 
   /**
    * Gets appropriate search distance based on object type
-   * Returns distance in scene units (1 unit = 1 AU)
-   * Increased for extremely large-scale simulations with escaping objects
+   * Returns distance in meters for realistic astronomical scales
    */
   private getSearchDistance(obj: CelestialObject): number {
     switch (obj.type) {
-      case CelestialType.MOON:
-        return 1000000; // 100,000 AU - moons can escape very far from parent
-      case CelestialType.SATELLITE:
-        return 500000; // 50,000 AU - satellites can escape
-      case CelestialType.DWARF_PLANET:
-        return 5000000; // 500,000 AU - dwarf planets can escape
+      case CelestialType.STAR:
+        return 1000 * AU_METERS; // 1000 AU - stars can influence objects at great distances
+      case CelestialType.GAS_GIANT:
+        return 100 * AU_METERS; // 100 AU - gas giants have strong gravitational influence
       case CelestialType.PLANET:
-        return 10000000; // 1M AU - planets can escape to interstellar space
+        return 10 * AU_METERS; // 10 AU - planets influence nearby objects
+      case CelestialType.DWARF_PLANET:
+        return 10 * AU_METERS; // 10 AU - dwarf planets similar to planets
+      case CelestialType.MOON:
+        return 1 * AU_METERS; // 1 AU - moons typically stay within 1 AU of parent
+      case CelestialType.SATELLITE:
+        return 10e6; // 10 Mm (10 million meters) - satellites stay close to parent
       case CelestialType.COMET:
-        return 100000000; // 10M AU - comets can escape to deep space
+        return 100 * AU_METERS; // 100 AU - comets can have wide orbits
       case CelestialType.ASTEROID:
-        return 1000000; // 100,000 AU - asteroids can escape
+        return 10 * AU_METERS; // 10 AU - asteroids typically within planetary systems
       default:
-        return 10000000; // 1M AU default
+        return 10 * AU_METERS; // 10 AU default
     }
   }
 }
