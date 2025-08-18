@@ -1,4 +1,4 @@
-import { simulationManager } from "@teskooano/app-simulation";
+import { simulationOrchestrator } from "@teskooano/app-simulation";
 import { StateAccessor } from "@teskooano/core-state";
 import { BehaviorSubject, Observable, Subscription } from "rxjs";
 import { distinctUntilChanged, map } from "rxjs/operators";
@@ -36,8 +36,8 @@ export class SimulationLoopManager {
         if (hasObjects) {
           await this.ensureSimulationLoopStarted();
         } else {
-          if (simulationManager.isLoopRunning) {
-            simulationManager.stopLoop();
+          if (simulationOrchestrator.isLoopRunning) {
+            simulationOrchestrator.stopLoop();
             this.simulationLoopStartedSubject.next(false);
             console.log(
               "[SimulationLoopManager] Simulation state stopped as no objects exist.",
@@ -52,9 +52,9 @@ export class SimulationLoopManager {
    * This also updates the `simulationLoopStarted$` observable.
    */
   private async ensureSimulationLoopStarted(): Promise<void> {
-    if (!simulationManager.isLoopRunning) {
+    if (!simulationOrchestrator.isLoopRunning) {
       try {
-        await simulationManager.startLoop();
+        await simulationOrchestrator.startLoop();
         this.simulationLoopStartedSubject.next(true);
         console.log(
           "[SimulationLoopManager] Simulation state initiated by ensureSimulationLoopStarted via SimulationManager.",
@@ -85,8 +85,8 @@ export class SimulationLoopManager {
    * Manually starts the simulation loop.
    */
   async startSimulation(): Promise<void> {
-    if (!simulationManager.isLoopRunning) {
-      await simulationManager.startLoop();
+    if (!simulationOrchestrator.isLoopRunning) {
+      await simulationOrchestrator.startLoop();
       this.simulationLoopStartedSubject.next(true);
     }
   }
@@ -95,8 +95,8 @@ export class SimulationLoopManager {
    * Manually stops the simulation loop.
    */
   stopSimulation(): void {
-    if (simulationManager.isLoopRunning) {
-      simulationManager.stopLoop();
+    if (simulationOrchestrator.isLoopRunning) {
+      simulationOrchestrator.stopLoop();
       this.simulationLoopStartedSubject.next(false);
     }
   }

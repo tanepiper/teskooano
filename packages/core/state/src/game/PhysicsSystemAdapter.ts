@@ -70,11 +70,8 @@ class PhysicsSystemAdapter {
   /**
    * Returns a snapshot of the orbital parameters for all celestial objects.
    */
-  public getOrbitalParametersSnapshot(): Map<
-    string | number,
-    OrbitalParameters
-  > {
-    const orbitalParams = new Map<string | number, OrbitalParameters>();
+  public getOrbitalParametersSnapshot(): Map<string, OrbitalParameters> {
+    const orbitalParams = new Map<string, OrbitalParameters>();
     const allObjects = this.getCelestialObjectsSnapshot();
 
     for (const obj of Object.values(allObjects)) {

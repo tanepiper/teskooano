@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/data-values": "file:../../data/values",
     "@teskooano/core-state": "file:../../core/state",
     "@teskooano/core-physics": "file:../../core/physics",
     "@teskooano/renderer-threejs": "file:../../renderer/threejs"

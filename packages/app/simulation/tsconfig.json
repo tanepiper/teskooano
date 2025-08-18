@@ -10,7 +10,8 @@
     "paths": {
       "@teskooano/renderer-threejs": ["../../renderer/threejs"],
       "@teskooano/core-state": ["../../core/state"],
-      "@teskooano/data-types": ["../../data/types"]
+      "@teskooano/data-types": ["../../data/types"],
+      "@teskooano/data-values": ["../../data/values"]
     }
   },
   "include": ["src/**/*.ts"],
@@ -18,6 +19,7 @@
   "references": [
     { "path": "../../renderer/threejs" },
     { "path": "../../core/state" },
-    { "path": "../../data/types" }
+    { "path": "../../data/types" },
+    { "path": "../../data/values" }
   ]
 }

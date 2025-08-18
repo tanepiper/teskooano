@@ -6,7 +6,7 @@ import {
   DebugOrchestrator,
 } from "./orchestrators";
 
-import { simulationManager } from "@teskooano/app-simulation";
+import { simulationOrchestrator } from "@teskooano/app-simulation";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -62,7 +62,7 @@ export class ModularSpaceRenderer {
    */
   private setupAnimationCallbacks(): void {
     // Register physics simulation callback first
-    const physicsCallback = simulationManager.createPhysicsCallback();
+    const physicsCallback = simulationOrchestrator.createPhysicsCallback();
     this.renderingOrchestrator.sceneManager.animationLoop.onPhysics(
       physicsCallback,
     );

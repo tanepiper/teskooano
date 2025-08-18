@@ -5,17 +5,35 @@ import {
   SimulationMode,
   AlgorithmType,
   IntegratorType,
+  CelestialType,
 } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
 import { AlgorithmFactory } from "../algorithms/algorithm-factory";
 import {
-  updateSimulation,
-  updateSimulationWithConfiguration,
-} from "./simulation";
-import {
   IdealOrreryStrategy,
   type IdealOrbitParams,
 } from "../modes/ideal/ideal-orrery";
+import { WasmCollisionDetection } from "../collision/wasm-collision";
+import { WasmSpatialPartitioning } from "../spatial/wasm-partitioning";
+import { calculateNewtonianGravitationalForce } from "../forces/gravity";
+import {
+  velocityVerletIntegrate,
+  standardEuler,
+  symplecticEuler,
+  idealOrbit,
+  rk4Integrate,
+  adaptiveRKIntegrate,
+  yoshida4Integrate,
+  forestRuthIntegrate,
+  pefrlIntegrate,
+  leapfrogIntegrate,
+} from "../integrators";
+import { sortBodiesByHierarchy } from "../utils";
+import {
+  AU_METERS,
+  GRAVITATIONAL_CONSTANT,
+  GRAVITATIONAL_SOFTENING_SQUARED,
+} from "@teskooano/data-values";
 
 /**
  * Enhanced simulation result with performance metrics and metadata
@@ -61,6 +79,7 @@ export interface SimulationManagerParams {
   bodyTypes?: Map<string, any>;
   octreeSize?: number;
   barnesHutTheta?: number;
+  ignoreCollisions?: Map<string, boolean>;
 
   // Optional preferences
   autoSelectAlgorithm?: boolean;
@@ -72,14 +91,192 @@ export interface SimulationManagerParams {
 }
 
 /**
- * High-level simulation manager that coordinates between ideal and N-body modes
+ * Type for cached integrator functions
+ */
+type IntegratorFunction = (
+  body: PhysicsStateReal,
+  currentAcceleration: OSVector3,
+  calculateNewAcceleration: (stateGuess: PhysicsStateReal) => OSVector3,
+  dt: number,
+) => PhysicsStateReal;
+
+/**
+ * Unified WASM-optimized simulation manager
  * Provides intelligent algorithm selection, performance monitoring, and validation
+ * with high-performance WASM spatial partitioning and collision detection
  */
 export class SimulationManager {
   private idealOrreryStrategy: IdealOrreryStrategy;
 
+  // WASM systems
+  private wasmCollisionDetection: WasmCollisionDetection;
+  private wasmSpatialPartitioning: WasmSpatialPartitioning;
+  private initialized = false;
+
+  // Caching for performance optimization
+  private integratorFunction: IntegratorFunction;
+
   constructor() {
     this.idealOrreryStrategy = new IdealOrreryStrategy();
+
+    // Initialize WASM systems
+    this.wasmCollisionDetection = new WasmCollisionDetection({
+      collisionDistance: 0.1 * AU_METERS, // 0.1 AU
+    });
+
+    this.wasmSpatialPartitioning = new WasmSpatialPartitioning(
+      1000 * AU_METERS,
+    ); // 1000 AU
+
+    // Initialize with default integrator
+    this.integratorFunction = this.createIntegratorFunction(
+      IntegratorType.PEFRL,
+    );
+  }
+
+  /**
+   * Initialize the WASM systems
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+
+    await this.wasmCollisionDetection.initialize();
+    await this.wasmSpatialPartitioning.initialize();
+    this.initialized = true;
+  }
+
+  /**
+   * Create integrator function based on type
+   */
+  private createIntegratorFunction(
+    integratorType: IntegratorType,
+  ): IntegratorFunction {
+    switch (integratorType) {
+      case IntegratorType.EULER:
+        return (body, currentAcceleration, _, dt) =>
+          standardEuler(body, currentAcceleration, dt);
+      case IntegratorType.SYMPLECTIC:
+        return (body, currentAcceleration, _, dt) =>
+          symplecticEuler(body, currentAcceleration, dt);
+      case IntegratorType.VERLET:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          velocityVerletIntegrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+      case IntegratorType.RK4:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          rk4Integrate(body, currentAcceleration, calculateNewAcceleration, dt);
+      case IntegratorType.ADAPTIVE:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) => {
+          const result = adaptiveRKIntegrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+          return result.newState;
+        };
+      case IntegratorType.YOSHIDA4:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          yoshida4Integrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+      case IntegratorType.FOREST_RUTH:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          forestRuthIntegrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+      case IntegratorType.PEFRL:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          pefrlIntegrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+      case IntegratorType.LEAPFROG:
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          leapfrogIntegrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+      default:
+        console.warn(
+          `Unknown integrator: ${integratorType}, falling back to verlet`,
+        );
+        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+          velocityVerletIntegrate(
+            body,
+            currentAcceleration,
+            calculateNewAcceleration,
+            dt,
+          );
+    }
+  }
+
+  /**
+   * Update integrator function when configuration changes
+   */
+  private updateIntegratorFunction(integratorType: IntegratorType): void {
+    this.integratorFunction = this.createIntegratorFunction(integratorType);
+  }
+
+  /**
+   * Calculate acceleration for a body using WASM spatial partitioning
+   */
+  private calculateAccelerationForBody_NBody(
+    targetBodyState: PhysicsStateReal,
+    allBodies: PhysicsStateReal[],
+  ): OSVector3 {
+    // Use WASM spatial partitioning for neighbor finding, then calculate forces
+    const neighborIds = this.wasmSpatialPartitioning.findNeighbors(
+      targetBodyState.id,
+    );
+
+    const netForce = new OSVector3(0, 0, 0);
+
+    // Create a map for fast body lookup
+    const bodyMap = new Map<string | number, PhysicsStateReal>();
+    for (const body of allBodies) {
+      bodyMap.set(body.id, body);
+    }
+
+    // Calculate forces from all neighboring bodies
+    for (const neighborId of neighborIds) {
+      // Skip self-interaction
+      if (neighborId === targetBodyState.id) continue;
+
+      // Get neighbor body from the bodies array
+      const neighborBody = bodyMap.get(neighborId);
+      if (!neighborBody) continue;
+
+      // Calculate gravitational force using standardized function
+      const force = calculateNewtonianGravitationalForce(
+        neighborBody,
+        targetBodyState,
+        GRAVITATIONAL_CONSTANT,
+      );
+      netForce.add(force);
+    }
+
+    const acceleration = new OSVector3(0, 0, 0);
+    if (targetBodyState.mass_kg !== 0) {
+      acceleration.copy(netForce).multiplyScalar(1 / targetBodyState.mass_kg);
+    }
+    return acceleration;
   }
 
   /**
@@ -352,11 +549,58 @@ export class SimulationManager {
       barnesHutTheta: params.barnesHutTheta || 0.7,
     };
 
-    const result = updateSimulationWithConfiguration(
-      params.bodies,
-      params.deltaTime,
-      simulationParams,
+    // Update integrator if needed
+    if (config.integrator) {
+      this.updateIntegratorFunction(config.integrator);
+    }
+
+    // Update WASM spatial partitioning
+    this.wasmSpatialPartitioning.update(params.bodies);
+
+    // Calculate accelerations using WASM spatial partitioning
+    const accelerations = new Map<string, OSVector3>();
+    params.bodies.forEach((body) => {
+      const acc = this.calculateAccelerationForBody_NBody(body, params.bodies);
+      accelerations.set(body.id, acc);
+    });
+
+    // Integration step using cached integrator
+    const integratedStates = params.bodies.map((body) => {
+      const currentAcceleration =
+        accelerations.get(body.id) || new OSVector3(0, 0, 0);
+
+      const calculateNewAccelerationForAdvanced = (
+        stateGuess: PhysicsStateReal,
+      ): OSVector3 => {
+        return this.calculateAccelerationForBody_NBody(
+          stateGuess,
+          params.bodies,
+        );
+      };
+
+      return this.integratorFunction(
+        body,
+        currentAcceleration,
+        calculateNewAccelerationForAdvanced,
+        params.deltaTime,
+      );
+    });
+
+    // Update collision detection with integrated states
+    this.wasmCollisionDetection.update(
+      integratedStates,
+      params.radii || new Map(),
+      params.isStar || new Map(),
+      params.bodyTypes || new Map(),
     );
+    const [finalStates, destroyedIds] =
+      this.wasmCollisionDetection.handleCollisions(params.ignoreCollisions);
+
+    const result = {
+      states: finalStates,
+      accelerations,
+      destroyedIds,
+    };
 
     const endTime = performance.now();
 
@@ -439,5 +683,14 @@ export class SimulationManager {
 
     result.metadata.recommendations = recommendations;
     result.metadata.warnings = warnings;
+  }
+
+  /**
+   * Clean up resources
+   */
+  dispose(): void {
+    this.wasmCollisionDetection.dispose();
+    this.wasmSpatialPartitioning.dispose();
+    this.initialized = false;
   }
 }

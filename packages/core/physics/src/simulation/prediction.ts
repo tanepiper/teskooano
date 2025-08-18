@@ -1,9 +1,11 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { type PhysicsStateReal } from "@teskooano/data-types";
-import { Octree } from "../spatial/octree";
+import { WasmSpatialPartitioning } from "../spatial/wasm-partitioning";
 import { velocityVerletIntegrate } from "../integrators";
 import { CelestialType } from "@teskooano/data-types";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
+import { calculateNewtonianGravitationalForce } from "../forces/gravity";
+import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 
 export type PredictedPoint = {
   point: OSVector3;
@@ -58,6 +60,9 @@ export function predictTrajectory(
   const predictedPoints: PredictedPoint[] = [];
   const relativeObjectPath: OSVector3[] = [];
 
+  // Initialize WASM spatial partitioning
+  const wasmSpatialPartitioning = new WasmSpatialPartitioning(1e12); // 1 trillion meters
+
   // Make a deep copy of the initial states to avoid modifying the original data
   let currentStates: PhysicsStateReal[] = allBodiesInitialStates.map(
     (body) => ({
@@ -102,20 +107,40 @@ export function predictTrajectory(
   }
 
   const accelerations = new Map<string | number, OSVector3>();
-  const octree = new Octree(octreeSize);
   const reusableAccVector = new OSVector3(0, 0, 0);
 
   // Simulation loop
   for (let i = 0; i < steps; i++) {
-    // Calculate accelerations using Octree
-    octree.clear();
-    for (const body of currentStates) {
-      octree.insert(body);
-    }
+    // Update WASM spatial partitioning with current states
+    wasmSpatialPartitioning.update(currentStates);
 
+    // Calculate accelerations using WASM spatial partitioning
     accelerations.clear();
     for (const body of currentStates) {
-      const netForce = octree.calculateForceOn(body, barnesHutTheta);
+      const neighborIds = wasmSpatialPartitioning.findNeighbors(body.id);
+      const netForce = new OSVector3(0, 0, 0);
+
+      // Create a map for fast body lookup
+      const bodyMap = new Map<string | number, PhysicsStateReal>();
+      for (const b of currentStates) {
+        bodyMap.set(b.id, b);
+      }
+
+      // Calculate forces from all neighboring bodies
+      for (const neighborId of neighborIds) {
+        if (neighborId === body.id) continue; // Skip self-interaction
+
+        const neighborBody = bodyMap.get(neighborId);
+        if (!neighborBody) continue;
+
+        const force = calculateNewtonianGravitationalForce(
+          neighborBody,
+          body,
+          GRAVITATIONAL_CONSTANT,
+        );
+        netForce.add(force);
+      }
+
       reusableAccVector.set(0, 0, 0);
       if (body.mass_kg !== 0) {
         reusableAccVector.copy(netForce).multiplyScalar(1 / body.mass_kg);
@@ -140,10 +165,37 @@ export function predictTrajectory(
       const calculateNewAcceleration = (
         stateGuess: PhysicsStateReal,
       ): OSVector3 => {
-        const force = octree.calculateForceOn(stateGuess, barnesHutTheta);
+        const neighborIds = wasmSpatialPartitioning.findNeighbors(
+          stateGuess.id,
+        );
+        const netForce = new OSVector3(0, 0, 0);
+
+        // Create a map for fast body lookup
+        const bodyMap = new Map<string | number, PhysicsStateReal>();
+        for (const b of currentStates) {
+          bodyMap.set(b.id, b);
+        }
+
+        // Calculate forces from all neighboring bodies
+        for (const neighborId of neighborIds) {
+          if (neighborId === stateGuess.id) continue; // Skip self-interaction
+
+          const neighborBody = bodyMap.get(neighborId);
+          if (!neighborBody) continue;
+
+          const force = calculateNewtonianGravitationalForce(
+            neighborBody,
+            stateGuess,
+            GRAVITATIONAL_CONSTANT,
+          );
+          netForce.add(force);
+        }
+
         reusableAccVector.set(0, 0, 0);
         if (stateGuess.mass_kg !== 0) {
-          reusableAccVector.copy(force).multiplyScalar(1 / stateGuess.mass_kg);
+          reusableAccVector
+            .copy(netForce)
+            .multiplyScalar(1 / stateGuess.mass_kg);
         }
         return reusableAccVector;
       };

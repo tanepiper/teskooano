@@ -1,4 +1,4 @@
-import { simulationManager } from "@teskooano/app-simulation";
+import { simulationOrchestrator } from "@teskooano/app-simulation";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
@@ -116,7 +116,7 @@ export class SystemFunctionsManager {
           });
 
           seed.updateSeed(parsedData.seed);
-          simulationManager.resetSystem(true);
+          simulationOrchestrator.resetSystem(true);
 
           observer.next({
             success: true,
@@ -193,7 +193,7 @@ export class SystemFunctionsManager {
    */
   public async clearSystem() {
     try {
-      simulationManager.stopLoop();
+      simulationOrchestrator.stopLoop();
 
       celestialManager.clearState({
         resetCamera: false,
@@ -202,7 +202,7 @@ export class SystemFunctionsManager {
       });
       actions.resetTime();
 
-      simulationManager.resetSystem(true);
+      simulationOrchestrator.resetSystem(true);
 
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
@@ -333,7 +333,7 @@ export class SystemFunctionsManager {
       celestialManager.createSolarSystem(star);
       seed.updateSeed("");
 
-      simulationManager.resetSystem(true);
+      simulationOrchestrator.resetSystem(true);
       return { success: true, symbol: "📄", message: "Blank system created." };
     } catch (error) {
       console.error("[SystemFunctions] Error creating blank system:", error);

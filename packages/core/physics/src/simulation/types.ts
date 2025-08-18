@@ -3,6 +3,9 @@ import {
   CelestialType,
   OrbitalParameters,
   PhysicsStateReal,
+  SimulationMode,
+  IntegratorType,
+  AlgorithmType,
 } from "@teskooano/data-types";
 /**
  * Define a return type that includes both states and accelerations
@@ -17,18 +20,9 @@ export interface SimulationStepResult {
  * Simulation configuration interface (local definition to avoid circular dependency)
  */
 export interface SimulationConfiguration {
-  mode: "ideal" | "nbody";
-  integrator?:
-    | "euler"
-    | "symplectic"
-    | "verlet"
-    | "rk4"
-    | "adaptive"
-    | "yoshida4"
-    | "forest-ruth"
-    | "pefrl"
-    | "leapfrog";
-  algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m" | "tree-pm";
+  mode: SimulationMode;
+  integrator?: IntegratorType;
+  algorithm?: AlgorithmType;
 }
 
 /**

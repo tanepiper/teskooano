@@ -2,7 +2,10 @@ import { OSVector3 } from "@teskooano/core-math";
 
 import { calculateNewtonianGravitationalForce } from "../forces/gravity";
 import { PhysicsStateReal } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
+import {
+  GRAVITATIONAL_CONSTANT,
+  GRAVITATIONAL_SOFTENING_SQUARED,
+} from "@teskooano/data-values";
 
 /**
  * Represents a node in the octree
@@ -325,9 +328,6 @@ const findBodiesInRange = (
 export class Octree {
   private root: OctreeNode;
   private maxDepth: number;
-  // Softening parameter for gravitational force calculations (in meters squared).
-  // This prevents singularities when bodies get very close. Set to 10,000 km^2.
-  private softeningFactorSquared: number = 1e10; // (100,000m)^2 = 10,000,000,000 m^2
   // Pre-allocate OSVector3 instances for performance
   private _tempForce: OSVector3 = new OSVector3();
   private _tempNodePointMass: PhysicsStateReal = {
@@ -402,7 +402,7 @@ export class Octree {
 
     const distance = Math.sqrt(
       distanceSquared(targetBody.position_m, node.centerOfMass_m) +
-        this.softeningFactorSquared,
+        GRAVITATIONAL_SOFTENING_SQUARED,
     );
     const nodeWidth = node.size * 2;
 
