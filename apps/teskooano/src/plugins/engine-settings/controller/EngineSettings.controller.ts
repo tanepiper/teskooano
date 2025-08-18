@@ -89,10 +89,24 @@ export class EngineSettingsController extends StateSubscriptionMixin {
           this._eventHandlerMap.get("toggle")!,
         );
       } else if (type === "slider") {
-        element.addEventListener(
-          CustomEvents.SLIDER_CHANGE,
-          this._eventHandlerMap.get("slider")!,
-        );
+        // Prefer RxJS value$ if available
+        const slider = element as TeskooanoSlider;
+        if (slider.value$) {
+          this.subscribeToState(slider.value$, (value) => {
+            // Reuse the handler logic to update state
+            const fakeEvent = new CustomEvent<SliderValueChangePayload>(
+              CustomEvents.SLIDER_CHANGE,
+              { detail: { value } },
+            );
+            (fakeEvent as any).target = slider;
+            this.handleSliderChange(fakeEvent);
+          });
+        } else {
+          element.addEventListener(
+            CustomEvents.SLIDER_CHANGE,
+            this._eventHandlerMap.get("slider")!,
+          );
+        }
       }
     });
   }

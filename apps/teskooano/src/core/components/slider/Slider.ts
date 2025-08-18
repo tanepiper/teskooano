@@ -6,6 +6,7 @@ import {
   Events,
   createComponentState,
 } from "@teskooano/ui-plugin/patterns";
+import { BehaviorSubject } from "rxjs";
 
 interface SliderState {
   value: number;
@@ -38,6 +39,9 @@ export class TeskooanoSlider extends HTMLElement {
   private valueDisplayElement!: HTMLElement;
   private helpTextElement!: HTMLElement;
   private valueInputElement!: HTMLInputElement;
+
+  // Expose a reactive stream for value changes (in addition to DOM event for compatibility)
+  public readonly value$ = new BehaviorSubject<number>(50);
 
   // Use the new reactive state pattern
   private state = createComponentState(
@@ -168,6 +172,8 @@ export class TeskooanoSlider extends HTMLElement {
     this.state.set("label", this.getAttribute("label") || "Slider");
     this.state.set("helpText", this.getAttribute("help-text") || "");
     this.state.set("inputValue", this.state.get("value").toString());
+    // seed initial value$
+    this.value$.next(this.state.get("value"));
   }
 
   private setupEventListeners(): void {
@@ -187,6 +193,9 @@ export class TeskooanoSlider extends HTMLElement {
     this.state.watch("value", (newValue: number) => {
       this.updateSliderValue(newValue);
       this.updateValueDisplay(newValue);
+      // RxJS stream emission
+      this.value$.next(newValue);
+      // DOM event for compatibility
       this.emitChangeEvent(newValue);
     });
 
