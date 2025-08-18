@@ -14,7 +14,6 @@ import { panelService } from "../../../../core/controllers/dockview/panel.servic
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 
-import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
 import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
@@ -378,14 +377,15 @@ export class CompositeEnginePanel
 
     // 3. Create the main renderer, injecting the dependencies.
     this._renderer = new ModularSpaceRenderer(this._engineContainer);
-    // Register renderer in the shared engine registry for this panel
-    if (this._api?.id) {
-      engineRegistry.registerRenderer(this._api.id, this._renderer);
-    }
     // @ts-ignore
     if (window.teskooano) {
       // @ts-ignore
       window.teskooano.renderer = this._renderer;
+    }
+
+    // Register renderer in the shared engine registry for this panel
+    if (this._api?.id) {
+      engineRegistry.registerRenderer(this._api.id, this._renderer);
     }
 
     // 4. Finalize setup.
@@ -423,19 +423,6 @@ export class CompositeEnginePanel
   private _finalizeRendererInitialization(): void {
     if (!this._renderer || !this._engineContainer) return;
 
-    if (this.element.isConnected && this._api?.id) {
-      this.dispatchEvent(
-        new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
-          bubbles: true,
-          composed: true,
-          detail: {
-            panelId: this._api.id,
-            parentInstance: this,
-          },
-        }),
-      );
-    }
-
     this._renderer.start();
 
     // After start, register sub-managers that are available via orchestrators
@@ -446,9 +433,6 @@ export class CompositeEnginePanel
       if (lighting)
         engineRegistry.registerLightingManager(this._api.id, lighting);
     }
-
-    // Start performance monitoring after renderer is ready
-    PerformanceMonitor.getInstance().startMonitoring();
 
     this._resizeObserver = new ResizeObserver(() => {
       this.triggerResize();
@@ -525,7 +509,7 @@ export class CompositeEnginePanel
 
     // Dispose toolbar
     const toolbarManager = this._params?.params?.engineToolbarManager;
-    if (toolbarManager && this._api?.id) {
+    if (toolbarManager and this._api?.id) {
       toolbarManager.disposeToolbarForPanel(this._api.id);
       this._engineToolbar = null;
     }
