@@ -34,6 +34,7 @@ import {
   PanelLifecycleManager,
 } from "./managers";
 import { engineRegistry } from "../../../../core/controllers/engine/engine-registry.service";
+import { EngineViewStateManager } from "../../../../core/controllers/engine/EngineViewStateManager";
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
@@ -66,6 +67,7 @@ export class CompositeEnginePanel
   private _cameraCoordinator: PanelCameraCoordinator | undefined = undefined;
   private _lifecycleManager: PanelLifecycleManager;
   private _eventManager: PanelEventManager;
+  private _engineViewStateManager: EngineViewStateManager | undefined;
 
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
 
@@ -404,7 +406,11 @@ export class CompositeEnginePanel
     }
 
     // Apply the complete initial view state to the newly created renderer.
-    applyViewStateToRenderer(this._renderer, viewState);
+    // Bind view state declaratively
+    this._engineViewStateManager = new EngineViewStateManager({
+      renderer: this._renderer,
+    });
+    this._engineViewStateManager.bindToState(this._viewStateSubject);
 
     this._finalizeRendererInitialization();
   }
