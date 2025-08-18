@@ -1,4 +1,4 @@
-import { CelestialStatus, CustomEvents } from "@teskooano/data-types";
+import { CelestialStatus } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 
@@ -59,37 +59,10 @@ export class EventManager {
         "touchend",
         this._handlers.onTreeInteraction,
       );
-      this._treeListContainer.addEventListener(
-        CustomEvents.FOCUS_REQUEST,
-        this._handlers.onTreeInteraction,
-      );
-      this._treeListContainer.addEventListener(
-        CustomEvents.FOLLOW_REQUEST,
-        this._handlers.onTreeInteraction,
-      );
     }
 
     // Global document event listeners
-    document.addEventListener(
-      "celestial-objects-loaded",
-      this._handlers.onObjectsLoaded,
-    );
-    document.addEventListener(
-      "celestial-object-destroyed",
-      this._handlers.onObjectDestroyed,
-    );
-    document.addEventListener(
-      "celestial-object-status-changed",
-      this._handleObjectStatusChanged,
-    );
-    document.addEventListener(
-      "celestial-influences-changed",
-      this._handlers.onInfluencesChanged,
-    );
-    document.addEventListener(
-      "celestial-hierarchy-changed",
-      this._handleHierarchyChanged,
-    );
+    // Document-level custom events are deprecated in favor of state streams.
   }
 
   public removeEventListeners(): void {

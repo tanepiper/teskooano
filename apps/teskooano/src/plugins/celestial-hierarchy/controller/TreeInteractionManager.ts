@@ -1,4 +1,4 @@
-import { CelestialStatus, CustomEvents } from "@teskooano/data-types";
+import { CelestialStatus } from "@teskooano/data-types";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 
 export interface TreeInteractionHandlers {
@@ -30,12 +30,10 @@ export class TreeInteractionManager {
       return;
     }
 
-    if (
-      event.type === CustomEvents.FOCUS_REQUEST ||
-      event.type === CustomEvents.FOLLOW_REQUEST
-    ) {
-      this.handleRowEvent(event);
-    }
+    // Handle focus/follow via button clicks using data attributes
+    const focusBtn = target.closest("[id='focus-btn']");
+    const followBtn = target.closest("[id='follow-btn']");
+    if (focusBtn || followBtn) this.handleRowEvent(event);
   }
 
   public expandTreeToReveal(focusedId: string): void {
@@ -79,19 +77,21 @@ export class TreeInteractionManager {
   }
 
   private handleRowEvent(event: Event): void {
-    const customEvent = event as CustomEvent<{ objectId: string }>;
-    const objectId = customEvent.detail?.objectId;
+    const row = (event.target as HTMLElement).closest(
+      "celestial-row",
+    ) as HTMLElement | null;
+    const objectId = row?.getAttribute("object-id") || undefined;
     if (!objectId) return;
 
     // Note: Object validation should be done by the calling controller
     // since this manager doesn't have access to the current object state
 
-    if (event.type === CustomEvents.FOCUS_REQUEST) {
+    if ((event.target as HTMLElement).id === "focus-btn") {
       console.debug(
         `[TreeInteractionManager] Focus requested via row event for: ${objectId}`,
       );
       this._handlers.onFocusRequest(objectId);
-    } else if (event.type === CustomEvents.FOLLOW_REQUEST) {
+    } else if ((event.target as HTMLElement).id === "follow-btn") {
       console.debug(
         `[TreeInteractionManager] Follow requested via row event for: ${objectId}`,
       );

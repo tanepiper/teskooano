@@ -1,7 +1,7 @@
-import { CustomEvents } from "@teskooano/data-types";
 import { CelestialIconComponent } from "../../../celestial-icons";
 import { FormatUtils } from "../../../celestial-info/utils/formatters";
 import { template } from "./CelestialRow.template.js";
+import { engineSignalsService } from "../../../core/controllers/engine/EngineSignals.service";
 
 /**
  * A custom element to display a single row in the celestial hierarchy list.
@@ -9,17 +9,6 @@ import { template } from "./CelestialRow.template.js";
  * This component shows the object's name, an icon representing its type, distance from origin,
  * and buttons to focus or follow the object. It's designed to be used within the celestial
  * hierarchy tree structure.
- *
- * @fires CustomEvents.FOCUS_REQUEST - Dispatched when the focus button is clicked.
- * @fires CustomEvents.FOLLOW_REQUEST - Dispatched when the follow button is clicked.
- *
- * @attr object-id - The unique ID of the celestial object.
- * @attr object-name - The display name of the celestial object.
- * @attr object-type - The type of the celestial object (e.g., 'Star', 'Planet'), used for the hover tooltip.
- * @attr {string} config - A JSON string representing the CelestialIconConfig.
- * @attr {boolean} inactive - When present, styles the row as inactive/disabled.
- * @attr {boolean} focused - When present, styles the row as the currently focused item.
- * @attr {boolean} following - When present, indicates the camera is following this object.
  */
 export class CelestialRowComponent extends HTMLElement {
   /** Observed attributes for automatic updates */
@@ -178,39 +167,21 @@ export class CelestialRowComponent extends HTMLElement {
 
   /**
    * Handles the click event for the focus button.
-   * Dispatches a `focus-request` custom event if the object is active.
-   *
-   * @param event - The click event
    */
   private handleFocusClick = (event: MouseEvent) => {
     event.stopPropagation();
     if (this._objectId && !this._isInactive) {
-      this.dispatchEvent(
-        new CustomEvent(CustomEvents.FOCUS_REQUEST, {
-          bubbles: true,
-          composed: true,
-          detail: { objectId: this._objectId },
-        }),
-      );
+      engineSignalsService.focusObject(this._objectId);
     }
   };
 
   /**
    * Handles the click event for the follow button.
-   * Dispatches a `follow-request` custom event if the object is active.
-   *
-   * @param event - The click event
    */
   private handleFollowClick = (event: MouseEvent) => {
     event.stopPropagation();
     if (this._objectId && !this._isInactive) {
-      this.dispatchEvent(
-        new CustomEvent(CustomEvents.FOLLOW_REQUEST, {
-          bubbles: true,
-          composed: true,
-          detail: { objectId: this._objectId },
-        }),
-      );
+      engineSignalsService.focusObject(this._objectId);
     }
   };
 

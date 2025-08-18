@@ -8,6 +8,7 @@ import { SimulationMode } from "@teskooano/data-types";
 import { finalize, of, Subject, switchMap, takeUntil, tap, timer } from "rxjs";
 import { EditableDateInput } from "./editable-date-input";
 import { SimpleDateCalculator } from "./simple-date-calculator";
+import { engineSignalsService } from "../../../../core/controllers/engine/EngineSignals.service";
 
 export interface TimeDisplayConfig {
   element: HTMLElement;
@@ -260,12 +261,9 @@ export class TimeDisplayManager {
           timeDifference >= 0 ? requiredTimeScale : -requiredTimeScale;
 
         actions.setTimeScale(timeScale);
-
-        document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
-        document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
-        document.dispatchEvent(
-          new CustomEvent("teskooano-clear-position-history"),
-        );
+        engineSignalsService.clearOrbits$.next();
+        engineSignalsService.clearPredictions$.next();
+        engineSignalsService.clearPositionHistory$.next();
       }),
 
       // Step 3: Wait for the jump duration or monitor progress
@@ -279,14 +277,10 @@ export class TimeDisplayManager {
       switchMap(() => {
         // Use atomic resetToStartDate to eliminate race conditions
         actions.resetToStartDate(targetDate);
-
         // Clear all orbital visualizations after state reset for clean new timeline
-
-        document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
-        document.dispatchEvent(new CustomEvent("teskooano-clear-predictions"));
-        document.dispatchEvent(
-          new CustomEvent("teskooano-clear-position-history"),
-        );
+        engineSignalsService.clearOrbits$.next();
+        engineSignalsService.clearPredictions$.next();
+        engineSignalsService.clearPositionHistory$.next();
 
         // Restore original simulation mode if we switched it
         if (needsModeSwitch && originalMode) {

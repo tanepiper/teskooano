@@ -18,6 +18,7 @@ import {
   type TrailCurveConfig,
 } from "../renderers/TrailManager";
 import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
+import { engineSignalsService } from "@teskooano/app-teskooano/src/core/controllers/engine/EngineSignals.service";
 
 /**
  * Enum defining the available modes for orbit visualization.
@@ -138,12 +139,11 @@ export class OrbitsManager extends StateSubscriptionMixin {
       this.setVisualizationMode(newMode, objectManager, renderableObjects$);
     });
 
-    // Listen for events to clear orbit trails and predictions
-    document.addEventListener("teskooano-clear-orbit-trails", () => {
+    // Subscribe to clear signals
+    this.subscribeToState(engineSignalsService.clearOrbits$, () => {
       this.clearAllTrails();
     });
-
-    document.addEventListener("teskooano-clear-predictions", () => {
+    this.subscribeToState(engineSignalsService.clearPredictions$, () => {
       this.clearAllPredictions();
     });
   }
