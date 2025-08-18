@@ -189,7 +189,7 @@ export class CelestialLightingManager {
    */
   public calculateDynamicAmbientLight(forceRefresh: boolean = false): number {
     if (!this.lightingCalculator) {
-      return 0.25; // Default minimum ambient
+      return 0.05; // Default minimum ambient - much darker for better contrast
     }
     return this.lightingCalculator.calculateDynamicAmbientLight(
       this.lightSources,

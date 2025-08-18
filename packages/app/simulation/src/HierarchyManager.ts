@@ -213,7 +213,7 @@ export class HierarchyManager {
   }
 
   /**
-   * Finds the best parent for an object using WASM spatial partitioning
+   * Finds the best parent for an object using centralized WASM spatial partitioning
    */
   private findBestParent(
     child: CelestialObject,
@@ -231,10 +231,10 @@ export class HierarchyManager {
     }
 
     try {
-      // Update WASM partitioning with current positions
+      // Update the centralized WASM spatial service with current positions
       this.wasmSpatialService.update(allPhysicsStates);
 
-      // Use WASM to find nearby bodies
+      // Use centralized WASM service to find nearby bodies
       const searchDistance = this.getSearchDistance(child);
       const nearbyBodies = this.wasmSpatialService.findBodiesInRange(
         childState.position_m,
@@ -277,7 +277,7 @@ export class HierarchyManager {
       return bestParent;
     } catch (error) {
       console.warn(
-        "[HierarchyManager] WASM failed, falling back to traditional method:",
+        "[HierarchyManager] Centralized WASM spatial partitioning failed, falling back to traditional method:",
         error,
       );
       return this.findBestParentTraditional(
