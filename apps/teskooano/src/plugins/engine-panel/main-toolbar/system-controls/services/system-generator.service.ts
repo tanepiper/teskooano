@@ -4,14 +4,11 @@ import {
   seed,
   StateAccessor,
 } from "@teskooano/core-state";
-import {
-  CelestialType,
-  CustomEvents,
-  type CelestialObject,
-} from "@teskooano/data-types";
+import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
 import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
+import { engineSignalsService } from "../../../../core/controllers/engine/EngineSignals.service";
 
 /**
  * A service dedicated to the complex process of procedurally generating a
@@ -31,12 +28,11 @@ export class SystemGenerator {
   }
 
   /**
-   * Dispatches a global event to signal that the simulation's timer should be reset.
+   * Dispatches a global signal to reset simulation time.
    * @private
    */
   private static dispatchSimulationTimeReset() {
-    const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
-    window.dispatchEvent(event);
+    engineSignalsService.simulationResetTime$.next();
   }
 
   /**
@@ -45,11 +41,11 @@ export class SystemGenerator {
    * entry point for creating a new system.
    *
    * The process involves:
-   * 1. Dispatching a `SYSTEM_GENERATION_START` event.
+   * 1. Emitting systemGenerationStart$.
    * 2. Clearing the current state.
    * 3. Calling the procedural generation library (`@teskooano/procedural-generation`).
    * 4. Processing the resulting stream of `CelestialObject`s, adding them to the state.
-   * 5. Finalizing the process by dispatching `SYSTEM_GENERATION_COMPLETE` and other cleanup events.
+   * 5. Finalizing the process by emitting systemGenerationComplete$ and other cleanup signals.
    *
    * @param {string} inputSeed - The seed string to use for generation.
    * @returns {Promise<boolean>} A promise that resolves to `true` if generation
@@ -60,16 +56,12 @@ export class SystemGenerator {
     // The generator service should ideally not be aware of UI-specific APIs.
     if (!this.dockviewApi) {
       console.error("Dockview API not provided to generateAndLoadSystem!");
-      window.dispatchEvent(
-        new CustomEvent(CustomEvents.SYSTEM_GENERATION_START),
-      );
-      window.dispatchEvent(
-        new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-      );
+      engineSignalsService.systemGenerationStart$.next();
+      engineSignalsService.systemGenerationComplete$.next();
       return false;
     }
 
-    window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
+    engineSignalsService.systemGenerationStart$.next();
 
     seed.updateSeed(inputSeed);
     const finalSeed = StateAccessor.getCurrentSeed();
@@ -125,9 +117,7 @@ export class SystemGenerator {
         finalize(() => {
           actions.resetTime();
           SystemGenerator.dispatchSimulationTimeReset();
-          window.dispatchEvent(
-            new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-          );
+          engineSignalsService.systemGenerationComplete$.next();
         }),
       );
 
@@ -139,9 +129,7 @@ export class SystemGenerator {
         "[SystemGenerator] Overall error in generateAndLoadSystem:",
         error,
       );
-      window.dispatchEvent(
-        new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-      );
+      engineSignalsService.systemGenerationComplete$.next();
       return false;
     }
   }

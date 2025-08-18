@@ -1,4 +1,4 @@
-import { CustomEvents } from "@teskooano/data-types";
+import { Subject } from "rxjs";
 import { StateSubscriptionMixin } from "@teskooano/core-state";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -32,6 +32,9 @@ export class ControlsManager extends StateSubscriptionMixin {
 
   /** Tracks whether debug/fly controls are active. */
   private isDebugModeActive: boolean = false;
+
+  /** Emits when a user manipulation ends with latest controls change detail. */
+  public readonly userManipulation$ = new Subject<ControlsChangeEvent>();
 
   /**
    * Creates an instance of ControlsManager.
@@ -71,6 +74,13 @@ export class ControlsManager extends StateSubscriptionMixin {
   }
 
   /**
+   * Exposes a stream that fires when the camera transition completes.
+   */
+  public getTransitionComplete$() {
+    return this.transitionManager.transitionComplete$;
+  }
+
+  /**
    * When the user starts interacting, cancel any ongoing animations or following.
    */
   private handleControlsStart = (): void => {
@@ -85,12 +95,8 @@ export class ControlsManager extends StateSubscriptionMixin {
       this.objectFollower.updateFollowOffset();
     }
 
-    const event = new CustomEvent(CustomEvents.USER_CAMERA_MANIPULATION, {
-      detail,
-      bubbles: true,
-      composed: true,
-    });
-    this.rendererElement.dispatchEvent(event);
+    // Publish via RxJS instead of DOM events
+    this.userManipulation$.next(detail);
   };
 
   /**

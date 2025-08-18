@@ -68,15 +68,7 @@ export class CameraManager {
       // Assuming controlsManager.dispose() handles OrbitControls cleanup and listener removal from its DOM element.
       this.renderer.interactionOrchestrator.getControlsManager()?.dispose();
     }
-    // Remove document-level listeners, they will be re-added if setDependencies completes.
-    document.removeEventListener(
-      "camera-transition-complete",
-      this.handleCameraTransitionComplete,
-    );
-    document.removeEventListener(
-      "user-camera-manipulation",
-      this.handleUserCameraManipulation,
-    );
+    // No DOM event listeners to remove now; subscriptions are managed per renderer
     this.renderer = undefined; // Clear the old renderer reference
   }
 
@@ -141,15 +133,17 @@ export class CameraManager {
     // its controls (e.g. OrbitControls) here if they were disposed or need to be
     // attached to a new camera/DOM element. We assume `initializeCameraPosition` will handle this.
 
-    // Re-add document event listeners
-    document.addEventListener(
-      "camera-transition-complete",
-      this.handleCameraTransitionComplete,
-    );
-    document.addEventListener(
-      "user-camera-manipulation",
-      this.handleUserCameraManipulation,
-    );
+    // Subscribe to renderer control streams for manipulation and transition completion
+    const controlsManager =
+      this.renderer?.interactionOrchestrator.getControlsManager();
+    if (controlsManager) {
+      controlsManager.getTransitionComplete$().subscribe((detail) => {
+        this.handleCameraTransitionComplete({ detail } as any);
+      });
+      controlsManager.userManipulation$.subscribe((detail: any) => {
+        this.handleUserCameraManipulation({ detail } as any);
+      });
+    }
 
     // Call initializeCameraPosition to sync the new renderer's controls
     this.initializeCameraPosition();

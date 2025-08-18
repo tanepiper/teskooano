@@ -1,4 +1,4 @@
-import { CustomEvents } from "@teskooano/data-types";
+import { Subject } from "rxjs";
 import { notificationManager } from "@teskooano/notifications";
 import {
   AnimationHelper,
@@ -49,6 +49,14 @@ export class CameraTransitionManager {
     this.orbitControlsHandler = orbitControlsHandler;
     this.objectFollower = objectFollower;
   }
+
+  /** Emits when a camera transition completes with final state and meta. */
+  public readonly transitionComplete$ = new Subject<{
+    position: Vector3;
+    target: Vector3;
+    type: "target-only" | "position-and-target";
+    focusedObjectId?: string | null;
+  }>();
 
   /**
    * Converts a value from the renderer's internal scene units into Astronomical Units (AU).
@@ -130,20 +138,13 @@ export class CameraTransitionManager {
       this.objectFollower.isFollowingTransitioning = false;
     }
 
-    const transitionCompleteEvent = new CustomEvent(
-      CustomEvents.CAMERA_TRANSITION_COMPLETE,
-      {
-        detail: {
-          position: finalCameraPos.toThreeJS(),
-          target: finalTargetPos.toThreeJS(),
-          type: type,
-          focusedObjectId: focusedObjectId,
-        },
-        bubbles: true,
-        composed: true,
-      },
-    );
-    document.dispatchEvent(transitionCompleteEvent);
+    // Publish via RxJS instead of DOM events
+    this.transitionComplete$.next({
+      position: finalCameraPos.toThreeJS(),
+      target: finalTargetPos.toThreeJS(),
+      type,
+      focusedObjectId,
+    });
   }
 
   /**
