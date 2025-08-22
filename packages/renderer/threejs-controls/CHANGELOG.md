@@ -6,14 +6,19 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **Major Refactor**: Removed the obsolete `InteractionManager` facade. The functionality was split: this package now exports `ControlsManager` as the primary component for camera control, while all 2D label rendering has been moved to the `@teskooano/renderer-threejs-labels` package, which exports a `Layer2DManager`.
-- **`ControlsManager`**: Now fully relies on GSAP for all programmatic camera transitions, removing the internal `moveToPosition` logic.
-- `ControlsManager.ts` now uses `getSimulationState` and `setSimulationState` from `@teskooano/core-state` for camera state updates.
-- Extensive comment removal and minor code cleanup across various files, including test files and `setup.ts`.
-- Removed Playwright and Vitest browser-specific triple-slash directives from `setup.ts`.
+- **Major Refactor**: Separated camera management functionality into two distinct packages:
+  - **`@teskooano/renderer-threejs-controls`**: Now focuses exclusively on low-level camera controls and interaction mechanics.
+  - **`@teskooano/renderer-threejs-camera`**: New package for high-level camera management and simulation integration.
+- **`ControlsManager`**: Now focuses on low-level control orchestration, delegating high-level operations to the camera package.
+- **Interface-Based Design**: Uses `ICameraRenderer` interface from `@teskooano/data-types` to avoid circular dependencies.
+- Removed `CameraManager`, camera constants, and camera-related types from this package.
+- Updated dependencies to include the new `@teskooano/renderer-threejs-camera` package.
 
 ### Removed
 
+- `CameraManager`: Moved to `@teskooano/renderer-threejs-camera` package.
+- `constants.ts`: Camera-related constants moved to `@teskooano/renderer-threejs-camera` package.
+- `types.ts`: Camera-related types moved to `@teskooano/data-types` package.
 - `InteractionManager`: This facade was outdated and did not reflect the actual architecture. Consumers should now instantiate `ControlsManager` and the `Layer2DManager` from `@teskooano/renderer-threejs-labels` directly.
 - `UIManager`: A non-existent class that was referenced by the old `InteractionManager`.
 

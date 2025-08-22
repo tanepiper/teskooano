@@ -1,10 +1,10 @@
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
+import { CameraManager } from "@teskooano/renderer-threejs-camera";
 import type {
-  CameraManager,
   CameraManagerOptions,
   CameraManagerState,
-} from "@teskooano/renderer-threejs-controls";
+} from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../panels/composite-panel/CompositeEnginePanel";
 import { OSVector3 } from "@teskooano/core-math";
 

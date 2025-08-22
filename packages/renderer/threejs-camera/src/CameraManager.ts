@@ -1,7 +1,11 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { StateAccessor, actions, renderableStore } from "@teskooano/core-state";
-import { CelestialType } from "@teskooano/data-types";
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+import {
+  CelestialType,
+  ICameraRenderer,
+  CameraManagerOptions,
+  CameraManagerState,
+} from "@teskooano/data-types";
 import { CameraHelper } from "@teskooano/renderer-threejs-helpers";
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
@@ -12,7 +16,6 @@ import {
   DEFAULT_CAMERA_TARGET,
   DEFAULT_FOV,
 } from "./constants";
-import type { CameraManagerOptions, CameraManagerState } from "./types";
 
 /**
  * Manages camera operations within a Teskooano engine view.
@@ -32,7 +35,7 @@ export class CameraManager {
    */
   static pluginName = "CameraManager";
 
-  private renderer: ModularSpaceRenderer | undefined;
+  private renderer: ICameraRenderer | null = null;
   private onFocusChangeCallback?: (focusedObjectId: string | null) => void;
   private intendedFocusIdForTransition: string | null = null; // Store intended focus during transition
   private originalTimeScale: number = 1; // Store original timeScale during transitions
@@ -71,7 +74,7 @@ export class CameraManager {
       "user-camera-manipulation",
       this.handleUserCameraManipulation,
     );
-    this.renderer = undefined; // Clear the old renderer reference
+    this.renderer = null; // Clear the old renderer reference
   }
 
   /**

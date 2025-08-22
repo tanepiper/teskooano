@@ -1,4 +1,4 @@
-import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
+import type { CameraManagerState } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import { FocusInteractionManager } from "./focus-interactions.js";
 

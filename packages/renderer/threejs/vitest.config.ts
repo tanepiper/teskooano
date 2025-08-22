@@ -15,6 +15,10 @@ export default defineConfig({
         __dirname,
         "../threejs-core/src",
       ),
+      "@teskooano/renderer-threejs-camera": resolve(
+        __dirname,
+        "../threejs-camera/src",
+      ),
       "@teskooano/renderer-threejs-interaction": resolve(
         __dirname,
         "../threejs-interaction/src",

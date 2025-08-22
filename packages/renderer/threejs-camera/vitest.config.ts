@@ -10,14 +10,16 @@ export default defineConfig({
     alias: {
       "@": resolve(__dirname, "./src"),
       "@teskooano/core-state": resolve(__dirname, "../../core/state/src"),
+      "@teskooano/core-math": resolve(__dirname, "../../core/math/src"),
       "@teskooano/data-types": resolve(__dirname, "../../data/types/src"),
-      "@teskooano/renderer-threejs-core": resolve(
+      "@teskooano/renderer-threejs": resolve(__dirname, "../threejs/src"),
+      "@teskooano/renderer-threejs-helpers": resolve(
         __dirname,
-        "../threejs-core/src",
+        "../threejs-helpers/src",
       ),
-      "@teskooano/renderer-threejs-camera": resolve(
+      "@teskooano/notifications": resolve(
         __dirname,
-        "../threejs-camera/src",
+        "../../app/notifications/src",
       ),
     },
   },

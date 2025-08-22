@@ -1,6 +1,8 @@
 type: "library"
 language: "typescript"
 
+id: threejs-controls
+
 fileGroups:
   sources:
     - "src/**/*"

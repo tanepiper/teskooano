@@ -15,6 +15,7 @@
     "@teskooano/core-state": "file:../../packages/core/state",
     "@teskooano/procedural-generation": "file:../../packages/systems/procedural-generation",
     "@teskooano/renderer-threejs": "file:../../packages/renderer/threejs",
+    "@teskooano/renderer-threejs-camera": "file:../../packages/renderer/threejs-camera",
     "@teskooano/web-apis": "file:../../packages/app/web-apis",
     "@teskooano/design-system": "file:../../packages/design-system",
     "@teskooano/systems-solar-system": "file:../../packages/systems/solar-system",

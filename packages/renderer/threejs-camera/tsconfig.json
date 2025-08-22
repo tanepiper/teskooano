@@ -8,9 +8,10 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@teskooano/core-state": ["../../core/state/src"],
+      "@teskooano/core-math": ["../../core/math/src"],
       "@teskooano/data-types": ["../../data/types/src"],
-      "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
-      "@teskooano/renderer-threejs-camera": ["../threejs-camera/src"],
+      "@teskooano/renderer-threejs": ["../threejs/src"],
+      "@teskooano/renderer-threejs-helpers": ["../threejs-helpers/src"],
       "@teskooano/notifications": ["../../app/notifications/src"]
     },
     "noEmit": false
@@ -19,9 +20,10 @@
   "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "../../core/state" },
+    { "path": "../../core/math" },
     { "path": "../../data/types" },
-    { "path": "../threejs-core" },
-    { "path": "../threejs-camera" },
+    { "path": "../threejs" },
+    { "path": "../threejs-helpers" },
     { "path": "../../app/notifications" }
   ]
 }
