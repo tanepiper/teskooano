@@ -19,12 +19,3 @@ export const neptuneSystemBodies = [
   thalassa,
   naiad,
 ];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the neptuneSystemBodies array instead.
- */
-export function initializeNeptune(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The neptuneSystemBodies array should be used with the main solar system initialization
-}

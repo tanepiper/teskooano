@@ -1,13 +1,5 @@
-import { OSVector3 } from "@teskooano/core-math";
-import {
-  calculateOrbitalPosition,
-  calculateOrbitalVelocity,
-  createOrbitalElements,
-} from "@teskooano/core-physics";
-import {
-  type CelestialObject,
-  type PhysicsStateReal,
-} from "@teskooano/data-types";
+import { createOrbitalElements } from "@teskooano/core-physics";
+import { type CelestialObject } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-values";
 import * as UTIL from "../utils";
 
@@ -82,56 +74,6 @@ export function setupBinaryOrbit(
   // The primary star (more massive) becomes the reference point
   primaryStar.parentId = undefined; // Primary star has no parent (fixed reference)
   companionStar.parentId = primaryStar.id; // Companion orbits the primary
-
-  try {
-    // Calculate initial positions
-    const barycentricState: PhysicsStateReal = {
-      id: "barycenter",
-      mass_kg: totalMass,
-      position_m: new OSVector3(0, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
-    };
-
-    const primaryInitialPos = calculateOrbitalPosition(
-      barycentricState,
-      primaryOrbit,
-      0,
-    );
-    const primaryInitialVel = calculateOrbitalVelocity(
-      barycentricState,
-      primaryOrbit,
-      0,
-    );
-
-    const companionInitialPos = calculateOrbitalPosition(
-      barycentricState,
-      companionOrbit,
-      0,
-    );
-    const companionInitialVel = calculateOrbitalVelocity(
-      barycentricState,
-      companionOrbit,
-      0,
-    );
-
-    // Validate initial conditions for stability (silent validation)
-    const actualSeparation = primaryInitialPos.distanceTo(companionInitialPos);
-    const expectedSeparation = separationMeters;
-    const separationError =
-      Math.abs(actualSeparation - expectedSeparation) / expectedSeparation;
-
-    // Validate velocity magnitudes for circular/low-eccentricity orbits
-    const primaryVelMag = primaryInitialVel.length();
-    const companionVelMag = companionInitialVel.length();
-    const G = 6.674e-11; // Gravitational constant in m^3 kg^-1 s^-2
-    const expectedPrimaryVel = Math.sqrt((G * totalMass) / primarySMA);
-    const expectedCompanionVel = Math.sqrt((G * totalMass) / companionSMA);
-
-    // Note: physicsStateReal is not part of the current CelestialObject interface
-    // Position and velocity will be calculated by the physics system
-  } catch (error) {
-    // Silent error handling for binary orbit calculation
-  }
 
   return [primaryStar, companionStar];
 }

@@ -1,6 +1,7 @@
 import { StellarType, type CelestialObject } from "@teskooano/data-types";
+import { SOLAR_MASS } from "@teskooano/data-values";
+import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
 import { CelestialZone, type StellarSystemConfiguration } from "./types";
-import * as CONST from "../constants";
 
 /**
  * Handles scaling zones based on stellar properties
@@ -17,8 +18,8 @@ export class ZoneScaler {
 
     if (!luminosity) {
       // Fallback to mass-based calculation if luminosity property is missing.
-      const mass = star.realMass_kg || CONST.SOLAR_MASS_KG;
-      const solarMasses = mass / CONST.SOLAR_MASS_KG;
+      const mass = star.realMass_kg || SOLAR_MASS;
+      const solarMasses = mass / SOLAR_MASS;
       // Main sequence mass-luminosity relation: L ∝ M^3.5
       luminosity = Math.pow(solarMasses, 3.5);
     }
@@ -99,8 +100,8 @@ export class ZoneScaler {
       }
 
       // Fallback to mass-based calculation if luminosity property is missing.
-      const mass = star.realMass_kg || CONST.SOLAR_MASS_KG;
-      const solarMasses = mass / CONST.SOLAR_MASS_KG;
+      const mass = star.realMass_kg || SOLAR_MASS;
+      const solarMasses = mass / SOLAR_MASS;
       // Main sequence mass-luminosity relation: L ∝ M^3.5
       return sum + Math.pow(solarMasses, 3.5);
     }, 0);
@@ -156,11 +157,11 @@ export class ZoneScaler {
       ...zone,
       minAU: Math.min(
         zone.baseMinAU * finalScalingFactor,
-        CONST.SYSTEM_MAX_DISTANCE_AU,
+        SYSTEM_MAX_DISTANCE_AU,
       ),
       maxAU: Math.min(
         zone.baseMaxAU * finalScalingFactor,
-        CONST.SYSTEM_MAX_DISTANCE_AU,
+        SYSTEM_MAX_DISTANCE_AU,
       ),
       // Adjust formation probability based on system complexity
       formationProbability: zone.formationProbability * complexity,

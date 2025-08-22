@@ -1,6 +1,5 @@
 import { CelestialStatus, CustomEvents } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 
 export interface EventHandlers {
   onObjectsLoaded: () => void;
@@ -15,7 +14,6 @@ export interface EventHandlers {
  * Manages all event handling for the celestial hierarchy controller.
  */
 export class EventManager {
-  private _view: CelestialHierarchy;
   private _treeListContainer: HTMLUListElement;
   private _resetButton: HTMLElement;
   private _clearButton: HTMLElement;
@@ -23,13 +21,11 @@ export class EventManager {
   private _handlers: EventHandlers;
 
   constructor(
-    view: CelestialHierarchy,
     treeListContainer: HTMLUListElement,
     resetButton: HTMLElement,
     clearButton: HTMLElement,
     handlers: EventHandlers,
   ) {
-    this._view = view;
     this._treeListContainer = treeListContainer;
     this._resetButton = resetButton;
     this._clearButton = clearButton;
@@ -147,7 +143,7 @@ export class EventManager {
     }
   };
 
-  private _handleHierarchyChanged = (event: Event): void => {
+  private _handleHierarchyChanged = (): void => {
     console.debug("[EventManager] Hierarchy changed event received.");
     this._handlers.onHierarchyChanged();
   };

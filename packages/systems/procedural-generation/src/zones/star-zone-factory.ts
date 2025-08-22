@@ -1,12 +1,11 @@
 import {
-  StellarType,
   GasGiantClass,
   PlanetType,
   type CelestialObject,
 } from "@teskooano/data-types";
-import { CelestialZone, ZoneCategory, OrbitalConfiguration } from "./types";
+import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
+import { CelestialZone, OrbitalConfiguration, ZoneCategory } from "./types";
 import { enhancedCelestialZones } from "./zone-definitions";
-import * as CONST from "../constants";
 
 /**
  * Factory for creating star-specific zones
@@ -16,10 +15,7 @@ export class StarZoneFactory {
    * Creates star-specific zones based on the star's unique characteristics.
    * This is more sophisticated than just scaling generic zones.
    */
-  static createStarSpecificZones(
-    star: CelestialObject,
-    random: () => number,
-  ): CelestialZone[] {
+  static createStarSpecificZones(star: CelestialObject): CelestialZone[] {
     const starProps = star.properties as any;
     const spectralClass = starProps?.spectralClass || "G";
     const stellarType = starProps?.stellarType || "MAIN_SEQUENCE";
@@ -459,8 +455,8 @@ export class StarZoneFactory {
 
     return {
       ...templateZone,
-      minAU: Math.min(baseMinAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
-      maxAU: Math.min(baseMaxAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+      minAU: Math.min(baseMinAU * scalingFactor, SYSTEM_MAX_DISTANCE_AU),
+      maxAU: Math.min(baseMaxAU * scalingFactor, SYSTEM_MAX_DISTANCE_AU),
     };
   }
 
@@ -501,8 +497,8 @@ export class StarZoneFactory {
 
     return {
       ...modifiedZone,
-      minAU: Math.min(baseMinAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
-      maxAU: Math.min(baseMaxAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+      minAU: Math.min(baseMinAU * scalingFactor, SYSTEM_MAX_DISTANCE_AU),
+      maxAU: Math.min(baseMaxAU * scalingFactor, SYSTEM_MAX_DISTANCE_AU),
     };
   }
 
@@ -521,8 +517,8 @@ export class StarZoneFactory {
       category,
       baseMinAU,
       baseMaxAU,
-      minAU: Math.min(baseMinAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
-      maxAU: Math.min(baseMaxAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+      minAU: Math.min(baseMinAU * scalingFactor, SYSTEM_MAX_DISTANCE_AU),
+      maxAU: Math.min(baseMaxAU * scalingFactor, SYSTEM_MAX_DISTANCE_AU),
       temperatureRange: { min: 100, max: 400 },
       allowedPlanetTypes: [
         PlanetType.TERRESTRIAL,

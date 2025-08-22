@@ -1,10 +1,10 @@
 import { utils } from "@teskooano/core-math";
 import { type CelestialObject } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
+import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
+import { getRandomItem } from "../utils";
 import type { CelestialZone, OrbitalArrangement } from "../zones";
 import { OrbitalConfiguration } from "../zones";
-import { getRandomItem } from "../utils";
-import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
-import { AU_METERS } from "@teskooano/data-values";
 
 /**
  * Represents a single body placement with its orbital configuration
@@ -83,7 +83,7 @@ export function generateBodyDistances(
     .flatMap((group) => group.bodies)
     .sort((a, b) => a.distanceAU - b.distanceAU);
 
-  return filterValidPlacements(allPlacements, stars);
+  return filterValidPlacements(allPlacements);
 }
 
 /**
@@ -130,7 +130,7 @@ function generatePlacementsForZone(
 
     // Determine if this should be a special configuration
     const shouldUseSpecialConfig =
-      random() < getSpecialConfigurationChance(zone, distance);
+      random() < getSpecialConfigurationChance(zone);
 
     if (shouldUseSpecialConfig) {
       const specialGroup = generateSpecialConfigurationGroup(
@@ -188,7 +188,7 @@ function generateSpecialConfigurationGroup(
   if (availableConfigs.length === 0) return null;
 
   const chosenConfig = getRandomItem(availableConfigs, random);
-  const arrangement = createArrangement(random, chosenConfig, baseDistance);
+  const arrangement = createArrangement(random, chosenConfig);
 
   switch (chosenConfig) {
     case OrbitalConfiguration.BINARY_PAIR:
@@ -228,20 +228,17 @@ function generateSpecialConfigurationGroup(
       return generateRogueGroup(
         random,
         zone,
-        baseDistance,
         parentStar,
-        relativeDistance,
+
         arrangement,
         slotIndex,
       );
 
     case OrbitalConfiguration.CIRCUMBINARY:
       return generateCircumbinaryGroup(
-        random,
         zone,
         baseDistance,
         parentStar,
-        relativeDistance,
         arrangement,
         slotIndex,
       );
@@ -400,9 +397,9 @@ function generateCoOrbitalGroup(
 function generateRogueGroup(
   random: () => number,
   zone: CelestialZone,
-  baseDistance: number,
+
   parentStar: CelestialObject,
-  relativeDistance: number,
+
   arrangement: OrbitalArrangement,
   slotIndex: number,
 ): PlacementGroup {
@@ -442,11 +439,9 @@ function generateRogueGroup(
  * Generates circumbinary objects (orbiting both stars in a binary system)
  */
 function generateCircumbinaryGroup(
-  random: () => number,
   zone: CelestialZone,
   baseDistance: number,
   parentStar: CelestialObject,
-  relativeDistance: number,
   arrangement: OrbitalArrangement,
   slotIndex: number,
 ): PlacementGroup {
@@ -612,10 +607,7 @@ function getStarDistance(star: CelestialObject): number {
   return (star.orbit?.realSemiMajorAxis_m ?? 0) / AU_METERS;
 }
 
-function getSpecialConfigurationChance(
-  zone: CelestialZone,
-  distance: number,
-): number {
+function getSpecialConfigurationChance(zone: CelestialZone): number {
   if (!zone || zone.formationProbability === undefined) {
     return 0.1; // Default 10% chance if zone is undefined
   }
@@ -637,7 +629,6 @@ function getAvailableConfigurations(
 function createArrangement(
   random: () => number,
   configuration: OrbitalConfiguration,
-  baseDistance: number,
 ): OrbitalArrangement {
   switch (configuration) {
     case OrbitalConfiguration.BINARY_PAIR:
@@ -688,10 +679,7 @@ function createStandardPlacement(
   };
 }
 
-function filterValidPlacements(
-  placements: BodyPlacement[],
-  stars: CelestialObject[],
-): BodyPlacement[] {
+function filterValidPlacements(placements: BodyPlacement[]): BodyPlacement[] {
   return placements.filter((placement) => {
     // Skip validation for rogue objects
     if (placement.configuration === OrbitalConfiguration.ROGUE) {

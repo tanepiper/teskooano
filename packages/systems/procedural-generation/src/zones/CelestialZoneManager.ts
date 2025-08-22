@@ -12,13 +12,11 @@ import { StarZoneFactory } from "./star-zone-factory";
  */
 export class CelestialZoneManager {
   private readonly zones: CelestialZone[];
-  private readonly random: () => number;
   private readonly stellarConfigurator: StellarSystemConfigurator;
   private readonly zoneSelector: ZoneSelector;
 
   constructor(random: () => number, customZones?: CelestialZone[]) {
     this.zones = customZones || enhancedCelestialZones;
-    this.random = random;
     this.stellarConfigurator = new StellarSystemConfigurator(random);
     this.zoneSelector = new ZoneSelector(random);
   }
@@ -66,11 +64,7 @@ export class CelestialZoneManager {
     config: StellarSystemConfiguration,
   ): CelestialZone[] {
     const adjustedZones = this.getAdjustedZones(stars, config);
-    return this.zoneSelector.selectZonesForPlacement(
-      adjustedZones,
-      stars,
-      config,
-    );
+    return this.zoneSelector.selectZonesForPlacement(adjustedZones, stars);
   }
 
   /**
@@ -91,11 +85,8 @@ export class CelestialZoneManager {
    * Creates star-specific zones based on the star's unique characteristics.
    * This is more sophisticated than just scaling generic zones.
    */
-  static createStarSpecificZones(
-    star: CelestialObject,
-    random: () => number,
-  ): CelestialZone[] {
-    return StarZoneFactory.createStarSpecificZones(star, random);
+  static createStarSpecificZones(star: CelestialObject): CelestialZone[] {
+    return StarZoneFactory.createStarSpecificZones(star);
   }
 }
 

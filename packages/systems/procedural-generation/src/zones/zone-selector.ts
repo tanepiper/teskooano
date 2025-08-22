@@ -1,9 +1,5 @@
 import { type CelestialObject } from "@teskooano/data-types";
-import {
-  CelestialZone,
-  ZoneCategory,
-  type StellarSystemConfiguration,
-} from "./types";
+import { CelestialZone, ZoneCategory } from "./types";
 import { createDefaultZones } from "./zone-definitions";
 import { getRandomItem } from "../utils";
 
@@ -23,7 +19,6 @@ export class ZoneSelector {
   selectZonesForPlacement(
     adjustedZones: CelestialZone[],
     stars: CelestialObject[],
-    config: StellarSystemConfiguration,
   ): CelestialZone[] {
     // Ensure we have at least some zones to work with
     if (!adjustedZones || adjustedZones.length === 0) {

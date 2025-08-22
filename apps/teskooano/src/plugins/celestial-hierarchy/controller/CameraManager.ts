@@ -1,6 +1,5 @@
 import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 import { FocusInteractionManager } from "./focus-interactions.js";
 
 export interface CameraStateHandlers {
@@ -12,7 +11,6 @@ export interface CameraStateHandlers {
  * Manages camera state, focus, and follow functionality for the celestial hierarchy.
  */
 export class CameraManager {
-  private _view: CelestialHierarchy;
   private _treeListContainer: HTMLUListElement;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _currentFocusedId: string | null = null;
@@ -22,11 +20,9 @@ export class CameraManager {
   private _focusInteractionManager: FocusInteractionManager;
 
   constructor(
-    view: CelestialHierarchy,
     treeListContainer: HTMLUListElement,
     handlers: CameraStateHandlers,
   ) {
-    this._view = view;
     this._treeListContainer = treeListContainer;
     this._handlers = handlers;
     this._focusInteractionManager = new FocusInteractionManager(null);

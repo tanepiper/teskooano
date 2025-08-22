@@ -27,12 +27,3 @@ export const jupiterSystemBodies = [
   ganymede,
   callisto,
 ];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the jupiterSystemBodies array instead.
- */
-export function initializeJupiter(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The jupiterSystemBodies array should be used with the main solar system initialization
-}

@@ -5,7 +5,6 @@ import {
 } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 import { FocusListManager } from "./FocusListManager.js";
 import { EventManager, type EventHandlers } from "./EventManager.js";
 import { CameraManager, type CameraStateHandlers } from "./CameraManager.js";
@@ -22,7 +21,6 @@ import {
  * of the celestial hierarchy functionality.
  */
 export class CelestialHierarchyController extends StateSubscriptionMixin {
-  private _view: CelestialHierarchy;
   private _listManager: FocusListManager;
   private _eventManager: EventManager;
   private _cameraManager: CameraManager;
@@ -35,14 +33,12 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
    * Creates an instance of CelestialHierarchyController.
    */
   constructor(
-    view: CelestialHierarchy,
     treeListContainer: HTMLUListElement,
     destroyedListContainer: HTMLUListElement,
     resetButton: HTMLElement,
     clearButton: HTMLElement,
   ) {
     super();
-    this._view = view;
 
     // Initialize managers
     this._listManager = new FocusListManager(
@@ -51,7 +47,6 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     );
 
     this._eventManager = new EventManager(
-      view,
       treeListContainer,
       resetButton,
       clearButton,
@@ -59,7 +54,6 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     );
 
     this._cameraManager = new CameraManager(
-      view,
       treeListContainer,
       this._createCameraStateHandlers(),
     );
@@ -190,12 +184,6 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
         this._cameraManager.clearFollow();
       }
     }
-  }
-
-  private _handleHierarchyChanged(): void {
-    // Hierarchy changed - update distances and re-render
-    this._distanceManager.forceDistanceUpdate();
-    this._populateListInternal();
   }
 
   private _handleTreeInteraction(event: Event): void {

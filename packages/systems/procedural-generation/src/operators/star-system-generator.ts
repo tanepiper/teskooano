@@ -1,7 +1,6 @@
 import type { CelestialObject, StarProperties } from "@teskooano/data-types";
-import type { StellarSystemConfiguration } from "../zones/types";
-import { StellarSystemType } from "../zones/types";
 import { generateStar } from "../generators/stars/star";
+import type { StellarSystemConfiguration } from "../zones/types";
 import { setupBinaryOrbit } from "./binary-orbit-setup";
 
 /**

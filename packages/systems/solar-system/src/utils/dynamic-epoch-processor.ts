@@ -75,8 +75,9 @@ export class DynamicEpochProcessor {
     });
 
     // Use precise calculation for all objects to ensure maximum accuracy
-    const { position, velocity, updatedOrbitalElements } =
-      calculateCurrentPositionPrecise(object.orbit);
+    const { updatedOrbitalElements } = calculateCurrentPositionPrecise(
+      object.orbit,
+    );
 
     return {
       ...object,
