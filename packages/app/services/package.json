@@ -2,17 +2,13 @@
   "name": "@teskooano/app-services",
   "version": "0.4.0-dev.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "clean": "rm -rf dist"
-  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "dependencies": {
     "@teskooano/core-state": "workspace:*",
     "@teskooano/core-math": "workspace:*",
     "@teskooano/data-types": "workspace:*",
+    "@teskooano/data-values": "workspace:*",
     "@teskooano/renderer-threejs": "workspace:*",
     "@teskooano/renderer-threejs-controls": "workspace:*",
     "rxjs": "^7.8.1",
@@ -23,24 +19,24 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
     },
     "./camera": {
-      "import": "./dist/services/CameraService.js",
-      "types": "./dist/services/CameraService.d.ts"
+      "import": "./src/services/CameraService.ts",
+      "types": "./src/services/CameraService.ts"
     },
     "./hierarchy": {
-      "import": "./dist/services/HierarchyService.js",
-      "types": "./dist/services/HierarchyService.d.ts"
+      "import": "./src/services/HierarchyService.ts",
+      "types": "./src/services/HierarchyService.ts"
     },
     "./panel": {
-      "import": "./dist/services/PanelService.js",
-      "types": "./dist/services/PanelService.d.ts"
+      "import": "./src/services/PanelService.ts",
+      "types": "./src/services/PanelService.ts"
     },
     "./renderer": {
-      "import": "./dist/services/RendererService.js",
-      "types": "./dist/services/RendererService.d.ts"
+      "import": "./src/services/RendererService.ts",
+      "types": "./src/services/RendererService.ts"
     }
   }
 }

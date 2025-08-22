@@ -7,5 +7,6 @@ export { RendererService } from './services/RendererService.js';
 // Export service interfaces and types
 export type { CameraServiceState, CameraServiceOptions } from './services/CameraService.js';
 export type { HierarchyServiceState, HierarchyNode } from './services/HierarchyService.js';
-export type { PanelServiceState, PanelInstance } from './services/PanelService.js';
-export type { RendererServiceState, RendererServiceOptions } from './services/RendererService.js';
+export type { PanelServiceState, PanelInstance, PanelLifecycleOptions } from './services/PanelService.js';
+export { PanelLifecycleState } from './services/PanelService.js';
+export type { RendererServiceState, RendererServiceOptions, RendererVisualSettings, RendererInstance } from './services/RendererService.js';
