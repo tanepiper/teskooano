@@ -1,12 +1,6 @@
 import { standardizeToCurrentEpoch } from "@teskooano/core-physics";
 import type { CelestialObject } from "@teskooano/data-types";
-import {
-  validateEpochConsistency,
-  generateEpochSummary,
-  logEpochAnalysis,
-  EpochValidationResult,
-  EpochSummary,
-} from "./epoch-utilities";
+import { generateEpochSummary, logEpochAnalysis } from "./epoch-utilities";
 
 /**
  * Standardizes all celestial objects in a solar system to the current epoch.

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "rm -rf dist && rm -rf tsconfig.tsbuildinfo && vite build",
+    "build:prod": "rm -rf dist && rm -rf tsconfig.tsbuildinfo && tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },

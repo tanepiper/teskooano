@@ -1,9 +1,7 @@
-import { initializeMercury as initializeMercuryPlanet } from "./mercury";
+import { mercury } from "./mercury";
 
 /**
- * Initializes the complete Mercury system.
- * Mercury has no moons, so only the planet itself is initialized.
+ * Mercury system bodies that can be initialized in any order.
+ * Each object should have a parentId that references an existing body.
  */
-export function initializeMercury(parentId: string): void {
-  initializeMercuryPlanet(parentId);
-}
+export const mercurySystemBodies = [mercury];

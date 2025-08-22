@@ -1,13 +1,13 @@
-import { saturn } from "./saturn";
-import { titan } from "./titan";
-import { enceladus } from "./enceladus";
-import { rhea } from "./rhea";
 import { dione } from "./dione";
-import { tethys } from "./tethys";
-import { mimas } from "./mimas";
+import { enceladus } from "./enceladus";
 import { hyperion } from "./hyperion";
 import { iapetus } from "./iapetus";
+import { mimas } from "./mimas";
 import { phoebe } from "./phoebe";
+import { rhea } from "./rhea";
+import { saturn } from "./saturn";
+import { tethys } from "./tethys";
+import { titan } from "./titan";
 
 /**
  * Saturn system bodies that can be initialized in any order.

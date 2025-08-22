@@ -168,19 +168,16 @@ export class TeskooanoTooltip extends HTMLElement {
     });
 
     // Watch for alignment changes
-    this.state.watch("verticalAlign", (verticalAlign: "above" | "below") => {
+    this.state.watch("verticalAlign", () => {
       this.updatePositioning();
     });
 
-    this.state.watch(
-      "horizontalAlign",
-      (horizontalAlign: "start" | "center" | "end") => {
-        this.updatePositioning();
-      },
-    );
+    this.state.watch("horizontalAlign", () => {
+      this.updatePositioning();
+    });
 
     // Watch for timeout changes
-    this.state.watch("timeout", (timeout: number) => {
+    this.state.watch("timeout", () => {
       if (this.state.get("isVisible")) {
         this.startHideTimeout();
       }

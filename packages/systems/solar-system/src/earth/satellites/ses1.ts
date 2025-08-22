@@ -1,13 +1,10 @@
+import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
 import {
   type CelestialObject,
-  CelestialType,
   CelestialStatus,
+  CelestialType,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import {
-  createOrbitalElements,
-  createOrbitalElementsFromTLE,
-} from "@teskooano/core-physics";
 
 const GEOSTATIONARY_TLE_LINE1 =
   "1 36516U 10016A   25202.56989238 -.00000117  00000-0  00000-0 0  9990";

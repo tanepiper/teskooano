@@ -1,6 +1,6 @@
 import { Subject } from "rxjs";
 import type { RendererStats } from "./AnimationLoop";
-import type { PerformanceOptimization } from "./SceneManager";
+import type { PerformanceOptimization } from "@teskooano/data-types";
 
 /** Payload for the `beforeRender` and `afterRender` events. */
 export interface RenderLoopPayload {

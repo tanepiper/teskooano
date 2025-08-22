@@ -24,6 +24,18 @@ tasks:
     outputs:
       # The built distribution
       - "dist"
+  build-prod:
+    local: true
+    command: "npm run build:prod"
+    inputs:
+      # Sources
+      - "@group(sources)"
+      # Package dependencies
+      - "package.json"
+      - "tsconfig.json"
+    outputs:
+      # The built distribution
+      - "dist"
 
   # Start the development server
   dev:

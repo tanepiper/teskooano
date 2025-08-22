@@ -1,10 +1,10 @@
 import { createOrbitalElements } from "@teskooano/core-physics";
 import {
-  CelestialType,
   CelestialStatus,
+  CelestialType,
+  CometClass,
   CometProperties,
   type CelestialObject,
-  CometClass,
 } from "@teskooano/data-types";
 
 /**

@@ -4,7 +4,6 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AU_METERS } from "@teskooano/data-values";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
-import { WasmSpatialService } from "@teskooano/core-physics";
 
 /**
  * Defines the structure for a component that can be registered with the CSS2DManager.
@@ -29,8 +28,6 @@ export abstract class BaseLabelLayer {
 
   /** Raycaster for occlusion testing */
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
-  /** Reusable vector for calculations */
-  private tempVector = new THREE.Vector3();
   // Pre-allocated vectors for performance in occlusion testing
   private _tempVector3_1 = new THREE.Vector3();
   private _tempVector3_2 = new THREE.Vector3();
@@ -38,9 +35,6 @@ export abstract class BaseLabelLayer {
 
   /** Performance optimization: throttle occlusion checks */
   private occlusionCheckCounter = 0;
-
-  /** WASM spatial partitioning for optimized occlusion testing */
-  private wasmSpatialService: WasmSpatialService;
 
   /** Public occlusion configuration options */
   public occlusionConfig = {
@@ -81,9 +75,6 @@ export abstract class BaseLabelLayer {
     if (occlusionOptions) {
       this.occlusionConfig = { ...this.occlusionConfig, ...occlusionOptions };
     }
-
-    // Initialize WASM spatial service for occlusion optimization
-    this.wasmSpatialService = WasmSpatialService.getInstance();
 
     // Configure raycaster for better performance
     this.raycaster.far = Infinity;
@@ -194,9 +185,8 @@ export abstract class BaseLabelLayer {
    * Subclasses should override this method to implement LOD or other updates.
    */
   public update(
-    camera: THREE.PerspectiveCamera,
-    centralBody: OSVector3,
-    objectManager: ObjectManager,
+    _camera: THREE.PerspectiveCamera,
+    _objectManager: ObjectManager,
   ): void {}
 
   /**

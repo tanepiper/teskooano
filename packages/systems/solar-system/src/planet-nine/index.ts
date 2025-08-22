@@ -9,12 +9,3 @@ import { planetNine } from "./planet-nine";
  * Future discoveries may add additional objects to this system.
  */
 export const planetNineSystemBodies = [planetNine];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the planetNineSystemBodies array instead.
- */
-export function initializePlanetNine(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The planetNineSystemBodies array should be used with the main solar system initialization
-}

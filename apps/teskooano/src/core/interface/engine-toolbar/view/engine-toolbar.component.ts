@@ -1,4 +1,3 @@
-import { EngineToolbarController } from "./engine-toolbar.controller";
 import { template } from "./engine-toolbar.template";
 
 export class EngineToolbarComponent extends HTMLElement {
@@ -8,8 +7,6 @@ export class EngineToolbarComponent extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-
-    new EngineToolbarController(this);
   }
 }
 

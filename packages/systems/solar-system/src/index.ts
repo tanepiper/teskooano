@@ -2,14 +2,14 @@ import { celestialManager, actions } from "@teskooano/core-state";
 import { earthSystemBodies } from "./earth";
 import { jupiterSystemBodies } from "./jupiter";
 import { marsSystemBodies } from "./mars";
-import { mercury } from "./mercury/mercury";
+import { mercurySystemBodies } from "./mercury";
 import { minorBodies } from "./minor-bodies";
 import { neptuneSystemBodies } from "./neptune";
 import { plutoSystemBodies } from "./pluto";
 import { saturnSystemBodies } from "./saturn";
 import { systemCelestials } from "./sol";
 import { uranusSystemBodies } from "./uranus";
-import { venus } from "./venus/venus";
+import { venusSystemBodies } from "./venus";
 import { allSatellites } from "./satellites";
 import { allComets } from "./comets";
 import { asteroids } from "./asteroids";
@@ -23,8 +23,8 @@ import { processSolarSystemToCurrentTime } from "./utils/dynamic-epoch-processor
  */
 const solarSystemBodies = [
   ...systemCelestials,
-  mercury,
-  venus,
+  ...mercurySystemBodies,
+  ...venusSystemBodies,
   ...earthSystemBodies,
   ...marsSystemBodies,
   ...jupiterSystemBodies,

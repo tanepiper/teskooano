@@ -1,5 +1,4 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
 import {
   concat,
   concatMap,
@@ -8,7 +7,6 @@ import {
   of,
   Observable,
   type OperatorFunction,
-  from,
 } from "rxjs";
 import {
   generateAsteroidBelt,

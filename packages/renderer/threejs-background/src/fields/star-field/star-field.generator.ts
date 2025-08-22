@@ -50,7 +50,6 @@ export function createStarField(
     );
 
     const baseColor = starColors[Math.floor(random() * starColors.length)];
-    const starColor = new THREE.Color();
 
     const hsl = { h: 0, s: 0, l: 0 };
     baseColor.getHSL(hsl);

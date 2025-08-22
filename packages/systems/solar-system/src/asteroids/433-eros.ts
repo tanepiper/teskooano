@@ -1,11 +1,14 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
-import { CONVERSION } from "@teskooano/core-physics";
 import {
+  CONVERSION,
+  createOrbitalElements,
+  kmToM,
+} from "@teskooano/core-physics";
+import {
+  type AsteroidProperties,
   type CelestialObject,
+  AsteroidClass,
   CelestialStatus,
   CelestialType,
-  type AsteroidProperties,
-  AsteroidClass,
 } from "@teskooano/data-types";
 import * as THREE from "three";
 

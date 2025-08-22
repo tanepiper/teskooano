@@ -1,13 +1,13 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   type CelestialObject,
-  CelestialType,
-  PlanetType,
-  RockyType,
   CelestialStatus,
+  CelestialType,
   type PlanetProperties,
+  PlanetType,
   type RingProperties,
   type RingSystemConfiguration,
+  RockyType,
 } from "@teskooano/data-types";
 
 /**

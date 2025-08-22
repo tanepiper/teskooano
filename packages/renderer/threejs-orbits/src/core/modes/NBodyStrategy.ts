@@ -5,9 +5,6 @@ import { PredictionManager } from "../../renderers/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
-import { simulationStateService } from "@teskooano/core-state";
-import { StateAccessor } from "@teskooano/core-state";
-import { CelestialType } from "@teskooano/data-types";
 import { TrailCurveType } from "../../renderers/TrailManager";
 import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import { BaseCelestialRenderer } from "@teskooano/renderer-threejs-celestial";
@@ -133,7 +130,6 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
         if (renderer && renderer.positionHistoryManager) {
           // For now, use a simple distance calculation based on object position
           // In a real implementation, we'd need to pass the camera as a parameter
-          const distance = obj.position.length(); // Simple distance from origin
           this.orbitalRenderer.updateOrbitalLine(
             obj.id,
             renderer.positionHistoryManager,

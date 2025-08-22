@@ -1,8 +1,8 @@
-import { halley } from "./halley";
-import { haleBopp } from "./hale-bopp";
-import { encke } from "./encke";
-import { temple2 } from "./temple-2";
 import { borrelly } from "./borrelly";
+import { encke } from "./encke";
+import { haleBopp } from "./hale-bopp";
+import { halley } from "./halley";
+import { temple2 } from "./temple-2";
 import { whipple } from "./whipple";
 
 /**

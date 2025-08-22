@@ -1,5 +1,5 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
+
 import { StateSubscriptionMixin } from "@teskooano/core-state";
 import * as THREE from "three";
 import type { LightSourceComponent } from "../components/LightSourceComponent";
@@ -51,21 +51,16 @@ export class LightingManager extends StateSubscriptionMixin {
    * @internal Subscribes to renderable objects state changes to trigger updates.
    */
   private subscribeToStateChanges(): void {
-    this.subscribeToState(
-      this.renderableObjects$,
-      (objects: Record<string, RenderableCelestialObject>) => {
-        this.updateLightSources(objects);
-        this.updateShadowCasting();
-      },
-    );
+    this.subscribeToState(this.renderableObjects$, () => {
+      this.updateLightSources();
+      this.updateShadowCasting();
+    });
   }
 
   /**
    * @internal Updates all registered light source components.
    */
-  private updateLightSources(
-    objects: Record<string, RenderableCelestialObject>,
-  ): void {
+  private updateLightSources(): void {
     this.lightSources.forEach((component) => {
       // Update the component - it will fetch fresh data from state internally
       component.update();
@@ -177,27 +172,6 @@ export class LightingManager extends StateSubscriptionMixin {
   }
 
   /**
-   * @internal Updates all registered light source components and shadow casting.
-   * This is now called automatically when state changes.
-   */
-  private update(): void {
-    this.lightSources.forEach((component) => {
-      component.update();
-    });
-
-    // Throttle shadow updates to improve performance
-    const now = performance.now();
-    if (
-      this.lightSources.size > 0 &&
-      (this.shadowCasters.size > 1 || this.ringShadowCasters.size > 0) &&
-      now - this.lastShadowUpdate > SHADOW_UPDATE_INTERVAL
-    ) {
-      this.updateShadowCasting();
-      this.lastShadowUpdate = now;
-    }
-  }
-
-  /**
    * Updates shadow casting based on planetary positions relative to light sources.
    * A planet casts shadows on another planet only when it's between a light source and the target.
    */
@@ -219,22 +193,20 @@ export class LightingManager extends StateSubscriptionMixin {
           // Check if this caster blocks light to any other object
           let shouldCastShadow = false;
 
-          this.shadowCasters.forEach(
-            ({ mesh: targetMesh, object: targetObject }, targetId) => {
-              if (casterId === targetId) return; // Same object
-              if (targetId === lightComponent.celestialObject.id) return; // Target is the light source
+          this.shadowCasters.forEach(({ object: targetObject }, targetId) => {
+            if (casterId === targetId) return; // Same object
+            if (targetId === lightComponent.celestialObject.id) return; // Target is the light source
 
-              const isBlocking = this.isObjectBlockingLight(
-                lightPos,
-                casterObject.position,
-                targetObject.position,
-                casterMesh,
-              );
-              if (isBlocking) {
-                shouldCastShadow = true;
-              }
-            },
-          );
+            const isBlocking = this.isObjectBlockingLight(
+              lightPos,
+              casterObject.position,
+              targetObject.position,
+              casterMesh,
+            );
+            if (isBlocking) {
+              shouldCastShadow = true;
+            }
+          });
 
           if (shouldCastShadow) {
             casterMesh.castShadow = true;
@@ -245,7 +217,7 @@ export class LightingManager extends StateSubscriptionMixin {
 
     // Handle ring shadow casting
     this.ringShadowCasters.forEach(
-      ({ meshes, object: ringObject, parentObject }, ringId) => {
+      ({ meshes, object: ringObject, parentObject }) => {
         // Initially disable all ring shadow casting
         meshes.forEach((mesh) => {
           mesh.castShadow = false;
@@ -270,23 +242,21 @@ export class LightingManager extends StateSubscriptionMixin {
 
           // Check if rings cast shadows on other objects (moons, planets)
           let shouldCastShadowOnOthers = false;
-          this.shadowCasters.forEach(
-            ({ mesh: targetMesh, object: targetObject }, targetId) => {
-              if (targetId === lightComponent.celestialObject.id) return; // Target is the light source
-              if (targetId === parentObject.id) return; // Already checked parent above
+          this.shadowCasters.forEach(({ object: targetObject }, targetId) => {
+            if (targetId === lightComponent.celestialObject.id) return; // Target is the light source
+            if (targetId === parentObject.id) return; // Already checked parent above
 
-              if (
-                this.isRingBlockingLightToObject(
-                  lightPos,
-                  ringObject.position,
-                  targetObject.position,
-                  targetObject.radius || 1,
-                )
-              ) {
-                shouldCastShadowOnOthers = true;
-              }
-            },
-          );
+            if (
+              this.isRingBlockingLightToObject(
+                lightPos,
+                ringObject.position,
+                targetObject.position,
+                targetObject.radius || 1,
+              )
+            ) {
+              shouldCastShadowOnOthers = true;
+            }
+          });
 
           // Enable shadow casting if rings are blocking light to any object
           if (shouldCastShadowOnParent || shouldCastShadowOnOthers) {

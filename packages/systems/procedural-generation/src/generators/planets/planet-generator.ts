@@ -5,7 +5,6 @@ import {
   CelestialStatus,
   CelestialType,
   PlanetProperties,
-  RingProperties,
   RingSystemConfiguration,
 } from "@teskooano/data-types";
 import { AU_METERS, EARTH_MASS } from "@teskooano/data-values";
@@ -18,7 +17,7 @@ import {
   generateGasGiantSpecificProperties,
   generateRockyPlanetSpecificProperties,
 } from "./planet-properties";
-import { generateRings, generateRingsArray } from "./planet-rings";
+import { generateRings } from "./planet-rings";
 import {
   determinePlanetTypeAndBaseProperties,
   type PlanetBaseProperties,
@@ -26,7 +25,6 @@ import {
 import { createProceduralSurfaceProperties } from "../../properties/creator";
 import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
 import { CelestialZone } from "../../zones";
-import { createOrbitalElements } from "@teskooano/core-physics";
 
 /**
  * Base configuration for planet generation

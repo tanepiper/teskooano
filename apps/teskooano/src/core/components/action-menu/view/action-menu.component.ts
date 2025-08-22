@@ -141,7 +141,7 @@ export class ActionMenuComponent extends HTMLElement {
           iconSvg: item.iconSvg || "",
           active: false,
           disabled: false,
-          action: async (context: any) => {
+          action: async () => {
             try {
               await this._pluginManager.execute(item.functionId);
             } catch (error) {

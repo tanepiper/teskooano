@@ -1,16 +1,11 @@
 import { StateAccessor } from "@teskooano/core-state";
-import {
-  rendererEvents,
-  type RendererStats,
-} from "@teskooano/renderer-threejs-core";
-import { throttleTime } from "rxjs/operators";
 import type { pluginManager } from "@teskooano/ui-plugin";
-import type { DockviewController } from "../controllers/dockview";
 import {
   EventBus,
   Events,
   type ObjectFocusedPayload,
 } from "@teskooano/ui-plugin/patterns";
+import type { DockviewController } from "../controllers/dockview";
 
 interface AppContext {
   dockviewController: DockviewController;
@@ -31,24 +26,12 @@ export class EventSetup {
    */
   public static setupEventListeners(
     pluginManagerInstance: typeof pluginManager,
-    appContext: AppContext,
+    _appContext: AppContext,
   ): void {
     const eventBus = EventBus.getInstance();
-    this.setupRendererStatsListener();
+
     this.setupObjectFocusListener(pluginManagerInstance, eventBus);
     this.setupTourRequestListener(pluginManagerInstance, eventBus);
-  }
-
-  /**
-   * Subscribes to renderer stats updates and reflects them in the global simulation state.
-   */
-  private static setupRendererStatsListener(): void {
-    rendererEvents.statsUpdated$
-      .pipe(throttleTime(1000, undefined, { leading: true, trailing: true }))
-      .subscribe((stats: RendererStats) => {
-        // This part seems to interact with a different state system (Zustand likely).
-        // It's left as is, but ideally, this would also emit an event.
-      });
   }
 
   /**

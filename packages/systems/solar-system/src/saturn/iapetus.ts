@@ -1,10 +1,10 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialType,
+  CelestialObject,
   CelestialStatus,
+  CelestialType,
   PlanetType,
   type PlanetProperties,
-  CelestialObject,
 } from "@teskooano/data-types";
 
 const IAPETUS_MASS_KG = 1.806e21;

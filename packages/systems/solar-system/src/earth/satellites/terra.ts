@@ -1,13 +1,10 @@
+import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
 import {
   type CelestialObject,
-  CelestialType,
   CelestialStatus,
+  CelestialType,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import {
-  createOrbitalElements,
-  createOrbitalElementsFromTLE,
-} from "@teskooano/core-physics";
 
 // Calculate orbital velocity directly for Earth satellite
 // v = sqrt(GM/r) where GM = 3.986e14 m³/s² for Earth

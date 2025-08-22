@@ -1,26 +1,16 @@
+import { OSVector3 } from "@teskooano/core-math";
 import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import type {
-  AnimationLoop,
-  SceneManager,
   GridManager,
+  SceneManager,
 } from "@teskooano/renderer-threejs-core";
 import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import type { RenderPipelineOptions } from "./types";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { StateAccessor } from "@teskooano/core-state";
-import { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import { BackgroundManager } from "@teskooano/renderer-threejs-background";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-celestial";
-import { GridManager } from "@teskooano/renderer-threejs-core";
 
 /**
  * Orchestrates the sequence of updates for each frame in the rendering loop.
@@ -36,7 +26,7 @@ export class RenderPipeline {
   private objectManager: ObjectManager;
   private backgroundManager: BackgroundManager;
   private lightingManager: LightingManager;
-  private lodManager: LODManager;
+
   private gridManager: GridManager;
   private css2DManager: Layer2DManager;
 
@@ -69,7 +59,6 @@ export class RenderPipeline {
     this.objectManager = managers.objectManager;
     this.backgroundManager = managers.backgroundManager;
     this.lightingManager = managers.lightingManager;
-    this.lodManager = managers.lodManager;
     this.gridManager = managers.gridManager;
     this.css2DManager = managers.css2DManager;
 
@@ -144,7 +133,7 @@ export class RenderPipeline {
 
     // 7. Render the 2D overlay AFTER the main render to ensure proper depth isolation.
     // AU markers are positioned relative to origin (0,0,0), not a moving central body
-    this.css2DManager.update(this.camera, this.origin, this.objectManager);
+    this.css2DManager.update(this.camera, this.objectManager);
     this.css2DManager.render(this.camera);
 
     // 8. Run any custom render callbacks injected into the loop.

@@ -1,4 +1,3 @@
-import { SceneManager } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import {
   RenderingOrchestrator,

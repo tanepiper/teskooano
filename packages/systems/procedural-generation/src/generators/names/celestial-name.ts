@@ -1,24 +1,7 @@
-import * as UTIL from "../../utils";
 import { createSeededRandom } from "@teskooano/core-math";
 
 const vowels = "aeiou";
 const consonants = "bcdfghjklmnpqrstvwxyz";
-
-const consonantDoubles = [
-  "b",
-  "d",
-  "f",
-  "g",
-  "l",
-  "m",
-  "n",
-  "p",
-  "r",
-  "s",
-  "t",
-];
-
-const vowelDoubles = ["a", "e", "o"];
 
 /**
  * Generates a unique and evocative name for a celestial body using a

@@ -1,10 +1,10 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
+  CelestialObject,
+  CelestialStatus,
   CelestialType,
   PlanetType,
-  CelestialStatus,
   type PlanetProperties,
-  CelestialObject,
 } from "@teskooano/data-types";
 
 const MIMAS_MASS_KG = 3.75e19;

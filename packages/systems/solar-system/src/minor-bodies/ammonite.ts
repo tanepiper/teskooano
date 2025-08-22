@@ -1,10 +1,10 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
-  CelestialType,
   CelestialStatus,
+  CelestialType,
   PlanetType,
-  type PlanetProperties,
   type CelestialObject,
+  type PlanetProperties,
 } from "@teskooano/data-types";
 
 // Orbital parameters from JPL Small-Body Database (epoch 2025-05-05)

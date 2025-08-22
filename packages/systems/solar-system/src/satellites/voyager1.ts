@@ -1,11 +1,10 @@
 import {
   createOrbitalElements,
-  kmToM,
   distanceAUToHyperbolicSemiMajorAxis,
 } from "@teskooano/core-physics";
 import {
-  CelestialType,
   CelestialStatus,
+  CelestialType,
   SatelliteProperties,
   type CelestialObject,
 } from "@teskooano/data-types";

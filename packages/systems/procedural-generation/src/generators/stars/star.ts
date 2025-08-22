@@ -1,4 +1,3 @@
-import { OSVector3 } from "@teskooano/core-math";
 import type {
   CelestialObject,
   OrbitalParameters,

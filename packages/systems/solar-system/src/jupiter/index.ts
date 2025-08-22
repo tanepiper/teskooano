@@ -1,13 +1,13 @@
-import { jupiter } from "./jupiter";
-import { io } from "./io";
-import { europa } from "./europa";
-import { ganymede } from "./ganymede";
-import { callisto } from "./callisto";
-import { metis } from "./metis";
 import { adrastea } from "./adrastea";
 import { amalthea } from "./amalthea";
-import { thebe } from "./thebe";
+import { callisto } from "./callisto";
+import { europa } from "./europa";
+import { ganymede } from "./ganymede";
 import { himalia } from "./himalia";
+import { io } from "./io";
+import { jupiter } from "./jupiter";
+import { metis } from "./metis";
+import { thebe } from "./thebe";
 
 /**
  * Jupiter system bodies that can be initialized in any order.

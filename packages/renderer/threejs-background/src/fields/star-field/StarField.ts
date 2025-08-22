@@ -68,10 +68,10 @@ export class StarField extends Field {
   /**
    * Updates the star field's state for the current frame.
    * This includes animating the layers and applying the parallax effect.
-   * @param deltaTime The time elapsed since the last frame, in seconds.
+   * @param _deltaTime The time elapsed since the last frame, in seconds.
    * @param camera The scene's camera, used to calculate parallax.
    */
-  public update(deltaTime: number, camera?: THREE.PerspectiveCamera): void {
+  public update(_deltaTime: number, camera?: THREE.PerspectiveCamera): void {
     if (camera) {
       this.applyParallax(camera);
     }

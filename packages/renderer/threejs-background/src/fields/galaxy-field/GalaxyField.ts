@@ -55,10 +55,10 @@ export class GalaxyField extends Field {
   /**
    * Updates the galaxy field's state for the current frame.
    * Static background galaxies don't need updates unless parallax is enabled.
-   * @param deltaTime The time elapsed since the last frame, in seconds.
+   * @param _deltaTime The time elapsed since the last frame, in seconds.
    * @param camera The scene's camera, used to calculate parallax.
    */
-  public update(deltaTime: number, camera?: THREE.PerspectiveCamera): void {
+  public update(_deltaTime: number, camera?: THREE.PerspectiveCamera): void {
     if (camera && this.parallaxStrength > 0) {
       this.applyParallax(camera);
     }

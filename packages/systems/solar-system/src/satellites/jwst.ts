@@ -1,12 +1,11 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import {
-  CelestialType,
   CelestialStatus,
+  CelestialType,
+  LagrangePointType,
   SatelliteProperties,
   type CelestialObject,
-  LagrangePointType,
 } from "@teskooano/data-types";
-import { SOLAR_MASS, EARTH_MASS, AU } from "@teskooano/core-physics";
 
 export const jwst: CelestialObject<SatelliteProperties> = {
   id: "jwst",

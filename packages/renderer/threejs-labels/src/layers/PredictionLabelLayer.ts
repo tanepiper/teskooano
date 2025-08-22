@@ -62,7 +62,6 @@ export class PredictionLabelLayer extends BaseLabelLayer {
 
   public update(
     camera: THREE.PerspectiveCamera,
-    centralBody: OSVector3, // Not used by prediction labels
     objectManager: ObjectManager,
   ): void {
     if (!this.isVisible || !this.activePredictionObject) {
@@ -81,7 +80,6 @@ export class PredictionLabelLayer extends BaseLabelLayer {
     // Baseline thresholds in scene units
     const BASE_HIDE_SHORT_TERM_DIST = 50;
     const BASE_HIDE_MEDIUM_TERM_DIST = 150;
-    const BASE_HIDE_LONG_TERM_DIST = 3000;
     const EARTH_ORBITAL_VELOCITY_MS = 29780; // ~30 km/s
 
     // Scale thresholds based on the object's velocity relative to Earth's orbital speed.
@@ -92,7 +90,6 @@ export class PredictionLabelLayer extends BaseLabelLayer {
 
     const HIDE_SHORT_TERM_DIST = BASE_HIDE_SHORT_TERM_DIST * clampedFactor;
     const HIDE_MEDIUM_TERM_DIST = BASE_HIDE_MEDIUM_TERM_DIST * clampedFactor;
-    const HIDE_LONG_TERM_DIST = BASE_HIDE_LONG_TERM_DIST * clampedFactor;
 
     const ONE_DAY = 86400;
     const NINETY_DAYS = ONE_DAY * 90;

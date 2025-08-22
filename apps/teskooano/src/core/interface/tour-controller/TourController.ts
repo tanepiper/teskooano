@@ -121,7 +121,7 @@ export class TourController {
    * Waits for the engine panel to be fully created and initialized.
    */
   private async waitForEnginePanel(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let retryCount = 0;
       const maxRetries = 50; // 5 seconds maximum wait time
 

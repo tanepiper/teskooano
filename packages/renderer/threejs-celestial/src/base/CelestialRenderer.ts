@@ -1,17 +1,8 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "./managers/LODManager";
 import * as THREE from "three";
 import { CelestialMeshOptions } from "./types";
-import {
-  LightingCalculator,
-  ShadowCasterUtils,
-  LightArrayUtils,
-  type LightSourcesMap,
-  type LightSourceData,
-  type ShadowCasterData,
-  type LightingConfig,
-} from "./lighting";
+import { type LightSourcesMap } from "./lighting";
 
 /**
  * Common interface for all celestial renderers

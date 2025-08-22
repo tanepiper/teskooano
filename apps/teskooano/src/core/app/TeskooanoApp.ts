@@ -150,7 +150,6 @@ export class TeskooanoApp {
       appElement,
       toolbarElement,
       dockviewController,
-      modalManager,
     );
 
     // Step 5: User Interface (requires services)
@@ -167,10 +166,6 @@ export class TeskooanoApp {
   // ================================
   // PHASE 1: Environment & Core Setup
   // ================================
-
-  private setupEnvironment() {
-    console.debug("[Init] Validating environment...");
-  }
 
   private async initializePerformanceMonitoring(): Promise<PerformanceMonitor> {
     console.debug("[Init] Initializing performance monitoring...");
@@ -289,7 +284,6 @@ export class TeskooanoApp {
     appElement: HTMLElement,
     toolbarElement: HTMLElement,
     dockviewController: DockviewController,
-    modalManager: OverlayManager,
   ): Promise<void> {
     console.debug("[Init] Initializing application managers...");
     await ManagerInitializer.initializeManagers(
@@ -297,7 +291,6 @@ export class TeskooanoApp {
       appElement,
       toolbarElement,
       dockviewController,
-      modalManager,
     );
   }
 

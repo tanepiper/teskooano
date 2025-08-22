@@ -1,11 +1,11 @@
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
+  CelestialStatus,
   CelestialType,
   StellarType,
-  CelestialStatus,
-  type StarProperties,
   type CelestialObject,
+  type StarProperties,
 } from "@teskooano/data-types";
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 
 /**
  * Sun configuration object for modular solar system initialization.

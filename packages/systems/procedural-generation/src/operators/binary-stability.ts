@@ -1,6 +1,5 @@
 import { type CelestialObject } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-values";
-import * as CONST from "../constants";
 
 /**
  * Calculates binary stability constraints to prevent orbital decay

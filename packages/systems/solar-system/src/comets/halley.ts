@@ -1,4 +1,4 @@
-import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -7,7 +7,6 @@ import {
   type CometProperties,
 } from "@teskooano/data-types";
 import * as THREE from "three";
-import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Halley's Comet (1P/Halley)

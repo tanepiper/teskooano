@@ -1,10 +1,10 @@
+import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
 import {
   type CelestialObject,
-  CelestialType,
   CelestialStatus,
+  CelestialType,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
 
 const ISS_TLE_LINE1 =
   "1 25544U 98067A   25201.84759595  .00007915  00000-0  14663-3 0  9997";

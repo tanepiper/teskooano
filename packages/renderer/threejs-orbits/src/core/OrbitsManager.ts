@@ -12,11 +12,7 @@ import { NBodyStrategy } from "./modes/NBodyStrategy";
 import type { IOrbitVisualizationStrategy } from "./modes/IOrbitVisualizationStrategy";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { PredictionManager } from "../renderers/PredictionManager";
-import {
-  TrailManager,
-  TrailCurveType,
-  type TrailCurveConfig,
-} from "../renderers/TrailManager";
+import { TrailManager, type TrailCurveConfig } from "../renderers/TrailManager";
 import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -63,9 +59,6 @@ export class OrbitsManager extends StateSubscriptionMixin {
   private orbitLinesVisible: boolean = true;
   /** Flag indicating if prediction line visualizations are visible */
   private predictionLinesVisible: boolean = true;
-
-  /** Currently highlighted object ID */
-  private highlightedObjectId: string | null = null;
 
   /** Color used for highlighting */
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);

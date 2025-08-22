@@ -5,7 +5,7 @@ import {
   type RenderableCelestialObject,
   CelestialType,
 } from "@teskooano/data-types";
-import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import {
   CELESTIAL_LABEL_TAG,
   CelestialLabelComponent,
@@ -24,47 +24,6 @@ export interface LabelVisibilityConfig {
   satellite?: number;
   ejectedSatellite?: number;
   asteroid?: number; // Add asteroid visibility config
-}
-
-/**
- * Calculates the distance from a point to the surface of a celestial object.
- * For solid bodies (planets, moons, etc.), this subtracts the object's radius.
- * For stars and other gaseous bodies, this returns the distance to the center.
- * @param fromPosition The position to measure from (e.g., camera position)
- * @param toPosition The position of the celestial object's center
- * @param objectRadius The radius of the celestial object in meters
- * @param objectType The type of celestial object
- * @returns The distance to the surface (or center for stars) in scene units
- */
-function calculateSurfaceDistance(
-  fromPosition: THREE.Vector3,
-  toPosition: THREE.Vector3,
-  objectRadius: number,
-  objectType: CelestialType,
-): number {
-  const centerDistance = fromPosition.distanceTo(toPosition);
-
-  // For all solid bodies, subtract the radius to get surface distance
-  // This includes planets, moons, satellites, comets, etc.
-  const solidBodyTypes = [
-    CelestialType.PLANET,
-    CelestialType.DWARF_PLANET,
-    CelestialType.MOON,
-    CelestialType.SATELLITE,
-    CelestialType.COMET,
-    CelestialType.ASTEROID_FIELD,
-    CelestialType.OORT_CLOUD,
-    CelestialType.ASTEROID, // Add ASTEROID to solid body types
-  ];
-
-  if (solidBodyTypes.includes(objectType) && objectRadius > 0) {
-    // Convert radius from meters to scene units
-    const radiusInSceneUnits = objectRadius * (1 / AU_METERS);
-    return Math.max(0, centerDistance - radiusInSceneUnits);
-  }
-
-  // For stars and gas giants (no solid surface), use center distance
-  return centerDistance;
 }
 
 export class CelestialLabelLayer extends BaseLabelLayer {
@@ -152,11 +111,10 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
   public override update(
     camera: THREE.PerspectiveCamera,
-    centralBody: OSVector3, // Not used by celestial labels
     objectManager: ObjectManager,
   ): void {
     // Call parent update for throttling
-    super.update(camera, centralBody, objectManager);
+    super.update(camera, objectManager);
 
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);

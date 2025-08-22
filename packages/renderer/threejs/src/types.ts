@@ -2,7 +2,6 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODManager } from "@teskooano/renderer-threejs-celestial";
 import type {
   GridManager,
   SceneManager,
@@ -82,8 +81,6 @@ export interface RenderPipelineOptions {
   backgroundManager: BackgroundManager;
   /** The manager for scene lighting. */
   lightingManager: LightingManager;
-  /** The manager for Level of Detail. */
-  lodManager: LODManager;
   /** The manager for the grid helper. */
   gridManager: GridManager;
 

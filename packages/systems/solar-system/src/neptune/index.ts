@@ -1,10 +1,10 @@
-import { neptune } from "./neptune";
-import { triton } from "./triton";
-import { nereid } from "./nereid";
-import { galatea } from "./galatea";
 import { despina } from "./despina";
-import { thalassa } from "./thalassa";
+import { galatea } from "./galatea";
 import { naiad } from "./naiad";
+import { neptune } from "./neptune";
+import { nereid } from "./nereid";
+import { thalassa } from "./thalassa";
+import { triton } from "./triton";
 
 /**
  * Neptune system bodies that can be initialized in any order.

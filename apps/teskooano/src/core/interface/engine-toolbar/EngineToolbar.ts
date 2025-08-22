@@ -30,7 +30,6 @@ export class EngineToolbar {
   private _manager: EngineToolbarManager;
   private _apiId: string;
   private _parentEngine: any;
-  private _isExpanded: boolean = true;
   private _activeFloatingPanels: Map<string, string> = new Map();
   // Use Subject for easier cleanup on dispose
   private _destroy$ = new Subject<void>();
@@ -390,8 +389,6 @@ export class EngineToolbar {
    * @param isExpanded - `true` if the toolbar should be expanded, `false` otherwise.
    */
   public updateExpansionUI(isExpanded: boolean): void {
-    this._isExpanded = isExpanded;
-
     if (!this._toggleButton || !this._collapsibleContainer) return;
 
     const iconSpan = this._toggleButton.querySelector("span[slot='icon']");

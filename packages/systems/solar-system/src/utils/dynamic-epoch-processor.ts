@@ -7,8 +7,8 @@ import {
 import type { CelestialObject } from "@teskooano/data-types";
 import {
   calculateProcessingStats,
-  logProcessingStats,
   EpochProcessingStats,
+  logProcessingStats,
 } from "./epoch-utilities";
 
 /**

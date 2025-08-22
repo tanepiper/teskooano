@@ -1,9 +1,7 @@
-import { OSVector3 } from "@teskooano/core-math";
 import type {
   AsteroidFieldProperties,
   CelestialObject,
   OrbitalParameters,
-  PhysicsStateReal,
   StarProperties,
 } from "@teskooano/data-types";
 import {
@@ -19,11 +17,7 @@ import {
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
-import {
-  calculateOrbitalPosition,
-  calculateOrbitalVelocity,
-  createOrbitalElements,
-} from "@teskooano/core-physics";
+import { createOrbitalElements } from "@teskooano/core-physics";
 import { isValidAsteroidBeltDistance } from "./utils";
 
 /**

@@ -4,14 +4,14 @@ import {
   kmToM,
 } from "@teskooano/core-physics";
 import {
+  CelestialStatus,
   CelestialType,
   GasGiantClass,
   RockyType,
-  CelestialStatus,
+  type CelestialObject,
   type GasGiantProperties,
   type RingProperties,
   type RingSystemConfiguration,
-  type CelestialObject,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";
 

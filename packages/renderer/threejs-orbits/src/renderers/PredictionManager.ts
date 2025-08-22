@@ -1,20 +1,11 @@
 import * as THREE from "three";
-import {
-  type RenderableCelestialObject,
-  CelestialType,
-} from "@teskooano/data-types";
 import { StateAccessor, PhysicsStateProvider } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { TrailCurveType, type TrailCurveConfig } from "./TrailManager";
+import { type TrailCurveConfig } from "./TrailManager";
 import { Subscription } from "rxjs";
 import { map, distinctUntilChanged } from "rxjs/operators";
-import {
-  CSS2DLayerType,
-  Layer2DManager,
-} from "@teskooano/renderer-threejs-labels";
-import { PredictionLabelLayer } from "@teskooano/renderer-threejs-labels";
+import { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { SECONDS_PER_YEAR } from "@teskooano/data-values";
-import { OSVector3 } from "@teskooano/core-math";
 import { PredictionCalculator } from "./PredictionCalculator";
 import { PredictionRenderer } from "./PredictionRenderer";
 import { PredictionLabels } from "./PredictionLabels";
@@ -58,17 +49,11 @@ export class PredictionManager {
   /** Object manager for scene interaction */
   private objectManager: ObjectManager;
 
-  /** The manager for 2D labels */
-  private layer2DManager: Layer2DManager | null = null;
-
   /** Duration to predict into the future (in seconds), synced from global state. */
   private predictionDuration: number = 0;
 
   /** Number of steps to use for prediction calculations */
   private predictionSteps: number = 60;
-
-  /** Flag indicating if prediction visualization is enabled */
-  private visualizationVisible: boolean = true;
 
   /** Subscription to state changes */
   private stateSubscription: Subscription | undefined;

@@ -1,5 +1,4 @@
 import type { pluginManager } from "@teskooano/ui-plugin";
-import type { OverlayManager } from "../controllers/dockview";
 
 /**
  * Handles initialization of application managers in the correct order
@@ -14,7 +13,6 @@ export class ManagerInitializer {
     appElement: HTMLElement,
     toolbarElement: HTMLElement,
     dockviewController: any,
-    modalManager: OverlayManager,
   ): Promise<void> {
     try {
       // Initialize engine view manager (critical)

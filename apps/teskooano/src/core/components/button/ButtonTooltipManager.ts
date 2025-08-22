@@ -1,10 +1,6 @@
 import type { TeskooanoButton } from "./Button";
 import type { TeskooanoTooltip } from "../tooltip/Tooltip";
-import {
-  getEventBus,
-  Events,
-  type EventListener,
-} from "@teskooano/ui-plugin/patterns";
+import { getEventBus, Events } from "@teskooano/ui-plugin/patterns";
 
 /**
  * Manages the behavior and content of a tooltip associated with a TeskooanoButton.

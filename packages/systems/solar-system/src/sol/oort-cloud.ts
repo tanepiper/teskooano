@@ -1,12 +1,12 @@
 import { createOrbitalElements } from "@teskooano/core-physics";
 import {
-  CelestialType,
   CelestialStatus,
-  type OortCloudProperties,
+  CelestialType,
   type CelestialObject,
+  type OortCloudProperties,
 } from "@teskooano/data-types";
-import { SolarSystemBodies } from "../shared/const";
 import { AU_METERS } from "@teskooano/data-values";
+import { SolarSystemBodies } from "../shared/const";
 
 /**
  * Oort Cloud configuration object for modular solar system initialization.

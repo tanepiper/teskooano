@@ -4,9 +4,9 @@ import {
   kmToM,
 } from "@teskooano/core-physics";
 import {
+  CelestialStatus,
   CelestialType,
   PlanetType,
-  CelestialStatus,
   type CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";

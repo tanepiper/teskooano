@@ -2,7 +2,6 @@ import {
   RenderableCelestialObject,
   CelestialType,
 } from "@teskooano/data-types";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import { BillboardManager } from "../billboards";
@@ -574,11 +573,11 @@ export abstract class BaseCelestialRenderer<
    * An initialization method intended to be overridden by subclasses.
    * This provides a hook for post-constructor setup logic.
    * @param object The celestial object to initialize.
-   * @param options Additional options for initialization.
+   * @param _options Additional options for initialization.
    */
   public initialize(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
+    _options?: CelestialMeshOptions,
   ): void {
     // Update orbital manager with correct object ID if it was initialized with 'unknown'
     if (this.positionHistoryManager.getObjectId() === "unknown") {

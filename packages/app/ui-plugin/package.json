@@ -4,24 +4,24 @@
   "private": true,
   "description": "Core UI plugin system for Teskooano applications.",
   "type": "module",
-  "types": "dist/index.d.ts",
+  "types": "src/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "types": "./src/index.d.ts",
+        "default": "./src/index.ts"
       }
     },
     "./patterns": {
       "import": {
-        "types": "./dist/patterns/index.d.ts",
-        "default": "./dist/patterns/index.js"
+        "types": "./src/patterns/index.d.ts",
+        "default": "./src/patterns/index.ts"
       }
     },
     "./vite.js": {
       "import": {
-        "types": "./dist/vite-plugin.d.ts",
-        "default": "./dist/vite-plugin.js"
+        "types": "./src/vite-plugin.d.ts",
+        "default": "./src/vite-plugin.ts"
       }
     }
   },

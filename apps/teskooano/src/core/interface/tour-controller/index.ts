@@ -19,7 +19,7 @@ const initializeTourFunction: FunctionConfig = {
   id: "tour:initialize",
   execute: async (
     context: PluginExecutionContext,
-    options?: { dockviewController?: any },
+    _options?: { dockviewController?: any },
   ) => {
     if (!tourControllerInstance) {
       // Get the DockView modal manager from the plugin manager

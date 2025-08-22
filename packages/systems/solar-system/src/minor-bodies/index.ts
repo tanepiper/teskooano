@@ -1,11 +1,11 @@
-import { ceres } from "./ceres";
-import { leleakuhonua } from "./leleakuhonua";
-import { vp113 } from "./vp113";
-import { eris, dysnomia } from "./eris";
-import { makemake, mk2 } from "./makemake";
-import { haumea, hiiaka, namaka } from "./haumea";
-import { sedna } from "./sedna"; // Import Sedna
 import { ammonite } from "./ammonite";
+import { ceres } from "./ceres";
+import { dysnomia, eris } from "./eris";
+import { haumea, hiiaka, namaka } from "./haumea";
+import { leleakuhonua } from "./leleakuhonua";
+import { makemake, mk2 } from "./makemake";
+import { sedna } from "./sedna"; // Import Sedna
+import { vp113 } from "./vp113";
 
 /**
  * Minor bodies that can be initialized in any order.

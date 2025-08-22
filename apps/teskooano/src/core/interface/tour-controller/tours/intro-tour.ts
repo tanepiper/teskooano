@@ -65,7 +65,7 @@ export function createIntroTour(
       },
       onPopoverRender: (
         popover: PopoverDOM,
-        opts: { config: Config; state: State },
+        _opts: { config: Config; state: State },
       ) => {
         popover.description.innerHTML = `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "which may be currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`;
       },

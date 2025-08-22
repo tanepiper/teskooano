@@ -4,11 +4,10 @@ import {
   kmToM,
 } from "@teskooano/core-physics";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType,
-  CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";

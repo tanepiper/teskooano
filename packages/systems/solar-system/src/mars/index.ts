@@ -7,12 +7,3 @@ import { deimos } from "./deimos";
  * Each object should have a parentId that references an existing body.
  */
 export const marsSystemBodies = [mars, phobos, deimos];
-
-/**
- * Legacy function for backward compatibility.
- * @deprecated Use the marsSystemBodies array instead.
- */
-export function initializeMars(parentId: string): void {
-  // This function is now deprecated - use the modular approach instead
-  // The marsSystemBodies array should be used with the main solar system initialization
-}

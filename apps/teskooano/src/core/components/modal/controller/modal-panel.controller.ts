@@ -20,7 +20,6 @@ export class ModalPanelController {
   private confirmButton: HTMLButtonElement | null = null;
   private closeButton: HTMLButtonElement | null = null;
   private secondaryButton: HTMLButtonElement | null = null;
-  private contentSlot: HTMLSlotElement | null = null;
 
   constructor(
     shadowRoot: ShadowRoot,
@@ -174,9 +173,6 @@ export class ModalPanelController {
     this.secondaryButton = this.shadowRoot.getElementById(
       "secondary-button",
     ) as HTMLButtonElement;
-    this.contentSlot = this.shadowRoot.querySelector(
-      'slot[name="content"]',
-    ) as HTMLSlotElement;
   }
 
   /**

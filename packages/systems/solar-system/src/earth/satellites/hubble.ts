@@ -1,10 +1,10 @@
+import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
 import {
   type CelestialObject,
-  CelestialType,
   CelestialStatus,
+  CelestialType,
   SatelliteProperties,
 } from "@teskooano/data-types";
-import { createOrbitalElementsFromTLE } from "@teskooano/core-physics";
 
 const HUBBLE_TLE_LINE1 =
   "1 20580U 90037B   25202.58856561  .00004350  00000-0  15814-3 0  9993";

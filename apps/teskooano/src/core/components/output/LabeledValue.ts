@@ -114,11 +114,11 @@ export class TeskooanoLabeledValue extends HTMLElement {
     });
 
     // Watch for slot availability changes
-    this.state.watch("hasLabelSlot", (hasLabelSlot: boolean) => {
+    this.state.watch("hasLabelSlot", () => {
       this.updateLabelDisplay(this.state.get("label"));
     });
 
-    this.state.watch("hasValueSlot", (hasValueSlot: boolean) => {
+    this.state.watch("hasValueSlot", () => {
       this.updateValueDisplay(this.state.get("value"));
     });
   }

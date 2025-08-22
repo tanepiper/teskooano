@@ -1,5 +1,5 @@
-import { pluto } from "./pluto";
 import { charon } from "./charon";
+import { pluto } from "./pluto";
 
 /**
  * Pluto system configuration objects for modular solar system initialization.

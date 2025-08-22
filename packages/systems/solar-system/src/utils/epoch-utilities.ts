@@ -1,8 +1,8 @@
-import type { CelestialObject } from "@teskooano/data-types";
 import {
-  getJulianDayForEpoch,
   getCurrentPreciseEpoch,
+  getJulianDayForEpoch,
 } from "@teskooano/core-physics";
+import type { CelestialObject } from "@teskooano/data-types";
 
 /**
  * Comprehensive shared utilities for epoch processing in the solar system.

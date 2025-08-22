@@ -220,7 +220,7 @@ export class TeskooanoSelect extends HTMLElement {
     });
   }
 
-  private handleOptionChanges = (mutations: MutationRecord[]) => {
+  private handleOptionChanges = () => {
     this.syncOptions();
   };
 

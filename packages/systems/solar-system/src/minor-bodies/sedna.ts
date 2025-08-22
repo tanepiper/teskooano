@@ -1,10 +1,10 @@
 import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   type CelestialObject,
-  CelestialType,
-  PlanetType,
   CelestialStatus,
+  CelestialType,
   type PlanetProperties,
+  PlanetType,
 } from "@teskooano/data-types";
 
 /**

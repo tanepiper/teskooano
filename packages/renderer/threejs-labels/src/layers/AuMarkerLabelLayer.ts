@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OSVector3 } from "@teskooano/core-math";
+
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AuMarkerLabelComponent } from "../components/au-marker-label/AuMarkerLabelComponent";
@@ -74,8 +74,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
 
   public override update(
     camera: THREE.PerspectiveCamera,
-    centralBody: OSVector3, // This is actually the origin point (0,0,0) for AU markers
-    objectManager: ObjectManager, // Pass ObjectManager for raycasting
+    objectManager: ObjectManager,
   ): void {
     if (!this.isVisible) {
       // If the layer is globally hidden, ensure all groups are hidden.
@@ -94,7 +93,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
     // Set the camera for the raycaster
     raycaster.camera = camera;
 
-    this.managedGroups.forEach((group, au) => {
+    this.managedGroups.forEach((group) => {
       const markerAuValueScene = group.userData.sceneDistance || 0;
       if (markerAuValueScene === 0) {
         group.visible = false;

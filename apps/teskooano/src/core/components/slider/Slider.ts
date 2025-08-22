@@ -1,11 +1,6 @@
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 import { template } from "./Slider.template";
-import {
-  ReactiveState,
-  EventBus,
-  Events,
-  createComponentState,
-} from "@teskooano/ui-plugin/patterns";
+import { createComponentState } from "@teskooano/ui-plugin/patterns";
 
 interface SliderState {
   value: number;

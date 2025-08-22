@@ -1,11 +1,7 @@
 import type { TeskooanoTooltip } from "../tooltip/Tooltip";
 import { template } from "./Button.template";
 import { ButtonTooltipManager } from "./ButtonTooltipManager";
-import {
-  createComponentState,
-  Events,
-  type EventConfig,
-} from "@teskooano/ui-plugin/patterns";
+import { createComponentState, Events } from "@teskooano/ui-plugin/patterns";
 
 /**
  * A custom button element `<teskooano-button>` that extends standard button functionality
@@ -382,12 +378,6 @@ export class TeskooanoButton extends HTMLElement {
       case "type":
         this.state.set("type", newValue || "button");
         break;
-    }
-  }
-
-  private updateAttribute(name: string, value: string | null) {
-    if (name === "type") {
-      this.setButtonAttribute(name, value);
     }
   }
 
