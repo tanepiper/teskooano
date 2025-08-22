@@ -1,0 +1,46 @@
+{
+  "name": "@teskooano/app-services",
+  "version": "0.4.0-dev.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@teskooano/core-state": "workspace:*",
+    "@teskooano/core-math": "workspace:*",
+    "@teskooano/data-types": "workspace:*",
+    "@teskooano/renderer-threejs": "workspace:*",
+    "@teskooano/renderer-threejs-controls": "workspace:*",
+    "rxjs": "^7.8.1",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./camera": {
+      "import": "./dist/services/CameraService.js",
+      "types": "./dist/services/CameraService.d.ts"
+    },
+    "./hierarchy": {
+      "import": "./dist/services/HierarchyService.js",
+      "types": "./dist/services/HierarchyService.d.ts"
+    },
+    "./panel": {
+      "import": "./dist/services/PanelService.js",
+      "types": "./dist/services/PanelService.d.ts"
+    },
+    "./renderer": {
+      "import": "./dist/services/RendererService.js",
+      "types": "./dist/services/RendererService.d.ts"
+    }
+  }
+}
