@@ -19,7 +19,6 @@ interface RenderableCacheEntry {
   mass: number;
   primaryLightSourceId: string | undefined;
   axialTilt: OSVector3 | number | undefined;
-  siderealPeriod: number | undefined;
   objectType: CelestialType;
   parentId?: string;
 }
@@ -134,7 +133,6 @@ export class RenderableObjectFactory {
         mass: (obj.realMass_kg ?? 0) * SCALE.MASS,
         primaryLightSourceId: undefined, // Will be set later
         axialTilt: obj.orbit.axialTilt,
-        siderealPeriod: obj.orbit.siderealRotationPeriod_s,
         objectType: obj.type,
         parentId: obj.parentId,
       };
@@ -201,7 +199,7 @@ export class RenderableObjectFactory {
     target.rotation.copy(
       this.calculateRotation(
         cached.axialTilt,
-        cached.siderealPeriod,
+        obj.orbit.siderealRotationPeriod_s,
         simulationTime,
       ).toThreeJS(),
     );
