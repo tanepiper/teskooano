@@ -89,54 +89,52 @@ export class PanelLifecycleManager {
     this._subscription = new Subscription();
 
     this._subscription.add(
-      StateAccessor.getCelestialObjectsStream().subscribe(
-        (celestialObjects) => {
-          if (!this._options.getIsConnected()) return;
+      StateAccessor.celestialObjects$().subscribe((celestialObjects) => {
+        if (!this._options.getIsConnected()) return;
 
-          const hasObjects = Object.keys(celestialObjects).length > 0;
-          const rendererExists = !!this._options.getRenderer();
+        const hasObjects = Object.keys(celestialObjects).length > 0;
+        const rendererExists = !!this._options.getRenderer();
 
-          if (hasObjects) {
-            // If we have objects, ensure the renderer is up and placeholder is hidden.
-            // Cancel any pending renderer disposal timeout
+        if (hasObjects) {
+          // If we have objects, ensure the renderer is up and placeholder is hidden.
+          // Cancel any pending renderer disposal timeout
+          if (this._clearTimeout) {
+            clearTimeout(this._clearTimeout);
+            this._clearTimeout = null;
+          }
+
+          if (!rendererExists) {
+            this._options.initializeRendererAndUI();
+            // Physics simulation is now handled by the AnimationLoop
+            // No need to call simulationManager.startLoop() separately
+          }
+          this._options.placeholderManager?.hide();
+        } else {
+          // If we have no objects, wait a bit before disposing the renderer
+          // to avoid disposing it during system loading operations
+          if (rendererExists) {
+            // Clear any existing timeout
             if (this._clearTimeout) {
               clearTimeout(this._clearTimeout);
+            }
+
+            // Set a timeout to dispose the renderer after a short delay
+            // This prevents disposing during rapid state changes (like system loading)
+            this._clearTimeout = window.setTimeout(() => {
+              console.log(
+                "[PanelLifecycleManager] Disposing renderer after delay",
+              );
+              this._options.disposeRendererAndUI();
+              // Don't call resetSystem here as it might interfere with the state
+              // simulationManager.resetSystem(true);
               this._clearTimeout = null;
-            }
-
-            if (!rendererExists) {
-              this._options.initializeRendererAndUI();
-              // Physics simulation is now handled by the AnimationLoop
-              // No need to call simulationManager.startLoop() separately
-            }
-            this._options.placeholderManager?.hide();
-          } else {
-            // If we have no objects, wait a bit before disposing the renderer
-            // to avoid disposing it during system loading operations
-            if (rendererExists) {
-              // Clear any existing timeout
-              if (this._clearTimeout) {
-                clearTimeout(this._clearTimeout);
-              }
-
-              // Set a timeout to dispose the renderer after a short delay
-              // This prevents disposing during rapid state changes (like system loading)
-              this._clearTimeout = window.setTimeout(() => {
-                console.log(
-                  "[PanelLifecycleManager] Disposing renderer after delay",
-                );
-                this._options.disposeRendererAndUI();
-                // Don't call resetSystem here as it might interfere with the state
-                // simulationManager.resetSystem(true);
-                this._clearTimeout = null;
-              }, 50); // Reduced from 100ms to 50ms
-            }
-            if (!this._isGeneratingSystem) {
-              this._options.placeholderManager?.showMessage(false);
-            }
+            }, 50); // Reduced from 100ms to 50ms
           }
-        },
-      ),
+          if (!this._isGeneratingSystem) {
+            this._options.placeholderManager?.showMessage(false);
+          }
+        }
+      }),
     );
 
     // Add event listeners for system generation start and complete.

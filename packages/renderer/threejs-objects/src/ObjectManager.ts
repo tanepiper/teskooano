@@ -144,7 +144,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     css2DManager: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<
       Record<string, OSVector3>
-    > = StateAccessor.getAccelerationVectorsStream(),
+    > = StateAccessor.accelerationVectors$(),
     lightingManager: LightingManager,
   ) {
     super();
@@ -429,6 +429,13 @@ export class ObjectManager extends StateSubscriptionMixin {
     // Update visual effects that need per-frame updates for smooth animation
     this.lensingHandler.updateAll(renderer, scene, camera);
     this.debrisEffectManager.update(deltaTime);
+
+    // Trigger renderer updates continuously for smooth rotation
+    // This ensures celestial objects rotate continuously as time progresses
+    if (Object.keys(this.celestialRenderers).length > 0) {
+      const allRenderableObjects = StateAccessor.getRenderableObjects();
+      this.rendererUpdater.updateRenderersReactive(allRenderableObjects);
+    }
   }
 
   /**

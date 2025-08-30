@@ -71,7 +71,7 @@ export class FocusInteractionManager {
       return false;
     }
 
-    const objects = StateAccessor.getCurrentCelestialObjects();
+    const objects = StateAccessor.getCelestialObjects();
     const targetObject = objects[objectId];
 
     // Special handling for asteroid fields and oort clouds
@@ -108,7 +108,7 @@ export class FocusInteractionManager {
     objectId: string,
     checkType: boolean = true,
   ): boolean {
-    const objects = StateAccessor.getCurrentCelestialObjects();
+    const objects = StateAccessor.getCelestialObjects();
     const targetObject = objects[objectId];
 
     if (!targetObject) {

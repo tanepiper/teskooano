@@ -247,7 +247,7 @@ export class SystemControls extends HTMLElement {
     }
 
     const displayState$ = combineLatest([
-      StateAccessor.getCelestialObjectsStream(),
+      StateAccessor.celestialObjects$(),
       StateAccessor.getCurrentSeedStream(),
       this.controller.isGenerating$$,
       this.mobile$$,

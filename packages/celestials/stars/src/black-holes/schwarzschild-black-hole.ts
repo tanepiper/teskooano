@@ -6,7 +6,7 @@ import type {
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import { GravitationalLensingHelper } from "./gravitational-lensing";
 
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,

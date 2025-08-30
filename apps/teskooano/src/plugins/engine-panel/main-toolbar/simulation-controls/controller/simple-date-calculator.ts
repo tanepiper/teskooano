@@ -86,8 +86,7 @@ export class SimpleDateCalculator {
 
       try {
         // Get current simulation state to calculate time difference
-        const currentSimulationState =
-          StateAccessor.getCurrentSimulationState();
+        const currentSimulationState = StateAccessor.getSimulationState();
         const currentEffectiveDate = new Date(
           currentSimulationState.startDate.getTime() +
             currentSimulationState.time * 1000,

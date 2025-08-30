@@ -475,6 +475,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
               Math.cos(tiltRad),
               Math.sin(tiltRad),
             );
+            console.log("parentAxialTilt - config", parentAxialTilt);
           } else if (parentObject.axialTilt.x !== undefined) {
             // Convert OSVector3 to THREE.Vector3 for shader uniforms
             parentAxialTilt = new THREE.Vector3(
@@ -482,6 +483,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
               parentObject.axialTilt.y,
               parentObject.axialTilt.z,
             );
+            console.log("parentAxialTilt - parentObject", parentAxialTilt);
           }
         }
       }

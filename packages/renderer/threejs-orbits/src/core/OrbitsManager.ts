@@ -396,7 +396,6 @@ export class OrbitsManager extends StateSubscriptionMixin {
    * @param objectId - ID of the object to highlight, or null to clear highlighting
    */
   highlightVisualization(objectId: string | null): void {
-    this.highlightedObjectId = objectId;
     this.activeStrategy?.highlight(objectId, this.highlightColor);
   }
 

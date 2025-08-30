@@ -1,0 +1,24 @@
+formulas:
+  Number of Classes: list(classes).unique().length
+  Total Dependencies: list(dependencies).unique().length
+properties:
+  formula.Number of Classes:
+    displayName: Used Classes
+views:
+  - type: table
+    name: Table
+    order:
+      - file.name
+      - package
+      - formula.Number of Classes
+      - formula.Total Dependencies
+    sort:
+      - property: formula.Number of Classes
+        direction: DESC
+      - property: package
+        direction: ASC
+    columnSize:
+      note.package: 279
+  - type: cards
+    name: View
+    cardSize: 290

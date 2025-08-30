@@ -169,7 +169,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
 
     // Fallback: try to get from the global state
     try {
-      const allCelestials = StateAccessor.getCurrentCelestialObjects();
+      const allCelestials = StateAccessor.getCelestialObjects();
       // Look for any object that might be currently focused
       // This is a heuristic - we'll check if there's only one object or if there's a clear "main" object
       const celestialIds = Object.keys(allCelestials);
@@ -257,7 +257,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
       ) {
         message = `Object '${potentiallyDestroyedObject.name}' has been destroyed.`;
       } else if (oldSelectedId && !potentiallyDestroyedObject) {
-        const allCelestials = StateAccessor.getCurrentCelestialObjects();
+        const allCelestials = StateAccessor.getCelestialObjects();
         const oldObjectData = allCelestials[oldSelectedId];
         if (!oldObjectData) {
           message = `Object previously selected (${oldSelectedId}) is no longer available.`;

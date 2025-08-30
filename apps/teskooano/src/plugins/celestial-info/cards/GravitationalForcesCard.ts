@@ -44,7 +44,7 @@ export class GravitationalForcesCard extends BaseCelestialCard {
       PhysicsStateProvider.getPhysicsState(celestial);
     if (!celestialPhysicsState) return "";
 
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const influences: {
       name: string;
       force: number;

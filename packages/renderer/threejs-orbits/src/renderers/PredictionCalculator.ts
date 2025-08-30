@@ -41,7 +41,7 @@ export class PredictionCalculator {
     relativeToBodyId?: string,
   ): Promise<{ points: OSVector3[]; timestamps: number[] }> {
     try {
-      const fullObjectsMap = StateAccessor.getCurrentCelestialObjects();
+      const fullObjectsMap = StateAccessor.getCelestialObjects();
       const targetObject = fullObjectsMap[objectId];
 
       if (!targetObject) {
@@ -140,8 +140,8 @@ export class PredictionCalculator {
    * Determines the reference body for relative coordinates based on object type and system configuration
    */
   determineRelativeBodyId(objectId: string): string | undefined {
-    const fullObjectsMap = StateAccessor.getCurrentCelestialObjects();
-    const renderableObjectsMap = StateAccessor.getCurrentRenderableObjects();
+    const fullObjectsMap = StateAccessor.getCelestialObjects();
+    const renderableObjectsMap = StateAccessor.getRenderableObjects();
     const targetObject = fullObjectsMap[objectId];
     const renderableTargetObject = renderableObjectsMap[objectId];
 

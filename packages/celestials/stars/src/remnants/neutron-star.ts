@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { NeutronStarSubtype } from "@teskooano/data-types";
 import { GravitationalLensingHelper } from "@teskooano/celestials-stars";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
 import {
   BaseCelestialRendererOptions,

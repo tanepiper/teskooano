@@ -515,7 +515,7 @@ export class CameraManager {
   private pauseSimulationForTransition(): void {
     if (this.isTransitioning) return; // Already in a transition
 
-    const currentState = StateAccessor.getCurrentSimulationState();
+    const currentState = StateAccessor.getSimulationState();
     this.originalTimeScale = currentState.timeScale;
     this.isTransitioning = true;
 

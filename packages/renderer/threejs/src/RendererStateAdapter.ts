@@ -40,7 +40,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
   constructor() {
     super();
     this.factory = new RenderableObjectFactory();
-    const initialSimState = StateAccessor.getCurrentSimulationState();
+    const initialSimState = StateAccessor.getSimulationState();
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
       trailLengthMultiplier:
         initialSimState.visualSettings.trailLengthMultiplier,
@@ -123,17 +123,25 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
    */
   private subscribeToCoreState(): void {
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(
-      StateAccessor.getCelestialObjectsStream(),
-      (objects) => this.processCelestialObjectsUpdateNow(objects),
+    this.subscribeToState(StateAccessor.celestialObjects$(), (objects) =>
+      this.processCelestialObjectsUpdateNow(objects),
     );
 
     // ✅ Using RxJS operators for cleaner visual settings transformation
     this.subscribeToStateWithMapping(
-      StateAccessor.getSimulationStateStream(),
+      StateAccessor.simulation$(),
       (simState: SimulationState) => {
         // Update simulation time
         this.currentSimulationTime = simState.time ?? 0;
+
+        // Trigger rotation recalculation when time changes
+        // This ensures celestial objects rotate continuously as time progresses
+        if (
+          this.lastProcessedObjects &&
+          Object.keys(this.lastProcessedObjects).length > 0
+        ) {
+          this.processCelestialObjectsUpdateNow(this.lastProcessedObjects);
+        }
 
         // Extract and transform visual settings
         return this.extractVisualSettings(simState);

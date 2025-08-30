@@ -9,7 +9,7 @@ import {
   CustomEvents,
   type CelestialObject,
 } from "@teskooano/data-types";
-import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
+import { generateSystem as generateSystemObservable } from "@teskooano/systems-procedural-generation";
 import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
 

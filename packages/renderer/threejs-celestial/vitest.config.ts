@@ -25,10 +25,7 @@ export default defineConfig({
         __dirname,
         "../threejs-lighting/src",
       ),
-      "@teskooano/renderer-threejs-lod": resolve(
-        __dirname,
-        "../threejs-lod/src",
-      ),
+
       "@teskooano/web-apis": resolve(__dirname, "../../web-apis/src"),
     },
   },

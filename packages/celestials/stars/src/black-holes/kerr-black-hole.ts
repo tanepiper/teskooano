@@ -9,7 +9,7 @@ import { GravitationalLensingHelper } from "./gravitational-lensing";
 import { generateAccretionDiskProperties } from "@teskooano/celestials-rings";
 import { RingSystemRenderer } from "@teskooano/celestials-rings";
 
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,

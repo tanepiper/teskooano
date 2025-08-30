@@ -27,7 +27,7 @@ export class SimulationLoopManager {
    * and automatically managing the simulation state.
    */
   private initialize(): void {
-    this.subscription = StateAccessor.getCelestialObjectsStream()
+    this.subscription = StateAccessor.celestialObjects$()
       .pipe(
         map((objects) => Object.keys(objects).length > 0),
         distinctUntilChanged(),

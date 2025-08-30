@@ -71,7 +71,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
    */
   public init(): void {
     this.setupEventListeners();
-    this.handleStateUpdate(StateAccessor.getCurrentSimulationState());
+    this.handleStateUpdate(StateAccessor.getSimulationState());
 
     this.subscribeToState(simulationState$, (state: SimulationState) => {
       this.handleStateUpdate(state);

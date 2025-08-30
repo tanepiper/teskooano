@@ -100,7 +100,7 @@ export class PredictionManager {
    * Subscribes to the global simulation state to keep prediction settings in sync.
    */
   private initializeStateSubscriptions(): void {
-    this.stateSubscription = StateAccessor.getSimulationStateStream()
+    this.stateSubscription = StateAccessor.simulation$()
       .pipe(
         map((state) => state.visualSettings.predictionDuration),
         distinctUntilChanged(),
@@ -140,7 +140,7 @@ export class PredictionManager {
       return false;
     }
 
-    const fullObjectsMap = StateAccessor.getCurrentCelestialObjects();
+    const fullObjectsMap = StateAccessor.getCelestialObjects();
     const targetObject = fullObjectsMap[objectId];
 
     // Check if the target object exists
@@ -156,7 +156,7 @@ export class PredictionManager {
       return false;
     }
 
-    const renderableObjectsMap = StateAccessor.getCurrentRenderableObjects();
+    const renderableObjectsMap = StateAccessor.getRenderableObjects();
     const renderableTargetObject = renderableObjectsMap[objectId];
 
     if (!renderableTargetObject) {
@@ -187,8 +187,7 @@ export class PredictionManager {
           const currentPosition = targetPhysicsState.position_m.toThreeJS();
           const currentVelocity = targetPhysicsState.velocity_mps.toThreeJS();
           const threeJsObject = this.objectManager.getObject(objectId);
-          const currentSimulationTime =
-            StateAccessor.getCurrentSimulationState().time;
+          const currentSimulationTime = StateAccessor.getSimulationState().time;
           this.labels.updateCurrentState(
             currentPosition,
             currentVelocity,

@@ -10,7 +10,7 @@ vi.mock("./PhysicsStateCalculator", () => ({
 
 vi.mock("@teskooano/core-state", () => ({
   StateAccessor: {
-    getCurrentCelestialObjects: vi.fn(),
+    getCelestialObjects: vi.fn(),
   },
 }));
 

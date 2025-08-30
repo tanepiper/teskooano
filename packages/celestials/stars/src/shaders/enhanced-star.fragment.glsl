@@ -26,7 +26,7 @@ varying vec3 vPosition;
 // Improved noise function based on Shadertoy example
 float snoise(vec3 uv, float res, float time) {
     const vec3 s = vec3(1e0, 1e2, 1e4);
-    uv *= res + (time / 100000000.0) * 0.1; // Increase time component to the noise sampling significantly
+    uv *= res + (time / 40000.0) * 0.1; // Increase time component to the noise sampling significantly
     vec3 uv0 = floor(mod(uv, res))*s;
     vec3 uv1 = floor(mod(uv+vec3(1.), res))*s;
     vec3 f = fract(uv); f = f*f*(3.0-2.0*f);
@@ -54,7 +54,7 @@ float fbm(vec3 p, float time) { // Pass time to fbm
 }
 
 void main() {
-    float time = uTime / 100000000.0 * 0.1; // Use uTime directly for continuous animation
+    float time = uTime / 40000.0 * 0.1; // Use uTime directly for continuous animation
     
     // Create animated coordinates for plasma noise
     vec3 animatedPosition = vPosition + vec3(time * 2.0, time * 3.0, time * 4.0); // Crank up multipliers

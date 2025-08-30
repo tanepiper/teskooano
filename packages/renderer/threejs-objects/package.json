@@ -34,7 +34,6 @@
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "@teskooano/renderer-threejs-lighting": "file:../threejs-lighting",
-    "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
     "@teskooano/renderer-threejs-orbits": "file:../threejs-orbits",
     "@teskooano/renderer-threejs--celestial": "file:../threejs-celestial",
     "@teskooano/celestials-comet": "file:../../../celestials/comet",

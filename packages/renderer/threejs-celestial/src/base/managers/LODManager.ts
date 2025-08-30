@@ -40,11 +40,10 @@ export class LODManager extends StateSubscriptionMixin {
     super();
 
     // Initialize with current performance profile
-    this.currentProfile =
-      StateAccessor.getCurrentSimulationState().performanceProfile;
+    this.currentProfile = StateAccessor.getSimulationState().performanceProfile;
 
     // Subscribe to performance profile changes
-    this.subscribeToState(StateAccessor.getSimulationStateStream(), (state) => {
+    this.subscribeToState(StateAccessor.simulation$(), (state) => {
       if (state.performanceProfile !== this.currentProfile) {
         this.currentProfile = state.performanceProfile;
       }

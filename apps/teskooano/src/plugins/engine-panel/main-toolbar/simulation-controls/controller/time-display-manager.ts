@@ -77,7 +77,7 @@ export class TimeDisplayManager {
    * Gets the current simulation start date
    */
   public getCurrentDate(): Date {
-    const state = StateAccessor.getCurrentSimulationState();
+    const state = StateAccessor.getSimulationState();
     return new Date(state.startDate);
   }
 
@@ -86,14 +86,14 @@ export class TimeDisplayManager {
    */
   private calculatePlanetaryPositionsForDate(targetDate: Date): void {
     // Pause simulation to prevent any interference
-    const currentState = StateAccessor.getCurrentSimulationState();
+    const currentState = StateAccessor.getSimulationState();
     const wasPaused = currentState.paused;
     if (!wasPaused) {
       actions.togglePause();
     }
 
     // Get all current celestial objects
-    const celestialObjects = StateAccessor.getCurrentCelestialObjects();
+    const celestialObjects = StateAccessor.getCelestialObjects();
 
     // Use the simplified calculator to get new positions
     const calculationResult = SimpleDateCalculator.calculatePositionsForDate(
@@ -166,12 +166,12 @@ export class TimeDisplayManager {
     this.dateJumpCancel$.next();
 
     try {
-      const currentState = StateAccessor.getCurrentSimulationState();
+      const currentState = StateAccessor.getSimulationState();
       const currentTime = currentState.time;
 
       // Validate the date change
       const validation = SimpleDateCalculator.validateDateChange(
-        StateAccessor.getCurrentSimulationState().startDate,
+        StateAccessor.getSimulationState().startDate,
         newDate,
       );
 
@@ -186,7 +186,7 @@ export class TimeDisplayManager {
       // Calculate target time in seconds from original start date
       const targetTimeSeconds =
         (newDate.getTime() -
-          StateAccessor.getCurrentSimulationState().startDate.getTime()) /
+          StateAccessor.getSimulationState().startDate.getTime()) /
         1000;
       const currentTimeSeconds = currentTime;
       const timeDifference = targetTimeSeconds - currentTimeSeconds;
@@ -236,7 +236,7 @@ export class TimeDisplayManager {
    */
   private performDateJump(targetDate: Date, timeDifference: number) {
     // Store original simulation state
-    const simulationState = StateAccessor.getCurrentSimulationState();
+    const simulationState = StateAccessor.getSimulationState();
     const originalMode = simulationState.simulationConfig?.mode;
     const needsModeSwitch =
       originalMode && originalMode !== SimulationMode.IDEAL;
@@ -303,7 +303,7 @@ export class TimeDisplayManager {
   }
 
   private hasActiveSimulation(): boolean {
-    const celestialObjects = StateAccessor.getCurrentCelestialObjects();
+    const celestialObjects = StateAccessor.getCelestialObjects();
     return Object.keys(celestialObjects).length > 0;
   }
 
@@ -329,7 +329,7 @@ export class TimeDisplayManager {
 
     if (this.editableDateInput) {
       // Calculate current date from state start date + elapsed time
-      const state = StateAccessor.getCurrentSimulationState();
+      const state = StateAccessor.getSimulationState();
       const currentDate = new Date(
         state.startDate.getTime() + timeSeconds * 1000,
       );
@@ -347,7 +347,7 @@ export class TimeDisplayManager {
     this.element.textContent = "";
 
     this.editableDateInput = new EditableDateInput(this.element, {
-      initialDate: StateAccessor.getCurrentSimulationState().startDate,
+      initialDate: StateAccessor.getSimulationState().startDate,
       onDateChange: this.handleDateChange,
       compact: this.config.compact || false,
     });

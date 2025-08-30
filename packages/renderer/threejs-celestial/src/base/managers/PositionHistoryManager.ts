@@ -391,7 +391,7 @@ export class PositionHistoryManager {
    */
   private isSimulationPaused(): boolean {
     try {
-      const simulationState = StateAccessor.getCurrentSimulationState();
+      const simulationState = StateAccessor.getSimulationState();
       return simulationState.paused || false;
     } catch (error) {
       console.warn("Could not get simulation pause state, assuming not paused");
@@ -407,7 +407,7 @@ export class PositionHistoryManager {
     try {
       // Import here to avoid circular dependencies
 
-      const simulationState = StateAccessor.getCurrentSimulationState();
+      const simulationState = StateAccessor.getSimulationState();
       return simulationState.timeScale || 1;
     } catch (error) {
       console.warn("Could not get time scale from state, using default 1");

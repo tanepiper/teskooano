@@ -248,7 +248,7 @@ export class ShadowSourcesCard extends BaseCelestialCard {
     lightCelestial: CelestialObject,
     currentRenderableObjects: Record<string, any>,
   ): CelestialObject[] {
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const potentialCasters: CelestialObject[] = [];
 
     // Simple logic based on object types:
@@ -302,7 +302,7 @@ export class ShadowSourcesCard extends BaseCelestialCard {
     currentRenderableObjects: Record<string, any>,
   ): ShadowCaster[] {
     const shadowCasters: ShadowCaster[] = [];
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
 
     console.warn("Using fallback method for:", celestial.name);
 

@@ -9,7 +9,7 @@ import {
   type CelestialMeshOptions,
   type LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import { AsteroidFieldMaterial } from "@teskooano/celestials-asteroid-field";
 import { SCALE } from "@teskooano/data-values";

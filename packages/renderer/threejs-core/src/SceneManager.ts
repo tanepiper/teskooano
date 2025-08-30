@@ -90,7 +90,7 @@ export class SceneManager {
     this.options = options;
 
     // Get initial state for defaults
-    const simState = StateAccessor.getCurrentSimulationState();
+    const simState = StateAccessor.getSimulationState();
     this.fov = options.fov ?? simState.camera.fov ?? 75;
     this.width = container.clientWidth;
     this.height = container.clientHeight;
@@ -186,7 +186,7 @@ export class SceneManager {
     renderer: WebGLRenderer;
   } {
     // Determine power preference based on performance profile
-    const simState = StateAccessor.getCurrentSimulationState();
+    const simState = StateAccessor.getSimulationState();
     const profile = simState.performanceProfile;
     let powerPref: "default" | "high-performance" | "low-power" = "default"; // Default to "default"
 

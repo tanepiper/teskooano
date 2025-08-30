@@ -47,7 +47,7 @@ export function createIntroTour(
       },
       onNextClick: () => {
         const totalCelestialObjects = Object.values(
-          StateAccessor.getCurrentCelestialObjects(),
+          StateAccessor.getCelestialObjects(),
         ).length;
         hasCelestialObjects = totalCelestialObjects > 0;
         driverObj.moveNext();

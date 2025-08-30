@@ -38,18 +38,29 @@
       "@teskooano/renderer-threejs-lighting": [
         "packages/renderer/threejs-lighting/src"
       ],
+      "@teskooano/renderer-threejs-camera": [
+        "packages/renderer/threejs-camera/src"
+      ],
+      "@teskooano/renderer-threejs-helpers": [
+        "packages/renderer/threejs-helpers/src"
+      ],
       "@teskooano/notifications": ["packages/app/notifications/src"],
       "@teskooano/renderer-threejs-celestial": [
         "packages/renderer/threejs-celestial/src"
       ],
       "@teskooano/core-state": ["packages/core/state/src/index.ts"],
+      "@teskooano/core-math": ["packages/core/math/src/index.ts"],
       "@teskooano/data-types": ["packages/data/types/src/index.ts"],
+      "@teskooano/data-values": ["packages/data/values/src/index.ts"],
       "@teskooano/app-simulation": [
         "packages/app/simulation/src/Simulation.ts"
       ],
       "@teskooano/core-physics": ["packages/core/physics/src/index.ts"],
       "@teskooano/systems-procedural-generation": [
         "packages/systems/procedural-generation/src/index.ts"
+      ],
+      "@teskooano/systems-solar-system": [
+        "packages/systems/solar-system/src/index.ts"
       ],
       "@teskooano/core-debug": ["packages/core/debug/src/index.ts"],
       "@teskooano/celestials-comet": ["packages/celestials/comet/src/index.ts"],
@@ -67,19 +78,30 @@
       "@teskooano/celestials-oort-cloud": [
         "packages/celestials/oort-cloud/src/index.ts"
       ],
+      "@teskooano/celestials-asteroid": [
+        "packages/celestials/asteroid/src/index.ts"
+      ],
+      "@teskooano/celestials-satellite": [
+        "packages/celestials/satellite/src/index.ts"
+      ],
       "@teskooano/celestials": ["packages/celestials/src/index.ts"],
       "@teskooano/*": ["packages/*/src"],
       "@teskooano/ui-plugin": ["packages/app/ui-plugin/dist/index.js"],
       "@teskooano/ui-plugin/ts": ["packages/app/ui-plugin/src/index.ts"],
       "@teskooano/ui-plugin/vite.js": [
         "packages/app/ui-plugin/src/vite-plugin.ts"
-      ]
+      ],
+      "@teskooano/web-apis": ["packages/app/web-apis/src/index.ts"],
+      "@teskooano/design-system": ["packages/app/design-system/src/index.ts"]
     },
     "types": ["node", "vitest/globals"]
   },
   "references": [
     {
       "path": "./packages/data/types"
+    },
+    {
+      "path": "./packages/data/values"
     },
     {
       "path": "./packages/core/math"
@@ -89,6 +111,9 @@
     },
     {
       "path": "./packages/core/physics"
+    },
+    {
+      "path": "./packages/core/debug"
     },
     {
       "path": "./packages/renderer/threejs"
@@ -118,16 +143,28 @@
       "path": "./packages/renderer/threejs-background"
     },
     {
+      "path": "./packages/renderer/threejs-camera"
+    },
+    {
+      "path": "./packages/renderer/threejs-helpers"
+    },
+    {
       "path": "./packages/app/simulation"
+    },
+    {
+      "path": "./packages/app/notifications"
+    },
+    {
+      "path": "./packages/app/web-apis"
+    },
+    {
+      "path": "./packages/app/design-system"
     },
     {
       "path": "./packages/systems/procedural-generation"
     },
     {
-      "path": "./packages/core/debug"
-    },
-    {
-      "path": "./packages/app/notifications"
+      "path": "./packages/systems/solar-system"
     },
     { "path": "./packages/celestials/comet" },
     { "path": "./packages/celestials/terrestrial" },
@@ -135,7 +172,9 @@
     { "path": "./packages/celestials/gas-giants" },
     { "path": "./packages/celestials/stars" },
     { "path": "./packages/celestials/asteroid-field" },
-    { "path": "./packages/celestials/oort-cloud" }
+    { "path": "./packages/celestials/oort-cloud" },
+    { "path": "./packages/celestials/asteroid" },
+    { "path": "./packages/celestials/satellite" }
   ],
   "include": ["packages/**/*", "apps/**/*", "glsl.d.ts"],
   "exclude": ["node_modules", "dist"]

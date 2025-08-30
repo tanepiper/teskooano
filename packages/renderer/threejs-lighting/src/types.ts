@@ -31,7 +31,7 @@ export interface LightManagerConfig {
   camera: THREE.PerspectiveCamera;
   /** Whether post-processing is enabled. */
   enablePostProcessing: boolean;
-  /** An optional Observable stream of renderable objects. Defaults to `StateAccessor.getRenderableObjectsStream()`. */
+  /** An optional Observable stream of renderable objects. Defaults to `StateAccessor.renderableObjects$()`. */
   objects$?: Observable<Record<string, RenderableCelestialObject>>;
   /** The color of the ambient light. Defaults to 0xffffff. */
   ambientLightColor?: number;

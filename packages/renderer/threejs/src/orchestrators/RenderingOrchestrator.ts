@@ -143,7 +143,6 @@ export class RenderingOrchestrator {
       objectManager: this._objectManager,
       backgroundManager: this._backgroundManager,
       lightingManager: this._lightingManager,
-      lodManager: this._lodManager,
       gridManager: this._gridManager,
       css2DManager,
     });

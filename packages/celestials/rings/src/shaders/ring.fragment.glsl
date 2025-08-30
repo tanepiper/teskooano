@@ -37,25 +37,63 @@ varying vec2 vUv;
 varying vec3 vWorldNormal;
 varying vec3 vPosition; // World space position of the fragment
 
-// Enhanced noise function with better distribution
-float noise(vec2 st) {
-    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+// Smoothstep function for better transitions
+float smootherstep(float edge0, float edge1, float x) {
+    x = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
 }
 
-// Fractional Brownian Motion for more complex noise
+// Improved hash function for better noise distribution
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+// Improved noise function with better distribution and less banding
+float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    
+    // Smooth interpolation
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    
+    return mix(
+        mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+        mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+        u.y
+    );
+}
+
+// Improved Fractional Brownian Motion with better octave blending
 float fbm(vec2 st) {
     float value = 0.0;
     float amplitude = 0.5;
     float frequency = 1.0;
+    float maxValue = 0.0;
     
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
         value += amplitude * noise(st * frequency);
+        maxValue += amplitude;
         amplitude *= 0.5;
         frequency *= 2.0;
         st += vec2(3.123, 2.456); // Offset to avoid correlation
     }
     
-    return value;
+    return value / maxValue; // Normalize to 0-1 range
+}
+
+// Smooth noise function for better transitions
+float smoothNoise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    
+    // Quintic interpolation for smoother transitions
+    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    
+    return mix(
+        mix(noise(i + vec2(0.0, 0.0)), noise(i + vec2(1.0, 0.0)), u.x),
+        mix(noise(i + vec2(0.0, 1.0)), noise(i + vec2(1.0, 1.0)), u.x),
+        u.y
+    );
 }
 
 // Function to calculate shadow from a single spherical occluder
@@ -80,77 +118,77 @@ float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius)
     return 1.0; // Lit
 }
 
-// Create individual ring segments
+// Create concentric ring bands (like Saturn's rings)
 float createRingSegments(vec2 uv, float distanceFromCenter) {
     // Convert to polar coordinates for ring segmentation
     vec2 centered = uv - vec2(0.5, 0.5);
     float angle = atan(centered.y, centered.x);
     float radius = length(centered) * 2.0;
     
-    // Create multiple ring segment layers
-    float segmentDensity = uSegmentDensity; // Number of segments per ring
-    float segmentWidth = uSegmentWidth; // Width of each segment (0.0-1.0)
+    // Create concentric ring bands using radius instead of angle
+    float ringDensity = uSegmentDensity * 5.0; // More rings for finer detail
+    float ringWidth = uSegmentWidth; // Width of each ring gap
     
-    // Primary ring segments
-    float primarySegments = sin(angle * segmentDensity + time * 0.1) * 0.5 + 0.5;
-    primarySegments = smoothstep(1.0 - segmentWidth, 1.0, primarySegments);
+    // Primary concentric rings - use radius for radial banding (static)
+    float primaryRings = sin(radius * ringDensity) * 0.5 + 0.5;
+    primaryRings = smootherstep(1.0 - ringWidth, 1.0, primaryRings);
     
-    // Secondary ring segments (different frequency)
-    float secondarySegments = sin(angle * segmentDensity * 1.7 + time * 0.15) * 0.5 + 0.5;
-    secondarySegments = smoothstep(1.0 - segmentWidth * 0.6, 1.0, secondarySegments);
+    // Secondary ring layer (different frequency) with reduced intensity
+    float secondaryRings = sin(radius * ringDensity * 1.3) * 0.5 + 0.5;
+    secondaryRings = smootherstep(1.0 - ringWidth * 0.7, 1.0, secondaryRings);
     
-    // Tertiary ring segments (very fine detail)
-    float tertiarySegments = sin(angle * segmentDensity * 3.2 + time * 0.05) * 0.5 + 0.5;
-    tertiarySegments = smoothstep(1.0 - segmentWidth * 0.3, 1.0, tertiarySegments);
+    // Tertiary ring layer (very fine detail) with much reduced intensity
+    float tertiaryRings = sin(radius * ringDensity * 2.1) * 0.5 + 0.5;
+    tertiaryRings = smootherstep(1.0 - ringWidth * 0.4, 1.0, tertiaryRings);
     
-    // Combine all segment layers
-    float allSegments = primarySegments * 0.6 + secondarySegments * 0.3 + tertiarySegments * 0.1;
+    // Combine all ring layers with better weighting
+    float allRings = primaryRings * 0.7 + secondaryRings * 0.2 + tertiaryRings * 0.1;
     
-    // Add radial variation to segment intensity
-    float radialVariation = sin(radius * 30.0 + time * 0.02) * 0.3 + 0.7;
+    // Add subtle angular variation for natural appearance (static)
+    float angularVariation = 1.0 + sin(angle * 8.0) * 0.05;
     
-    return allSegments * radialVariation;
+    return allRings * angularVariation;
 }
 
-// Create density variations within ring segments
+// Create smoother density variations within ring bands
 float createDensityVariations(vec2 uv, float distanceFromCenter) {
     vec2 centered = uv - vec2(0.5, 0.5);
     float angle = atan(centered.y, centered.x);
     float radius = length(centered) * 2.0;
     
-    // Multiple layers of density noise
-    float density1 = fbm(vec2(angle * 20.0, radius * 10.0) + time * 0.01);
-    float density2 = fbm(vec2(angle * 40.0, radius * 20.0) + time * 0.02);
-    float density3 = fbm(vec2(angle * 80.0, radius * 40.0) + time * 0.005);
+    // Multiple layers of density noise - balance radial and angular patterns (static)
+    float density1 = fbm(vec2(radius * 25.0, angle * 8.0));
+    float density2 = fbm(vec2(radius * 50.0, angle * 16.0));
+    float density3 = fbm(vec2(radius * 100.0, angle * 32.0));
     
-    // Combine density layers
-    float totalDensity = density1 * 0.5 + density2 * 0.3 + density3 * 0.2;
+    // Combine density layers with better weighting
+    float totalDensity = density1 * 0.6 + density2 * 0.3 + density3 * 0.1;
     
-    // Add radial density falloff
+    // Add smoother radial density falloff
     float radialFalloff = smoothstep(1.5, 0.5, radius);
     
     return totalDensity * radialFalloff * uDensityVariation;
 }
 
-// Create particle-like detail within segments
+// Create smoother particle-like detail within ring bands
 float createParticleDetail(vec2 uv, float distanceFromCenter) {
     vec2 centered = uv - vec2(0.5, 0.5);
     float angle = atan(centered.y, centered.x);
     float radius = length(centered) * 2.0;
     
-    // Create particle-like noise
-    float particleNoise = fbm(vec2(angle * 100.0, radius * 50.0) + time * 0.03);
+    // Create particle-like noise - balance radial and angular patterns (static)
+    float particleNoise = fbm(vec2(radius * 60.0, angle * 20.0));
     
-    // Create individual particle spots
+    // Create smoother individual particle spots within ring bands (static)
     float particles = 0.0;
-    for (int i = 0; i < 8; i++) {
-        float particleAngle = angle + float(i) * PI * 0.25 + time * 0.01;
-        float particleRadius = radius + sin(float(i) * 2.0 + time * 0.02) * 0.1;
-        float particle = sin(particleAngle * 60.0) * sin(particleRadius * 40.0);
-        particles += smoothstep(0.8, 1.0, particle) * 0.3;
+    for (int i = 0; i < 6; i++) {
+        float particleAngle = angle + float(i) * PI * 0.33;
+        float particleRadius = radius + sin(float(i) * 1.5) * 0.01;
+        float particle = sin(particleAngle * 40.0) * sin(particleRadius * 80.0);
+        particles += smoothstep(0.7, 1.0, particle) * 0.1;
     }
     
-    return (particleNoise * 0.7 + particles * 0.3) * uParticleDetail;
+    return (particleNoise * 0.9 + particles * 0.1) * uParticleDetail;
 }
 
 void main() {
@@ -211,18 +249,18 @@ void main() {
     // 3. Create particle-like detail
     float particleDetail = createParticleDetail(vUv, distanceFromCenter);
     
-    // 4. Combine all detail layers
-    float ringDetail = ringSegments * (0.6 + densityVariations) * (0.8 + particleDetail);
+    // 4. Combine all detail layers with smoother blending
+    float ringDetail = ringSegments * (0.7 + densityVariations * 0.3) * (0.9 + particleDetail * 0.1);
     
-    // 5. Add some basic noise for texture
-    vec2 noiseCoord = vUv * 30.0 + time * 0.01;
+    // 5. Add smoother noise for texture (static)
+    vec2 noiseCoord = vUv * 20.0;
     float noiseVal = fbm(noiseCoord);
     
-    // 6. Create radial falloff to fade rings at edges
+    // 6. Create smoother radial falloff to fade rings at edges
     float radialFalloff = smoothstep(1.8, 0.2, distanceFromCenter);
     
-    // 7. Combine everything for final ring variation
-    float ringVariation = ringDetail * (0.9 + noiseVal * 0.1) * radialFalloff;
+    // 7. Combine everything for final ring variation with reduced banding
+    float ringVariation = ringDetail * (0.95 + noiseVal * 0.05) * radialFalloff;
 
     // Combine all factors for final color
     vec3 finalColor = color * (totalLight + ambientIntensity) * ringVariation;

@@ -401,7 +401,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /**
    * Gets the current simulation state to check if simulation is paused.
    */
-  private getCurrentSimulationState(): any {
+  private getSimulationState(): any {
     return this.currentSimulationState;
   }
 

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { WhiteDwarfSubtype } from "@teskooano/data-types";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,

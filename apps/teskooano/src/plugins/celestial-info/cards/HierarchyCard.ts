@@ -38,7 +38,7 @@ export class HierarchyCard extends BaseCelestialCard {
    * Renders hierarchy information in table format.
    */
   protected renderHierarchy(celestial: CelestialObject): string {
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const parent = allObjects[celestial.parentId || ""];
     const children = Object.values(allObjects).filter(
       (obj) => obj.parentId === celestial.id,

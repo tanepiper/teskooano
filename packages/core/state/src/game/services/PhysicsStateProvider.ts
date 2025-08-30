@@ -31,7 +31,7 @@ export class PhysicsStateProvider {
     }
 
     // Calculate physics state
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const physicsState = PhysicsStateCalculator.calculatePhysicsState(
       object,
       allObjects,
@@ -70,7 +70,7 @@ export class PhysicsStateProvider {
     this.cache.delete(object.id);
 
     // Calculate and cache new physics state
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const physicsState = PhysicsStateCalculator.calculatePhysicsState(
       object,
       allObjects,

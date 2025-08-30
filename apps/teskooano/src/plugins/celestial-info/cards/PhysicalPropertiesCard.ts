@@ -144,7 +144,7 @@ export class PhysicalPropertiesCard extends BaseCelestialCard {
   private getRingSystemInfo(): string | null {
     if (!this.currentCelestial) return null;
 
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const ringSystem = Object.values(allObjects).find(
       (obj) =>
         obj.parentId === this.currentCelestial!.id &&

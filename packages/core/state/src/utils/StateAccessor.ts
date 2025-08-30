@@ -1,23 +1,22 @@
-import { Observable, startWith } from "rxjs";
+import type { OSVector3 } from "@teskooano/core-math";
 import type {
   CelestialObject,
   RenderableCelestialObject,
 } from "@teskooano/data-types";
-import type { OSVector3 } from "@teskooano/core-math";
+import { Observable, startWith } from "rxjs";
 import {
-  celestialObjects$,
-  simulationState$,
-  celestialHierarchy$,
   accelerationVectors$,
-  currentSeed$,
   celestial,
-  seed,
+  celestialHierarchy$,
+  celestialObjects$,
+  currentSeed$,
   physics,
-  simulation,
+  seed,
+  simulationState$,
   simulationStateService,
 } from "../game";
-import type { SimulationState } from "../game/types";
 import { renderableStore } from "../game/renderableStore";
+import type { SimulationState } from "../game/types";
 
 /**
  * Standardized accessor for all state in the Teskooano application.
@@ -30,12 +29,12 @@ import { renderableStore } from "../game/renderableStore";
  * @example
  * ```typescript
  * // Reactive access with initial value
- * StateAccessor.getCelestialObjectsStream().subscribe(objects => {
+ * StateAccessor.celestialObjects$().subscribe(objects => {
  *   // Handle objects update
  * });
  *
  * // Imperative access
- * const currentObjects = StateAccessor.getCurrentCelestialObjects();
+ * const currentObjects = StateAccessor.getCelestialObjects();
  * ```
  */
 export class StateAccessor {
@@ -44,16 +43,14 @@ export class StateAccessor {
    * Gets a reactive stream of celestial objects with the current value as initial emission.
    * Preferred over direct import of celestialObjects$ when you need the current state immediately.
    */
-  static getCelestialObjectsStream(): Observable<
-    Record<string, CelestialObject>
-  > {
+  static celestialObjects$(): Observable<Record<string, CelestialObject>> {
     return celestialObjects$.pipe(startWith(celestial.getObjects()));
   }
 
   /**
    * Gets the current celestial objects imperatively.
    */
-  static getCurrentCelestialObjects(): Record<string, CelestialObject> {
+  static getCelestialObjects(): Record<string, CelestialObject> {
     return celestial.getObjects();
   }
 
@@ -62,7 +59,7 @@ export class StateAccessor {
    * Gets a reactive stream of simulation state with the current value as initial emission.
    * Preferred over direct import of simulationState$ when you need the current state immediately.
    */
-  static getSimulationStateStream(): Observable<SimulationState> {
+  static simulation$(): Observable<SimulationState> {
     return simulationState$.pipe(
       startWith(simulationStateService.getSimulationState()),
     );
@@ -71,7 +68,7 @@ export class StateAccessor {
   /**
    * Gets the current simulation state imperatively.
    */
-  static getCurrentSimulationState(): SimulationState {
+  static getSimulationState(): SimulationState {
     return simulationStateService.getSimulationState();
   }
 
@@ -79,14 +76,14 @@ export class StateAccessor {
   /**
    * Gets a reactive stream of celestial hierarchy with the current value as initial emission.
    */
-  static getCelestialHierarchyStream(): Observable<Record<string, string[]>> {
+  static celestialHierarchy$(): Observable<Record<string, string[]>> {
     return celestialHierarchy$.pipe(startWith(celestial.getHierarchy()));
   }
 
   /**
    * Gets the current celestial hierarchy imperatively.
    */
-  static getCurrentCelestialHierarchy(): Record<string, string[]> {
+  static getCelestialHierarchy(): Record<string, string[]> {
     return celestial.getHierarchy();
   }
 
@@ -94,7 +91,7 @@ export class StateAccessor {
   /**
    * Gets a reactive stream of acceleration vectors with the current value as initial emission.
    */
-  static getAccelerationVectorsStream(): Observable<Record<string, OSVector3>> {
+  static accelerationVectors$(): Observable<Record<string, OSVector3>> {
     return accelerationVectors$.pipe(
       startWith(physics.getAccelerationVectors()),
     );
@@ -103,7 +100,7 @@ export class StateAccessor {
   /**
    * Gets the current acceleration vectors imperatively.
    */
-  static getCurrentAccelerationVectors(): Record<string, OSVector3> {
+  static getAccelerationVectors(): Record<string, OSVector3> {
     return physics.getAccelerationVectors();
   }
 
@@ -129,7 +126,7 @@ export class StateAccessor {
    * @returns The celestial object or undefined if not found
    */
   static getCelestialObject(objectId: string): CelestialObject | undefined {
-    return this.getCurrentCelestialObjects()[objectId];
+    return this.getCelestialObjects()[objectId];
   }
 
   /**
@@ -138,7 +135,7 @@ export class StateAccessor {
    * @returns Array of celestial objects (only existing objects are included)
    */
   static getCelestialObjectsByIds(objectIds: string[]): CelestialObject[] {
-    const allObjects = this.getCurrentCelestialObjects();
+    const allObjects = this.getCelestialObjects();
     return objectIds
       .map((id) => allObjects[id])
       .filter((obj): obj is CelestialObject => obj !== undefined);
@@ -152,7 +149,7 @@ export class StateAccessor {
   static getCelestialObjectsMapByIds(
     objectIds: string[],
   ): Record<string, CelestialObject> {
-    const allObjects = this.getCurrentCelestialObjects();
+    const allObjects = this.getCelestialObjects();
     const result: Record<string, CelestialObject> = {};
 
     objectIds.forEach((id) => {
@@ -171,7 +168,7 @@ export class StateAccessor {
    * @returns True if the object exists
    */
   static hasCelestialObject(objectId: string): boolean {
-    return objectId in this.getCurrentCelestialObjects();
+    return objectId in this.getCelestialObjects();
   }
 
   /**
@@ -179,7 +176,7 @@ export class StateAccessor {
    * @returns Array of all celestial object IDs
    */
   static getCelestialObjectIds(): string[] {
-    return Object.keys(this.getCurrentCelestialObjects());
+    return Object.keys(this.getCelestialObjects());
   }
 
   /**
@@ -187,7 +184,7 @@ export class StateAccessor {
    * @returns Number of celestial objects in the system
    */
   static getCelestialObjectCount(): number {
-    return Object.keys(this.getCurrentCelestialObjects()).length;
+    return Object.keys(this.getCelestialObjects()).length;
   }
 
   /**
@@ -206,7 +203,7 @@ export class StateAccessor {
    * Gets the current snapshot of all renderable objects (reactive).
    * @returns Observable of the current renderable objects map with initial value
    */
-  static getRenderableObjectsStream(): Observable<
+  static renderableObjects$(): Observable<
     Record<string, RenderableCelestialObject>
   > {
     return renderableStore.renderableObjects$.pipe(
@@ -218,10 +215,7 @@ export class StateAccessor {
    * Gets the current snapshot of all renderable objects (imperative).
    * @returns The current renderable objects map
    */
-  static getCurrentRenderableObjects(): Record<
-    string,
-    RenderableCelestialObject
-  > {
+  static getRenderableObjects(): Record<string, RenderableCelestialObject> {
     return renderableStore.getRenderableObjects();
   }
 
@@ -233,7 +227,7 @@ export class StateAccessor {
   static getRenderableObject(
     objectId: string,
   ): RenderableCelestialObject | undefined {
-    return this.getCurrentRenderableObjects()[objectId];
+    return this.getRenderableObjects()[objectId];
   }
 
   /**
@@ -244,7 +238,7 @@ export class StateAccessor {
   static getRenderableObjectsByIds(
     objectIds: string[],
   ): RenderableCelestialObject[] {
-    const allObjects = this.getCurrentRenderableObjects();
+    const allObjects = this.getRenderableObjects();
     return objectIds
       .map((id) => allObjects[id])
       .filter((obj): obj is RenderableCelestialObject => obj !== undefined);
@@ -258,7 +252,7 @@ export class StateAccessor {
   static getRenderableObjectsMapByIds(
     objectIds: string[],
   ): Record<string, RenderableCelestialObject> {
-    const allObjects = this.getCurrentRenderableObjects();
+    const allObjects = this.getRenderableObjects();
     const result: Record<string, RenderableCelestialObject> = {};
 
     objectIds.forEach((id) => {
@@ -277,7 +271,7 @@ export class StateAccessor {
    * @returns True if the renderable object exists
    */
   static hasRenderableObject(objectId: string): boolean {
-    return objectId in this.getCurrentRenderableObjects();
+    return objectId in this.getRenderableObjects();
   }
 
   /**
@@ -285,7 +279,7 @@ export class StateAccessor {
    * @returns Array of all renderable object IDs
    */
   static getRenderableObjectIds(): string[] {
-    return Object.keys(this.getCurrentRenderableObjects());
+    return Object.keys(this.getRenderableObjects());
   }
 
   /**
@@ -293,6 +287,6 @@ export class StateAccessor {
    * @returns Number of renderable objects in the system
    */
   static getRenderableObjectCount(): number {
-    return Object.keys(this.getCurrentRenderableObjects()).length;
+    return Object.keys(this.getRenderableObjects()).length;
   }
 }

@@ -36,7 +36,7 @@ export class HierarchyManager {
    * Processes one object per tick to avoid performance issues.
    */
   public updateHierarchies(): void {
-    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const allObjects = StateAccessor.getCelestialObjects();
     const objectIds = Object.keys(allObjects);
     const allPhysicsStates = physicsSystemAdapter.getPhysicsBodies();
 

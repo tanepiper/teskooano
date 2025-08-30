@@ -61,7 +61,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this._distanceManager = new DistanceUpdateManager(
       treeListContainer,
       destroyedListContainer,
-      () => StateAccessor.getCurrentCelestialObjects(),
+      () => StateAccessor.getCelestialObjects(),
     );
 
     this._treeInteractionManager = new TreeInteractionManager(
@@ -79,7 +79,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this._distanceManager.startPeriodicUpdates();
 
     this._previousObjectsState = {
-      ...StateAccessor.getCurrentCelestialObjects(),
+      ...StateAccessor.getCelestialObjects(),
     };
 
     // Subscribe to state changes
@@ -143,7 +143,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   }
 
   private _populateListInternal = (): void => {
-    const objects = StateAccessor.getCurrentCelestialObjects();
+    const objects = StateAccessor.getCelestialObjects();
     this._listManager.populate(
       objects,
       this._cameraManager.getCurrentFocusedId(),
@@ -192,7 +192,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
 
   private _handleFocusRequest(objectId: string): void {
     // Validate object before requesting focus
-    const currentObjects = StateAccessor.getCurrentCelestialObjects();
+    const currentObjects = StateAccessor.getCelestialObjects();
     const currentObject = currentObjects[objectId];
     if (
       !currentObject ||
@@ -209,7 +209,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
 
   private _handleFollowRequest(objectId: string): void {
     // Validate object before requesting follow
-    const currentObjects = StateAccessor.getCurrentCelestialObjects();
+    const currentObjects = StateAccessor.getCelestialObjects();
     const currentObject = currentObjects[objectId];
     if (
       !currentObject ||

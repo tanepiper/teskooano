@@ -25,9 +25,9 @@
     "three": "0.179.1"
   },
   "devDependencies": {
-    "@playwright/test": "1.54.2",
+    "@playwright/test": "1.55.0",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.33.0",
+    "eslint": "9.34.0",
     "jsdom": "26.1.0",
     "typescript": "5.9.2",
     "vite-tsconfig-paths": "5.1.4",

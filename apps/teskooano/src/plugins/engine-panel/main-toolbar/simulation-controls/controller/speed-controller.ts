@@ -43,7 +43,7 @@ export class SpeedController {
     scaleSelect.style.display = "inline-block";
     scaleSelect.innerHTML = "";
 
-    let currentScale = StateAccessor.getCurrentSimulationState().timeScale;
+    let currentScale = StateAccessor.getSimulationState().timeScale;
     currentScale =
       currentScale < 0
         ? Math.abs(currentScale)
@@ -74,7 +74,7 @@ export class SpeedController {
     if (applyChange) {
       const selectedValue = parseFloat(scaleSelect.value);
       if (!isNaN(selectedValue)) {
-        const currentSimState = StateAccessor.getCurrentSimulationState();
+        const currentSimState = StateAccessor.getSimulationState();
         const newScale =
           currentSimState.timeScale < 0 ? -selectedValue : selectedValue;
         actions.setTimeScale(newScale);
@@ -88,7 +88,7 @@ export class SpeedController {
    * Increases the simulation speed
    */
   public speedUp = (): void => {
-    const currentScale = StateAccessor.getCurrentSimulationState().timeScale;
+    const currentScale = StateAccessor.getSimulationState().timeScale;
     if (currentScale === 0) {
       actions.setTimeScale(1);
       return;
@@ -105,7 +105,7 @@ export class SpeedController {
    * Decreases the simulation speed
    */
   public speedDown = (): void => {
-    const currentScale = StateAccessor.getCurrentSimulationState().timeScale;
+    const currentScale = StateAccessor.getSimulationState().timeScale;
     if (currentScale === 0) {
       actions.setTimeScale(-1);
       return;
@@ -122,7 +122,7 @@ export class SpeedController {
    * Reverses the simulation direction
    */
   public reverse = (): void => {
-    const currentScale = StateAccessor.getCurrentSimulationState().timeScale;
+    const currentScale = StateAccessor.getSimulationState().timeScale;
     actions.setTimeScale(currentScale === 0 ? -1 : -currentScale);
   };
 

@@ -61,22 +61,33 @@ export class RendererUpdater extends StateSubscriptionMixin {
    * @internal Subscribes to renderable objects state changes to trigger renderer updates.
    */
   private subscribeToStateChanges(): void {
+    // Subscribe to renderable objects changes
     this.subscribeToState(
       this.renderableObjects$,
       (objects: Record<string, RenderableCelestialObject>) => {
         this.updateRenderersReactive(objects);
       },
     );
+
+    // Subscribe to simulation state changes (for time and timeScale updates)
+    this.subscribeToState(StateAccessor.simulation$(), (simulationState) => {
+      // Only update if we have renderable objects
+      if (Object.keys(this.celestialRenderers).length > 0) {
+        const allRenderableObjects = StateAccessor.getRenderableObjects();
+        this.updateRenderersReactive(allRenderableObjects);
+      }
+    });
   }
 
   /**
-   * @internal Updates all renderers reactively when state changes.
+   * Updates all renderers reactively when state changes.
    */
-  private updateRenderersReactive(
+  public updateRenderersReactive(
     allRenderableObjects: Record<string, RenderableCelestialObject>,
   ): void {
-    const time = Date.now() / 1000;
-    const timeScale = 1.0;
+    const simulationState = StateAccessor.getSimulationState();
+    const time = simulationState.time;
+    const timeScale = simulationState.timeScale;
 
     const context = {
       time,
@@ -102,10 +113,11 @@ export class RendererUpdater extends StateSubscriptionMixin {
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
   ): void {
-    const allRenderableObjects = StateAccessor.getCurrentRenderableObjects();
+    const allRenderableObjects = StateAccessor.getRenderableObjects();
+    const currentTimeScale = StateAccessor.getSimulationState().timeScale;
     const context = {
       time,
-      timeScale,
+      timeScale: currentTimeScale,
       camera,
       renderer: renderer || this.renderer,
       scene: scene || this.scene,
@@ -143,7 +155,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
       allRenderableObjects: Record<string, RenderableCelestialObject>;
     },
   ) {
-    // const allObjects = StateAccessor.getCurrentRenderableObjects(); // Removed redundant call
+    // const allObjects = StateAccessor.getRenderableObjects(); // Removed redundant call
 
     rendererMap.forEach((rendererInstance, objectId) => {
       const object = context.allRenderableObjects[objectId]; // Use directly from context

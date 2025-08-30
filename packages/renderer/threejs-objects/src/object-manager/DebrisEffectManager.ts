@@ -1,4 +1,3 @@
-import type { DestructionEvent } from "@teskooano/core-physics";
 import * as THREE from "three";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
@@ -97,7 +96,7 @@ export class DebrisEffectManager {
    * Creates and animates visual debris based on a destruction event.
    * @param event - The destruction event data.
    */
-  public createDebrisEffect(event: DestructionEvent): void {
+  public createDebrisEffect(event: any): void {
     if (!this._enableDebrisEffects) {
       return;
     }

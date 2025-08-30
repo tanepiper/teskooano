@@ -29,6 +29,9 @@ export class SimulationOrchestrator {
   private coreSimulationManager: SimulationManager;
   private wasmSpatialService: WasmSpatialService;
 
+  // Time tracking for proper simulation scaling
+  private lastRealTime: number = 0;
+
   // Event Subjects
   private readonly _resetTime$ = new Subject<void>();
   private readonly _orbitUpdate$ = new Subject<OrbitUpdatePayload>();
@@ -81,6 +84,9 @@ export class SimulationOrchestrator {
     }
     this.coreSimulationManager.dispose();
     this.subscriptionManager.dispose(); // Clear any existing subscriptions
+
+    // Reset time tracking
+    this.lastRealTime = 0;
 
     // Initialize centralized WASM spatial service
     try {
@@ -135,8 +141,6 @@ export class SimulationOrchestrator {
     return this.isRunning;
   }
 
-  private fixedTimeStep = 1 / 30; // 30 FPS fixed timestep
-
   /**
    * Creates a physics simulation callback that can be registered with an AnimationLoop.
    * This eliminates the need for a separate requestAnimationFrame loop.
@@ -151,10 +155,24 @@ export class SimulationOrchestrator {
         return;
       }
 
-      const scaledDeltaTime =
-        this.fixedTimeStep *
-        simulationStateService.getSimulationState().timeScale;
-      const newSimulationTime = deltaTime + scaledDeltaTime;
+      // Track real time that has passed
+      const currentRealTime = performance.now() / 1000; // Convert to seconds
+      const realTimeDelta =
+        this.lastRealTime === 0 ? 0 : currentRealTime - this.lastRealTime;
+      this.lastRealTime = currentRealTime;
+
+      // Skip if no real time has passed (first frame or very small delta)
+      if (realTimeDelta <= 0) {
+        return;
+      }
+
+      const currentSimulationTime =
+        simulationStateService.getSimulationState().time;
+      const timeScale = simulationStateService.getSimulationState().timeScale;
+
+      // Scale the real time delta by the time scale
+      const scaledDeltaTime = realTimeDelta * timeScale;
+      const newSimulationTime = currentSimulationTime + scaledDeltaTime;
 
       this.updateSimulationTime(newSimulationTime);
       this.processLagrangeObjects();

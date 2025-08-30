@@ -23,7 +23,7 @@ export class PhysicsCard extends BaseCelestialCard {
     // Subscribe to real-time celestial object updates to get the raw physics state
     if (this.currentCelestial) {
       this.stateSubscriber.subscribeToState(
-        StateAccessor.getCelestialObjectsStream(),
+        StateAccessor.celestialObjects$(),
         (celestialObjects: Record<string, CelestialObject>) => {
           if (this.currentCelestial) {
             const celestialObject = celestialObjects[this.currentCelestial.id];

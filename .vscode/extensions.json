@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "astro-build.astro-vscode",
+    "anseki.vscode-color",
+    "github.vscode-github-actions",
+    "esbenp.prettier-vscode",
+    "foxundermoon.shell-format",
+    "raczzalan.webgl-glsl-editor",
+    "ohziinteractivestudio.ohzi-vscode-glb-viewer"
+  ]
+}

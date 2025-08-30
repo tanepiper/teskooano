@@ -1,13 +1,14 @@
 import { simulationOrchestrator } from "@teskooano/app-simulation";
-import { OSVector3 } from "@teskooano/core-math";
+import { createSeededRandomSync } from "@teskooano/core-math";
 import {
   actions,
   celestialManager,
-  StateAccessor,
   seed,
+  StateAccessor,
 } from "@teskooano/core-state";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
-import { generateStar } from "@teskooano/procedural-generation";
+import { generateStar } from "@teskooano/systems-procedural-generation";
+import { initializeSolarSystem } from "@teskooano/systems-solar-system";
 import type {
   FunctionConfig,
   PluginExecutionContext,
@@ -25,8 +26,6 @@ import {
   type Observable as ObservableType,
 } from "rxjs";
 import { SystemGenerator } from "./system-generator.service";
-import { initializeSolarSystem } from "@teskooano/systems-solar-system";
-import { createSeededRandomSync } from "@teskooano/core-math";
 
 /** Represents the data structure for an imported system file. */
 interface SystemImportData {
@@ -221,7 +220,7 @@ export class SystemFunctionsManager {
    */
   public async exportSystem() {
     try {
-      const objects = StateAccessor.getCurrentCelestialObjects();
+      const objects = StateAccessor.getCelestialObjects();
       const seed = StateAccessor.getCurrentSeed();
       const objectsArray = Object.values(objects);
 

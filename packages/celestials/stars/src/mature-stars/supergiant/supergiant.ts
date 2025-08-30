@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarRenderer } from "../../base/base-star";
 import { EnhancedStarMaterial } from "../../materials/enhanced-star.material";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,

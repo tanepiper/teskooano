@@ -3,7 +3,7 @@ import {
   createFallbackSphere,
   type CelestialRenderer,
 } from "@teskooano/renderer-threejs-celestial";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
 import { OortCloudRenderer } from "./renderer";
