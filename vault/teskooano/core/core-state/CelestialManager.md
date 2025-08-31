@@ -25,7 +25,7 @@ status: active
 
 # CelestialManager
 
-Singleton manager consolidating celestial object lifecycle operations, factory methods, and business logic.
+Singleton manager consolidating celestial object lifecycle operations, factory methods, and business logic with shared utilities integration.
 
 **Location**: `src/managers/celestialManager.ts`
 
@@ -36,9 +36,10 @@ The `CelestialManager` provides centralized management for celestial object oper
 - **Object Lifecycle**: Add, update, remove, and mark destroyed objects
 - **Factory Methods**: Create solar systems and celestial objects with proper initialization
 - **Hierarchy Management**: Parent-child relationship tracking and updates
-- **Event Dispatching**: Custom events for UI synchronization
+- **Event Dispatching**: Custom events for UI synchronization using shared utilities
 - **Physics Integration**: Proper physics state calculation and caching
 - **Dependency Sorting**: Ensures objects are created in correct dependency order
+- **Code Reuse**: Uses shared utilities to eliminate duplicate logic
 
 ## 🏗️ Architecture
 
@@ -71,6 +72,24 @@ actions.addCelestialObject(object);
 // New way (recommended)
 import { celestialManager } from "@teskooano/core-state";
 celestialManager.addObject(object);
+```
+
+### Shared Utilities Integration
+
+Uses shared utilities to eliminate code duplication:
+
+```typescript
+import {
+  validateCelestialData,
+  processStarData,
+  processCelestialData,
+  sortByDependency,
+  createHierarchyFromObjects,
+  dispatchObjectDestroyedEvent,
+  dispatchObjectsLoadedEvent,
+  dispatchObjectsLoadedEventFromMap,
+  isValidRootObject,
+} from "../utils/CelestialUtils";
 ```
 
 ## 🔧 Core Methods
@@ -146,92 +165,53 @@ interface ClearStateOptions {
 
 ### Star Processing
 
+Uses shared `processStarData` utility:
+
 ```typescript
-private processStarData(data: CelestialObject): CelestialObject {
-  const inputStarProps = data.properties?.type === CelestialType.STAR
-    ? data.properties
-    : undefined;
-
-  const processedProperties: StarProperties = {
-    ...DEFAULT_STAR_PROPERTIES,
-    isMainStar: inputStarProps?.isMainStar ?? true,
-    spectralClass: inputStarProps?.spectralClass || "G2V",
-    luminosity: inputStarProps?.luminosity ?? 1.0,
-    color: inputStarProps?.color ?? "#FFF9E5",
-    stellarType: inputStarProps?.stellarType,
-    partnerStars: inputStarProps?.partnerStars,
-    mainSpectralClass: inputStarProps?.mainSpectralClass,
-    luminosityClass: inputStarProps?.luminosityClass,
-    specialSpectralClass: inputStarProps?.specialSpectralClass,
-  };
-
-  return {
-    ...data,
-    status: CelestialStatus.ACTIVE,
-    temperature: data.temperature ?? 5778,
-    albedo: data.albedo ?? 0.3,
-    atmosphere: isPlanetAtmosphere(data.atmosphere) ? data.atmosphere : undefined,
-    properties: processedProperties,
-    seed: data.seed ?? `${Math.floor(Date.now() % 1000000)}`,
-    parentId: data.parentId,
-  };
-}
+const processedObject = processStarData(data);
+this.addObject(processedObject);
 ```
 
 ### Celestial Object Processing
 
+Uses shared `processCelestialData` utility:
+
 ```typescript
-private processCelestialData<T extends CelestialSpecificPropertiesUnion>(
-  data: CelestialObject<T>
-): CelestialObject<T> | null {
-  // Validate basic requirements
-  if (!this.validateCelestialData(data)) {
-    return null;
-  }
-
-  const seed = data.seed ?? `${Math.floor(Date.now() % 1000000)}`;
-
-  return {
-    ...data,
-    status: CelestialStatus.ACTIVE,
-    temperature: data.temperature ?? 100,
-    albedo: data.albedo ?? 0.3,
-    atmosphere: isPlanetAtmosphere(data.atmosphere) ? data.atmosphere : undefined,
-    seed,
-    parentId: data.parentId,
-  };
+const processedObject = processCelestialData(data);
+if (processedObject) {
+  this.addObject(processedObject);
 }
 ```
 
 ### Dependency Sorting
 
+Uses shared `sortByDependency` utility:
+
 ```typescript
-private sortByDependency(objects: CelestialObject[]): CelestialObject[] {
-  if (objects.length <= 1) return objects;
+const sortedData = sortByDependency(data);
+```
 
-  const objectMap = new Map(objects.map(obj => [obj.id, obj]));
-  const sorted: CelestialObject[] = [];
-  const visited = new Set<string>();
+### Hierarchy Creation
 
-  function visit(objectId: string) {
-    if (visited.has(objectId)) return;
-    visited.add(objectId);
+Uses shared `createHierarchyFromObjects` utility:
 
-    const obj = objectMap.get(objectId);
-    if (obj) {
-      if (obj.parentId && objectMap.has(obj.parentId)) {
-        visit(obj.parentId);
-      }
-      sorted.push(obj);
-    }
-  }
+```typescript
+const newHierarchy = createHierarchyFromObjects(sortedData);
+```
 
-  for (const obj of objects) {
-    visit(obj.id);
-  }
+### Event Dispatching
 
-  return sorted;
-}
+Uses shared event dispatching utilities:
+
+```typescript
+// Dispatch object destroyed event
+dispatchObjectDestroyedEvent(id);
+
+// Dispatch objects loaded event
+dispatchObjectsLoadedEvent(totalObjects, systemId);
+
+// Dispatch objects loaded event from map
+dispatchObjectsLoadedEventFromMap(celestialStore.getObjects());
 ```
 
 ## 🚀 Usage Examples
@@ -353,17 +333,24 @@ celestialManager.clearState({
 
 ### Batch Processing
 
-- **Dependency Sorting**: Objects created in correct order
+- **Dependency Sorting**: Objects created in correct order using shared utility
 - **Bulk Updates**: Multiple objects added in single operation
 - **Physics Cache**: Clears physics state cache after bulk operations
-- **Event Batching**: Single event dispatch for multiple objects
+- **Event Batching**: Single event dispatch for multiple objects using shared utilities
 
 ### Memory Management
 
 - **Pre-allocated Objects**: Reduces garbage collection
-- **Efficient Validation**: Early returns for invalid data
+- **Efficient Validation**: Early returns for invalid data using shared validation
 - **Proper Cleanup**: Removes objects from all stores
-- **Event Cleanup**: Dispatches destruction events
+- **Event Cleanup**: Dispatches destruction events using shared utilities
+
+### Code Reuse
+
+- **Shared Utilities**: Uses shared validation, processing, and event utilities
+- **Consistent Behavior**: Consistent behavior across application
+- **Maintainability**: Centralized logic for common operations
+- **Reduced Duplication**: Eliminates duplicate code between components
 
 ## 🔗 Integration Points
 
@@ -381,9 +368,16 @@ celestialManager.clearState({
 
 ### With Event System
 
-- Dispatches `CELESTIAL_OBJECTS_LOADED` events
-- Dispatches `CELESTIAL_OBJECT_DESTROYED` events
+- Dispatches `CELESTIAL_OBJECTS_LOADED` events using shared utilities
+- Dispatches `CELESTIAL_OBJECT_DESTROYED` events using shared utilities
 - Provides event details for UI updates
+
+### With Shared Utilities
+
+- Uses shared validation utilities for data validation
+- Uses shared processing utilities for object processing
+- Uses shared event dispatching utilities for events
+- Uses shared hierarchy utilities for relationship management
 
 ## 🔗 Related Components
 
@@ -391,6 +385,7 @@ celestialManager.clearState({
 - [[PhysicsStateProvider]] - Manages physics state calculations
 - [[SimulationStateService]] - Manages simulation state
 - [[StateAccessor]] - Provides unified state access
+- [[CelestialUtils]] - Shared utilities for validation, processing, and events
 
 ## 📚 Architecture Patterns
 
@@ -399,7 +394,24 @@ celestialManager.clearState({
 - **Manager Pattern**: Centralized business logic
 - **Event Pattern**: Dispatches events for UI synchronization
 - **Strategy Pattern**: Different processing for different object types
+- **Shared Utilities Pattern**: Uses shared utilities to eliminate duplication
+
+## 🔄 Recent Improvements
+
+### Code Duplication Elimination
+
+- **Shared Validation**: Uses shared `validateCelestialData` utility
+- **Shared Processing**: Uses shared `processStarData` and `processCelestialData` utilities
+- **Shared Hierarchy**: Uses shared `sortByDependency` and `createHierarchyFromObjects` utilities
+- **Shared Events**: Uses shared event dispatching utilities
+
+### Enhanced Functionality
+
+- **Consistent Behavior**: Consistent behavior across application through shared utilities
+- **Better Maintainability**: Centralized logic for common operations
+- **Reduced Complexity**: Simplified manager through utility delegation
+- **Improved Error Handling**: Consistent error handling through shared utilities
 
 ---
 
-_The CelestialManager provides comprehensive lifecycle management for celestial objects with efficient batch processing and proper physics integration._
+_The CelestialManager provides comprehensive lifecycle management for celestial objects with efficient batch processing, proper physics integration, and elimination of code duplication through shared utilities._

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "core/core-state/StateAccessor.md",
+                "file": "core/core-physics/AlgorithmFactory.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "StateAccessor"
+              "title": "AlgorithmFactory"
             }
           }
         ]
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "core/core-state/StateAccessor.md",
+                "file": "core/core-physics/AlgorithmFactory.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of StateAccessor"
+              "title": "Outline of AlgorithmFactory"
             }
           }
         ],
@@ -171,6 +171,21 @@
   },
   "active": "6ecb65330d6d43b7",
   "lastOpenFiles": [
+    "core/core-state/CelestialUtils.md",
+    "core/core-state/StoreFilters.md",
+    "core/core-physics/Vector3Pool.md",
+    "core/core-physics/OrbitalValidationDebugger.md",
+    "core/core-physics/LagrangePointService.md",
+    "core/core-physics/IdealOrreryStrategy.md",
+    "core/core-physics/WasmCollisionDetection.md",
+    "core/core-physics/WasmSpatialPartitioning.md",
+    "core/core-state/StateAccessor.md",
+    "core/core-physics/Octree.md",
+    "core/core-physics/TreePMStrategy.md",
+    "core/core-physics/AlgorithmFactory.md",
+    "core/core-physics/SimulationManager.md",
+    "core/core-physics/core-physics.md",
+    "core/core-physics",
     "core/core-state/StateSubscriptionMixin.md",
     "core/core-state/CelestialManager.md",
     "core/core-state/SimulationTypes.md",
@@ -183,30 +198,15 @@
     "threejs-renderers/threejs-orbits/IdealStrategy.md",
     "threejs-renderers/threejs-orbits/IOrbitVisualizationStrategy.md",
     "threejs-renderers/threejs-orbits/threejs-orbits.md",
-    "threejs-renderers/threejs-orbits/simplify.md",
     "Untitled.base",
     "Component View.base",
-    "Dependencies Data View.md",
     "Untitled.canvas",
-    "threejs-renderers/threejs-orbits/NBodyPredictionRenderer.md",
-    "threejs-renderers/threejs-orbits/NBodyTrailsRenderer.md",
-    "threejs-renderers/threejs-orbits/NBodyStrategy.md",
-    "threejs-renderers/threejs-orbits/OrbitCalculator.md",
-    "Untitled.md",
-    "threejs-renderers/threejs-orbits/TrailDataPool.md",
-    "threejs-renderers/threejs-orbits/SimpleOrbitalRenderer.md",
-    "threejs-renderers/threejs-orbits/PredictionRenderer.md",
-    "threejs-renderers/threejs-orbits/PredictionCalculator.md",
-    "threejs-renderers/threejs-orbits/SharedMaterials.md",
-    "threejs-renderers/threejs-orbits/TrailCurveInterpolator.md",
-    "threejs-renderers/threejs-orbits/KeplerianManager.md",
     "architecture",
     "threejs-renderers/threejs-orbits",
     "threejs-renderers/threejs-objects",
     "threejs-renderers/threejs-lighting",
     "threejs-renderers/threejs-labels",
     "threejs-renderers/threejs-core",
-    "threejs-renderers/threejs-celestial",
-    "threejs-renderers"
+    "threejs-renderers/threejs-celestial"
   ]
 }

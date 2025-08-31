@@ -1,45 +1,159 @@
 import { BehaviorSubject, Observable } from "rxjs";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import {
+  filterVisibleRenderableObjects,
+  filterActiveRenderableObjects,
+  filterPhysicsActiveRenderableObjects,
+  filterVisibleRenderableObjects$,
+  filterActiveRenderableObjects$,
+  filterPhysicsActiveRenderableObjects$,
+} from "../utils";
 
 /**
- * @class RenderableStore
- * @singleton
- * @description Manages the state of renderable celestial objects.
+ * Manages the state of renderable celestial objects.
+ *
  * This store holds data derived from the core celestialObjectsStore and physics updates,
  * providing a centralized place for accessing and manipulating renderable objects.
- * Access the store's data via the `renderableObjects$` observable or `getRenderableObjects()` method.
- * Use the provided action methods to modify the store.
+ * It provides both reactive (Observable) and imperative (getter/setter) access patterns
+ * for managing renderable objects.
+ *
+ * ## Architecture
+ *
+ * The store uses RxJS BehaviorSubjects to maintain state and provide reactive streams:
+ * - `_renderableObjectsStore`: Stores the complete map of renderable objects by ID
+ *
+ * ## Filtered Observables
+ *
+ * The store provides pre-filtered observables for common use cases:
+ * - `visibleRenderableObjects$`: Only objects that are visible
+ * - `activeRenderableObjects$`: Only objects that are active (not destroyed)
+ * - `physicsActiveRenderableObjects$`: Objects that are active AND not ignoring physics
+ *
+ * ## Usage Patterns
+ *
+ * ### Reactive Access (Recommended)
+ * ```typescript
+ * // Subscribe to all renderable object changes
+ * renderableStore.renderableObjects$.subscribe(objects => {
+ *   console.log('Renderable objects updated:', Object.keys(objects));
+ * });
+ *
+ * // Subscribe to only visible objects
+ * renderableStore.visibleRenderableObjects$.subscribe(objects => {
+ *   console.log('Visible objects:', Object.keys(objects));
+ * });
+ *
+ * // Subscribe to physics-active objects
+ * renderableStore.physicsActiveRenderableObjects$.subscribe(objects => {
+ *   console.log('Physics-active objects:', Object.keys(objects));
+ * });
+ * ```
+ *
+ * ### Imperative Access
+ * ```typescript
+ * // Get current state
+ * const allObjects = renderableStore.getRenderableObjects();
+ * const earthObject = renderableStore.getRenderableObject('earth');
+ *
+ * // Modify state
+ * renderableStore.addRenderableObject(newObject);
+ * renderableStore.updateRenderableObject('earth', updates);
+ * ```
+ *
+ * ## Singleton Pattern
+ *
+ * This store follows a singleton pattern to ensure a single source of truth
+ * across the entire application. Access the instance via `getInstance()` or
+ * use the exported `renderableStore` constant.
+ *
+ * @example
+ * ```typescript
+ * import { renderableStore } from '@teskooano/core-state';
+ *
+ * // Add a new renderable object
+ * const earthRenderable = createEarthRenderable();
+ * renderableStore.addRenderableObject(earthRenderable);
+ *
+ * // React to changes
+ * renderableStore.renderableObjects$.subscribe(objects => {
+ *   console.log(`Renderable objects: ${Object.keys(objects).length}`);
+ * });
+ *
+ * renderableStore.visibleRenderableObjects$.subscribe(objects => {
+ *   console.log(`Visible objects: ${Object.keys(objects).length}`);
+ * });
+ * ```
  */
 class RenderableStore {
   private static instance: RenderableStore;
 
-  /**
-   * @private
-   * @description BehaviorSubject holding the renderable state of celestial objects.
-   * @internal Use renderableObjects$ for external observable access.
-   */
+  /** BehaviorSubject holding the current map of renderable objects by ID */
   private readonly _renderableObjectsStore = new BehaviorSubject<
     Record<string, RenderableCelestialObject>
   >({});
 
-  /**
-   * @public
-   * @description Observable for the renderable state of celestial objects.
-   * Subscribe to this observable to receive updates when renderable objects change.
-   */
+  /** Observable stream of renderable objects that emits on every change */
   public readonly renderableObjects$: Observable<
     Record<string, RenderableCelestialObject>
   >;
 
+  // =============================================================================
+  // FILTERED OBSERVABLES
+  // =============================================================================
+
+  /**
+   * Observable of only visible renderable objects.
+   * Useful for rendering systems that only need visible objects.
+   */
+  public readonly visibleRenderableObjects$: Observable<
+    Record<string, RenderableCelestialObject>
+  >;
+
+  /**
+   * Observable of only active renderable objects (not destroyed).
+   * This is the most commonly used filtered stream.
+   */
+  public readonly activeRenderableObjects$: Observable<
+    Record<string, RenderableCelestialObject>
+  >;
+
+  /**
+   * Observable of objects that are active AND not ignoring physics.
+   * Useful for physics systems that need renderable data.
+   */
+  public readonly physicsActiveRenderableObjects$: Observable<
+    Record<string, RenderableCelestialObject>
+  >;
+
+  /**
+   * Private constructor to enforce singleton pattern.
+   * Initializes empty renderable objects map and sets up filtered observables.
+   */
   private constructor() {
     this.renderableObjects$ = this._renderableObjectsStore.asObservable();
+
+    // Set up filtered observables using shared operators
+    this.visibleRenderableObjects$ = filterVisibleRenderableObjects$(
+      this.renderableObjects$,
+    );
+    this.activeRenderableObjects$ = filterActiveRenderableObjects$(
+      this.renderableObjects$,
+    );
+    this.physicsActiveRenderableObjects$ =
+      filterPhysicsActiveRenderableObjects$(this.renderableObjects$);
   }
 
   /**
-   * @public
-   * @static
-   * @description Provides access to the singleton instance of the RenderableStore.
-   * @returns {RenderableStore} The singleton instance.
+   * Gets the singleton instance of the RenderableStore.
+   * Creates the instance if it doesn't exist.
+   *
+   * @returns The singleton RenderableStore instance
+   *
+   * @example
+   * ```typescript
+   * const store = RenderableStore.getInstance();
+   * store.addRenderableObject(renderableData);
+   * ```
    */
   public static getInstance(): RenderableStore {
     if (!RenderableStore.instance) {
@@ -48,11 +162,131 @@ class RenderableStore {
     return RenderableStore.instance;
   }
 
+  // Note: Filtering methods have been moved to shared utilities in StoreFilters.ts
+  // The filtered observables now use the shared operators for consistency
+
+  // =============================================================================
+  // OBJECT OPERATIONS
+  // =============================================================================
+
   /**
-   * @public
-   * @description Adds or replaces a renderable object in the store.
+   * Gets the current snapshot of all renderable objects.
+   *
+   * This method returns a copy of the current objects map. For reactive updates,
+   * prefer subscribing to `renderableObjects$` instead.
+   *
+   * @returns A record mapping object IDs to their renderable object data
+   *
+   * @example
+   * ```typescript
+   * const allObjects = renderableStore.getRenderableObjects();
+   * console.log(`Found ${Object.keys(allObjects).length} renderable objects`);
+   * ```
+   */
+  public getRenderableObjects(): Record<string, RenderableCelestialObject> {
+    return this._renderableObjectsStore.getValue();
+  }
+
+  /**
+   * Gets a specific renderable object by its ID.
+   *
+   * @param id The unique identifier of the renderable object
+   * @returns The renderable object if found, undefined otherwise
+   *
+   * @example
+   * ```typescript
+   * const earthRenderable = renderableStore.getRenderableObject('earth');
+   * if (earthRenderable) {
+   *   console.log(`Earth renderable: ${earthRenderable.type}`);
+   * }
+   * ```
+   */
+  public getRenderableObject(
+    id: string,
+  ): RenderableCelestialObject | undefined {
+    return this._renderableObjectsStore.getValue()[id];
+  }
+
+  /**
+   * Gets the current snapshot of visible renderable objects.
+   *
+   * This is the imperative version of `visibleRenderableObjects$`.
+   *
+   * @returns A record mapping object IDs to their visible renderable object data
+   *
+   * @example
+   * ```typescript
+   * const visibleObjects = renderableStore.getVisibleRenderableObjects();
+   * console.log(`Found ${Object.keys(visibleObjects).length} visible objects`);
+   * ```
+   */
+  public getVisibleRenderableObjects(): Record<
+    string,
+    RenderableCelestialObject
+  > {
+    return filterVisibleRenderableObjects(this.getRenderableObjects());
+  }
+
+  /**
+   * Gets the current snapshot of active renderable objects.
+   *
+   * This is the imperative version of `activeRenderableObjects$`.
+   *
+   * @returns A record mapping object IDs to their active renderable object data
+   *
+   * @example
+   * ```typescript
+   * const activeObjects = renderableStore.getActiveRenderableObjects();
+   * console.log(`Found ${Object.keys(activeObjects).length} active objects`);
+   * ```
+   */
+  public getActiveRenderableObjects(): Record<
+    string,
+    RenderableCelestialObject
+  > {
+    return filterActiveRenderableObjects(this.getRenderableObjects());
+  }
+
+  /**
+   * Gets the current snapshot of physics-active renderable objects.
+   *
+   * This is the imperative version of `physicsActiveRenderableObjects$`.
+   *
+   * @returns A record mapping object IDs to their physics-active renderable object data
+   *
+   * @example
+   * ```typescript
+   * const physicsObjects = renderableStore.getPhysicsActiveRenderableObjects();
+   * console.log(`Found ${Object.keys(physicsObjects).length} physics-active objects`);
+   * ```
+   */
+  public getPhysicsActiveRenderableObjects(): Record<
+    string,
+    RenderableCelestialObject
+  > {
+    return filterPhysicsActiveRenderableObjects(this.getRenderableObjects());
+  }
+
+  /**
+   * Adds or replaces a renderable object in the store.
+   *
+   * This method will either add a new object or update an existing one.
+   * The change will trigger emissions on the `renderableObjects$` observable.
    * Typically called by a factory for initial state or an adapter during updates.
-   * @param {RenderableCelestialObject} object - The renderable object to add or replace.
+   *
+   * @param object The renderable object to add or replace
+   *
+   * @example
+   * ```typescript
+   * const newRenderable: RenderableCelestialObject = {
+   *   id: 'kepler-442b',
+   *   type: 'PLANET',
+   *   isVisible: true,
+   *   // ... other properties
+   * };
+   *
+   * renderableStore.addRenderableObject(newRenderable);
+   * ```
    */
   public addRenderableObject(object: RenderableCelestialObject): void {
     const currentObjects = this._renderableObjectsStore.getValue();
@@ -63,10 +297,25 @@ class RenderableStore {
   }
 
   /**
-   * @public
-   * @description Updates specific properties of a renderable object.
-   * @param {string} celestialObjectId - The ID of the celestial object to update.
-   * @param {Partial<RenderableCelestialObject>} updates - An object containing the properties to update.
+   * Updates specific properties of a renderable object.
+   *
+   * This method updates only the specified properties while preserving others.
+   * The change will trigger emissions on the `renderableObjects$` observable.
+   *
+   * @param celestialObjectId The ID of the celestial object to update
+   * @param updates An object containing the properties to update
+   *
+   * @example
+   * ```typescript
+   * // Update visibility
+   * renderableStore.updateRenderableObject('earth', { isVisible: false });
+   *
+   * // Update multiple properties
+   * renderableStore.updateRenderableObject('earth', {
+   *   isVisible: true,
+   *   ignorePhysics: false
+   * });
+   * ```
    */
   public updateRenderableObject(
     celestialObjectId: string,
@@ -90,10 +339,18 @@ class RenderableStore {
   }
 
   /**
-   * @public
-   * @description Removes a renderable object from the store.
+   * Removes a renderable object from the store.
+   *
+   * This method will remove the object and trigger emissions on the `renderableObjects$` observable.
    * Should be called when the corresponding core celestial object is removed.
-   * @param {string} celestialObjectId - The ID of the celestial object to remove.
+   *
+   * @param celestialObjectId The ID of the celestial object to remove
+   *
+   * @example
+   * ```typescript
+   * // Remove a destroyed object
+   * renderableStore.removeRenderableObject('destroyed-asteroid');
+   * ```
    */
   public removeRenderableObject(celestialObjectId: string): void {
     const currentObjects = this._renderableObjectsStore.getValue();
@@ -109,43 +366,60 @@ class RenderableStore {
   }
 
   /**
-   * @public
-   * @description Sets the entire renderable objects map.
+   * Sets the entire renderable objects map.
+   *
+   * This method completely replaces the current objects map. Use with caution
+   * as it will trigger emissions on the `renderableObjects$` observable for all subscribers.
    * Useful for initialization or bulk updates from an adapter.
-   * @param {Record<string, RenderableCelestialObject>} objects - The new map of renderable objects.
+   *
+   * @param objects The new complete map of renderable objects
+   *
+   * @example
+   * ```typescript
+   * // Load a new set of renderable objects
+   * const newRenderableObjects = await loadRenderableData();
+   * renderableStore.setAllRenderableObjects(newRenderableObjects);
+   *
+   * // Clear all renderable objects
+   * renderableStore.setAllRenderableObjects({});
+   * ```
    */
   public setAllRenderableObjects(
     objects: Record<string, RenderableCelestialObject>,
   ): void {
     this._renderableObjectsStore.next(objects);
   }
-
-  /**
-   * @public
-   * @description Gets the current snapshot of all renderable objects.
-   * @returns {Record<string, RenderableCelestialObject>} The current map of renderable objects.
-   */
-  public getRenderableObjects(): Record<string, RenderableCelestialObject> {
-    return this._renderableObjectsStore.getValue();
-  }
 }
 
 /**
  * Singleton instance of the RenderableStore.
- * Use this instance to access and manage renderable celestial objects.
+ *
+ * This is the primary way to access the renderable store throughout the application.
+ * It provides both reactive and imperative access to renderable object data,
+ * including pre-filtered observables for common use cases.
  *
  * @example
- * import { renderableStore } from '@teskooano/core/state';
+ * ```typescript
+ * import { renderableStore } from '@teskooano/core-state';
  *
- * // Subscribe to updates
+ * // Reactive subscription to all renderable objects
  * renderableStore.renderableObjects$.subscribe(objects => {
- *   console.log("Renderable objects updated:", objects);
+ *   console.log('All renderable objects changed:', Object.keys(objects));
  * });
  *
- * // Add an object
- * renderableStore.addRenderableObject({ celestialObjectId: 'earth', ... });
+ * // Reactive subscription to only visible objects
+ * renderableStore.visibleRenderableObjects$.subscribe(objects => {
+ *   console.log('Visible objects changed:', Object.keys(objects));
+ * });
  *
- * // Get all objects
- * const allObjects = renderableStore.getRenderableObjects();
+ * // Reactive subscription to physics-active objects
+ * renderableStore.physicsActiveRenderableObjects$.subscribe(objects => {
+ *   console.log('Physics-active objects changed:', Object.keys(objects));
+ * });
+ *
+ * // Imperative access
+ * const earthObject = renderableStore.getRenderableObject('earth');
+ * const visibleObjects = renderableStore.getVisibleRenderableObjects();
+ * ```
  */
 export const renderableStore = RenderableStore.getInstance();

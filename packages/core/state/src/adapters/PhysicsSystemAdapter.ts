@@ -1,17 +1,14 @@
-import {
-  CelestialStatus,
-  CelestialType,
-  type CelestialObject,
-} from "@teskooano/data-types";
+import { type CelestialObject } from "@teskooano/data-types";
 import type {
   SimulationStepResult,
   PhysicsStateReal,
 } from "@teskooano/core-physics";
-import { Observable, take } from "rxjs";
+import { Observable } from "rxjs";
 import { celestialStore } from "../stores/CelestialStore";
 import { physicsStore } from "../stores/PhysicsStore";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import type { OrbitalParameters } from "@teskooano/data-types";
+import { filterActiveCelestialObjects } from "../utils";
 
 /**
  * @class PhysicsSystemAdapter
@@ -66,6 +63,14 @@ export class PhysicsSystemAdapter {
   }
 
   /**
+   * Returns a snapshot of active celestial objects (filtered for physics simulation).
+   * Uses shared filtering utilities for consistency.
+   */
+  public getActiveCelestialObjectsSnapshot(): Record<string, CelestialObject> {
+    return filterActiveCelestialObjects(this.getCelestialObjectsSnapshot());
+  }
+
+  /**
    * Returns a snapshot of the orbital parameters for all celestial objects.
    */
   public getOrbitalParametersSnapshot(): Map<string, OrbitalParameters> {
@@ -91,9 +96,15 @@ export class PhysicsSystemAdapter {
     };
 
     this.updatePhysicsStates(result, newCelestialObjectsMap);
-    this.processDestructionEvents(result, newCelestialObjectsMap);
 
-    celestialStore.setAllObjects(newCelestialObjectsMap);
+    // Convert destroyed IDs to strings and use CelestialStore's destruction processing
+    const destroyedIds = Array.from(result.destroyedIds).map((id: any) =>
+      String(id),
+    );
+    const updatedObjectsMap =
+      celestialStore.processDestructionEvents(destroyedIds);
+
+    celestialStore.setAllObjects(updatedObjectsMap);
     physicsStore.updateAccelerationVectors(result.accelerations);
   }
 
@@ -117,57 +128,8 @@ export class PhysicsSystemAdapter {
     });
   }
 
-  /**
-   * Processes destruction events and updates object statuses.
-   * Ring systems automatically destroy themselves if their parent is destroyed.
-   */
-  private processDestructionEvents(
-    result: SimulationStepResult,
-    newCelestialObjectsMap: Record<string, CelestialObject>,
-  ): void {
-    // Process direct destruction events first
-    result.destroyedIds.forEach((idToDestroy) => {
-      const idToDestroyStr = String(idToDestroy);
-      const existingObject = newCelestialObjectsMap[idToDestroyStr];
-      if (
-        existingObject &&
-        existingObject.status !== CelestialStatus.DESTROYED &&
-        existingObject.status !== CelestialStatus.ANNIHILATED
-      ) {
-        // Simple destruction - all destroyed objects get DESTROYED status
-        newCelestialObjectsMap[idToDestroyStr] = {
-          ...existingObject,
-          status: CelestialStatus.DESTROYED,
-        };
-      }
-    });
-
-    // Now handle reactive ring system destruction
-    Object.values(newCelestialObjectsMap).forEach((object) => {
-      if (
-        object.type === CelestialType.RING_SYSTEM &&
-        object.parentId &&
-        object.status !== CelestialStatus.DESTROYED &&
-        object.status !== CelestialStatus.ANNIHILATED
-      ) {
-        const parent = newCelestialObjectsMap[object.parentId];
-        if (
-          parent &&
-          (parent.status === CelestialStatus.DESTROYED ||
-            parent.status === CelestialStatus.ANNIHILATED)
-        ) {
-          // Ring system automatically destroys itself when parent is destroyed
-          newCelestialObjectsMap[object.id] = {
-            ...object,
-            status: parent.status, // Inherit parent's destruction status
-          };
-          console.debug(
-            `[PhysicsSystemAdapter] Ring system ${object.id} auto-destroyed due to parent ${object.parentId} destruction`,
-          );
-        }
-      }
-    });
-  }
+  // Note: Destruction event processing has been moved to CelestialStore.processDestructionEvents()
+  // to eliminate code duplication and ensure consistent destruction handling across the application
 }
 
 export const physicsSystemAdapter = PhysicsSystemAdapter.getInstance();

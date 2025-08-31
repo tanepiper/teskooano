@@ -29,7 +29,7 @@ status: active
 
 # PhysicsSystemAdapter
 
-Singleton adapter bridging between core state management and the physics engine, handling data preparation and result processing.
+Singleton adapter bridging between core state management and the physics engine, handling data preparation and result processing with centralized destruction event handling.
 
 **Location**: `src/adapters/PhysicsSystemAdapter.ts`
 
@@ -39,9 +39,10 @@ The `PhysicsSystemAdapter` serves as a crucial bridge between the application's 
 
 - **Data Preparation**: Converts celestial objects to physics bodies for simulation
 - **Result Processing**: Updates state from physics engine simulation results
-- **Destruction Handling**: Processes object destruction events and status updates
+- **Destruction Handling**: Delegates destruction processing to CelestialStore for consistency
 - **State Synchronization**: Maintains consistency between physics and game state
 - **Performance Optimization**: Efficient batch processing and state updates
+- **Code Reuse**: Eliminates duplicate destruction logic through shared utilities
 
 ## 🏗️ Architecture
 
@@ -69,6 +70,18 @@ Acts as a bridge between two different interfaces:
 - **Core State**: `CelestialObject` data structures
 - **Physics Engine**: `PhysicsStateReal` data structures
 
+### Shared Utilities Integration
+
+Uses shared utilities to eliminate code duplication:
+
+```typescript
+// Uses shared filtering utilities
+import { filterActiveCelestialObjects } from "../utils";
+
+// Delegates destruction processing to CelestialStore
+const updatedObjectsMap = celestialStore.processDestructionEvents(destroyedIds);
+```
+
 ## 🔧 Core Methods
 
 ### Physics Data Preparation
@@ -79,6 +92,9 @@ getPhysicsBodies(): PhysicsStateReal[];
 
 // Get snapshot of celestial objects
 getCelestialObjectsSnapshot(): Record<string, CelestialObject>;
+
+// Get snapshot of active celestial objects
+getActiveCelestialObjectsSnapshot(): Record<string, CelestialObject>;
 
 // Get snapshot of orbital parameters
 getOrbitalParametersSnapshot(): Map<string, OrbitalParameters>;
@@ -111,7 +127,7 @@ graph TD
     A[Physics Engine] --> B[SimulationStepResult]
     B --> C[PhysicsSystemAdapter]
     C --> D[Update Physics States]
-    D --> E[Process Destruction Events]
+    D --> E[CelestialStore.processDestructionEvents]
     E --> F[Update CelestialStore]
     F --> G[Update PhysicsStore]
 ```
@@ -156,9 +172,12 @@ public updateStateFromResult(result: SimulationStepResult): void {
   };
 
   this.updatePhysicsStates(result, newCelestialObjectsMap);
-  this.processDestructionEvents(result, newCelestialObjectsMap);
 
-  celestialStore.setAllObjects(newCelestialObjectsMap);
+  // Convert destroyed IDs to strings and use CelestialStore's destruction processing
+  const destroyedIds = Array.from(result.destroyedIds).map((id: any) => String(id));
+  const updatedObjectsMap = celestialStore.processDestructionEvents(destroyedIds);
+
+  celestialStore.setAllObjects(updatedObjectsMap);
   physicsStore.updateAccelerationVectors(result.accelerations);
 }
 ```
@@ -184,50 +203,11 @@ private updatePhysicsStates(
 }
 ```
 
-### Destruction Event Processing
+### Active Objects Snapshot
 
 ```typescript
-private processDestructionEvents(
-  result: SimulationStepResult,
-  newCelestialObjectsMap: Record<string, CelestialObject>
-): void {
-  // Process direct destruction events first
-  result.destroyedIds.forEach((idToDestroy) => {
-    const idToDestroyStr = String(idToDestroy);
-    const existingObject = newCelestialObjectsMap[idToDestroyStr];
-    if (
-      existingObject &&
-      existingObject.status !== CelestialStatus.DESTROYED &&
-      existingObject.status !== CelestialStatus.ANNIHILATED
-    ) {
-      newCelestialObjectsMap[idToDestroyStr] = {
-        ...existingObject,
-        status: CelestialStatus.DESTROYED,
-      };
-    }
-  });
-
-  // Handle reactive ring system destruction
-  Object.values(newCelestialObjectsMap).forEach((object) => {
-    if (
-      object.type === CelestialType.RING_SYSTEM &&
-      object.parentId &&
-      object.status !== CelestialStatus.DESTROYED &&
-      object.status !== CelestialStatus.ANNIHILATED
-    ) {
-      const parent = newCelestialObjectsMap[object.parentId];
-      if (
-        parent &&
-        (parent.status === CelestialStatus.DESTROYED ||
-         parent.status === CelestialStatus.ANNIHILATED)
-      ) {
-        newCelestialObjectsMap[object.id] = {
-          ...object,
-          status: parent.status,
-        };
-      }
-    }
-  });
+public getActiveCelestialObjectsSnapshot(): Record<string, CelestialObject> {
+  return filterActiveCelestialObjects(this.getCelestialObjectsSnapshot());
 }
 ```
 
@@ -259,7 +239,7 @@ function simulationStep() {
   // Run physics step
   const result = physicsEngine.step(bodies, deltaTime);
 
-  // Update state with results
+  // Update state with results (destruction processing handled by CelestialStore)
   physicsSystemAdapter.updateStateFromResult(result);
 
   // Continue loop
@@ -272,10 +252,12 @@ function simulationStep() {
 ```typescript
 // Get current state snapshot
 const celestialObjects = physicsSystemAdapter.getCelestialObjectsSnapshot();
+const activeObjects = physicsSystemAdapter.getActiveCelestialObjectsSnapshot();
 const orbitalParams = physicsSystemAdapter.getOrbitalParametersSnapshot();
 
 // Use for analysis or debugging
-console.log("Active objects:", Object.keys(celestialObjects).length);
+console.log("All objects:", Object.keys(celestialObjects).length);
+console.log("Active objects:", Object.keys(activeObjects).length);
 console.log("Objects with orbits:", orbitalParams.size);
 ```
 
@@ -299,18 +281,21 @@ try {
 - **Status Filtering**: Only processes active objects
 - **Physics Filtering**: Skips objects with `ignorePhysics` flag
 - **Batch Processing**: Processes all objects in single operation
+- **Shared Utilities**: Uses shared filtering for consistency
 
 ### State Updates
 
 - **Immutable Updates**: Creates new state objects for updates
 - **Bulk Updates**: Updates all objects in single store operation
 - **Cache Management**: Updates physics state cache efficiently
+- **Centralized Destruction**: Uses CelestialStore for destruction processing
 
 ### Memory Management
 
 - **Snapshot Creation**: Efficient shallow copies for snapshots
 - **Result Processing**: Processes results without unnecessary allocations
 - **Error Handling**: Graceful handling of missing objects
+- **Code Reuse**: Eliminates duplicate logic through shared utilities
 
 ## 🔗 Integration Points
 
@@ -325,6 +310,7 @@ try {
 - Reads from `celestialStore` for object data
 - Updates `celestialStore` with simulation results
 - Updates `physicsStore` with acceleration vectors
+- Delegates destruction processing to `celestialStore`
 
 ### With PhysicsStateProvider
 
@@ -332,12 +318,20 @@ try {
 - Updates provider cache with simulation results
 - Maintains cache consistency
 
+### With Shared Utilities
+
+- Uses shared filtering utilities for consistency
+- Eliminates duplicate destruction logic
+- Maintains consistent behavior across application
+
 ## 🔗 Related Components
 
-- [[CelestialStore]] - Source of celestial object data
+- [[CelestialStore]] - Source of celestial object data and destruction processing
 - [[PhysicsStore]] - Stores acceleration vectors
 - [[PhysicsStateProvider]] - Manages physics state calculations
 - [[SimulationStateService]] - Controls simulation configuration
+- [[StoreFilters]] - Shared filtering utilities
+- [[CelestialUtils]] - Shared event dispatching utilities
 
 ## 📚 Architecture Patterns
 
@@ -345,7 +339,24 @@ try {
 - **Bridge Pattern**: Connects different data structures
 - **Adapter Pattern**: Adapts between interfaces
 - **Batch Processing Pattern**: Efficient bulk operations
+- **Shared Utilities Pattern**: Eliminates code duplication
+
+## 🔄 Recent Improvements
+
+### Code Duplication Elimination
+
+- **Removed Duplicate Logic**: Eliminated private `processDestructionEvents` method
+- **Centralized Destruction**: Now uses `CelestialStore.processDestructionEvents()`
+- **Shared Utilities**: Uses shared filtering and event dispatching utilities
+- **Consistent Behavior**: Ensures consistent destruction handling across application
+
+### Enhanced Functionality
+
+- **Active Objects Snapshot**: Added `getActiveCelestialObjectsSnapshot()` method
+- **Improved Type Safety**: Better type handling for destroyed IDs
+- **Cleaner Architecture**: Simplified adapter responsibilities
+- **Better Error Handling**: More robust error handling and logging
 
 ---
 
-_The PhysicsSystemAdapter provides efficient bridging between core state management and the physics engine with robust error handling and performance optimization._
+_The PhysicsSystemAdapter provides efficient bridging between core state management and the physics engine with centralized destruction event handling and elimination of code duplication._

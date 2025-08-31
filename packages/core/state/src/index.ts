@@ -1,7 +1,6 @@
 // Import from logical directories
 import { celestialManager } from "./managers";
 import { physicsSystemAdapter } from "./adapters";
-import { renderableStore } from "./stores";
 import {
   PhysicsStateCalculator,
   PhysicsStateProvider,
@@ -11,6 +10,7 @@ import {
   celestialStore as celestial,
   physicsStore as physics,
   seedStore as seed,
+  renderableStore,
 } from "./stores";
 // Export types and utilities
 export {

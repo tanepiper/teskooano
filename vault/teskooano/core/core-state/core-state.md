@@ -49,7 +49,7 @@ status: active
 
 # Core State Package
 
-Comprehensive state management system for the Teskooano application using RxJS for reactive state management with modular, single-responsibility architecture.
+Comprehensive state management system for the Teskooano application using RxJS for reactive state management with modular, single-responsibility architecture and shared utilities for code reuse.
 
 ## 🎯 Purpose
 
@@ -61,6 +61,8 @@ The `@teskooano/core-state` package provides centralized state management:
 - **Object Lifecycle**: Comprehensive celestial object management
 - **Performance Optimization**: Efficient caching and state updates
 - **Type Safety**: Full TypeScript type safety throughout
+- **Code Reuse**: Shared utilities eliminate duplicate logic across components
+- **Destruction Processing**: Advanced destruction event handling with cascade effects
 
 ## 🏗️ Architecture
 
@@ -83,6 +85,10 @@ src/
 │   └── CelestialManager.ts
 ├── adapters/          # Bridge components
 │   └── PhysicsSystemAdapter.ts
+├── utils/             # Shared utilities
+│   ├── StoreFilters.ts
+│   ├── CelestialUtils.ts
+│   └── index.ts
 ├── types/             # Type definitions and utilities
 │   ├── types.ts
 │   └── utils.ts
@@ -98,6 +104,8 @@ src/
 3. **Clean APIs**: Functional APIs grouped by domain
 4. **Reactive Patterns**: RxJS observables for state synchronization
 5. **Type Safety**: Full TypeScript type safety throughout
+6. **Code Reuse**: Shared utilities eliminate duplicate logic
+7. **Performance**: Optimized algorithms and minimal allocations
 
 ## 🔧 Core Components
 
@@ -113,7 +121,7 @@ Core business logic services:
 
 Pure data storage with RxJS observables:
 
-- **[[CelestialStore]]** - Manages celestial objects and hierarchy
+- **[[CelestialStore]]** - Manages celestial objects, hierarchy, and destruction events
 - **[[SeedStore]]** - Manages seed state with localStorage persistence
 - **[[PhysicsStore]]** - Manages physics-related state (acceleration vectors)
 - **[[RenderableStore]]** - Manages renderable celestial objects
@@ -122,13 +130,20 @@ Pure data storage with RxJS observables:
 
 Business logic and complex operations:
 
-- **[[CelestialManager]]** - Consolidates celestial object lifecycle operations
+- **[[CelestialManager]]** - Consolidates celestial object lifecycle operations using shared utilities
 
 ### **Adapters** (`adapters/`)
 
 Bridge components between different systems:
 
-- **[[PhysicsSystemAdapter]]** - Bridges core state and physics engine
+- **[[PhysicsSystemAdapter]]** - Bridges core state and physics engine with centralized destruction handling
+
+### **Shared Utilities** (`utils/`)
+
+Centralized utilities for code reuse:
+
+- **[[StoreFilters]]** - Shared filtering functions and RxJS operators
+- **[[CelestialUtils]]** - Shared validation, processing, hierarchy, and event utilities
 
 ### **Types** (`types/`)
 
@@ -154,6 +169,20 @@ private readonly _objects: BehaviorSubject<Record<string, CelestialObject>>;
 public readonly objects$: Observable<Record<string, CelestialObject>>;
 ```
 
+### **Shared Utilities Integration**
+
+Stores use shared utilities for consistency and code reuse:
+
+```typescript
+// Example: CelestialStore using shared filters
+this.activeObjects$ = filterActiveCelestialObjects$(this.objects$);
+this.destroyedObjects$ = filterDestroyedCelestialObjects$(this.objects$);
+this.physicsActiveObjects$ = filterPhysicsActiveCelestialObjects$(
+  this.objects$,
+);
+this.visibleObjects$ = filterVisibleCelestialObjects$(this.objects$);
+```
+
 ### **Immutable Updates**
 
 All operations create new state objects to ensure reactive updates:
@@ -163,6 +192,22 @@ public setObject(id: string, object: CelestialObject): void {
   const current = this._objects.getValue();
   this._objects.next({ ...current, [id]: object });
 }
+```
+
+### **Advanced Destruction Processing**
+
+CelestialStore provides comprehensive destruction event processing:
+
+```typescript
+// Process destruction events with cascade effects
+const updatedObjects = celestialStore.processDestructionEvents([
+  "asteroid-1",
+  "asteroid-2",
+]);
+celestialStore.setAllObjects(updatedObjects);
+
+// Or use convenience method
+celestialStore.markObjectsDestroyed(["asteroid-1", "asteroid-2"]);
 ```
 
 ### **Store Integration**
@@ -218,8 +263,43 @@ import { physicsSystemAdapter } from "@teskooano/core-state";
 // Get physics bodies for simulation
 const bodies = physicsSystemAdapter.getPhysicsBodies();
 
-// Update state with simulation results
+// Update state with simulation results (destruction processing handled by CelestialStore)
 physicsSystemAdapter.updateStateFromResult(simulationResult);
+```
+
+### **Destruction Event Processing**
+
+```typescript
+import { celestialStore } from "@teskooano/core-state";
+
+// Process destruction events from physics simulation
+const updatedObjects = celestialStore.processDestructionEvents([
+  "asteroid-1",
+  "asteroid-2",
+]);
+celestialStore.setAllObjects(updatedObjects);
+
+// Or use convenience method
+celestialStore.markObjectsDestroyed(["asteroid-1", "asteroid-2"]);
+```
+
+### **Shared Utilities Usage**
+
+```typescript
+import {
+  filterActiveCelestialObjects,
+  processCelestialData,
+  dispatchObjectDestroyedEvent,
+} from "@teskooano/core-state";
+
+// Use shared filtering
+const activeObjects = filterActiveCelestialObjects(allObjects);
+
+// Use shared processing
+const processedObject = processCelestialData(rawData);
+
+// Use shared event dispatching
+dispatchObjectDestroyedEvent("asteroid-001");
 ```
 
 ### **Subscription Management**
@@ -243,6 +323,7 @@ class MyComponent extends StateSubscriptionMixin {
 - **PhysicsSystemAdapter**: Bridges application state and physics engine
 - **PhysicsStateProvider**: Provides physics state with caching
 - **PhysicsStateCalculator**: Calculates physics state from celestial objects
+- **Destruction Processing**: Centralized destruction event handling
 
 ### **With Renderer**
 
@@ -255,6 +336,13 @@ class MyComponent extends StateSubscriptionMixin {
 - **StateSubscriptionMixin**: Manages UI component subscriptions
 - **StateAccessor**: Provides reactive state access for UI
 - **CelestialManager**: Handles UI-triggered object operations
+- **Event Dispatching**: Shared utilities for UI synchronization
+
+### **With Shared Utilities**
+
+- **StoreFilters**: Provides consistent filtering across stores
+- **CelestialUtils**: Provides validation, processing, and event utilities
+- **Code Reuse**: Eliminates duplicate logic across components
 
 ## 🎯 Key Features
 
@@ -264,6 +352,7 @@ class MyComponent extends StateSubscriptionMixin {
 - **Batch Operations**: Efficient bulk updates and operations
 - **Memory Management**: Automatic cleanup and optimization
 - **Reactive Efficiency**: RxJS optimizations for state updates
+- **Shared Utilities**: Optimized algorithms with minimal allocations
 
 ### **Type Safety**
 
@@ -279,6 +368,20 @@ class MyComponent extends StateSubscriptionMixin {
 - **Debug Support**: Comprehensive error logging
 - **State Consistency**: Maintains data integrity
 
+### **Code Reuse**
+
+- **Shared Utilities**: Centralized logic for common operations
+- **Consistent Behavior**: Consistent behavior across application
+- **Maintainability**: Easy to maintain and update
+- **Reduced Duplication**: Eliminates duplicate code
+
+### **Advanced Features**
+
+- **Destruction Processing**: Comprehensive destruction event handling
+- **Cascade Effects**: Automatic ring system destruction when parent is destroyed
+- **Event Dispatching**: Shared utilities for UI synchronization
+- **Filtering**: Advanced filtering with RxJS operators
+
 ### **Extensibility**
 
 - **Modular Design**: Easy to extend and modify
@@ -293,6 +396,8 @@ class MyComponent extends StateSubscriptionMixin {
 - [[PhysicsSystemAdapter]] - Physics engine integration
 - [[StateAccessor]] - Unified state access
 - [[StateSubscriptionMixin]] - Subscription management
+- [[StoreFilters]] - Shared filtering utilities
+- [[CelestialUtils]] - Shared validation and processing utilities
 
 ## 📚 Architecture Patterns
 
@@ -302,7 +407,39 @@ class MyComponent extends StateSubscriptionMixin {
 - **Bridge Pattern**: Connects different system interfaces
 - **Factory Pattern**: Creates and initializes objects
 - **Manager Pattern**: Centralized business logic
+- **Shared Utilities Pattern**: Eliminates code duplication
+- **Event Pattern**: Dispatches events for UI synchronization
+
+## 🔄 Recent Improvements
+
+### **Code Duplication Elimination**
+
+- **Shared Filtering**: Created `StoreFilters` for consistent filtering across stores
+- **Shared Processing**: Created `CelestialUtils` for validation, processing, and events
+- **Centralized Destruction**: Moved destruction logic to `CelestialStore`
+- **Consistent Behavior**: Ensures consistent behavior across application
+
+### **Enhanced Functionality**
+
+- **Destruction Processing**: Advanced destruction event handling with cascade effects
+- **Filtered Observables**: Pre-composed RxJS operators for reactive filtering
+- **Event Dispatching**: Shared utilities for consistent event dispatching
+- **Type Safety**: Improved type safety throughout
+
+### **Performance Improvements**
+
+- **Optimized Algorithms**: Efficient filtering and processing algorithms
+- **Minimal Allocations**: Reduced object creation and memory usage
+- **Caching**: RxJS operators use `shareReplay(1)` for performance
+- **Batch Operations**: Efficient bulk operations for better performance
+
+### **Architecture Improvements**
+
+- **Cleaner Separation**: Better separation of concerns
+- **Reduced Complexity**: Simplified components through utility delegation
+- **Better Maintainability**: Centralized logic for common operations
+- **Improved Error Handling**: Consistent error handling through shared utilities
 
 ---
 
-_The Core State package provides comprehensive, reactive state management with modular architecture and full TypeScript type safety._
+_The Core State package provides comprehensive, reactive state management with modular architecture, full TypeScript type safety, and elimination of code duplication through shared utilities._

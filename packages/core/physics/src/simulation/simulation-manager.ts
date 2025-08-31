@@ -551,7 +551,7 @@ export class SimulationManager {
 
     // Update integrator if needed
     if (config.integrator) {
-      this.updateIntegratorFunction(config.integrator);
+      this.updateIntegratorFunction(config.integrator as IntegratorType);
     }
 
     // Update WASM spatial partitioning

@@ -1,7 +1,18 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import { map, shareReplay } from "rxjs/operators";
 import type { CelestialObject } from "@teskooano/data-types";
 import { CelestialStatus } from "@teskooano/data-types";
+import {
+  filterActiveCelestialObjects,
+  filterDestroyedCelestialObjects,
+  filterPhysicsActiveCelestialObjects,
+  filterVisibleCelestialObjects,
+  filterActiveCelestialObjects$,
+  filterDestroyedCelestialObjects$,
+  filterPhysicsActiveCelestialObjects$,
+  filterVisibleCelestialObjects$,
+} from "../utils";
+import { CelestialType } from "@teskooano/data-types";
+import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
 
 /**
  * Manages celestial object data storage and hierarchy relationships.
@@ -139,26 +150,13 @@ export class CelestialStore {
     this._hierarchy = new BehaviorSubject<Record<string, string[]>>({});
     this.hierarchy$ = this._hierarchy.asObservable();
 
-    // Set up filtered observables
-    this.activeObjects$ = this.objects$.pipe(
-      map((objects) => this.filterActiveObjects(objects)),
-      shareReplay(1),
+    // Set up filtered observables using shared operators
+    this.activeObjects$ = filterActiveCelestialObjects$(this.objects$);
+    this.destroyedObjects$ = filterDestroyedCelestialObjects$(this.objects$);
+    this.physicsActiveObjects$ = filterPhysicsActiveCelestialObjects$(
+      this.objects$,
     );
-
-    this.destroyedObjects$ = this.objects$.pipe(
-      map((objects) => this.filterDestroyedObjects(objects)),
-      shareReplay(1),
-    );
-
-    this.physicsActiveObjects$ = this.objects$.pipe(
-      map((objects) => this.filterPhysicsActiveObjects(objects)),
-      shareReplay(1),
-    );
-
-    this.visibleObjects$ = this.objects$.pipe(
-      map((objects) => this.filterVisibleObjects(objects)),
-      shareReplay(1),
-    );
+    this.visibleObjects$ = filterVisibleCelestialObjects$(this.objects$);
   }
 
   /**
@@ -184,91 +182,8 @@ export class CelestialStore {
   // FILTERING METHODS
   // =============================================================================
 
-  /**
-   * Filters objects to only include active ones (not destroyed or annihilated).
-   *
-   * @param objects The complete map of celestial objects
-   * @returns A filtered map containing only active objects
-   */
-  private filterActiveObjects(
-    objects: Record<string, CelestialObject>,
-  ): Record<string, CelestialObject> {
-    const filtered: Record<string, CelestialObject> = {};
-    Object.values(objects).forEach((obj) => {
-      if (
-        obj.status !== CelestialStatus.DESTROYED &&
-        obj.status !== CelestialStatus.ANNIHILATED
-      ) {
-        filtered[obj.id] = obj;
-      }
-    });
-    return filtered;
-  }
-
-  /**
-   * Filters objects to only include destroyed or annihilated ones.
-   *
-   * @param objects The complete map of celestial objects
-   * @returns A filtered map containing only destroyed objects
-   */
-  private filterDestroyedObjects(
-    objects: Record<string, CelestialObject>,
-  ): Record<string, CelestialObject> {
-    const filtered: Record<string, CelestialObject> = {};
-    Object.values(objects).forEach((obj) => {
-      if (
-        obj.status === CelestialStatus.DESTROYED ||
-        obj.status === CelestialStatus.ANNIHILATED
-      ) {
-        filtered[obj.id] = obj;
-      }
-    });
-    return filtered;
-  }
-
-  /**
-   * Filters objects to only include those that are active AND not ignoring physics.
-   *
-   * @param objects The complete map of celestial objects
-   * @returns A filtered map containing only physics-active objects
-   */
-  private filterPhysicsActiveObjects(
-    objects: Record<string, CelestialObject>,
-  ): Record<string, CelestialObject> {
-    const filtered: Record<string, CelestialObject> = {};
-    Object.values(objects).forEach((obj) => {
-      if (
-        obj.status !== CelestialStatus.DESTROYED &&
-        obj.status !== CelestialStatus.ANNIHILATED &&
-        !obj.ignorePhysics
-      ) {
-        filtered[obj.id] = obj;
-      }
-    });
-    return filtered;
-  }
-
-  /**
-   * Filters objects to only include those that are active AND visible.
-   *
-   * @param objects The complete map of celestial objects
-   * @returns A filtered map containing only visible objects
-   */
-  private filterVisibleObjects(
-    objects: Record<string, CelestialObject>,
-  ): Record<string, CelestialObject> {
-    const filtered: Record<string, CelestialObject> = {};
-    Object.values(objects).forEach((obj) => {
-      if (
-        obj.status !== CelestialStatus.DESTROYED &&
-        obj.status !== CelestialStatus.ANNIHILATED &&
-        obj.isVisible !== false // Default to true if not specified
-      ) {
-        filtered[obj.id] = obj;
-      }
-    });
-    return filtered;
-  }
+  // Note: Filtering methods have been moved to shared utilities in StoreFilters.ts
+  // The filtered observables now use the shared operators for consistency
 
   // =============================================================================
   // OBJECT OPERATIONS
@@ -311,7 +226,7 @@ export class CelestialStore {
    * ```
    */
   public getActiveObjects(): Record<string, CelestialObject> {
-    return this.filterActiveObjects(this.getObjects());
+    return filterActiveCelestialObjects(this.getObjects());
   }
 
   /**
@@ -328,7 +243,7 @@ export class CelestialStore {
    * ```
    */
   public getDestroyedObjects(): Record<string, CelestialObject> {
-    return this.filterDestroyedObjects(this.getObjects());
+    return filterDestroyedCelestialObjects(this.getObjects());
   }
 
   /**
@@ -345,7 +260,7 @@ export class CelestialStore {
    * ```
    */
   public getPhysicsActiveObjects(): Record<string, CelestialObject> {
-    return this.filterPhysicsActiveObjects(this.getObjects());
+    return filterPhysicsActiveCelestialObjects(this.getObjects());
   }
 
   /**
@@ -362,7 +277,7 @@ export class CelestialStore {
    * ```
    */
   public getVisibleObjects(): Record<string, CelestialObject> {
-    return this.filterVisibleObjects(this.getObjects());
+    return filterVisibleCelestialObjects(this.getObjects());
   }
 
   /**
@@ -668,6 +583,102 @@ export class CelestialStore {
     const objects = this._objects.getValue();
     const object = objects[childId];
     return object?.parentId ? objects[object.parentId] : undefined;
+  }
+
+  // =============================================================================
+  // DESTRUCTION EVENT PROCESSING
+  // =============================================================================
+
+  /**
+   * Processes destruction events and updates object statuses.
+   * Ring systems automatically destroy themselves if their parent is destroyed.
+   * Uses shared event dispatching utilities for consistency.
+   *
+   * @param destroyedIds Array of object IDs to mark as destroyed
+   * @returns The updated objects map with destruction events applied
+   *
+   * @example
+   * ```typescript
+   * // Process destruction events from physics simulation
+   * const updatedObjects = celestialStore.processDestructionEvents(['asteroid-1', 'asteroid-2']);
+   * celestialStore.setAllObjects(updatedObjects);
+   * ```
+   */
+  public processDestructionEvents(
+    destroyedIds: string[],
+  ): Record<string, CelestialObject> {
+    const currentObjects = this.getObjects();
+    const newObjectsMap: Record<string, CelestialObject> = {
+      ...currentObjects,
+    };
+
+    // Process direct destruction events first
+    destroyedIds.forEach((idToDestroy) => {
+      const existingObject = newObjectsMap[idToDestroy];
+      if (
+        existingObject &&
+        existingObject.status !== CelestialStatus.DESTROYED &&
+        existingObject.status !== CelestialStatus.ANNIHILATED
+      ) {
+        // Simple destruction - all destroyed objects get DESTROYED status
+        newObjectsMap[idToDestroy] = {
+          ...existingObject,
+          status: CelestialStatus.DESTROYED,
+        };
+
+        // Dispatch destruction event using shared utility
+        dispatchObjectDestroyedEvent(idToDestroy);
+      }
+    });
+
+    // Now handle reactive ring system destruction
+    Object.values(newObjectsMap).forEach((object) => {
+      if (
+        object.type === CelestialType.RING_SYSTEM &&
+        object.parentId &&
+        object.status !== CelestialStatus.DESTROYED &&
+        object.status !== CelestialStatus.ANNIHILATED
+      ) {
+        const parent = newObjectsMap[object.parentId];
+        if (
+          parent &&
+          (parent.status === CelestialStatus.DESTROYED ||
+            parent.status === CelestialStatus.ANNIHILATED)
+        ) {
+          // Ring system automatically destroys itself when parent is destroyed
+          newObjectsMap[object.id] = {
+            ...object,
+            status: parent.status, // Inherit parent's destruction status
+          };
+
+          // Dispatch destruction event using shared utility
+          dispatchObjectDestroyedEvent(object.id);
+
+          console.debug(
+            `[CelestialStore] Ring system ${object.id} auto-destroyed due to parent ${object.parentId} destruction`,
+          );
+        }
+      }
+    });
+
+    return newObjectsMap;
+  }
+
+  /**
+   * Marks specific objects as destroyed and processes cascade effects.
+   * This is a convenience method that combines destruction processing with store updates.
+   *
+   * @param destroyedIds Array of object IDs to mark as destroyed
+   *
+   * @example
+   * ```typescript
+   * // Mark objects as destroyed and update the store
+   * celestialStore.markObjectsDestroyed(['asteroid-1', 'asteroid-2']);
+   * ```
+   */
+  public markObjectsDestroyed(destroyedIds: string[]): void {
+    const updatedObjects = this.processDestructionEvents(destroyedIds);
+    this.setAllObjects(updatedObjects);
   }
 }
 

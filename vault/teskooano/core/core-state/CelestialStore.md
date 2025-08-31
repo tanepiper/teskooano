@@ -14,7 +14,7 @@ status: active
 
 # CelestialStore
 
-Pure data store for celestial objects and hierarchy relationships using RxJS for reactive state management.
+Pure data store for celestial objects and hierarchy relationships using RxJS for reactive state management with comprehensive destruction event processing.
 
 **Location**: `src/stores/celestialStore.ts`
 
@@ -27,6 +27,7 @@ The `CelestialStore` provides centralized storage for celestial object data:
 - **Reactive Updates**: RxJS observables for real-time state synchronization
 - **Immutable Operations**: All updates create new state objects
 - **Efficient Queries**: Get children, parents, and object counts
+- **Destruction Processing**: Handles object destruction events and cascade effects
 - **Pure Data Store**: No business logic, only data storage
 
 ## 🏗️ Architecture
@@ -58,6 +59,20 @@ public readonly objects$: Observable<Record<string, CelestialObject>>;
 
 private readonly _hierarchy: BehaviorSubject<Record<string, string[]>>;
 public readonly hierarchy$: Observable<Record<string, string[]>>;
+```
+
+### Shared Utilities Integration
+
+Uses shared filtering and event dispatching utilities:
+
+```typescript
+// Filtered observables use shared operators
+this.activeObjects$ = filterActiveCelestialObjects$(this.objects$);
+this.destroyedObjects$ = filterDestroyedCelestialObjects$(this.objects$);
+this.physicsActiveObjects$ = filterPhysicsActiveCelestialObjects$(
+  this.objects$,
+);
+this.visibleObjects$ = filterVisibleCelestialObjects$(this.objects$);
 ```
 
 ### Immutable Updates
@@ -92,6 +107,38 @@ removeObject(id: string): void;
 setAllObjects(objects: Record<string, CelestialObject>): void;
 ```
 
+### Filtered Object Access
+
+```typescript
+// Get active objects (not destroyed or annihilated)
+getActiveObjects(): Record<string, CelestialObject>;
+
+// Get destroyed objects
+getDestroyedObjects(): Record<string, CelestialObject>;
+
+// Get physics-active objects (active and not ignoring physics)
+getPhysicsActiveObjects(): Record<string, CelestialObject>;
+
+// Get visible objects (active and visible)
+getVisibleObjects(): Record<string, CelestialObject>;
+```
+
+### Reactive Filtered Observables
+
+```typescript
+// Observable of active objects
+activeObjects$: Observable<Record<string, CelestialObject>>;
+
+// Observable of destroyed objects
+destroyedObjects$: Observable<Record<string, CelestialObject>>;
+
+// Observable of physics-active objects
+physicsActiveObjects$: Observable<Record<string, CelestialObject>>;
+
+// Observable of visible objects
+visibleObjects$: Observable<Record<string, CelestialObject>>;
+```
+
 ### Hierarchy Operations
 
 ```typescript
@@ -119,6 +166,16 @@ getChildren(parentId: string): CelestialObject[];
 
 // Get parent of child
 getParent(childId: string): CelestialObject | undefined;
+```
+
+### Destruction Event Processing
+
+```typescript
+// Process destruction events and return updated objects map
+processDestructionEvents(destroyedIds: string[]): Record<string, CelestialObject>;
+
+// Mark objects as destroyed and update store
+markObjectsDestroyed(destroyedIds: string[]): void;
 ```
 
 ## 📊 Data Structure
@@ -194,6 +251,62 @@ Object.keys(newHierarchy).forEach((parentId) => {
 this._hierarchy.next(newHierarchy);
 ```
 
+### Destruction Event Processing
+
+```typescript
+// Process destruction events with cascade effects
+public processDestructionEvents(destroyedIds: string[]): Record<string, CelestialObject> {
+  const currentObjects = this.getObjects();
+  const newObjectsMap: Record<string, CelestialObject> = { ...currentObjects };
+
+  // Process direct destruction events first
+  destroyedIds.forEach((idToDestroy) => {
+    const existingObject = newObjectsMap[idToDestroy];
+    if (
+      existingObject &&
+      existingObject.status !== CelestialStatus.DESTROYED &&
+      existingObject.status !== CelestialStatus.ANNIHILATED
+    ) {
+      newObjectsMap[idToDestroy] = {
+        ...existingObject,
+        status: CelestialStatus.DESTROYED,
+      };
+
+      // Dispatch destruction event using shared utility
+      dispatchObjectDestroyedEvent(idToDestroy);
+    }
+  });
+
+  // Handle reactive ring system destruction
+  Object.values(newObjectsMap).forEach((object) => {
+    if (
+      object.type === CelestialType.RING_SYSTEM &&
+      object.parentId &&
+      object.status !== CelestialStatus.DESTROYED &&
+      object.status !== CelestialStatus.ANNIHILATED
+    ) {
+      const parent = newObjectsMap[object.parentId];
+      if (
+        parent &&
+        (parent.status === CelestialStatus.DESTROYED ||
+          parent.status === CelestialStatus.ANNIHILATED)
+      ) {
+        // Ring system automatically destroys itself when parent is destroyed
+        newObjectsMap[object.id] = {
+          ...object,
+          status: parent.status, // Inherit parent's destruction status
+        };
+
+        // Dispatch destruction event using shared utility
+        dispatchObjectDestroyedEvent(object.id);
+      }
+    }
+  });
+
+  return newObjectsMap;
+}
+```
+
 ## 🚀 Usage Examples
 
 ### Basic Object Management
@@ -217,6 +330,25 @@ celestialStore.removeObject("asteroid-001");
 const allObjects = celestialStore.getObjects();
 ```
 
+### Filtered Object Access
+
+```typescript
+// Get filtered objects
+const activeObjects = celestialStore.getActiveObjects();
+const destroyedObjects = celestialStore.getDestroyedObjects();
+const physicsObjects = celestialStore.getPhysicsActiveObjects();
+const visibleObjects = celestialStore.getVisibleObjects();
+
+// Subscribe to filtered observables
+celestialStore.activeObjects$.subscribe((objects) => {
+  console.log("Active objects:", Object.keys(objects).length);
+});
+
+celestialStore.physicsActiveObjects$.subscribe((objects) => {
+  console.log("Physics objects:", Object.keys(objects).length);
+});
+```
+
 ### Hierarchy Management
 
 ```typescript
@@ -235,6 +367,20 @@ celestialStore.removeChild("earth", "moon");
 
 // Remove object from hierarchy
 celestialStore.removeHierarchyEntry("destroyed-satellite");
+```
+
+### Destruction Event Processing
+
+```typescript
+// Process destruction events from physics simulation
+const updatedObjects = celestialStore.processDestructionEvents([
+  "asteroid-1",
+  "asteroid-2",
+]);
+celestialStore.setAllObjects(updatedObjects);
+
+// Or use the convenience method
+celestialStore.markObjectsDestroyed(["asteroid-1", "asteroid-2"]);
 ```
 
 ### Reactive Subscriptions
@@ -309,14 +455,20 @@ const objectCount = Object.keys(celestialStore.getObjects()).length;
 ### Memory Management
 
 - **No Circular References**: Clean object references
-- **Efficient Filtering**: Uses native array methods
+- **Efficient Filtering**: Uses shared filtering utilities
 - **Proper Cleanup**: Removes all references when deleting objects
 
 ### Query Optimization
 
 - **Direct Access**: O(1) lookup by ID
 - **Cached Results**: RxJS caches observable results
-- **Efficient Filtering**: Uses native JavaScript methods
+- **Efficient Filtering**: Uses shared filtering operators
+
+### Shared Utilities
+
+- **Code Reuse**: Uses shared filtering and event dispatching utilities
+- **Consistency**: Consistent behavior across the application
+- **Maintainability**: Centralized logic for common operations
 
 ## 🔗 Integration Points
 
@@ -338,12 +490,20 @@ const objectCount = Object.keys(celestialStore.getObjects()).length;
 - Maintains object state for physics integration
 - Supports physics state updates
 
+### With Destruction Processing
+
+- Handles destruction events from physics simulation
+- Manages cascade effects (ring system destruction)
+- Dispatches destruction events for UI updates
+
 ## 🔗 Related Components
 
 - [[CelestialManager]] - Uses this store for object operations
 - [[StateAccessor]] - Provides unified access to this store
 - [[PhysicsSystemAdapter]] - Reads object data for physics
 - [[RenderableStore]] - Stores derived renderable data
+- [[StoreFilters]] - Shared filtering utilities
+- [[CelestialUtils]] - Shared event dispatching utilities
 
 ## 📚 Architecture Patterns
 
@@ -351,7 +511,8 @@ const objectCount = Object.keys(celestialStore.getObjects()).length;
 - **Reactive Pattern**: RxJS observables for state updates
 - **Immutable Pattern**: New state objects for all changes
 - **Pure Data Pattern**: No business logic, only data storage
+- **Shared Utilities Pattern**: Uses shared filtering and event utilities
 
 ---
 
-_The CelestialStore provides efficient, reactive storage for celestial objects with immutable updates and comprehensive hierarchy management._
+_The CelestialStore provides efficient, reactive storage for celestial objects with immutable updates, comprehensive hierarchy management, and advanced destruction event processing._
