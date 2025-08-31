@@ -122,6 +122,8 @@ export class SimulationManager {
 
   // Caching for performance optimization
   private integratorFunction: IntegratorFunction;
+  // Throttle resonance analysis to avoid per-step cost
+  private resonanceElapsed_s: number = 0;
 
   constructor() {
     this.idealOrreryStrategy = new IdealOrreryStrategy();
@@ -605,13 +607,22 @@ export class SimulationManager {
 
     // Optional: resonance detection (no forces changed)
     if (config.resonanceModeling && config.resonanceInNBody) {
+      // Throttle by simulated time interval and cap per-step pairs
+      const defaultInterval_s = 5 * 365.25 * 24 * 3600; // 5 years
+      const interval_s =
+        (config as any).resonanceUpdateInterval_s || defaultInterval_s;
+      this.resonanceElapsed_s += params.deltaTime || 0;
+      if (this.resonanceElapsed_s < interval_s) {
+        // Skip this step
+      } else {
+        this.resonanceElapsed_s = 0;
       try {
         const integrator = new ResonanceIntegrator({
           enableResonanceDetection: true,
           resonanceTolerance: 0.05,
-          librationDetectionWindow: 200,
-          timeStep: 0.05,
-          maxIntegrationSteps: 2000,
+          librationDetectionWindow: 64,
+          timeStep: 0.1,
+          maxIntegrationSteps: 256,
         });
         const AU = 149_597_870_700;
         // Require orbital metadata to proceed
@@ -627,11 +638,14 @@ export class SimulationManager {
             })
             .filter((o): o is { id: string; orbit: OrbitalParameters; parentId: string; mass_kg: number } => !!o);
 
+          const maxPairs = (config as any).resonanceMaxPairsPerStep || 16;
+          let pairsProcessed = 0;
           for (const obj of objects) {
             const sameSystem = objects.filter(
               (o) => o.id !== obj.id && o.parentId === obj.parentId,
             );
             for (const perturber of sameSystem) {
+              if (pairsProcessed >= maxPairs) break;
               if ((perturber.mass_kg || 0) < 1e22) continue;
               const periodRatio = (obj.orbit.period_s || 0) / (perturber.orbit.period_s || 1);
               if (!isFinite(periodRatio) || periodRatio <= 0) continue;
@@ -672,11 +686,14 @@ export class SimulationManager {
                   res.resonanceState,
                 );
               } catch (_) {}
+              pairsProcessed++;
             }
+            if (pairsProcessed >= maxPairs) break;
           }
         }
       } catch (e) {
         console.warn("[Resonance] N-body resonance analysis skipped:", e);
+      }
       }
     }
 
