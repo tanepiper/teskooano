@@ -720,6 +720,14 @@ export class SimulationManager {
       }
     }
 
+    // Compute final accelerations snapshot for result
+    const accelerations = new Map<string, OSVector3>();
+    this.wasmSpatialPartitioning.update(finalStates);
+    finalStates.forEach((body) => {
+      const acc = this.calculateAccelerationForBody_NBody(body, finalStates);
+      accelerations.set(body.id, acc);
+    });
+
     const result = {
       states: finalStates,
       accelerations,
