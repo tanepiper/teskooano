@@ -566,34 +566,54 @@ export class SimulationManager {
     // Update WASM spatial partitioning
     this.wasmSpatialPartitioning.update(params.bodies);
 
-    // Calculate accelerations using WASM spatial partitioning
-    const accelerations = new Map<string, OSVector3>();
-    params.bodies.forEach((body) => {
-      const acc = this.calculateAccelerationForBody_NBody(body, params.bodies);
-      accelerations.set(body.id, acc);
-    });
+    // Substepping to preserve stability for fast orbits (moons) at high time scales
+    let currentStates: PhysicsStateReal[] = params.bodies;
+    // Estimate max stable substep as a fraction of the smallest orbital period
+    let minPeriod_s = Infinity;
+    if (params.orbitalParameters) {
+      for (const [id, el] of params.orbitalParameters.entries()) {
+        if (el && el.period_s && el.period_s > 0) {
+          if (el.period_s < minPeriod_s) minPeriod_s = el.period_s;
+        }
+      }
+    }
+    const fallbackMaxStep_s = 3600; // 1 hour if we lack orbital metadata
+    const maxSubstep_s = isFinite(minPeriod_s)
+      ? Math.max(1, 0.02 * minPeriod_s)
+      : fallbackMaxStep_s;
+    const substeps = Math.max(
+      1,
+      Math.min(64, Math.ceil(params.deltaTime / maxSubstep_s)),
+    );
+    const dtSub = params.deltaTime / substeps;
 
-    // Integration step using cached integrator
-    const integratedStates = params.bodies.map((body) => {
-      const currentAcceleration =
-        accelerations.get(body.id) || new OSVector3(0, 0, 0);
+    for (let sub = 0; sub < substeps; sub++) {
+      // Update WASM partitioning and compute accelerations for current state
+      this.wasmSpatialPartitioning.update(currentStates);
+      const accMap = new Map<string, OSVector3>();
+      currentStates.forEach((body) => {
+        const acc = this.calculateAccelerationForBody_NBody(body, currentStates);
+        accMap.set(body.id, acc);
+      });
 
-      const calculateNewAccelerationForAdvanced = (
-        stateGuess: PhysicsStateReal,
-      ): OSVector3 => {
-        return this.calculateAccelerationForBody_NBody(
-          stateGuess,
-          params.bodies,
+      // Integrate one substep
+      currentStates = currentStates.map((body) => {
+        const currentAcceleration = accMap.get(body.id) || new OSVector3(0, 0, 0);
+        const calculateNewAccelerationForAdvanced = (
+          stateGuess: PhysicsStateReal,
+        ): OSVector3 => {
+          return this.calculateAccelerationForBody_NBody(stateGuess, currentStates);
+        };
+        return this.integratorFunction(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dtSub,
         );
-      };
+      });
+    }
 
-      return this.integratorFunction(
-        body,
-        currentAcceleration,
-        calculateNewAccelerationForAdvanced,
-        params.deltaTime,
-      );
-    });
+    const integratedStates = currentStates;
 
     // Update collision detection with integrated states
     this.wasmCollisionDetection.update(
