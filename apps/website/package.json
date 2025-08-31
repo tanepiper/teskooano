@@ -13,10 +13,10 @@
     "@astrojs/starlight": "0.35.2",
     "@teskooano/design-system": "file:../../packages/design-system",
     "@pasqal-io/starlight-client-mermaid": "0.1.0",
-    "astro": "5.13.3",
+    "astro": "5.13.5",
     "sharp": "0.34.3",
     "starlight-typedoc": "0.21.3",
-    "typedoc": "0.28.10",
+    "typedoc": "0.28.11",
     "typedoc-plugin-markdown": "4.8.1"
   }
 }

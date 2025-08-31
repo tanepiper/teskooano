@@ -21,11 +21,11 @@
     "@teskooano/systems-solar-system": "file:../../packages/systems/solar-system",
     "@teskooano/data-values": "file:../../packages/data/values",
     "@teskooano/data-types": "file:../../packages/data/types",
-    "dockview-core": "4.7.0",
+    "dockview-core": "4.7.1",
     "driver.js": "1.3.6",
     "three": "0.179.1",
     "rxjs": "7.8.2",
-    "@fluentui/svg-icons": "1.1.308",
+    "@fluentui/svg-icons": "1.1.309",
     "@teskooano/ui-plugin": "file:../../packages/app/ui-plugin"
   },
   "devDependencies": {
