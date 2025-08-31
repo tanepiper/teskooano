@@ -58,6 +58,7 @@ function isPlanetAtmosphere(props: any): props is PlanetAtmosphereProperties {
  */
 export class CelestialManager {
   private static instance: CelestialManager;
+  private resonanceState: Map<string, any> = new Map();
 
   private constructor() {}
 
@@ -95,6 +96,30 @@ export class CelestialManager {
     } catch (error) {
       console.error(`[CelestialManager] Error adding ${object.id}:`, error);
     }
+  }
+
+  /**
+   * Returns a celestial object by id (pass-through to store).
+   */
+  public getObject(id: string) {
+    return celestialStore.getObject(id);
+  }
+
+  /**
+   * Store per-object resonance state for UI/telemetry.
+   */
+  public setResonanceState(id: string, state: any): void {
+    this.resonanceState.set(id, state);
+  }
+
+  public getResonanceState(id: string): any | undefined {
+    return this.resonanceState.get(id);
+  }
+
+  public getAllResonanceStates(): Record<string, any> {
+    const out: Record<string, any> = {};
+    for (const [k, v] of this.resonanceState.entries()) out[k] = v;
+    return out;
   }
 
   /**

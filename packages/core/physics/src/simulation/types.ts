@@ -23,6 +23,9 @@ export interface SimulationConfiguration {
   mode: SimulationMode;
   integrator?: IntegratorType;
   algorithm?: AlgorithmType;
+  resonanceModeling?: boolean;
+  resonanceInIdealMode?: boolean;
+  resonanceInNBody?: boolean;
 }
 
 /**

@@ -30,6 +30,13 @@ import {
 } from "../integrators";
 import { sortBodiesByHierarchy } from "../utils";
 import {
+  ResonanceIntegrator,
+  estimateResonantSemiMajorAxisAU,
+  findNearestResonance,
+  ResonanceType,
+} from "../orbital";
+import { celestialManager } from "@teskooano/core-state";
+import {
   AU_METERS,
   GRAVITATIONAL_CONSTANT,
   GRAVITATIONAL_SOFTENING_SQUARED,
@@ -115,6 +122,8 @@ export class SimulationManager {
 
   // Caching for performance optimization
   private integratorFunction: IntegratorFunction;
+  // Throttle resonance analysis to avoid per-step cost
+  private resonanceElapsed_s: number = 0;
 
   constructor() {
     this.idealOrreryStrategy = new IdealOrreryStrategy();
@@ -557,34 +566,54 @@ export class SimulationManager {
     // Update WASM spatial partitioning
     this.wasmSpatialPartitioning.update(params.bodies);
 
-    // Calculate accelerations using WASM spatial partitioning
-    const accelerations = new Map<string, OSVector3>();
-    params.bodies.forEach((body) => {
-      const acc = this.calculateAccelerationForBody_NBody(body, params.bodies);
-      accelerations.set(body.id, acc);
-    });
+    // Substepping to preserve stability for fast orbits (moons) at high time scales
+    let currentStates: PhysicsStateReal[] = params.bodies;
+    // Estimate max stable substep as a fraction of the smallest orbital period
+    let minPeriod_s = Infinity;
+    if (params.orbitalParameters) {
+      for (const [id, el] of params.orbitalParameters.entries()) {
+        if (el && el.period_s && el.period_s > 0) {
+          if (el.period_s < minPeriod_s) minPeriod_s = el.period_s;
+        }
+      }
+    }
+    const fallbackMaxStep_s = 3600; // 1 hour if we lack orbital metadata
+    const maxSubstep_s = isFinite(minPeriod_s)
+      ? Math.max(1, 0.02 * minPeriod_s)
+      : fallbackMaxStep_s;
+    const substeps = Math.max(
+      1,
+      Math.min(64, Math.ceil(params.deltaTime / maxSubstep_s)),
+    );
+    const dtSub = params.deltaTime / substeps;
 
-    // Integration step using cached integrator
-    const integratedStates = params.bodies.map((body) => {
-      const currentAcceleration =
-        accelerations.get(body.id) || new OSVector3(0, 0, 0);
+    for (let sub = 0; sub < substeps; sub++) {
+      // Update WASM partitioning and compute accelerations for current state
+      this.wasmSpatialPartitioning.update(currentStates);
+      const accMap = new Map<string, OSVector3>();
+      currentStates.forEach((body) => {
+        const acc = this.calculateAccelerationForBody_NBody(body, currentStates);
+        accMap.set(body.id, acc);
+      });
 
-      const calculateNewAccelerationForAdvanced = (
-        stateGuess: PhysicsStateReal,
-      ): OSVector3 => {
-        return this.calculateAccelerationForBody_NBody(
-          stateGuess,
-          params.bodies,
+      // Integrate one substep
+      currentStates = currentStates.map((body) => {
+        const currentAcceleration = accMap.get(body.id) || new OSVector3(0, 0, 0);
+        const calculateNewAccelerationForAdvanced = (
+          stateGuess: PhysicsStateReal,
+        ): OSVector3 => {
+          return this.calculateAccelerationForBody_NBody(stateGuess, currentStates);
+        };
+        return this.integratorFunction(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dtSub,
         );
-      };
+      });
+    }
 
-      return this.integratorFunction(
-        body,
-        currentAcceleration,
-        calculateNewAccelerationForAdvanced,
-        params.deltaTime,
-      );
-    });
+    const integratedStates = currentStates;
 
     // Update collision detection with integrated states
     this.wasmCollisionDetection.update(
@@ -595,6 +624,109 @@ export class SimulationManager {
     );
     const [finalStates, destroyedIds] =
       this.wasmCollisionDetection.handleCollisions(params.ignoreCollisions);
+
+    // Optional: resonance detection (no forces changed)
+    if (config.resonanceModeling && config.resonanceInNBody) {
+      // Throttle by simulated time interval and cap per-step pairs
+      // Base: once per simulation day, scaled up by timeScale (e.g., x10^7 => ~ once per 10 years)
+      const baseDay_s = 24 * 3600;
+      const timeScale = (params as any).timeScale || 1;
+      const scaledInterval_s = baseDay_s * Math.max(1, timeScale);
+      const interval_s =
+        (config as any).resonanceUpdateInterval_s || scaledInterval_s;
+      this.resonanceElapsed_s += params.deltaTime || 0;
+      if (this.resonanceElapsed_s < interval_s) {
+        // Skip this step
+      } else {
+        this.resonanceElapsed_s = 0;
+      try {
+        const integrator = new ResonanceIntegrator({
+          enableResonanceDetection: true,
+          resonanceTolerance: 0.05,
+          librationDetectionWindow: 64,
+          timeStep: 0.1,
+          maxIntegrationSteps: 256,
+        });
+        const AU = 149_597_870_700;
+        // Require orbital metadata to proceed
+        if (params.orbitalParameters && params.parentIds) {
+          // Build simplified objects from provided params instead of querying the state manager
+          const objects = integratedStates
+            .map((s) => {
+              const id = String(s.id);
+              const orbit = params.orbitalParameters!.get(id);
+              const parentId = params.parentIds!.get(id);
+              if (!orbit || !parentId) return null;
+              return { id, orbit, parentId, mass_kg: s.mass_kg };
+            })
+            .filter((o): o is { id: string; orbit: OrbitalParameters; parentId: string; mass_kg: number } => !!o);
+
+          const maxPairs = (config as any).resonanceMaxPairsPerStep || 16;
+          let pairsProcessed = 0;
+          for (const obj of objects) {
+            const sameSystem = objects.filter(
+              (o) => o.id !== obj.id && o.parentId === obj.parentId,
+            );
+            for (const perturber of sameSystem) {
+              if (pairsProcessed >= maxPairs) break;
+              if ((perturber.mass_kg || 0) < 1e22) continue;
+              const periodRatio = (obj.orbit.period_s || 0) / (perturber.orbit.period_s || 1);
+              if (!isFinite(periodRatio) || periodRatio <= 0) continue;
+              const guess = findNearestResonance(periodRatio, 12, 12);
+              if (!guess) continue;
+              const centerAU = estimateResonantSemiMajorAxisAU(
+                perturber.orbit.realSemiMajorAxis_m,
+                guess.p,
+                guess.q,
+              );
+              const smaAU = obj.orbit.realSemiMajorAxis_m / AU;
+              const widthAU = 2.0; // coarse generic width
+              if (Math.abs(smaAU - centerAU) > widthAU) continue;
+              const res = integrator.integrateWithResonance(
+                obj.orbit,
+                perturber.orbit,
+                {
+                  planetId: perturber.id,
+                  ratio: { p: guess.p, q: guess.q },
+                  type: smaAU >= centerAU
+                    ? ResonanceType.EXTERNAL
+                    : ResonanceType.INTERNAL,
+                  semiMajorAxisCenter: centerAU,
+                  width: widthAU,
+                  librationModes: [],
+                  stabilityCriteria: {
+                    maxEccentricity: 1,
+                    maxInclination: 180,
+                    minPerihelionDistance: 0,
+                  },
+                },
+                500 * 365.25 * 24 * 3600,
+              );
+              // Publish resonance state if manager is available
+              try {
+                celestialManager.setResonanceState(
+                  `${obj.id}__${perturber.id}`,
+                  res.resonanceState,
+                );
+              } catch (_) {}
+              pairsProcessed++;
+            }
+            if (pairsProcessed >= maxPairs) break;
+          }
+        }
+      } catch (e) {
+        console.warn("[Resonance] N-body resonance analysis skipped:", e);
+      }
+      }
+    }
+
+    // Compute final accelerations snapshot for result
+    const accelerations = new Map<string, OSVector3>();
+    this.wasmSpatialPartitioning.update(finalStates);
+    finalStates.forEach((body) => {
+      const acc = this.calculateAccelerationForBody_NBody(body, finalStates);
+      accelerations.set(body.id, acc);
+    });
 
     const result = {
       states: finalStates,

@@ -76,6 +76,12 @@ export interface SimulationConfiguration {
   mode: SimulationMode;
   integrator?: IntegratorType;
   algorithm?: AlgorithmType;
+  /** Enable resonance-aware corrections and analysis */
+  resonanceModeling?: boolean;
+  /** Apply resonance corrections during ideal (Keplerian) mode */
+  resonanceInIdealMode?: boolean;
+  /** Compute/display resonance state during N-body mode (no force override) */
+  resonanceInNBody?: boolean;
 }
 
 // Note: Validation utilities are available in @teskooano/core-state

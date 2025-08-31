@@ -3,6 +3,7 @@ import { ceres } from "./ceres";
 import { dysnomia, eris } from "./eris";
 import { haumea, hiiaka, namaka } from "./haumea";
 import { leleakuhonua } from "./leleakuhonua";
+import { lido2020VN40 } from "./lido-2020-vn40";
 import { makemake, mk2 } from "./makemake";
 import { sedna } from "./sedna"; // Import Sedna
 import { vp113 } from "./vp113";
@@ -25,4 +26,6 @@ export const minorBodies = [
   hiiaka,
   namaka,
   ammonite,
+  // Resonant TNOs
+  lido2020VN40, // 2020 VN40 (LiDO) - First 10:1 resonator with Neptune
 ];

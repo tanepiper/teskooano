@@ -30,6 +30,9 @@ export function getDefaultConfiguration(): SimulationConfiguration {
     mode: SimulationMode.NBODY,
     integrator: IntegratorType.PEFRL,
     algorithm: AlgorithmType.TREE_PM,
+    resonanceModeling: true,
+    resonanceInIdealMode: true,
+    resonanceInNBody: true,
   };
 }
 
