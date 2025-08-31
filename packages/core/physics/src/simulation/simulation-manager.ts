@@ -608,9 +608,12 @@ export class SimulationManager {
     // Optional: resonance detection (no forces changed)
     if (config.resonanceModeling && config.resonanceInNBody) {
       // Throttle by simulated time interval and cap per-step pairs
-      const defaultInterval_s = 5 * 365.25 * 24 * 3600; // 5 years
+      // Base: once per simulation day, scaled up by timeScale (e.g., x10^7 => ~ once per 10 years)
+      const baseDay_s = 24 * 3600;
+      const timeScale = (params as any).timeScale || 1;
+      const scaledInterval_s = baseDay_s * Math.max(1, timeScale);
       const interval_s =
-        (config as any).resonanceUpdateInterval_s || defaultInterval_s;
+        (config as any).resonanceUpdateInterval_s || scaledInterval_s;
       this.resonanceElapsed_s += params.deltaTime || 0;
       if (this.resonanceElapsed_s < interval_s) {
         // Skip this step
