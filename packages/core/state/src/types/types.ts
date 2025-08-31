@@ -34,6 +34,12 @@ export interface SimulationConfiguration {
    * The algorithm type to use for the simulation.
    */
   algorithm?: string;
+  /** Enable resonance-aware corrections and analysis */
+  resonanceModeling?: boolean;
+  /** Apply resonance corrections during ideal (Keplerian) mode */
+  resonanceInIdealMode?: boolean;
+  /** Compute/display resonance state during N-body mode (no force override) */
+  resonanceInNBody?: boolean;
 }
 
 /**

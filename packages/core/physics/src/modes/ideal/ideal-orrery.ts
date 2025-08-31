@@ -4,6 +4,10 @@ import type {
 } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
 import { calculateKeplerianStateAtTime } from "../../orbital/ideal";
+import {
+  ResonanceIntegrator,
+  NEPTUNE_RESONANCES,
+} from "../../orbital";
 import { sortBodiesByHierarchy } from "../../utils";
 
 /**
@@ -41,6 +45,8 @@ export class IdealOrreryStrategy {
     "Perfect Keplerian orbits with no gravitational interactions";
   readonly complexity = "O(N)";
 
+  private resonanceIntegrator?: ResonanceIntegrator;
+
   simulate(params: IdealOrbitParams): IdealOrbitResult {
     const startTime = performance.now();
 
@@ -66,6 +72,21 @@ export class IdealOrreryStrategy {
     const sortedBodies = sortBodiesByHierarchy(bodies, parentIds);
     const updatedStates: Record<string, PhysicsStateReal> = {};
 
+    // Initialize resonance integrator if enabled
+    const resonanceEnabled = !!(
+      params.configuration.resonanceModeling &&
+      params.configuration.resonanceInIdealMode
+    );
+    if (resonanceEnabled && !this.resonanceIntegrator) {
+      this.resonanceIntegrator = new ResonanceIntegrator({
+        enableResonanceDetection: true,
+        resonanceTolerance: 0.05,
+        librationDetectionWindow: 200,
+        timeStep: 0.05,
+        maxIntegrationSteps: 2000,
+      });
+    }
+
     // Process each body using hierarchical order
     for (const body of sortedBodies) {
       const bodyOrbitalParams = orbitalParameters.get(body.id);
@@ -88,13 +109,58 @@ export class IdealOrreryStrategy {
         continue;
       }
 
-      // Calculate the ideal Keplerian orbit position
-      const newState = this.calculateIdealOrbit(
+      // Calculate the ideal Keplerian orbit position (baseline)
+      let newState = this.calculateIdealOrbit(
         body,
         parentState,
         bodyOrbitalParams,
         currentTime_s,
       );
+
+      // Optionally apply resonance-aware corrections to refine orbital elements
+      if (resonanceEnabled && this.resonanceIntegrator) {
+        // Only attempt resonance analysis for Neptune external resonances for now
+        const neptuneParent = parentIds.get(body.id) === "sun";
+        if (neptuneParent) {
+          const neptuneOrbit = orbitalParameters.get("neptune");
+          if (neptuneOrbit) {
+            const tenToOne = NEPTUNE_RESONANCES["10:1"];
+            const integration = this.resonanceIntegrator.integrateWithResonance(
+              bodyOrbitalParams,
+              neptuneOrbit,
+              tenToOne,
+              2000 * 365.25 * 24 * 3600,
+            );
+            // If resonant, we can slightly adjust mean anomaly to reflect libration center bias
+            if (integration.resonanceState.isResonant) {
+              const mode = integration.resonanceState.librationMode;
+              const biasDeg =
+                mode === "zero_center"
+                  ? 0
+                  : mode === "asymmetric_leading"
+                  ? 90
+                  : mode === "asymmetric_trailing"
+                  ? 270
+                  : 180;
+              // Convert to radians and blend lightly (do not drift orbit)
+              const currentMA = bodyOrbitalParams.meanAnomaly;
+              const targetMA = (biasDeg * Math.PI) / 180;
+              const blendedMA = currentMA * 0.98 + targetMA * 0.02;
+              const adjustedParams = {
+                ...bodyOrbitalParams,
+                meanAnomaly: blendedMA,
+              } as OrbitalParameters;
+              const adjustedState = this.calculateIdealOrbit(
+                body,
+                parentState,
+                adjustedParams,
+                currentTime_s,
+              );
+              newState = adjustedState;
+            }
+          }
+        }
+      }
       updatedStates[body.id] = newState;
     }
 
