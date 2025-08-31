@@ -29,6 +29,8 @@ import {
   leapfrogIntegrate,
 } from "../integrators";
 import { sortBodiesByHierarchy } from "../utils";
+import { ResonanceIntegrator, NEPTUNE_RESONANCES } from "../orbital";
+import { celestialManager } from "@teskooano/core-state";
 import {
   AU_METERS,
   GRAVITATIONAL_CONSTANT,
@@ -595,6 +597,45 @@ export class SimulationManager {
     );
     const [finalStates, destroyedIds] =
       this.wasmCollisionDetection.handleCollisions(params.ignoreCollisions);
+
+    // Optional: resonance detection (no forces changed)
+    if (config.resonanceModeling && config.resonanceInNBody) {
+      try {
+        const integrator = new ResonanceIntegrator({
+          enableResonanceDetection: true,
+          resonanceTolerance: 0.05,
+          librationDetectionWindow: 200,
+          timeStep: 0.05,
+          maxIntegrationSteps: 2000,
+        });
+        const AU = 149_597_870_700;
+        // Build a quick lookup for Neptune orbit
+        const neptuneObj = celestialManager.getObject("neptune");
+        const neptuneOrbit = neptuneObj?.orbit;
+        if (neptuneOrbit) {
+          for (const body of integratedStates) {
+            // Only analyze solar-orbiting bodies
+            const obj = celestialManager.getObject(String(body.id));
+            if (!obj || obj.parentId !== "sun" || !obj.orbit) continue;
+            // Quick filter near target resonances by semi-major axis
+            const smaAU = obj.orbit.realSemiMajorAxis_m / AU;
+            const tenToOne = NEPTUNE_RESONANCES["10:1"];
+            const nearTenToOne =
+              Math.abs(smaAU - tenToOne.semiMajorAxisCenter) < tenToOne.width * 2;
+            if (!nearTenToOne) continue;
+            const res = integrator.integrateWithResonance(
+              obj.orbit,
+              neptuneOrbit,
+              tenToOne,
+              1000 * 365.25 * 24 * 3600,
+            );
+            celestialManager.setResonanceState(obj.id, res.resonanceState);
+          }
+        }
+      } catch (e) {
+        console.warn("[Resonance] N-body resonance analysis skipped:", e);
+      }
+    }
 
     const result = {
       states: finalStates,
