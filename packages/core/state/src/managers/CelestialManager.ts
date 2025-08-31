@@ -99,6 +99,13 @@ export class CelestialManager {
   }
 
   /**
+   * Returns a celestial object by id (pass-through to store).
+   */
+  public getObject(id: string) {
+    return celestialStore.getObject(id);
+  }
+
+  /**
    * Store per-object resonance state for UI/telemetry.
    */
   public setResonanceState(id: string, state: any): void {
