@@ -44,7 +44,7 @@ export function calculateResonantAngle(
   planetElements: OrbitalParameters,
   resonanceRatio: { p: number; q: number }
 ): number {
-  const n = resonanceRatio.p / resonanceRatio.q;
+  const { p, q } = resonanceRatio;
   // Mean longitudes (radians)
   const lambdaTNO =
     tnoElements.meanAnomaly +
@@ -57,8 +57,13 @@ export function calculateResonantAngle(
   const varpiTNO =
     tnoElements.argumentOfPeriapsis + tnoElements.longitudeOfAscendingNode;
 
-  const phiRad = n * lambdaTNO - lambdaPlanet - (n - 1) * varpiTNO;
-  // Normalize to [0, 2π) then convert to degrees for mode logic
+  // Choose formula based on whether object is external or internal to perturber
+  const external =
+    tnoElements.realSemiMajorAxis_m >= planetElements.realSemiMajorAxis_m;
+  const phiRad = external
+    ? p * lambdaTNO - q * lambdaPlanet - (p - q) * varpiTNO
+    : p * lambdaPlanet - q * lambdaTNO - (p - q) * varpiTNO;
+
   const twoPi = Math.PI * 2;
   const phiNorm = ((phiRad % twoPi) + twoPi) % twoPi;
   return (phiNorm * 180) / Math.PI;
@@ -160,6 +165,41 @@ export function calculateResonanceStability(
     librationMode,
     librationAmplitude,
   };
+}
+
+/**
+ * Find nearest small-integer resonance p:q to a given period ratio R = P_obj / P_ref
+ */
+export function findNearestResonance(
+  periodRatio: number,
+  maxP: number = 10,
+  maxQ: number = 10,
+): { p: number; q: number; error: number } | null {
+  let best: { p: number; q: number; error: number } | null = null;
+  for (let p = 1; p <= maxP; p++) {
+    for (let q = 1; q <= maxQ; q++) {
+      const ratio = p / q;
+      const error = Math.abs(ratio - periodRatio);
+      if (!best || error < best.error) {
+        best = { p, q, error };
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Estimate the semi-major axis center (AU) for a p:q resonance from a perturber's semi-major axis (m)
+ * using Kepler's third law: a_obj ≈ a_ref * (p/q)^(2/3)
+ */
+export function estimateResonantSemiMajorAxisAU(
+  perturberSemiMajorAxis_m: number,
+  p: number,
+  q: number,
+): number {
+  const AU = 149_597_870_700;
+  const a_ref = perturberSemiMajorAxis_m / AU;
+  return a_ref * Math.pow(p / q, 2 / 3);
 }
 
 /**

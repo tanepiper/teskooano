@@ -4,10 +4,7 @@ import type {
 } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
 import { calculateKeplerianStateAtTime } from "../../orbital/ideal";
-import {
-  ResonanceIntegrator,
-  NEPTUNE_RESONANCES,
-} from "../../orbital";
+import { ResonanceIntegrator } from "../../orbital";
 import { sortBodiesByHierarchy } from "../../utils";
 
 /**
@@ -117,47 +114,41 @@ export class IdealOrreryStrategy {
         currentTime_s,
       );
 
-      // Optionally apply resonance-aware corrections to refine orbital elements
+      // Optionally apply resonance-aware corrections to refine orbital elements (generic)
       if (resonanceEnabled && this.resonanceIntegrator) {
-        // Only attempt resonance analysis for Neptune external resonances for now
-        const neptuneParent = parentIds.get(body.id) === "sun";
-        if (neptuneParent) {
-          const neptuneOrbit = orbitalParameters.get("neptune");
-          if (neptuneOrbit) {
-            const tenToOne = NEPTUNE_RESONANCES["10:1"];
-            const integration = this.resonanceIntegrator.integrateWithResonance(
-              bodyOrbitalParams,
-              neptuneOrbit,
-              tenToOne,
-              2000 * 365.25 * 24 * 3600,
+        // Attempt with the immediate parent as perturber (works for moons/planets around stars)
+        const perturberParams = orbitalParameters.get(parentId);
+        if (perturberParams) {
+          const integration = this.resonanceIntegrator.integrateWithResonance(
+            bodyOrbitalParams,
+            perturberParams,
+            // Generic p:q search handled internally by caller in N-body; here we apply only a small adjustment after detection
+            { planetId: parentId, ratio: { p: 1, q: 1 }, type: "external", semiMajorAxisCenter: 0, width: 0, librationModes: [], stabilityCriteria: { maxEccentricity: 1, maxInclination: 180, minPerihelionDistance: 0 } },
+            0,
+          );
+          if (integration.resonanceState.isResonant && integration.resonanceState.librationMode) {
+            const mode = integration.resonanceState.librationMode as string;
+            const biasDeg =
+              mode === "zero_center"
+                ? 0
+                : mode === "asymmetric_leading"
+                ? 90
+                : mode === "asymmetric_trailing"
+                ? 270
+                : 180;
+            const currentMA = bodyOrbitalParams.meanAnomaly;
+            const targetMA = (biasDeg * Math.PI) / 180;
+            const blendedMA = currentMA * 0.99 + targetMA * 0.01;
+            const adjustedParams = {
+              ...bodyOrbitalParams,
+              meanAnomaly: blendedMA,
+            } as OrbitalParameters;
+            newState = this.calculateIdealOrbit(
+              body,
+              parentState,
+              adjustedParams,
+              currentTime_s,
             );
-            // If resonant, we can slightly adjust mean anomaly to reflect libration center bias
-            if (integration.resonanceState.isResonant) {
-              const mode = integration.resonanceState.librationMode;
-              const biasDeg =
-                mode === "zero_center"
-                  ? 0
-                  : mode === "asymmetric_leading"
-                  ? 90
-                  : mode === "asymmetric_trailing"
-                  ? 270
-                  : 180;
-              // Convert to radians and blend lightly (do not drift orbit)
-              const currentMA = bodyOrbitalParams.meanAnomaly;
-              const targetMA = (biasDeg * Math.PI) / 180;
-              const blendedMA = currentMA * 0.98 + targetMA * 0.02;
-              const adjustedParams = {
-                ...bodyOrbitalParams,
-                meanAnomaly: blendedMA,
-              } as OrbitalParameters;
-              const adjustedState = this.calculateIdealOrbit(
-                body,
-                parentState,
-                adjustedParams,
-                currentTime_s,
-              );
-              newState = adjustedState;
-            }
           }
         }
       }

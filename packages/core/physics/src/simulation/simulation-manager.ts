@@ -29,7 +29,11 @@ import {
   leapfrogIntegrate,
 } from "../integrators";
 import { sortBodiesByHierarchy } from "../utils";
-import { ResonanceIntegrator, NEPTUNE_RESONANCES } from "../orbital";
+import {
+  ResonanceIntegrator,
+  estimateResonantSemiMajorAxisAU,
+  findNearestResonance,
+} from "../orbital";
 import { celestialManager } from "@teskooano/core-state";
 import {
   AU_METERS,
@@ -609,27 +613,38 @@ export class SimulationManager {
           maxIntegrationSteps: 2000,
         });
         const AU = 149_597_870_700;
-        // Build a quick lookup for Neptune orbit
-        const neptuneObj = celestialManager.getObject("neptune");
-        const neptuneOrbit = neptuneObj?.orbit;
-        if (neptuneOrbit) {
-          for (const body of integratedStates) {
-            // Only analyze solar-orbiting bodies
-            const obj = celestialManager.getObject(String(body.id));
-            if (!obj || obj.parentId !== "sun" || !obj.orbit) continue;
-            // Quick filter near target resonances by semi-major axis
+        // For every pair (candidate, perturber) that shares the same parent, check nearest small-integer resonance
+        const objects = integratedStates
+          .map((s) => celestialManager.getObject(String(s.id)))
+          .filter((o): o is NonNullable<typeof o> => !!o && !!o.orbit);
+        for (const obj of objects) {
+          // Limit scope: only consider significant perturbers (e.g., gas giants, stars) in same system
+          const sameSystem = objects.filter(
+            (o) => o.id !== obj.id && o.parentId === obj.parentId,
+          );
+          for (const perturber of sameSystem) {
+            // Skip low-mass perturbers by a simple mass threshold
+            if ((perturber.realMass_kg || 0) < 1e22) continue;
+            const periodRatio = (obj.orbit.period_s || 0) / (perturber.orbit.period_s || 1);
+            if (!isFinite(periodRatio) || periodRatio <= 0) continue;
+            const guess = findNearestResonance(periodRatio, 12, 12);
+            if (!guess) continue;
+            // Estimate resonance center to prefilter by semi-major axis distance
+            const centerAU = estimateResonantSemiMajorAxisAU(
+              perturber.orbit.realSemiMajorAxis_m,
+              guess.p,
+              guess.q,
+            );
             const smaAU = obj.orbit.realSemiMajorAxis_m / AU;
-            const tenToOne = NEPTUNE_RESONANCES["10:1"];
-            const nearTenToOne =
-              Math.abs(smaAU - tenToOne.semiMajorAxisCenter) < tenToOne.width * 2;
-            if (!nearTenToOne) continue;
+            const widthAU = 2.0; // generic coarse width; can be refined per system
+            if (Math.abs(smaAU - centerAU) > widthAU) continue;
             const res = integrator.integrateWithResonance(
               obj.orbit,
-              neptuneOrbit,
-              tenToOne,
-              1000 * 365.25 * 24 * 3600,
+              perturber.orbit,
+              { planetId: perturber.id, ratio: { p: guess.p, q: guess.q }, type: smaAU >= centerAU ? "external" : "internal", semiMajorAxisCenter: centerAU, width: widthAU, librationModes: [], stabilityCriteria: { maxEccentricity: 1, maxInclination: 180, minPerihelionDistance: 0 } },
+              500 * 365.25 * 24 * 3600,
             );
-            celestialManager.setResonanceState(obj.id, res.resonanceState);
+            celestialManager.setResonanceState(`${obj.id}__${perturber.id}`, res.resonanceState);
           }
         }
       } catch (e) {
