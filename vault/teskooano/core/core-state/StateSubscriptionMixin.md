@@ -34,6 +34,7 @@ The `StateSubscriptionMixin` provides comprehensive subscription management:
 - **Debugging Tools**: Subscription counting and leak detection
 - **Standardized Patterns**: Consistent subscription management across components
 - **Memory Leak Prevention**: Ensures proper cleanup of all subscriptions
+- **Performance Optimization**: Optimized subscription tracking for better performance
 
 ## 🏗️ Architecture
 
@@ -69,20 +70,17 @@ export class MyComponent {
 
 ### Subscription Tracking
 
-Internally tracks all subscriptions for automatic cleanup:
+Optimized subscription tracking for better performance:
 
 ```typescript
-private subscriptions: Subscription[] = [];
+private subscription = new Subscription();
 
 public subscribeToState<T>(
   observable$: Observable<T>,
   next: (value: T) => void
 ): void {
-  this.subscriptions.push(
-    observable$.subscribe({
-      next: next,
-      error: this.defaultErrorHandler,
-    })
+  this.subscription.add(
+    observable$.subscribe(next)
   );
 }
 ```

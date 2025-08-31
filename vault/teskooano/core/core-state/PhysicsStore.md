@@ -58,6 +58,34 @@ public getAccelerationVectors(): Record<string, OSVector3>
 - **Complete Data**: Returns all stored vectors
 - **Object Mapping**: Maps object IDs to vectors
 
+### **getAccelerationVector()**
+
+```typescript
+public getAccelerationVector(id: string): OSVector3 | undefined
+```
+
+**Purpose**: Gets a specific acceleration vector by object ID
+
+**Features**:
+
+- **Direct Access**: O(1) lookup by object ID
+- **Null Safety**: Returns undefined if not found
+- **Type Safety**: Full TypeScript type safety
+
+### **getNonZeroAccelerationVectors()**
+
+```typescript
+public getNonZeroAccelerationVectors(): Record<string, OSVector3>
+```
+
+**Purpose**: Gets only non-zero acceleration vectors
+
+**Features**:
+
+- **Filtered Access**: Only vectors with non-zero magnitude
+- **Performance**: Uses shared filtering utilities
+- **Imperative Version**: Synchronous version of nonZeroAccelerationVectors$
+
 ### **updateAccelerationVectors()**
 
 ```typescript
@@ -131,6 +159,20 @@ public readonly accelerationVectors$: Observable<Record<string, OSVector3>>
 - **Reactive Updates**: Notifies on vector changes
 - **Initial Value**: Emits current vectors immediately
 - **Complete State**: Provides full vector state
+
+### **nonZeroAccelerationVectors$**
+
+```typescript
+public readonly nonZeroAccelerationVectors$: Observable<Record<string, OSVector3>>
+```
+
+**Purpose**: Observable stream of non-zero acceleration vectors
+
+**Features**:
+
+- **Filtered Updates**: Only vectors with non-zero magnitude
+- **Performance**: Uses shared filtering utilities
+- **Reactive**: Updates when vectors change
 
 ## 🎮 Usage Examples
 

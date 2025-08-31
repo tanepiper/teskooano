@@ -1,5 +1,4 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { BehaviorSubject, Observable } from "rxjs";
 import { SimulationState, SimulationConfiguration } from "../types/types";
 import { getDefaultConfiguration, isValidConfiguration } from "../utils";
 import {
@@ -8,67 +7,32 @@ import {
   IntegratorType,
   SimulationMode,
 } from "@teskooano/data-types";
+import { simulationStore } from "../stores/SimulationStore";
 
 /**
- * @class SimulationStateService
+ * @class SimulationManager
  * @description Manages the simulation's control state including time, pause status,
  * selected objects, camera, physics engine, and visual settings.
- * It follows a singleton pattern to ensure a single source of truth for the simulation state.
+ * It follows a singleton pattern and delegates state persistence to SimulationStore.
  */
-export class SimulationStateService {
-  private static instance: SimulationStateService;
-
-  /** The initial, default state for the simulation. */
-  private readonly _initialState: SimulationState = {
-    time: 0,
-    timeScale: 1,
-    startDate: new Date(),
-    paused: false,
-    selectedObject: null,
-    focusedObjectId: null,
-    camera: {
-      position: new OSVector3().setFromArray([0, 100, 100]),
-      target: new OSVector3().setZero(),
-      fov: 75,
-    },
-    simulationConfig: getDefaultConfiguration(),
-    visualSettings: {
-      trailLengthMultiplier: 2,
-      showAllOrbits: true,
-      showAllLabels: false,
-      showAuMarkers: true,
-      predictionSteps: 500,
-      predictionDuration: 2,
-    },
-    performanceProfile: "medium",
-  };
-
-  /** The RxJS BehaviorSubject holding the current simulation state. */
-  private readonly _simulationState: BehaviorSubject<SimulationState>;
-  /** An observable that emits the current simulation state whenever it changes. */
-  public readonly simulationState$: Observable<SimulationState>;
+export class SimulationManager {
+  private static instance: SimulationManager;
 
   /**
    * Private constructor to enforce the singleton pattern.
-   * Initializes the state with default values.
    */
-  private constructor() {
-    this._simulationState = new BehaviorSubject<SimulationState>(
-      this._initialState,
-    );
-    this.simulationState$ = this._simulationState.asObservable();
-  }
+  private constructor() {}
 
   /**
-   * Provides access to the singleton instance of the SimulationStateService.
+   * Provides access to the singleton instance of the SimulationManager.
    * Creates the instance if it doesn't exist.
    * @returns The singleton instance.
    */
-  public static getInstance(): SimulationStateService {
-    if (!SimulationStateService.instance) {
-      SimulationStateService.instance = new SimulationStateService();
+  public static getInstance(): SimulationManager {
+    if (!SimulationManager.instance) {
+      SimulationManager.instance = new SimulationManager();
     }
-    return SimulationStateService.instance;
+    return SimulationManager.instance;
   }
 
   /**
@@ -76,17 +40,15 @@ export class SimulationStateService {
    * @returns The current simulation state object.
    */
   public getSimulationState(): SimulationState {
-    return this._simulationState.getValue();
+    return simulationStore.getSimulationState();
   }
 
   /**
-   * Overwrites the entire simulation state with a new state object.
-   * This is a powerful method and should be used with caution. For most updates,
-   * prefer using the more specific setter methods like `setTimeScale` or `selectObject`.
-   * @param newState The complete new simulation state.
+   * Gets the simulation state observable for reactive subscriptions.
+   * @returns Observable of simulation state changes.
    */
-  public setSimulationState(newState: SimulationState): void {
-    this._simulationState.next(newState);
+  public getSimulationState$() {
+    return simulationStore.simulationState$;
   }
 
   /**
@@ -94,19 +56,15 @@ export class SimulationStateService {
    * @param scale - The new time scale factor. `1` is real-time, `>1` is faster, `<1` is slower.
    */
   public setTimeScale(scale: number): void {
-    this.setSimulationState({
-      ...this.getSimulationState(),
-      timeScale: scale,
-    });
+    simulationStore.updateSimulationState({ timeScale: scale });
   }
 
   /**
    * Toggles the simulation's paused state.
    */
   public togglePause(): void {
-    const currentState = this.getSimulationState();
-    this.setSimulationState({
-      ...currentState,
+    const currentState = simulationStore.getSimulationState();
+    simulationStore.updateSimulationState({
       paused: !currentState.paused,
     });
   }
@@ -115,9 +73,8 @@ export class SimulationStateService {
    * Resets the simulation clock to zero, sets the time scale to 1, and un-pauses.
    */
   public resetTime(resetPaused: boolean = false): void {
-    const currentState = this.getSimulationState();
-    this.setSimulationState({
-      ...currentState,
+    const currentState = simulationStore.getSimulationState();
+    simulationStore.updateSimulationState({
       time: 0,
       timeScale: 1,
       // Logic is if it's currently paused, we don't want to un-pause it unless resetPaused is true
@@ -129,9 +86,7 @@ export class SimulationStateService {
    * Sets the simulation start date.
    */
   public setStartDate(startDate: Date): void {
-    const currentState = this.getSimulationState();
-    this.setSimulationState({
-      ...currentState,
+    simulationStore.updateSimulationState({
       startDate: new Date(startDate),
     });
   }
@@ -140,9 +95,7 @@ export class SimulationStateService {
    * Resets the simulation state to a new start date with time zero.
    */
   public resetToStartDate(startDate: Date): void {
-    const currentState = this.getSimulationState();
-    this.setSimulationState({
-      ...currentState,
+    simulationStore.updateSimulationState({
       time: 0,
       timeScale: 1,
       startDate: new Date(startDate),
@@ -156,15 +109,14 @@ export class SimulationStateService {
    * @param dt The amount of time to step forward, in simulation seconds. Defaults to 1.
    */
   public stepTime(dt: number = 1): void {
-    const currentState = this.getSimulationState();
+    const currentState = simulationStore.getSimulationState();
     if (currentState.paused) {
-      this.setSimulationState({
-        ...currentState,
+      simulationStore.updateSimulationState({
         time: currentState.time + dt,
       });
     } else {
       console.warn(
-        "[SimulationStateService] Cannot step time while simulation is running.",
+        "[SimulationManager] Cannot step time while simulation is running.",
       );
     }
   }
@@ -175,8 +127,7 @@ export class SimulationStateService {
    * @param objectId The unique ID of the object to select, or null to deselect.
    */
   public selectObject(objectId: string | null): void {
-    this.setSimulationState({
-      ...this.getSimulationState(),
+    simulationStore.updateSimulationState({
       selectedObject: objectId,
     });
   }
@@ -186,8 +137,7 @@ export class SimulationStateService {
    * @param objectId The unique ID of the object to focus, or null to unfocus.
    */
   public setFocusedObject(objectId: string | null): void {
-    this.setSimulationState({
-      ...this.getSimulationState(),
+    simulationStore.updateSimulationState({
       focusedObjectId: objectId,
     });
   }
@@ -198,9 +148,8 @@ export class SimulationStateService {
    * @param target The new point the camera should look at.
    */
   public updateCamera(position: OSVector3, target: OSVector3): void {
-    const currentState = this.getSimulationState();
-    this.setSimulationState({
-      ...currentState,
+    const currentState = simulationStore.getSimulationState();
+    simulationStore.updateSimulationState({
       camera: {
         ...currentState.camera,
         position,
@@ -221,8 +170,7 @@ export class SimulationStateService {
       );
     }
 
-    this.setSimulationState({
-      ...this.getSimulationState(),
+    simulationStore.updateSimulationState({
       simulationConfig: config,
     });
   }
@@ -232,7 +180,7 @@ export class SimulationStateService {
    * @param mode The simulation mode to use.
    */
   public setSimulationMode(mode: SimulationMode): void {
-    const currentState = this.getSimulationState();
+    const currentState = simulationStore.getSimulationState();
     const currentConfig = currentState.simulationConfig;
 
     let newConfig: SimulationConfiguration;
@@ -255,7 +203,7 @@ export class SimulationStateService {
    * @param algorithm The N-Body algorithm to use.
    */
   public setNBodyAlgorithm(algorithm: AlgorithmType): void {
-    const currentState = this.getSimulationState();
+    const currentState = simulationStore.getSimulationState();
     const currentConfig = currentState.simulationConfig;
 
     if (currentConfig.mode !== SimulationMode.NBODY) {
@@ -276,7 +224,7 @@ export class SimulationStateService {
    * @param integrator The numerical integrator to use.
    */
   public setNBodyIntegrator(integrator: IntegratorType): void {
-    const currentState = this.getSimulationState();
+    const currentState = simulationStore.getSimulationState();
     const currentConfig = currentState.simulationConfig;
 
     if (currentConfig.mode !== SimulationMode.NBODY) {
@@ -297,7 +245,7 @@ export class SimulationStateService {
    * @returns The current simulation configuration.
    */
   public getSimulationConfiguration(): SimulationConfiguration {
-    return this.getSimulationState().simulationConfig;
+    return simulationStore.getSimulationState().simulationConfig;
   }
 
   /**
@@ -315,8 +263,7 @@ export class SimulationStateService {
    * @param profile The desired performance profile name.
    */
   public setPerformanceProfile(profile: DeviceTier): void {
-    this.setSimulationState({
-      ...this.getSimulationState(),
+    simulationStore.updateSimulationState({
       performanceProfile: profile,
     });
   }
@@ -329,9 +276,8 @@ export class SimulationStateService {
    */
   public setTrailLengthMultiplier(multiplier: number): void {
     const validatedMultiplier = Math.max(0, multiplier);
-    const currentState = this.getSimulationState();
-    this.setSimulationState({
-      ...currentState,
+    const currentState = simulationStore.getSimulationState();
+    simulationStore.updateSimulationState({
       visualSettings: {
         ...currentState.visualSettings,
         trailLengthMultiplier: validatedMultiplier,
@@ -346,12 +292,11 @@ export class SimulationStateService {
    * @param duration The duration into the future to predict, in simulation years.
    */
   public setPredictionSettings(steps: number, duration: number): void {
-    const currentState = this.getSimulationState();
+    const currentState = simulationStore.getSimulationState();
     const newSteps = Math.max(10, steps);
     const newDuration = Math.max(0.1, duration);
 
-    this.setSimulationState({
-      ...currentState,
+    simulationStore.updateSimulationState({
       visualSettings: {
         ...currentState.visualSettings,
         predictionSteps: newSteps,
@@ -359,7 +304,14 @@ export class SimulationStateService {
       },
     });
   }
+
+  /**
+   * Resets the simulation state to the initial default values.
+   */
+  public resetToInitialState(): void {
+    simulationStore.resetToInitialState();
+  }
 }
 
-/** Singleton instance of the SimulationStateService. */
-export const simulationStateService = SimulationStateService.getInstance();
+/** Singleton instance of the SimulationManager. */
+export const simulationManager = SimulationManager.getInstance();

@@ -33,7 +33,7 @@ The `StateAccessor` provides unified access to all application state:
 - **Imperative Access**: Direct getter methods for immediate state retrieval
 - **Convenience Methods**: Common patterns like getting objects by IDs
 - **Consistent Interface**: Eliminates inconsistency between direct imports and accessor methods
-- **Performance Optimization**: Efficient access patterns with minimal overhead
+- **Performance Optimization**: Efficient access patterns with minimal overhead and optimized observables
 
 ## 🏗️ Architecture
 
@@ -54,7 +54,7 @@ export class StateAccessor {
 Provides both reactive and imperative access patterns:
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 StateAccessor.celestialObjects$().subscribe((objects) => {
   // Handle objects update
 });
@@ -63,13 +63,13 @@ StateAccessor.celestialObjects$().subscribe((objects) => {
 const currentObjects = StateAccessor.getCelestialObjects();
 ```
 
-### Observable Enhancement
+### Observable Optimization
 
-Enhances observables with initial values using `startWith`:
+Optimized observables for better performance:
 
 ```typescript
 static celestialObjects$(): Observable<Record<string, CelestialObject>> {
-  return celestialObjects$.pipe(startWith(celestial.getObjects()));
+  return celestialObjects$; // Direct observable access for better performance
 }
 ```
 
@@ -78,7 +78,7 @@ static celestialObjects$(): Observable<Record<string, CelestialObject>> {
 ### Celestial Objects Access
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 static celestialObjects$(): Observable<Record<string, CelestialObject>>;
 
 // Imperative access
@@ -97,7 +97,7 @@ static hasAnyCelestialObjects(): boolean;
 ### Simulation State Access
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 static simulation$(): Observable<SimulationState>;
 
 // Imperative access
@@ -107,7 +107,7 @@ static getSimulationState(): SimulationState;
 ### Celestial Hierarchy Access
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 static celestialHierarchy$(): Observable<Record<string, string[]>>;
 
 // Imperative access
@@ -117,7 +117,7 @@ static getCelestialHierarchy(): Record<string, string[]>;
 ### Acceleration Vectors Access
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 static accelerationVectors$(): Observable<Record<string, OSVector3>>;
 
 // Imperative access
@@ -127,7 +127,7 @@ static getAccelerationVectors(): Record<string, OSVector3>;
 ### Current Seed Access
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 static getCurrentSeedStream(): Observable<string>;
 
 // Imperative access
@@ -137,7 +137,7 @@ static getCurrentSeed(): string;
 ### Renderable Objects Access
 
 ```typescript
-// Reactive access with initial value
+// Reactive access
 static renderableObjects$(): Observable<Record<string, RenderableCelestialObject>>;
 
 // Imperative access
@@ -164,7 +164,7 @@ const objects = StateAccessor.getCelestialObjects();
 const simulationState = StateAccessor.getSimulationState();
 const currentSeed = StateAccessor.getCurrentSeed();
 
-// Reactive access with initial value
+// Reactive access
 StateAccessor.celestialObjects$().subscribe((objects) => {
   console.log("Objects updated:", Object.keys(objects).length);
 });

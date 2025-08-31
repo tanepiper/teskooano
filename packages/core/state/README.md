@@ -2,11 +2,11 @@
 
 ## Overview
 
-The `@teskooano/core-state` package is a crucial component of the Teskooano engine, responsible for managing the simulation's core data, physics state, and game configuration. Using RxJS as its foundation, it enables efficient state updates and subscriptions across the application, ensuring consistent data flow throughout the system.
+The `@teskooano/core-state` package is the central state management system for the Teskooano engine, responsible for managing the simulation's core data, physics state, renderable objects, and simulation control. Using RxJS as its foundation, it provides reactive state management with intelligent caching, filtering, and performance optimization.
 
 ## What is it?
 
-The `@teskooano/core-state` library is the central state management system for the Open Space engine. It provides a reactive, atomic store for all game state including celestial objects, physics state, and game configuration. Using Nanostores as its foundation, it enables efficient state updates and subscriptions across the application, ensuring consistent data flow throughout the system.
+The `@teskooano/core-state` library is the central state management system for the Teskooano engine. It provides a comprehensive, reactive state management solution for all simulation data including celestial objects, physics state, renderable objects, and simulation control. Using RxJS as its foundation, it enables efficient state updates and subscriptions across the application, ensuring consistent data flow throughout the system.
 
 ## Where is it?
 
@@ -31,6 +31,22 @@ graph TD
     State --> Simulation
     State --> UI
     State --> Celestial
+
+    subgraph "Core State Components"
+        CS[CelestialStore]
+        PS[PhysicsStore]
+        RS[RenderableStore]
+        SS[SeedStore]
+        SVS[SimulationStateService]
+        PPA[PhysicsSystemAdapter]
+    end
+
+    State --> CS
+    State --> PS
+    State --> RS
+    State --> SS
+    State --> SVS
+    State --> PPA
 ```
 
 ## When is it used?
@@ -43,56 +59,72 @@ The state management system is used:
 - By the renderer to access current positions and properties for rendering
 - By UI components to display information and respond to user interactions
 - When loading and saving simulation state
+- For physics engine integration and state synchronization
+- For system generation with seed-based procedural content
+- For camera control and object selection
+- For performance optimization and caching
 
 ## How does it work?
 
 The state management is built around:
 
-### Atomic Stores
+### Singleton Stores
 
-- `celestialObjectsStore`: Maps object IDs to their full data including physics state
-- `celestialHierarchyStore`: Tracks parent-child relationships between celestial objects
+- **`CelestialStore`**: Maps object IDs to their full data including physics state and hierarchy relationships
+- **`PhysicsStore`**: Manages acceleration vectors and physics-related state
+- **`RenderableStore`**: Stores Three.js-compatible renderable objects
+- **`SeedStore`**: Manages system generation seed with localStorage persistence
 
-### Factory Functions
+### Services & Adapters
 
-- Creates and registers new celestial objects in the state
-- Manages object lifecycle and hierarchy
+- **`SimulationStateService`**: Manages simulation control (time, camera, selection, configuration)
+- **`PhysicsStateProvider`**: Provides physics state calculations with intelligent caching
+- **`PhysicsStateCalculator`**: Computes physics states from celestial objects
+- **`PhysicsSystemAdapter`**: Bridges core state and physics engine
 
-### Actions & Updates
+### Utilities & Managers
 
-- Updates physics states based on simulation ticks
-- Provides actions for manipulating celestial objects
-- Handles deletion and creation of objects
+- **`CelestialManager`**: Consolidates celestial object lifecycle operations
+- **`StoreFilters`**: Provides filtering utilities for celestial and renderable objects
+- **`CelestialUtils`**: Offers validation, processing, and event dispatching utilities
+- **`StateAccessor`**: Provides unified state access with optimized observables
 
-### Simulation Control
+### Reactive Architecture
 
-- Manages time progression and simulation speed
-- Controls pause/resume functionality
-- Maintains game clock and simulation ticks
+- RxJS observables provide reactive state updates throughout the application
+- Pre-filtered observables for common use cases (active, visible, physics-active objects)
+- Intelligent caching and performance optimization
+- Immutable state updates ensure reactive behavior and debugging
 
 ## Strengths
 
-- Reactive architecture ensures UI and rendering remain in sync with simulation
-- Atomic updates improve performance by only rerendering what changed
-- Clear separation between state and rendering logic
-- Well-defined actions for state manipulation
+- **Reactive Architecture**: RxJS observables ensure UI and rendering remain in sync with simulation
+- **Performance Optimization**: Intelligent caching, filtering, and batch operations
+- **Type Safety**: Full TypeScript type safety across all components
+- **Modular Design**: Clear separation of concerns with specialized stores and services
+- **Shared Utilities**: Centralized utilities eliminate code duplication and ensure consistency
+- **Comprehensive Coverage**: Handles all aspects of simulation state (celestial, physics, renderable, control)
+- **Error Handling**: Graceful error handling with fallbacks and logging
 
 ## Weaknesses
 
-- Currently focused primarily on celestial state management
-- Limited UI state management capabilities for the planned window system
+- **Complexity**: Large number of components may be overwhelming for new developers
+- **Dependency Management**: Multiple singleton instances require careful dependency management
+- **Learning Curve**: RxJS patterns and reactive programming concepts require understanding
 
 ## Opportunities
 
-- Expanding to support the new UI window management system
-- Adding support for loading and saving system data from JSON
-- Implementing player ship state tracking
+- **Performance Monitoring**: Add metrics and monitoring for cache hit rates and performance
+- **State Persistence**: Enhanced localStorage integration for saving/loading simulation states
+- **Plugin System**: Extensible architecture for custom state management plugins
+- **Testing**: Comprehensive test coverage for all stores and services
 
 ## Future Considerations
 
 For upcoming features:
 
-- The new UI manager will require dedicated state stores for tracking window positions, visibility, and configuration
-- System loader will need state management for loading, validating, and tracking available star systems
-- Ship movement will require new state components for player ship status, navigation, and warp capabilities
-- Local storage integration for persisting UI preferences and window layouts
+- **UI State Management**: Dedicated stores for window positions, visibility, and configuration
+- **System Persistence**: Enhanced state management for loading, validating, and tracking star systems
+- **Player State**: New state components for player ship status, navigation, and capabilities
+- **Multiplayer Support**: State synchronization for collaborative simulations
+- **Advanced Caching**: More sophisticated caching strategies for large-scale simulations

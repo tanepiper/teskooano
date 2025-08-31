@@ -10,9 +10,8 @@ tags: [core, state, adapter, singleton, physics, simulation, bridge]
 type: Class
 package: "@teskooano/core-state"
 name: PhysicsSystemAdapter
-dependencies:
-  ["@teskooano/data-types", "@teskooano/core-physics", "@teskooano/core-math"]
-classes: ["PhysicsStateProvider", "SimulationStepResult"]
+dependencies: ["@teskooano/data-types", "@teskooano/core-physics", "rxjs"]
+classes: []
 functions: []
 constants: []
 types:
@@ -90,6 +89,12 @@ const updatedObjectsMap = celestialStore.processDestructionEvents(destroyedIds);
 // Get physics bodies for simulation
 getPhysicsBodies(): PhysicsStateReal[];
 
+// Get reactive physics bodies stream
+getPhysicsBodies$(): Observable<PhysicsStateReal[]>;
+
+// Get reactive active objects stream
+getPhysicsActiveObjects$(): Observable<Record<string, CelestialObject>>;
+
 // Get snapshot of celestial objects
 getCelestialObjectsSnapshot(): Record<string, CelestialObject>;
 
@@ -138,29 +143,25 @@ graph TD
 
 ```typescript
 public getPhysicsBodies(): PhysicsStateReal[] {
-  const bodies: PhysicsStateReal[] = [];
-  const allObjects = celestialStore.getObjects();
-
-  Object.values(allObjects)
-    .filter((obj: CelestialObject) =>
-      obj.status !== CelestialStatus.DESTROYED &&
-      obj.status !== CelestialStatus.ANNIHILATED &&
-      !obj.ignorePhysics
-    )
-    .forEach((obj: CelestialObject) => {
-      const physicsState = PhysicsStateProvider.getPhysicsState(obj);
-      if (physicsState) {
-        bodies.push(physicsState);
-      } else {
-        console.warn(
-          `[PhysicsSystemAdapter] Object ${obj.id} is active for physics but could not calculate physics state, skipping in simulation.`
-        );
-      }
-    });
-
-  return bodies;
+  return PhysicsStateProvider.getPhysicsStates();
 }
 ```
+
+**Note**: The implementation now delegates to `PhysicsStateProvider.getPhysicsStates()` for consistency and performance.
+
+### Reactive Methods
+
+```typescript
+public getPhysicsBodies$(): Observable<PhysicsStateReal[]> {
+  return PhysicsStateProvider.physicsStates$;
+}
+
+public getPhysicsActiveObjects$(): Observable<Record<string, CelestialObject>> {
+  return PhysicsStateProvider.physicsActiveObjects$;
+}
+```
+
+**Note**: These methods delegate to `PhysicsStateProvider`'s reactive streams for consistency and performance.
 
 ### State Update from Results
 
@@ -226,6 +227,20 @@ const simulationResult = await runPhysicsSimulation(physicsBodies);
 
 // Update state with results
 physicsSystemAdapter.updateStateFromResult(simulationResult);
+```
+
+### Reactive Physics Integration
+
+```typescript
+// Subscribe to physics bodies changes
+physicsSystemAdapter.getPhysicsBodies$().subscribe((bodies) => {
+  console.log("Physics bodies updated:", bodies.length);
+});
+
+// Subscribe to active objects changes
+physicsSystemAdapter.getPhysicsActiveObjects$().subscribe((objects) => {
+  console.log("Active objects:", Object.keys(objects).length);
+});
 ```
 
 ### Simulation Loop Integration

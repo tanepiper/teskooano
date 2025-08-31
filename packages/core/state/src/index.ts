@@ -1,16 +1,13 @@
 // Import from logical directories
-import { celestialManager } from "./managers";
+import { celestialManager, simulationManager } from "./managers";
 import { physicsSystemAdapter } from "./adapters";
-import {
-  PhysicsStateCalculator,
-  PhysicsStateProvider,
-  simulationStateService,
-} from "./services";
+import { PhysicsStateCalculator, PhysicsStateProvider } from "./services";
 import {
   celestialStore as celestial,
   physicsStore as physics,
   seedStore as seed,
   renderableStore,
+  simulationStore,
 } from "./stores";
 // Export types and utilities
 export {
@@ -33,8 +30,8 @@ export {
   physicsSystemAdapter,
   renderableStore,
   seed,
-  simulationStateService as simulation,
-  simulationStateService,
+  simulationManager,
+  simulationStore,
 };
 
 // Export observables directly
@@ -42,39 +39,24 @@ export const currentSeed$ = seed.currentSeed$;
 export const celestialObjects$ = celestial.objects$;
 export const celestialHierarchy$ = celestial.hierarchy$;
 export const accelerationVectors$ = physics.accelerationVectors$;
-export const simulationState$ = simulationStateService.simulationState$;
+export const simulationState$ = simulationStore.simulationState$;
 
 // Legacy actions object for backward compatibility
 export const actions = {
   // Simulation actions
-  setTimeScale: simulationStateService.setTimeScale.bind(
-    simulationStateService,
-  ),
-  togglePause: simulationStateService.togglePause.bind(simulationStateService),
-  resetTime: simulationStateService.resetTime.bind(simulationStateService),
-  setStartDate: simulationStateService.setStartDate.bind(
-    simulationStateService,
-  ),
-  resetToStartDate: simulationStateService.resetToStartDate.bind(
-    simulationStateService,
-  ),
-  stepTime: simulationStateService.stepTime.bind(simulationStateService),
-  selectObject: simulationStateService.selectObject.bind(
-    simulationStateService,
-  ),
-  setFocusedObject: simulationStateService.setFocusedObject.bind(
-    simulationStateService,
-  ),
-  updateCamera: simulationStateService.updateCamera.bind(
-    simulationStateService,
-  ),
-  setPerformanceProfile: simulationStateService.setPerformanceProfile.bind(
-    simulationStateService,
-  ),
+  setTimeScale: simulationManager.setTimeScale.bind(simulationManager),
+  togglePause: simulationManager.togglePause.bind(simulationManager),
+  resetTime: simulationManager.resetTime.bind(simulationManager),
+  setStartDate: simulationManager.setStartDate.bind(simulationManager),
+  resetToStartDate: simulationManager.resetToStartDate.bind(simulationManager),
+  stepTime: simulationManager.stepTime.bind(simulationManager),
+  selectObject: simulationManager.selectObject.bind(simulationManager),
+  setFocusedObject: simulationManager.setFocusedObject.bind(simulationManager),
+  updateCamera: simulationManager.updateCamera.bind(simulationManager),
+  setPerformanceProfile:
+    simulationManager.setPerformanceProfile.bind(simulationManager),
   setTrailLengthMultiplier:
-    simulationStateService.setTrailLengthMultiplier.bind(
-      simulationStateService,
-    ),
+    simulationManager.setTrailLengthMultiplier.bind(simulationManager),
 
   // Celestial actions
   addCelestialObject: celestialManager.addObject.bind(celestialManager),

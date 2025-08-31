@@ -66,13 +66,16 @@ public readonly hierarchy$: Observable<Record<string, string[]>>;
 Uses shared filtering and event dispatching utilities:
 
 ```typescript
-// Filtered observables use shared operators
+// Filtered observables use shared operators from StoreFilters
 this.activeObjects$ = filterActiveCelestialObjects$(this.objects$);
 this.destroyedObjects$ = filterDestroyedCelestialObjects$(this.objects$);
 this.physicsActiveObjects$ = filterPhysicsActiveCelestialObjects$(
   this.objects$,
 );
 this.visibleObjects$ = filterVisibleCelestialObjects$(this.objects$);
+
+// Event dispatching uses shared utilities from CelestialUtils
+import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
 ```
 
 ### Immutable Updates

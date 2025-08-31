@@ -123,6 +123,62 @@ public getRenderableObjects(): Record<string, RenderableCelestialObject>
 - **Complete Data**: Returns all stored objects
 - **Object Mapping**: Maps object IDs to renderable objects
 
+### **getRenderableObject()**
+
+```typescript
+public getRenderableObject(id: string): RenderableCelestialObject | undefined
+```
+
+**Purpose**: Gets a specific renderable object by ID
+
+**Features**:
+
+- **Direct Access**: O(1) lookup by object ID
+- **Null Safety**: Returns undefined if not found
+- **Type Safety**: Full TypeScript type safety
+
+### **getVisibleRenderableObjects()**
+
+```typescript
+public getVisibleRenderableObjects(): Record<string, RenderableCelestialObject>
+```
+
+**Purpose**: Gets only visible renderable objects
+
+**Features**:
+
+- **Filtered Access**: Only objects with `isVisible: true`
+- **Performance**: Uses shared filtering utilities
+- **Imperative Version**: Synchronous version of visibleRenderableObjects$
+
+### **getActiveRenderableObjects()**
+
+```typescript
+public getActiveRenderableObjects(): Record<string, RenderableCelestialObject>
+```
+
+**Purpose**: Gets only active renderable objects
+
+**Features**:
+
+- **Status Filtering**: Only objects not destroyed or annihilated
+- **Performance**: Uses shared filtering utilities
+- **Imperative Version**: Synchronous version of activeRenderableObjects$
+
+### **getPhysicsActiveRenderableObjects()**
+
+```typescript
+public getPhysicsActiveRenderableObjects(): Record<string, RenderableCelestialObject>
+```
+
+**Purpose**: Gets only physics-active renderable objects
+
+**Features**:
+
+- **Physics Filtering**: Only objects active and not ignoring physics
+- **Performance**: Uses shared filtering utilities
+- **Imperative Version**: Synchronous version of physicsActiveRenderableObjects$
+
 ### **renderableObjects$**
 
 ```typescript
@@ -136,6 +192,48 @@ public readonly renderableObjects$: Observable<Record<string, RenderableCelestia
 - **Reactive Updates**: Notifies on object changes
 - **Initial Value**: Emits current objects immediately
 - **Complete State**: Provides full object state
+
+### **visibleRenderableObjects$**
+
+```typescript
+public readonly visibleRenderableObjects$: Observable<Record<string, RenderableCelestialObject>>
+```
+
+**Purpose**: Observable stream of visible renderable objects
+
+**Features**:
+
+- **Filtered Updates**: Only objects with `isVisible: true`
+- **Performance**: Uses shared filtering utilities
+- **Reactive**: Updates when objects change
+
+### **activeRenderableObjects$**
+
+```typescript
+public readonly activeRenderableObjects$: Observable<Record<string, RenderableCelestialObject>>
+```
+
+**Purpose**: Observable stream of active renderable objects
+
+**Features**:
+
+- **Status Filtering**: Only objects not destroyed or annihilated
+- **Performance**: Uses shared filtering utilities
+- **Reactive**: Updates when object status changes
+
+### **physicsActiveRenderableObjects$**
+
+```typescript
+public readonly physicsActiveRenderableObjects$: Observable<Record<string, RenderableCelestialObject>>
+```
+
+**Purpose**: Observable stream of physics-active renderable objects
+
+**Features**:
+
+- **Physics Filtering**: Only objects active and not ignoring physics
+- **Performance**: Uses shared filtering utilities
+- **Reactive**: Updates when object status changes
 
 ## 🎮 Usage Examples
 
@@ -156,6 +254,15 @@ renderableStore.addRenderableObject({
 renderableStore.renderableObjects$.subscribe((objects) => {
   console.log("Renderable objects updated:", objects);
 });
+
+// Subscribe to filtered updates
+renderableStore.visibleRenderableObjects$.subscribe((objects) => {
+  console.log("Visible objects:", Object.keys(objects));
+});
+
+renderableStore.activeRenderableObjects$.subscribe((objects) => {
+  console.log("Active objects:", Object.keys(objects));
+});
 ```
 
 ### **Object Updates**
@@ -169,6 +276,13 @@ renderableStore.updateRenderableObject("earth", {
 
 // Remove object
 renderableStore.removeRenderableObject("earth");
+
+// Get specific object
+const earthObject = renderableStore.getRenderableObject("earth");
+
+// Get filtered objects
+const visibleObjects = renderableStore.getVisibleRenderableObjects();
+const activeObjects = renderableStore.getActiveRenderableObjects();
 ```
 
 ### **Bulk Operations**

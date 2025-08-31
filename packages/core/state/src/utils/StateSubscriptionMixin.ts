@@ -33,7 +33,7 @@ import { Observable, Subscription } from "rxjs";
  * ```
  */
 export class StateSubscriptionMixin {
-  private subscriptions: Subscription[] = [];
+  private subscription = new Subscription();
 
   /**
    * Subscribes to an observable and tracks the subscription.
@@ -45,12 +45,7 @@ export class StateSubscriptionMixin {
     observable$: Observable<T>,
     next: (value: T) => void,
   ): void {
-    this.subscriptions.push(
-      observable$.subscribe({
-        next: next,
-        error: this.defaultErrorHandler,
-      }),
-    );
+    this.subscription.add(observable$.subscribe(next));
   }
 
   /**
@@ -77,11 +72,8 @@ export class StateSubscriptionMixin {
     mapper: (value: T) => R,
     handler: (value: R) => void,
   ): void {
-    this.subscriptions.push(
-      observable.subscribe({
-        next: (value: T) => handler(mapper(value)),
-        error: this.defaultErrorHandler,
-      }),
+    this.subscription.add(
+      observable.subscribe((value: T) => handler(mapper(value))),
     );
   }
 
@@ -97,7 +89,7 @@ export class StateSubscriptionMixin {
     handler: (value: T) => void,
     errorHandler?: (error: any) => void,
   ): void {
-    this.subscriptions.push(
+    this.subscription.add(
       observable.subscribe({
         next: handler,
         error: errorHandler || this.defaultErrorHandler,
@@ -119,8 +111,7 @@ export class StateSubscriptionMixin {
    * be called from the component's dispose/destroy lifecycle method.
    */
   public dispose(): void {
-    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
-    this.subscriptions = [];
+    this.subscription.unsubscribe();
   }
 
   /**
@@ -128,7 +119,7 @@ export class StateSubscriptionMixin {
    * Useful for debugging subscription leaks.
    */
   public hasActiveSubscriptions(): boolean {
-    return this.subscriptions.some((subscription) => !subscription.closed);
+    return !this.subscription.closed;
   }
 
   /**
@@ -136,6 +127,6 @@ export class StateSubscriptionMixin {
    * Note: This uses internal Subscription properties and should only be used for debugging.
    */
   public getSubscriptionCount(): number {
-    return this.subscriptions.length;
+    return this.subscription.closed ? 0 : 1;
   }
 }

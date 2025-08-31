@@ -27,12 +27,7 @@ functions:
     "isValidRootObject",
     "isPlanetAtmosphere",
   ]
-constants:
-  [
-    "ROOT_OBJECT_TYPES",
-    "DEFAULT_STAR_PROPERTIES",
-    "DEFAULT_CELESTIAL_PROPERTIES",
-  ]
+constants: ["DEFAULT_STAR_PROPERTIES", "DEFAULT_CELESTIAL_PROPERTIES"]
 types:
   [
     "CelestialObject",
@@ -253,23 +248,10 @@ export function dispatchObjectsLoadedEventFromMap(
 
 ### **Constants**
 
-#### **ROOT_OBJECT_TYPES**
-
-```typescript
-const ROOT_OBJECT_TYPES = new Set([
-  CelestialType.STAR,
-  CelestialType.PLANET,
-  CelestialType.GAS_GIANT,
-  CelestialType.SATELLITE,
-]);
-```
-
-**Purpose**: Defines which celestial types can be root objects
-
 #### **DEFAULT_STAR_PROPERTIES**
 
 ```typescript
-const DEFAULT_STAR_PROPERTIES: StarProperties = {
+export const DEFAULT_STAR_PROPERTIES: StarProperties = {
   type: CelestialType.STAR,
   isMainStar: true,
   spectralClass: "G2V",
@@ -280,10 +262,12 @@ const DEFAULT_STAR_PROPERTIES: StarProperties = {
 
 **Purpose**: Default properties for star objects
 
+**Note**: `ROOT_OBJECT_TYPES` is a private constant used internally by `isValidRootObject()` and is not exported.
+
 #### **DEFAULT_CELESTIAL_PROPERTIES**
 
 ```typescript
-const DEFAULT_CELESTIAL_PROPERTIES = {
+export const DEFAULT_CELESTIAL_PROPERTIES = {
   status: CelestialStatus.ACTIVE,
   temperature: 100,
   albedo: 0.3,

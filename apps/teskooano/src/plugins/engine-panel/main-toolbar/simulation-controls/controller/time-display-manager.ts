@@ -1,7 +1,7 @@
 import {
   actions,
   PhysicsStateProvider,
-  simulationStateService,
+  simulationManager,
   StateAccessor,
 } from "@teskooano/core-state";
 import { SimulationMode } from "@teskooano/data-types";
@@ -245,7 +245,7 @@ export class TimeDisplayManager {
       // Step 1: Switch to ideal mode if needed
       tap(() => {
         if (needsModeSwitch) {
-          simulationStateService.setSimulationMode(SimulationMode.IDEAL);
+          simulationManager.setSimulationMode(SimulationMode.IDEAL);
         }
       }),
 
@@ -290,7 +290,7 @@ export class TimeDisplayManager {
 
         // Restore original simulation mode if we switched it
         if (needsModeSwitch && originalMode) {
-          simulationStateService.setSimulationMode(originalMode);
+          simulationManager.setSimulationMode(originalMode);
         }
 
         // Short delay to ensure state propagates before completing

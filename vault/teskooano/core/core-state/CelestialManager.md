@@ -4,9 +4,8 @@ tags: [core, state, manager, singleton, celestial, lifecycle, factory]
 type: Class
 package: "@teskooano/core-state"
 name: CelestialManager
-dependencies:
-  ["@teskooano/data-types", "@teskooano/core-physics", "@teskooano/core-math"]
-classes: ["PhysicsStateProvider", "CustomEvents"]
+dependencies: ["@teskooano/data-types"]
+classes: ["PhysicsStateProvider"]
 functions: []
 constants: []
 types:
@@ -91,6 +90,8 @@ import {
   isValidRootObject,
 } from "../utils/CelestialUtils";
 ```
+
+**Note**: All utilities are imported directly from `CelestialUtils` for clarity and explicit dependency management.
 
 ## 🔧 Core Methods
 

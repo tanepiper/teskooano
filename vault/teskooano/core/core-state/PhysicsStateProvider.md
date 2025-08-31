@@ -4,8 +4,8 @@ tags: [core, state, service, static, cache, physics, performance]
 type: Class
 package: "@teskooano/core-state"
 name: PhysicsStateProvider
-dependencies: ["@teskooano/data-types", "@teskooano/core-state"]
-classes: ["PhysicsStateCalculator"]
+dependencies: ["@teskooano/data-types", "rxjs"]
+classes: []
 functions: []
 constants: []
 types:
@@ -61,6 +61,35 @@ public static getPhysicsState<T extends CelestialSpecificPropertiesUnion>(
 - **Cache First**: Checks cache before calculating
 - **Lazy Calculation**: Only calculates when needed
 - **Error Handling**: Returns null for invalid objects
+
+### **physicsStates$**
+
+```typescript
+public static readonly physicsStates$: Observable<PhysicsStateReal[]>
+```
+
+**Purpose**: Observable stream of physics states for all active objects
+
+**Features**:
+
+- **Reactive Updates**: Automatically updates when objects change
+- **Automatic Calculation**: Calculates physics states on-demand
+- **Caching**: Uses internal cache for performance
+- **Error Handling**: Skips objects that can't be calculated
+
+### **physicsActiveObjects$**
+
+```typescript
+public static readonly physicsActiveObjects$: Observable<Record<string, CelestialObject>>
+```
+
+**Purpose**: Observable stream of active celestial objects
+
+**Features**:
+
+- **Pre-filtered**: Only objects active for physics simulation
+- **Reactive Updates**: Updates when object status changes
+- **Performance**: Uses CelestialStore's pre-filtered observable
 
 ### **clearCache()**
 
@@ -151,6 +180,16 @@ PhysicsStateProvider.removeFromCache("earth-id");
 
 // Update object cache
 PhysicsStateProvider.updateCache(updatedObject);
+```
+
+### **Imperative Access**
+
+```typescript
+// Get all physics states
+const states = PhysicsStateProvider.getPhysicsStates();
+
+// Get active objects
+const activeObjects = PhysicsStateProvider.getPhysicsActiveObjects();
 ```
 
 ### **Simulation Integration**

@@ -1,6 +1,6 @@
 import { GeometryUtilities, type PerformanceConfig } from "./GeometryUtilities";
 import type { DeviceTier } from "@teskooano/data-types";
-import { simulationStateService } from "@teskooano/core-state";
+import { simulationManager } from "@teskooano/core-state";
 import {
   IdleDetectionAPI,
   BatteryAPI,
@@ -288,7 +288,7 @@ export class PerformanceMonitor {
     this.setDeviceTier(deviceTier);
 
     // Update the global state with the detected device tier
-    simulationStateService.setPerformanceProfile(deviceTier);
+    simulationManager.setPerformanceProfile(deviceTier);
 
     // Set appropriate target FPS based on device tier
     switch (deviceTier) {

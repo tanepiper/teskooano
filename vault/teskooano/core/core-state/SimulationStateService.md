@@ -147,6 +147,7 @@ public setPredictionSettings(steps: number, duration: number): void
 - **Prediction Settings**: Configure trajectory prediction
 - **Performance Optimization**: Avoid unnecessary updates
 - **Visual Quality**: Control rendering quality
+- **Input Validation**: Validates and clamps input values
 
 ### **Performance Management**
 
@@ -179,6 +180,20 @@ public readonly simulationState$: Observable<SimulationState>
 - **State Override**: Set complete state (use with caution)
 - **Reactive Stream**: Observable state changes
 - **State Snapshot**: Immediate state access
+
+### **Configuration Validation**
+
+```typescript
+public isConfigurationValid(): boolean
+```
+
+**Purpose**: Validates current simulation configuration
+
+**Features**:
+
+- **Configuration Check**: Validates current configuration
+- **Error Prevention**: Prevents invalid configurations
+- **Debug Support**: Helps identify configuration issues
 
 ## 🎮 Usage Examples
 
@@ -230,6 +245,13 @@ simulationStateService.setNBodyIntegrator(IntegratorType.PEFRL);
 // Select and focus objects
 simulationStateService.selectObject("earth");
 simulationStateService.setFocusedObject("mars");
+
+// Validate configuration
+if (simulationStateService.isConfigurationValid()) {
+  console.log("Configuration is valid");
+} else {
+  console.log("Configuration is invalid");
+}
 ```
 
 ## 🔄 Integration Points

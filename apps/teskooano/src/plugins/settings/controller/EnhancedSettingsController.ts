@@ -1,7 +1,6 @@
 import {
-  simulation,
+  simulationManager,
   simulationState$,
-  simulationStateService,
   type SimulationConfiguration,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
@@ -71,7 +70,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    */
   constructor(private elements: IEnhancedSettingsPanelElements) {
     super();
-    this.currentConfig = simulationStateService.getSimulationConfiguration();
+    this.currentConfig = simulationManager.getSimulationConfiguration();
     this.initialize();
   }
 
@@ -184,7 +183,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * @private
    */
   private updateUI(): void {
-    const state = simulationStateService.getSimulationState();
+    const state = simulationManager.getSimulationState();
     this.currentConfig = state.simulationConfig;
 
     // Update basic controls
@@ -365,7 +364,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     if (typeof value === "number" && !isNaN(value)) {
       // Ensure the value is non-negative (validation is also done in the service)
       const multiplier = Math.max(0, value);
-      simulationStateService.setTrailLengthMultiplier(multiplier);
+      simulationManager.setTrailLengthMultiplier(multiplier);
     }
   };
 
@@ -378,7 +377,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     const mode = target.value as SimulationMode;
 
     try {
-      simulationStateService.setSimulationMode(mode);
+      simulationManager.setSimulationMode(mode);
       this.clearValidationMessages();
 
       // Add smooth transition effect
@@ -406,7 +405,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     const algorithm = target.value as AlgorithmType;
 
     try {
-      simulationStateService.setNBodyAlgorithm(algorithm);
+      simulationManager.setNBodyAlgorithm(algorithm);
       this.clearValidationMessages();
     } catch (error) {
       console.error("Failed to set algorithm:", error);
@@ -428,7 +427,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     const integrator = target.value as IntegratorType;
 
     try {
-      simulationStateService.setNBodyIntegrator(integrator);
+      simulationManager.setNBodyIntegrator(integrator);
       this.clearValidationMessages();
     } catch (error) {
       console.error("Failed to set integrator:", error);
@@ -450,7 +449,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     const value = target.value as DeviceTier;
 
     if (PERFORMANCE_PROFILE_OPTIONS.some((opt) => opt.value === value)) {
-      simulationStateService.setPerformanceProfile(value);
+      simulationManager.setPerformanceProfile(value);
     }
   };
 

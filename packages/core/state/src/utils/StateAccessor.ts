@@ -4,14 +4,15 @@ import type {
   RenderableCelestialObject,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { Observable, startWith } from "rxjs";
+import { Observable } from "rxjs";
 import {
   celestialStore,
   physicsStore as physics,
   seedStore as seed,
   renderableStore,
+  simulationStore,
 } from "./../stores";
-import { simulationStateService, PhysicsStateProvider } from "../services";
+import { PhysicsStateProvider } from "../services";
 
 import type { SimulationState } from "../types";
 
@@ -20,7 +21,7 @@ export const currentSeed$ = seed.currentSeed$;
 export const celestialObjects$ = celestialStore.objects$;
 export const celestialHierarchy$ = celestialStore.hierarchy$;
 export const accelerationVectors$ = physics.accelerationVectors$;
-export const simulationState$ = simulationStateService.simulationState$;
+export const simulationState$ = simulationStore.simulationState$;
 
 /**
  * Standardized accessor for all state in the Teskooano application.
@@ -32,7 +33,7 @@ export const simulationState$ = simulationStateService.simulationState$;
  *
  * @example
  * ```typescript
- * // Reactive access with initial value
+ * // Reactive access
  * StateAccessor.celestialObjects$().subscribe(objects => {
  *   // Handle objects update
  * });
@@ -44,11 +45,11 @@ export const simulationState$ = simulationStateService.simulationState$;
 export class StateAccessor {
   // Celestial Objects
   /**
-   * Gets a reactive stream of celestial objects with the current value as initial emission.
-   * Preferred over direct import of celestialObjects$ when you need the current state immediately.
+   * Gets a reactive stream of celestial objects.
+   * Preferred over direct import of celestialObjects$ for consistent access patterns.
    */
   static celestialObjects$(): Observable<Record<string, CelestialObject>> {
-    return celestialObjects$.pipe(startWith(celestialStore.getObjects()));
+    return celestialObjects$;
   }
 
   /**
@@ -60,28 +61,26 @@ export class StateAccessor {
 
   // Simulation State
   /**
-   * Gets a reactive stream of simulation state with the current value as initial emission.
-   * Preferred over direct import of simulationState$ when you need the current state immediately.
+   * Gets a reactive stream of simulation state.
+   * Preferred over direct import of simulationState$ for consistent access patterns.
    */
   static simulation$(): Observable<SimulationState> {
-    return simulationState$.pipe(
-      startWith(simulationStateService.getSimulationState()),
-    );
+    return simulationState$;
   }
 
   /**
    * Gets the current simulation state imperatively.
    */
   static getSimulationState(): SimulationState {
-    return simulationStateService.getSimulationState();
+    return simulationStore.getSimulationState();
   }
 
   // Celestial Hierarchy
   /**
-   * Gets a reactive stream of celestial hierarchy with the current value as initial emission.
+   * Gets a reactive stream of celestial hierarchy.
    */
   static celestialHierarchy$(): Observable<Record<string, string[]>> {
-    return celestialHierarchy$.pipe(startWith(celestialStore.getHierarchy()));
+    return celestialHierarchy$;
   }
 
   /**
@@ -93,12 +92,10 @@ export class StateAccessor {
 
   // Acceleration Vectors
   /**
-   * Gets a reactive stream of acceleration vectors with the current value as initial emission.
+   * Gets a reactive stream of acceleration vectors.
    */
   static accelerationVectors$(): Observable<Record<string, OSVector3>> {
-    return accelerationVectors$.pipe(
-      startWith(physics.getAccelerationVectors()),
-    );
+    return accelerationVectors$;
   }
 
   /**
@@ -183,10 +180,10 @@ export class StateAccessor {
 
   // Current Seed
   /**
-   * Gets a reactive stream of the current seed with the current value as initial emission.
+   * Gets a reactive stream of the current seed.
    */
   static getCurrentSeedStream(): Observable<string> {
-    return currentSeed$.pipe(startWith(seed.getCurrentSeed()));
+    return currentSeed$;
   }
 
   /**
@@ -278,14 +275,12 @@ export class StateAccessor {
 
   /**
    * Gets the current snapshot of all renderable objects (reactive).
-   * @returns Observable of the current renderable objects map with initial value
+   * @returns Observable of the current renderable objects map
    */
   static renderableObjects$(): Observable<
     Record<string, RenderableCelestialObject>
   > {
-    return renderableStore.renderableObjects$.pipe(
-      startWith(renderableStore.getRenderableObjects()),
-    );
+    return renderableStore.renderableObjects$;
   }
 
   /**

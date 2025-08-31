@@ -2,7 +2,8 @@ import { SimulationManager, WasmSpatialService } from "@teskooano/core-physics";
 import {
   celestialManager,
   physicsSystemAdapter,
-  simulationStateService,
+  simulationManager as coreSimulationManager,
+  simulationStore,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import {
@@ -152,7 +153,7 @@ export class SimulationOrchestrator {
         return;
       }
 
-      const simulationState = simulationStateService.getSimulationState();
+      const simulationState = coreSimulationManager.getSimulationState();
       if (simulationState.paused) {
         // Reset lastRealTime when paused to prevent time jumps when unpausing
         this.lastRealTime = 0;
@@ -171,8 +172,8 @@ export class SimulationOrchestrator {
       }
 
       const currentSimulationTime =
-        simulationStateService.getSimulationState().time;
-      const timeScale = simulationStateService.getSimulationState().timeScale;
+        coreSimulationManager.getSimulationState().time;
+      const timeScale = coreSimulationManager.getSimulationState().timeScale;
 
       // Scale the real time delta by the time scale
       const scaledDeltaTime = realTimeDelta * timeScale;
@@ -193,8 +194,8 @@ export class SimulationOrchestrator {
   }
 
   private updateSimulationTime(newTime: number): void {
-    const currentState = simulationStateService.getSimulationState();
-    simulationStateService.setSimulationState({
+    const currentState = simulationStore.getSimulationState();
+    simulationStore.setSimulationState({
       ...currentState,
       time: newTime,
     });
@@ -219,7 +220,7 @@ export class SimulationOrchestrator {
     const allCelestialObjects =
       physicsSystemAdapter.getCelestialObjectsSnapshot();
     const simulationConfig =
-      simulationStateService.getSimulationState().simulationConfig;
+      coreSimulationManager.getSimulationState().simulationConfig;
     const orbitalParameters =
       physicsSystemAdapter.getOrbitalParametersSnapshot();
 
@@ -266,7 +267,7 @@ export class SimulationOrchestrator {
 
   private updateHierarchies(): void {
     const simulationConfig =
-      simulationStateService.getSimulationState().simulationConfig;
+      coreSimulationManager.getSimulationState().simulationConfig;
     if (simulationConfig.mode !== "ideal") {
       this.hierarchyManager.updateHierarchies();
     }
@@ -306,10 +307,10 @@ export class SimulationOrchestrator {
       });
     } else {
       // Even if skipping full state clear, internal time and resetTime$ event might be relevant.
-      if (simulationStateService.getSimulationState().time !== 0) {
+      if (simulationStore.getSimulationState().time !== 0) {
         // If time is not already zero
-        simulationStateService.setSimulationState({
-          ...simulationStateService.getSimulationState(),
+        simulationStore.setSimulationState({
+          ...simulationStore.getSimulationState(),
           time: 0,
         });
       }
