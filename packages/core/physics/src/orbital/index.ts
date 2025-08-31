@@ -6,3 +6,5 @@ export * from "./lagrange-service";
 export * from "./helpers";
 export * from "./epoch";
 export * from "./tle";
+export * from "./resonance";
+export * from "./resonance-integrator";
