@@ -33,6 +33,7 @@ import {
   ResonanceIntegrator,
   estimateResonantSemiMajorAxisAU,
   findNearestResonance,
+  ResonanceType,
 } from "../orbital";
 import { celestialManager } from "@teskooano/core-state";
 import {
@@ -613,38 +614,65 @@ export class SimulationManager {
           maxIntegrationSteps: 2000,
         });
         const AU = 149_597_870_700;
-        // For every pair (candidate, perturber) that shares the same parent, check nearest small-integer resonance
-        const objects = integratedStates
-          .map((s) => celestialManager.getObject(String(s.id)))
-          .filter((o): o is NonNullable<typeof o> => !!o && !!o.orbit);
-        for (const obj of objects) {
-          // Limit scope: only consider significant perturbers (e.g., gas giants, stars) in same system
-          const sameSystem = objects.filter(
-            (o) => o.id !== obj.id && o.parentId === obj.parentId,
-          );
-          for (const perturber of sameSystem) {
-            // Skip low-mass perturbers by a simple mass threshold
-            if ((perturber.realMass_kg || 0) < 1e22) continue;
-            const periodRatio = (obj.orbit.period_s || 0) / (perturber.orbit.period_s || 1);
-            if (!isFinite(periodRatio) || periodRatio <= 0) continue;
-            const guess = findNearestResonance(periodRatio, 12, 12);
-            if (!guess) continue;
-            // Estimate resonance center to prefilter by semi-major axis distance
-            const centerAU = estimateResonantSemiMajorAxisAU(
-              perturber.orbit.realSemiMajorAxis_m,
-              guess.p,
-              guess.q,
+        // Require orbital metadata to proceed
+        if (params.orbitalParameters && params.parentIds) {
+          // Build simplified objects from provided params instead of querying the state manager
+          const objects = integratedStates
+            .map((s) => {
+              const id = String(s.id);
+              const orbit = params.orbitalParameters!.get(id);
+              const parentId = params.parentIds!.get(id);
+              if (!orbit || !parentId) return null;
+              return { id, orbit, parentId, mass_kg: s.mass_kg };
+            })
+            .filter((o): o is { id: string; orbit: OrbitalParameters; parentId: string; mass_kg: number } => !!o);
+
+          for (const obj of objects) {
+            const sameSystem = objects.filter(
+              (o) => o.id !== obj.id && o.parentId === obj.parentId,
             );
-            const smaAU = obj.orbit.realSemiMajorAxis_m / AU;
-            const widthAU = 2.0; // generic coarse width; can be refined per system
-            if (Math.abs(smaAU - centerAU) > widthAU) continue;
-            const res = integrator.integrateWithResonance(
-              obj.orbit,
-              perturber.orbit,
-              { planetId: perturber.id, ratio: { p: guess.p, q: guess.q }, type: smaAU >= centerAU ? "external" : "internal", semiMajorAxisCenter: centerAU, width: widthAU, librationModes: [], stabilityCriteria: { maxEccentricity: 1, maxInclination: 180, minPerihelionDistance: 0 } },
-              500 * 365.25 * 24 * 3600,
-            );
-            celestialManager.setResonanceState(`${obj.id}__${perturber.id}`, res.resonanceState);
+            for (const perturber of sameSystem) {
+              if ((perturber.mass_kg || 0) < 1e22) continue;
+              const periodRatio = (obj.orbit.period_s || 0) / (perturber.orbit.period_s || 1);
+              if (!isFinite(periodRatio) || periodRatio <= 0) continue;
+              const guess = findNearestResonance(periodRatio, 12, 12);
+              if (!guess) continue;
+              const centerAU = estimateResonantSemiMajorAxisAU(
+                perturber.orbit.realSemiMajorAxis_m,
+                guess.p,
+                guess.q,
+              );
+              const smaAU = obj.orbit.realSemiMajorAxis_m / AU;
+              const widthAU = 2.0; // coarse generic width
+              if (Math.abs(smaAU - centerAU) > widthAU) continue;
+              const res = integrator.integrateWithResonance(
+                obj.orbit,
+                perturber.orbit,
+                {
+                  planetId: perturber.id,
+                  ratio: { p: guess.p, q: guess.q },
+                  type: smaAU >= centerAU
+                    ? ResonanceType.EXTERNAL
+                    : ResonanceType.INTERNAL,
+                  semiMajorAxisCenter: centerAU,
+                  width: widthAU,
+                  librationModes: [],
+                  stabilityCriteria: {
+                    maxEccentricity: 1,
+                    maxInclination: 180,
+                    minPerihelionDistance: 0,
+                  },
+                },
+                500 * 365.25 * 24 * 3600,
+              );
+              // Publish resonance state if manager is available
+              try {
+                celestialManager.setResonanceState(
+                  `${obj.id}__${perturber.id}`,
+                  res.resonanceState,
+                );
+              } catch (_) {}
+            }
           }
         }
       } catch (e) {
