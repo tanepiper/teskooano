@@ -7,7 +7,6 @@ import type {
   CelestialObject,
   CelestialSpecificPropertiesUnion,
   PhysicsStateReal,
-  RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import { AU_METERS, MIN_ROGUE_DISTANCE_AU } from "@teskooano/data-values";
@@ -98,54 +97,6 @@ export class PhysicsStateCalculator {
 
     // Handle normal orbital objects
     return this.calculateOrbitalPhysics(data, allObjects, visitedIds);
-  }
-
-  /**
-   * Creates a renderable celestial object from a base celestial object
-   */
-  public static async createRenderableObject<
-    T extends CelestialSpecificPropertiesUnion,
-  >(
-    data: CelestialObject<T>,
-    allObjects: Record<string, CelestialObject>,
-  ): Promise<RenderableCelestialObject<T> | null> {
-    const physicsState = this.calculatePhysicsState(
-      data,
-      allObjects,
-      new Set(),
-    );
-    if (!physicsState) {
-      return null;
-    }
-
-    const { Vector3, Quaternion } = await import("three");
-
-    // Create renderable object with calculated physics state
-    const renderable: RenderableCelestialObject<T> = {
-      ...data,
-      radius: data.realRadius_m, // Will be scaled by renderer
-      mass: data.realMass_kg,
-      position: new Vector3(
-        physicsState.position_m.x,
-        physicsState.position_m.y,
-        physicsState.position_m.z,
-      ),
-      velocity: new Vector3(
-        physicsState.velocity_mps.x,
-        physicsState.velocity_mps.y,
-        physicsState.velocity_mps.z,
-      ),
-      velocityMagnitude_mps: physicsState.velocity_mps.length(),
-      rotation: new Quaternion(),
-      physicsStateReal: physicsState,
-      isVisible: true,
-      isTargetable: true,
-      isSelected: false,
-      isFocused: false,
-      uniforms: {},
-    };
-
-    return renderable;
   }
 
   private static isSpecialObject(type: CelestialType): boolean {

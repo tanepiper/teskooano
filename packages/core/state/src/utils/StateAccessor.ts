@@ -2,22 +2,23 @@ import type { OSVector3 } from "@teskooano/core-math";
 import type {
   CelestialObject,
   RenderableCelestialObject,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
 import { Observable, startWith } from "rxjs";
 import {
-  celestialStore as celestial,
+  celestialStore,
   physicsStore as physics,
   seedStore as seed,
   renderableStore,
 } from "./../stores";
-import { simulationStateService } from "../services/simulation";
+import { simulationStateService, PhysicsStateProvider } from "../services";
 
 import type { SimulationState } from "../types";
 
 // Re-export observables for convenience
 export const currentSeed$ = seed.currentSeed$;
-export const celestialObjects$ = celestial.objects$;
-export const celestialHierarchy$ = celestial.hierarchy$;
+export const celestialObjects$ = celestialStore.objects$;
+export const celestialHierarchy$ = celestialStore.hierarchy$;
 export const accelerationVectors$ = physics.accelerationVectors$;
 export const simulationState$ = simulationStateService.simulationState$;
 
@@ -47,14 +48,14 @@ export class StateAccessor {
    * Preferred over direct import of celestialObjects$ when you need the current state immediately.
    */
   static celestialObjects$(): Observable<Record<string, CelestialObject>> {
-    return celestialObjects$.pipe(startWith(celestial.getObjects()));
+    return celestialObjects$.pipe(startWith(celestialStore.getObjects()));
   }
 
   /**
    * Gets the current celestial objects imperatively.
    */
   static getCelestialObjects(): Record<string, CelestialObject> {
-    return celestial.getObjects();
+    return celestialStore.getObjects();
   }
 
   // Simulation State
@@ -80,14 +81,14 @@ export class StateAccessor {
    * Gets a reactive stream of celestial hierarchy with the current value as initial emission.
    */
   static celestialHierarchy$(): Observable<Record<string, string[]>> {
-    return celestialHierarchy$.pipe(startWith(celestial.getHierarchy()));
+    return celestialHierarchy$.pipe(startWith(celestialStore.getHierarchy()));
   }
 
   /**
    * Gets the current celestial hierarchy imperatively.
    */
   static getCelestialHierarchy(): Record<string, string[]> {
-    return celestial.getHierarchy();
+    return celestialStore.getHierarchy();
   }
 
   // Acceleration Vectors
@@ -105,6 +106,79 @@ export class StateAccessor {
    */
   static getAccelerationVectors(): Record<string, OSVector3> {
     return physics.getAccelerationVectors();
+  }
+
+  // Physics States
+  /**
+   * Gets a reactive stream of physics states for active celestial objects.
+   * Filters out destroyed, annihilated, and physics-ignored objects.
+   */
+  static physicsStates$(): Observable<PhysicsStateReal[]> {
+    return PhysicsStateProvider.physicsStates$;
+  }
+
+  /**
+   * Gets a reactive stream of active celestial objects (filtered for physics simulation).
+   */
+  static physicsActiveObjects$(): Observable<Record<string, CelestialObject>> {
+    return PhysicsStateProvider.physicsActiveObjects$;
+  }
+
+  /**
+   * Gets the current physics states for all active objects (imperative version).
+   */
+  static getPhysicsStates(): PhysicsStateReal[] {
+    return PhysicsStateProvider.getPhysicsStates();
+  }
+
+  /**
+   * Gets the current active objects for physics (imperative version).
+   */
+  static getPhysicsActiveObjects(): Record<string, CelestialObject> {
+    return PhysicsStateProvider.getPhysicsActiveObjects();
+  }
+
+  // Filtered Celestial Objects
+  /**
+   * Gets a reactive stream of active celestial objects (not destroyed or annihilated).
+   */
+  static activeObjects$(): Observable<Record<string, CelestialObject>> {
+    return celestialStore.activeObjects$;
+  }
+
+  /**
+   * Gets a reactive stream of destroyed celestial objects.
+   */
+  static destroyedObjects$(): Observable<Record<string, CelestialObject>> {
+    return celestialStore.destroyedObjects$;
+  }
+
+  /**
+   * Gets a reactive stream of visible celestial objects (active and visible).
+   */
+  static visibleObjects$(): Observable<Record<string, CelestialObject>> {
+    return celestialStore.visibleObjects$;
+  }
+
+  /**
+   * Gets the current active objects (imperative version).
+   */
+  static getActiveObjects(): Record<string, CelestialObject> {
+    return celestialStore.getActiveObjects();
+  }
+
+  /**
+   * Gets the current destroyed objects (imperative version).
+   */
+  static getDestroyedObjects(): Record<string, CelestialObject> {
+    return celestialStore.getDestroyedObjects();
+  }
+
+  /**
+   * Gets the current visible objects (imperative version).
+   */
+  static getVisibleObjects(): Record<string, CelestialObject> {
+    return celestialStore.getVisibleObjects();
   }
 
   // Current Seed

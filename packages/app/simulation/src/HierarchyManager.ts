@@ -53,11 +53,12 @@ export class HierarchyManager {
     const obj = allObjects[objectId];
     const physicsState = allPhysicsStates.find((p) => p.id === objectId);
 
+    // Use pre-filtered active objects instead of manual status checking
+    const activeObjects = StateAccessor.getActiveObjects();
     if (
       obj &&
       physicsState &&
-      obj.status !== CelestialStatus.DESTROYED &&
-      obj.status !== CelestialStatus.ANNIHILATED
+      activeObjects[objectId] // Object is active if it exists in activeObjects
     ) {
       this.handleObjectHierarchy(
         obj,
@@ -194,7 +195,9 @@ export class HierarchyManager {
     if (!parentId) return;
 
     const parent = allObjects[parentId];
-    if (!parent || parent.status === CelestialStatus.DESTROYED) {
+    // Use pre-filtered active objects to check if parent is destroyed
+    const activeObjects = StateAccessor.getActiveObjects();
+    if (!parent || !activeObjects[parentId]) {
       // Parent is gone, find a new one
       const newParent = this.findBestParent(
         obj,
@@ -250,11 +253,9 @@ export class HierarchyManager {
         const potentialParent = allObjects[nearbyId];
         const parentState = allPhysicsStates.find((p) => p.id === nearbyId);
 
-        if (
-          !potentialParent ||
-          !parentState ||
-          potentialParent.status === CelestialStatus.DESTROYED
-        ) {
+        // Use pre-filtered active objects to check if parent is destroyed
+        const activeObjects = StateAccessor.getActiveObjects();
+        if (!potentialParent || !parentState || !activeObjects[nearbyId]) {
           continue;
         }
 
@@ -301,19 +302,18 @@ export class HierarchyManager {
     let bestParent: CelestialObject | null = null;
     let maxForce = -1;
 
-    for (const potentialParentId in allObjects) {
+    // Use pre-filtered active objects instead of manual filtering
+    const activeObjects = StateAccessor.getActiveObjects();
+
+    for (const potentialParentId in activeObjects) {
       if (potentialParentId === child.id) continue;
 
-      const potentialParent = allObjects[potentialParentId];
+      const potentialParent = activeObjects[potentialParentId];
       const parentState = allPhysicsStates.find(
         (p) => p.id === potentialParent.id,
       );
 
-      if (
-        !potentialParent ||
-        !parentState ||
-        potentialParent.status === CelestialStatus.DESTROYED
-      ) {
+      if (!potentialParent || !parentState) {
         continue;
       }
 

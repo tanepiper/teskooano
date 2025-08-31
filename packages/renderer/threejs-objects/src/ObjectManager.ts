@@ -280,24 +280,21 @@ export class ObjectManager extends StateSubscriptionMixin {
    * @returns The corresponding Object3D, or undefined if not found.
    */
   getCentralBody(): THREE.Object3D | undefined {
-    // Find the sun (or primary star)
-    const centralBodyId = Object.keys(this.latestRenderableObjects).find(
-      (id) => {
-        const obj = this.latestRenderableObjects[id];
-        return (
-          obj.type === CelestialType.STAR &&
-          obj.status !== CelestialStatus.DESTROYED &&
-          !obj.parentId // Assuming the primary star has no parent
-        );
-      },
-    );
+    // Find the sun (or primary star) using pre-filtered active objects
+    const activeObjects = StateAccessor.getActiveObjects();
+    const centralBodyId = Object.keys(activeObjects).find((id) => {
+      const obj = activeObjects[id];
+      return (
+        obj.type === CelestialType.STAR && !obj.parentId // Assuming the primary star has no parent
+      );
+    });
 
     if (centralBodyId) {
       return this.objects.get(centralBodyId) ?? undefined;
     }
 
-    // Fallback to the first object if no primary star is found
-    const firstId = Object.keys(this.latestRenderableObjects)[0];
+    // Fallback to the first active object if no primary star is found
+    const firstId = Object.keys(activeObjects)[0];
     return this.objects.get(firstId) ?? undefined;
   }
 

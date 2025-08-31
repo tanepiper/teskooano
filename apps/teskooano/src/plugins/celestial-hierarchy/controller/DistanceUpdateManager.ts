@@ -1,7 +1,6 @@
 import { CelestialObject, CelestialType } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import { WasmSpatialService } from "@teskooano/core-physics";
-import { OSVector3 } from "@teskooano/core-math";
 import { physicsSystemAdapter } from "@teskooano/core-state";
 import type { PhysicsStateReal } from "@teskooano/data-types";
 

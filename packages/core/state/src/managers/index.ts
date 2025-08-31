@@ -1,1 +1,1 @@
-export { CelestialManager, celestialManager } from "./celestialManager";
+export * from "./CelestialManager";

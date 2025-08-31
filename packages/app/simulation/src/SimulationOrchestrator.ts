@@ -148,10 +148,14 @@ export class SimulationOrchestrator {
    */
   public createPhysicsCallback(): (deltaTime: number) => void {
     return (deltaTime: number) => {
-      if (
-        !this.isRunning ||
-        simulationStateService.getSimulationState().paused
-      ) {
+      if (!this.isRunning) {
+        return;
+      }
+
+      const simulationState = simulationStateService.getSimulationState();
+      if (simulationState.paused) {
+        // Reset lastRealTime when paused to prevent time jumps when unpausing
+        this.lastRealTime = 0;
         return;
       }
 

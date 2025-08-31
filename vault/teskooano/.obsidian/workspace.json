@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "core/core-state/CelestialManager.md",
+                "file": "core/core-state/StateAccessor.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "CelestialManager"
+              "title": "StateAccessor"
             }
           }
         ]
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "core/core-state/CelestialManager.md",
+                "file": "core/core-state/StateAccessor.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of CelestialManager"
+              "title": "Outline of StateAccessor"
             }
           }
         ],
@@ -171,6 +171,8 @@
   },
   "active": "6ecb65330d6d43b7",
   "lastOpenFiles": [
+    "core/core-state/StateSubscriptionMixin.md",
+    "core/core-state/CelestialManager.md",
     "core/core-state/SimulationTypes.md",
     "core/core-state/SimulationUtils.md",
     "core/core-state/RenderableStore.md",
@@ -178,7 +180,6 @@
     "core/core-state/SeedStore.md",
     "core/core-state/PhysicsStateProvider.md",
     "core/core-state/PhysicsStateCalculator.md",
-    "core/core-state/StateSubscriptionMixin.md",
     "threejs-renderers/threejs-orbits/IdealStrategy.md",
     "threejs-renderers/threejs-orbits/IOrbitVisualizationStrategy.md",
     "threejs-renderers/threejs-orbits/threejs-orbits.md",
@@ -199,7 +200,6 @@
     "threejs-renderers/threejs-orbits/SharedMaterials.md",
     "threejs-renderers/threejs-orbits/TrailCurveInterpolator.md",
     "threejs-renderers/threejs-orbits/KeplerianManager.md",
-    "threejs-renderers/threejs-orbits/PredictionManager.md",
     "architecture",
     "threejs-renderers/threejs-orbits",
     "threejs-renderers/threejs-objects",

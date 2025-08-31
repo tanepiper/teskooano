@@ -191,14 +191,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   }
 
   private _handleFocusRequest(objectId: string): void {
-    // Validate object before requesting focus
-    const currentObjects = StateAccessor.getCelestialObjects();
-    const currentObject = currentObjects[objectId];
-    if (
-      !currentObject ||
-      currentObject.status === CelestialStatus.DESTROYED ||
-      currentObject.status === CelestialStatus.ANNIHILATED
-    ) {
+    // Validate object before requesting focus using pre-filtered active objects
+    const activeObjects = StateAccessor.getActiveObjects();
+    const currentObject = activeObjects[objectId];
+    if (!currentObject) {
       console.warn(
         `[CelestialHierarchyController] Focus ignored for inactive object ${objectId}.`,
       );
@@ -208,14 +204,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   }
 
   private _handleFollowRequest(objectId: string): void {
-    // Validate object before requesting follow
-    const currentObjects = StateAccessor.getCelestialObjects();
-    const currentObject = currentObjects[objectId];
-    if (
-      !currentObject ||
-      currentObject.status === CelestialStatus.DESTROYED ||
-      currentObject.status === CelestialStatus.ANNIHILATED
-    ) {
+    // Validate object before requesting follow using pre-filtered active objects
+    const activeObjects = StateAccessor.getActiveObjects();
+    const currentObject = activeObjects[objectId];
+    if (!currentObject) {
       console.warn(
         `[CelestialHierarchyController] Follow ignored for inactive object ${objectId}.`,
       );

@@ -10,9 +10,9 @@ import {
   CelestialType,
   CustomEvents,
 } from "@teskooano/data-types";
-import { renderableStore } from "../stores/renderableStore";
+import { renderableStore } from "../stores/RenderableStore";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
-import { celestialStore } from "../stores/celestialStore";
+import { celestialStore } from "../stores/CelestialStore";
 import { ClearStateOptions } from "../types/types";
 
 // Cache for frequently accessed data

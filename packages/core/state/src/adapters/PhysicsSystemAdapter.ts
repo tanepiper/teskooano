@@ -7,8 +7,9 @@ import type {
   SimulationStepResult,
   PhysicsStateReal,
 } from "@teskooano/core-physics";
-import { celestialStore } from "../stores/celestialStore";
-import { physicsStore } from "../stores/physicsStore";
+import { Observable, take } from "rxjs";
+import { celestialStore } from "../stores/CelestialStore";
+import { physicsStore } from "../stores/PhysicsStore";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import type { OrbitalParameters } from "@teskooano/data-types";
 
@@ -18,7 +19,7 @@ import type { OrbitalParameters } from "@teskooano/data-types";
  * and the physics engine. It prepares data for the physics simulation and applies
  * the simulation results back to the game state.
  */
-class PhysicsSystemAdapter {
+export class PhysicsSystemAdapter {
   private static instance: PhysicsSystemAdapter;
 
   private constructor() {
@@ -34,30 +35,27 @@ class PhysicsSystemAdapter {
 
   /**
    * Get an array of REAL physics states for active celestial objects to be fed into the simulation.
-   * Filters out destroyed objects or those explicitly ignoring physics.
+   * Uses RxJS observables for efficient filtering and caching.
    */
   public getPhysicsBodies(): PhysicsStateReal[] {
-    const bodies: PhysicsStateReal[] = [];
-    const allObjects = celestialStore.getObjects();
+    return PhysicsStateProvider.getPhysicsStates();
+  }
 
-    Object.values(allObjects)
-      .filter(
-        (obj: CelestialObject) =>
-          obj.status !== CelestialStatus.DESTROYED &&
-          obj.status !== CelestialStatus.ANNIHILATED && // Also exclude annihilated
-          !obj.ignorePhysics,
-      )
-      .forEach((obj: CelestialObject) => {
-        const physicsState = PhysicsStateProvider.getPhysicsState(obj);
-        if (physicsState) {
-          bodies.push(physicsState);
-        } else {
-          console.warn(
-            `[PhysicsSystemAdapter] Object ${obj.id} is active for physics but could not calculate physics state, skipping in simulation.`,
-          );
-        }
-      });
-    return bodies;
+  /**
+   * Get an observable of physics states for active celestial objects.
+   * This is the reactive version of getPhysicsBodies().
+   */
+  public getPhysicsBodies$(): Observable<PhysicsStateReal[]> {
+    return PhysicsStateProvider.physicsStates$;
+  }
+
+  /**
+   * Get an observable of active celestial objects (filtered for physics simulation).
+   */
+  public getPhysicsActiveObjects$(): Observable<
+    Record<string, CelestialObject>
+  > {
+    return PhysicsStateProvider.physicsActiveObjects$;
   }
 
   /**

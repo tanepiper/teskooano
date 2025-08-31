@@ -5,6 +5,7 @@ import {
 } from "@teskooano/data-types";
 import { generateIconConfig } from "../../celestial-icons";
 import { formatDetailedType } from "../utils/type-formatter";
+import { StateAccessor } from "@teskooano/core-state";
 
 /**
  * Manages the DOM representation of the celestial object list.
@@ -31,23 +32,12 @@ export class FocusListManager {
    * @param currentFocusedId The ID of the currently focused object, if any.
    */
   public populate(
-    objects: Record<string, CelestialObject>,
+    _objects: Record<string, CelestialObject>,
     currentFocusedId: string | null,
   ): void {
-    const activeObjects: Record<string, CelestialObject> = {};
-    const destroyedObjects: CelestialObject[] = [];
-
-    for (const id in objects) {
-      const obj = objects[id];
-      if (
-        obj.status === CelestialStatus.DESTROYED ||
-        obj.status === CelestialStatus.ANNIHILATED
-      ) {
-        destroyedObjects.push(obj);
-      } else {
-        activeObjects[id] = obj;
-      }
-    }
+    // Use pre-filtered objects instead of manual filtering
+    const activeObjects = StateAccessor.getActiveObjects();
+    const destroyedObjects = Object.values(StateAccessor.getDestroyedObjects());
 
     this.populateHierarchy(activeObjects, currentFocusedId);
     this.populateDestroyedList(destroyedObjects);
@@ -266,18 +256,12 @@ export class FocusListManager {
       return true;
     }
 
-    const rowElement = listItem.querySelector<HTMLElement>(
-      "celestial-row.focus-row-item",
-    );
-    const caretElement = listItem.querySelector<HTMLElement>(
-      ":scope > .list-item-content > .caret",
-    );
+    const isDestroyed = [
+      CelestialStatus.DESTROYED,
+      CelestialStatus.ANNIHILATED,
+    ].includes(status);
 
-    const isDestroyed = status === CelestialStatus.DESTROYED;
-    const isAnnihilated = status === CelestialStatus.ANNIHILATED;
-    const isInactive = isDestroyed || isAnnihilated;
-
-    if (isInactive) {
+    if (isDestroyed) {
       // The object has been destroyed, it needs to move to the other list.
       // The easiest and safest way to handle this structural change is to
       // trigger a full refresh of both lists.

@@ -1,12 +1,9 @@
-import { celestialStore } from "./celestialStore";
-import { seedStore } from "./seedStore";
-import { physicsStore } from "./physicsStore";
-import { renderableStore } from "./renderableStore";
+import { celestialStore } from "./CelestialStore.js";
+import { seedStore } from "./SeedStore.js";
+import { physicsStore } from "./PhysicsStore.js";
+import { renderableStore } from "./RenderableStore.js";
 
-export { celestialStore } from "./celestialStore";
-export { seedStore } from "./seedStore";
-export { physicsStore } from "./physicsStore";
-export { renderableStore } from "./renderableStore";
+export { celestialStore, seedStore, physicsStore, renderableStore };
 
 // Re-export observables for convenience
 export const currentSeed$ = seedStore.currentSeed$;

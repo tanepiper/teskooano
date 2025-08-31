@@ -18,6 +18,7 @@ import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";
 import { GlobalLODManager } from "./GlobalLODManager";
+import { StateAccessor } from "@teskooano/core-state";
 
 /**
  * @internal
@@ -91,10 +92,8 @@ export class ObjectLifecycleManager {
       }
 
       // Handle destroyed/annihilated objects explicitly
-      if (
-        objectData.status === CelestialStatus.DESTROYED ||
-        objectData.status === CelestialStatus.ANNIHILATED
-      ) {
+      const destroyedObjects = StateAccessor.getDestroyedObjects();
+      if (destroyedObjects[id]) {
         if (mesh) {
           this.removeObject(objectData.id);
         }

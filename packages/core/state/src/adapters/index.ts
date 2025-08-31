@@ -1,1 +1,1 @@
-export { physicsSystemAdapter } from "./PhysicsSystemAdapter";
+export * from "./PhysicsSystemAdapter";

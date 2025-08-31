@@ -13,13 +13,6 @@ describe("PhysicsStateCalculator", () => {
     );
   });
 
-  it("should have createRenderableObject method", async () => {
-    expect(PhysicsStateCalculator).toBeDefined();
-    expect(typeof PhysicsStateCalculator.createRenderableObject).toBe(
-      "function",
-    );
-  });
-
   it("should be a static class", async () => {
     expect(PhysicsStateCalculator).toBeDefined();
     expect(typeof PhysicsStateCalculator).toBe("object");

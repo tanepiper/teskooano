@@ -55,20 +55,16 @@ export class PredictionCalculator {
       const radii = new Map<string | number, number>();
       const bodyTypes = new Map<string | number, CelestialType>();
 
-      Object.values(fullObjectsMap)
-        .filter(
-          (obj) =>
-            obj.status !== CelestialStatus.DESTROYED &&
-            obj.status !== CelestialStatus.ANNIHILATED &&
-            !obj.ignorePhysics,
-        )
-        .forEach((obj) => {
-          const physicsState = PhysicsStateProvider.getPhysicsState(obj);
-          if (physicsState) {
-            radii.set(obj.id, obj.realRadius_m);
-            bodyTypes.set(obj.id, obj.type);
-          }
-        });
+      // Use pre-filtered physics-active objects instead of manual filtering
+      const physicsActiveObjects = StateAccessor.getPhysicsActiveObjects();
+
+      Object.values(physicsActiveObjects).forEach((obj) => {
+        const physicsState = PhysicsStateProvider.getPhysicsState(obj);
+        if (physicsState) {
+          radii.set(obj.id, obj.realRadius_m);
+          bodyTypes.set(obj.id, obj.type);
+        }
+      });
 
       // Use WASM spatial partitioning for all predictions
       const predictedResult = await predictTrajectory(

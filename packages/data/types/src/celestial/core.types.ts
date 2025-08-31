@@ -51,4 +51,7 @@ export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
 
   /** When true, this object will be excluded from collision detection. */
   ignoreCollisions?: boolean;
+
+  /** When true, this object will be visible in the simulation. Defaults to true if not specified. */
+  isVisible?: boolean;
 }
