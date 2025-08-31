@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "threejs-renderers/threejs-orbits/IdealStrategy.md",
+                "file": "core/core-state/CelestialManager.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "IdealStrategy"
+              "title": "CelestialManager"
             }
           }
         ]
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "threejs-renderers/threejs-orbits/IdealStrategy.md",
+                "file": "core/core-state/CelestialManager.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of IdealStrategy"
+              "title": "Outline of CelestialManager"
             }
           }
         ],
@@ -171,6 +171,15 @@
   },
   "active": "6ecb65330d6d43b7",
   "lastOpenFiles": [
+    "core/core-state/SimulationTypes.md",
+    "core/core-state/SimulationUtils.md",
+    "core/core-state/RenderableStore.md",
+    "core/core-state/PhysicsStore.md",
+    "core/core-state/SeedStore.md",
+    "core/core-state/PhysicsStateProvider.md",
+    "core/core-state/PhysicsStateCalculator.md",
+    "core/core-state/StateSubscriptionMixin.md",
+    "threejs-renderers/threejs-orbits/IdealStrategy.md",
     "threejs-renderers/threejs-orbits/IOrbitVisualizationStrategy.md",
     "threejs-renderers/threejs-orbits/threejs-orbits.md",
     "threejs-renderers/threejs-orbits/simplify.md",
@@ -180,7 +189,6 @@
     "Untitled.canvas",
     "threejs-renderers/threejs-orbits/NBodyPredictionRenderer.md",
     "threejs-renderers/threejs-orbits/NBodyTrailsRenderer.md",
-    "threejs-renderers/threejs-orbits/IdealStrategy.md",
     "threejs-renderers/threejs-orbits/NBodyStrategy.md",
     "threejs-renderers/threejs-orbits/OrbitCalculator.md",
     "Untitled.md",
@@ -192,13 +200,6 @@
     "threejs-renderers/threejs-orbits/TrailCurveInterpolator.md",
     "threejs-renderers/threejs-orbits/KeplerianManager.md",
     "threejs-renderers/threejs-orbits/PredictionManager.md",
-    "threejs-renderers/threejs-orbits/TrailManager.md",
-    "threejs-renderers/threejs-orbits/OrbitsManager.md",
-    "threejs-renderers/threejs-objects/physicsToThreeJSPosition.md",
-    "threejs-renderers/threejs-celestial/BaseCelestialRenderer.md",
-    "threejs-renderers/threejs-objects/RenderableObjectFactory.md",
-    "Welcome.md",
-    "threejs-renderers/threejs-objects/MeshFactory.md",
     "architecture",
     "threejs-renderers/threejs-orbits",
     "threejs-renderers/threejs-objects",

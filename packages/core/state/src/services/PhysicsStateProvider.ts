@@ -4,7 +4,7 @@ import type {
   PhysicsStateReal,
 } from "@teskooano/data-types";
 import { PhysicsStateCalculator } from "./PhysicsStateCalculator";
-import { StateAccessor } from "@teskooano/core-state";
+import { StateAccessor } from "../utils";
 
 /**
  * Service that provides physics state for any CelestialObject by calculating it on-demand.

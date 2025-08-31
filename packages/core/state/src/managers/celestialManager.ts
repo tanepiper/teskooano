@@ -10,10 +10,10 @@ import {
   CelestialType,
   CustomEvents,
 } from "@teskooano/data-types";
-import { renderableStore } from "../renderableStore";
+import { renderableStore } from "../stores/renderableStore";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import { celestialStore } from "../stores/celestialStore";
-import { ClearStateOptions } from "../types";
+import { ClearStateOptions } from "../types/types";
 
 // Cache for frequently accessed data
 const ROOT_OBJECT_TYPES = new Set([

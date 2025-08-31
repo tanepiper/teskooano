@@ -1,0 +1,1 @@
+export { physicsSystemAdapter } from "./PhysicsSystemAdapter";

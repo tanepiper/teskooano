@@ -3,7 +3,7 @@ import {
   IntegratorType,
   SimulationMode,
 } from "@teskooano/data-types";
-import type { SimulationConfiguration } from "./types";
+import type { SimulationConfiguration } from "../types";
 
 /**
  * Validates if a simulation configuration is valid.

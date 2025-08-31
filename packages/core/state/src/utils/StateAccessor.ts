@@ -5,18 +5,21 @@ import type {
 } from "@teskooano/data-types";
 import { Observable, startWith } from "rxjs";
 import {
-  accelerationVectors$,
-  celestial,
-  celestialHierarchy$,
-  celestialObjects$,
-  currentSeed$,
-  physics,
-  seed,
-  simulationState$,
-  simulationStateService,
-} from "../game";
-import { renderableStore } from "../game/renderableStore";
-import type { SimulationState } from "../game/types";
+  celestialStore as celestial,
+  physicsStore as physics,
+  seedStore as seed,
+  renderableStore,
+} from "./../stores";
+import { simulationStateService } from "../services/simulation";
+
+import type { SimulationState } from "../types";
+
+// Re-export observables for convenience
+export const currentSeed$ = seed.currentSeed$;
+export const celestialObjects$ = celestial.objects$;
+export const celestialHierarchy$ = celestial.hierarchy$;
+export const accelerationVectors$ = physics.accelerationVectors$;
+export const simulationState$ = simulationStateService.simulationState$;
 
 /**
  * Standardized accessor for all state in the Teskooano application.

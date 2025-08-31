@@ -7,9 +7,9 @@ import type {
   SimulationStepResult,
   PhysicsStateReal,
 } from "@teskooano/core-physics";
-import { celestialStore } from "./stores/celestialStore";
-import { physicsStore } from "./stores/physicsStore";
-import { PhysicsStateProvider } from "./services/PhysicsStateProvider";
+import { celestialStore } from "../stores/celestialStore";
+import { physicsStore } from "../stores/physicsStore";
+import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import type { OrbitalParameters } from "@teskooano/data-types";
 
 /**
