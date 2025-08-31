@@ -218,8 +218,9 @@ export class SimulationOrchestrator {
   private prepareSimulationParameters(newSimulationTime: number) {
     const allCelestialObjects =
       physicsSystemAdapter.getCelestialObjectsSnapshot();
-    const simulationConfig =
-      simulationStateService.getSimulationState().simulationConfig;
+    const state = simulationStateService.getSimulationState();
+    const simulationConfig = state.simulationConfig;
+    const timeScale = state.timeScale;
     const orbitalParameters =
       physicsSystemAdapter.getOrbitalParametersSnapshot();
 
@@ -246,6 +247,7 @@ export class SimulationOrchestrator {
       orbitalParameters,
       parentIds: parentIdsMap,
       currentTime_s: newSimulationTime,
+      timeScale,
       radii,
       isStar,
       bodyTypes,
