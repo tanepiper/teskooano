@@ -1,5 +1,5 @@
 // Import from logical directories
-import { celestialManager, simulationManager } from "./managers";
+import { celestialManager, simulationManager, CameraManager } from "./managers";
 import { physicsSystemAdapter } from "./adapters";
 import { PhysicsStateCalculator, PhysicsStateProvider } from "./services";
 import {
@@ -8,6 +8,7 @@ import {
   seedStore as seed,
   renderableStore,
   simulationStore,
+  CameraStore,
 } from "./stores";
 // Export types and utilities
 export {
@@ -32,6 +33,8 @@ export {
   seed,
   simulationManager,
   simulationStore,
+  CameraManager,
+  CameraStore,
 };
 
 // Export observables directly
@@ -50,9 +53,7 @@ export const actions = {
   setStartDate: simulationManager.setStartDate.bind(simulationManager),
   resetToStartDate: simulationManager.resetToStartDate.bind(simulationManager),
   stepTime: simulationManager.stepTime.bind(simulationManager),
-  selectObject: simulationManager.selectObject.bind(simulationManager),
-  setFocusedObject: simulationManager.setFocusedObject.bind(simulationManager),
-  updateCamera: simulationManager.updateCamera.bind(simulationManager),
+
   setPerformanceProfile:
     simulationManager.setPerformanceProfile.bind(simulationManager),
   setTrailLengthMultiplier:

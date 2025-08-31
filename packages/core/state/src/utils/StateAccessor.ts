@@ -11,10 +11,12 @@ import {
   seedStore as seed,
   renderableStore,
   simulationStore,
+  CameraStore,
 } from "./../stores";
 import { PhysicsStateProvider } from "../services";
-
+import { CameraManager } from "../managers";
 import type { SimulationState } from "../types";
+import type { CameraState } from "../stores/CameraStore";
 
 // Re-export observables for convenience
 export const currentSeed$ = seed.currentSeed$;
@@ -360,5 +362,48 @@ export class StateAccessor {
    */
   static getRenderableObjectCount(): number {
     return Object.keys(this.getRenderableObjects()).length;
+  }
+
+  // =============================================================================
+  // PANEL-SPECIFIC CAMERA STATE ACCESS
+  // =============================================================================
+
+  /**
+   * Gets a camera manager instance for a specific panel.
+   * @param panelId Unique identifier for the panel.
+   * @param initialState Optional initial camera state for new instances.
+   * @returns The camera manager instance for the panel.
+   */
+  static getCameraManager(
+    panelId: string,
+    initialState?: Partial<CameraState>,
+  ): CameraManager {
+    return CameraManager.getInstance(panelId, initialState);
+  }
+
+  /**
+   * Gets a camera store instance for a specific panel.
+   * @param panelId Unique identifier for the panel.
+   * @param initialState Optional initial camera state for new instances.
+   * @returns The camera store instance for the panel.
+   */
+  static getCameraStore(panelId: string, initialState?: Partial<CameraState>) {
+    return CameraStore.getInstance(panelId, initialState);
+  }
+
+  /**
+   * Gets all registered camera store instances.
+   * @returns Map of panel ID to camera store instance.
+   */
+  static getAllCameraStores(): Map<string, CameraStore> {
+    return CameraStore.getAllInstances();
+  }
+
+  /**
+   * Removes a camera store instance for a specific panel.
+   * @param panelId Unique identifier for the panel.
+   */
+  static removeCameraStore(panelId: string): void {
+    CameraStore.removeInstance(panelId);
   }
 }

@@ -91,7 +91,8 @@ export class SceneManager {
 
     // Get initial state for defaults
     const simState = StateAccessor.getSimulationState();
-    this.fov = options.fov ?? simState.camera.fov ?? 75;
+    // Camera state is now per-panel, so we use the provided FOV or default
+    this.fov = options.fov ?? 75;
     this.width = container.clientWidth;
     this.height = container.clientHeight;
 

@@ -1,4 +1,3 @@
-import { OSVector3 } from "@teskooano/core-math";
 import { SimulationState, SimulationConfiguration } from "../types/types";
 import { getDefaultConfiguration, isValidConfiguration } from "../utils";
 import {
@@ -119,43 +118,6 @@ export class SimulationManager {
         "[SimulationManager] Cannot step time while simulation is running.",
       );
     }
-  }
-
-  /**
-   * Sets the currently selected celestial object.
-   * This is typically used for displaying information about an object in the UI.
-   * @param objectId The unique ID of the object to select, or null to deselect.
-   */
-  public selectObject(objectId: string | null): void {
-    simulationStore.updateSimulationState({
-      selectedObject: objectId,
-    });
-  }
-
-  /**
-   * Sets the object that the camera should be focused on or following.
-   * @param objectId The unique ID of the object to focus, or null to unfocus.
-   */
-  public setFocusedObject(objectId: string | null): void {
-    simulationStore.updateSimulationState({
-      focusedObjectId: objectId,
-    });
-  }
-
-  /**
-   * Updates the camera's position and target in the simulation state.
-   * @param position The new position of the camera.
-   * @param target The new point the camera should look at.
-   */
-  public updateCamera(position: OSVector3, target: OSVector3): void {
-    const currentState = simulationStore.getSimulationState();
-    simulationStore.updateSimulationState({
-      camera: {
-        ...currentState.camera,
-        position,
-        target,
-      },
-    });
   }
 
   /**

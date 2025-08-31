@@ -17,8 +17,8 @@ import { UniformsRendererFactory } from "./uniform-renderers/UniformsRendererFac
 export class CelestialUniformsController extends StateSubscriptionMixin {
   private _view: CelestialUniformsEditor;
   private _container: HTMLElement;
-  private _placeholder: HTMLElement;
-  private _titleEl: HTMLElement;
+
+  private _panelId: string;
 
   private currentSelectedId: string | null = null;
   private activeInputSubscriptions: any[] = [];
@@ -34,18 +34,18 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
    * @param container The main container element to render controls into.
    * @param placeholder The placeholder element to show messages.
    * @param titleEl The title element of the panel.
+   * @param panelId Unique identifier for the panel this controller belongs to.
    */
   constructor(
     view: CelestialUniformsEditor,
     container: HTMLElement,
-    placeholder: HTMLElement,
-    titleEl: HTMLElement,
+    panelId: string,
   ) {
     super();
     this._view = view;
     this._container = container;
-    this._placeholder = placeholder;
-    this._titleEl = titleEl;
+
+    this._panelId = panelId;
 
     this._handleRendererFocusChange = (event: Event): void => {
       const customEvent = event as CustomEvent<{
@@ -145,26 +145,19 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
 
   /**
    * Gets the currently focused object ID from the camera manager state.
+   * Uses the panel-specific camera manager for this controller's panel.
    * @returns The ID of the currently focused/followed object, or null if none.
    */
   private _getCurrentFocusedObjectId(): string | null {
-    // Try to get the focused object from the camera manager state
-    // We need to find the camera manager through the panel system
-    const panels = document.querySelectorAll("[data-panel-api-id]");
-    for (const panel of Array.from(panels)) {
-      const panelApiId = panel.getAttribute("data-panel-api-id");
-      if (panelApiId) {
-        // Try to access the camera manager through the panel
-        const panelElement = panel as any;
-        if (panelElement._cameraManager) {
-          const cameraState = panelElement._cameraManager
-            .getCameraState$?.()
-            ?.getValue?.();
-          if (cameraState?.focusedObjectId) {
-            return cameraState.focusedObjectId;
-          }
-        }
-      }
+    // Try to get from the panel-specific camera manager
+    try {
+      const cameraManager = StateAccessor.getCameraManager(this._panelId);
+      return cameraManager.getFocusedObject();
+    } catch (error) {
+      console.warn(
+        `[CelestialUniformsController] Could not access camera state for panel ${this._panelId}:`,
+        error,
+      );
     }
 
     // Fallback: try to get from the global state

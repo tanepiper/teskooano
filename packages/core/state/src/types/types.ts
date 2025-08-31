@@ -56,7 +56,8 @@ export interface VisualSettingsState {
 
 /**
  * Represents the overall state of the simulation at any given time.
- * This includes time, control parameters, selected objects, camera, and performance settings.
+ * This includes time, control parameters, and performance settings.
+ * Camera state is managed separately by CameraStore.
  */
 export interface SimulationState {
   /** The current accumulated simulation time in seconds. */
@@ -67,12 +68,6 @@ export interface SimulationState {
   startDate: Date;
   /** Indicates whether the simulation is currently paused. */
   paused: boolean;
-  /** The ID of the currently selected celestial object, or null if none selected. */
-  selectedObject: string | null;
-  /** The ID of the celestial object that the camera is focused on, or null. */
-  focusedObjectId: string | null;
-  /** The current state of the simulation camera. */
-  camera: CameraState;
   /** The simulation configuration (mode, algorithm, integrator). */
   simulationConfig: SimulationConfiguration;
   /** Current visual settings for the simulation. */

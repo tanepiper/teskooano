@@ -18,6 +18,7 @@ export class CelestialInfoController extends StateSubscriptionMixin {
   private _viewManager: CelestialInfoViewManager;
   private _currentSelectedId: string | null = null;
   private _parentPanel: CompositeEnginePanel | null = null;
+  private _panelId: string;
 
   /**
    * Creates an instance of CelestialInfoController.
@@ -33,6 +34,7 @@ export class CelestialInfoController extends StateSubscriptionMixin {
     super();
     this._view = view;
     this._viewManager = new CelestialInfoViewManager(container, placeholder);
+    this._panelId = "";
   }
 
   /**
@@ -57,6 +59,32 @@ export class CelestialInfoController extends StateSubscriptionMixin {
   public setParentPanel(panel: CompositeEnginePanel): void {
     this._parentPanel = panel;
     this._viewManager.setParentPanel(panel);
+  }
+
+  /**
+   * Sets the panel ID for this controller.
+   * @param panelId Unique identifier for the panel this controller belongs to.
+   */
+  public setPanelId(panelId: string): void {
+    this._panelId = panelId;
+  }
+
+  /**
+   * Handles the initial selection of an object when the panel is created.
+   * @param selectedId The ID of the initially focused object, if any.
+   */
+  public handleInitialSelection(selectedId: string | null): void {
+    // If no specific object is provided, check if there's a currently followed object
+    if (!selectedId) {
+      // Try to get the currently focused object from the camera manager
+      // This will work for both focused and followed objects since they both set focusedObjectId
+      const currentFocusedId = this._getCurrentFocusedObjectId();
+      if (currentFocusedId) {
+        selectedId = currentFocusedId;
+      }
+    }
+
+    this.handleSelectionChange(selectedId);
   }
 
   /**
@@ -131,6 +159,48 @@ export class CelestialInfoController extends StateSubscriptionMixin {
       }
     }
   };
+
+  /**
+   * Gets the currently focused object ID from the panel-specific camera manager.
+   * @returns The ID of the currently focused/followed object, or null if none.
+   */
+  private _getCurrentFocusedObjectId(): string | null {
+    // Try to get from the panel-specific camera manager
+    try {
+      const cameraManager = StateAccessor.getCameraManager(this._panelId);
+      return cameraManager.getFocusedObject();
+    } catch (error) {
+      console.warn(
+        `[CelestialInfoController] Could not access camera state for panel ${this._panelId}:`,
+        error,
+      );
+    }
+
+    // Fallback: try to get from the global state
+    try {
+      const allCelestials = StateAccessor.getCelestialObjects();
+      // Look for any object that might be currently focused
+      // This is a heuristic - we'll check if there's only one object or if there's a clear "main" object
+      const celestialIds = Object.keys(allCelestials);
+      if (celestialIds.length === 1) {
+        return celestialIds[0];
+      }
+      // If there are multiple objects, look for the main star (usually the first one)
+      const mainStar = Object.values(allCelestials).find(
+        (obj) => obj.type === "STAR" && (obj.properties as any)?.isMainStar,
+      );
+      if (mainStar) {
+        return mainStar.id;
+      }
+    } catch (error) {
+      console.warn(
+        "[CelestialInfoController] Could not determine current focused object:",
+        error,
+      );
+    }
+
+    return null;
+  }
 
   /**
    * Central logic for handling a change in the selected object.

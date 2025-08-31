@@ -15,6 +15,7 @@ import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-p
  */
 export class CelestialInfo extends HTMLElement implements IContentRenderer {
   private _controller: CelestialInfoController;
+  private _panelId: string | null = null;
 
   /**
    * Unique identifier for the custom element.
@@ -53,6 +54,12 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
+    // Store the panel ID for use in the controller
+    this._panelId = parameters.api.id;
+
+    // Set the panel ID in the controller
+    this._controller.setPanelId(this._panelId);
+
     const parentPanel = (parameters.params as any)
       ?.parentInstance as CompositeEnginePanel;
 

@@ -1,4 +1,3 @@
-import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
 import { SimulationState, SimulationConfiguration } from "../types/types";
 import { getDefaultConfiguration, isValidConfiguration } from "../utils";
@@ -23,13 +22,6 @@ export class SimulationStore {
     timeScale: 1,
     startDate: new Date(),
     paused: false,
-    selectedObject: null,
-    focusedObjectId: null,
-    camera: {
-      position: new OSVector3().setFromArray([0, 100, 100]),
-      target: new OSVector3().setZero(),
-      fov: 75,
-    },
     simulationConfig: getDefaultConfiguration(),
     visualSettings: {
       trailLengthMultiplier: 2,

@@ -20,6 +20,7 @@ export class CelestialUniformsEditor
   private _container: HTMLElement | null = null;
   private _placeholder: HTMLElement | null = null;
   private _titleEl: HTMLElement | null = null;
+  private _panelId: string | null = null;
 
   /**
    * Unique identifier for the custom element.
@@ -33,6 +34,9 @@ export class CelestialUniformsEditor
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
+    // Store the panel ID for use in the controller
+    this._panelId = parameters.api.id;
+
     const params = (parameters.params as { focusedObjectId?: string }) || {};
     this._controller?.handleInitialSelection(params.focusedObjectId ?? null);
   }
@@ -46,17 +50,21 @@ export class CelestialUniformsEditor
     this._placeholder = this._shadow.querySelector(".placeholder");
     this._titleEl = this._shadow.querySelector("#uniforms-title");
 
-    if (this._container && this._placeholder && this._titleEl) {
+    if (
+      this._container &&
+      this._placeholder &&
+      this._titleEl &&
+      this._panelId
+    ) {
       this._controller = new CelestialUniformsController(
         this,
         this._container,
-        this._placeholder,
-        this._titleEl,
+        this._panelId,
       );
       this._controller.initialize();
     } else {
       console.error(
-        "[CelestialUniformsEditor] Could not find essential elements in shadow DOM.",
+        "[CelestialUniformsEditor] Could not find essential elements in shadow DOM or panel ID not available.",
       );
     }
   }
