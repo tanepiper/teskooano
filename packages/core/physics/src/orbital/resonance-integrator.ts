@@ -1,5 +1,4 @@
-import { OSVector3 } from "@teskooano/core-math";
-import { type OrbitalElements } from "./shared";
+import type { OrbitalParameters } from "@teskooano/data-types";
 import { 
   calculateResonantAngle, 
   determineLibrationMode, 
@@ -61,22 +60,22 @@ export class ResonanceIntegrator {
    * Integrate orbital evolution with resonance detection
    */
   public integrateWithResonance(
-    tnoElements: OrbitalElements,
-    planetElements: OrbitalElements,
+    tnoElements: OrbitalParameters,
+    planetElements: OrbitalParameters,
     resonanceConfig: ResonanceConfig,
     integrationTime: number
   ): {
-    finalElements: OrbitalElements;
+    finalElements: OrbitalParameters;
     resonanceState: ResonanceState;
     evolutionHistory: Array<{
       time: number;
-      elements: OrbitalElements;
+      elements: OrbitalParameters;
       resonanceState: ResonanceState;
     }>;
   } {
     const evolutionHistory: Array<{
       time: number;
-      elements: OrbitalElements;
+      elements: OrbitalParameters;
       resonanceState: ResonanceState;
     }> = [];
 
@@ -166,8 +165,8 @@ export class ResonanceIntegrator {
    * Check if an object is currently in resonance
    */
   private checkResonance(
-    tnoElements: OrbitalElements,
-    planetElements: OrbitalElements,
+    tnoElements: OrbitalParameters,
+    planetElements: OrbitalParameters,
     resonanceConfig: ResonanceConfig
   ): boolean {
     const tnoPeriod = tnoElements.period_s;
@@ -178,7 +177,10 @@ export class ResonanceIntegrator {
     const periodMatch = Math.abs(actualRatio - expectedRatio) < this.config.resonanceTolerance;
     
     // Also check if semi-major axis is within resonance width
-    const axisMatch = Math.abs(tnoElements.semiMajorAxisAU - resonanceConfig.semiMajorAxisCenter) < resonanceConfig.width;
+    // Compute current semi-major axis in AU from realSemiMajorAxis_m (1 AU = 149,597,870,700 m)
+    const AU = 149_597_870_700;
+    const smaAU = tnoElements.realSemiMajorAxis_m / AU;
+    const axisMatch = Math.abs(smaAU - resonanceConfig.semiMajorAxisCenter) < resonanceConfig.width;
     
     return periodMatch && axisMatch;
   }
@@ -187,7 +189,7 @@ export class ResonanceIntegrator {
    * Calculate stability score based on LiDO paper findings
    */
   private calculateStabilityScore(
-    elements: OrbitalElements,
+    elements: OrbitalParameters,
     librationAmplitude: number,
     timeInResonance: number
   ): number {
@@ -196,7 +198,10 @@ export class ResonanceIntegrator {
     const eccentricityScore = Math.max(0, 1 - elements.eccentricity);
     
     // 2. Low inclination (more stable, but high inclination can be stable in some cases)
-    const inclinationScore = Math.max(0, 1 - (elements.inclinationDeg / 45));
+    const inclinationScore = Math.max(
+      0,
+      1 - ((elements.inclination * 180) / Math.PI / 45),
+    );
     
     // 3. Small libration amplitude (more stable)
     const librationScore = Math.max(0, 1 - (librationAmplitude / 360));
@@ -218,7 +223,10 @@ export class ResonanceIntegrator {
   /**
    * Simplified orbital element update (in practice would use full n-body integration)
    */
-  private updateOrbitalElements(elements: OrbitalElements, timeOffset: number): OrbitalElements {
+  private updateOrbitalElements(
+    elements: OrbitalParameters,
+    timeOffset: number,
+  ): OrbitalParameters {
     // This is a simplified update - in practice would use full n-body integration
     // with perturbations from all major planets
     
@@ -227,7 +235,7 @@ export class ResonanceIntegrator {
     // Update mean anomaly based on time
     const meanMotion = (2 * Math.PI) / elements.period_s;
     const deltaM = meanMotion * timeOffset;
-    updatedElements.meanAnomalyDeg = (elements.meanAnomalyDeg + (deltaM * 180 / Math.PI)) % 360;
+    updatedElements.meanAnomaly = (elements.meanAnomaly + deltaM) % (2 * Math.PI);
     
     // Add small perturbations to simulate n-body effects
     // These would be calculated from actual gravitational interactions

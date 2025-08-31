@@ -4,7 +4,7 @@ import {
   type ResonanceConfig,
   LibrationMode 
 } from "@teskooano/core-physics";
-import { type OrbitalElements } from "@teskooano/core-physics";
+// Note: Using OrbitalParameters from data-types; analyzer reads from celestialManager objects
 import { celestialManager } from "@teskooano/core-state";
 
 /**
@@ -269,42 +269,5 @@ export class ResonanceAnalyzer {
     };
   }
 
-  /**
-   * Generate a report on resonance dynamics
-   */
-  public generateResonanceReport(): {
-    title: string;
-    summary: string;
-    keyFindings: string[];
-    implications: string[];
-    recommendations: string[];
-  } {
-    const lidoAnalysis = this.analyzeLiDOObject();
-    
-    return {
-      title: "Resonance Dynamics Analysis: LiDO Discovery and Implications",
-      summary: "Analysis of 2020 VN40 (LiDO) reveals novel libration behavior in Neptune's 10:1 resonance, providing insights into the dynamics of high-inclination resonant TNOs.",
-      keyFindings: [
-        "2020 VN40 exhibits libration around 0°, a previously unknown mode for Neptune's external resonances",
-        "High-inclination objects in n:1 resonances show different libration behavior than low-inclination objects",
-        "The resonant interaction becomes strongly dependent on the argument of pericenter (ω)",
-        "Resonant islands shift as ω precesses, creating new libration centers",
-        "This affects the on-sky distribution and detectability of resonant TNOs",
-      ],
-      implications: [
-        "Survey strategies for distant resonators need to account for novel libration modes",
-        "High-inclination resonant TNOs may be more common than previously thought",
-        "The 10:1 resonance population is likely larger than current detections suggest",
-        "Resonance sticking efficiency may be higher for high-inclination objects",
-        "Long-term stability predictions need to account for libration mode changes",
-      ],
-      recommendations: [
-        "Implement enhanced resonance detection algorithms that can identify novel libration modes",
-        "Develop survey strategies specifically targeting high-inclination resonant TNOs",
-        "Improve n-body integration to handle complex resonance dynamics",
-        "Add resonance analysis tools to the planetary physics engine",
-        "Create visualization tools for libration mode evolution",
-      ],
-    };
-  }
+  // generateResonanceReport removed per request
 }

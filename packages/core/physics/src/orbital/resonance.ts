@@ -1,4 +1,4 @@
-import { type OrbitalElements } from "./shared";
+import type { OrbitalParameters } from "@teskooano/data-types";
 
 /**
  * Mean Motion Resonance (MMR) types and their characteristics
@@ -40,17 +40,28 @@ export interface ResonanceConfig {
  * φ = nλ_TNO - λ_planet - (n-1)ϖ_TNO
  */
 export function calculateResonantAngle(
-  tnoElements: OrbitalElements,
-  planetElements: OrbitalElements,
+  tnoElements: OrbitalParameters,
+  planetElements: OrbitalParameters,
   resonanceRatio: { p: number; q: number }
 ): number {
   const n = resonanceRatio.p / resonanceRatio.q;
-  const lambdaTNO = tnoElements.meanAnomalyDeg + tnoElements.argumentOfPeriapsisDeg + tnoElements.longitudeOfAscendingNodeDeg;
-  const lambdaPlanet = planetElements.meanAnomalyDeg + planetElements.argumentOfPeriapsisDeg + planetElements.longitudeOfAscendingNodeDeg;
-  const varpiTNO = tnoElements.argumentOfPeriapsisDeg + tnoElements.longitudeOfAscendingNodeDeg;
-  
-  const phi = n * lambdaTNO - lambdaPlanet - (n - 1) * varpiTNO;
-  return phi % 360;
+  // Mean longitudes (radians)
+  const lambdaTNO =
+    tnoElements.meanAnomaly +
+    tnoElements.argumentOfPeriapsis +
+    tnoElements.longitudeOfAscendingNode;
+  const lambdaPlanet =
+    planetElements.meanAnomaly +
+    planetElements.argumentOfPeriapsis +
+    planetElements.longitudeOfAscendingNode;
+  const varpiTNO =
+    tnoElements.argumentOfPeriapsis + tnoElements.longitudeOfAscendingNode;
+
+  const phiRad = n * lambdaTNO - lambdaPlanet - (n - 1) * varpiTNO;
+  // Normalize to [0, 2π) then convert to degrees for mode logic
+  const twoPi = Math.PI * 2;
+  const phiNorm = ((phiRad % twoPi) + twoPi) % twoPi;
+  return (phiNorm * 180) / Math.PI;
 }
 
 /**
@@ -91,8 +102,8 @@ export function determineLibrationMode(
  * Check if an object is in resonance with a planet
  */
 export function isInResonance(
-  tnoElements: OrbitalElements,
-  planetElements: OrbitalElements,
+  tnoElements: OrbitalParameters,
+  planetElements: OrbitalParameters,
   resonanceRatio: { p: number; q: number },
   tolerance: number = 0.1
 ): boolean {
@@ -108,8 +119,8 @@ export function isInResonance(
  * Calculate resonance stability based on LiDO paper findings
  */
 export function calculateResonanceStability(
-  tnoElements: OrbitalElements,
-  planetElements: OrbitalElements,
+  tnoElements: OrbitalParameters,
+  planetElements: OrbitalParameters,
   resonanceRatio: { p: number; q: number }
 ): {
   isStable: boolean;
@@ -122,8 +133,11 @@ export function calculateResonanceStability(
   // Simulate resonant angle evolution over multiple periods
   // This is a simplified version - full implementation would use n-body integration
   for (let i = 0; i < 100; i++) {
-    const timeOffset = (i * tnoElements.period_s) / 100;
-    const angle = calculateResonantAngle(tnoElements, planetElements, resonanceRatio);
+    const angle = calculateResonantAngle(
+      tnoElements,
+      planetElements,
+      resonanceRatio,
+    );
     resonantAngles.push(angle);
   }
   
@@ -133,7 +147,8 @@ export function calculateResonanceStability(
   // Stability criteria based on LiDO paper
   const isStable = 
     tnoElements.eccentricity < 0.8 && // High eccentricity reduces stability
-    tnoElements.inclinationDeg < 45 && // Very high inclination can destabilize
+    // Convert inclination to degrees for threshold comparison
+    (tnoElements.inclination * (180 / Math.PI)) < 45 && // Very high inclination can destabilize
     librationAmplitude < 300; // Large libration amplitude indicates instability
   
   // Stability score (0-1, higher is more stable)
