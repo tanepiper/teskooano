@@ -17,7 +17,7 @@ import {
   ProtostarSubtype,
 } from "@teskooano/data-types";
 import { generateCelestialName } from "../names/celestial-name";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 import { createOrbitalElements } from "@teskooano/core-physics";
 import {
   GRAVITATIONAL_CONSTANT,

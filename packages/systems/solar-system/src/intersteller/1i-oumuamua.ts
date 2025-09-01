@@ -35,6 +35,7 @@ export const oumuamua: CelestialObject<AsteroidProperties> = {
     siderealRotationPeriod_s: 8.67 * 3600, // 8.67 hours
     axialTiltDeg: 0, // Tumbling object
     isHyperbolic: true,
+    epoch: "J2017.5", // Discovery epoch (mid-2017)
   }),
   properties: {
     type: CelestialType.ASTEROID,

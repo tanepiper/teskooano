@@ -10,7 +10,7 @@ import {
 import { AU_METERS, EARTH_MASS } from "@teskooano/data-values";
 import { Observable, Subscriber } from "rxjs";
 import { generateCelestialName } from "../../generators/names/celestial-name";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 import { SYSTEM_MAX_DISTANCE_AU } from "../../constants";
 import { calculatePlanetOrbitAndInitialState } from "./planet-orbit";
 import {
@@ -23,7 +23,10 @@ import {
   type PlanetBaseProperties,
 } from "./planet-type";
 import { createProceduralSurfaceProperties } from "../../properties/creator";
-import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
+import {
+  calculateStellarLuminosity,
+  estimateTemperature,
+} from "../../utils-functions";
 import { CelestialZone } from "../../zones";
 
 /**

@@ -1,6 +1,6 @@
 import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
 import { utils } from "@teskooano/core-math";
-import { getRandomItem } from "../utils";
+import { getRandomItem } from "../utils-functions";
 
 export function getDesertProperties(
   random: () => number,

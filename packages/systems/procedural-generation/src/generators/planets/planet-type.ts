@@ -6,7 +6,7 @@ import {
   RockyType,
   type CelestialObject,
 } from "@teskooano/data-types";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 import { ZoneCategory } from "../../zones/types";
 
 /**

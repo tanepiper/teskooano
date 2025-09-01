@@ -11,7 +11,7 @@ import {
   SurfaceType,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 import type { PlanetBaseProperties } from "./planet-type";
 import { ProceduralSurfaceProperties } from "@teskooano/data-types";
 import { createProceduralSurfaceProperties } from "../../properties";

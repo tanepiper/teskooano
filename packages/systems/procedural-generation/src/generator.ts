@@ -7,6 +7,10 @@ import { generateStars } from "./operators/star-generator";
 import { take } from "rxjs/operators";
 import { CelestialZoneManager } from "./zones";
 import { generateBodyDistances } from "./utils/body-placement";
+import {
+  setSystemToCurrentEpoch,
+  logSystemEpochInfo,
+} from "./utils/epoch-utils";
 
 /**
  * Enhanced star system generator using sophisticated zone management.
@@ -16,6 +20,7 @@ import { generateBodyDistances } from "./utils/body-placement";
  * 2. Create physics-based zones using CelestialZoneManager
  * 3. Place bodies using sophisticated orbital configurations
  * 4. Add moons to planets
+ * 5. Apply current epoch to all celestial objects
  *
  * Uses the sophisticated CelestialZoneManager and advanced body placement for realistic generation.
  */
@@ -37,11 +42,12 @@ export async function generateSystem(
           throw new Error("System generation failed to produce any stars.");
         }
 
-        // Emit all stars first
-        let celestialCount = 0;
+        // Collect all generated objects
+        const allObjects: CelestialObject[] = [];
+
+        // Add stars to collection
         stars.forEach((star) => {
-          subscriber.next(star);
-          celestialCount++;
+          allObjects.push(star);
         });
 
         // Step 2: Generate realistic body count (15-45 bodies total)
@@ -55,22 +61,46 @@ export async function generateSystem(
         // Step 4: Generate sophisticated body placements with orbital configurations
         const bodyPlacements = generateBodyDistances(random, zones, stars);
 
-        const remainingSlots = 80 - celestialCount;
+        const remainingSlots = 80 - stars.length;
 
-        from(bodyPlacements)
-          .pipe(
-            generateBodyForSlot(random, seed),
-            take(remainingSlots > 0 ? remainingSlots : 0),
-            catchError((err) => {
-              console.error("Error in body generation pipeline:", err);
-              return EMPTY;
-            }),
-          )
-          .subscribe({
-            next: (obj) => subscriber.next(obj),
-            error: (err) => subscriber.error(err),
-            complete: () => subscriber.complete(),
+        // Generate all bodies and collect them
+        const bodyObservable = from(bodyPlacements).pipe(
+          generateBodyForSlot(random, seed),
+          take(remainingSlots > 0 ? remainingSlots : 0),
+          catchError((err) => {
+            console.error("Error in body generation pipeline:", err);
+            return EMPTY;
+          }),
+        );
+
+        // Collect all bodies first
+        await new Promise<void>((resolve) => {
+          bodyObservable.subscribe({
+            next: (obj) => {
+              allObjects.push(obj);
+            },
+            error: (err) => {
+              subscriber.error(err);
+              resolve();
+            },
+            complete: () => {
+              resolve();
+            },
           });
+        });
+
+        // Step 5: Apply current epoch to all celestial objects
+        const epochUpdatedObjects = setSystemToCurrentEpoch(allObjects);
+
+        // Log epoch information for debugging
+        logSystemEpochInfo(epochUpdatedObjects, systemName);
+
+        // Emit all objects with updated epochs
+        epochUpdatedObjects.forEach((obj) => {
+          subscriber.next(obj);
+        });
+
+        subscriber.complete();
       } catch (error) {
         subscriber.error(error);
       }

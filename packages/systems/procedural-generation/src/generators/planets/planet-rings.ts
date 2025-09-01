@@ -5,7 +5,7 @@ import type {
 } from "@teskooano/data-types";
 import { RockyType } from "@teskooano/data-types";
 import * as CONST from "../../constants";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 
 /**
  * Calculates the Roche limit for a given planet

@@ -5,7 +5,7 @@ import type {
 } from "@teskooano/data-types";
 import { PlanetType, SurfaceType } from "@teskooano/data-types";
 import * as CONST from "../../constants";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 import { createProceduralSurfaceProperties } from "../../properties";
 
 /**

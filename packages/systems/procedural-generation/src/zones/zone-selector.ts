@@ -1,7 +1,7 @@
 import { type CelestialObject } from "@teskooano/data-types";
 import { CelestialZone, ZoneCategory } from "./types";
 import { createDefaultZones } from "./zone-definitions";
-import { getRandomItem } from "../utils";
+import { getRandomItem } from "../utils-functions";
 
 /**
  * Handles zone selection for body placement

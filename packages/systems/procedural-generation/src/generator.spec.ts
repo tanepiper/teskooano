@@ -325,7 +325,7 @@ describe("Enhanced Procedural Generation System", () => {
 
   it("validates orbital boundary checking utility function", async () => {
     // Test the isOrbitWithinSystemBoundary utility function
-    const { isOrbitWithinSystemBoundary } = await import("./utils");
+    const { isOrbitWithinSystemBoundary } = await import("./utils-functions");
 
     // Test circular orbit at boundary
     expect(isOrbitWithinSystemBoundary(10000, 0, 10000)).toBe(true);

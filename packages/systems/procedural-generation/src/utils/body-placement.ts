@@ -2,7 +2,7 @@ import { utils } from "@teskooano/core-math";
 import { type CelestialObject } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-values";
 import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
-import { getRandomItem } from "../utils";
+import { getRandomItem } from "../utils-functions";
 import type { CelestialZone, OrbitalArrangement } from "../zones";
 import { OrbitalConfiguration } from "../zones";
 

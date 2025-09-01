@@ -1,15 +1,13 @@
+import { calculateCurrentPositionPrecise } from "@teskooano/core-physics";
 import {
-  calculateCurrentPositionPrecise,
   getCurrentJulianDay,
   getCurrentPreciseEpoch,
   getJulianDayForEpoch,
-} from "@teskooano/core-physics";
-import type { CelestialObject } from "@teskooano/data-types";
-import {
   calculateProcessingStats,
-  EpochProcessingStats,
   logProcessingStats,
-} from "./epoch-utilities";
+  type EpochProcessingStats,
+} from "@teskooano/core-math";
+import type { CelestialObject } from "@teskooano/data-types";
 
 /**
  * Processes celestial objects to calculate their current positions based on the actual current time.

@@ -1,6 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { EARTH_MASS } from "@teskooano/data-values";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 
 /**
  * Moon physical properties generation

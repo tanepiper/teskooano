@@ -16,6 +16,31 @@ import { asteroids } from "./asteroids";
 import { interstellarObjects } from "./intersteller";
 import { planetNineSystemBodies } from "./planet-nine";
 import { processSolarSystemToCurrentTime } from "./utils/dynamic-epoch-processor";
+import type { CelestialObject } from "@teskooano/data-types";
+
+/**
+ * Fixes any solar system objects with empty/missing epochs by setting them to J2000.
+ * This ensures hand-crafted objects use the standard astronomical epoch instead of defaulting to current time.
+ */
+function fixEmptyEpochs<T>(
+  objects: CelestialObject<T>[],
+): CelestialObject<T>[] {
+  return objects.map((object) => {
+    if (
+      object.orbit &&
+      (!object.orbit.epoch || object.orbit.epoch.trim() === "")
+    ) {
+      return {
+        ...object,
+        orbit: {
+          ...object.orbit,
+          epoch: "J2000",
+        },
+      };
+    }
+    return object;
+  });
+}
 
 /**
  * Solar system bodies that can be initialized in any order.
@@ -46,9 +71,12 @@ const solarSystemBodies = [
  * All orbital elements are dynamically calculated to today's current positions.
  */
 export function initializeSolarSystem() {
+  // Fix any objects with empty epochs by setting them to J2000
+  const fixedEpochBodies = fixEmptyEpochs(solarSystemBodies);
+
   // Process all objects to calculate their current positions based on the actual current time
   const currentPositionBodies =
-    processSolarSystemToCurrentTime(solarSystemBodies);
+    processSolarSystemToCurrentTime(fixedEpochBodies);
 
   // CRITICAL: Set simulation start date to actual current time to match processed objects
   // This ensures UI time calculations are synchronized with object positions

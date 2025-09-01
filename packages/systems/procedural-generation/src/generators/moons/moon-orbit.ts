@@ -1,7 +1,7 @@
 import { createOrbitalElements } from "@teskooano/core-physics";
 import { type OrbitalParameters } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-values";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 
 /**
  * Moon orbital mechanics and parameter generation

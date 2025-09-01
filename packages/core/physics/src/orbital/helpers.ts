@@ -1,4 +1,4 @@
-import { OSVector3, utils } from "@teskooano/core-math";
+import { OSVector3, utils, getCurrentPreciseEpoch } from "@teskooano/core-math";
 import type { LagrangePointType } from "@teskooano/data-types";
 import { type OrbitalParameters } from "@teskooano/data-types";
 import {
@@ -174,7 +174,7 @@ export function createOrbitalElements(
     realAphelion_m: realAphelion_m,
     realPerihelion_m: realPerihelion_m,
     averageOrbitalSpeed_mps: averageOrbitalSpeed_mps,
-    epoch: input.epoch ?? J2000_EPOCH,
+    epoch: input.epoch ?? getCurrentPreciseEpoch(),
     timeOfPerihelion: input.timeOfPerihelion,
     lagrangePointType: input.lagrangePointType, // Include if present
   };

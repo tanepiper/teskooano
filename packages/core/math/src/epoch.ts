@@ -1,12 +1,6 @@
-import {
-  getCurrentPreciseEpoch,
-  getJulianDayForEpoch,
-} from "@teskooano/core-physics";
-import type { CelestialObject } from "@teskooano/data-types";
-
 /**
- * Comprehensive shared utilities for epoch processing in the solar system.
- * This module consolidates common functionality used across different epoch processors.
+ * Comprehensive epoch utilities for astronomical calculations.
+ * This module provides functions for epoch validation, analysis, and processing.
  */
 
 /**
@@ -53,6 +47,142 @@ export interface EpochSummary {
 }
 
 /**
+ * Gets the current date as an epoch string (YYYY-MM-DD format).
+ * This represents today's actual date for dynamic position calculations.
+ */
+export function getCurrentEpoch(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Gets the current date and time as a precise epoch string (YYYY-MM-DDTHH:MM:SS format).
+ * This provides more accurate positioning for objects that move quickly (like satellites).
+ */
+export function getCurrentPreciseEpoch(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+  const second = String(now.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+}
+
+/**
+ * Gets the current Julian Day number with time precision.
+ * This is the most accurate way to represent the current moment.
+ */
+export function getCurrentJulianDay(): number {
+  const now = new Date();
+  return dateToJulianDay(now);
+}
+
+/**
+ * J2000 epoch as the standard astronomical reference.
+ * This is the only hard-coded epoch we keep as it's the international standard.
+ */
+export const J2000_EPOCH = "J2000";
+
+/**
+ * Julian Day number for J2000 epoch.
+ * Julian Day is a continuous count of days since January 1, 4713 BC.
+ */
+export const J2000_JULIAN_DAY = 2451545.0; // January 1, 2000 12:00:00 UTC
+
+/**
+ * Converts a date to Julian Day number.
+ * Uses the standard astronomical formula for Julian Day calculation.
+ */
+export function dateToJulianDay(date: Date): number {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const second = date.getSeconds();
+
+  // Astronomical Julian Day calculation
+  let jd =
+    367 * year -
+    Math.floor((7 * (year + Math.floor((month + 9) / 12))) / 4) +
+    Math.floor((275 * month) / 9) +
+    day +
+    1721013.5 +
+    hour / 24 +
+    minute / 1440 +
+    second / 86400;
+
+  return jd;
+}
+
+/**
+ * Converts Julian Day to years since J2000 epoch.
+ */
+export function julianDayToYearsSinceJ2000(julianDay: number): number {
+  return (julianDay - J2000_JULIAN_DAY) / 365.25;
+}
+
+/**
+ * Converts years since J2000 to Julian Day.
+ */
+export function yearsSinceJ2000ToJulianDay(years: number): number {
+  return J2000_JULIAN_DAY + years * 365.25;
+}
+
+/**
+ * Converts an epoch string to Julian Day number.
+ * Supports multiple epoch formats:
+ * - J2000, J2025, etc. (Julian epoch format)
+ * - JD 2451545.0, JD2460675.0 (Julian Day format)
+ * - 2451545.0, 2460675.0 (numeric Julian Day)
+ * - 2025-05-05 (ISO date format)
+ * - 2025-05-05T12:30:45 (ISO datetime format)
+ */
+export function getJulianDayForEpoch(epoch: string): number {
+  // Handle Julian epoch format (J2000, J2025, etc.)
+  if (epoch.startsWith("J") && epoch.length > 1) {
+    const year = parseInt(epoch.substring(1));
+    if (!isNaN(year)) {
+      // J2000 = 2451545.0, each year adds 365.25 days
+      return J2000_JULIAN_DAY + (year - 2000) * 365.25;
+    }
+  }
+
+  // Handle Julian Day format (JD 2451545.0, JD2460675.0)
+  if (epoch.startsWith("JD")) {
+    const jd = parseFloat(epoch.substring(2).trim());
+    if (!isNaN(jd)) {
+      return jd;
+    }
+  }
+
+  // Handle numeric Julian Day (2451545.0, 2460675.0)
+  const numericJd = parseFloat(epoch);
+  if (!isNaN(numericJd)) {
+    return numericJd;
+  }
+
+  // Handle ISO date format (2025-05-05, 2025-05-05T12:30:45)
+  try {
+    const date = new Date(epoch);
+    if (!isNaN(date.getTime())) {
+      return dateToJulianDay(date);
+    }
+  } catch {
+    // Invalid date format
+  }
+
+  // Fallback to J2000 for unknown formats
+  console.warn(`Unknown epoch format: ${epoch}, using J2000 as fallback`);
+  return J2000_JULIAN_DAY;
+}
+
+/**
  * Validates epoch consistency across all celestial objects.
  * Identifies objects using different epochs and potential accuracy issues.
  *
@@ -60,7 +190,7 @@ export interface EpochSummary {
  * @returns Comprehensive validation results including issues and inconsistencies
  */
 export function validateEpochConsistency<T>(
-  objects: CelestialObject<T>[],
+  objects: Array<{ name: string; orbit?: { epoch: string } }>,
 ): EpochValidationResult {
   const epochs = new Set<string>();
   const inconsistentObjects: Array<{ name: string; epoch: string }> = [];
@@ -131,7 +261,7 @@ export function validateEpochConsistency<T>(
  * @returns Detailed epoch summary with time difference analysis
  */
 export function generateEpochSummary<T>(
-  objects: CelestialObject<T>[],
+  objects: Array<{ orbit?: { epoch: string } }>,
 ): EpochSummary {
   const epochCounts: Record<string, number> = {};
   const currentJulianDay = getJulianDayForEpoch(getCurrentPreciseEpoch());
@@ -242,8 +372,8 @@ export function calculateProcessingStats(
  * @param title - Optional title for the log output
  */
 export function logEpochAnalysis<T>(
-  objects: CelestialObject<T>[],
-  title: string = "Solar System Epoch Analysis",
+  objects: Array<{ name: string; orbit?: { epoch: string } }>,
+  title: string = "Epoch Analysis",
 ): void {
   const summary = generateEpochSummary(objects);
   const validation = validateEpochConsistency(objects);

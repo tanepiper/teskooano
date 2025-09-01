@@ -15,7 +15,7 @@ import {
 } from "@teskooano/data-values";
 import { Observable } from "rxjs";
 import * as CONST from "../../constants";
-import * as UTIL from "../../utils";
+import * as UTIL from "../../utils-functions";
 import { generateCelestialName } from "../names/celestial-name";
 
 /**

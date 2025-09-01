@@ -5,3 +5,4 @@ export * from "./OSMatrix4";
 export * from "./constants";
 export * as utils from "./utils";
 export * from "./random";
+export * from "./epoch";
