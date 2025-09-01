@@ -49,7 +49,6 @@ export function setupBinaryOrbit(
     realAphelion_m: 0,
     realPerihelion_m: 0,
     averageOrbitalSpeed_mps: 0,
-    epoch: "J2000",
   };
 
   // Companion orbit around the main star

@@ -33,7 +33,7 @@ export interface OrbitalParameters {
   /** The average orbital speed (METERS PER SECOND). */
   averageOrbitalSpeed_mps: number;
   /** The epoch for these orbital elements (e.g., "J2000"). */
-  epoch: string;
+  epoch?: string;
   /** Optional: The time of perihelion passage as an ISO date string. */
   timeOfPerihelion?: string;
 }

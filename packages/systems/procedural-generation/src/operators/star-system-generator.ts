@@ -32,7 +32,6 @@ export function generateStellarSystem(
       realAphelion_m: 0,
       realPerihelion_m: 0,
       averageOrbitalSpeed_mps: 0,
-      epoch: "J2000",
     };
     return stars;
   }
@@ -61,7 +60,6 @@ export function generateStellarSystem(
     realAphelion_m: 0,
     realPerihelion_m: 0,
     averageOrbitalSpeed_mps: 0,
-    epoch: "J2000",
   };
 
   // Set main star property
