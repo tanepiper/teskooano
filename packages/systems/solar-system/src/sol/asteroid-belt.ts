@@ -19,19 +19,19 @@ export const asteroidBelt: CelestialObject<AsteroidFieldProperties> = {
   realMass_kg: 3e21,
   realRadius_m: (3.3 - 2.1) * AU_METERS,
   orbit: createOrbitalElements({
-    semiMajorAxisAU: 2.7,
-    eccentricity: 0.079,
-    inclinationDeg: 9.0,
-    longitudeOfAscendingNodeDeg: 80.0,
-    argumentOfPeriapsisDeg: 73.0,
+    semiMajorAxisAU: 0, // Belt is centered on the Sun
+    eccentricity: 0,
+    inclinationDeg: 0,
+    longitudeOfAscendingNodeDeg: 0,
+    argumentOfPeriapsisDeg: 0,
     meanAnomalyDeg: 0.0,
-    period_s: Math.sqrt(Math.pow(2.7, 3)) * 3.15576e7,
+    period_s: 0, // No orbital motion - static visual feature
     siderealRotationPeriod_s: 0,
     axialTiltDeg: 0,
   }),
   temperature: 165,
   albedo: 0.12,
-  ignorePhysics: false,
+  ignorePhysics: true, // Belt is a static visual feature, not a physics object
   ignoreCollisions: true,
   properties: {
     type: CelestialType.ASTEROID_FIELD,

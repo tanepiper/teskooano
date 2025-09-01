@@ -117,11 +117,20 @@ export class PhysicsStateCalculator {
       return null;
     }
 
+    // Get parent's physics state to inherit its position
+    const parentPhysics = this.calculatePhysicsState(parent, allObjects);
+    if (!parentPhysics) {
+      console.error(
+        `[PhysicsStateCalculator] Could not calculate parent physics for ${data.id}`,
+      );
+      return null;
+    }
+
     // For special objects, use parent's position (they don't have their own physics)
     return {
       id: data.id,
       mass_kg: 0,
-      position_m: new OSVector3().setZero(), // Will be set by parent
+      position_m: parentPhysics.position_m.clone(), // Use parent's actual position
       velocity_mps: new OSVector3().setZero(),
     };
   }
