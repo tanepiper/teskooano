@@ -5,17 +5,7 @@ import {
   SimulationMode,
 } from "@teskooano/data-types";
 
-/**
- * Defines the state of the camera in the simulation.
- */
-export interface CameraState {
-  /** The position of the camera in 3D space (real-world units, typically meters if not otherwise specified by context). */
-  position: OSVector3;
-  /** The point in 3D space the camera is looking at (real-world units). */
-  target: OSVector3;
-  /** The vertical field of view of the camera in degrees. */
-  fov: number;
-}
+// CameraState has been moved to stores/CameraStore.ts to support enhanced camera state management
 
 /**
  * Configuration for the simulation physics system.

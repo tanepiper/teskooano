@@ -14,11 +14,11 @@ import {
 export {
   type SimulationState,
   type SimulationConfiguration,
-  type CameraState,
   type VisualSettingsState,
   type ClearStateOptions,
   type CelestialRegistry,
 } from "./types";
+export { type CameraState } from "./stores/CameraStore";
 export * from "./utils";
 
 // Export the service instances directly

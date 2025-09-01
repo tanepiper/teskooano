@@ -26,6 +26,7 @@ export interface PluginManagerProxy {
  * Provides access to core application APIs and services.
  */
 export interface PluginExecutionContext {
+  options?: Record<string, any>;
   /** Limited plugin manager interface for function execution */
   pluginManager: PluginManagerProxy;
   /** DockView API for panel management */

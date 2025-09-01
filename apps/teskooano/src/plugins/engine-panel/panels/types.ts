@@ -1,6 +1,5 @@
 import type { DockviewController } from "../../../core/controllers/dockview";
 import type { EngineToolbarManager } from "../../../core/interface/engine-toolbar";
-import type { OSVector3 } from "@teskooano/core-math";
 
 /**
  * The parameters for the CompositeEnginePanel
@@ -21,22 +20,11 @@ export interface CompositePanelParams {
 }
 
 /**
- * Represents the internal view state of an engine panel, including camera,
- * focus, and display options.
+ * Represents the internal view state of an engine panel, excluding camera state.
+ * Camera state (position, target, fov, focus) is managed centrally via core-state's
+ * per-panel CameraStore/CameraManager.
  */
 export interface CompositeEngineState {
-  /**
-   * The position of the camera
-   */
-  cameraPosition: OSVector3;
-  /**
-   * The target of the camera
-   */
-  cameraTarget: OSVector3;
-  /**
-   * The focused object ID
-   */
-  focusedObjectId: string | null;
   /**
    * Whether to show the 5AU grid
    */
@@ -69,8 +57,4 @@ export interface CompositeEngineState {
    * NOTE: This is still a work in progress and the camera controls are not yet fully integrated
    */
   isDebugMode?: boolean;
-  /**
-   * The Field of View (FOV)
-   */
-  fov?: number;
 }

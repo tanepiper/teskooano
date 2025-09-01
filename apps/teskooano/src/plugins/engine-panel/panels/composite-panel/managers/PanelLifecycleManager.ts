@@ -1,5 +1,4 @@
 import { StateAccessor } from "@teskooano/core-state";
-import { simulationOrchestrator } from "@teskooano/app-simulation";
 import { CustomEvents } from "@teskooano/data-types";
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { Subscription } from "rxjs";

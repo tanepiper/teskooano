@@ -69,7 +69,6 @@ export class CompositeEnginePanel
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
 
   private _engineToolbar: EngineToolbar | null = null;
-  private _context: PluginExecutionContext | null = null;
 
   /**
    * The root HTML element for this panel (fulfills IContentRenderer for custom elements).
@@ -289,7 +288,6 @@ export class CompositeEnginePanel
     this._params = parameters as GroupPanelPartInitParameters & {
       params?: CompositePanelParams;
     };
-    this._context = parameters.context;
 
     this.setupSubscriptions();
 
@@ -377,7 +375,6 @@ export class CompositeEnginePanel
     this._cameraCoordinator = new PanelCameraCoordinator(
       this,
       this._renderer,
-      this._viewStateSubject,
       this._api?.id,
     );
 

@@ -1,10 +1,15 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { StateAccessor, actions, renderableStore } from "@teskooano/core-state";
+import {
+  StateAccessor,
+  actions,
+  renderableStore,
+  CameraStore,
+} from "@teskooano/core-state";
+import type { CameraState } from "@teskooano/core-state";
 import {
   CelestialType,
   ICameraRenderer,
   CameraManagerOptions,
-  CameraManagerState,
 } from "@teskooano/data-types";
 import { CameraHelper } from "@teskooano/renderer-threejs-helpers";
 import { BehaviorSubject } from "rxjs";
@@ -26,8 +31,8 @@ import {
  * - Pointing the camera towards a target position.
  * - Resetting the camera view to defaults.
  * - Managing the camera's Field of View (FOV).
- * - Providing an observable state (`BehaviorSubject`) for camera updates.
- * - Interacting with the `ModularSpaceRenderer` for camera control and transitions.
+ * - Providing an observable state through core-state CameraStore integration.
+ * - Interacting with renderer implementations via ICameraRenderer interface.
  */
 export class CameraManager {
   /**
@@ -36,28 +41,19 @@ export class CameraManager {
   static pluginName = "CameraManager";
 
   private renderer: ICameraRenderer | null = null;
+  private cameraStore: CameraStore | null = null;
+  private panelId: string | null = null;
   private onFocusChangeCallback?: (focusedObjectId: string | null) => void;
   private intendedFocusIdForTransition: string | null = null; // Store intended focus during transition
   private originalTimeScale: number = 1; // Store original timeScale during transitions
   private isTransitioning: boolean = false; // Track if we're in a transition
 
   /**
-   * BehaviorSubject holding the current state of the camera.
-   * Emits updates whenever the camera's position, target, FOV, or focused object changes.
-   */
-  private cameraStateSubject: BehaviorSubject<CameraManagerState>;
-
-  /**
    * Constructs the CameraManager.
-   * Initializes the camera state with default values.
+   * Camera state will be managed through core-state CameraStore once dependencies are set.
    */
   constructor() {
-    this.cameraStateSubject = new BehaviorSubject<CameraManagerState>({
-      fov: DEFAULT_FOV,
-      focusedObjectId: null,
-      currentPosition: DEFAULT_CAMERA_POSITION.clone(),
-      currentTarget: DEFAULT_CAMERA_TARGET.clone(),
-    });
+    // No longer managing state directly - delegated to CameraStore
   }
 
   private _cleanupPriorRenderer(): void {
@@ -92,51 +88,54 @@ export class CameraManager {
       return;
     }
     this.renderer = options.renderer;
+    this.panelId = options.panelId;
     this.onFocusChangeCallback = options.onFocusChangeCallback;
 
-    const initialFov = options.initialFov ?? DEFAULT_FOV;
-    let initialTarget: OSVector3;
-    let initialPosition: OSVector3;
-    let initialFocusedObjectId = options.initialFocusedObjectId ?? null;
+    // Get or create camera store for this panel
+    if (this.panelId) {
+      const initialFov = options.initialFov ?? DEFAULT_FOV;
+      let initialTarget: OSVector3;
+      let initialPosition: OSVector3;
+      let initialFocusedObjectId = options.initialFocusedObjectId ?? null;
 
-    if (initialFocusedObjectId) {
-      const initialFocusObject =
-        renderableStore.getRenderableObjects()[initialFocusedObjectId];
-      if (initialFocusObject?.position) {
-        // Convert THREE.Vector3 to OSVector3
-        initialTarget = OSVector3.fromThreeJS(initialFocusObject.position);
+      if (initialFocusedObjectId) {
+        const initialFocusObject =
+          renderableStore.getRenderableObjects()[initialFocusedObjectId];
+        if (initialFocusObject?.position) {
+          // Convert THREE.Vector3 to OSVector3
+          initialTarget = OSVector3.fromThreeJS(initialFocusObject.position);
+        } else {
+          console.warn(
+            `[CameraManager Init] Initial focused object ${initialFocusedObjectId} not found or has no position. Using default target.`,
+          );
+          initialFocusedObjectId = null;
+          initialTarget =
+            options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
+        }
       } else {
-        console.warn(
-          `[CameraManager Init] Initial focused object ${initialFocusedObjectId} not found or has no position. Using default target.`,
-        );
-        initialFocusedObjectId = null;
         initialTarget =
           options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
       }
-    } else {
-      initialTarget =
-        options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
+
+      initialPosition =
+        options.initialCameraPosition ?? DEFAULT_CAMERA_POSITION.clone();
+
+      // Initialize camera store with consistent property names
+      const initialState: Partial<CameraState> = {
+        fov: initialFov,
+        focusedObjectId: initialFocusedObjectId,
+        position: initialPosition,
+        target: initialTarget,
+      };
+
+      this.cameraStore = StateAccessor.getCameraStore(
+        this.panelId,
+        initialState,
+      );
+
+      // Ensure the new renderer's camera and controls are updated
+      this.renderer?.renderingOrchestrator?.sceneManager?.setFov(initialFov);
     }
-
-    // If initialCameraPosition is not given for a subsequent call,
-    // we might want to preserve the current camera position from cameraStateSubject
-    // instead of resetting to DEFAULT_CAMERA_POSITION. For now, we'll use provided or default.
-    initialPosition =
-      options.initialCameraPosition ?? DEFAULT_CAMERA_POSITION.clone();
-
-    // Update the state with OSVector3 values
-    this.cameraStateSubject.next({
-      fov: initialFov,
-      focusedObjectId: initialFocusedObjectId,
-      currentPosition: initialPosition,
-      currentTarget: initialTarget,
-    });
-
-    // Ensure the new renderer's camera and controls are updated
-    this.renderer?.renderingOrchestrator?.sceneManager?.setFov(initialFov);
-    // It's crucial that ModularSpaceRenderer's controlsManager re-initializes
-    // its controls (e.g. OrbitControls) here if they were disposed or need to be
-    // attached to a new camera/DOM element. We assume `initializeCameraPosition` will handle this.
 
     // Re-add document event listeners
     document.addEventListener(
@@ -157,10 +156,10 @@ export class CameraManager {
    * This ensures the controls (e.g., OrbitControls) start synchronized with the manager's state.
    */
   public initializeCameraPosition(): void {
-    if (!this.renderer) {
-      // Guard against no renderer
+    if (!this.renderer || !this.cameraStore) {
+      // Guard against no renderer or camera store
       console.warn(
-        "[CameraManager] Cannot initialize camera position: Renderer not set.",
+        "[CameraManager] Cannot initialize camera position: Renderer or camera store not set.",
       );
       return;
     }
@@ -174,25 +173,27 @@ export class CameraManager {
       );
       return;
     }
-    const initialState = this.cameraStateSubject.getValue();
+    const currentState = this.cameraStore.getCameraState();
     // Convert OSVector3 to THREE.Vector3 for the renderer
-    this.renderer.camera.position.copy(
-      initialState.currentPosition.toThreeJS(),
-    );
-    controlsManager.controls.target.copy(
-      initialState.currentTarget.toThreeJS(),
-    );
+    this.renderer.camera.position.copy(currentState.position.toThreeJS());
+    controlsManager.controls.target.copy(currentState.target.toThreeJS());
     controlsManager.controls.update(); // Crucial for OrbitControls
   }
 
   /**
    * Provides observable access to the camera's state.
-   * Subscribe to this BehaviorSubject to react to changes in camera position, target, FOV, or focus.
+   * Now delegates to the core-state CameraStore for consistency.
    *
-   * @returns {BehaviorSubject<CameraManagerState>} The BehaviorSubject stream of camera state.
+   * @returns {BehaviorSubject<CameraState>} The BehaviorSubject stream of camera state from core-state.
    */
-  public getCameraState$(): BehaviorSubject<CameraManagerState> {
-    return this.cameraStateSubject;
+  public getCameraState$(): BehaviorSubject<CameraState> {
+    if (!this.cameraStore) {
+      throw new Error(
+        "[CameraManager] Camera store not initialized. Call setDependencies first.",
+      );
+    }
+    // Return the BehaviorSubject directly from the store
+    return this.cameraStore["_cameraState"];
   }
 
   /**
@@ -312,11 +313,15 @@ export class CameraManager {
       return;
     }
 
-    const currentState = this.cameraStateSubject.getValue();
+    if (!this.cameraStore) {
+      console.warn("[CameraManager] Camera store not initialized.");
+      return;
+    }
+
+    const currentState = this.cameraStore.getCameraState();
 
     if (currentState.focusedObjectId !== objectId) {
-      this.cameraStateSubject.next({
-        ...currentState,
+      this.cameraStore.updateCameraState({
         focusedObjectId: objectId,
       });
       this.intendedFocusIdForTransition = objectId;
@@ -350,8 +355,7 @@ export class CameraManager {
         console.error(
           `[CameraManager] focusOnObject: Cannot focus on ${objectId}. Object data not found or missing position.`,
         );
-        this.cameraStateSubject.next({
-          ...currentState,
+        this.cameraStore.updateCameraState({
           focusedObjectId: null,
         });
         this.intendedFocusIdForTransition = null;
@@ -432,10 +436,11 @@ export class CameraManager {
         console.warn(
           "[CameraManager] ControlsManager not available to focus on object.",
         );
-        this.cameraStateSubject.next({
-          ...this.cameraStateSubject.getValue(),
-          focusedObjectId: null,
-        });
+        if (this.cameraStore) {
+          this.cameraStore.updateCameraState({
+            focusedObjectId: null,
+          });
+        }
         this.intendedFocusIdForTransition = null;
       }
     }
@@ -499,12 +504,17 @@ export class CameraManager {
       return;
     }
 
-    const currentState = this.cameraStateSubject.getValue();
+    if (!this.cameraStore) {
+      console.warn("[CameraManager] Camera store not initialized.");
+      return;
+    }
+
+    const currentState = this.cameraStore.getCameraState();
     if (fov === currentState.fov) {
       return;
     }
 
-    this.cameraStateSubject.next({ ...currentState, fov: fov });
+    this.cameraStore.updateCameraState({ fov });
     sceneManager.setFov(fov);
   }
 
@@ -548,8 +558,10 @@ export class CameraManager {
    * @param {Event} event - The custom event containing transition details.
    */
   private handleCameraTransitionComplete = (event: Event): void => {
+    if (!this.cameraStore) return;
+
     const detail = (event as CustomEvent).detail;
-    const currentState = this.cameraStateSubject.getValue();
+    const currentState = this.cameraStore.getCameraState();
 
     // Resume simulation after transition completes
     this.resumeSimulationAfterTransition();
@@ -557,10 +569,10 @@ export class CameraManager {
     // Update position and target from the transition's end state
     const newPosition = detail.position
       ? OSVector3.fromThreeJS(detail.position)
-      : currentState.currentPosition.clone();
+      : currentState.position.clone();
     const newTarget = detail.target
       ? OSVector3.fromThreeJS(detail.target)
-      : currentState.currentTarget.clone();
+      : currentState.target.clone();
 
     // The focusedObjectId for a programmatic transition is whatever we intended it to be
     // when we started the transition.
@@ -568,14 +580,13 @@ export class CameraManager {
 
     if (
       currentState.focusedObjectId !== newFocusedId ||
-      !currentState.currentPosition.equals(newPosition) ||
-      !currentState.currentTarget.equals(newTarget)
+      !currentState.position.equals(newPosition) ||
+      !currentState.target.equals(newTarget)
     ) {
-      this.cameraStateSubject.next({
-        ...currentState,
+      this.cameraStore.updateCameraState({
         focusedObjectId: newFocusedId,
-        currentPosition: newPosition,
-        currentTarget: newTarget,
+        position: newPosition,
+        target: newTarget,
       });
 
       if (
@@ -595,13 +606,13 @@ export class CameraManager {
    * Updates the internal state and clears any active semantic focus.
    */
   private handleUserCameraManipulation = (event: Event): void => {
-    if (!this.renderer?.interactionOrchestrator) return;
+    if (!this.renderer?.interactionOrchestrator || !this.cameraStore) return;
 
     const detail = (event as CustomEvent).detail;
     const newPosition = OSVector3.fromThreeJS(detail.position);
     const newTarget = OSVector3.fromThreeJS(detail.target);
 
-    const currentState = this.cameraStateSubject.getValue();
+    const currentState = this.cameraStore.getCameraState();
 
     // If user manipulates camera, they are implicitly breaking any "follow"
     // The focusedObjectId might still be relevant if they are orbiting it,
@@ -616,14 +627,13 @@ export class CameraManager {
     // For now, any manual manipulation clears programmatic focus.
 
     if (
-      !currentState.currentPosition.equals(newPosition) ||
-      !currentState.currentTarget.equals(newTarget) ||
+      !currentState.position.equals(newPosition) ||
+      !currentState.target.equals(newTarget) ||
       currentState.focusedObjectId !== newFocusedId
     ) {
-      this.cameraStateSubject.next({
-        ...currentState,
-        currentPosition: newPosition,
-        currentTarget: newTarget,
+      this.cameraStore.updateCameraState({
+        position: newPosition,
+        target: newTarget,
         focusedObjectId: newFocusedId, // User interaction clears programmatic focus
       });
       if (
@@ -637,12 +647,18 @@ export class CameraManager {
 
   /**
    * Cleans up resources and listeners when the CameraManager is no longer needed.
-   * Removes event listeners and completes the state BehaviorSubject.
+   * Removes event listeners and cleans up camera store if this was the last reference.
    */
   public destroy(): void {
     this._cleanupPriorRenderer(); // Call the same cleanup
-    // If CameraManager had its own direct subscriptions to external observables, unsubscribe here.
-    // For now, it mainly manages renderer and document listeners.
-    this.cameraStateSubject.complete(); // Complete the subject
+
+    // Clean up camera store reference
+    if (this.panelId) {
+      // Note: We don't automatically remove the camera store instance here
+      // as it might be used by other components. The panel lifecycle manager
+      // should handle cleanup when the panel is actually destroyed.
+      this.cameraStore = null;
+      this.panelId = null;
+    }
   }
 }

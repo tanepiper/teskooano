@@ -1,5 +1,4 @@
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import { OSVector3 } from "../../../../../../../packages/core/math/src/OSVector3";
 import type { CompositeEngineState } from "../types";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 
@@ -9,9 +8,6 @@ import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 export const DEFAULT_PANEL_FOV = 75;
 
 export const createDefaultViewState = (): CompositeEngineState => ({
-  cameraPosition: new OSVector3(200, 200, 200),
-  cameraTarget: new OSVector3(0, 0, 0),
-  focusedObjectId: null,
   showGrid: false,
   showCelestialLabels: true,
   showAuMarkers: true,
@@ -19,7 +15,6 @@ export const createDefaultViewState = (): CompositeEngineState => ({
   showOrbitLines: true,
   showPredictionLines: false,
   isDebugMode: false,
-  fov: DEFAULT_PANEL_FOV,
 });
 
 /**
@@ -70,10 +65,6 @@ export function applyViewStateToRenderer(
         CSS2DLayerType.PREDICTION_LABELS,
         updates.showPredictionLines,
       );
-  }
-  if (updates.fov !== undefined) {
-    renderer.camera.fov = updates.fov;
-    renderer.camera.updateProjectionMatrix();
   }
   if (updates.isDebugMode !== undefined) {
     renderer.setDebugMode(updates.isDebugMode);

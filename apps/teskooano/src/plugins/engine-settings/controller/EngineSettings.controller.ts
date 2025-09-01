@@ -1,14 +1,24 @@
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CompositeEngineState } from "../../engine-panel/panels/types.js";
 import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js";
-import { StateSubscriptionMixin } from "@teskooano/core-state";
+import { StateSubscriptionMixin, StateAccessor } from "@teskooano/core-state";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
-export interface ControlRegistration<T extends HTMLElement = HTMLElement> {
+export interface EngineOptionRegistration<T extends HTMLElement = HTMLElement> {
   key: keyof CompositeEngineState;
-  type: "toggle" | "slider";
+  type: "toggle";
   element: T;
 }
+
+export interface CameraOptionRegistration<T extends HTMLElement = HTMLElement> {
+  key: "fov";
+  type: "slider";
+  element: T;
+}
+
+export type ControlRegistration =
+  | EngineOptionRegistration
+  | CameraOptionRegistration;
 
 /**
  * Controller for the EngineUISettingsPanel view.
@@ -18,9 +28,11 @@ export interface ControlRegistration<T extends HTMLElement = HTMLElement> {
  * parent CompositeEnginePanel, and displays error messages.
  */
 export class EngineSettingsController extends StateSubscriptionMixin {
-  private _controls: ControlRegistration[];
+  private _engineOptions: EngineOptionRegistration[];
+  private _cameraOptions: CameraOptionRegistration[];
   private _errorMessageElement: HTMLElement;
   private _parentPanel: CompositeEnginePanel | null = null;
+  private _panelId: string = "";
   private _eventHandlerMap: Map<string, EventListenerOrEventListenerObject> =
     new Map();
 
@@ -34,9 +46,37 @@ export class EngineSettingsController extends StateSubscriptionMixin {
     errorMessageElement: HTMLElement,
   ) {
     super();
-    this._controls = controls;
+    // Partition controls into engine view options and camera options
+    this._engineOptions = controls.filter(
+      (c): c is EngineOptionRegistration =>
+        c.key !== "fov" && c.type === "toggle",
+    );
+    this._cameraOptions = controls.filter(
+      (c): c is CameraOptionRegistration =>
+        c.key === "fov" && c.type === "slider",
+    );
+
     this._errorMessageElement = errorMessageElement;
     this.bindHandlers();
+  }
+
+  /** Sets the panel ID for panel-specific camera operations */
+  public setPanelId(panelId: string): void {
+    this._panelId = panelId;
+    // Initialize FOV slider value from per-panel camera state if present
+    const fovControl = this._cameraOptions[0];
+    if (fovControl && this._panelId) {
+      try {
+        const cameraManager = StateAccessor.getCameraManager(this._panelId);
+        const fov = cameraManager.getCameraFov();
+        const slider = fovControl.element as TeskooanoSlider;
+        if (typeof fov === "number") {
+          slider.value = fov;
+        }
+      } catch {
+        // Ignore; panel camera may not be ready yet
+      }
+    }
   }
 
   /**
@@ -82,18 +122,14 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * Attaches event listeners to the interactive UI elements based on the control config.
    */
   private addEventListeners(): void {
-    this._controls.forEach(({ element, type }) => {
-      if (type === "toggle") {
-        element.addEventListener(
-          "change",
-          this._eventHandlerMap.get("toggle")!,
-        );
-      } else if (type === "slider") {
-        element.addEventListener(
-          CustomEvents.SLIDER_CHANGE,
-          this._eventHandlerMap.get("slider")!,
-        );
-      }
+    this._engineOptions.forEach(({ element }) => {
+      element.addEventListener("change", this._eventHandlerMap.get("toggle")!);
+    });
+    this._cameraOptions.forEach(({ element }) => {
+      element.addEventListener(
+        CustomEvents.SLIDER_CHANGE,
+        this._eventHandlerMap.get("slider")!,
+      );
     });
   }
 
@@ -101,18 +137,17 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * Removes all attached event listeners for cleanup.
    */
   private removeEventListeners(): void {
-    this._controls.forEach(({ element, type }) => {
-      if (type === "toggle") {
-        element.removeEventListener(
-          "change",
-          this._eventHandlerMap.get("toggle")!,
-        );
-      } else if (type === "slider") {
-        element.removeEventListener(
-          CustomEvents.SLIDER_CHANGE,
-          this._eventHandlerMap.get("slider")!,
-        );
-      }
+    this._engineOptions.forEach(({ element }) => {
+      element.removeEventListener(
+        "change",
+        this._eventHandlerMap.get("toggle")!,
+      );
+    });
+    this._cameraOptions.forEach(({ element }) => {
+      element.removeEventListener(
+        CustomEvents.SLIDER_CHANGE,
+        this._eventHandlerMap.get("slider")!,
+      );
     });
   }
 
@@ -147,10 +182,11 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * Uses the element's `name` attribute to identify the state key to update.
    */
   private handleToggleChange = (event: Event): void => {
-    const target = event.target as HTMLInputElement;
+    const target = event.target as HTMLInputElement & { name?: string };
     const key = target.name as keyof CompositeEngineState;
     if (key && this._parentPanel) {
-      this._parentPanel.setProperty(key, target.checked);
+      const nextValue: boolean = !!target.checked;
+      this._parentPanel.setProperty(key, nextValue);
     }
   };
 
@@ -169,7 +205,7 @@ export class EngineSettingsController extends StateSubscriptionMixin {
 
     try {
       const target = event.target as HTMLElement & { name?: string };
-      const key = target.name as keyof CompositeEngineState;
+      const key = target.name as CameraOptionRegistration["key"]; // only 'fov'
       const newValue = event.detail?.value;
 
       if (!key) {
@@ -182,8 +218,19 @@ export class EngineSettingsController extends StateSubscriptionMixin {
         return;
       }
 
-      this._parentPanel.setProperty(key, newValue);
-      this.clearError();
+      // Handle camera FOV via per-panel camera manager and engine manager
+      if (key === "fov") {
+        if (this._panelId) {
+          try {
+            const cameraManager = StateAccessor.getCameraManager(this._panelId);
+            cameraManager.setCameraFov(newValue);
+          } catch {
+            // Ignore; core camera may not yet be available
+          }
+        }
+        this._parentPanel.engineCameraManager?.setFov(newValue);
+        this.clearError();
+      }
     } catch (error) {
       this.showError("An error occurred while updating slider value.");
     }
@@ -195,20 +242,28 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * @param viewState The latest state from the parent panel.
    */
   private updateUiState(viewState: CompositeEngineState): void {
-    this._controls.forEach(({ key, type, element }) => {
-      const value = viewState[key];
-
-      if (value === undefined) return;
-
-      if (type === "toggle" && typeof value === "boolean") {
+    // Engine view options (toggles)
+    this._engineOptions.forEach(({ key, element }) => {
+      const value = viewState[key as keyof CompositeEngineState];
+      if (typeof value === "boolean") {
         (element as HTMLInputElement).checked = value;
-      } else if (type === "slider" && typeof value === "number") {
-        const slider = element as TeskooanoSlider;
-        if (slider.value !== value) {
-          slider.value = value;
-        }
       }
     });
+
+    // Camera options (FOV slider) sync from core-state
+    const fovControl = this._cameraOptions[0];
+    if (fovControl && this._panelId) {
+      try {
+        const cameraManager = StateAccessor.getCameraManager(this._panelId);
+        const fov = cameraManager.getCameraFov();
+        const slider = fovControl.element as TeskooanoSlider;
+        if (typeof fov === "number" && slider.value !== fov) {
+          slider.value = fov;
+        }
+      } catch {
+        // Ignore if camera not ready
+      }
+    }
   }
 
   /**

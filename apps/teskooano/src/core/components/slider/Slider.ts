@@ -1,19 +1,5 @@
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 import { template } from "./Slider.template";
-import { createComponentState } from "@teskooano/ui-plugin/patterns";
-
-interface SliderState {
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  isDisabled: boolean;
-  isEditable: boolean;
-  isInvalid: boolean;
-  inputValue: string;
-  label: string;
-  helpText: string;
-}
 
 export class TeskooanoSlider extends HTMLElement {
   static observedAttributes = [
@@ -28,30 +14,20 @@ export class TeskooanoSlider extends HTMLElement {
   ];
 
   private sliderElement!: HTMLInputElement;
-  private labelElement!: HTMLLabelElement;
   private labelSlot!: HTMLSlotElement;
   private valueDisplayElement!: HTMLElement;
   private helpTextElement!: HTMLElement;
   private valueInputElement!: HTMLInputElement;
 
-  // Use the new reactive state pattern
-  private state = createComponentState(
-    {
-      value: 50,
-      min: 0,
-      max: 100,
-      step: 1,
-      isDisabled: false,
-      isEditable: false,
-      isInvalid: false,
-      inputValue: "50",
-      label: "Slider",
-      helpText: "",
-    } as SliderState,
-    {
-      componentName: "teskooano-slider",
-    },
-  );
+  // Simple properties
+  private _value = 50;
+  private _min = 0;
+  private _max = 100;
+  private _step = 1;
+  private _disabled = false;
+  private _editable = false;
+  private _label = "Slider";
+  private _helpText = "";
 
   private debounceTimeout: number | null = null;
 
@@ -59,12 +35,16 @@ export class TeskooanoSlider extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
+  }
+
+  connectedCallback() {
     this.initializeElements();
+    this.setupEventListeners();
+    this.updateUI();
   }
 
   private initializeElements(): void {
     this.sliderElement = this.shadowRoot!.querySelector("#slider-input")!;
-    this.labelElement = this.shadowRoot!.querySelector("label")!;
     this.labelSlot = this.shadowRoot!.querySelector('slot[name="label"]')!;
     this.valueDisplayElement =
       this.shadowRoot!.querySelector("#value-display")!;
@@ -73,15 +53,8 @@ export class TeskooanoSlider extends HTMLElement {
     this.valueInputElement = this.shadowRoot!.querySelector("#value-input")!;
   }
 
-  connectedCallback() {
-    this.updateStateFromAttributes();
-    this.setupEventListeners();
-    this.setupStateWatchers();
-  }
-
   disconnectedCallback() {
     this.removeEventListeners();
-    this.state.cleanup(); // Automatic cleanup of all subscriptions
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
     }
@@ -96,244 +69,173 @@ export class TeskooanoSlider extends HTMLElement {
 
     switch (name) {
       case "label":
-        this.state.set("label", newValue || "Slider");
+        this._label = newValue || "Slider";
         break;
       case "value":
-        const numValue = this.parseAttributeSafe(newValue, 50);
-        this.state.set("value", numValue);
-        this.state.set("inputValue", numValue.toString());
+        this._value = this.parseNumber(newValue, this._value);
         break;
       case "min":
-        const minValue = this.parseAttributeSafe(newValue, 0);
-        this.state.set("min", minValue);
+        this._min = this.parseNumber(newValue, 0);
         break;
       case "max":
-        const maxValue = this.parseAttributeSafe(newValue, 100);
-        this.state.set("max", maxValue);
+        this._max = this.parseNumber(newValue, 100);
         break;
       case "step":
-        const stepValue = this.parseAttributeSafe(newValue, 1, true);
-        this.state.set("step", stepValue);
+        this._step = this.parseNumber(newValue, 1);
         break;
       case "disabled":
-        const isDisabled = newValue !== null;
-        this.state.set("isDisabled", isDisabled);
+        this._disabled = newValue !== null;
         break;
       case "help-text":
-        this.state.set("helpText", newValue || "");
+        this._helpText = newValue || "";
         break;
       case "editable-value":
-        const isEditable = newValue !== null;
-        this.state.set("isEditable", isEditable);
+        this._editable = newValue !== null;
         break;
     }
+
+    this.updateUI();
   }
 
-  private parseAttributeSafe(
-    value: string | null,
-    defaultValue: number,
-    mustBePositive: boolean = false,
-  ): number {
+  private parseNumber(value: string | null, defaultValue: number): number {
     const num = parseFloat(value ?? "");
-    if (isNaN(num)) {
-      return defaultValue;
-    }
-    if (mustBePositive && num <= 0) {
-      return defaultValue;
-    }
-    return num;
-  }
-
-  private updateStateFromAttributes(): void {
-    this.state.set("min", this.parseAttributeSafe(this.getAttribute("min"), 0));
-    this.state.set(
-      "max",
-      this.parseAttributeSafe(this.getAttribute("max"), 100),
-    );
-    this.state.set(
-      "step",
-      this.parseAttributeSafe(this.getAttribute("step"), 1, true),
-    );
-    this.state.set(
-      "value",
-      this.parseAttributeSafe(this.getAttribute("value"), 50),
-    );
-    this.state.set("isDisabled", this.hasAttribute("disabled"));
-    this.state.set("isEditable", this.hasAttribute("editable-value"));
-    this.state.set("label", this.getAttribute("label") || "Slider");
-    this.state.set("helpText", this.getAttribute("help-text") || "");
-    this.state.set("inputValue", this.state.get("value").toString());
+    return isNaN(num) ? defaultValue : num;
   }
 
   private setupEventListeners(): void {
-    this.sliderElement.addEventListener("input", this.handleSliderInput);
-    this.valueInputElement.addEventListener("input", this.handleTextInput);
+    this.sliderElement.addEventListener("input", this.handleSliderChange);
+    this.valueInputElement.addEventListener("input", this.handleInputChange);
     this.valueInputElement.addEventListener("blur", this.handleInputBlur);
   }
 
   private removeEventListeners(): void {
-    this.sliderElement.removeEventListener("input", this.handleSliderInput);
-    this.valueInputElement.removeEventListener("input", this.handleTextInput);
+    this.sliderElement.removeEventListener("input", this.handleSliderChange);
+    this.valueInputElement.removeEventListener("input", this.handleInputChange);
     this.valueInputElement.removeEventListener("blur", this.handleInputBlur);
   }
 
-  private setupStateWatchers(): void {
-    // Watch for value changes to update UI
-    this.state.watch("value", (newValue: number) => {
-      this.updateSliderValue(newValue);
-      this.updateValueDisplay(newValue);
-      this.emitChangeEvent(newValue);
-    });
-
-    // Watch for min/max/step changes to update slider attributes
-    this.state.watch("min", (newValue: number) => {
-      this.sliderElement.min = newValue.toString();
-      this.valueInputElement.min = newValue.toString();
-    });
-
-    this.state.watch("max", (newValue: number) => {
-      this.sliderElement.max = newValue.toString();
-      this.valueInputElement.max = newValue.toString();
-    });
-
-    this.state.watch("step", (newValue: number) => {
-      this.sliderElement.step = newValue.toString();
-      this.valueInputElement.step = newValue.toString();
-    });
-
-    // Watch for disabled state changes
-    this.state.watch("isDisabled", (isDisabled: boolean) => {
-      this.sliderElement.disabled = isDisabled;
-      this.valueInputElement.disabled = isDisabled;
-
-      if (isDisabled) {
-        this.setAttribute("disabled", "");
-      } else {
-        this.removeAttribute("disabled");
-      }
-    });
-
-    // Watch for editable state changes
-    this.state.watch("isEditable", (isEditable: boolean) => {
-      if (isEditable) {
-        this.setAttribute("editable-value", "");
-      } else {
-        this.removeAttribute("editable-value");
-      }
-    });
-
-    // Watch for invalid state changes
-    this.state.watch("isInvalid", (isInvalid: boolean) => {
-      if (isInvalid) {
-        this.valueInputElement.classList.add("invalid");
-      } else {
-        this.valueInputElement.classList.remove("invalid");
-      }
-    });
-
-    // Watch for input value changes
-    this.state.watch("inputValue", (newValue: string) => {
-      if (this.valueInputElement.value !== newValue) {
-        this.valueInputElement.value = newValue;
-      }
-    });
-
-    // Watch for label changes
-    this.state.watch("label", (newLabel: string) => {
-      this.updateLabel(newLabel);
-    });
-
-    // Watch for help text changes
-    this.state.watch("helpText", (newHelpText: string) => {
-      this.updateHelpText(newHelpText);
-    });
-  }
-
-  private handleSliderInput = (e: Event) => {
+  private handleSliderChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const newValue = parseFloat(target.value);
 
-    if (!isNaN(newValue) && !this.state.get("isDisabled")) {
-      this.state.set("value", newValue);
-      this.state.set("inputValue", newValue.toString());
-      this.state.set("isInvalid", false);
+    if (!isNaN(newValue) && !this._disabled) {
+      this._value = newValue;
+      this.updateValueDisplay();
+      this.updateNumberInput();
+      this.emitChangeEvent();
     }
   };
 
-  private handleTextInput = (e: Event) => {
+  private handleInputChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const rawValue = target.value;
-    this.state.set("inputValue", rawValue);
-
     const numValue = parseFloat(rawValue);
-    const min = this.state.get("min");
-    const max = this.state.get("max");
 
-    if (isNaN(numValue) || numValue < min || numValue > max) {
-      this.state.set("isInvalid", true);
-    } else {
-      this.state.set("isInvalid", false);
-
-      const step = this.state.get("step");
-      const steppedValue = Math.round((numValue - min) / step) * step + min;
-      const clampedValue = Math.max(min, Math.min(steppedValue, max));
-
-      // Debounce the update to avoid too many events
-      if (this.debounceTimeout) {
-        clearTimeout(this.debounceTimeout);
-      }
-      this.debounceTimeout = window.setTimeout(() => {
-        this.state.set("value", clampedValue);
-      }, 400);
+    if (isNaN(numValue) || numValue < this._min || numValue > this._max) {
+      this.valueInputElement.classList.add("invalid");
+      return;
     }
+
+    this.valueInputElement.classList.remove("invalid");
+
+    // Apply step and clamp
+    const steppedValue =
+      Math.round((numValue - this._min) / this._step) * this._step + this._min;
+    const clampedValue = Math.max(this._min, Math.min(steppedValue, this._max));
+
+    // Debounce the update
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+    this.debounceTimeout = window.setTimeout(() => {
+      this._value = clampedValue;
+      this.updateSlider();
+      this.updateValueDisplay();
+      this.emitChangeEvent();
+    }, 400);
   };
 
   private handleInputBlur = () => {
-    if (this.state.get("isInvalid")) {
-      const lastValidValue = this.state.get("value");
-      this.state.set("inputValue", lastValidValue.toString());
-      this.state.set("isInvalid", false);
-    }
+    this.valueInputElement.classList.remove("invalid");
+    this.updateNumberInput();
   };
 
-  private updateSliderValue(value: number): void {
-    if (parseFloat(this.sliderElement.value) !== value) {
-      this.sliderElement.value = value.toString();
-    }
-  }
+  private updateUI(): void {
+    if (!this.sliderElement || !this.valueInputElement) return;
 
-  private updateValueDisplay(value: number): void {
-    const precision = this.calculatePrecision(this.state.get("step"));
-    this.valueDisplayElement.textContent = value.toFixed(precision);
-  }
+    // Update slider
+    this.sliderElement.min = this._min.toString();
+    this.sliderElement.max = this._max.toString();
+    this.sliderElement.step = this._step.toString();
+    this.sliderElement.value = this._value.toString();
+    this.sliderElement.disabled = this._disabled;
 
-  private updateLabel(label: string): void {
-    if (!this.querySelector('[slot="label"]')) {
-      this.labelSlot.textContent = label;
-    }
-    this.labelElement.setAttribute("for", "slider-input");
-    const labelText =
-      this.labelSlot.textContent?.trim() ||
-      this.querySelector('[slot="label"]')?.textContent?.trim() ||
-      label;
-    this.sliderElement.setAttribute("aria-label", labelText);
-  }
+    // Update number input
+    this.valueInputElement.min = this._min.toString();
+    this.valueInputElement.max = this._max.toString();
+    this.valueInputElement.step = this._step.toString();
+    this.valueInputElement.value = this._value.toString();
+    this.valueInputElement.disabled = this._disabled;
 
-  private updateHelpText(helpText: string): void {
-    this.helpTextElement.textContent = helpText;
-    if (helpText) {
-      const helpTextId = "help-text-" + this.getUniqueId();
-      this.helpTextElement.id = helpTextId;
-      this.sliderElement.setAttribute("aria-describedby", helpTextId);
+    // Update value display
+    this.updateValueDisplay();
+
+    // Update label
+    this.updateLabel();
+
+    // Update help text
+    this.updateHelpText();
+
+    // Update disabled attribute on host
+    if (this._disabled) {
+      this.setAttribute("disabled", "");
     } else {
-      this.sliderElement.removeAttribute("aria-describedby");
+      this.removeAttribute("disabled");
+    }
+
+    // Update editable attribute on host
+    if (this._editable) {
+      this.setAttribute("editable-value", "");
+    } else {
+      this.removeAttribute("editable-value");
     }
   }
 
-  private emitChangeEvent(value: number): void {
+  private updateSlider(): void {
+    this.sliderElement.value = this._value.toString();
+  }
+
+  private updateNumberInput(): void {
+    this.valueInputElement.value = this._value.toString();
+  }
+
+  private updateValueDisplay(): void {
+    const precision = this.calculatePrecision(this._step);
+    this.valueDisplayElement.textContent = this._value.toFixed(precision);
+  }
+
+  private updateLabel(): void {
+    if (!this.querySelector('[slot="label"]')) {
+      this.labelSlot.textContent = this._label;
+    }
+  }
+
+  private updateHelpText(): void {
+    // Only update slot content if there's no slotted help-text content
+    if (!this.querySelector('[slot="help-text"]')) {
+      const helpTextSlot = this.helpTextElement.querySelector(
+        'slot[name="help-text"]',
+      ) as HTMLSlotElement;
+      if (helpTextSlot) {
+        helpTextSlot.textContent = this._helpText;
+      }
+    }
+  }
+
+  private emitChangeEvent(): void {
     this.dispatchEvent(
       new CustomEvent<SliderValueChangePayload>(CustomEvents.SLIDER_CHANGE, {
-        detail: { value },
+        detail: { value: this._value },
         bubbles: true,
         composed: true,
       }),
@@ -348,34 +250,31 @@ export class TeskooanoSlider extends HTMLElement {
     return 0;
   }
 
-  private getUniqueId(): string {
-    return performance.now().toString(36).substring(2, 9);
-  }
-
   // Public API
   get value(): number {
-    return this.state.get("value");
+    return this._value;
   }
 
   set value(newValue: number) {
-    const min = this.state.get("min");
-    const max = this.state.get("max");
-    const step = this.state.get("step");
-    const steppedValue = Math.round((newValue - min) / step) * step + min;
-    const clampedValue = Math.max(min, Math.min(steppedValue, max));
+    const steppedValue =
+      Math.round((newValue - this._min) / this._step) * this._step + this._min;
+    const clampedValue = Math.max(this._min, Math.min(steppedValue, this._max));
 
-    if (!isNaN(clampedValue) && clampedValue !== this.state.get("value")) {
-      this.state.set("value", clampedValue);
+    if (!isNaN(clampedValue) && clampedValue !== this._value) {
+      this._value = clampedValue;
+      this.updateUI();
+      this.emitChangeEvent();
     }
   }
 
   get disabled(): boolean {
-    return this.state.get("isDisabled");
+    return this._disabled;
   }
 
   set disabled(isDisabled: boolean) {
-    if (isDisabled !== this.state.get("isDisabled")) {
-      this.state.set("isDisabled", isDisabled);
+    if (isDisabled !== this._disabled) {
+      this._disabled = isDisabled;
+      this.updateUI();
     }
   }
 }

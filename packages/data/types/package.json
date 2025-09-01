@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "three": "0.179.1",
-    "@teskooano/data-values": "file:../values"
+    "@teskooano/data-values": "file:../values",
+    "@teskooano/core-math": "file:../../core/math"
   },
   "devDependencies": {
     "typescript": "5.9.2",
