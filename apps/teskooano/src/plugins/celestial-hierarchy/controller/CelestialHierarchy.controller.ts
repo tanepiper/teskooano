@@ -106,6 +106,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this._eventManager.setParentPanel(panel);
     this._cameraManager.setParentPanel(panel);
     this._distanceManager.setParentPanel(panel);
+    this._listManager.setParentPanel(panel);
   }
 
   /**

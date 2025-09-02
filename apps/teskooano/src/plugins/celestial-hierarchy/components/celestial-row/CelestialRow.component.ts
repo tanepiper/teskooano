@@ -1,6 +1,7 @@
-import { CustomEvents } from "@teskooano/data-types";
 import { CelestialIconComponent } from "../../../celestial-icons";
 import { FormatUtils } from "../../../celestial-info/utils/formatters";
+import { ActionMenuComponent } from "../../../../core/components/action-menu";
+import { CelestialRowController } from "./controller/CelestialRow.controller";
 import { template } from "./CelestialRow.template.js";
 
 /**
@@ -33,13 +34,6 @@ export class CelestialRowComponent extends HTMLElement {
     "following",
   ];
 
-  /** The unique identifier of the celestial object */
-  private _objectId: string | null = null;
-  /** Whether the row is currently inactive/disabled */
-  private _isInactive: boolean = false;
-  /** Whether this object is currently focused */
-  private _isFocused: boolean = false;
-
   /** Reference to the celestial icon component */
   private iconEl: CelestialIconComponent | null = null;
   /** Reference to the name display element */
@@ -50,6 +44,10 @@ export class CelestialRowComponent extends HTMLElement {
   private focusBtn: HTMLElement | null = null;
   /** Reference to the follow button */
   private followBtn: HTMLElement | null = null;
+  /** Reference to the action menu component */
+  private actionMenuEl: ActionMenuComponent | null = null;
+  /** Controller that handles all business logic */
+  private controller: CelestialRowController;
 
   /**
    * Creates an instance of CelestialRowComponent.
@@ -59,13 +57,16 @@ export class CelestialRowComponent extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
+    // Initialize controller
+    this.controller = new CelestialRowController(this);
+
     // Cache element references
     this.iconEl = this.shadowRoot!.getElementById(
       "icon",
     ) as CelestialIconComponent;
     this.nameEl = this.shadowRoot!.getElementById("name");
     this.distanceEl = this.shadowRoot!.getElementById("distance");
-    // focusBtn and followBtn will be initialized in connectedCallback
+    // focusBtn, followBtn, and actionMenuEl will be initialized in connectedCallback
   }
 
   /**
@@ -75,6 +76,7 @@ export class CelestialRowComponent extends HTMLElement {
   connectedCallback() {
     this.focusBtn = this.shadowRoot!.getElementById("focus-btn");
     this.followBtn = this.shadowRoot!.getElementById("follow-btn");
+    this.actionMenuEl = this.shadowRoot!.getElementById("action-menu") as ActionMenuComponent;
 
     if (this.focusBtn) {
       this.focusBtn.addEventListener("click", this.handleFocusClick);
@@ -84,6 +86,9 @@ export class CelestialRowComponent extends HTMLElement {
     }
 
     this.updateButtonTitles();
+
+    // Set up action menu when the element is ready
+    this.initializeActionMenu();
   }
 
   /**
@@ -93,6 +98,7 @@ export class CelestialRowComponent extends HTMLElement {
   disconnectedCallback() {
     this.focusBtn?.removeEventListener("click", this.handleFocusClick);
     this.followBtn?.removeEventListener("click", this.handleFollowClick);
+    this.actionMenuEl?.removeEventListener("action-triggered", this.handleActionTriggered as EventListener);
   }
 
   /**
@@ -110,9 +116,19 @@ export class CelestialRowComponent extends HTMLElement {
   ) {
     if (oldValue === newValue) return;
 
+    // Update controller state
+    this.controller.updateFromAttributes({
+      objectId: name === "object-id" ? newValue : undefined,
+      objectName: name === "object-name" ? newValue : undefined,
+      objectType: name === "object-type" ? newValue : undefined,
+      inactive: name === "inactive" ? newValue !== null : undefined,
+      focused: name === "focused" ? newValue !== null : undefined,
+      following: name === "following" ? newValue !== null : undefined,
+    });
+
+    // Handle view updates
     switch (name) {
       case "object-id":
-        this._objectId = newValue;
         this.updateButtonTitles();
         break;
       case "object-name":
@@ -125,15 +141,14 @@ export class CelestialRowComponent extends HTMLElement {
         this.updateIcon(newValue);
         break;
       case "inactive":
-        this._isInactive = newValue !== null;
-        this.toggleAttribute("inactive", this._isInactive);
+        this.toggleAttribute("inactive", newValue !== null);
         break;
       case "focused":
-        this._isFocused = newValue !== null;
-        this.toggleAttribute("focused", this._isFocused);
+        this.toggleAttribute("focused", newValue !== null);
         break;
       case "following":
         this.updateButtonTitles();
+        this.updateActionMenuState();
         break;
     }
   }
@@ -142,9 +157,7 @@ export class CelestialRowComponent extends HTMLElement {
    * Updates the button titles based on the current object name and following state.
    */
   private updateButtonTitles() {
-    const objectName = this.getAttribute("object-name");
-    const id = this._objectId;
-    const displayName = objectName || id || "Unknown";
+    const displayName = this.controller.getDisplayName();
 
     if (this.focusBtn) {
       this.focusBtn.setAttribute("title", `Focus ${displayName}`);
@@ -178,40 +191,20 @@ export class CelestialRowComponent extends HTMLElement {
 
   /**
    * Handles the click event for the focus button.
-   * Dispatches a `focus-request` custom event if the object is active.
-   *
-   * @param event - The click event
+   * Delegates to controller for business logic.
    */
   private handleFocusClick = (event: MouseEvent) => {
     event.stopPropagation();
-    if (this._objectId && !this._isInactive) {
-      this.dispatchEvent(
-        new CustomEvent(CustomEvents.FOCUS_REQUEST, {
-          bubbles: true,
-          composed: true,
-          detail: { objectId: this._objectId },
-        }),
-      );
-    }
+    this.controller.handleFocusClick();
   };
 
   /**
    * Handles the click event for the follow button.
-   * Dispatches a `follow-request` custom event if the object is active.
-   *
-   * @param event - The click event
+   * Delegates to controller for business logic.
    */
   private handleFollowClick = (event: MouseEvent) => {
     event.stopPropagation();
-    if (this._objectId && !this._isInactive) {
-      this.dispatchEvent(
-        new CustomEvent(CustomEvents.FOLLOW_REQUEST, {
-          bubbles: true,
-          composed: true,
-          detail: { objectId: this._objectId },
-        }),
-      );
-    }
+    this.controller.handleFollowClick();
   };
 
   /**
@@ -228,28 +221,106 @@ export class CelestialRowComponent extends HTMLElement {
 
   /**
    * Gets the unique identifier of the celestial object.
-   *
-   * @returns The object ID or null if not set
    */
   get objectId(): string | null {
-    return this._objectId;
+    return this.controller.objectId;
   }
 
   /**
    * Gets whether the row is currently inactive/disabled.
-   *
-   * @returns True if the row is inactive
    */
   get isInactive(): boolean {
-    return this._isInactive;
+    return this.controller.isInactive;
   }
 
   /**
    * Gets whether this object is currently focused.
-   *
-   * @returns True if the object is focused
    */
   get isFocused(): boolean {
-    return this._isFocused;
+    return this.controller.isFocused;
+  }
+
+  /**
+   * Sets the parent panel reference for accessing renderer and state.
+   */
+  public setParentPanel(panel: any): void {
+    this.controller.setParentPanel(panel);
+    this.updateActionMenuState();
+  }
+
+  /**
+   * Initializes the action menu when the element is ready.
+   */
+  private async initializeActionMenu(): Promise<void> {
+    if (!this.actionMenuEl || !this.controller.objectId) return;
+
+    // Wait for the action menu custom element to be fully defined
+    await customElements.whenDefined("teskooano-action-menu");
+    
+    // Small delay to ensure the element is fully constructed
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    this.setupActionMenu();
+  }
+
+  /**
+   * Sets up the action menu with celestial-specific actions.
+   */
+  private setupActionMenu(): void {
+    if (!this.actionMenuEl || !this.controller.objectId) return;
+
+    // Ensure the action menu has the required methods
+    if (typeof this.actionMenuEl.setConfig !== 'function') {
+      console.warn(`[CelestialRow] Action menu element not ready for ${this.controller.objectId}`);
+      return;
+    }
+
+    // Set unique instance ID based on object ID
+    this.actionMenuEl.setAttribute("instance-id", `celestial-${this.controller.objectId}`);
+
+    // Configure the action menu
+    this.actionMenuEl.setConfig({
+      instanceId: `celestial-${this.controller.objectId}`,
+      buttonSize: "xs",
+      direction: "left",
+      closeOnAction: false,
+      toggleTitle: "Object Actions",
+    });
+
+    // Set up the actions
+    this.updateActionMenuActions();
+
+    // Listen for action events
+    this.actionMenuEl.addEventListener("action-triggered", this.handleActionTriggered as EventListener);
+  }
+
+  /**
+   * Updates the action menu actions based on current object state.
+   */
+  private updateActionMenuActions(): void {
+    if (!this.actionMenuEl || !this.controller.objectId) return;
+
+    const actions = this.controller.createActionMenuItems();
+    this.actionMenuEl.setActions(actions);
+  }
+
+  /**
+   * Handles action menu events.
+   */
+  private handleActionTriggered = (event: Event): void => {
+    const customEvent = event as CustomEvent;
+    // Actions are handled by their individual action handlers
+    // This method can be used for additional logging or state updates
+    console.debug(`[CelestialRow] Action triggered:`, customEvent.detail);
+  };
+
+  /**
+   * Updates the action menu state to reflect current visibility settings.
+   */
+  private updateActionMenuState(): void {
+    if (!this.actionMenuEl) return;
+
+    // Get updated actions from controller and refresh the menu
+    this.updateActionMenuActions();
   }
 }

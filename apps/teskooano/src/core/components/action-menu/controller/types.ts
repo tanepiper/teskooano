@@ -1,4 +1,6 @@
 export interface ActionMenuConfig {
+  /** The instance ID of the menu */
+  instanceId: string;
   /** The size of buttons in the menu */
   buttonSize?: "xs" | "sm" | "md" | "lg";
   /** The direction the menu appears from the toggle button */

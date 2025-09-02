@@ -82,7 +82,7 @@ export class TeskooanoButton extends HTMLElement {
         {
           eventType: Events.THEME_CHANGED,
           handler: () => {
-            this.refreshTooltipContent();
+            // Tooltip content will be refreshed when next shown
           },
         },
       ],
@@ -174,8 +174,7 @@ export class TeskooanoButton extends HTMLElement {
       variant: this.getAttribute("variant"),
     });
 
-    // Initialize tooltip content
-    this.tooltipManager.updateContent();
+    // Tooltip content will be initialized lazily when first shown
   }
 
   disconnectedCallback() {
@@ -241,7 +240,6 @@ export class TeskooanoButton extends HTMLElement {
     // Watch for variant changes
     this.state.watch("variant", () => {
       this.updateVariant();
-      this.refreshTooltipContent();
     });
 
     // Watch for size changes
@@ -345,25 +343,18 @@ export class TeskooanoButton extends HTMLElement {
         break;
       case "tooltip-text":
         this.state.set("tooltipText", newValue);
-        this.tooltipManager.updateContent();
         break;
       case "tooltip-title":
         this.state.set("tooltipTitle", newValue);
-        this.tooltipManager.updateContent();
         break;
       case "tooltip-icon":
         this.state.set("tooltipIcon", newValue);
-        this.tooltipManager.updateContent();
         break;
       case "title":
         this.state.set("title", newValue);
-        if (!this.hasAttribute("tooltip-text")) {
-          this.tooltipManager.updateContent();
-        }
         break;
       case "active":
         this.state.set("active", newValue !== null);
-        this.tooltipManager.updateContent();
         break;
       case "fullwidth":
         this.state.set("fullwidth", newValue !== null);
@@ -373,7 +364,6 @@ export class TeskooanoButton extends HTMLElement {
         break;
       case "variant":
         this.state.set("variant", newValue);
-        this.tooltipManager.updateContent();
         break;
       case "type":
         this.state.set("type", newValue || "button");
@@ -446,9 +436,7 @@ export class TeskooanoButton extends HTMLElement {
     this.setButtonAttribute("variant", this.variant);
   }
 
-  public refreshTooltipContent() {
-    this.tooltipManager.updateContent();
-  }
+
 
   get active(): boolean {
     return this.state.get("active");

@@ -24,7 +24,7 @@ A reusable, configurable action menu component that provides a collapsible menu 
   direction="right"
   close-on-action="true"
   toggle-title="More Options"
-  icon="<svg>...</svg>"
+  toggle-icon-svg="<svg>...</svg>"
 >
 </teskooano-action-menu>
 ```
@@ -78,13 +78,13 @@ document.body.appendChild(menu);
 
 ## Icon Configuration
 
-The Action Menu supports custom icons for the toggle button. You can specify an icon using either the `icon` attribute or the `toggleIconSvg` configuration property.
+The Action Menu supports custom icons for the toggle button. You can specify an icon using either the `toggle-icon-svg` attribute or the `toggleIconSvg` configuration property.
 
-### Using the `icon` Attribute
+### Using the `toggle-icon-svg` Attribute
 
 ```html
 <teskooano-action-menu
-  icon="<svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+  toggle-icon-svg="<svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
     <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z'/>
   </svg>"
 >

@@ -12,8 +12,8 @@ import { template } from "./action-menu.template.js";
  * @attr direction - The direction the menu appears (left, right, top, bottom)
  * @attr close-on-action - Whether to close menu when action is clicked (true/false)
  * @attr toggle-title - The title for the toggle button
+ * @attr toggle-icon-svg - The SVG icon to use for the toggle button (defaults to more horizontal icon)
  * @attr instance-id - The unique instance ID for this menu
- * @attr icon - The SVG icon to use for the toggle button (defaults to more horizontal icon)
  *
  * @fires action-triggered - Dispatched when an action is clicked
  */
@@ -24,13 +24,12 @@ export class ActionMenuComponent extends HTMLElement {
     "direction",
     "close-on-action",
     "toggle-title",
+    "toggle-icon-svg",
     "instance-id",
-    "icon",
   ];
 
   private _controller: ActionMenuController;
   private _instanceId: string;
-  private _pluginManager: any = null;
 
   constructor() {
     super();
@@ -41,22 +40,13 @@ export class ActionMenuComponent extends HTMLElement {
     this._instanceId =
       this.getAttribute("instance-id") || this._generateInstanceId();
 
-    // Get configuration from attributes
-    const config: ActionMenuConfig = {
-      buttonSize: (this.getAttribute("button-size") as any) || "xs",
-      direction: (this.getAttribute("direction") as any) || "right",
-      closeOnAction: this.getAttribute("close-on-action") === "true",
-      toggleTitle: this.getAttribute("toggle-title") || "Celestial Actions",
-      toggleIconSvg: this.getAttribute("icon") || undefined,
-    };
+    // Create controller with instance ID and initial config from attributes
+    this._controller = new ActionMenuController(
+      this,
+      this._getConfigFromAttributes()
+    );
 
-    // Create controller with instance ID
-    this._controller = new ActionMenuController(this, this._instanceId, config);
-
-    // Initialize icon if provided
-    if (config.toggleIconSvg) {
-      this._updateIcon(config.toggleIconSvg);
-    }
+    // Subscribe to controller events and forward them
     this._controller.actionTriggered$.subscribe(
       ({ action, event, instanceId }) => {
         this.dispatchEvent(
@@ -79,9 +69,12 @@ export class ActionMenuComponent extends HTMLElement {
 
   /**
    * Sets the configuration for the action menu.
+   * This will also update the corresponding attributes.
    */
   public setConfig(config: Partial<ActionMenuConfig>): void {
-    this._controller.setConfig(config);
+    // Update attributes to reflect the config
+    this._updateAttributesFromConfig(config);
+    // The controller will be updated via attributeChangedCallback
   }
 
   /**
@@ -96,7 +89,7 @@ export class ActionMenuComponent extends HTMLElement {
    * This allows the menu to fetch and display plugin-registered actions.
    */
   public setPluginManager(pluginManager: any): void {
-    this._pluginManager = pluginManager;
+    this._controller.setPluginManager(pluginManager);
   }
 
   /**
@@ -104,63 +97,7 @@ export class ActionMenuComponent extends HTMLElement {
    * This combines built-in actions with plugin-registered actions.
    */
   public setActionsWithPlugins(actions: ActionMenuItem[]): void {
-    // Get plugin-registered actions for the action-menu target
-    const pluginActions = this._getPluginActions();
-
-    // Combine built-in actions with plugin actions
-    const allActions = [...actions, ...pluginActions];
-
-    console.log(allActions);
-
-    this._controller.setActions(allActions);
-  }
-
-  /**
-   * Gets plugin-registered actions for the action-menu target.
-   */
-  private _getPluginActions(): ActionMenuItem[] {
-    try {
-      if (!this._pluginManager) {
-        return [];
-      }
-
-      // Get toolbar items for the action-menu target
-      const toolbarItems =
-        this._pluginManager.getToolbarItemsForTarget("action-menu");
-
-      if (!toolbarItems || toolbarItems.length === 0) {
-        return [];
-      }
-
-      // Convert toolbar items to ActionMenuItem format
-      const pluginActions: ActionMenuItem[] = toolbarItems
-        .filter((item: any) => item.type === "function") // Only function-type items
-        .map((item: any) => ({
-          id: item.id,
-          title: item.title || item.tooltipText || "Plugin Action",
-          iconSvg: item.iconSvg || "",
-          active: false,
-          disabled: false,
-          action: async () => {
-            try {
-              await this._pluginManager.execute(item.functionId);
-            } catch (error) {
-              console.error(
-                `[ActionMenuComponent] Error executing plugin action ${item.id}:`,
-                error,
-              );
-            }
-          },
-        }));
-
-      return pluginActions;
-    } catch (error) {
-      console.warn(
-        "[ActionMenuComponent] Error getting plugin actions:",
-        error,
-      );
-      return [];
-    }
+    this._controller.setActionsWithPlugins(actions);
   }
 
   /**
@@ -234,54 +171,54 @@ export class ActionMenuComponent extends HTMLElement {
     oldValue: string | null,
     newValue: string | null,
   ): void {
-    if (oldValue === newValue) return;
+    if (oldValue === newValue || !this._controller) return;
 
     switch (name) {
       case "instance-id":
         if (newValue) {
           this._instanceId = newValue;
-          // Update the controller's instance ID
           this._controller.updateInstanceId(newValue);
         }
         break;
-      case "icon":
-        this._updateIcon(newValue);
-        break;
-      case "toggle-title":
-        this._updateTitle(newValue);
-        break;
-      case "button-size":
-      case "direction":
-      case "close-on-action":
-        // Recreate controller with new config
-        this._controller.setConfig({
-          buttonSize: (this.getAttribute("button-size") as any) || "xs",
-          direction: (this.getAttribute("direction") as any) || "right",
-          closeOnAction: this.getAttribute("close-on-action") === "true",
-          toggleTitle: this.getAttribute("toggle-title") || "More Options",
-          toggleIconSvg: this.getAttribute("icon") || undefined,
-        });
+      default:
+        // For all other attributes, update the controller with new config
+        this._controller.setConfig(this._getConfigFromAttributes());
         break;
     }
   }
 
   /**
-   * Updates the toggle button icon.
+   * Gets configuration from current attributes.
    */
-  private _updateIcon(iconSvg: string | null): void {
-    const iconElement = this.shadowRoot?.getElementById("menu-icon");
-    if (iconElement) {
-      iconElement.innerHTML = iconSvg || "";
-    }
+  private _getConfigFromAttributes(): ActionMenuConfig {
+    return {
+      instanceId: this.getAttribute("instance-id") || "action-menu",
+      buttonSize: (this.getAttribute("button-size") as any) || "xs",
+      direction: (this.getAttribute("direction") as any) || "right",
+      closeOnAction: this.getAttribute("close-on-action") === "true",
+      toggleTitle: this.getAttribute("toggle-title") || "More Options",
+      toggleIconSvg: this.getAttribute("toggle-icon-svg") || undefined,
+    };
   }
 
   /**
-   * Updates the toggle button title.
+   * Updates attributes from configuration object.
    */
-  private _updateTitle(title: string | null): void {
-    const buttonElement = this.shadowRoot?.getElementById("menu-toggle-btn");
-    if (buttonElement) {
-      buttonElement.setAttribute("title", title || "More Options");
+  private _updateAttributesFromConfig(config: Partial<ActionMenuConfig>): void {
+    if (config.buttonSize !== undefined) {
+      this.setAttribute("button-size", config.buttonSize);
+    }
+    if (config.direction !== undefined) {
+      this.setAttribute("direction", config.direction);
+    }
+    if (config.closeOnAction !== undefined) {
+      this.setAttribute("close-on-action", config.closeOnAction.toString());
+    }
+    if (config.toggleTitle !== undefined) {
+      this.setAttribute("toggle-title", config.toggleTitle);
+    }
+    if (config.toggleIconSvg !== undefined) {
+      this.setAttribute("toggle-icon-svg", config.toggleIconSvg);
     }
   }
 
@@ -308,7 +245,7 @@ export class ActionMenuFactory {
   private _baseConfig: ActionMenuConfig;
   private _pluginManager: any = null;
 
-  constructor(baseConfig: ActionMenuConfig = {}) {
+  constructor(baseConfig: ActionMenuConfig) {
     this._baseConfig = baseConfig;
   }
 

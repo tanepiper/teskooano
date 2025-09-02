@@ -34,7 +34,9 @@ export class ActionMenuManager {
    */
   public createFactory(
     factoryId: string,
-    baseConfig: ActionMenuConfig = {},
+    baseConfig: ActionMenuConfig = {
+      instanceId: factoryId,
+    },
   ): ActionMenuFactory {
     const factory = new ActionMenuFactory(baseConfig);
 
@@ -65,7 +67,9 @@ export class ActionMenuManager {
   public createMenuForTarget(
     menuId: string,
     parentElement: HTMLElement,
-    config: ActionMenuConfig = {},
+    config: ActionMenuConfig = {
+      instanceId: menuId,
+    },
   ): ActionMenuComponent | null {
     if (this.activeMenus.has(menuId)) {
       console.warn(
@@ -118,6 +122,7 @@ export class ActionMenuManager {
       direction: "right",
       closeOnAction: false,
       toggleTitle: "More Options",
+      instanceId: "hierarchy",
     });
   }
 
@@ -131,6 +136,7 @@ export class ActionMenuManager {
       direction: "right",
       closeOnAction: false,
       toggleTitle: "Celestial Actions",
+      instanceId: "celestial",
     });
   }
 
@@ -144,6 +150,7 @@ export class ActionMenuManager {
       direction: "bottom",
       closeOnAction: true,
       toggleTitle: "More Tools",
+      instanceId: "toolbar",
     });
   }
 
@@ -196,7 +203,9 @@ export class ActionMenuManager {
       menu.setConfig(config);
 
       // Update stored configuration
-      const existingConfig = this.menuConfigs.get(menuId) || {};
+      const existingConfig = this.menuConfigs.get(menuId) || {
+        instanceId: menuId,
+      };
       this.menuConfigs.set(menuId, { ...existingConfig, ...config });
     } else {
       console.warn(

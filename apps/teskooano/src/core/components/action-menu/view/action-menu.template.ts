@@ -36,6 +36,9 @@ template.innerHTML = `
     pointer-events: none;
     transition: max-width 0.3s ease-in-out, opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, pointer-events 0s 0.3s;
     white-space: nowrap;
+    /* Ensure menu doesn't interfere with toggle button */
+    min-width: 0;
+    min-height: 0;
   }
 
   .menu-container teskooano-button {
@@ -82,14 +85,14 @@ template.innerHTML = `
     right: 100%;
     top: 50%;
     transform: translateY(-50%);
-    margin-right: 8px;
+    margin-right: 16px; /* Increased from 8px to prevent overlap */
   }
 
   .menu-container[data-direction="right"] {
     left: 100%;
     top: 50%;
     transform: translateY(-50%);
-    margin-left: 8px;
+    margin-left: 16px; /* Increased from 8px to prevent overlap */
   }
 
   .menu-container[data-direction="top"] {
@@ -113,7 +116,7 @@ template.innerHTML = `
   <teskooano-button 
     id="menu-toggle-btn" 
     title="More Options" 
-    appearance="stealth" 
+    variant="ghost" 
     class="menu-toggle-button"
     size="xs">
     <span slot="icon" id="menu-icon">${MoreHorizontalIcon}</span>

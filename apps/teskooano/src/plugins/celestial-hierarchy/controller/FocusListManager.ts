@@ -15,6 +15,7 @@ import { StateAccessor } from "@teskooano/core-state";
 export class FocusListManager {
   private _rootUlElement: HTMLElement;
   private _destroyedUlElement: HTMLElement;
+  private _parentPanel: any = null;
 
   /**
    * Creates an instance of FocusListManager.
@@ -24,6 +25,13 @@ export class FocusListManager {
   constructor(rootUlElement: HTMLElement, destroyedUlElement: HTMLElement) {
     this._rootUlElement = rootUlElement;
     this._destroyedUlElement = destroyedUlElement;
+  }
+
+  /**
+   * Sets the parent panel reference for accessing renderer.
+   */
+  public setParentPanel(panel: any): void {
+    this._parentPanel = panel;
   }
 
   /**
@@ -70,6 +78,11 @@ export class FocusListManager {
       const iconConfig = generateIconConfig(obj);
       row.setAttribute("config", JSON.stringify(iconConfig));
       row.setAttribute("inactive", ""); // Always inactive
+      
+      // Set parent panel reference for action menu functionality
+      if (this._parentPanel && typeof (row as any).setParentPanel === 'function') {
+        (row as any).setParentPanel(this._parentPanel);
+      }
 
       listItem.appendChild(row);
       this._destroyedUlElement.appendChild(listItem);
@@ -155,6 +168,11 @@ export class FocusListManager {
         if (isFocused) row.setAttribute("focused", "");
 
         row.classList.add("focus-row-item");
+        
+        // Set parent panel reference for action menu functionality
+        if (this._parentPanel && typeof (row as any).setParentPanel === 'function') {
+          (row as any).setParentPanel(this._parentPanel);
+        }
 
         const contentDiv = document.createElement("div");
         contentDiv.classList.add("list-item-content");

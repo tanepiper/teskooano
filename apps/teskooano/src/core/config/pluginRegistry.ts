@@ -13,4 +13,5 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-tour": { path: "../interface/tour-controller" },
   "teskooano-engine-toolbar": { path: "../interface/engine-toolbar" },
   notifications: { path: "../../plugins/notifications" },
+  "teskooano-action-menu": { path: "../components/action-menu" },
 };

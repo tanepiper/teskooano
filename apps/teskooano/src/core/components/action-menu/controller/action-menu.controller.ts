@@ -16,6 +16,7 @@ export class ActionMenuController {
   private _actions: ActionMenuItem[] = [];
   private _isExpanded = false;
   private _instanceId: string;
+  private _pluginManager: any = null;
 
   private _toggleButton: HTMLElement | null = null;
   private _menuContainer: HTMLElement | null = null;
@@ -25,11 +26,10 @@ export class ActionMenuController {
 
   constructor(
     host: HTMLElement,
-    instanceId: string,
-    config: ActionMenuConfig = {},
+    config: ActionMenuConfig,
   ) {
     this._host = host;
-    this._instanceId = instanceId;
+    this._instanceId = config.instanceId;
     this._config = {
       buttonSize: "xs",
       direction: "right",
@@ -40,7 +40,7 @@ export class ActionMenuController {
 
     this._cacheElementReferences();
     this._attachEventListeners();
-    this._updateDirection();
+    this._applyConfigurationToDOM();
   }
 
   /**
@@ -59,9 +59,17 @@ export class ActionMenuController {
 
   /**
    * Sets the configuration for the action menu.
+   * This method handles all visual updates based on the new configuration.
    */
   public setConfig(config: Partial<ActionMenuConfig>): void {
     this._config = { ...this._config, ...config };
+    this._applyConfigurationToDOM();
+  }
+
+  /**
+   * Applies the current configuration to the DOM elements.
+   */
+  private _applyConfigurationToDOM(): void {
     this._updateDirection();
     this._updateToggleButton();
     this._renderActions();
@@ -149,6 +157,74 @@ export class ActionMenuController {
    */
   public get isExpanded(): boolean {
     return this._isExpanded;
+  }
+
+  /**
+   * Sets the plugin manager for this controller.
+   */
+  public setPluginManager(pluginManager: any): void {
+    this._pluginManager = pluginManager;
+  }
+
+  /**
+   * Sets the actions and integrates plugin-registered actions for the action-menu target.
+   */
+  public setActionsWithPlugins(actions: ActionMenuItem[]): void {
+    // Get plugin-registered actions for the action-menu target
+    const pluginActions = this._getPluginActions();
+
+    // Combine built-in actions with plugin actions
+    const allActions = [...actions, ...pluginActions];
+
+    this.setActions(allActions);
+  }
+
+  /**
+   * Gets plugin-registered actions for the action-menu target.
+   */
+  private _getPluginActions(): ActionMenuItem[] {
+    try {
+      if (!this._pluginManager) {
+        return [];
+      }
+
+      // Get toolbar items for the action-menu target
+      const toolbarItems =
+        this._pluginManager.getToolbarItemsForTarget("action-menu");
+
+      if (!toolbarItems || toolbarItems.length === 0) {
+        return [];
+      }
+
+      // Convert toolbar items to ActionMenuItem format
+      const pluginActions: ActionMenuItem[] = toolbarItems
+        .filter((item: any) => item.type === "function") // Only function-type items
+        .map((item: any) => ({
+          id: item.id,
+          title: item.title || item.tooltipText || "Plugin Action",
+          iconSvg: item.iconSvg || "",
+          active: false,
+          disabled: false,
+          action: async () => {
+            try {
+              await this._pluginManager.execute(item.functionId);
+            } catch (error) {
+              console.error(
+                `[ActionMenuController] Error executing plugin action ${item.id}:`,
+                error,
+              );
+            }
+          },
+        }));
+
+      return pluginActions;
+    } catch (error) {
+      console.warn(
+        "[ActionMenuController] Error getting plugin actions:",
+        error,
+      );
+      return [];
+    }
   }
 
   /**
@@ -245,28 +321,38 @@ export class ActionMenuController {
       );
 
       // Update icon if provided
+      this._updateToggleIcon();
+    }
+  }
+
+  /**
+   * Updates the toggle button icon.
+   */
+  private _updateToggleIcon(): void {
+    const iconSlot = this._toggleButton?.querySelector("span[slot='icon']");
+    if (iconSlot) {
       if (this._config.toggleIconSvg) {
-        const iconSlot = this._toggleButton.querySelector("span[slot='icon']");
-        if (iconSlot) {
-          iconSlot.innerHTML = this._config.toggleIconSvg;
-        }
+        iconSlot.innerHTML = this._config.toggleIconSvg;
+      } else {
+        // Keep default icon if no custom icon is provided
+        // The template already includes the default MoreHorizontalIcon
       }
     }
   }
 
   private _renderActions(): void {
-    console.log("Rendering actions:", this._actions, this._menuContainer);
     if (!this._menuContainer) return;
 
     // Clear existing actions
     this._menuContainer.innerHTML = "";
 
     // Create action buttons
-    this._actions.forEach((action) => {
+    this._actions.forEach((action, index) => {
       const button = document.createElement("teskooano-button");
+      button.id = `${this._config.instanceId || 'action-menu'}-btn-${index}`;
       button.setAttribute("size", this._config.buttonSize || "xs");
       button.setAttribute("title", action.title);
-      button.setAttribute("appearance", "stealth");
+      button.setAttribute("variant", "ghost");
 
       if (action.disabled) {
         button.setAttribute("disabled", "");
@@ -284,6 +370,12 @@ export class ActionMenuController {
 
       // Add click handler
       button.addEventListener("click", this._handleActionClick(action));
+
+      // Prevent mouse events from bubbling to parent elements
+      button.addEventListener("mouseenter", (e) => e.stopPropagation());
+      button.addEventListener("mouseleave", (e) => e.stopPropagation());
+      button.addEventListener("focusin", (e) => e.stopPropagation());
+      button.addEventListener("focusout", (e) => e.stopPropagation());
 
       this._menuContainer!.appendChild(button);
     });

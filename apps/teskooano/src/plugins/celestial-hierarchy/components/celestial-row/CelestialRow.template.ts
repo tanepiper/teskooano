@@ -107,12 +107,13 @@ template.innerHTML = `
   <span id="distance" class="object-distance"></span>
 </div>
 <div class="action-buttons">
-  <teskooano-button size="xs" id="focus-btn" title="Focus Camera" appearance="stealth">
+  <teskooano-button size="xs" id="focus-btn" title="Focus Camera" variant="ghost">
     <span slot="icon">${EyeIcon}</span>
   </teskooano-button>
-  <teskooano-button size="xs" id="follow-btn" title="Follow Object" appearance="stealth">
+  <teskooano-button size="xs" id="follow-btn" title="Follow Object" variant="ghost">
     <span slot="icon">${PersonRunningFilledIcon}</span>
   </teskooano-button>
+  <teskooano-action-menu id="action-menu" direction="left"></teskooano-action-menu>
 </div>
 `;
 
