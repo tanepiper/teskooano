@@ -1,6 +1,7 @@
 import { BehaviorSubject, Observable } from "rxjs";
 import type { CelestialObject } from "@teskooano/data-types";
 import { CelestialStatus } from "@teskooano/data-types";
+import { DEFAULT_CELESTIAL_DISPLAY_OPTIONS } from "@teskooano/data-types";
 import {
   filterActiveCelestialObjects,
   filterDestroyedCelestialObjects,
@@ -301,28 +302,240 @@ export class CelestialStore {
   /**
    * Sets or updates a celestial object in the store.
    *
-   * This method will either add a new object or update an existing one.
-   * The change will trigger emissions on the `objects$` observable.
+   * This method will add a new object or update an existing one, triggering
+   * emissions on the `objects$` observable.
    *
-   * @param id The unique identifier for the celestial object
+   * @param id The unique identifier of the celestial object
    * @param object The celestial object data to store
    *
    * @example
    * ```typescript
-   * const newPlanet: CelestialObject = {
-   *   id: 'kepler-442b',
-   *   type: CelestialType.PLANET,
-   *   realMass_kg: 2.36e25,
-   *   realRadius_m: 6.5e6,
-   *   // ... other properties
-   * };
-   *
+   * // Add a new planet
    * celestialStore.setObject('kepler-442b', newPlanet);
    * ```
    */
   public setObject(id: string, object: CelestialObject): void {
     const current = this._objects.getValue();
     this._objects.next({ ...current, [id]: object });
+  }
+
+  /**
+   * Updates specific properties of a celestial object without replacing the entire object.
+   *
+   * This method is useful for updating display options, status, or other properties
+   * without needing to reconstruct the entire celestial object.
+   *
+   * @param id The unique identifier of the celestial object to update
+   * @param updates Partial object containing only the properties to update
+   * @returns true if the object was found and updated, false otherwise
+   *
+   * @example
+   * ```typescript
+   * // Update display options for Earth
+   * celestialStore.updateObject('earth', {
+   *   uiOptions: { showLabels: false, showOrbit: true }
+   * });
+   *
+   * // Update status
+   * celestialStore.updateObject('asteroid-1', { status: CelestialStatus.DESTROYED });
+   * ```
+   */
+  public updateObject<T extends Partial<CelestialObject>>(
+    id: string,
+    updates: T,
+  ): boolean {
+    const current = this._objects.getValue();
+    const existingObject = current[id];
+
+    if (!existingObject) {
+      return false;
+    }
+
+    const updatedObject = { ...existingObject, ...updates };
+    this._objects.next({ ...current, [id]: updatedObject });
+    return true;
+  }
+
+  /**
+   * Updates the display options for a specific celestial object.
+   *
+   * This method provides a convenient way to update just the UI display options
+   * for a celestial object, such as showing/hiding labels, orbits, trails, etc.
+   *
+   * @param id The unique identifier of the celestial object
+   * @param displayOptions The display options to apply
+   * @returns true if the object was found and updated, false otherwise
+   *
+   * @example
+   * ```typescript
+   * // Hide labels and orbits for a specific planet
+   * celestialStore.updateDisplayOptions('mars', {
+   *   showLabels: false,
+   *   showOrbit: false
+   * });
+   *
+   * // Show trails for a comet
+   * celestialStore.updateDisplayOptions('comet-1', {
+   *   showTrail: true
+   * });
+   * ```
+   */
+  public updateDisplayOptions(
+    id: string,
+    displayOptions: Partial<NonNullable<CelestialObject["uiOptions"]>>,
+  ): boolean {
+    const current = this._objects.getValue();
+    const existingObject = current[id];
+
+    if (!existingObject) {
+      return false;
+    }
+
+    // Start with defaults, merge with existing options, then apply updates
+    const currentOptions = existingObject.uiOptions || {};
+    const mergedOptions = {
+      ...DEFAULT_CELESTIAL_DISPLAY_OPTIONS,
+      ...currentOptions,
+      ...displayOptions,
+    };
+
+    const updatedObject = { ...existingObject, uiOptions: mergedOptions };
+    this._objects.next({ ...current, [id]: updatedObject });
+    return true;
+  }
+
+  /**
+   * Gets the display options for a specific celestial object.
+   *
+   * @param id The unique identifier of the celestial object
+   * @returns The display options for the object, or undefined if not found
+   *
+   * @example
+   * ```typescript
+   * const options = celestialStore.getDisplayOptions('earth');
+   * if (options?.showLabels) {
+   *   console.log('Earth labels are visible');
+   * }
+   * ```
+   */
+  public getDisplayOptions(
+    id: string,
+  ): NonNullable<CelestialObject["uiOptions"]> | undefined {
+    const current = this._objects.getValue();
+    return current[id]?.uiOptions;
+  }
+
+  /**
+   * Gets the effective display options for a specific celestial object with defaults applied.
+   *
+   * This method returns the complete display options for an object, merging any
+   * custom settings with the default values. This is useful for rendering systems
+   * that need to know the final display state of an object.
+   *
+   * @param id The unique identifier of the celestial object
+   * @returns The effective display options with defaults applied, or undefined if object not found
+   *
+   * @example
+   * ```typescript
+   * const effectiveOptions = celestialStore.getEffectiveDisplayOptions('earth');
+   * if (effectiveOptions.showLabels) {
+   *   console.log('Earth labels should be visible');
+   * }
+   * ```
+   */
+  public getEffectiveDisplayOptions(
+    id: string,
+  ): Required<NonNullable<CelestialObject["uiOptions"]>> | undefined {
+    const current = this._objects.getValue();
+    const existingObject = current[id];
+
+    if (!existingObject) {
+      return undefined;
+    }
+
+    // Merge defaults with any custom options
+    const customOptions = existingObject.uiOptions || {};
+    return { ...DEFAULT_CELESTIAL_DISPLAY_OPTIONS, ...customOptions };
+  }
+
+  /**
+   * Resets the display options for a specific celestial object to default values.
+   *
+   * This method removes any custom display options and restores the default
+   * behavior for the specified object.
+   *
+   * @param id The unique identifier of the celestial object
+   * @returns true if the object was found and reset, false otherwise
+   *
+   * @example
+   * ```typescript
+   * // Reset Earth's display options to defaults
+   * celestialStore.resetDisplayOptions('earth');
+   * ```
+   */
+  public resetDisplayOptions(id: string): boolean {
+    const current = this._objects.getValue();
+    const existingObject = current[id];
+
+    if (!existingObject) {
+      return false;
+    }
+
+    // Remove custom display options, letting defaults take effect
+    const { uiOptions, ...objectWithoutOptions } = existingObject;
+    const updatedObject = { ...objectWithoutOptions, uiOptions: undefined };
+
+    this._objects.next({ ...current, [id]: updatedObject });
+    return true;
+  }
+
+  /**
+   * Gets all celestial objects with their effective display options applied.
+   *
+   * This method returns a map of all objects where each object has its
+   * display options merged with defaults. This is useful for rendering
+   * systems that need to know the final display state of all objects.
+   *
+   * @returns A map of object IDs to objects with effective display options
+   *
+   * @example
+   * ```typescript
+   * const objectsWithOptions = celestialStore.getObjectsWithEffectiveDisplayOptions();
+   * Object.entries(objectsWithOptions).forEach(([id, object]) => {
+   *   if (object.uiOptions?.showLabels) {
+   *     console.log(`${id} labels should be visible`);
+   *   }
+   * });
+   * ```
+   */
+  public getObjectsWithEffectiveDisplayOptions(): Record<
+    string,
+    CelestialObject & {
+      uiOptions: Required<NonNullable<CelestialObject["uiOptions"]>>;
+    }
+  > {
+    const current = this._objects.getValue();
+    const result: Record<
+      string,
+      CelestialObject & {
+        uiOptions: Required<NonNullable<CelestialObject["uiOptions"]>>;
+      }
+    > = {};
+
+    Object.entries(current).forEach(([id, object]) => {
+      const customOptions = object.uiOptions || {};
+      const effectiveOptions = {
+        ...DEFAULT_CELESTIAL_DISPLAY_OPTIONS,
+        ...customOptions,
+      };
+
+      result[id] = {
+        ...object,
+        uiOptions: effectiveOptions,
+      };
+    });
+
+    return result;
   }
 
   /**

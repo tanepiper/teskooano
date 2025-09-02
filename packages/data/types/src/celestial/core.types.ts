@@ -1,3 +1,4 @@
+import { CelestialDisplayOptions } from "./display.types";
 import type { CelestialStatus, CelestialType } from "./enums";
 import { OrbitalParameters } from "./orbit.type";
 import type {
@@ -19,12 +20,10 @@ export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
   name: string;
   /** Current status of the object in the simulation */
   status: CelestialStatus;
-
   /** The REAL physical radius of the object (in METERS). */
   realRadius_m: number;
   /** The REAL physical mass of the object (in KILOGRAMS). */
   realMass_kg: number;
-
   /** Orbital parameters defining the object's path around its parent. */
   orbit: OrbitalParameters;
   /** Average surface or effective temperature in Kelvin. */
@@ -51,6 +50,8 @@ export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
 
   /** When true, this object will be excluded from collision detection. */
   ignoreCollisions?: boolean;
+
+  uiOptions?: CelestialDisplayOptions;
 
   /** When true, this object will be visible in the simulation. Defaults to true if not specified. */
   isVisible?: boolean;

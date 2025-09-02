@@ -43,7 +43,7 @@ export class ActionMenuComponent extends HTMLElement {
     // Create controller with instance ID and initial config from attributes
     this._controller = new ActionMenuController(
       this,
-      this._getConfigFromAttributes()
+      this._getConfigFromAttributes(),
     );
 
     // Subscribe to controller events and forward them

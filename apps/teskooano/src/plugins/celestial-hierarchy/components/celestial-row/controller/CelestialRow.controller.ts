@@ -100,7 +100,7 @@ export class CelestialRowController {
     if (!this._objectId) return [];
 
     const objectName = this._objectName || "Object";
-    
+
     // Get current visibility states
     const orbitVisible = this.getOrbitVisibility();
     const trailVisible = this.getTrailVisibility();
@@ -143,26 +143,42 @@ export class CelestialRowController {
    */
   private getOrbitVisibility(): boolean {
     if (!this._parentPanel || !this._objectId) return false;
-    
+
     try {
       const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer = renderer?.renderingOrchestrator?.celestialManager?.getRenderer(this._objectId);
-      
-      if (celestialRenderer && typeof celestialRenderer.shouldShowOrbitLines === 'function') {
+      const celestialRenderer =
+        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+          this._objectId,
+        );
+
+      if (
+        celestialRenderer &&
+        typeof celestialRenderer.shouldShowOrbitLines === "function"
+      ) {
         // Get camera distance to determine if orbit should be visible
-        const camera = renderer?.renderingOrchestrator?.cameraManager?.getCamera();
+        const camera =
+          renderer?.renderingOrchestrator?.cameraManager?.getCamera();
         if (camera) {
-          const object = renderer?.renderingOrchestrator?.objectManager?.getObject(this._objectId);
+          const object =
+            renderer?.renderingOrchestrator?.objectManager?.getObject(
+              this._objectId,
+            );
           if (object) {
             const distance = camera.position.distanceTo(object.position);
-            return celestialRenderer.shouldShowOrbitLines(distance, this._objectType as any);
+            return celestialRenderer.shouldShowOrbitLines(
+              distance,
+              this._objectType as any,
+            );
           }
         }
       }
     } catch (error) {
-      console.warn(`[CelestialRowController] Error getting orbit visibility for ${this._objectId}:`, error);
+      console.warn(
+        `[CelestialRowController] Error getting orbit visibility for ${this._objectId}:`,
+        error,
+      );
     }
-    
+
     return false;
   }
 
@@ -171,26 +187,42 @@ export class CelestialRowController {
    */
   private getTrailVisibility(): boolean {
     if (!this._parentPanel || !this._objectId) return false;
-    
+
     try {
       const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer = renderer?.renderingOrchestrator?.celestialManager?.getRenderer(this._objectId);
-      
-      if (celestialRenderer && typeof celestialRenderer.shouldShowTrailLines === 'function') {
+      const celestialRenderer =
+        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+          this._objectId,
+        );
+
+      if (
+        celestialRenderer &&
+        typeof celestialRenderer.shouldShowTrailLines === "function"
+      ) {
         // Get camera distance to determine if trail should be visible
-        const camera = renderer?.renderingOrchestrator?.cameraManager?.getCamera();
+        const camera =
+          renderer?.renderingOrchestrator?.cameraManager?.getCamera();
         if (camera) {
-          const object = renderer?.renderingOrchestrator?.objectManager?.getObject(this._objectId);
+          const object =
+            renderer?.renderingOrchestrator?.objectManager?.getObject(
+              this._objectId,
+            );
           if (object) {
             const distance = camera.position.distanceTo(object.position);
-            return celestialRenderer.shouldShowTrailLines(distance, this._objectType as any);
+            return celestialRenderer.shouldShowTrailLines(
+              distance,
+              this._objectType as any,
+            );
           }
         }
       }
     } catch (error) {
-      console.warn(`[CelestialRowController] Error getting trail visibility for ${this._objectId}:`, error);
+      console.warn(
+        `[CelestialRowController] Error getting trail visibility for ${this._objectId}:`,
+        error,
+      );
     }
-    
+
     return false;
   }
 
@@ -199,18 +231,27 @@ export class CelestialRowController {
    */
   private getPredictionVisibility(): boolean {
     if (!this._parentPanel || !this._objectId) return false;
-    
+
     try {
       const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer = renderer?.renderingOrchestrator?.celestialManager?.getRenderer(this._objectId);
-      
-      if (celestialRenderer && typeof celestialRenderer.shouldShowPredictionLines === 'function') {
+      const celestialRenderer =
+        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+          this._objectId,
+        );
+
+      if (
+        celestialRenderer &&
+        typeof celestialRenderer.shouldShowPredictionLines === "function"
+      ) {
         return celestialRenderer.shouldShowPredictionLines();
       }
     } catch (error) {
-      console.warn(`[CelestialRowController] Error getting prediction visibility for ${this._objectId}:`, error);
+      console.warn(
+        `[CelestialRowController] Error getting prediction visibility for ${this._objectId}:`,
+        error,
+      );
     }
-    
+
     return false;
   }
 
@@ -219,14 +260,18 @@ export class CelestialRowController {
    */
   private toggleOrbitVisibility(): void {
     if (!this._parentPanel || !this._objectId) return;
-    
+
     try {
       const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer = renderer?.renderingOrchestrator?.celestialManager?.getRenderer(this._objectId);
-      
+      const celestialRenderer =
+        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+          this._objectId,
+        );
+
       if (celestialRenderer) {
         // Toggle the orbit configuration
-        const currentConfig = celestialRenderer.positionHistoryManager?.getConfig();
+        const currentConfig =
+          celestialRenderer.positionHistoryManager?.getConfig();
         if (currentConfig) {
           const newConfig = {
             ...currentConfig,
@@ -236,7 +281,10 @@ export class CelestialRowController {
         }
       }
     } catch (error) {
-      console.error(`[CelestialRowController] Error toggling orbit visibility for ${this._objectId}:`, error);
+      console.error(
+        `[CelestialRowController] Error toggling orbit visibility for ${this._objectId}:`,
+        error,
+      );
     }
   }
 
@@ -245,14 +293,18 @@ export class CelestialRowController {
    */
   private toggleTrailVisibility(): void {
     if (!this._parentPanel || !this._objectId) return;
-    
+
     try {
       const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer = renderer?.renderingOrchestrator?.celestialManager?.getRenderer(this._objectId);
-      
+      const celestialRenderer =
+        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+          this._objectId,
+        );
+
       if (celestialRenderer) {
         // Toggle the trail configuration
-        const currentConfig = celestialRenderer.positionHistoryManager?.getConfig();
+        const currentConfig =
+          celestialRenderer.positionHistoryManager?.getConfig();
         if (currentConfig) {
           const newConfig = {
             ...currentConfig,
@@ -262,7 +314,10 @@ export class CelestialRowController {
         }
       }
     } catch (error) {
-      console.error(`[CelestialRowController] Error toggling trail visibility for ${this._objectId}:`, error);
+      console.error(
+        `[CelestialRowController] Error toggling trail visibility for ${this._objectId}:`,
+        error,
+      );
     }
   }
 
@@ -271,18 +326,24 @@ export class CelestialRowController {
    */
   private togglePredictionVisibility(): void {
     if (!this._parentPanel || !this._objectId) return;
-    
+
     try {
       const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer = renderer?.renderingOrchestrator?.celestialManager?.getRenderer(this._objectId);
-      
+      const celestialRenderer =
+        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+          this._objectId,
+        );
+
       if (celestialRenderer) {
         // Toggle prediction lines
         const currentlyVisible = celestialRenderer.shouldShowPredictionLines();
         celestialRenderer.setShowPredictionLines(!currentlyVisible);
       }
     } catch (error) {
-      console.error(`[CelestialRowController] Error toggling prediction visibility for ${this._objectId}:`, error);
+      console.error(
+        `[CelestialRowController] Error toggling prediction visibility for ${this._objectId}:`,
+        error,
+      );
     }
   }
 

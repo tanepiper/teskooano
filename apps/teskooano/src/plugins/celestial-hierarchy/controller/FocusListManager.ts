@@ -78,9 +78,12 @@ export class FocusListManager {
       const iconConfig = generateIconConfig(obj);
       row.setAttribute("config", JSON.stringify(iconConfig));
       row.setAttribute("inactive", ""); // Always inactive
-      
+
       // Set parent panel reference for action menu functionality
-      if (this._parentPanel && typeof (row as any).setParentPanel === 'function') {
+      if (
+        this._parentPanel &&
+        typeof (row as any).setParentPanel === "function"
+      ) {
         (row as any).setParentPanel(this._parentPanel);
       }
 
@@ -168,9 +171,12 @@ export class FocusListManager {
         if (isFocused) row.setAttribute("focused", "");
 
         row.classList.add("focus-row-item");
-        
+
         // Set parent panel reference for action menu functionality
-        if (this._parentPanel && typeof (row as any).setParentPanel === 'function') {
+        if (
+          this._parentPanel &&
+          typeof (row as any).setParentPanel === "function"
+        ) {
           (row as any).setParentPanel(this._parentPanel);
         }
 

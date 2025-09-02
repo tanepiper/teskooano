@@ -12,7 +12,7 @@ export const createDefaultViewState = (): CompositeEngineState => ({
   showCelestialLabels: true,
   showAuMarkers: true,
   showDebrisEffects: false,
-  showOrbitLines: true,
+  showOrbitLines: false,
   showPredictionLines: false,
   isDebugMode: false,
 });

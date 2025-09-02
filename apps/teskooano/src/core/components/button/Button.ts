@@ -436,8 +436,6 @@ export class TeskooanoButton extends HTMLElement {
     this.setButtonAttribute("variant", this.variant);
   }
 
-
-
   get active(): boolean {
     return this.state.get("active");
   }

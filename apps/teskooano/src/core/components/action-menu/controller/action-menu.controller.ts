@@ -24,10 +24,7 @@ export class ActionMenuController {
   /** Observable that emits when an action is triggered */
   public readonly actionTriggered$ = new Subject<ActionMenuEvent>();
 
-  constructor(
-    host: HTMLElement,
-    config: ActionMenuConfig,
-  ) {
+  constructor(host: HTMLElement, config: ActionMenuConfig) {
     this._host = host;
     this._instanceId = config.instanceId;
     this._config = {
@@ -349,7 +346,7 @@ export class ActionMenuController {
     // Create action buttons
     this._actions.forEach((action, index) => {
       const button = document.createElement("teskooano-button");
-      button.id = `${this._config.instanceId || 'action-menu'}-btn-${index}`;
+      button.id = `${this._config.instanceId || "action-menu"}-btn-${index}`;
       button.setAttribute("size", this._config.buttonSize || "xs");
       button.setAttribute("title", action.title);
       button.setAttribute("variant", "ghost");

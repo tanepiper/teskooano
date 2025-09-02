@@ -76,7 +76,9 @@ export class CelestialRowComponent extends HTMLElement {
   connectedCallback() {
     this.focusBtn = this.shadowRoot!.getElementById("focus-btn");
     this.followBtn = this.shadowRoot!.getElementById("follow-btn");
-    this.actionMenuEl = this.shadowRoot!.getElementById("action-menu") as ActionMenuComponent;
+    this.actionMenuEl = this.shadowRoot!.getElementById(
+      "action-menu",
+    ) as ActionMenuComponent;
 
     if (this.focusBtn) {
       this.focusBtn.addEventListener("click", this.handleFocusClick);
@@ -98,7 +100,10 @@ export class CelestialRowComponent extends HTMLElement {
   disconnectedCallback() {
     this.focusBtn?.removeEventListener("click", this.handleFocusClick);
     this.followBtn?.removeEventListener("click", this.handleFollowClick);
-    this.actionMenuEl?.removeEventListener("action-triggered", this.handleActionTriggered as EventListener);
+    this.actionMenuEl?.removeEventListener(
+      "action-triggered",
+      this.handleActionTriggered as EventListener,
+    );
   }
 
   /**
@@ -256,10 +261,10 @@ export class CelestialRowComponent extends HTMLElement {
 
     // Wait for the action menu custom element to be fully defined
     await customElements.whenDefined("teskooano-action-menu");
-    
+
     // Small delay to ensure the element is fully constructed
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     this.setupActionMenu();
   }
 
@@ -270,13 +275,18 @@ export class CelestialRowComponent extends HTMLElement {
     if (!this.actionMenuEl || !this.controller.objectId) return;
 
     // Ensure the action menu has the required methods
-    if (typeof this.actionMenuEl.setConfig !== 'function') {
-      console.warn(`[CelestialRow] Action menu element not ready for ${this.controller.objectId}`);
+    if (typeof this.actionMenuEl.setConfig !== "function") {
+      console.warn(
+        `[CelestialRow] Action menu element not ready for ${this.controller.objectId}`,
+      );
       return;
     }
 
     // Set unique instance ID based on object ID
-    this.actionMenuEl.setAttribute("instance-id", `celestial-${this.controller.objectId}`);
+    this.actionMenuEl.setAttribute(
+      "instance-id",
+      `celestial-${this.controller.objectId}`,
+    );
 
     // Configure the action menu
     this.actionMenuEl.setConfig({
@@ -291,7 +301,10 @@ export class CelestialRowComponent extends HTMLElement {
     this.updateActionMenuActions();
 
     // Listen for action events
-    this.actionMenuEl.addEventListener("action-triggered", this.handleActionTriggered as EventListener);
+    this.actionMenuEl.addEventListener(
+      "action-triggered",
+      this.handleActionTriggered as EventListener,
+    );
   }
 
   /**

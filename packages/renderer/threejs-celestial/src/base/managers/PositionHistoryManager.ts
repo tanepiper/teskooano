@@ -101,7 +101,7 @@ export class PositionHistoryManager {
     this.config = {
       maxHistoryPoints: 1000000,
       minDistanceThreshold: 1e-6,
-      showOrbitLines: true,
+      showOrbitLines: false,
       showPredictionLines: false,
       orbitLineLODDistance: 1000,
       trailLODDistance: 500,

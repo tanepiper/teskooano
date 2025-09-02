@@ -113,7 +113,7 @@ template.innerHTML = `
   <teskooano-button size="xs" id="follow-btn" title="Follow Object" variant="ghost">
     <span slot="icon">${PersonRunningFilledIcon}</span>
   </teskooano-button>
-  <teskooano-action-menu id="action-menu" direction="left"></teskooano-action-menu>
+  <!--<teskooano-action-menu id="action-menu" direction="left"></teskooano-action-menu>-->
 </div>
 `;
 
