@@ -34,7 +34,6 @@ export class FocusInteractionManager {
     }
 
     this.enginePanel!.engineCameraManager?.pointCameraAt(targetPosition);
-    this.enginePanel!.updateViewState({ focusedObjectId: objectId });
 
     console.debug(`[FocusInteractionManager] Focus pointed at ${objectId}`);
     return true;
@@ -192,8 +191,9 @@ export class FocusInteractionManager {
     const targetPosition = new THREE.Vector3(innerRadiusSceneUnits, 0, 0);
 
     // Calculate camera position with an offset for a good viewing angle
+    // Use 30% of the radius for consistency with the main camera system
     const cameraOffset = new THREE.Vector3(0.3, 0.2, 0.5).normalize();
-    const offsetDistance = innerRadiusSceneUnits * 0.1; // 10% of the inner radius as offset
+    const offsetDistance = innerRadiusSceneUnits * 0.3; // 30% of the inner radius as offset
     const cameraPosition = targetPosition
       .clone()
       .add(cameraOffset.multiplyScalar(offsetDistance));

@@ -23,7 +23,7 @@ export class CameraStore {
 
   /** The initial, default camera state. */
   private readonly _initialState: CameraState = {
-    position: new OSVector3().setFromArray([0, 100, 100]),
+    position: new OSVector3().setFromArray([200, 200, 200]),
     target: new OSVector3().setZero(),
     fov: 75,
     selectedObject: null,
