@@ -41,6 +41,7 @@ export type Integrator = (
 export enum SimulationMode {
   IDEAL = "ideal", // Keplerian/ideal orbital mechanics
   NBODY = "nbody", // Full N-body physics simulation
+  HYBRID = "hybrid", // NEW: N-Body physics with Kepler corrections for stability
 }
 
 /**
@@ -76,6 +77,27 @@ export interface SimulationConfiguration {
   mode: SimulationMode;
   integrator?: IntegratorType;
   algorithm?: AlgorithmType;
+  
+  // Hybrid mode specific parameters
+  correctionFrequency?: "per-step" | "adaptive" | "manual";
+  correctionThreshold?: number;        // When to apply corrections (0.01 = 1%)
+  preserveMomentum?: boolean;          // Whether to conserve total momentum
+  hierarchicalCorrections?: boolean;   // Apply corrections hierarchically
+}
+
+/**
+ * Extended configuration specifically for hybrid mode
+ */
+export interface HybridConfiguration extends SimulationConfiguration {
+  mode: SimulationMode.HYBRID;
+  integrator: IntegratorType;
+  algorithm: AlgorithmType;
+  
+  // Required for hybrid mode
+  correctionFrequency: "per-step" | "adaptive" | "manual";
+  correctionThreshold: number;
+  preserveMomentum: boolean;
+  hierarchicalCorrections: boolean;
 }
 
 // Note: Validation utilities are available in @teskooano/core-state

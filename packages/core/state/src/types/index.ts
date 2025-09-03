@@ -1,7 +1,6 @@
 export {
   type SimulationState,
   type SimulationConfiguration,
-  type CameraState,
   type VisualSettingsState,
   type ClearStateOptions,
   type CelestialRegistry,

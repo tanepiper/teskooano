@@ -67,3 +67,62 @@ export interface LagrangeCalculationOptions {
   /** Whether to calculate effective potential */
   calculatePotential?: boolean;
 }
+
+/**
+ * Represents the stability analysis of an orbital body
+ */
+export interface StabilityReport {
+  /** Whether the orbit is currently stable */
+  isStable: boolean;
+  /** Position error magnitude in meters */
+  positionError: number;
+  /** Velocity error magnitude in m/s */
+  velocityError: number;
+  /** Recommended correction magnitude */
+  correctionMagnitude: number;
+  /** Recommended action to take */
+  recommendedAction: "none" | "position" | "velocity" | "both";
+  /** Confidence level of the analysis (0-1) */
+  confidence: number;
+}
+
+/**
+ * Represents a correction vector for hybrid mode
+ */
+export interface CorrectionVector {
+  /** Position correction in meters */
+  positionCorrection: OSVector3;
+  /** Velocity correction in m/s */
+  velocityCorrection: OSVector3;
+  /** Whether this correction preserves momentum */
+  preservesMomentum: boolean;
+  /** Priority of this correction (higher = more important) */
+  priority: number;
+}
+
+/**
+ * Configuration for hybrid mode corrections
+ */
+export interface HybridCorrectionConfig {
+  /** Frequency of corrections */
+  frequency: "per-step" | "adaptive" | "manual";
+  /** Threshold for applying corrections (0.01 = 1%) */
+  threshold: number;
+  /** Whether to preserve total momentum */
+  preserveMomentum: boolean;
+  /** Whether to apply corrections hierarchically */
+  hierarchicalCorrections: boolean;
+  /** Maximum correction magnitude to prevent over-correction */
+  maxCorrectionMagnitude: number;
+  /** Adaptive correction parameters */
+  adaptive: {
+    /** Base correction frequency */
+    baseFrequency: number;
+    /** Time scale scaling factor */
+    timeScaleFactor: number;
+    /** Body count scaling factor */
+    bodyCountFactor: number;
+    /** Error magnitude scaling factor */
+    errorFactor: number;
+  };
+}

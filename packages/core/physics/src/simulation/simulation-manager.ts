@@ -6,6 +6,8 @@ import {
   AlgorithmType,
   IntegratorType,
   CelestialType,
+  type StabilityReport,
+  type HybridCorrectionConfig,
 } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
 import { AlgorithmFactory } from "../algorithms/algorithm-factory";
@@ -29,6 +31,8 @@ import {
   leapfrogIntegrate,
 } from "../integrators";
 import { sortBodiesByHierarchy } from "../utils";
+import { HybridCorrectionEngine } from "../orbital/hybrid-corrections";
+import { OrbitalStabilityAnalyzer } from "../orbital/stability-analyzer";
 import {
   AU_METERS,
   GRAVITATIONAL_CONSTANT,
@@ -57,6 +61,8 @@ export interface EnhancedSimulationResult {
     };
     recommendations?: string[];
     warnings?: string[];
+    correctionsApplied?: number;
+    averageStability?: number;
   };
 }
 
@@ -298,6 +304,8 @@ export class SimulationManager {
 
     if (configuration.mode === SimulationMode.IDEAL) {
       result = this.executeIdealMode(params, startTime);
+    } else if (configuration.mode === SimulationMode.HYBRID) {
+      result = this.executeHybridMode(params, startTime);
     } else {
       result = this.executeNBodyMode(params, startTime);
     }
@@ -631,6 +639,112 @@ export class SimulationManager {
         performanceProfile,
       },
     };
+  }
+
+  /**
+   * Executes Hybrid mode simulation (N-Body + Kepler corrections)
+   */
+  private executeHybridMode(
+    params: SimulationManagerParams,
+    startTime: number,
+  ): EnhancedSimulationResult {
+    // 1. Execute N-Body step first
+    const nbodyResult = this.executeNBodyMode(params, startTime);
+    
+    // 2. Apply Kepler corrections if we have orbital parameters
+    if (params.orbitalParameters && params.parentIds && params.currentTime_s !== undefined) {
+      const hybridCorrections = new HybridCorrectionEngine();
+      const stabilityAnalyzer = new OrbitalStabilityAnalyzer();
+      
+      // Analyze stability for all bodies
+      const stabilityReports = new Map<string, StabilityReport>();
+      for (const body of nbodyResult.states) {
+        const bodyOrbitalParams = params.orbitalParameters.get(body.id);
+        const parentId = params.parentIds.get(body.id);
+        
+        if (bodyOrbitalParams && parentId) {
+          const parent = nbodyResult.states.find(b => b.id === parentId);
+          if (parent) {
+            const report = stabilityAnalyzer.analyzeStability(
+              body,
+              bodyOrbitalParams,
+              parent,
+              params.currentTime_s,
+              this.getDefaultHybridConfig()
+            );
+            stabilityReports.set(body.id, report);
+          }
+        }
+      }
+      
+      // Apply corrections
+      const correctedStates = hybridCorrections.applyCorrections(
+        nbodyResult.states,
+        params.orbitalParameters,
+        params.parentIds,
+        this.getDefaultHybridConfig(),
+        stabilityReports
+      );
+      
+      // Calculate average stability
+      const averageStability = this.calculateAverageStability(stabilityReports);
+      
+      const endTime = performance.now();
+      
+      return {
+        states: correctedStates,
+        accelerations: nbodyResult.accelerations,
+        destroyedIds: nbodyResult.destroyedIds,
+        destructionEvents: nbodyResult.destructionEvents,
+        metadata: {
+          mode: SimulationMode.HYBRID,
+          algorithm: `${nbodyResult.metadata.algorithm}+kepler`,
+          integrator: `${nbodyResult.metadata.integrator}+kepler`,
+          executionTime: endTime - startTime,
+          bodyCount: params.bodies.length,
+          performanceProfile: nbodyResult.metadata.performanceProfile,
+          correctionsApplied: correctedStates.length - nbodyResult.states.length,
+          averageStability,
+        },
+      };
+    }
+    
+    // Fallback to N-Body if no orbital parameters
+    console.warn("Hybrid mode requires orbital parameters - falling back to N-Body");
+    return nbodyResult;
+  }
+
+  /**
+   * Gets default hybrid configuration
+   */
+  private getDefaultHybridConfig(): HybridCorrectionConfig {
+    return {
+      frequency: "adaptive",
+      threshold: 0.01, // 1% default threshold
+      preserveMomentum: true,
+      hierarchicalCorrections: true,
+      maxCorrectionMagnitude: 0.1, // 10% max correction
+      adaptive: {
+        baseFrequency: 1.0,
+        timeScaleFactor: 0.5,
+        bodyCountFactor: 0.3,
+        errorFactor: 1.0,
+      },
+    };
+  }
+
+  /**
+   * Calculates average stability across all bodies
+   */
+  private calculateAverageStability(reports: Map<string, StabilityReport>): number {
+    if (reports.size === 0) return 1.0;
+    
+    let totalStability = 0;
+    for (const report of reports.values()) {
+      totalStability += report.confidence;
+    }
+    
+    return totalStability / reports.size;
   }
 
   /**
