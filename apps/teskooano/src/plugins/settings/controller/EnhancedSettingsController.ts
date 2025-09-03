@@ -45,6 +45,14 @@ export interface IEnhancedSettingsPanelElements {
   algorithmSelectElement: HTMLSelectElement;
   integratorSelectElement: HTMLSelectElement;
 
+  // Hybrid mode specific controls
+  hybridControlsElement: HTMLDivElement;
+  correctionFrequencySelectElement: HTMLSelectElement;
+  correctionThresholdSliderElement: TeskooanoSlider;
+  thresholdValueElement: HTMLSpanElement;
+  preserveMomentumCheckboxElement: HTMLInputElement;
+  hierarchicalCorrectionsCheckboxElement: HTMLInputElement;
+
   // Display elements
   configDisplayElement: HTMLDivElement;
   modePerformanceElement: HTMLDivElement;
@@ -236,16 +244,25 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   }
 
   /**
-   * Shows or hides N-Body specific controls based on current mode.
+   * Shows or hides mode-specific controls based on current mode.
    * @private
    */
   private updateNBodyVisibility(): void {
     const isNBodyMode = this.currentConfig.mode === "nbody";
+    const isHybridMode = this.currentConfig.mode === "hybrid";
 
-    if (isNBodyMode) {
+    // Show/hide N-Body controls
+    if (isNBodyMode || isHybridMode) {
       this.elements.nbodyControlsElement.classList.add("visible");
     } else {
       this.elements.nbodyControlsElement.classList.remove("visible");
+    }
+
+    // Show/hide Hybrid controls
+    if (isHybridMode) {
+      this.elements.hybridControlsElement.classList.add("visible");
+    } else {
+      this.elements.hybridControlsElement.classList.remove("visible");
     }
   }
 
@@ -257,12 +274,23 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     const badge = this.elements.currentModeBadgeElement;
 
     // Remove existing mode classes
-    badge.classList.remove("ideal", "nbody");
+    badge.classList.remove("ideal", "nbody", "hybrid");
 
     // Add current mode class and update text
     badge.classList.add(this.currentConfig.mode);
-    badge.textContent =
-      this.currentConfig.mode === "ideal" ? "Ideal" : "N-Body";
+    switch (this.currentConfig.mode) {
+      case "ideal":
+        badge.textContent = "Ideal";
+        break;
+      case "nbody":
+        badge.textContent = "N-Body";
+        break;
+      case "hybrid":
+        badge.textContent = "Hybrid";
+        break;
+      default:
+        badge.textContent = "Unknown";
+    }
   }
 
   /**

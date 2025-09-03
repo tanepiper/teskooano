@@ -6,9 +6,23 @@ const template = document.createElement("template");
 const SIMULATION_MODE_OPTIONS: {
   value: SimulationMode;
   label: string;
+  description: string;
 }[] = [
-  { value: SimulationMode.NBODY, label: "N-Body (Full Physics)" },
-  { value: SimulationMode.IDEAL, label: "Ideal (Keplerian)" },
+  { 
+    value: SimulationMode.IDEAL, 
+    label: "Ideal (Keplerian)",
+    description: "Perfect stable orbits, no interactions"
+  },
+  { 
+    value: SimulationMode.NBODY, 
+    label: "N-Body (Full Physics)",
+    description: "Realistic physics, may become unstable"
+  },
+  { 
+    value: SimulationMode.HYBRID, 
+    label: "Hybrid (Stable Physics)",
+    description: "N-Body physics with stability corrections"
+  },
 ];
 
 const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [

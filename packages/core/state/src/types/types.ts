@@ -3,13 +3,15 @@ import {
   CelestialObject,
   DeviceTier,
   SimulationMode,
+  AlgorithmType,
+  IntegratorType,
 } from "@teskooano/data-types";
 
 // CameraState has been moved to stores/CameraStore.ts to support enhanced camera state management
 
 /**
  * Configuration for the simulation physics system.
- * Supports both ideal (Keplerian) and N-body physics modes.
+ * Supports ideal (Keplerian), N-body, and hybrid physics modes.
  */
 export interface SimulationConfiguration {
   /**
@@ -19,11 +21,17 @@ export interface SimulationConfiguration {
   /**
    * The integrator type to use for the simulation.
    */
-  integrator?: string;
+  integrator?: IntegratorType;
   /**
    * The algorithm type to use for the simulation.
    */
-  algorithm?: string;
+  algorithm?: AlgorithmType;
+  
+  // Hybrid mode specific parameters
+  correctionFrequency?: "per-step" | "adaptive" | "manual";
+  correctionThreshold?: number;        // When to apply corrections (0.01 = 1%)
+  preserveMomentum?: boolean;          // Whether to conserve total momentum
+  hierarchicalCorrections?: boolean;   // Apply corrections hierarchically
 }
 
 /**

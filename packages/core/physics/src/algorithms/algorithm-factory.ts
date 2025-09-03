@@ -1,7 +1,7 @@
 import type {
-  AlgorithmType,
   SimulationConfiguration,
 } from "@teskooano/core-state";
+import { AlgorithmType } from "@teskooano/data-types";
 import { SimulationMode, IntegratorType } from "@teskooano/data-types";
 
 /**
@@ -22,8 +22,18 @@ interface AlgorithmSpec {
  * Algorithm specifications based on research and implementation characteristics
  */
 const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
-  "barnes-hut": {
-    type: "barnes-hut",
+  [AlgorithmType.DIRECT]: {
+    type: AlgorithmType.DIRECT,
+    complexity: "O(N²)",
+    minBodies: 2,
+    maxBodies: 1000,
+    optimalRange: [2, 100],
+    description: "Direct force calculation, exact but slow for large systems",
+    memoryUsage: "low",
+    accuracy: "exact",
+  },
+  [AlgorithmType.BARNES_HUT]: {
+    type: AlgorithmType.BARNES_HUT,
     complexity: "O(N log N)",
     minBodies: 2,
     maxBodies: 100000,
@@ -32,8 +42,8 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
     memoryUsage: "medium",
     accuracy: "high",
   },
-  fmm: {
-    type: "fmm",
+  [AlgorithmType.FMM]: {
+    type: AlgorithmType.FMM,
     complexity: "O(N)",
     minBodies: 1000,
     maxBodies: 1000000,
@@ -42,8 +52,8 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
     memoryUsage: "medium",
     accuracy: "high",
   },
-  p3m: {
-    type: "p3m",
+  [AlgorithmType.P3M]: {
+    type: AlgorithmType.P3M,
     complexity: "O(N log N)",
     minBodies: 500,
     maxBodies: 100000,
@@ -52,8 +62,8 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
     memoryUsage: "medium",
     accuracy: "medium",
   },
-  "tree-pm": {
-    type: "tree-pm",
+  [AlgorithmType.TREE_PM]: {
+    type: AlgorithmType.TREE_PM,
     complexity: "O(N log N)",
     minBodies: 2,
     maxBodies: 1000000,
@@ -112,7 +122,7 @@ export class AlgorithmFactory {
       console.warn(
         `No suitable algorithm found for ${bodyCount} bodies with memory constraint ${maxMemoryUsage}. Falling back to barnes-hut.`,
       );
-      return "barnes-hut";
+      return AlgorithmType.BARNES_HUT;
     }
 
     // Sort by preference
@@ -281,6 +291,20 @@ export class AlgorithmFactory {
   ): SimulationConfiguration {
     if (mode === SimulationMode.IDEAL) {
       return { mode: SimulationMode.IDEAL };
+    }
+
+    if (mode === SimulationMode.HYBRID) {
+      // Hybrid mode: combine N-Body with Kepler corrections
+      const baseConfig = this.createOptimalConfiguration(bodyCount, SimulationMode.NBODY, preferences);
+      return {
+        ...baseConfig,
+        mode: SimulationMode.HYBRID,
+        // Hybrid-specific defaults
+        correctionFrequency: "adaptive",
+        correctionThreshold: 0.01, // 1% position error threshold
+        preserveMomentum: true,
+        hierarchicalCorrections: true,
+      };
     }
 
     const algorithm = this.selectOptimalAlgorithm(bodyCount, preferences);

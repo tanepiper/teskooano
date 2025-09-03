@@ -142,6 +142,11 @@ template.innerHTML = `
       color: white;
     }
 
+    .mode-badge.hybrid {
+      background-color: var(--color-success, #10b981);
+      color: white;
+    }
+
     /* N-Body specific controls container */
     .nbody-controls {
       display: grid;
@@ -163,6 +168,51 @@ template.innerHTML = `
       .nbody-controls {
         grid-template-columns: 1fr;
       }
+    }
+
+    /* Hybrid mode specific controls container */
+    .hybrid-controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md, 16px);
+      padding-top: var(--space-md, 16px);
+      border-top: 1px solid var(--color-border-subtle, #30304a);
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .hybrid-controls.visible {
+      opacity: 1;
+      max-height: 800px;
+    }
+
+    /* Slider container for threshold */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md, 12px);
+    }
+
+    .threshold-display {
+      min-width: 60px;
+      text-align: right;
+      color: var(--color-text-secondary, #aaa);
+      font-weight: bold;
+    }
+
+    /* Checkbox styling */
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm, 8px);
+      cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: auto;
+      margin: 0;
     }
 
     /* Performance indicator */
@@ -277,6 +327,7 @@ template.innerHTML = `
         <select id="setting-simulation-mode" class="teskooano-select">
           <option value="ideal">Ideal Orrery (Keplerian Orbits)</option>
           <option value="nbody">N-Body Physics (Gravitational Simulation)</option>
+          <option value="hybrid">Hybrid (Stable Physics)</option>
         </select>
         <small>Choose between stable orbital mechanics or realistic gravitational physics.</small>
         <div id="mode-performance" class="performance-indicator">
@@ -318,6 +369,52 @@ template.innerHTML = `
             <option value="leapfrog">Leapfrog</option>
           </select>
           <small>Method for advancing positions and velocities over time.</small>
+        </div>
+      </div>
+
+      <!-- Hybrid Mode Specific Controls (conditionally visible) -->
+      <div id="hybrid-controls" class="hybrid-controls">
+        <div class="form-group">
+          <label for="correction-frequency">
+            Correction Frequency
+            <span class="info-icon" title="Per-step: Maximum stability, higher cost. Adaptive: Balanced approach. Manual: User controlled."></span>
+          </label>
+          <select id="correction-frequency" class="teskooano-select">
+            <option value="per-step">Every Step</option>
+            <option value="adaptive">Adaptive</option>
+            <option value="manual">Manual</option>
+          </select>
+          <small>How often to apply Kepler corrections for stability.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="correction-threshold">
+            Correction Threshold (%)
+            <span class="info-icon" title="Lower values = more frequent corrections, higher stability. Higher values = fewer corrections, more realistic physics."></span>
+          </label>
+          <div class="slider-container">
+            <teskooano-slider id="correction-threshold" min="0.1" max="10" step="0.1" value="1.0"></teskooano-slider>
+            <span id="threshold-value" class="threshold-display">1.0%</span>
+          </div>
+          <small>Position error threshold for applying corrections.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="preserve-momentum" checked />
+            Preserve Total Momentum
+            <span class="info-icon" title="Ensures the total momentum of the system is conserved during corrections."></span>
+          </label>
+          <small>Maintains physical consistency while applying corrections.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="hierarchical-corrections" checked />
+            Hierarchical Corrections
+            <span class="info-icon" title="Apply corrections from parent to child bodies to maintain orbital hierarchy."></span>
+          </label>
+          <small>Maintains proper parent-child relationships during corrections.</small>
         </div>
       </div>
 
