@@ -401,6 +401,34 @@ export abstract class BaseLabelLayer {
   }
 
   /**
+   * Sets the visibility of a specific label element by ID.
+   * This method provides fine-grained control over individual label visibility.
+   *
+   * @param id The unique identifier of the label element
+   * @param visible Whether the label should be visible
+   * @returns true if the label was found and updated, false otherwise
+   */
+  public setElementVisibility(id: string, visible: boolean): boolean {
+    const element = this.elements.get(id);
+    if (element) {
+      element.visible = visible;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Gets the visibility state of a specific label element by ID.
+   *
+   * @param id The unique identifier of the label element
+   * @returns The current visibility state, or undefined if the element doesn't exist
+   */
+  public getElementVisibility(id: string): boolean | undefined {
+    const element = this.elements.get(id);
+    return element?.visible;
+  }
+
+  /**
    * Get current occlusion configuration
    */
   public getOcclusionConfig() {

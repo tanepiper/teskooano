@@ -6,6 +6,7 @@ import type {
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import { celestialStore } from "../stores/CelestialStore";
+import { renderableStore } from "../stores/RenderableStore";
 import { ClearStateOptions } from "../types/types";
 import {
   validateCelestialData,
@@ -222,6 +223,54 @@ export class CelestialManager {
     if (processedObject) {
       this.addObject(processedObject);
     }
+  }
+
+  /**
+   * Sets the visibility of labels for a specific celestial object.
+   * This method provides a convenient way to control label visibility
+   * on an individual object basis.
+   *
+   * Note: This method now operates on the renderableStore since UI options
+   * are specific to the rendering layer, not the core celestial data.
+   *
+   * @param id The unique identifier of the celestial object
+   * @param visible Whether labels should be visible for this object
+   * @returns true if the object was found and updated, false otherwise
+   */
+  public setLabelVisibility(id: string, visible: boolean): boolean {
+    return renderableStore.setLabelVisibility(id, visible);
+  }
+
+  /**
+   * Gets the current label visibility for a specific celestial object.
+   *
+   * Note: This method now reads from the renderableStore since UI options
+   * are specific to the rendering layer, not the core celestial data.
+   *
+   * @param id The unique identifier of the celestial object
+   * @returns The current label visibility state, or undefined if object not found
+   */
+  public getLabelVisibility(id: string): boolean | undefined {
+    return renderableStore.getLabelVisibility(id);
+  }
+
+  /**
+   * Sets label visibility for multiple celestial objects at once.
+   * This is useful for bulk operations like hiding all labels or
+   * showing labels for specific object types.
+   *
+   * Note: This method now operates on the renderableStore since UI options
+   * are specific to the rendering layer, not the core celestial data.
+   *
+   * @param ids Array of object IDs to update
+   * @param visible Whether labels should be visible for these objects
+   * @returns Number of objects successfully updated
+   */
+  public setLabelVisibilityForMultiple(
+    ids: string[],
+    visible: boolean,
+  ): number {
+    return renderableStore.setLabelVisibilityForMultiple(ids, visible);
   }
 
   // Note: Private helper methods have been moved to shared utilities in CelestialUtils.ts

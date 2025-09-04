@@ -3,6 +3,7 @@ import type * as THREE from "three";
 import type { CelestialSpecificPropertiesUnion } from ".";
 import type { PhysicsStateReal } from "../physics";
 import type { CelestialObject } from "./core.types";
+import type { CelestialDisplayOptions } from "./display.types";
 
 /**
  * Defines the structure of a celestial object once it has been processed
@@ -54,6 +55,9 @@ export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
 
   /** The axial tilt of the object (copied from orbit.axialTilt for convenience). */
   axialTilt?: OSVector3 | number;
+
+  /** UI display options for this renderable object (labels, orbits, trails, etc.). */
+  uiOptions?: CelestialDisplayOptions;
 }
 
 /**

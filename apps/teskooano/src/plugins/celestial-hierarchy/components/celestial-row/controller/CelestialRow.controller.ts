@@ -1,9 +1,7 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { renderableStore } from "@teskooano/core-state";
 import type { ActionMenuItem } from "../../../../../core/components/action-menu";
-import OrbitIcon from "@fluentui/svg-icons/icons/access_time_20_regular.svg?raw";
-import InfoIcon from "@fluentui/svg-icons/icons/info_20_regular.svg?raw";
-import TrailIcon from "@fluentui/svg-icons/icons/timeline_20_regular.svg?raw";
-import PredictionIcon from "@fluentui/svg-icons/icons/access_time_20_regular.svg?raw";
+import LabelIcon from "@fluentui/svg-icons/icons/tag_20_regular.svg?raw";
 
 /**
  * Controller for CelestialRowComponent that handles all business logic,
@@ -16,7 +14,7 @@ export class CelestialRowController {
   private _isInactive: boolean = false;
   private _isFocused: boolean = false;
   private _isFollowing: boolean = false;
-  private _parentPanel: any = null;
+
   private _host: HTMLElement;
 
   constructor(host: HTMLElement) {
@@ -25,9 +23,11 @@ export class CelestialRowController {
 
   /**
    * Sets the parent panel reference for accessing renderer and state.
+   * Note: This method is kept for compatibility but is no longer used
+   * since we now access the renderableStore directly.
    */
-  public setParentPanel(panel: any): void {
-    this._parentPanel = panel;
+  public setParentPanel(_panel: any): void {
+    // No longer needed since we use renderableStore directly
   }
 
   /**
@@ -101,263 +101,88 @@ export class CelestialRowController {
 
     const objectName = this._objectName || "Object";
 
-    // Get current visibility states
-    const orbitVisible = this.getOrbitVisibility();
-    const trailVisible = this.getTrailVisibility();
-    const predictionVisible = this.getPredictionVisibility();
+    // Get current label visibility state
+    const labelsVisible = this.getLabelVisibility();
 
     return [
       {
-        id: "orbit",
-        title: `Toggle Orbit Lines`,
-        iconSvg: OrbitIcon,
-        active: orbitVisible,
-        action: () => this.toggleOrbitVisibility(),
-      },
-      {
-        id: "trail",
-        title: `Toggle Trail Lines`,
-        iconSvg: TrailIcon,
-        active: trailVisible,
-        action: () => this.toggleTrailVisibility(),
-      },
-      {
-        id: "prediction",
-        title: `Toggle Prediction Lines`,
-        iconSvg: PredictionIcon,
-        active: predictionVisible,
-        action: () => this.togglePredictionVisibility(),
-      },
-      {
-        id: "info",
-        title: `Show ${objectName} Info`,
-        iconSvg: InfoIcon,
-        active: false,
-        action: () => this.showObjectInfo(),
+        id: "labels",
+        title: `${labelsVisible ? "Hide" : "Show"} ${objectName} Labels`,
+        iconSvg: LabelIcon,
+        active: labelsVisible,
+        action: () => this.toggleLabelVisibility(),
       },
     ];
   }
 
   /**
-   * Gets the current orbit visibility state for this object.
+   * Gets the current label visibility state for this object.
    */
-  private getOrbitVisibility(): boolean {
-    if (!this._parentPanel || !this._objectId) return false;
+  private getLabelVisibility(): boolean {
+    if (!this._objectId) return true;
 
     try {
-      const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer =
-        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
-          this._objectId,
-        );
+      const visibility = renderableStore.getLabelVisibility(this._objectId);
 
-      if (
-        celestialRenderer &&
-        typeof celestialRenderer.shouldShowOrbitLines === "function"
-      ) {
-        // Get camera distance to determine if orbit should be visible
-        const camera =
-          renderer?.renderingOrchestrator?.cameraManager?.getCamera();
-        if (camera) {
-          const object =
-            renderer?.renderingOrchestrator?.objectManager?.getObject(
-              this._objectId,
-            );
-          if (object) {
-            const distance = camera.position.distanceTo(object.position);
-            return celestialRenderer.shouldShowOrbitLines(
-              distance,
-              this._objectType as any,
-            );
-          }
-        }
-      }
+      // Return the explicit visibility state, or default to true if not set
+      return visibility ?? true;
     } catch (error) {
       console.warn(
-        `[CelestialRowController] Error getting orbit visibility for ${this._objectId}:`,
+        `[CelestialRowController] Error getting label visibility for ${this._objectId}:`,
         error,
       );
+      return true; // Default to visible on error
     }
-
-    return false;
   }
 
   /**
-   * Gets the current trail visibility state for this object.
+   * Toggles label visibility for this specific object.
    */
-  private getTrailVisibility(): boolean {
-    if (!this._parentPanel || !this._objectId) return false;
+  private toggleLabelVisibility(): void {
+    if (!this._objectId) return;
 
     try {
-      const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer =
-        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
-          this._objectId,
-        );
+      // Get current visibility state
+      const currentVisibility =
+        renderableStore.getLabelVisibility(this._objectId) ?? true;
+      const newVisibility = !currentVisibility;
 
-      if (
-        celestialRenderer &&
-        typeof celestialRenderer.shouldShowTrailLines === "function"
-      ) {
-        // Get camera distance to determine if trail should be visible
-        const camera =
-          renderer?.renderingOrchestrator?.cameraManager?.getCamera();
-        if (camera) {
-          const object =
-            renderer?.renderingOrchestrator?.objectManager?.getObject(
-              this._objectId,
-            );
-          if (object) {
-            const distance = camera.position.distanceTo(object.position);
-            return celestialRenderer.shouldShowTrailLines(
-              distance,
-              this._objectType as any,
-            );
-          }
-        }
-      }
-    } catch (error) {
-      console.warn(
-        `[CelestialRowController] Error getting trail visibility for ${this._objectId}:`,
-        error,
+      console.log(
+        `[CelestialRowController] Toggling label visibility for ${this._objectId}: ${currentVisibility} -> ${newVisibility}`,
       );
-    }
 
-    return false;
-  }
-
-  /**
-   * Gets the current prediction visibility state for this object.
-   */
-  private getPredictionVisibility(): boolean {
-    if (!this._parentPanel || !this._objectId) return false;
-
-    try {
-      const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer =
-        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
-          this._objectId,
-        );
-
-      if (
-        celestialRenderer &&
-        typeof celestialRenderer.shouldShowPredictionLines === "function"
-      ) {
-        return celestialRenderer.shouldShowPredictionLines();
-      }
-    } catch (error) {
-      console.warn(
-        `[CelestialRowController] Error getting prediction visibility for ${this._objectId}:`,
-        error,
+      // Update the label visibility through renderableStore
+      const success = renderableStore.setLabelVisibility(
+        this._objectId,
+        newVisibility,
       );
-    }
 
-    return false;
-  }
+      console.log(
+        `[CelestialRowController] Label visibility update success: ${success}`,
+      );
 
-  /**
-   * Toggles orbit line visibility for this specific object.
-   */
-  private toggleOrbitVisibility(): void {
-    if (!this._parentPanel || !this._objectId) return;
-
-    try {
-      const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer =
-        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
+      if (success) {
+        // Verify the change was applied
+        const verifyVisibility = renderableStore.getLabelVisibility(
           this._objectId,
         );
+        console.log(
+          `[CelestialRowController] Verified new visibility: ${verifyVisibility}`,
+        );
 
-      if (celestialRenderer) {
-        // Toggle the orbit configuration
-        const currentConfig =
-          celestialRenderer.positionHistoryManager?.getConfig();
-        if (currentConfig) {
-          const newConfig = {
-            ...currentConfig,
-            showOrbitLines: !currentConfig.showOrbitLines,
-          };
-          celestialRenderer.positionHistoryManager?.updateConfig(newConfig);
-        }
+        // Update the action menu to reflect the new state
+        this._host.dispatchEvent(
+          new Event("action-menu-update", { bubbles: true }),
+        );
+      } else {
+        console.warn(
+          `[CelestialRowController] Failed to update label visibility for ${this._objectId}`,
+        );
       }
     } catch (error) {
       console.error(
-        `[CelestialRowController] Error toggling orbit visibility for ${this._objectId}:`,
+        `[CelestialRowController] Error toggling label visibility for ${this._objectId}:`,
         error,
-      );
-    }
-  }
-
-  /**
-   * Toggles trail line visibility for this specific object.
-   */
-  private toggleTrailVisibility(): void {
-    if (!this._parentPanel || !this._objectId) return;
-
-    try {
-      const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer =
-        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
-          this._objectId,
-        );
-
-      if (celestialRenderer) {
-        // Toggle the trail configuration
-        const currentConfig =
-          celestialRenderer.positionHistoryManager?.getConfig();
-        if (currentConfig) {
-          const newConfig = {
-            ...currentConfig,
-            showTrailLines: !currentConfig.showTrailLines,
-          };
-          celestialRenderer.positionHistoryManager?.updateConfig(newConfig);
-        }
-      }
-    } catch (error) {
-      console.error(
-        `[CelestialRowController] Error toggling trail visibility for ${this._objectId}:`,
-        error,
-      );
-    }
-  }
-
-  /**
-   * Toggles prediction line visibility for this specific object.
-   */
-  private togglePredictionVisibility(): void {
-    if (!this._parentPanel || !this._objectId) return;
-
-    try {
-      const renderer = this._parentPanel.getRenderer();
-      const celestialRenderer =
-        renderer?.renderingOrchestrator?.celestialManager?.getRenderer(
-          this._objectId,
-        );
-
-      if (celestialRenderer) {
-        // Toggle prediction lines
-        const currentlyVisible = celestialRenderer.shouldShowPredictionLines();
-        celestialRenderer.setShowPredictionLines(!currentlyVisible);
-      }
-    } catch (error) {
-      console.error(
-        `[CelestialRowController] Error toggling prediction visibility for ${this._objectId}:`,
-        error,
-      );
-    }
-  }
-
-  /**
-   * Shows object info by dispatching an info request event.
-   */
-  private showObjectInfo(): void {
-    if (this._objectId && !this._isInactive) {
-      this._host.dispatchEvent(
-        new CustomEvent("celestial-info-request", {
-          bubbles: true,
-          composed: true,
-          detail: { objectId: this._objectId },
-        }),
       );
     }
   }

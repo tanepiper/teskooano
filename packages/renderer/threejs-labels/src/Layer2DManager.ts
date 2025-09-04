@@ -159,6 +159,46 @@ export class Layer2DManager {
   }
 
   /**
+   * Sets the visibility of a specific 2D instance within a layer.
+   * This method provides more control than showInstance/hideInstance
+   * by allowing you to set the exact visibility state.
+   *
+   * @param layer The layer the instance belongs to.
+   * @param id The unique ID of the instance to control.
+   * @param visible The desired visibility state.
+   * @returns true if the instance was found and updated, false otherwise.
+   */
+  setInstanceVisibility(
+    layer: CSS2DLayerType,
+    id: string,
+    visible: boolean,
+  ): boolean {
+    const layerInstance = this.layers.get(layer);
+    if (layerInstance) {
+      return layerInstance.setElementVisibility(id, visible);
+    }
+    return false;
+  }
+
+  /**
+   * Gets the current visibility state of a specific 2D instance within a layer.
+   *
+   * @param layer The layer the instance belongs to.
+   * @param id The unique ID of the instance to check.
+   * @returns The current visibility state, or undefined if the instance doesn't exist.
+   */
+  getInstanceVisibility(
+    layer: CSS2DLayerType,
+    id: string,
+  ): boolean | undefined {
+    const layerInstance = this.layers.get(layer);
+    if (layerInstance) {
+      return layerInstance.getElementVisibility(id);
+    }
+    return undefined;
+  }
+
+  /**
    * Clears all elements from a specific layer.
    * @param layerType - The layer to clear.
    */

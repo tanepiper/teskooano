@@ -1,4 +1,3 @@
-import { CelestialDisplayOptions } from "./display.types";
 import type { CelestialStatus, CelestialType } from "./enums";
 import { OrbitalParameters } from "./orbit.type";
 import type {
@@ -50,8 +49,6 @@ export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
 
   /** When true, this object will be excluded from collision detection. */
   ignoreCollisions?: boolean;
-
-  uiOptions?: CelestialDisplayOptions;
 
   /** When true, this object will be visible in the simulation. Defaults to true if not specified. */
   isVisible?: boolean;

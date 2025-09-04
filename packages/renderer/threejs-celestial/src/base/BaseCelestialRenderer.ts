@@ -499,6 +499,20 @@ export abstract class BaseCelestialRenderer<
   }
 
   /**
+   * Updates the label visibility for this celestial object.
+   * This method can be called by subclasses to control label visibility
+   * based on their own logic or to respond to state changes.
+   *
+   * @param visible Whether labels should be visible for this object
+   */
+  protected updateLabelVisibility(visible: boolean): void {
+    // Call the setLabelVisibility method if it exists
+    if (this.setLabelVisibility) {
+      this.setLabelVisibility(visible);
+    }
+  }
+
+  /**
    * Gets shadow caster cache statistics for debugging.
    * @returns Cache statistics
    */
@@ -528,6 +542,34 @@ export abstract class BaseCelestialRenderer<
    */
   protected getOrbitalMemoryStats() {
     return this.positionHistoryManager.getMemoryStats();
+  }
+
+  // === Label Visibility Control ===
+
+  /**
+   * Sets the visibility of labels for this celestial object.
+   * This method provides a way for renderers to control label visibility
+   * based on their own logic or user preferences.
+   *
+   * @param visible Whether labels should be visible for this object
+   */
+  protected setLabelVisibility(visible: boolean): void {
+    // This method can be overridden by subclasses to implement
+    // specific label visibility logic or to integrate with external
+    // label management systems.
+  }
+
+  /**
+   * Gets whether labels should be visible for this celestial object.
+   * This method can be overridden by subclasses to implement custom
+   * label visibility logic.
+   *
+   * @returns Whether labels should be visible
+   */
+  protected shouldShowLabels(): boolean {
+    // Default implementation returns true
+    // Subclasses can override this to implement custom logic
+    return true;
   }
 
   /**

@@ -91,6 +91,9 @@ export class CelestialRowComponent extends HTMLElement {
 
     // Set up action menu when the element is ready
     this.initializeActionMenu();
+
+    // Listen for action menu updates
+    this.addEventListener("action-menu-update", this.handleActionMenuUpdate);
   }
 
   /**
@@ -104,6 +107,7 @@ export class CelestialRowComponent extends HTMLElement {
       "action-triggered",
       this.handleActionTriggered as EventListener,
     );
+    this.removeEventListener("action-menu-update", this.handleActionMenuUpdate);
   }
 
   /**
@@ -336,4 +340,11 @@ export class CelestialRowComponent extends HTMLElement {
     // Get updated actions from controller and refresh the menu
     this.updateActionMenuActions();
   }
+
+  /**
+   * Handles action menu update events to refresh the menu state.
+   */
+  private handleActionMenuUpdate = (): void => {
+    this.updateActionMenuActions();
+  };
 }

@@ -1,5 +1,8 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  CelestialDisplayOptions,
+} from "@teskooano/data-types";
 import {
   filterVisibleRenderableObjects,
   filterActiveRenderableObjects,
@@ -388,6 +391,130 @@ class RenderableStore {
     objects: Record<string, RenderableCelestialObject>,
   ): void {
     this._renderableObjectsStore.next(objects);
+  }
+
+  // =============================================================================
+  // UI OPTIONS OPERATIONS
+  // =============================================================================
+
+  /**
+   * Sets the label visibility for a specific renderable object.
+   *
+   * @param objectId The ID of the object to update
+   * @param visible Whether labels should be visible for this object
+   * @returns true if the object was found and updated, false otherwise
+   *
+   * @example
+   * ```typescript
+   * renderableStore.setLabelVisibility('earth', false);
+   * ```
+   */
+  public setLabelVisibility(objectId: string, visible: boolean): boolean {
+    const currentObject = this.getRenderableObject(objectId);
+    if (!currentObject) {
+      console.warn(
+        `[RenderableStore] setLabelVisibility: Object ${objectId} not found`,
+      );
+      return false;
+    }
+
+    const currentOptions = currentObject.uiOptions || {};
+    console.log(
+      `[RenderableStore] Setting label visibility for ${objectId}: ${visible}, current options:`,
+      currentOptions,
+    );
+
+    this.updateRenderableObject(objectId, {
+      uiOptions: {
+        ...currentOptions,
+        showLabels: visible,
+      },
+    });
+
+    // Verify the update
+    const updatedObject = this.getRenderableObject(objectId);
+    console.log(
+      `[RenderableStore] After update, object ${objectId} uiOptions:`,
+      updatedObject?.uiOptions,
+    );
+
+    return true;
+  }
+
+  /**
+   * Gets the current label visibility for a specific renderable object.
+   *
+   * @param objectId The ID of the object to check
+   * @returns The current label visibility state, or undefined if object not found
+   *
+   * @example
+   * ```typescript
+   * const isVisible = renderableStore.getLabelVisibility('earth');
+   * ```
+   */
+  public getLabelVisibility(objectId: string): boolean | undefined {
+    const object = this.getRenderableObject(objectId);
+    return object?.uiOptions?.showLabels;
+  }
+
+  /**
+   * Sets label visibility for multiple renderable objects at once.
+   *
+   * @param objectIds Array of object IDs to update
+   * @param visible Whether labels should be visible for these objects
+   * @returns Number of objects successfully updated
+   *
+   * @example
+   * ```typescript
+   * const updated = renderableStore.setLabelVisibilityForMultiple(['earth', 'mars'], false);
+   * ```
+   */
+  public setLabelVisibilityForMultiple(
+    objectIds: string[],
+    visible: boolean,
+  ): number {
+    let updatedCount = 0;
+    for (const objectId of objectIds) {
+      if (this.setLabelVisibility(objectId, visible)) {
+        updatedCount++;
+      }
+    }
+    return updatedCount;
+  }
+
+  /**
+   * Updates the UI options for a specific renderable object.
+   *
+   * @param objectId The ID of the object to update
+   * @param uiOptions The UI options to update (will be merged with existing options)
+   * @returns true if the object was found and updated, false otherwise
+   *
+   * @example
+   * ```typescript
+   * renderableStore.updateUIOptions('earth', {
+   *   showLabels: false,
+   *   showOrbit: true
+   * });
+   * ```
+   */
+  public updateUIOptions(
+    objectId: string,
+    uiOptions: Partial<CelestialDisplayOptions>,
+  ): boolean {
+    const currentObject = this.getRenderableObject(objectId);
+    if (!currentObject) {
+      return false;
+    }
+
+    const currentOptions = currentObject.uiOptions || {};
+    this.updateRenderableObject(objectId, {
+      uiOptions: {
+        ...currentOptions,
+        ...uiOptions,
+      },
+    });
+
+    return true;
   }
 }
 

@@ -220,6 +220,9 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.subscribeToState(
       this.renderableObjects$,
       (objects: Record<string, RenderableCelestialObject>) => {
+        console.log(
+          `[ObjectManager] Received renderable objects update, count: ${Object.keys(objects).length}`,
+        );
         this.latestRenderableObjects = objects;
         this.objectLifecycleManager.syncObjectsWithState(
           this.latestRenderableObjects,
@@ -332,12 +335,13 @@ export class ObjectManager extends StateSubscriptionMixin {
   }
 
   /**
-   * @internal Updates the visibility of CSS2D labels based on object type and LOD levels.
-   *          Hides labels for destroyed objects or objects at high LOD distances (e.g., distant moons).
+   * @internal Updates the visibility of CSS2D labels based on object type, LOD levels, and individual UI options.
+   *          Hides labels for destroyed objects, objects at high LOD distances, or objects with showLabels: false.
    */
   private updateLabelVisibility(): void {
     if (!this.css2DManager) return; // Skip if no CSS2D manager
 
+    console.log(`[ObjectManager] updateLabelVisibility called`);
     const allRenderableObjects = this.latestRenderableObjects;
 
     for (const objectId in allRenderableObjects) {
@@ -354,9 +358,10 @@ export class ObjectManager extends StateSubscriptionMixin {
             .getLayer(CSS2DLayerType.CELESTIAL_LABELS)
             ?.getElement(objectId)?.visible
         ) {
-          this.css2DManager.hideInstance(
+          this.css2DManager.setInstanceVisibility(
             CSS2DLayerType.CELESTIAL_LABELS,
             objectId,
+            false,
           );
         }
         continue;
@@ -365,15 +370,26 @@ export class ObjectManager extends StateSubscriptionMixin {
       let showLabel = true; // Default to showing labels
       const type = objectData.type;
 
-      // Hide labels for specific types that shouldn't have them
-      if (type === CelestialType.RING_SYSTEM) {
+      // Check individual UI options first - this takes precedence over other logic
+      if (objectData.uiOptions?.showLabels === false) {
+        console.log(`[ObjectManager] Object ${objectId} has showLabels: false`);
         showLabel = false;
-      } else if (type === CelestialType.MOON) {
-        // For moons, only show label if parent is close (low LOD level)
-        if (objectData.parentId) {
-          const parentLOD = this.lodManager.getLOD(objectData.parentId);
-          // Show if parent LOD exists and is close (we can't easily determine LOD level from THREE.LOD)
-          showLabel = parentLOD !== undefined;
+      } else {
+        if (objectData.uiOptions?.showLabels !== undefined) {
+          console.log(
+            `[ObjectManager] Object ${objectId} has showLabels: ${objectData.uiOptions.showLabels}`,
+          );
+        }
+        // Hide labels for specific types that shouldn't have them
+        if (type === CelestialType.RING_SYSTEM) {
+          showLabel = false;
+        } else if (type === CelestialType.MOON) {
+          // For moons, only show label if parent is close (low LOD level)
+          if (objectData.parentId) {
+            const parentLOD = this.lodManager.getLOD(objectData.parentId);
+            // Show if parent LOD exists and is close (we can't easily determine LOD level from THREE.LOD)
+            showLabel = parentLOD !== undefined;
+          }
         }
       }
 
@@ -383,15 +399,14 @@ export class ObjectManager extends StateSubscriptionMixin {
       const isCurrentlyVisible = currentLabelElement?.visible ?? false;
 
       // Apply visibility change only if it differs from current state
-      if (showLabel && !isCurrentlyVisible) {
-        this.css2DManager.showInstance(
-          CSS2DLayerType.CELESTIAL_LABELS,
-          objectId,
+      if (showLabel !== isCurrentlyVisible) {
+        console.log(
+          `[ObjectManager] Setting label visibility for ${objectId}: ${isCurrentlyVisible} -> ${showLabel}`,
         );
-      } else if (!showLabel && isCurrentlyVisible) {
-        this.css2DManager.hideInstance(
+        this.css2DManager.setInstanceVisibility(
           CSS2DLayerType.CELESTIAL_LABELS,
           objectId,
+          showLabel,
         );
       }
     }
