@@ -1,5 +1,6 @@
 import ArrowSyncCircleIcon from "@fluentui/svg-icons/icons/arrow_sync_circle_24_regular.svg?raw";
 import DismissCircleIcon from "@fluentui/svg-icons/icons/dismiss_circle_24_regular.svg?raw";
+import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
 import { CelestialType } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -51,7 +52,8 @@ template.innerHTML = `
       gap: 8px;
     }
     teskooano-button#reset-view,
-    teskooano-button#clear-focus {
+    teskooano-button#clear-focus,
+    teskooano-button#toggle-labels {
       flex-grow: 1;
     }
 
@@ -190,6 +192,7 @@ template.innerHTML = `
     <div class="button-row">
       <teskooano-button id="reset-view" title="Reset Camera View & Clear Focus" icon-svg='${ArrowSyncCircleIcon}'>Reset</teskooano-button>
       <teskooano-button id="clear-focus" title="Clear Camera Focus" icon-svg='${DismissCircleIcon}'>Clear</teskooano-button>
+      <teskooano-button id="toggle-labels" title="Show/Hide All Labels" icon-svg='${EyeIcon}'>Labels</teskooano-button>
     </div>
   </div>
 

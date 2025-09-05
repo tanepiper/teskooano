@@ -40,8 +40,10 @@ export class CelestialHierarchy
     ) as HTMLUListElement;
     this.connectedWindowElement =
       this.shadowRoot!.getElementById("connected-window");
-    const resetButton = this.shadowRoot!.getElementById("reset-button")!;
-    const clearButton = this.shadowRoot!.getElementById("clear-button")!;
+    const resetButton = this.shadowRoot!.getElementById("reset-view")!;
+    const clearButton = this.shadowRoot!.getElementById("clear-focus")!;
+    const toggleLabelsButton =
+      this.shadowRoot!.getElementById("toggle-labels")!;
 
     if (!treeListContainer || !destroyedListContainer) {
       console.error(
@@ -56,6 +58,7 @@ export class CelestialHierarchy
       destroyedListContainer,
       resetButton,
       clearButton,
+      toggleLabelsButton,
     );
   }
 

@@ -2,6 +2,7 @@ import {
   celestialObjects$,
   StateAccessor,
   StateSubscriptionMixin,
+  renderableStore,
 } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
@@ -37,6 +38,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     destroyedListContainer: HTMLUListElement,
     resetButton: HTMLElement,
     clearButton: HTMLElement,
+    toggleLabelsButton: HTMLElement,
   ) {
     super();
 
@@ -50,6 +52,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       treeListContainer,
       resetButton,
       clearButton,
+      toggleLabelsButton,
       this._createEventHandlers(),
     );
 
@@ -126,6 +129,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       onInfluencesChanged: this._populateListInternal.bind(this),
       onHierarchyChanged: this._populateListInternal.bind(this), // Simplified - just re-render
       onTreeInteraction: this._handleTreeInteraction.bind(this),
+      onToggleAllLabels: this._toggleAllLabels.bind(this),
     };
   }
 
@@ -246,4 +250,46 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this._previousObjectsState = { ...currentObjects };
     if (needsListUpdate) this._populateListInternal();
   };
+
+  /**
+   * Toggles the visibility of all labels.
+   * If most labels are visible, hides all; if most are hidden, shows all.
+   */
+  private _toggleAllLabels(): void {
+    const renderableObjects = renderableStore.getRenderableObjects();
+    const objectIds = Object.keys(renderableObjects);
+
+    if (objectIds.length === 0) {
+      console.warn(
+        "[CelestialHierarchy] No objects available to toggle labels",
+      );
+      return;
+    }
+
+    // Count how many labels are currently visible
+    let visibleCount = 0;
+    for (const objectId of objectIds) {
+      const visibility = renderableStore.getLabelVisibility(objectId);
+      if (visibility === true) {
+        visibleCount++;
+      }
+    }
+
+    // If more than half are visible, hide all; otherwise show all
+    const shouldShowAll = visibleCount < objectIds.length / 2;
+
+    console.log(
+      `[CelestialHierarchy] Toggling all labels: ${visibleCount}/${objectIds.length} visible, ${shouldShowAll ? "showing" : "hiding"} all`,
+    );
+
+    // Update all objects
+    const successCount = renderableStore.setLabelVisibilityForMultiple(
+      objectIds,
+      shouldShowAll,
+    );
+
+    console.log(
+      `[CelestialHierarchy] Successfully updated ${successCount}/${objectIds.length} objects`,
+    );
+  }
 }

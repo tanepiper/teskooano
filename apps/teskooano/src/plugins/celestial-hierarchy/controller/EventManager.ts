@@ -8,6 +8,7 @@ export interface EventHandlers {
   onInfluencesChanged: () => void;
   onHierarchyChanged: () => void;
   onTreeInteraction: (event: Event) => void;
+  onToggleAllLabels: () => void;
 }
 
 /**
@@ -17,6 +18,7 @@ export class EventManager {
   private _treeListContainer: HTMLUListElement;
   private _resetButton: HTMLElement;
   private _clearButton: HTMLElement;
+  private _toggleLabelsButton: HTMLElement;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _handlers: EventHandlers;
 
@@ -24,11 +26,13 @@ export class EventManager {
     treeListContainer: HTMLUListElement,
     resetButton: HTMLElement,
     clearButton: HTMLElement,
+    toggleLabelsButton: HTMLElement,
     handlers: EventHandlers,
   ) {
     this._treeListContainer = treeListContainer;
     this._resetButton = resetButton;
     this._clearButton = clearButton;
+    this._toggleLabelsButton = toggleLabelsButton;
     this._handlers = handlers;
   }
 
@@ -43,6 +47,9 @@ export class EventManager {
     );
     this._clearButton?.addEventListener("click", () =>
       this._parentPanel?.engineCameraManager?.clearFocus(),
+    );
+    this._toggleLabelsButton?.addEventListener("click", () =>
+      this._handlers.onToggleAllLabels(),
     );
 
     // Tree interaction listeners
