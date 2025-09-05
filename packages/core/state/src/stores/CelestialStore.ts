@@ -1,5 +1,8 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import type { CelestialObject } from "@teskooano/data-types";
+import type {
+  CelestialObject,
+  RenderableCelestialObject,
+} from "@teskooano/data-types";
 import { CelestialStatus } from "@teskooano/data-types";
 import { DEFAULT_CELESTIAL_DISPLAY_OPTIONS } from "@teskooano/data-types";
 import {
@@ -420,7 +423,7 @@ export class CelestialStore {
    */
   public getDisplayOptions(
     id: string,
-  ): NonNullable<CelestialObject["uiOptions"]> | undefined {
+  ): RenderableCelestialObject["uiOptions"] | undefined {
     const current = this._objects.getValue();
     return current[id]?.uiOptions;
   }
@@ -445,7 +448,7 @@ export class CelestialStore {
    */
   public getEffectiveDisplayOptions(
     id: string,
-  ): Required<NonNullable<CelestialObject["uiOptions"]>> | undefined {
+  ): Required<NonNullable<RenderableCelestialObject["uiOptions"]>> | undefined {
     const current = this._objects.getValue();
     const existingObject = current[id];
 
@@ -511,14 +514,16 @@ export class CelestialStore {
   public getObjectsWithEffectiveDisplayOptions(): Record<
     string,
     CelestialObject & {
-      uiOptions: Required<NonNullable<CelestialObject["uiOptions"]>>;
+      uiOptions: Required<NonNullable<RenderableCelestialObject["uiOptions"]>>;
     }
   > {
     const current = this._objects.getValue();
     const result: Record<
       string,
       CelestialObject & {
-        uiOptions: Required<NonNullable<CelestialObject["uiOptions"]>>;
+        uiOptions: Required<
+          NonNullable<RenderableCelestialObject["uiOptions"]>
+        >;
       }
     > = {};
 

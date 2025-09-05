@@ -4,6 +4,7 @@ import type {
   CelestialSpecificPropertiesUnion,
   PlanetAtmosphereProperties,
 } from "./properties.types";
+import type { CelestialDisplayOptions } from "./display.types";
 
 /**
  * Represents the complete state and definition of a celestial object within the simulation.
@@ -52,4 +53,7 @@ export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
 
   /** When true, this object will be visible in the simulation. Defaults to true if not specified. */
   isVisible?: boolean;
+
+  /** UI display options for this celestial object (labels, orbits, trails, etc.). */
+  uiOptions?: CelestialDisplayOptions;
 }

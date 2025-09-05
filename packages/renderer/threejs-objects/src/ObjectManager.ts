@@ -220,9 +220,6 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.subscribeToState(
       this.renderableObjects$,
       (objects: Record<string, RenderableCelestialObject>) => {
-        console.log(
-          `[ObjectManager] Received renderable objects update, count: ${Object.keys(objects).length}`,
-        );
         this.latestRenderableObjects = objects;
         this.objectLifecycleManager.syncObjectsWithState(
           this.latestRenderableObjects,
@@ -341,7 +338,6 @@ export class ObjectManager extends StateSubscriptionMixin {
   private updateLabelVisibility(): void {
     if (!this.css2DManager) return; // Skip if no CSS2D manager
 
-    console.log(`[ObjectManager] updateLabelVisibility called`);
     const allRenderableObjects = this.latestRenderableObjects;
 
     for (const objectId in allRenderableObjects) {
@@ -358,10 +354,9 @@ export class ObjectManager extends StateSubscriptionMixin {
             .getLayer(CSS2DLayerType.CELESTIAL_LABELS)
             ?.getElement(objectId)?.visible
         ) {
-          this.css2DManager.setInstanceVisibility(
+          this.css2DManager.hideInstance(
             CSS2DLayerType.CELESTIAL_LABELS,
             objectId,
-            false,
           );
         }
         continue;
@@ -372,11 +367,10 @@ export class ObjectManager extends StateSubscriptionMixin {
 
       // Check individual UI options first - this takes precedence over other logic
       if (objectData.uiOptions?.showLabels === false) {
-        console.log(`[ObjectManager] Object ${objectId} has showLabels: false`);
         showLabel = false;
       } else {
         if (objectData.uiOptions?.showLabels !== undefined) {
-          console.log(
+          console.debug(
             `[ObjectManager] Object ${objectId} has showLabels: ${objectData.uiOptions.showLabels}`,
           );
         }
@@ -398,15 +392,16 @@ export class ObjectManager extends StateSubscriptionMixin {
         ?.getElement(objectId);
       const isCurrentlyVisible = currentLabelElement?.visible ?? false;
 
-      // Apply visibility change only if it differs from current state
-      if (showLabel !== isCurrentlyVisible) {
-        console.log(
-          `[ObjectManager] Setting label visibility for ${objectId}: ${isCurrentlyVisible} -> ${showLabel}`,
-        );
-        this.css2DManager.setInstanceVisibility(
+      // Show or hide label based on the calculated showLabel value
+      if (showLabel && !isCurrentlyVisible) {
+        this.css2DManager.showInstance(
           CSS2DLayerType.CELESTIAL_LABELS,
           objectId,
-          showLabel,
+        );
+      } else if (!showLabel && isCurrentlyVisible) {
+        this.css2DManager.hideInstance(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
         );
       }
     }

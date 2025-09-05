@@ -12,6 +12,8 @@ import {
   filterPhysicsActiveRenderableObjects$,
 } from "../utils";
 
+import { celestialStore } from "./CelestialStore";
+
 /**
  * Manages the state of renderable celestial objects.
  *
@@ -410,35 +412,29 @@ class RenderableStore {
    * ```
    */
   public setLabelVisibility(objectId: string, visible: boolean): boolean {
-    const currentObject = this.getRenderableObject(objectId);
-    if (!currentObject) {
-      console.warn(
-        `[RenderableStore] setLabelVisibility: Object ${objectId} not found`,
-      );
-      return false;
-    }
+    // Import here to avoid circular dependencies
 
-    const currentOptions = currentObject.uiOptions || {};
     console.log(
-      `[RenderableStore] Setting label visibility for ${objectId}: ${visible}, current options:`,
-      currentOptions,
+      `[RenderableStore] Setting label visibility for ${objectId}: ${visible}`,
     );
 
-    this.updateRenderableObject(objectId, {
-      uiOptions: {
-        ...currentOptions,
-        showLabels: visible,
-      },
+    // Update the CelestialStore instead of RenderableStore directly
+    // This ensures the change flows through the RendererStateAdapter
+    const success = celestialStore.updateDisplayOptions(objectId, {
+      showLabels: visible,
     });
 
-    // Verify the update
-    const updatedObject = this.getRenderableObject(objectId);
-    console.log(
-      `[RenderableStore] After update, object ${objectId} uiOptions:`,
-      updatedObject?.uiOptions,
-    );
+    if (success) {
+      console.log(
+        `[RenderableStore] Successfully updated label visibility for ${objectId}: ${visible}`,
+      );
+    } else {
+      console.warn(
+        `[RenderableStore] Failed to update label visibility for ${objectId}`,
+      );
+    }
 
-    return true;
+    return success;
   }
 
   /**
