@@ -154,4 +154,11 @@ export class EventManager {
     console.debug("[EventManager] Hierarchy changed event received.");
     this._handlers.onHierarchyChanged();
   };
+
+  /**
+   * Gets the toggle labels button element for external updates.
+   */
+  public getToggleLabelsButton(): HTMLElement {
+    return this._toggleLabelsButton;
+  }
 }

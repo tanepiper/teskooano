@@ -4,6 +4,7 @@ import {
   StateSubscriptionMixin,
   renderableStore,
 } from "@teskooano/core-state";
+import { labelStateManager } from "@teskooano/renderer-threejs-labels";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import { FocusListManager } from "./FocusListManager.js";
@@ -90,6 +91,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       celestialObjects$,
       this.checkForStatusChanges.bind(this),
     );
+
+    // Initialize button state
+    this._updateLabelsButtonState();
   }
 
   /**
@@ -266,10 +270,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       return;
     }
 
-    // Count how many labels are currently visible
+    // Count how many labels are currently visible (computed visibility)
     let visibleCount = 0;
     for (const objectId of objectIds) {
-      const visibility = renderableStore.getLabelVisibility(objectId);
+      const visibility = labelStateManager.getComputedVisibility(objectId);
       if (visibility === true) {
         visibleCount++;
       }
@@ -282,14 +286,47 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       `[CelestialHierarchy] Toggling all labels: ${visibleCount}/${objectIds.length} visible, ${shouldShowAll ? "showing" : "hiding"} all`,
     );
 
-    // Update all objects
-    const successCount = renderableStore.setLabelVisibilityForMultiple(
-      objectIds,
-      shouldShowAll,
-    );
+    // Update all objects using the label state manager
+    const visibilityMap: Record<string, boolean> = {};
+    objectIds.forEach((objectId) => {
+      visibilityMap[objectId] = shouldShowAll;
+    });
+
+    labelStateManager.setMultipleObjectVisibility(visibilityMap);
 
     console.log(
-      `[CelestialHierarchy] Successfully updated ${successCount}/${objectIds.length} objects`,
+      `[CelestialHierarchy] Successfully updated ${objectIds.length}/${objectIds.length} objects`,
     );
+
+    // Update button state to reflect new visibility
+    this._updateLabelsButtonState();
+  }
+
+  /**
+   * Updates the labels button text to reflect the current state.
+   */
+  private _updateLabelsButtonState(): void {
+    const renderableObjects = renderableStore.getRenderableObjects();
+    const objectIds = Object.keys(renderableObjects);
+
+    if (objectIds.length === 0) {
+      return;
+    }
+
+    // Count how many labels are currently visible
+    let visibleCount = 0;
+    for (const objectId of objectIds) {
+      const visibility = labelStateManager.getComputedVisibility(objectId);
+      if (visibility === true) {
+        visibleCount++;
+      }
+    }
+
+    // Update button text based on current state
+    const button = this._eventManager?.getToggleLabelsButton();
+    if (button) {
+      const shouldShowAll = visibleCount < objectIds.length / 2;
+      button.textContent = shouldShowAll ? "Show All" : "Hide All";
+    }
   }
 }

@@ -400,85 +400,6 @@ class RenderableStore {
   // =============================================================================
 
   /**
-   * Sets the label visibility for a specific renderable object.
-   *
-   * @param objectId The ID of the object to update
-   * @param visible Whether labels should be visible for this object
-   * @returns true if the object was found and updated, false otherwise
-   *
-   * @example
-   * ```typescript
-   * renderableStore.setLabelVisibility('earth', false);
-   * ```
-   */
-  public setLabelVisibility(objectId: string, visible: boolean): boolean {
-    // Import here to avoid circular dependencies
-
-    console.log(
-      `[RenderableStore] Setting label visibility for ${objectId}: ${visible}`,
-    );
-
-    // Update the CelestialStore instead of RenderableStore directly
-    // This ensures the change flows through the RendererStateAdapter
-    const success = celestialStore.updateDisplayOptions(objectId, {
-      showLabels: visible,
-    });
-
-    if (success) {
-      console.log(
-        `[RenderableStore] Successfully updated label visibility for ${objectId}: ${visible}`,
-      );
-    } else {
-      console.warn(
-        `[RenderableStore] Failed to update label visibility for ${objectId}`,
-      );
-    }
-
-    return success;
-  }
-
-  /**
-   * Gets the current label visibility for a specific renderable object.
-   *
-   * @param objectId The ID of the object to check
-   * @returns The current label visibility state, or undefined if object not found
-   *
-   * @example
-   * ```typescript
-   * const isVisible = renderableStore.getLabelVisibility('earth');
-   * ```
-   */
-  public getLabelVisibility(objectId: string): boolean | undefined {
-    const object = this.getRenderableObject(objectId);
-    return object?.uiOptions?.showLabels;
-  }
-
-  /**
-   * Sets label visibility for multiple renderable objects at once.
-   *
-   * @param objectIds Array of object IDs to update
-   * @param visible Whether labels should be visible for these objects
-   * @returns Number of objects successfully updated
-   *
-   * @example
-   * ```typescript
-   * const updated = renderableStore.setLabelVisibilityForMultiple(['earth', 'mars'], false);
-   * ```
-   */
-  public setLabelVisibilityForMultiple(
-    objectIds: string[],
-    visible: boolean,
-  ): number {
-    let updatedCount = 0;
-    for (const objectId of objectIds) {
-      if (this.setLabelVisibility(objectId, visible)) {
-        updatedCount++;
-      }
-    }
-    return updatedCount;
-  }
-
-  /**
    * Updates the UI options for a specific renderable object.
    *
    * @param objectId The ID of the object to update
@@ -488,7 +409,6 @@ class RenderableStore {
    * @example
    * ```typescript
    * renderableStore.updateUIOptions('earth', {
-   *   showLabels: false,
    *   showOrbit: true
    * });
    * ```

@@ -1,10 +1,5 @@
 export interface CelestialDisplayOptions {
   /**
-   * If the celestial object should have a label displayed.
-   */
-  showLabels?: boolean;
-
-  /**
    * If the celestial object should have a trail displayed.
    */
   showTrail?: boolean;
@@ -31,7 +26,6 @@ export interface CelestialDisplayOptions {
  */
 export const DEFAULT_CELESTIAL_DISPLAY_OPTIONS: Required<CelestialDisplayOptions> =
   {
-    showLabels: true,
     showTrail: false,
     showOrbit: false,
     showPrediction: false,

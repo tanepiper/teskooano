@@ -1,5 +1,6 @@
 import { CustomEvents } from "@teskooano/data-types";
 import { renderableStore } from "@teskooano/core-state";
+import { labelStateManager } from "@teskooano/renderer-threejs-labels";
 import type { ActionMenuItem } from "../../../../../core/components/action-menu";
 import LabelIcon from "@fluentui/svg-icons/icons/tag_20_regular.svg?raw";
 
@@ -122,10 +123,11 @@ export class CelestialRowController {
     if (!this._objectId) return true;
 
     try {
-      const visibility = renderableStore.getLabelVisibility(this._objectId);
-
-      // Return the explicit visibility state, or default to true if not set
-      return visibility ?? true;
+      // Get the computed visibility from the label state manager
+      const visibility = labelStateManager.getComputedVisibility(
+        this._objectId,
+      );
+      return visibility;
     } catch (error) {
       console.warn(
         `[CelestialRowController] Error getting label visibility for ${this._objectId}:`,
@@ -142,43 +144,42 @@ export class CelestialRowController {
     if (!this._objectId) return;
 
     try {
-      // Get current visibility state
-      const currentVisibility =
-        renderableStore.getLabelVisibility(this._objectId) ?? true;
-      const newVisibility = !currentVisibility;
-
-      console.log(
-        `[CelestialRowController] Toggling label visibility for ${this._objectId}: ${currentVisibility} -> ${newVisibility}`,
-      );
-
-      // Update the label visibility through renderableStore
-      const success = renderableStore.setLabelVisibility(
+      // Get current explicit visibility state
+      const currentExplicitVisibility = labelStateManager.getExplicitVisibility(
         this._objectId,
-        newVisibility,
       );
+      const currentComputedVisibility = labelStateManager.getComputedVisibility(
+        this._objectId,
+      );
+
+      // Toggle the explicit state (this is what the user is controlling)
+      const newExplicitVisibility =
+        currentExplicitVisibility === false ? true : false;
 
       console.log(
-        `[CelestialRowController] Label visibility update success: ${success}`,
+        `[CelestialRowController] Toggling label visibility for ${this._objectId}: explicit ${currentExplicitVisibility} -> ${newExplicitVisibility}, computed ${currentComputedVisibility}`,
       );
 
-      if (success) {
-        // Verify the change was applied
-        const verifyVisibility = renderableStore.getLabelVisibility(
-          this._objectId,
-        );
-        console.log(
-          `[CelestialRowController] Verified new visibility: ${verifyVisibility}`,
-        );
+      // Update the explicit visibility state
+      labelStateManager.setObjectVisibility(
+        this._objectId,
+        newExplicitVisibility,
+      );
 
-        // Update the action menu to reflect the new state
-        this._host.dispatchEvent(
-          new Event("action-menu-update", { bubbles: true }),
-        );
-      } else {
-        console.warn(
-          `[CelestialRowController] Failed to update label visibility for ${this._objectId}`,
-        );
-      }
+      console.log(`[CelestialRowController] Label visibility update completed`);
+
+      // Verify the change was applied
+      const verifyVisibility = labelStateManager.getComputedVisibility(
+        this._objectId,
+      );
+      console.log(
+        `[CelestialRowController] Verified new computed visibility: ${verifyVisibility}`,
+      );
+
+      // Update the action menu to reflect the new state
+      this._host.dispatchEvent(
+        new Event("action-menu-update", { bubbles: true }),
+      );
     } catch (error) {
       console.error(
         `[CelestialRowController] Error toggling label visibility for ${this._objectId}:`,

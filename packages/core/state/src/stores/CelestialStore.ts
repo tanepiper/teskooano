@@ -336,7 +336,7 @@ export class CelestialStore {
    * ```typescript
    * // Update display options for Earth
    * celestialStore.updateObject('earth', {
-   *   uiOptions: { showLabels: false, showOrbit: true }
+   *   uiOptions: { showOrbit: true }
    * });
    *
    * // Update status
@@ -371,9 +371,8 @@ export class CelestialStore {
    *
    * @example
    * ```typescript
-   * // Hide labels and orbits for a specific planet
+   * // Hide orbits for a specific planet
    * celestialStore.updateDisplayOptions('mars', {
-   *   showLabels: false,
    *   showOrbit: false
    * });
    *
@@ -416,8 +415,8 @@ export class CelestialStore {
    * @example
    * ```typescript
    * const options = celestialStore.getDisplayOptions('earth');
-   * if (options?.showLabels) {
-   *   console.log('Earth labels are visible');
+   * if (options?.showOrbit) {
+   *   console.log('Earth orbit is visible');
    * }
    * ```
    */
@@ -441,8 +440,8 @@ export class CelestialStore {
    * @example
    * ```typescript
    * const effectiveOptions = celestialStore.getEffectiveDisplayOptions('earth');
-   * if (effectiveOptions.showLabels) {
-   *   console.log('Earth labels should be visible');
+   * if (effectiveOptions.showOrbit) {
+   *   console.log('Earth orbit should be visible');
    * }
    * ```
    */
@@ -505,8 +504,8 @@ export class CelestialStore {
    * ```typescript
    * const objectsWithOptions = celestialStore.getObjectsWithEffectiveDisplayOptions();
    * Object.entries(objectsWithOptions).forEach(([id, object]) => {
-   *   if (object.uiOptions?.showLabels) {
-   *     console.log(`${id} labels should be visible`);
+   *   if (object.uiOptions?.showOrbit) {
+   *     console.log(`${id} orbit should be visible`);
    *   }
    * });
    * ```
