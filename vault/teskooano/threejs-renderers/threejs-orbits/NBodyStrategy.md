@@ -1,4 +1,24 @@
 ---
+aliases: [NBodyStrategy]
+tags: [renderer, threejs, orbits, nbody]
+type: Class
+package: "@teskooano/renderer-threejs-orbits"
+name: NBodyStrategy
+dependencies: ["SimpleOrbitalRenderer", "PredictionManager", "TrailCurveType", "@teskooano/renderer-threejs-labels"]
+functions: ["update", "highlight", "highlightPrediction", "setVisibility", "setPredictionVisibility", "clearAllTrails", "clearAllPredictions", "dispose", "getPerformanceStats"]
+status: active
+---
+
+# NBodyStrategy
+
+Strategy for N-Body modes. Renders historical trails (from `PositionHistoryManager`) and predictive trajectories with throttled updates and optional 2D labels.
+
+## Update Cadence
+
+- Orbital line geometry every 10 frames; predictions every 90 frames
+- `PredictionManager.update(delta)` each frame
+
+---
 name: "NBodyStrategy"
 description: "N-Body orbit visualization strategy for real-time physics-based trails and predictions"
 package: "@teskooano/renderer-threejs-orbits"

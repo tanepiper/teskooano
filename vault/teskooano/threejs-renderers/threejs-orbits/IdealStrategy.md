@@ -1,4 +1,24 @@
 ---
+aliases: [IdealStrategy]
+tags: [renderer, threejs, orbits]
+type: Class
+package: "@teskooano/renderer-threejs-orbits"
+name: IdealStrategy
+dependencies: ["KeplerianManager", "TrailCurveType"]
+functions: ["update", "highlight", "setVisibility", "clearAllTrails", "clearAllPredictions", "dispose", "setPredictionVisibility"]
+status: active
+---
+
+# IdealStrategy
+
+Strategy for ideal Keplerian orbit visualization. Builds and updates perfect ellipse lines for bodies with orbital elements.
+
+## Notes
+
+- Uses [[KeplerianManager]] with `TrailCurveType.Orbital`
+- Supports object highlighting; predictions are no-op in this mode
+
+---
 name: "IdealStrategy"
 description: "Ideal orbit visualization strategy for perfect Keplerian orbits using analytical calculations"
 package: "@teskooano/renderer-threejs-orbits"

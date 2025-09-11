@@ -1,4 +1,30 @@
 ---
+aliases: [OrbitsManager]
+tags: [renderer, threejs, orbits]
+type: Class
+package: "@teskooano/renderer-threejs-orbits"
+name: OrbitsManager
+dependencies: ["IdealStrategy", "NBodyStrategy", "@teskooano/renderer-threejs-objects", "@teskooano/renderer-threejs-labels", "@teskooano/core-state"]
+functions: ["setVisualizationMode", "updateAllVisualizations", "getVisualizationStatus", "setOrbitTrailsVisibility", "setPredictionVisibility", "getPredictionManager", "getTrailManager", "setTrailCurveConfig", "getTrailCurveConfig", "setPredictionCurveConfig", "getPredictionCurveConfig", "highlightVisualization", "clearAllTrails", "clearAllPredictions", "highlightPrediction", "dispose"]
+status: active
+---
+
+# OrbitsManager
+
+Entry point that switches between Keplerian (Ideal) vs N-Body orbit visualization strategies and exposes a unified API for trails and predictions.
+
+## Responsibilities
+
+- Mode selection from `SimulationConfiguration` and strategy lifecycle
+- Maintain shared groups for ideal orbit lines and prediction lines
+- Forward highlight/visibility/curve config to active strategy
+
+## Strategies
+
+- [[IdealStrategy]]: static Keplerian lines (no predictions)
+- [[NBodyStrategy]]: history trails from PositionHistoryManager + predicted trajectories
+
+---
 name: "OrbitsManager"
 description: "Main orchestrator for orbital visualization system using Strategy pattern"
 package: "@teskooano/renderer-threejs-orbits"

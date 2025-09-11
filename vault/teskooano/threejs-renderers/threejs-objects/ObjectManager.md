@@ -1,4 +1,26 @@
 ---
+aliases: [ObjectManager]
+tags: [renderer, threejs, objects]
+type: Class
+package: "@teskooano/renderer-threejs-objects"
+name: ObjectManager
+dependencies: ["GlobalLODManager", "LightingManager", "GravitationalLensingHandler", "DebrisEffectManager", "AccelerationVisualizer", "MeshFactory", "ObjectLifecycleManager", "RendererUpdater", "@teskooano/core-state", "@teskooano/renderer-threejs"]
+functions: ["getCamera", "getScene", "getLatestRenderableObjects", "getCelestialRenderers", "setDebugMode", "getObject", "getCentralBody", "updateRenderers", "update", "dispose", "addRawObjectToScene", "removeRawObjectFromScene", "recreateAllMeshes", "setDebugVisualization", "toggleDebugVisualization", "setDebrisEffectsEnabled", "toggleDebrisEffects", "getAllRenderedMeshes"]
+status: active
+---
+
+# ObjectManager
+
+Central orchestrator for Three.js scene objects representing celestial bodies. Composes lifecycle, LOD, lighting, lensing, debris, acceleration visuals, and reactive renderer updates.
+
+## Responsibilities
+
+- Sync scene objects to core-state `renderableObjects$`
+- Create meshes via [[MeshFactory]] with registered celestial renderers and register [[GlobalLODManager]]
+- Manage effects: [[GravitationalLensingHandler]], [[DebrisEffectManager]], [[AccelerationVisualizer]]
+- Delegate per-frame updates to [[RendererUpdater]]; expose raw scene add/remove when needed
+
+---
 aliases: [ObjectManager, object-manager, celestial-objects, scene-orchestrator]
 tags: [renderer, threejs, objects, manager, orchestrator, facade, lifecycle]
 type: Class

@@ -1,4 +1,25 @@
 ---
+aliases: [KeplerianManager]
+tags: [renderer, threejs, orbits]
+type: Class
+package: "@teskooano/renderer-threejs-orbits"
+name: KeplerianManager
+dependencies: ["OrbitCalculator", "SharedMaterials", "LineHelper", "RenderOrderManager", "TrailCurveInterpolator", "TrailCurveType"]
+functions: ["setCurveConfig", "getCurveConfig", "createOrUpdate", "remove", "clearAll", "setVisibility", "applyHighlightToObject", "resetPreviousHighlight", "hasLine", "dispose"]
+status: active
+---
+
+# KeplerianManager
+
+Maintains static Keplerian orbit lines in world space, with caching and curve interpolation for smooth ellipses.
+
+## Behavior
+
+- Caches raw OSVector3 points by `version` (e.g., semi-major axis) and THREE vectors to avoid recomputation
+- Converts to THREE arrays via converter; interpolates with [[TrailCurveInterpolator]]
+- Chooses materials by parent type (moon vs planet/star) and sets proper render order
+
+---
 name: "KeplerianManager"
 description: "Manages static Keplerian orbit lines with curved trail interpolation"
 package: "@teskooano/renderer-threejs-orbits"
