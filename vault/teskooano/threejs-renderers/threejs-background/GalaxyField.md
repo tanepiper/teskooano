@@ -17,4 +17,3 @@ Instanced distant galaxies rendered as billboards/meshes with optional parallax.
 
 - Creates instanced mesh group from generator
 - Stores/restores original material on debug toggle
-

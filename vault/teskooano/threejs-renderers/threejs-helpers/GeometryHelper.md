@@ -5,7 +5,19 @@ type: Class
 package: "@teskooano/renderer-threejs-helpers"
 name: GeometryHelper
 dependencies: ["three"]
-functions: ["createBox", "createSphere", "createTetrahedron", "createTorus", "createPlane", "createCylinder", "createCone", "createCircle", "createRing", "createStars"]
+functions:
+  [
+    "createBox",
+    "createSphere",
+    "createTetrahedron",
+    "createTorus",
+    "createPlane",
+    "createCylinder",
+    "createCone",
+    "createCircle",
+    "createRing",
+    "createStars",
+  ]
 status: active
 ---
 
@@ -17,4 +29,3 @@ Convenience factory for common meshes with consistent material defaults and tran
 
 - `createRing` supports injecting custom material (used by rings)
 - `createStars(amount, color, size, spread)` generates `THREE.Points`
-

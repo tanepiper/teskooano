@@ -5,7 +5,17 @@ type: Class
 package: "@teskooano/app-simulation"
 name: SimulationOrchestrator
 dependencies: ["@teskooano/core-physics", "@teskooano/core-state", "rxjs"]
-functions: ["getInstance", "startLoop", "stopLoop", "isLoopRunning", "createPhysicsCallback", "resetSystem", "resetTime", "dispose"]
+functions:
+  [
+    "getInstance",
+    "startLoop",
+    "stopLoop",
+    "isLoopRunning",
+    "createPhysicsCallback",
+    "resetSystem",
+    "resetTime",
+    "dispose",
+  ]
 events: ["onResetTime", "onOrbitUpdate"]
 status: active
 ---
@@ -24,4 +34,3 @@ Singleton that wires the physics loop, state adapters, hierarchy updates, and ev
 ## Loop
 
 - `createPhysicsCallback()` returns `(deltaTime) => {...}` performing: time accumulation → parameters prep → simulate → state update → hierarchies → emit
-

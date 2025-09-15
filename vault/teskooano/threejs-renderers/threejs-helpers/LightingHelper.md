@@ -5,7 +5,17 @@ type: Class
 package: "@teskooano/renderer-threejs-helpers"
 name: LightingHelper
 dependencies: ["three"]
-functions: ["createAmbientLight", "createDirectionalLight", "createHemisphereLight", "createPointLight", "createSpotLight", "createRectAreaLight", "createLightProbe", "createLightHelpers"]
+functions:
+  [
+    "createAmbientLight",
+    "createDirectionalLight",
+    "createHemisphereLight",
+    "createPointLight",
+    "createSpotLight",
+    "createRectAreaLight",
+    "createLightProbe",
+    "createLightHelpers",
+  ]
 status: active
 ---
 
@@ -23,4 +33,3 @@ Factory helpers for common light types with consistent defaults and optional sha
 ## Usage
 
 - Used by renderers for quick prototyping and debug lighting; production lighting is managed by [[threejs-lighting|LightingManager]].
-

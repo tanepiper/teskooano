@@ -4,7 +4,13 @@ tags: [systems, procedural]
 type: Class
 package: "@teskooano/systems-procedural-generation"
 name: ZoneScaler
-functions: ["calculateScalingFactor", "calculateCombinedLuminosity", "getComplexityFactor", "scaleZones"]
+functions:
+  [
+    "calculateScalingFactor",
+    "calculateCombinedLuminosity",
+    "getComplexityFactor",
+    "scaleZones",
+  ]
 status: active
 ---
 
@@ -18,4 +24,3 @@ Computes scaling factors for zone distances based on stellar luminosity/type/spe
 - Spectral/type multipliers (e.g., WR ↑, M ↓)
 - Clamp scaling within [0.1, 5.0]
 - Multi-star: average scaling × complexity factor
-

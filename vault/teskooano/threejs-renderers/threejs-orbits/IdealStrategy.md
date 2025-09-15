@@ -5,7 +5,16 @@ type: Class
 package: "@teskooano/renderer-threejs-orbits"
 name: IdealStrategy
 dependencies: ["KeplerianManager", "TrailCurveType"]
-functions: ["update", "highlight", "setVisibility", "clearAllTrails", "clearAllPredictions", "dispose", "setPredictionVisibility"]
+functions:
+  [
+    "update",
+    "highlight",
+    "setVisibility",
+    "clearAllTrails",
+    "clearAllPredictions",
+    "dispose",
+    "setPredictionVisibility",
+  ]
 status: active
 ---
 
@@ -19,37 +28,39 @@ Strategy for ideal Keplerian orbit visualization. Builds and updates perfect ell
 - Supports object highlighting; predictions are no-op in this mode
 
 ---
+
 name: "IdealStrategy"
 description: "Ideal orbit visualization strategy for perfect Keplerian orbits using analytical calculations"
 package: "@teskooano/renderer-threejs-orbits"
 dependencies:
-  [
-    "@teskooano/data-types",
-    "@teskooano/renderer-threejs-objects",
-    "three",
-    "rxjs",
-  ]
+[
+"@teskooano/data-types",
+"@teskooano/renderer-threejs-objects",
+"three",
+"rxjs",
+]
 classes:
-  [
-    "KeplerianManager",
-    "THREE.Color",
-    "THREE.Group",
-    "ObjectManager",
-    "Observable",
-  ]
+[
+"KeplerianManager",
+"THREE.Color",
+"THREE.Group",
+"ObjectManager",
+"Observable",
+]
 functions:
-  [
-    "update",
-    "highlight",
-    "setVisibility",
-    "setPredictionVisibility",
-    "clearAllTrails",
-    "clearAllPredictions",
-    "dispose",
-  ]
+[
+"update",
+"highlight",
+"setVisibility",
+"setPredictionVisibility",
+"clearAllTrails",
+"clearAllPredictions",
+"dispose",
+]
 constants: []
 types:
-  ["IOrbitVisualizationStrategy", "RenderableCelestialObject", "TrailCurveType"]
+["IOrbitVisualizationStrategy", "RenderableCelestialObject", "TrailCurveType"]
+
 ---
 
 # IdealStrategy

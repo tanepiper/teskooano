@@ -4,7 +4,8 @@ tags: [app, simulation]
 type: Class
 package: "@teskooano/app-simulation"
 name: HierarchyManager
-dependencies: ["@teskooano/core-state", "@teskooano/core-physics", "@teskooano/data-values"]
+dependencies:
+  ["@teskooano/core-state", "@teskooano/core-physics", "@teskooano/data-values"]
 functions: ["updateHierarchies"]
 status: active
 ---
@@ -23,4 +24,3 @@ Applies simple, incremental rules to maintain orbital parentage (moons, satellit
 
 - Processes one object per tick (`updateIndex`) to spread work
 - Queries `StateAccessor.getActiveObjects()` and `physicsSystemAdapter` snapshots
-

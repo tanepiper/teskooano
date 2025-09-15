@@ -4,8 +4,23 @@ tags: [renderer, threejs, controls]
 type: index
 package: "@teskooano/renderer-threejs-controls"
 version: "0.4.0-dev.0"
-dependencies: ["@teskooano/core-state", "@teskooano/data-types", "@teskooano/renderer-threejs-core", "@teskooano/renderer-threejs-camera", "@teskooano/notifications", "three", "gsap"]
-classes: ["ControlsManager", "OrbitControlsHandler", "CameraTransitionManager", "ObjectFollower"]
+dependencies:
+  [
+    "@teskooano/core-state",
+    "@teskooano/data-types",
+    "@teskooano/renderer-threejs-core",
+    "@teskooano/renderer-threejs-camera",
+    "@teskooano/notifications",
+    "three",
+    "gsap",
+  ]
+classes:
+  [
+    "ControlsManager",
+    "OrbitControlsHandler",
+    "CameraTransitionManager",
+    "ObjectFollower",
+  ]
 status: active
 ---
 
@@ -24,4 +39,3 @@ Input system decoupled from camera automation. Follows project rule: Controls ha
 
 - [[threejs-camera|CameraManager]] subscribes to focus/follow state
 - [[threejs-core|rendererEvents]] for timing hooks
-

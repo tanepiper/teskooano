@@ -4,7 +4,18 @@ tags: [app, ui, events]
 type: Class
 package: "@teskooano/ui-plugin"
 name: EventBus
-functions: ["setDebugMode", "emit", "on", "onAll", "once", "off", "clear", "getEventHistory", "getStats"]
+functions:
+  [
+    "setDebugMode",
+    "emit",
+    "on",
+    "onAll",
+    "once",
+    "off",
+    "clear",
+    "getEventHistory",
+    "getStats",
+  ]
 status: active
 ---
 
@@ -17,4 +28,3 @@ Singleton, type-light event bus for plugins/components. Supports namespacing via
 - `emit(type, payload, { source, target, bubbles })`
 - `on(type, listener, { source, target, immediate, maxTriggers })`
 - `onAll(listener)` for global monitors; `getStats()` for diagnostics
-

@@ -19,4 +19,3 @@ RxJS-based generators that emit fully specified `CelestialObject` planets (and r
 ## Rogue Planets
 
 - Use hyperbolic `eccentricity > 1` with negative semi-major axis; include `isHyperbolic: true`
-

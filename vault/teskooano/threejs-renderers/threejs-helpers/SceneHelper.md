@@ -25,4 +25,3 @@ Factory utilities to create optimized `THREE.Scene` and `THREE.WebGLRenderer` in
 
 - [[threejs-core|SceneManager]] during initialization
 - [[threejs-background|BackgroundManager]] for renderer access
-

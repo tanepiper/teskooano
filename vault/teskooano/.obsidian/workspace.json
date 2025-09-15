@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "core/core-physics/AlgorithmFactory.md",
+                "file": "data/data-types/CelestialType.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "AlgorithmFactory"
+              "title": "CelestialType"
             }
           }
         ]
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "core/core-physics/AlgorithmFactory.md",
+                "file": "data/data-types/CelestialType.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of AlgorithmFactory"
+              "title": "Outline of CelestialType"
             }
           }
         ],
@@ -171,42 +171,42 @@
   },
   "active": "6ecb65330d6d43b7",
   "lastOpenFiles": [
-    "core/core-state/CelestialUtils.md",
-    "core/core-state/StoreFilters.md",
-    "core/core-physics/Vector3Pool.md",
-    "core/core-physics/OrbitalValidationDebugger.md",
-    "core/core-physics/LagrangePointService.md",
-    "core/core-physics/IdealOrreryStrategy.md",
-    "core/core-physics/WasmCollisionDetection.md",
-    "core/core-physics/WasmSpatialPartitioning.md",
-    "core/core-state/StateAccessor.md",
-    "core/core-physics/Octree.md",
-    "core/core-physics/TreePMStrategy.md",
-    "core/core-physics/AlgorithmFactory.md",
-    "core/core-physics/SimulationManager.md",
-    "core/core-physics/core-physics.md",
-    "core/core-physics",
-    "core/core-state/StateSubscriptionMixin.md",
-    "core/core-state/CelestialManager.md",
-    "core/core-state/SimulationTypes.md",
-    "core/core-state/SimulationUtils.md",
-    "core/core-state/RenderableStore.md",
-    "core/core-state/PhysicsStore.md",
-    "core/core-state/SeedStore.md",
-    "core/core-state/PhysicsStateProvider.md",
-    "core/core-state/PhysicsStateCalculator.md",
-    "threejs-renderers/threejs-orbits/IdealStrategy.md",
-    "threejs-renderers/threejs-orbits/IOrbitVisualizationStrategy.md",
-    "threejs-renderers/threejs-orbits/threejs-orbits.md",
-    "Untitled.base",
-    "Component View.base",
-    "Untitled.canvas",
-    "architecture",
-    "threejs-renderers/threejs-orbits",
-    "threejs-renderers/threejs-objects",
-    "threejs-renderers/threejs-lighting",
-    "threejs-renderers/threejs-labels",
-    "threejs-renderers/threejs-core",
-    "threejs-renderers/threejs-celestial"
+    "data/data-types/DeviceTier.md",
+    "data/data-types/LagrangePointType.md",
+    "data/data-types/CelestialStatus.md",
+    "data/data-types/IntegratorType.md",
+    "data/data-types/SimulationMode.md",
+    "data/data-types/RockyType.md",
+    "data/data-types/AtmosphereType.md",
+    "data/data-types/CometClass.md",
+    "data/data-types/CustomEvents.md",
+    "data/data-types/TrailQuality.md",
+    "data/data-types/CelestialDisplayOptions.md",
+    "data/data-types/ProceduralSurfaceProperties.md",
+    "data/data-types/SimulationState.md",
+    "data/data-types/LagrangePoint.md",
+    "data/data-types/GasGiantClass.md",
+    "data/data-types/createMesh.md",
+    "data/data-types/PlanetType.md",
+    "data/data-types/CelestialObject.md",
+    "data/data-types/AsteroidFieldProperties.md",
+    "data/data-types/StellarType.md",
+    "data/data-types/PerformanceConfig.md",
+    "data/data-types/UIComponentType.md",
+    "celestials/stars/MainSequenceStarMaterial.md",
+    "celestials/stars/MainSequenceStarRenderer.md",
+    "celestials/stars/CoronaMaterial.md",
+    "celestials/stars/BaseStarMaterial.md",
+    "threejs-renderers/threejs-helpers",
+    "threejs-renderers/threejs-controls",
+    "threejs-renderers/threejs-camera",
+    "threejs-renderers/threejs-background",
+    "systems/solar-system",
+    "systems/procedural-generation",
+    "systems",
+    "data/data-values",
+    "data/data-types",
+    "data",
+    "Untitled.canvas"
   ]
 }

@@ -4,8 +4,17 @@ tags: [renderer, threejs, background]
 type: Class
 package: "@teskooano/renderer-threejs-background"
 name: BackgroundManager
-dependencies: ["three", "StarField", "NebulaField", "GalaxyField", "@teskooano/core-math", "@teskooano/core-state"]
-functions: ["addField", "toggleDebug", "setCamera", "getGroup", "update", "dispose"]
+dependencies:
+  [
+    "three",
+    "StarField",
+    "NebulaField",
+    "GalaxyField",
+    "@teskooano/core-math",
+    "@teskooano/core-state",
+  ]
+functions:
+  ["addField", "toggleDebug", "setCamera", "getGroup", "update", "dispose"]
 status: active
 ---
 
@@ -24,4 +33,3 @@ Composes multiple background `Field` layers (stars, nebulae, galaxies) at a base
 - `addField(field: Field)` register and add to group
 - `toggleDebug()` apply/remove debug visuals and propagate to fields
 - `update(dt)` positions group at camera and updates fields
-

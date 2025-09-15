@@ -16,4 +16,3 @@ Simple RxJS-based notification manager used by camera/controls for user feedback
 ## 📚 Classes
 
 - NotificationManager
-

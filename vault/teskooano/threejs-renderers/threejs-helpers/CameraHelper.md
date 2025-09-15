@@ -20,4 +20,3 @@ Creates `THREE.PerspectiveCamera` with presets and applies log-depth configurati
 
 - [[threejs-core|LogarithmicDepthMaterial]]
 - [[threejs-camera|CameraManager]]
-

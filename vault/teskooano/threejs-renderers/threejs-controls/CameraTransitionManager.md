@@ -5,7 +5,16 @@ type: Class
 package: "@teskooano/renderer-threejs-controls"
 name: CameraTransitionManager
 dependencies: ["three", "gsap", "AnimationHelper", "@teskooano/notifications"]
-functions: ["getIsAnimating", "cancelTransition", "transitionTargetTo", "transitionTo", "transitionToWithLookAtFirst", "calculateTransitionDuration", "dispose"]
+functions:
+  [
+    "getIsAnimating",
+    "cancelTransition",
+    "transitionTargetTo",
+    "transitionTo",
+    "transitionToWithLookAtFirst",
+    "calculateTransitionDuration",
+    "dispose",
+  ]
 status: active
 ---
 
@@ -24,4 +33,3 @@ Runs GSAP-driven camera transitions while temporarily disabling OrbitControls an
 ## Duration Model
 
 - `duration = clamp( MIN..MAX, BASE * (distanceAU ^ exponent) )`
-

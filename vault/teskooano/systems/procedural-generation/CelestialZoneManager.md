@@ -5,7 +5,15 @@ type: Class
 package: "@teskooano/systems-procedural-generation"
 name: CelestialZoneManager
 dependencies: ["ZoneScaler", "ZoneSelector", "StarZoneFactory"]
-functions: ["createForStar", "determineStellarConfiguration", "getAdjustedZones", "selectZonesForPlacement", "getAllZones", "getZoneForDistance"]
+functions:
+  [
+    "createForStar",
+    "determineStellarConfiguration",
+    "getAdjustedZones",
+    "selectZonesForPlacement",
+    "getAllZones",
+    "getZoneForDistance",
+  ]
 status: active
 ---
 
@@ -19,4 +27,3 @@ Coordinates zone scaling, selection, and star-specific zone generation for proce
 - `determineStellarConfiguration()`: single/binary/multi-star decision
 - `getAdjustedZones(stars, config)`: apply [[ZoneScaler]]
 - `selectZonesForPlacement(stars, config)`: choose active zones with [[ZoneSelector]]
-

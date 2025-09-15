@@ -18,4 +18,3 @@ Executes registered plugin functions with a curated execution context (plugin ma
 - Resolve function by id, construct `PluginExecutionContext`, invoke `execute`
 - Expose `getManagerInstance(id)` to plugin code
 - Provide registry-backed `execute` for composition
-

@@ -4,8 +4,30 @@ tags: [renderer, threejs, controls]
 type: Class
 package: "@teskooano/renderer-threejs-controls"
 name: ControlsManager
-dependencies: ["three", "rxjs", "OrbitControlsHandler", "CameraTransitionManager", "ObjectFollower", "@teskooano/core-state"]
-functions: ["transitionTargetTo", "moveToPosition", "transitionToWithLookAtFirst", "cancelTransition", "startFollowing", "stopFollowing", "update", "updateMinDistance", "setEnabled", "setDebugMode", "dispose", "calculateTransitionDuration"]
+dependencies:
+  [
+    "three",
+    "rxjs",
+    "OrbitControlsHandler",
+    "CameraTransitionManager",
+    "ObjectFollower",
+    "@teskooano/core-state",
+  ]
+functions:
+  [
+    "transitionTargetTo",
+    "moveToPosition",
+    "transitionToWithLookAtFirst",
+    "cancelTransition",
+    "startFollowing",
+    "stopFollowing",
+    "update",
+    "updateMinDistance",
+    "setEnabled",
+    "setDebugMode",
+    "dispose",
+    "calculateTransitionDuration",
+  ]
 status: active
 ---
 
@@ -27,4 +49,3 @@ Public facade for camera interaction. Composes [[OrbitControlsHandler]], [[Camer
 
 - Orders updates: follower → controls update → GSAP onUpdate hooks
 - Transition duration estimated by path distance (`calculateTransitionDuration`)
-

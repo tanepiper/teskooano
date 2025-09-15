@@ -4,8 +4,25 @@ tags: [renderer, threejs, orbits, nbody]
 type: Class
 package: "@teskooano/renderer-threejs-orbits"
 name: NBodyStrategy
-dependencies: ["SimpleOrbitalRenderer", "PredictionManager", "TrailCurveType", "@teskooano/renderer-threejs-labels"]
-functions: ["update", "highlight", "highlightPrediction", "setVisibility", "setPredictionVisibility", "clearAllTrails", "clearAllPredictions", "dispose", "getPerformanceStats"]
+dependencies:
+  [
+    "SimpleOrbitalRenderer",
+    "PredictionManager",
+    "TrailCurveType",
+    "@teskooano/renderer-threejs-labels",
+  ]
+functions:
+  [
+    "update",
+    "highlight",
+    "highlightPrediction",
+    "setVisibility",
+    "setPredictionVisibility",
+    "clearAllTrails",
+    "clearAllPredictions",
+    "dispose",
+    "getPerformanceStats",
+  ]
 status: active
 ---
 
@@ -19,44 +36,46 @@ Strategy for N-Body modes. Renders historical trails (from `PositionHistoryManag
 - `PredictionManager.update(delta)` each frame
 
 ---
+
 name: "NBodyStrategy"
 description: "N-Body orbit visualization strategy for real-time physics-based trails and predictions"
 package: "@teskooano/renderer-threejs-orbits"
 dependencies:
-  [
-    "@teskooano/data-types",
-    "@teskooano/renderer-threejs-objects",
-    "@teskooano/renderer-threejs-labels",
-    "@teskooano/renderer-threejs-celestial",
-    "three",
-  ]
+[
+"@teskooano/data-types",
+"@teskooano/renderer-threejs-objects",
+"@teskooano/renderer-threejs-labels",
+"@teskooano/renderer-threejs-celestial",
+"three",
+]
 classes:
-  [
-    "SimpleOrbitalRenderer",
-    "PredictionManager",
-    "THREE.Color",
-    "THREE.Group",
-    "ObjectManager",
-    "Layer2DManager",
-    "CelestialRenderer",
-    "BaseCelestialRenderer",
-  ]
+[
+"SimpleOrbitalRenderer",
+"PredictionManager",
+"THREE.Color",
+"THREE.Group",
+"ObjectManager",
+"Layer2DManager",
+"CelestialRenderer",
+"BaseCelestialRenderer",
+]
 functions:
-  [
-    "update",
-    "highlight",
-    "highlightPrediction",
-    "setVisibility",
-    "setPredictionVisibility",
-    "clearAllTrails",
-    "clearAllPredictions",
-    "dispose",
-    "getPerformanceStats",
-    "getRenderer",
-  ]
+[
+"update",
+"highlight",
+"highlightPrediction",
+"setVisibility",
+"setPredictionVisibility",
+"clearAllTrails",
+"clearAllPredictions",
+"dispose",
+"getPerformanceStats",
+"getRenderer",
+]
 constants: ["orbitalUpdateFrequency", "predictionUpdateFrequency"]
 types:
-  ["IOrbitVisualizationStrategy", "RenderableCelestialObject", "TrailCurveType"]
+["IOrbitVisualizationStrategy", "RenderableCelestialObject", "TrailCurveType"]
+
 ---
 
 # NBodyStrategy

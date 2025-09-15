@@ -19,4 +19,3 @@ Writes plugin contributions into registries (panels, functions, toolbar items, m
 - Toolbar: defer items until initializer function deps are present; stable order
 - Managers: instantiate and invoke optional `setDependencies`
 - Components: define via `customElements.define`
-

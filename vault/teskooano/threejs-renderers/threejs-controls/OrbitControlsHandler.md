@@ -18,4 +18,3 @@ Lifecycle and event wrapper for Three.js `OrbitControls`. Emits start/end events
 
 - Damping enabled by default; dynamic `minDistance` updates
 - Emits `onControlsEnd$` with `{ position, target }` snapshot
-

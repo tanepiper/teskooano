@@ -23,4 +23,3 @@ G-class main-sequence star renderer with spectral subclass support (G0–G9). Ma
 
 - `createMaterial(object)` returns configured ClassGStarMaterial
 - `update()` tweaks uniforms each frame (e.g., time-based noise)
-

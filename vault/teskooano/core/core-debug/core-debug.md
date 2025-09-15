@@ -4,7 +4,13 @@ tags: [core, debug]
 type: index
 package: "@teskooano/core-debug"
 dependencies: []
-classes: ["CelestialDebugger", "VectorDebug", "ThreeVectorDebug", "GlobalStateDebugger"]
+classes:
+  [
+    "CelestialDebugger",
+    "VectorDebug",
+    "ThreeVectorDebug",
+    "GlobalStateDebugger",
+  ]
 status: active
 ---
 
@@ -22,4 +28,3 @@ Helpers for debugging vectors, global state, and celestial parameters.
 ## 🔗 Related
 
 - Used by [[threejs-renderers/threejs-lighting/LightingManager|LightingManager]] and other renderers for development diagnostics
-

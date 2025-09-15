@@ -5,8 +5,39 @@ type: Class
 package: "@teskooano/renderer-threejs-helpers"
 name: AnimationHelper
 dependencies: ["three", "gsap"]
-classes: ["THREE.Object3D", "THREE.PerspectiveCamera", "gsap.core.Tween", "gsap.core.Timeline"]
-functions: ["animatePosition", "animateRotation", "animateScale", "animateCamera", "animateMaterial", "animateColor", "animateOpacity", "createFloatingAnimation", "createRotationAnimation", "createPulseAnimation", "createTimeline", "animateSequence", "stopAnimation", "stopObjectAnimations", "stopAllAnimations", "pauseAllAnimations", "resumeAllAnimations", "getActiveAnimationCount", "getActiveAnimationIds", "hasActiveAnimations", "createOrbitAnimation", "createDollyAnimation", "dispose"]
+classes:
+  [
+    "THREE.Object3D",
+    "THREE.PerspectiveCamera",
+    "gsap.core.Tween",
+    "gsap.core.Timeline",
+  ]
+functions:
+  [
+    "animatePosition",
+    "animateRotation",
+    "animateScale",
+    "animateCamera",
+    "animateMaterial",
+    "animateColor",
+    "animateOpacity",
+    "createFloatingAnimation",
+    "createRotationAnimation",
+    "createPulseAnimation",
+    "createTimeline",
+    "animateSequence",
+    "stopAnimation",
+    "stopObjectAnimations",
+    "stopAllAnimations",
+    "pauseAllAnimations",
+    "resumeAllAnimations",
+    "getActiveAnimationCount",
+    "getActiveAnimationIds",
+    "hasActiveAnimations",
+    "createOrbitAnimation",
+    "createDollyAnimation",
+    "dispose",
+  ]
 status: active
 ---
 
@@ -41,4 +72,3 @@ GSAP-powered animation utilities for Three.js objects, cameras, and materials wi
 
 - Reuses a single Map to avoid leaks; ensure `dispose()` is called on teardown
 - Uses GSAP’s internal tick; controls updated in GSAP onUpdate where provided
-

@@ -5,7 +5,26 @@ type: Class
 package: "@teskooano/renderer-threejs-helpers"
 name: LineHelper
 dependencies: ["three"]
-functions: ["createLine", "updateLine", "resizeLineBuffer", "disposeLine", "clear", "createSpiralPoints", "updateLinesGroup", "createSpiralLinesGroup", "createLineCurve", "createQuadraticBezierCurve", "createCubicBezierCurve", "createCustomCurve", "createCurvePath", "createLineFromPoints", "createPointsFromPoints", "updateGeometryFromCurve", "createCurveAlphaFunction"]
+functions:
+  [
+    "createLine",
+    "updateLine",
+    "resizeLineBuffer",
+    "disposeLine",
+    "clear",
+    "createSpiralPoints",
+    "updateLinesGroup",
+    "createSpiralLinesGroup",
+    "createLineCurve",
+    "createQuadraticBezierCurve",
+    "createCubicBezierCurve",
+    "createCustomCurve",
+    "createCurvePath",
+    "createLineFromPoints",
+    "createPointsFromPoints",
+    "updateGeometryFromCurve",
+    "createCurveAlphaFunction",
+  ]
 status: active
 ---
 
@@ -23,4 +42,3 @@ Efficient creation and updates of buffered line/points geometries with a backing
 
 - Avoids reallocation by `resizeLineBuffer` when capacity grows
 - Sets `frustumCulled=false` for continuous path rendering
-

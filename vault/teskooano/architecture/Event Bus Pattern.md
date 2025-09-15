@@ -27,4 +27,3 @@ sequenceDiagram
   Systems->>Loop: onRender callbacks
   Loop->>Bus: afterRender$
 ```
-

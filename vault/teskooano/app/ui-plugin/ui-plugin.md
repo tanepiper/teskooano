@@ -5,7 +5,15 @@ type: index
 package: "@teskooano/ui-plugin"
 version: "0.4.0-dev.0"
 dependencies: ["dockview-core"]
-classes: ["PluginExecutor", "PluginLoader", "RegistrationManager", "HMRManager", "EventBus", "ReactiveState"]
+classes:
+  [
+    "PluginExecutor",
+    "PluginLoader",
+    "RegistrationManager",
+    "HMRManager",
+    "EventBus",
+    "ReactiveState",
+  ]
 status: active
 ---
 
@@ -21,4 +29,3 @@ Extensible plugin architecture for UI features. See detailed [[apps/teskooano/pl
 ## 🔗 Related
 
 - Consumed by app panels in `apps/teskooano`
-

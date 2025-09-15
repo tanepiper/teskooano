@@ -16,4 +16,3 @@ Builds star-specific zone templates for diverse stellar types (e.g., white dwarf
 
 - Scales base AU ranges and adjusts allowed planet types by stellar context
 - Applies interstellar/frozen/cold/cool/hot/temperate zone patterns per type
-

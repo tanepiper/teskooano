@@ -5,7 +5,18 @@ type: Class
 package: "@teskooano/renderer-threejs-helpers"
 name: CelestialAnimationHelper
 dependencies: ["three", "gsap", "AnimationHelper"]
-functions: ["createPlanetRotation", "createStarPulse", "createMoonFloat", "createGlowAnimation", "createEntranceAnimation", "createExitAnimation", "createFocusAnimation", "stopCelestialAnimations", "dispose"]
+functions:
+  [
+    "createPlanetRotation",
+    "createStarPulse",
+    "createMoonFloat",
+    "createGlowAnimation",
+    "createEntranceAnimation",
+    "createExitAnimation",
+    "createFocusAnimation",
+    "stopCelestialAnimations",
+    "dispose",
+  ]
 status: active
 ---
 
@@ -26,4 +37,3 @@ Domain-specific animation helpers built atop [[AnimationHelper]] for planets, st
 
 - All return GSAP tween/timeline handles
 - Use `stopCelestialAnimations(object)` to cancel per-object animations
-

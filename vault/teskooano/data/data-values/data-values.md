@@ -17,4 +17,3 @@ Constants and value tables used by types, state, and physics (e.g., AU, physical
 
 - [[data-types]] references exported constants
 - [[core-state]] uses shared constants for initialization
-

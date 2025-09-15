@@ -5,7 +5,17 @@ type: Class
 package: "@teskooano/renderer-threejs-helpers"
 name: BufferPool
 dependencies: ["three"]
-functions: ["getBuffer", "releaseBuffer", "getBufferWithItemSize", "clear", "getStatistics", "getMemoryUsage", "garbageCollect", "resetStats"]
+functions:
+  [
+    "getBuffer",
+    "releaseBuffer",
+    "getBufferWithItemSize",
+    "clear",
+    "getStatistics",
+    "getMemoryUsage",
+    "garbageCollect",
+    "resetStats",
+  ]
 status: active
 ---
 
@@ -22,4 +32,3 @@ Memory pool for `THREE.BufferAttribute` instances keyed by vertex count. Reduces
 ## Used By
 
 - [[LineHelper]] for orbit/trail buffers
-

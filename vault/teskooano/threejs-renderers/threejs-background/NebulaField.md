@@ -21,4 +21,3 @@ Shader-driven volumetric nebula rendered on a large back-facing sphere with slow
 
 - Rotates at `rotationSpeed`; increments `uTime`
 - Positioned at `-baseDistance` with tiny random offset to avoid z-fighting
-

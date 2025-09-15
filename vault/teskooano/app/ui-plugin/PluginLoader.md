@@ -17,4 +17,3 @@ Loads plugins using virtual loaders and resolves dependencies with a topological
 - Read loaders from `virtual:teskooano-loaders`
 - DFS resolve with cycle detection (processing set) and visited set
 - Throw on missing loader or unmet dependency not already registered
-

@@ -21,4 +21,3 @@ Generates comets by class (short/long/interstellar) with appropriate orbital par
 ## Visuals
 
 - Activity drives coma radius, tail length, opacity and colors
-

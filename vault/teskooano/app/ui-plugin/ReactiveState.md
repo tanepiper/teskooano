@@ -4,7 +4,17 @@ tags: [app, ui, state]
 type: Class
 package: "@teskooano/ui-plugin"
 name: ReactiveState
-functions: ["get", "set", "update", "watch", "computed", "removeComputed", "dispose", "snapshot"]
+functions:
+  [
+    "get",
+    "set",
+    "update",
+    "watch",
+    "computed",
+    "removeComputed",
+    "dispose",
+    "snapshot",
+  ]
 status: active
 ---
 
@@ -22,4 +32,3 @@ Minimal reactive state with computed properties, watchers, batching, and depende
 
 - `createReactiveState<T>(initial)` typed helper
 - `connectObservable(state, prop, observable)` to sync RxJS streams
-

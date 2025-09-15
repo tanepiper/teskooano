@@ -12,4 +12,3 @@ status: active
 - [[NBodyStrategy]]
 - [[KeplerianManager]]
 - (renderers) SimpleOrbitalRenderer, PredictionManager, TrailManager, TrailCurveInterpolator…
-

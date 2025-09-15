@@ -16,4 +16,3 @@ Curated solar system data and utilities, including dynamic epoch processing.
 ## 🔗 Related
 
 - Provides seed data for [[core-state]] initialization and renderers
-

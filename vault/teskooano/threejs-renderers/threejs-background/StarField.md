@@ -18,4 +18,3 @@ Layered star backdrop built from multiple `THREE.Points` layers with color gradi
 - Multiple layers with different densities, brightness and tints
 - Parallax via inverse camera movement scaled by `parallaxStrength`
 - Debug recolors each layer with solid colors for inspection
-

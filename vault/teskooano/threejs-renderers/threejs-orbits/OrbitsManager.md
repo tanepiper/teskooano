@@ -4,8 +4,33 @@ tags: [renderer, threejs, orbits]
 type: Class
 package: "@teskooano/renderer-threejs-orbits"
 name: OrbitsManager
-dependencies: ["IdealStrategy", "NBodyStrategy", "@teskooano/renderer-threejs-objects", "@teskooano/renderer-threejs-labels", "@teskooano/core-state"]
-functions: ["setVisualizationMode", "updateAllVisualizations", "getVisualizationStatus", "setOrbitTrailsVisibility", "setPredictionVisibility", "getPredictionManager", "getTrailManager", "setTrailCurveConfig", "getTrailCurveConfig", "setPredictionCurveConfig", "getPredictionCurveConfig", "highlightVisualization", "clearAllTrails", "clearAllPredictions", "highlightPrediction", "dispose"]
+dependencies:
+  [
+    "IdealStrategy",
+    "NBodyStrategy",
+    "@teskooano/renderer-threejs-objects",
+    "@teskooano/renderer-threejs-labels",
+    "@teskooano/core-state",
+  ]
+functions:
+  [
+    "setVisualizationMode",
+    "updateAllVisualizations",
+    "getVisualizationStatus",
+    "setOrbitTrailsVisibility",
+    "setPredictionVisibility",
+    "getPredictionManager",
+    "getTrailManager",
+    "setTrailCurveConfig",
+    "getTrailCurveConfig",
+    "setPredictionCurveConfig",
+    "getPredictionCurveConfig",
+    "highlightVisualization",
+    "clearAllTrails",
+    "clearAllPredictions",
+    "highlightPrediction",
+    "dispose",
+  ]
 status: active
 ---
 
@@ -25,62 +50,64 @@ Entry point that switches between Keplerian (Ideal) vs N-Body orbit visualizatio
 - [[NBodyStrategy]]: history trails from PositionHistoryManager + predicted trajectories
 
 ---
+
 name: "OrbitsManager"
 description: "Main orchestrator for orbital visualization system using Strategy pattern"
 package: "@teskooano/renderer-threejs-orbits"
 dependencies:
-  [
-    "@teskooano/core-state",
-    "@teskooano/data-types",
-    "@teskooano/renderer-threejs-objects",
-    "@teskooano/renderer-threejs-labels",
-    "@teskooano/renderer-threejs-celestial",
-    "three",
-    "rxjs",
-  ]
+[
+"@teskooano/core-state",
+"@teskooano/data-types",
+"@teskooano/renderer-threejs-objects",
+"@teskooano/renderer-threejs-labels",
+"@teskooano/renderer-threejs-celestial",
+"three",
+"rxjs",
+]
 classes:
-  [
-    "StateSubscriptionMixin",
-    "THREE.Group",
-    "THREE.Color",
-    "ObjectManager",
-    "Layer2DManager",
-    "CelestialRenderer",
-    "IdealStrategy",
-    "NBodyStrategy",
-    "IOrbitVisualizationStrategy",
-    "PredictionManager",
-    "TrailManager",
-    "TrailCurveConfig",
-  ]
+[
+"StateSubscriptionMixin",
+"THREE.Group",
+"THREE.Color",
+"ObjectManager",
+"Layer2DManager",
+"CelestialRenderer",
+"IdealStrategy",
+"NBodyStrategy",
+"IOrbitVisualizationStrategy",
+"PredictionManager",
+"TrailManager",
+"TrailCurveConfig",
+]
 functions:
-  [
-    "switchMode",
-    "updateOrbitLines",
-    "createOrbitLine",
-    "updateTrailLine",
-    "createTrailLine",
-    "updatePredictionLine",
-    "createPredictionLine",
-    "dispose",
-    "initialize",
-    "update",
-    "addObject",
-    "removeObject",
-    "setHighlight",
-    "setVisibility",
-    "highlightVisualization",
-    "setPredictionDuration",
-  ]
+[
+"switchMode",
+"updateOrbitLines",
+"createOrbitLine",
+"updateTrailLine",
+"createTrailLine",
+"updatePredictionLine",
+"createPredictionLine",
+"dispose",
+"initialize",
+"update",
+"addObject",
+"removeObject",
+"setHighlight",
+"setVisibility",
+"highlightVisualization",
+"setPredictionDuration",
+]
 constants: ["OrbitDisplayMode"]
 types:
-  [
-    "OrbitDisplayMode",
-    "RenderableCelestialObject",
-    "TrailCurveConfig",
-    "IOrbitVisualizationStrategy",
-    "RendererStateAdapter",
-  ]
+[
+"OrbitDisplayMode",
+"RenderableCelestialObject",
+"TrailCurveConfig",
+"IOrbitVisualizationStrategy",
+"RendererStateAdapter",
+]
+
 ---
 
 # OrbitsManager

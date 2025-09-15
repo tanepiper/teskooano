@@ -4,8 +4,26 @@ tags: [renderer, threejs, camera, state]
 type: Class
 package: "@teskooano/renderer-threejs-camera"
 name: CameraManager
-dependencies: ["@teskooano/core-state", "@teskooano/data-types", "@teskooano/renderer-threejs-helpers", "rx", "three"]
-functions: ["setDependencies", "initializeCameraPosition", "getCameraState$", "followObject", "pointCameraAt", "resetCameraView", "clearFocus", "setFov", "destroy"]
+dependencies:
+  [
+    "@teskooano/core-state",
+    "@teskooano/data-types",
+    "@teskooano/renderer-threejs-helpers",
+    "rx",
+    "three",
+  ]
+functions:
+  [
+    "setDependencies",
+    "initializeCameraPosition",
+    "getCameraState$",
+    "followObject",
+    "pointCameraAt",
+    "resetCameraView",
+    "clearFocus",
+    "setFov",
+    "destroy",
+  ]
 status: active
 ---
 
@@ -35,4 +53,3 @@ High-level camera controller that owns camera state (via core-state `CameraStore
 
 - Temporarily adjusts simulation time scale during long transitions
 - Predicts object position over transition time to reduce snapping
-

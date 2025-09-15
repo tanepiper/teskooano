@@ -15,4 +15,3 @@ Randomly chooses a stellar system topology (single, close/wide binary, triple, c
 ## Outputs
 
 - `{ type, stars, systemName, description }` consumed by [[CelestialZoneManager]]
-

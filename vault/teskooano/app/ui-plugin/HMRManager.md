@@ -20,4 +20,3 @@ Handles plugin Hot Module Replacement lifecycle: unload (dispose + deregister) t
 
 - `unloadPlugin(id)`: call `dispose` if present; remove all registries; emit pluginsChanged
 - `reloadPlugin(id)`: unload then re-load via PluginLoader; process via RegistrationManager; run `initialize` if present
-

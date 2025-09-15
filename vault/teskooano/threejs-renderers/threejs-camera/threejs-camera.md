@@ -5,7 +5,16 @@ type: index
 package: "@teskooano/renderer-threejs-camera"
 version: "0.4.0-dev.0"
 dependencies:
-  ["@teskooano/core-state", "@teskooano/core-math", "@teskooano/data-types", "@teskooano/renderer-threejs", "@teskooano/renderer-threejs-helpers", "@teskooano/notifications", "three", "rxjs"]
+  [
+    "@teskooano/core-state",
+    "@teskooano/core-math",
+    "@teskooano/data-types",
+    "@teskooano/renderer-threejs",
+    "@teskooano/renderer-threejs-helpers",
+    "@teskooano/notifications",
+    "three",
+    "rxjs",
+  ]
 classes: ["CameraManager"]
 status: active
 ---
@@ -22,4 +31,3 @@ Camera subsystem for the renderer: manages camera state, presets, FOV, and integ
 
 - [[threejs-core|SceneManager]] provides camera instance to the loop
 - [[threejs-controls]] interacts via state/events; see ControlsManager
-

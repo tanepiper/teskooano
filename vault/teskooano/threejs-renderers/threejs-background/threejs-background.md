@@ -23,4 +23,3 @@ Space backdrop rendering: star fields, nebulae, galaxies. Rendered early (low re
 ## 🔗 Related
 
 - [[threejs-core|RenderOrderManager]]: Background ranges (-1000..-800)
-

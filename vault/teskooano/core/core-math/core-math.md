@@ -24,4 +24,3 @@ Renderer-agnostic math primitives used by physics and state layers.
 
 - [[core-physics]] uses these primitives throughout
 - [[data-types]] builds higher-level structures atop them
-
