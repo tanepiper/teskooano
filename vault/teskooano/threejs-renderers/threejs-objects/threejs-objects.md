@@ -322,11 +322,11 @@ objectManager.dispose();
 
 ## 🔗 Related Components
 
-- **[[threejs-celestial]]** - Provides base renderer classes and interfaces
-- **[[threejs-lighting]]** - Manages light sources created by ObjectManager
-- **[[threejs-orbits]]** - Receives object data for orbital visualization
-- **[[threejs-labels]]** - Uses object data for label positioning
-- **[[threejs-core]]** - Provides scene access for mesh attachment
+- **[[threejs-celestial/threejs-celestial|Three.js Celestial]]** - Provides base renderer classes and interfaces
+- **[[threejs-lighting/threejs-lighting|Three.js Lighting]]** - Manages light sources created by ObjectManager
+- **[[threejs-orbits/threejs-orbits|Three.js Orbits]]** - Receives object data for orbital visualization
+- **[[threejs-labels/threejs-labels|Three.js Labels]]** - Uses object data for label positioning
+- **[[threejs-core/threejs-core|Three.js Core]]** - Provides scene access for mesh attachment
 - **[[celestials-stars]]** - Star-specific renderer creation
 - **[[celestials-terrestrial]]** - Planet and moon renderer creation
 - **[[celestials-gas-giants]]** - Gas giant renderer creation

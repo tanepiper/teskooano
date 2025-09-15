@@ -170,10 +170,10 @@ animationHelper.animatePosition(object, targetPosition, { duration: 2 });
 
 ## 📚 Related Documentation
 
-- [[threejs-core]]: Core rendering infrastructure
-- [[threejs-celestial]]: Celestial object rendering
-- [[threejs-orbits]]: Orbital mechanics and rendering
-- [[threejs-camera]]: Advanced camera management
-- [[threejs-lighting]]: Lighting system and management
+- [[threejs-core/threejs-core|Three.js Core]]: Core rendering infrastructure
+- [[threejs-celestial/threejs-celestial|Three.js Celestial]]: Celestial object rendering
+- [[threejs-orbits/threejs-orbits|Three.js Orbits]]: Orbital mechanics and rendering
+- [[threejs-camera/threejs-camera|Three.js Camera]]: Advanced camera management
+- [[threejs-lighting/threejs-lighting|Three.js Lighting]]: Lighting system and management
 
 ---

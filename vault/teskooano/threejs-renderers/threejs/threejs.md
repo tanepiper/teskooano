@@ -70,20 +70,20 @@ This package serves as the **integrator** for the modular Three.js rendering sys
 
 ### Core Components
 
-- [[ModularSpaceRenderer]] - Main orchestrator and public facade
-- [[RendererStateAdapter]] - State integration and transformation
-- [[RenderPipeline]] - Per-frame update orchestration
+- [[threejs/ModularSpaceRenderer|ModularSpaceRenderer]] - Main orchestrator and public facade
+- [[threejs/RendererStateAdapter|RendererStateAdapter]] - State integration and transformation
+- [[threejs/RenderPipeline|RenderPipeline]] - Per-frame update orchestration
 
 ### Orchestrators
 
-- [[orchestrators]] - Orchestrator pattern overview and architecture
-- [[RenderingOrchestrator]] - Manages core rendering systems
-- [[InteractionOrchestrator]] - Manages user interaction systems
-- [[DebugOrchestrator]] - Manages debug and analysis tools
+- [[threejs/orchestrators|orchestrators]] - Orchestrator pattern overview and architecture
+- [[threejs/RenderingOrchestrator|RenderingOrchestrator]] - Manages core rendering systems
+- [[threejs/InteractionOrchestrator|InteractionOrchestrator]] - Manages user interaction systems
+- [[threejs/DebugOrchestrator|DebugOrchestrator]] - Manages debug and analysis tools
 
 ### Architecture & Integration
 
-- [[Three.js Renderer Architecture]] - Overall system architecture
+- [[threejs-renderers/Renderer Architecture Index|Three.js Renderer Architecture]] - Overall system architecture
 - [[State Integration Patterns]] - How core state integrates with renderer
 - [[Performance Optimization]] - Performance considerations and strategies
 
@@ -91,18 +91,18 @@ This package serves as the **integrator** for the modular Three.js rendering sys
 
 ### By Component Type
 
-- **Main Orchestrator**: [[ModularSpaceRenderer]]
-- **State Integration**: [[RendererStateAdapter]]
-- **Update Pipeline**: [[RenderPipeline]]
-- **Orchestrator Pattern**: [[orchestrators]]
-- **System Orchestrators**: [[RenderingOrchestrator]], [[InteractionOrchestrator]], [[DebugOrchestrator]]
+- **Main Orchestrator**: [[threejs/ModularSpaceRenderer|ModularSpaceRenderer]]
+- **State Integration**: [[threejs/RendererStateAdapter|RendererStateAdapter]]
+- **Update Pipeline**: [[threejs/RenderPipeline|RenderPipeline]]
+- **Orchestrator Pattern**: [[threejs/orchestrators|orchestrators]]
+- **System Orchestrators**: [[threejs/RenderingOrchestrator|RenderingOrchestrator]], [[threejs/InteractionOrchestrator|InteractionOrchestrator]], [[threejs/DebugOrchestrator|DebugOrchestrator]]
 
 ### By Architecture Pattern
 
-- **Orchestrator Pattern**: [[ModularSpaceRenderer]] coordinates specialized orchestrators
+- **Orchestrator Pattern**: [[threejs/ModularSpaceRenderer|ModularSpaceRenderer]] coordinates specialized orchestrators
 - **Facade Pattern**: Provides simplified interface to complex subsystem
-- **Adapter Pattern**: [[RendererStateAdapter]] bridges core state and renderers
-- **Pipeline Pattern**: [[RenderPipeline]] manages update sequence
+- **Adapter Pattern**: [[threejs/RendererStateAdapter|RendererStateAdapter]] bridges core state and renderers
+- **Pipeline Pattern**: [[threejs/RenderPipeline|RenderPipeline]] manages update sequence
 
 ## 🚀 Core Features
 
@@ -190,19 +190,19 @@ This package integrates the following packages:
 
 ### Core Dependencies
 
-- **[[threejs-core]]** - Foundational Three.js infrastructure
-- **[[core-state]]** - State management and subscriptions
-- **[[data-types]]** - Core data structures and types
+- **[[threejs-core/threejs-core|Three.js Core]]** - Foundational Three.js infrastructure
+- **[[core/core-state/core-state|Core State]]** - State management and subscriptions
+- **[[data/data-types/data-types|Data Types]]** - Core data structures and types
 
 ### Feature Packages
 
-- **[[threejs-objects]]** - Celestial object rendering
-- **[[threejs-lighting]]** - Dynamic lighting system
-- **[[threejs-orbits]]** - Orbital visualization
-- **[[threejs-labels]]** - 2D label rendering
-- **[[threejs-camera]]** - Camera management
-- **[[threejs-controls]]** - User interaction controls
-- **[[threejs-background]]** - Skybox and background
+- **[[threejs-objects/threejs-objects|Three.js Objects]]** - Celestial object rendering
+- **[[threejs-lighting/threejs-lighting|Three.js Lighting]]** - Dynamic lighting system
+- **[[threejs-orbits/threejs-orbits|Three.js Orbits]]** - Orbital visualization
+- **[[threejs-labels/threejs-labels|Three.js Labels]]** - 2D label rendering
+- **[[threejs-camera/threejs-camera|Three.js Camera]]** - Camera management
+- **[[threejs-controls/threejs-controls|Three.js Controls]]** - User interaction controls
+- **[[threejs-background/threejs-background|Three.js Background]]** - Skybox and background
 
 ### External Dependencies
 
@@ -417,7 +417,7 @@ const triangleCount = renderer.getTriangleCount();
 
 ### Core Package
 
-- [[threejs-core]] - Foundational Three.js infrastructure
+- [[threejs-core/threejs-core|Three.js Core]] - Foundational Three.js infrastructure
 
 ### Feature Packages
 
@@ -431,8 +431,8 @@ const triangleCount = renderer.getTriangleCount();
 
 ### System Integration
 
-- [[core-state]] - State management system
-- [[data-types]] - Core data structures
+- [[core/core-state/core-state|Core State]] - State management system
+- [[data/data-types/data-types|Data Types]] - Core data structures
 
 ---
 

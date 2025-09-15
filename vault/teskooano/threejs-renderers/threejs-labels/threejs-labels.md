@@ -337,11 +337,11 @@ interface LabelVisibilityConfig {
 
 ### Core Dependencies
 
-- **[[data-types]]** - Core data structures and types
-- **[[core-math]]** - Vector mathematics (OSVector3)
+- **[[data/data-types/data-types|Data Types]]** - Core data structures and types
+- **[[core/core-math/core-math|Core Math]]** - Vector mathematics (OSVector3)
 - **[[data-values]]** - Constants and scale values
-- **[[threejs-objects]]** - Object management and mesh access
-- **[[threejs-core]]** - Render order management
+- **[[threejs-objects/threejs-objects|Three.js Objects]]** - Object management and mesh access
+- **[[threejs-core/threejs-core|Three.js Core]]** - Render order management
 - **Three.js** - Three.js core library and CSS2DRenderer
 
 ### Development Dependencies
@@ -353,10 +353,10 @@ interface LabelVisibilityConfig {
 ## 📚 Related Documentation
 
 - **[[threejs]]** - Main Three.js renderer package
-- **[[threejs-core]]** - Core rendering utilities and managers
-- **[[threejs-objects]]** - Object management and mesh systems
-- **[[data-types]]** - Core data structures and celestial types
-- **[[core-math]]** - Vector mathematics and spatial calculations
+- **[[threejs-core/threejs-core|Three.js Core]]** - Core rendering utilities and managers
+- **[[threejs-objects/threejs-objects|Three.js Objects]]** - Object management and mesh systems
+- **[[data/data-types/data-types|Data Types]]** - Core data structures and celestial types
+- **[[core/core-math/core-math|Core Math]]** - Vector mathematics and spatial calculations
 - **[[data-values]]** - Constants and scale values for space simulation
 
 ---

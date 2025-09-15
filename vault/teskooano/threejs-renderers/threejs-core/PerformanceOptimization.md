@@ -498,8 +498,8 @@ function monitorOptimizationEffectiveness(
 
 ### Integration Components
 
-- [[core-state]] - Provides user profile and performance state
-- [[data-types]] - Provides DeviceTier and PerformanceOptimization types
+- [[core/core-state/core-state|Core State]] - Provides user profile and performance state
+- [[data/data-types/data-types|Data Types]] - Provides DeviceTier and PerformanceOptimization types
 - [[threejs-helpers]] - Provides WebGL capability detection
 
 ## 🏛️ Architecture Patterns

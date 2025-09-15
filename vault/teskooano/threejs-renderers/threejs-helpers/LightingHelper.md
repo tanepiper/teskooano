@@ -249,6 +249,6 @@ spotLight.target.position.set(0, 0, 0);
 ## 📚 Related Documentation
 
 - [[threejs-lighting|LightingManager]]: Production lighting management system
-- [[threejs-celestial]]: Celestial object rendering with lighting
-- [[threejs-core]]: Core rendering infrastructure
-- [[threejs-background]]: Background rendering and lighting
+- [[threejs-celestial/threejs-celestial|Three.js Celestial]]: Celestial object rendering with lighting
+- [[threejs-core/threejs-core|Three.js Core]]: Core rendering infrastructure
+- [[threejs-background/threejs-background|Three.js Background]]: Background rendering and lighting

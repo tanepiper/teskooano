@@ -364,17 +364,17 @@ console.log(influentialLights.length); // 2
 
 ### Primary Integration
 
-- **[[threejs-objects]]** - Creates and manages LightSourceComponent instances for stars and other light-emitting objects
-- **[[threejs-celestial]]** - Uses light source data for shader calculations and material updates
-- **[[threejs-core]]** - Provides scene access for light attachment and Three.js integration
+- **[[threejs-objects/threejs-objects|Three.js Objects]]** - Creates and manages LightSourceComponent instances for stars and other light-emitting objects
+- **[[threejs-celestial/threejs-celestial|Three.js Celestial]]** - Uses light source data for shader calculations and material updates
+- **[[threejs-core/threejs-core|Three.js Core]]** - Provides scene access for light attachment and Three.js integration
 - **[[Modular Space Renderer]]** - Orchestrates the lighting pipeline and coordinates with other renderer systems
 
 ### Secondary Integration
 
-- **[[core-state]]** - Provides celestial object data and state management for light source synchronization
-- **[[data-types]]** - Defines RenderableCelestialObject and related types used by lighting components
+- **[[core/core-state/core-state|Core State]]** - Provides celestial object data and state management for light source synchronization
+- **[[data/data-types/data-types|Data Types]]** - Defines RenderableCelestialObject and related types used by lighting components
 - **[[renderer-threejs-helpers]]** - Provides LightingHelper for optimized Three.js light creation
-- **[[core-math]]** - Provides OSVector3 for position calculations and mathematical operations
+- **[[core/core-math/core-math|Core Math]]** - Provides OSVector3 for position calculations and mathematical operations
 
 ### Data Flow Integration
 

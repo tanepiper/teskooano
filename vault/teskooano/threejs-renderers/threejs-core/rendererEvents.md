@@ -410,7 +410,7 @@ const performanceWarnings = rendererEvents.statsUpdated$.pipe(
 - [[AnimationLoop]] - Emits render loop events
 - [[SceneManager]] - Emits resize and disposal events
 - [[PerformanceOptimization]] - Emits performance optimization events
-- [[core-state]] - Integrates with state management patterns
+- [[core/core-state/core-state|Core State]] - Integrates with state management patterns
 
 ## 🏛️ Architecture Patterns
 

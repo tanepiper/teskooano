@@ -55,16 +55,16 @@ The orchestrator pattern serves to:
 
 ### By Orchestrator Type
 
-- **Core Rendering**: [[RenderingOrchestrator]] - Scene, objects, lighting, orbits, background
-- **User Interaction**: [[InteractionOrchestrator]] - Controls, labels, AU markers
-- **Debug & Analysis**: [[DebugOrchestrator]] - Debug tools, performance monitoring
+- **Core Rendering**: [[threejs/RenderingOrchestrator|RenderingOrchestrator]] - Scene, objects, lighting, orbits, background
+- **User Interaction**: [[threejs/InteractionOrchestrator|InteractionOrchestrator]] - Controls, labels, AU markers
+- **Debug & Analysis**: [[threejs/DebugOrchestrator|DebugOrchestrator]] - Debug tools, performance monitoring
 
 ### By System Responsibility
 
-- **Scene Management**: [[RenderingOrchestrator]] coordinates scene, camera, renderer
-- **Object Management**: [[RenderingOrchestrator]] manages celestial objects and rendering
-- **User Interface**: [[InteractionOrchestrator]] manages 2D labels and user controls
-- **Debug Tools**: [[DebugOrchestrator]] provides debugging and analysis capabilities
+- **Scene Management**: [[threejs/RenderingOrchestrator|RenderingOrchestrator]] coordinates scene, camera, renderer
+- **Object Management**: [[threejs/RenderingOrchestrator|RenderingOrchestrator]] manages celestial objects and rendering
+- **User Interface**: [[threejs/InteractionOrchestrator|InteractionOrchestrator]] manages 2D labels and user controls
+- **Debug Tools**: [[threejs/DebugOrchestrator|DebugOrchestrator]] provides debugging and analysis capabilities
 
 ## 🏗️ Orchestrator Architecture
 
@@ -306,21 +306,21 @@ function cleanup() {
 
 ### Core Orchestrators
 
-- [[RenderingOrchestrator]] - Core rendering systems coordination
-- [[InteractionOrchestrator]] - User interaction systems coordination
-- [[DebugOrchestrator]] - Debug and analysis systems coordination
+- [[threejs/RenderingOrchestrator|RenderingOrchestrator]] - Core rendering systems coordination
+- [[threejs/InteractionOrchestrator|InteractionOrchestrator]] - User interaction systems coordination
+- [[threejs/DebugOrchestrator|DebugOrchestrator]] - Debug and analysis systems coordination
 
 ### Architecture Components
 
-- [[ModularSpaceRenderer]] - Main orchestrator coordinator
-- [[RenderPipeline]] - Update orchestration
-- [[RendererStateAdapter]] - State integration
+- [[threejs/ModularSpaceRenderer|ModularSpaceRenderer]] - Main orchestrator coordinator
+- [[threejs/RenderPipeline|RenderPipeline]] - Update orchestration
+- [[threejs/RendererStateAdapter|RendererStateAdapter]] - State integration
 
 ### System Integration
 
-- [[threejs-core]] - Foundational Three.js infrastructure
-- [[core-state]] - State management system
-- [[data-types]] - Core data structures
+- [[threejs-core/threejs-core|Three.js Core]] - Foundational Three.js infrastructure
+- [[core/core-state/core-state|Core State]] - State management system
+- [[data/data-types/data-types|Data Types]] - Core data structures
 
 ---
 

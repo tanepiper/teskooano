@@ -264,7 +264,7 @@ if (!obj) {
 - **[[LightingManager]]** - Uses light source maps for scene lighting
 - **[[LightSourceComponent]]** - Creates lights for identified light sources
 - **[[threejs-objects]]** - Provides celestial object data
-- **[[core-state]]** - Source of celestial object hierarchy
+- **[[core/core-state/core-state|Core State]]** - Source of celestial object hierarchy
 
 ## 🏛️ Architecture Patterns
 

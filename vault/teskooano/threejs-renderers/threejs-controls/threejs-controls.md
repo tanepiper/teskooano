@@ -271,10 +271,10 @@ graph TD
 
 ### Core Dependencies
 
-- **[[core-state]]** - State management and object tracking
-- **[[data-types]]** - Interface definitions and type safety
-- **[[threejs-core]]** - Core renderer events and utilities
-- **[[threejs-camera]]** - High-level camera management integration
+- **[[core/core-state/core-state|Core State]]** - State management and object tracking
+- **[[data/data-types/data-types|Data Types]]** - Interface definitions and type safety
+- **[[threejs-core/threejs-core|Three.js Core]]** - Core renderer events and utilities
+- **[[threejs-camera/threejs-camera|Three.js Camera]]** - High-level camera management integration
 - **[[notifications]]** - Progress notification system
 - **Three.js** - 3D graphics library and OrbitControls
 - **GSAP** - Animation library for smooth transitions
@@ -293,10 +293,10 @@ graph TD
 
 ## 📚 Related Documentation
 
-- [[threejs-camera]] - High-level camera management system
-- [[threejs-core]] - Core renderer events and utilities
-- [[core-state]] - State management and object tracking
-- [[data-types]] - Interface definitions and types
+- [[threejs-camera/threejs-camera|Three.js Camera]] - High-level camera management system
+- [[threejs-core/threejs-core|Three.js Core]] - Core renderer events and utilities
+- [[core/core-state/core-state|Core State]] - State management and object tracking
+- [[data/data-types/data-types|Data Types]] - Interface definitions and types
 - [[notifications]] - Progress notification system
 
 ---

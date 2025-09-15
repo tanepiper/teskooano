@@ -4,21 +4,20 @@
     "type": "split",
     "children": [
       {
-        "id": "61a94be4c4c02a04",
+        "id": "381419f3b9bfe300",
         "type": "tabs",
         "children": [
           {
-            "id": "6ecb65330d6d43b7",
+            "id": "a527e49f28b0834e",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "bases",
               "state": {
-                "file": "Welcome.md",
-                "mode": "source",
-                "source": false
+                "file": "Component View.base",
+                "viewName": "Table"
               },
-              "icon": "lucide-file",
-              "title": "Welcome"
+              "icon": "lucide-table",
+              "title": "Component View"
             }
           }
         ]
@@ -142,13 +141,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Welcome.md",
+                "file": "Component View.base",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Welcome"
+              "title": "Outline of Component View"
             }
           }
         ],
@@ -169,8 +168,18 @@
       "bases:Create new base": false
     }
   },
-  "active": "6ecb65330d6d43b7",
+  "active": "a527e49f28b0834e",
   "lastOpenFiles": [
+    "Dependencies Data View.md",
+    "threejs-renderers/threejs/ModularSpaceRenderer.md",
+    "Welcome.md",
+    "threejs-renderers/threejs-camera/threejs-camera.md",
+    "threejs-renderers/threejs-orbits/IdealStrategy.md",
+    "threejs-renderers/threejs-orbits/TrailManager.md",
+    "threejs-renderers/threejs-core/threejs-core.md",
+    "@teskooano/core-state.md",
+    "threejs-renderers/threejs-camera/CameraManager.md",
+    "@teskooano",
     "Component View.base",
     "threejs-renderers/threejs-celestial/threejs-celestial.md",
     "threejs-renderers/threejs-celestial/createFallbackSphere.md",
@@ -184,20 +193,12 @@
     "threejs-renderers/threejs-celestial/TimeManager.md",
     "threejs-renderers/threejs-celestial/LODManager.md",
     "threejs-renderers/threejs-celestial/MaterialManager.md",
-    "threejs-renderers/threejs-camera/CameraManager.md",
     "threejs-renderers/threejs-core/PerformanceOptimization.md",
     "threejs-renderers/threejs/orchestrators.md",
     "threejs-renderers/threejs/DebugOrchestrator.md",
     "threejs-renderers/threejs/InteractionOrchestrator.md",
     "threejs-renderers/threejs/RenderingOrchestrator.md",
-    "threejs-renderers/threejs/RenderPipeline.md",
-    "threejs-renderers/threejs/RendererStateAdapter.md",
-    "threejs-renderers/threejs/threejs.md",
-    "threejs-renderers/threejs/ModularSpaceRenderer.md",
     "threejs-renderers/threejs",
-    "threejs-renderers/threejs-camera/threejs-camera.md",
-    "threejs-renderers/threejs-background/Field.md",
-    "_templates/agent-documentation-template.md",
     "_templates",
     "threejs-renderers/threejs-helpers",
     "threejs-renderers/threejs-controls",
@@ -205,7 +206,6 @@
     "threejs-renderers/threejs-background",
     "systems/solar-system",
     "systems/procedural-generation",
-    "systems",
     "Untitled.canvas"
   ]
 }

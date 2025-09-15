@@ -403,8 +403,8 @@ class OrbitsManager {
 
 ### Core Dependencies
 
-- [[core-state]] - Core state management system
-- [[data-types]] - Core data structures and types
+- [[core/core-state/core-state|Core State]] - Core state management system
+- [[data/data-types/data-types|Data Types]] - Core data structures and types
 - [[RenderableObjectFactory]] - Factory for creating renderable objects
 
 ### Renderer Integration

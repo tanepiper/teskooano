@@ -239,5 +239,5 @@ controlsManager.update(deltaTime);
 - [[OrbitControlsHandler]] - User input handling and OrbitControls management
 - [[CameraTransitionManager]] - GSAP-based animated transitions
 - [[ObjectFollower]] - Camera following logic for moving objects
-- [[threejs-camera]] - High-level camera management system
-- [[threejs-core]] - Core renderer events and utilities
+- [[threejs-camera/threejs-camera|Three.js Camera]] - High-level camera management system
+- [[threejs-core/threejs-core|Three.js Core]] - Core renderer events and utilities

@@ -117,8 +117,8 @@ This package establishes the fundamental building blocks for 3D rendering:
 
 This package depends on the following packages:
 
-- **[[core-state]]** - State management and subscriptions
-- **[[data-types]]** - Core data structures and types
+- **[[core/core-state/core-state|Core State]]** - State management and subscriptions
+- **[[data/data-types/data-types|Data Types]]** - Core data structures and types
 - **[[threejs-helpers]]** - Utility functions and helpers
 - **Three.js** - Three.js core library
 

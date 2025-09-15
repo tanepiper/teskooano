@@ -197,13 +197,13 @@ Base classes define the overall rendering algorithm structure while allowing sub
 
 ## 📚 Related Documentation
 
-- [[threejs-core]] - Core renderer events and utilities
-- [[threejs-lighting]] - Lighting system integration
-- [[threejs-lod]] - Level of Detail utilities
-- [[threejs-helpers]] - Utility functions and helpers
-- [[core-state]] - State management and subscriptions
-- [[core-math]] - Vector mathematics and calculations
-- [[core-physics]] - WASM spatial service for shadow detection
+- [[threejs-core/threejs-core|Three.js Core]] - Core renderer events and utilities
+- [[threejs-lighting/threejs-lighting|Three.js Lighting]] - Lighting system integration
+- [[threejs-lod/threejs-lod|Three.js LOD]] - Level of Detail utilities
+- [[threejs-helpers/threejs-helpers|Three.js Helpers]] - Utility functions and helpers
+- [[core/core-state/core-state|Core State]] - State management and subscriptions
+- [[core/core-math/core-math|Core Math]] - Vector mathematics and calculations
+- [[core/core-physics/core-physics|Core Physics]] - WASM spatial service for shadow detection
 
 ## 📚 Documentation Structure
 
@@ -272,8 +272,8 @@ Base classes define the overall rendering algorithm structure while allowing sub
 
 ### Core Dependencies
 
-- **[[core-state]]** - State management and subscriptions
-- **[[data-types]]** - Core data structures and types
+- **[[core/core-state/core-state|Core State]]** - State management and subscriptions
+- **[[data/data-types/data-types|Data Types]]** - Core data structures and types
 - **[[threejs-lighting]]** - Lighting system integration
 - **[[web-apis]]** - Web API monitoring (battery, memory, idle detection)
 - **Three.js** - Three.js core library

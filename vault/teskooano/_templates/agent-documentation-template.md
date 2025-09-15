@@ -725,6 +725,27 @@ These enhancements ensure that the template provides comprehensive coverage for 
 - Add comments explaining complex logic
 - Use consistent naming conventions
 
+### Obsidian Link Formatting
+
+**Important**: When creating links to other documentation files, use the proper Obsidian link format:
+
+- **Basic Link**: `[[filename]]` - Links to a file with the same name
+- **Path Link**: `[[path/to/file]]` - Links to a file in a specific directory
+- **Labeled Link**: `[[path/to/file|Display Name]]` - Links to a file but displays custom text
+
+**Examples**:
+
+- `[[threejs-core/threejs-core]]` - Links to the threejs-core package index
+- `[[threejs-renderers/threejs-objects/ObjectManager]]` - Links to ObjectManager component
+- `[[core/core-state/core-state|Core State Management]]` - Links to core-state with custom label
+
+**Best Practices**:
+
+- Use full paths for clarity: `[[threejs-renderers/threejs-core/threejs-core]]`
+- Use descriptive labels for better readability: `[[threejs-renderers/threejs-orbits/OrbitsManager|Orbital Visualization Manager]]`
+- Always verify links point to existing files
+- Use consistent path structure throughout documentation
+
 ### Diagram Standards
 
 - Use Mermaid diagrams for architecture and data flow

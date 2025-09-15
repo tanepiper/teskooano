@@ -210,7 +210,7 @@ scene.add(starfield);
 
 ## 📚 Related Documentation
 
-- [[threejs-celestial]]: Celestial object rendering system
-- [[threejs-orbits]]: Orbital mechanics and visualization
-- [[threejs-background]]: Background rendering and starfields
-- [[threejs-core]]: Core rendering infrastructure
+- [[threejs-celestial/threejs-celestial|Three.js Celestial]]: Celestial object rendering system
+- [[threejs-orbits/threejs-orbits|Three.js Orbits]]: Orbital mechanics and visualization
+- [[threejs-background/threejs-background|Three.js Background]]: Background rendering and starfields
+- [[threejs-core/threejs-core|Three.js Core]]: Core rendering infrastructure
