@@ -2,7 +2,7 @@
 aliases: [threejs-core, core-renderer, scene-manager, animation-loop]
 tags: [renderer, threejs, core, foundation, scene, animation]
 type: index
-name: "@teskooano/renderer-threejs-core"
+package: "@teskooano/renderer-threejs-core"
 version: "0.4.0-dev.0"
 dependencies:
   [
@@ -74,7 +74,7 @@ This package establishes the fundamental building blocks for 3D rendering:
 
 ### Performance & Optimization
 
-- [[Performance Optimization]] - Device capability detection and optimization
+- [[PerformanceOptimization]] - Device capability detection and optimization
 - [[LogarithmicDepthMaterial]] - Logarithmic depth buffer for space-scale precision
 - [[RenderOrderManager]] - Centralized render order management
 
@@ -95,7 +95,7 @@ This package establishes the fundamental building blocks for 3D rendering:
 
 - **Scene Management**: [[SceneManager]], [[GridManager]], [[DebugSphereManager]]
 - **Animation**: [[AnimationLoop]], [[rendererEvents]]
-- **Performance**: [[Performance Optimization]], [[LogarithmicDepthMaterial]]
+- **Performance**: [[PerformanceOptimization]], [[LogarithmicDepthMaterial]]
 - **Debug**: [[DepthBufferDebugger]], [[RenderOrderManager]]
 
 ### By Architecture Pattern
@@ -110,7 +110,7 @@ This package establishes the fundamental building blocks for 3D rendering:
 1. Start with [[SceneManager]] to understand scene setup
 2. Explore [[AnimationLoop]] for render cycle management
 3. Learn about [[rendererEvents]] for system communication
-4. Check out [[Performance Optimization]] for device optimization
+4. Check out [[PerformanceOptimization]] for device optimization
 5. Review [[LogarithmicDepthMaterial]] for space-scale precision
 
 ## 📦 Dependencies

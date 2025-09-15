@@ -10,7 +10,6 @@ dependencies:
     "@teskooano/data-types",
     "@teskooano/renderer-threejs-core",
     "@teskooano/renderer-threejs-lighting",
-    "@teskooano/renderer-threejs-lod",
     "@teskooano/renderer-threejs-orbits",
     "@teskooano/renderer-threejs-celestial",
     "@teskooano/renderer-threejs-labels",
@@ -22,11 +21,11 @@ dependencies:
     "@teskooano/celestials-rings",
     "@teskooano/celestials-oort-cloud",
     "@teskooano/celestials-asteroid",
-    "@teskooano/celestials-satellite",
     "three",
     "rxjs",
     "eventemitter3",
   ]
+devDependencies: ["@types/three", "vitest"]
 classes:
   [
     "ObjectManager",
@@ -289,6 +288,37 @@ objectManager.setDebrisEffectsEnabled(true);
 // Cleanup
 objectManager.dispose();
 ```
+
+## Dependencies
+
+### Core Dependencies
+
+- **@teskooano/core-state** - Provides state management and physics state access
+- **@teskooano/data-types** - Provides celestial object type definitions
+- **@teskooano/renderer-threejs-core** - Core Three.js renderer utilities
+- **@teskooano/renderer-threejs-lighting** - Lighting system for light source management
+- **@teskooano/renderer-threejs-orbits** - Orbital visualization system
+- **@teskooano/renderer-threejs-celestial** - Base celestial renderer classes
+- **@teskooano/renderer-threejs-labels** - 2D label management system
+- **three** - Three.js 3D graphics library
+- **rxjs** - Reactive programming library for state management
+- **eventemitter3** - Event system for object lifecycle events
+
+### Celestial Renderer Dependencies
+
+- **@teskooano/celestials-comet** - Comet-specific renderer
+- **@teskooano/celestials-terrestrial** - Terrestrial planet renderer
+- **@teskooano/celestials-gas-giants** - Gas giant renderer
+- **@teskooano/celestials-stars** - Star renderer
+- **@teskooano/celestials-asteroid-field** - Asteroid field renderer
+- **@teskooano/celestials-rings** - Ring system renderer
+- **@teskooano/celestials-oort-cloud** - Oort cloud renderer
+- **@teskooano/celestials-asteroid** - Individual asteroid renderer
+
+### Development Dependencies
+
+- **@types/three** - TypeScript definitions for Three.js
+- **vitest** - Testing framework
 
 ## 🔗 Related Components
 

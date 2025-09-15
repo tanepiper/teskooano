@@ -46,6 +46,26 @@ The `CelestialLightingManager` provides centralized lighting functionality for c
 - **Dynamic Ambient Lighting**: Realistic ambient light based on nearby stars
 - **Performance Optimization**: Throttled updates and intelligent caching
 
+## 🚀 Core Features
+
+### 1. Light Source Management
+
+- **Light Source Caching**: Efficient caching of lighting calculations
+- **Distance Attenuation**: Physically-based light falloff
+- **Dynamic Updates**: Real-time light source updates
+
+### 2. Shadow Caster Detection
+
+- **Automatic Detection**: Automatic shadow caster identification
+- **Spatial Optimization**: Uses WASM spatial service for efficient queries
+- **Ring System Support**: Specialized shadow caster detection for ring systems
+
+### 3. Ambient Lighting
+
+- **Dynamic Ambient**: Realistic ambient light based on nearby stars
+- **Intelligent Caching**: Caches ambient light calculations
+- **Performance Optimization**: Throttled updates and intelligent caching
+
 ## 🏗️ Architecture
 
 ### Instance-Based Design
@@ -318,6 +338,82 @@ lightingManager.dispose();
 - Integrates with simulation state for object data
 - Supports dynamic object updates
 - Maintains consistency with physics engine
+
+## ⚡ Performance Considerations
+
+### Efficiency
+
+- **Intelligent Caching**: Avoids redundant calculations through caching
+- **Squared Distance**: Uses squared distance for efficiency
+- **Early Returns**: Returns cached results when possible
+- **Batch Processing**: Processes multiple light sources efficiently
+
+### Quality Metrics
+
+- **Accuracy**: Accurate lighting calculations for realistic rendering
+- **Performance**: Minimal performance impact on rendering
+- **Memory Usage**: Efficient memory usage with caching
+- **Consistency**: Consistent lighting calculations across frames
+
+### Performance Monitoring
+
+- **Cache Hit Rate**: Monitor cache effectiveness
+- **Calculation Time**: Track lighting calculation performance
+- **Memory Usage**: Monitor memory usage for caching
+- **Light Count**: Track number of lights being processed
+
+## 🔌 Integration Points
+
+### Primary Integration
+
+- **BaseCelestialRenderer**: Provides lighting calculations for renderers
+- **WasmSpatialService**: Uses spatial service for shadow detection
+- **State Management**: Integrates with simulation state
+
+### Secondary Integration
+
+- **Lighting System**: Integration with lighting management systems
+- **Performance Monitoring**: Integration with performance monitoring
+- **Debug Systems**: Integration with debug and development systems
+
+## 🐛 Debug Features
+
+### Validation
+
+- **Light Validation**: Validates light source data
+- **Cache Validation**: Validates cache integrity
+- **Distance Validation**: Validates distance calculations
+- **Configuration Validation**: Validates lighting configuration
+
+### Monitoring
+
+- **Cache Stats**: Tracks cache statistics and effectiveness
+- **Calculation Stats**: Monitors lighting calculation performance
+- **Memory Stats**: Monitors memory usage for caching
+- **Light Stats**: Tracks light source processing statistics
+
+### Debugging Tools
+
+- **Cache Info**: Get detailed cache information
+- **Calculation Info**: Get calculation performance information
+- **Memory Info**: Get memory usage information
+- **Light Info**: Get light source processing information
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Advanced Caching**: More sophisticated caching strategies
+- **Predictive Calculations**: Predict lighting needs for better performance
+- **Memory Optimization**: Optimize memory usage for caching
+- **Performance Profiling**: Enhanced performance monitoring
+
+### Potential Improvements
+
+- **Multi-threaded Calculations**: Parallel lighting calculations for better performance
+- **Advanced Attenuation**: More sophisticated attenuation models
+- **Dynamic Ambient**: More dynamic ambient lighting calculations
+- **Advanced Validation**: More sophisticated validation and error handling
 
 ## 🔗 Related Components
 

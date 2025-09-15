@@ -15,6 +15,10 @@ export default defineConfig({
         __dirname,
         "../threejs-core/src",
       ),
+      "@teskooano/renderer-threejs-helpers": resolve(
+        __dirname,
+        "../threejs-helpers/src",
+      ),
     },
   },
 });

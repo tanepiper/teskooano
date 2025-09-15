@@ -1,8 +1,9 @@
 ---
 aliases: [threejs-lighting, lighting, dynamic-lighting, star-lighting]
 tags: [renderer, threejs, lighting, stars, shadows, dynamic]
-type: index
+type: Index
 package: "@teskooano/renderer-threejs-lighting"
+name: "@teskooano/renderer-threejs-lighting"
 version: "0.4.0-dev.0"
 dependencies:
   [
@@ -12,7 +13,18 @@ dependencies:
     "@teskooano/renderer-threejs-core",
     "@teskooano/renderer-threejs-helpers",
     "three",
-    "rxjs",
+  ]
+devDependencies:
+  [
+    "@types/three",
+    "@playwright/test",
+    "@vitest/browser",
+    "@vitest/ui",
+    "eslint",
+    "happy-dom",
+    "playwright",
+    "typescript",
+    "vitest",
   ]
 classes: ["LightingManager", "LightSourceComponent", "StateSubscriptionMixin"]
 functions: ["calculateVisualIntensity", "calculateLightSourceMaps"]
@@ -23,14 +35,7 @@ constants:
     "SHADOW_DISTANCE_THRESHOLD",
     "SHADOW_UPDATE_INTERVAL",
   ]
-types:
-  [
-    "LightSourceOptions",
-    "LightActionPlan",
-    "LightManagerConfig",
-    "LightSourceData",
-    "LightSourceMap",
-  ]
+types: ["LightSourceOptions", "LightActionPlan", "LightManagerConfig"]
 status: active
 ---
 
@@ -155,74 +160,228 @@ graph TD
 - **Light Source Assignment**: Assigns primary light sources based on mass and distance
 - **Complex Interactions**: Handles tertiary and higher-order star systems
 
-## 🔧 Configuration
+## 📊 Technical Specifications
 
-### LightSourceMapOptions
+### Interface/Type Definitions
 
 ```typescript
-interface LightSourceMapOptions {
-  maxLights?: number;
-  distanceThreshold?: number;
-  massWeight?: number;
+interface LightSourceOptions {
+  /** The specific THREE.Light instance to use. Defaults to a PointLight. */
+  light?: THREE.Light;
+  /** Whether this light source should cast shadows. Defaults to false. */
+  castShadow?: boolean;
+}
+
+interface LightActionPlan {
+  adds: {
+    id: string;
+    position: THREE.Vector3;
+    color?: number;
+    intensity?: number;
+  }[];
+  updates: {
+    id: string;
+    position: THREE.Vector3;
+    color?: number;
+    intensity?: number;
+  }[];
+  removes: string[];
+}
+
+interface LightManagerConfig {
+  /** The Three.js scene to manage lights within. */
+  scene: THREE.Scene;
+  /** The Three.js camera. */
+  camera: THREE.PerspectiveCamera;
+  /** Whether post-processing is enabled. */
+  enablePostProcessing: boolean;
+  /** An optional Observable stream of renderable objects. */
+  objects$?: Observable<Record<string, RenderableCelestialObject>>;
+  /** The color of the ambient light. Defaults to 0xffffff. */
+  ambientLightColor?: number;
+  /** The intensity of the ambient light. Defaults to 0.3. */
+  ambientLightIntensity?: number;
+  /** The default color for new star point lights. Defaults to 0xffffff. */
+  defaultStarLightColor?: number;
+  /** The default intensity for new star point lights. Defaults to 1.5. */
+  defaultStarLightIntensity?: number;
+  /** The default distance for new star point lights. Defaults to 0 (no falloff). */
+  defaultStarLightDistance?: number;
+  /** The default decay for new star point lights. Defaults to 0.5. */
+  defaultStarLightDecay?: number;
+  /** Configuration for calculating star light intensity from temperature. */
+  intensityCalculation?: {
+    /** The base intensity value. Defaults to 1.0. */
+    base: number;
+    /** The minimum temperature (in Kelvin) before intensity starts increasing. Defaults to 3000. */
+    minTemp: number;
+    /** The divisor used to scale the temperature difference. Defaults to 5000. */
+    divisor: number;
+  };
 }
 ```
 
-### Light Source Types
+### Configuration Options
 
 ```typescript
-interface LightSourceData {
-  position: OSVector3;
-  color: THREE.Color;
-  intensity: number;
-  distance: number;
-}
-
-interface LightSourceMap {
-  [objectId: string]: string; // objectId -> primaryLightSourceId
-}
+// Performance constants
+const INFLUENCE_THRESHOLD = 0.0;
+const MAX_INFLUENTIAL_LIGHTS = 4;
+const SHADOW_DISTANCE_THRESHOLD = 10000; // Max distance for shadow casting in scene units
+const SHADOW_UPDATE_INTERVAL = 500; // Update shadows every 500ms instead of every frame
 ```
 
-## 🚀 Usage Example
+## 💡 Usage Examples
+
+### Basic Usage
 
 ```typescript
+import {
+  LightingManager,
+  LightSourceComponent,
+  calculateLightSourceMaps,
+} from "@teskooano/renderer-threejs-lighting";
+import * as THREE from "three";
+
+// Create lighting manager
+const scene = new THREE.Scene();
+const lightingManager = new LightingManager(scene);
+
 // Phase 1: Calculate light source relationships
 const lightSourceMap = calculateLightSourceMaps(celestialObjects);
 
 // Phase 2: Create and register light sources
-const lightingManager = new LightingManager(scene);
-
-// For each star, create a light source component
 stars.forEach((star) => {
-  const light = new THREE.PointLight(star.color, star.luminosity);
-  const lightSource = new LightSourceComponent(star);
-
+  const lightSource = new LightSourceComponent(star, {
+    castShadow: true,
+  });
   lightingManager.register(lightSource);
-  scene.add(light);
 });
 
 // Register planets as shadow casters
 planets.forEach((planet) => {
+  const planetMesh = createPlanetMesh(planet);
+  planetMesh.receiveShadow = true;
   lightingManager.registerShadowCaster(planet.id, planetMesh, planet);
 });
 
-// In celestial renderers, query for influential lights
+// In render loop - LightingManager updates automatically via state subscriptions
+function animate() {
+  requestAnimationFrame(animate);
+  // lightingManager.update() is not needed - updates happen automatically via state subscriptions
+  renderer.render(scene, camera);
+}
+```
+
+### Advanced Usage
+
+```typescript
+import {
+  LightingManager,
+  LightSourceComponent,
+} from "@teskooano/renderer-threejs-lighting";
+
+// Advanced configuration with custom light
+const customLight = new THREE.PointLight(0xff0000, 2.0, 0, 2);
+const lightSource = new LightSourceComponent(starObject, {
+  light: customLight,
+  castShadow: true,
+});
+
+// Register with mesh group instead of scene
+const starMeshGroup = new THREE.Group();
+lightingManager.register(lightSource, starMeshGroup);
+
+// Register ring system shadows
+const ringMeshes = createRingMeshes(ringObject);
+lightingManager.registerRingShadowCasters(
+  ringObject.id,
+  ringMeshes,
+  ringObject,
+  parentPlanet,
+);
+
+// Query for influential lights in shader
 const influentialLights = lightingManager.getInfluentialLights(
-  objectPosition,
+  targetObject,
   3, // max 3 lights
 );
 
-// Update shader uniforms with light data
-shaderMaterial.uniforms.lightPositions.value = influentialLights.map((light) =>
-  light.getPosition(),
+// Update shader uniforms
+shaderMaterial.uniforms.lightPositions.value = influentialLights.map(
+  (light) => light.light.position,
+);
+shaderMaterial.uniforms.lightColors.value = influentialLights.map(
+  (light) => light.light.color,
+);
+shaderMaterial.uniforms.lightIntensities.value = influentialLights.map(
+  (light) => light.light.intensity,
 );
 ```
 
-## 🔗 Related Components
+### Real-world Scenario
 
-- **[[threejs-objects]]** - Creates and manages LightSourceComponent instances
-- **[[threejs-celestial]]** - Uses light source data for shader calculations
-- **[[threejs-core]]** - Provides scene access for light attachment
-- **[[Modular Space Renderer]]** - Orchestrates the lighting pipeline
+```typescript
+// Multi-star system with dynamic lighting
+const binarySystem = {
+  primaryStar: createStar({ luminosity: 1.0, color: "#ffffff" }),
+  secondaryStar: createStar({ luminosity: 0.5, color: "#ffaaaa" }),
+  planet: createPlanet({ parentId: "primaryStar" }),
+};
+
+// Calculate light source relationships
+const lightSourceMap = calculateLightSourceMaps(binarySystem);
+// Result: { primaryStar: 'primaryStar', secondaryStar: 'primaryStar', planet: 'primaryStar' }
+
+// Create lighting manager
+const lightingManager = new LightingManager(scene, renderableObjects$);
+
+// Register both stars as light sources
+const primaryLight = new LightSourceComponent(binarySystem.primaryStar);
+const secondaryLight = new LightSourceComponent(binarySystem.secondaryStar);
+lightingManager.register(primaryLight);
+lightingManager.register(secondaryLight);
+
+// Register planet for shadow casting
+const planetMesh = createPlanetMesh(binarySystem.planet);
+lightingManager.registerShadowCaster(
+  binarySystem.planet.id,
+  planetMesh,
+  binarySystem.planet,
+);
+
+// In planet renderer, get influential lights
+const influentialLights = lightingManager.getInfluentialLights(
+  binarySystem.planet,
+  2, // max 2 lights for binary system
+);
+
+// Both stars will influence the planet's lighting
+console.log(influentialLights.length); // 2
+```
+
+## 🔌 Integration Points
+
+### Primary Integration
+
+- **[[threejs-objects]]** - Creates and manages LightSourceComponent instances for stars and other light-emitting objects
+- **[[threejs-celestial]]** - Uses light source data for shader calculations and material updates
+- **[[threejs-core]]** - Provides scene access for light attachment and Three.js integration
+- **[[Modular Space Renderer]]** - Orchestrates the lighting pipeline and coordinates with other renderer systems
+
+### Secondary Integration
+
+- **[[core-state]]** - Provides celestial object data and state management for light source synchronization
+- **[[data-types]]** - Defines RenderableCelestialObject and related types used by lighting components
+- **[[renderer-threejs-helpers]]** - Provides LightingHelper for optimized Three.js light creation
+- **[[core-math]]** - Provides OSVector3 for position calculations and mathematical operations
+
+### Data Flow Integration
+
+- **State Access**: LightingManager subscribes to renderable objects state changes for automatic updates
+- **Component Lifecycle**: LightSourceComponent integrates with object creation/destruction lifecycle
+- **Shader Integration**: Light data flows from LightingManager to celestial renderers for shader uniforms
+- **Scene Management**: Three.js lights are automatically added/removed from scene based on object lifecycle
 
 ## 📚 Architecture Patterns
 
@@ -258,20 +417,69 @@ shaderMaterial.uniforms.lightPositions.value = influentialLights.map((light) =>
 - **Light Disposal**: Proper disposal of Three.js light instances
 - **Registry Cleanup**: LightingManager clears unused light sources
 
-## 🔍 Debug Features
+## 🐛 Debug Features
+
+### Validation
+
+- **Input Validation**: LightSourceComponent validates celestial object data and stellar properties
+- **Output Validation**: LightingManager validates light source queries and shadow casting calculations
+- **State Validation**: Automatic validation of object state changes and light source synchronization
+- **Configuration Validation**: LightSourceOptions and LightManagerConfig validation for proper setup
+
+### Monitoring
+
+- **Performance Monitoring**: Track light source query performance and shadow casting frequency
+- **Error Monitoring**: Console warnings for circular dependencies in light source hierarchy
+- **Usage Monitoring**: Monitor light source registration/unregistration and component lifecycle
+- **Health Monitoring**: Track lighting system health through state subscription status
+
+### Debugging Tools
+
+- **Debug Mode**: Console logging for light source hierarchy calculation and shadow casting decisions
+- **Logging**: Detailed logging of light source queries, shadow casting, and performance metrics
+- **Tracing**: Trace light source relationships and shadow casting paths for debugging
+- **Profiling**: Performance profiling for light source queries and shadow casting calculations
 
 ### Light Source Visualization
 
-- **Debug Spheres**: Visual representation of light source positions
-- **Intensity Indicators**: Color-coded spheres showing light intensity
-- **Relationship Lines**: Lines showing light source assignments
+- **Debug Spheres**: Visual representation of light source positions and influence ranges
+- **Intensity Indicators**: Color-coded spheres showing light intensity and visual intensity mapping
+- **Relationship Lines**: Lines showing light source assignments and shadow casting relationships
+- **Shadow Visualization**: Visual indicators for active shadow casting and blocking relationships
 
-### Performance Monitoring
+## 🔮 Future Enhancements
 
-- **Query Counts**: Track number of light source queries per frame
-- **Update Frequency**: Monitor light source update frequency
-- **Memory Usage**: Track light source component memory usage
-- **Shadow Performance**: Monitor shadow casting performance
+### Optimization Opportunities
+
+- **Performance Optimization**: Implement light source culling based on camera frustum and distance to reduce unnecessary calculations
+- **Memory Optimization**: Add light source pooling and reuse for frequently created/destroyed objects
+- **Code Optimization**: Optimize shadow casting calculations with spatial partitioning for large numbers of objects
+- **Architecture Optimization**: Implement light source LOD system to reduce complexity for distant objects
+
+### Potential Improvements
+
+- **Feature Enhancement**: Add support for directional and spot lights for specialized lighting scenarios
+- **Integration Enhancement**: Improve integration with post-processing effects like bloom and lens flares
+- **API Enhancement**: Add more granular control over light source influence calculations and shadow casting parameters
+- **User Experience**: Add visual debugging tools for light source relationships and shadow casting visualization
+
+## Dependencies
+
+### Core Dependencies
+
+- **@teskooano/core-math** - Mathematical operations and vector calculations for lighting calculations
+- **@teskooano/core-state** - State management and object synchronization for light source updates
+- **@teskooano/data-types** - Type definitions for celestial objects and lighting components
+- **@teskooano/renderer-threejs-core** - Core Three.js renderer integration and scene management
+- **three** - Three.js library for 3D graphics and lighting
+
+### Development Dependencies
+
+- **typescript** - Type safety and modern JavaScript features
+- **vitest** - Testing framework with browser support
+- **@vitest/browser** - Browser testing capabilities
+- **@playwright/test** - End-to-end testing
+- **eslint** - Code quality and consistency
 
 ---
 

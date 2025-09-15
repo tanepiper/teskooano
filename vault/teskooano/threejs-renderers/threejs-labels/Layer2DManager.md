@@ -244,12 +244,112 @@ layer2DManager.dispose();
 - **[[PredictionLabelLayer]]** - Trajectory prediction labels
 - **[[LabelSystem Interface]]** - System configuration interface
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. Layer Management System
+
+- **Multi-Layer Architecture**: Organized layers for different label types
+- **CSS2D Integration**: HTML elements rendered in 3D space
+- **Dynamic Visibility**: Distance and occlusion-based visibility rules
+- **Performance Optimization**: Caching, throttling, and efficient updates
+
+### 2. Component Registration
+
+- **Automatic Registration**: Web components registered automatically
+- **Type Safety**: Enum-based layer type identification
+- **Overwrite Protection**: Warns if layer type already exists
+- **Component Isolation**: Layers manage their own web components
+
+### 3. Update and Rendering
+
+- **Centralized Updates**: All layers updated in single cycle
+- **Efficient Rendering**: Delegates to underlying CSS2DRenderer
+- **Performance Monitoring**: Track update and render performance
+- **Resource Management**: Proper cleanup and disposal
+
+## ⚡ Performance Considerations
+
+### Renderer Setup
+
+- **CSS2DRenderer**: Efficient 2D HTML rendering
+- **DOM Integration**: Minimal DOM manipulation
+- **Canvas Positioning**: Absolute positioning for overlay effect
+- **Pointer Events**: Disabled to prevent interference with 3D interaction
+
+### Layer Management
+
+- **Map-Based Registry**: O(1) layer access and retrieval
+- **Component Caching**: Web components registered once per layer type
+- **Update Delegation**: Efficient batch processing
+- **Memory Cleanup**: Proper disposal of layers and elements
+
+### Update Optimization
+
+- **Batch Updates**: All layers updated in single cycle
+- **Conditional Updates**: Layers handle their own update frequency
+- **Occlusion Delegation**: Individual layers manage occlusion testing
+- **Visibility Caching**: Layers cache visibility states
+
+## 🔌 Integration Points
+
+### Three.js Integration
+
+- **Scene**: Labels positioned relative to 3D objects
+- **Camera**: Camera position used for visibility and occlusion
+- **CSS2DRenderer**: Underlying renderer for HTML element overlay
+- **ObjectManager**: Access to celestial objects for occlusion testing
+
+### Layer Integration
+
+- **BaseLabelLayer**: All layers inherit from this abstract class
+- **Component Registration**: Automatic web component registration
+- **Update Delegation**: Centralized update cycle management
+- **Resource Management**: Proper cleanup and disposal
+
+### Performance Integration
+
+- **Update Throttling**: Layers handle their own update frequency
+- **Occlusion Testing**: Delegated to individual layers
+- **Visibility Culling**: Distance and LOD-based culling
+- **Memory Management**: Automatic cleanup of unused elements
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Web Workers**: Offload layer updates to background threads
+- **GPU Rendering**: GPU-based rendering for better performance
+- **Spatial Indexing**: Octree or BVH for faster layer queries
+- **Predictive Updates**: Predict layer updates based on camera movement
+
+### Feature Enhancements
+
+- **Dynamic Layer Creation**: Create layers dynamically based on needs
+- **Layer Clustering**: Group similar layers for better performance
+- **Interactive Layers**: Clickable layers with hover effects
+- **Layer Animations**: Smooth transitions for layer appearance/disappearance
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly layer interactions
+- **Accessibility**: Screen reader support and keyboard navigation
+- **Internationalization**: Multi-language layer support
+
+## 📚 Architecture Patterns
 
 - **Manager Pattern**: Centralized orchestration of multiple layers
 - **Registry Pattern**: Map-based layer registration and retrieval
 - **Delegate Pattern**: Update and rendering delegation to layers
 - **Factory Pattern**: Automatic component registration and creation
 - **Observer Pattern**: Layer updates triggered by external events
+
+## 📚 Related Documentation
+
+- **[[BaseLabelLayer]]** - Abstract base class for all layers
+- **[[CelestialLabelLayer]]** - Celestial body labels
+- **[[AuMarkerLabelLayer]]** - AU distance marker labels
+- **[[PredictionLabelLayer]]** - Trajectory prediction labels
+- **[[LabelSystem Interface]]** - System configuration interface
 
 ---

@@ -1,6 +1,30 @@
+---
+aliases:
+  [
+    Welcome,
+    Teskooano Welcome,
+    Renderer Welcome,
+    Architecture Welcome,
+    Digital Garden,
+  ]
+tags: [welcome, introduction, overview, architecture, renderer, threejs]
+type: Guide
+package: "@teskooano/renderer-system"
+name: "Teskooano Renderer Architecture Digital Garden"
+version: "1.0.0"
+dependencies: []
+devDependencies: []
+classes: []
+functions: []
+events: []
+constants: []
+types: []
+status: active
+---
+
 # Teskooano Renderer Architecture Digital Garden
 
-Welcome to the Teskooano renderer architecture documentation! This vault provides a comprehensive overview of how the various renderer components interconnect and work together to create the 3D space simulation.
+Welcome to the Teskooano renderer architecture documentation! This vault provides a comprehensive overview of how the various renderer components interconnect and work together to create high-performance 3D space simulation rendering.
 
 ## 🏗️ Architecture Overview
 
@@ -24,7 +48,7 @@ The Teskooano renderer system is built on a modular, package-based architecture 
 ### Specialized Renderers
 
 - [[threejs-objects]] - Main object management and mesh creation
-- [[threejs-orbits]] - Orbital path visualization (Keplerian and N-body)
+- [[threejs-orbits]] - Orbital path visualization (Keplerian and N-body) with optimized rendering pipeline
 - [[threejs-labels]] - 2D label rendering and occlusion
 - [[threejs-background]] - Space background and star field rendering
 
@@ -50,29 +74,124 @@ The Teskooano renderer system is built on a modular, package-based architecture 
 - [[Modular Space Renderer]] - Main orchestrator component
 - [[Animation Loop]] - Drives the entire rendering pipeline
 
-## 🎯 Quick Navigation
+## 📚 Documentation Structure
+
+### Core Infrastructure
+
+- **[[threejs-core]]** - Foundational Three.js scene and animation management
+- **[[threejs-celestial]]** - Base classes and interfaces for celestial object rendering
+- **[[threejs-lighting]]** - Dynamic lighting system for stars and celestial bodies
+
+### Specialized Renderers
+
+- **[[threejs-objects]]** - Main object management and mesh creation
+- **[[threejs-orbits]]** - Orbital path visualization (Keplerian and N-body) with optimized rendering pipeline
+- **[[threejs-labels]]** - 2D label rendering and occlusion
+- **[[threejs-background]]** - Space background and star field rendering
+
+### Support Systems
+
+- **[[threejs-camera]]** - Camera management and controls
+- **[[threejs-controls]]** - User interaction and input handling
+- **[[threejs-helpers]]** - Utility functions and debugging tools
+
+### Main Orchestrator
+
+- **[[Modular Space Renderer]]** - Central orchestrator that coordinates all systems
+
+## 🔄 Quick Navigation
 
 ### By Component Type
 
-- [[Celestial Objects]] - Planets, stars, moons, and other bodies
-- [[Orbital Systems]] - Trajectories, predictions, and orbital mechanics
-- [[Lighting System]] - Dynamic lighting and shadows
-- [[User Interface]] - Labels, controls, and interaction
+- **Core Systems**: [[threejs-core]], [[threejs-celestial]], [[threejs-lighting]]
+- **Rendering**: [[threejs-objects]], [[threejs-orbits]], [[threejs-labels]], [[threejs-background]]
+- **Support**: [[threejs-camera]], [[threejs-controls]], [[threejs-helpers]]
+- **Orchestration**: [[Modular Space Renderer]]
 
 ### By Architecture Pattern
 
-- [[Manager Pattern]] - How managers coordinate different systems
-- [[Strategy Pattern]] - How different rendering strategies are selected
-- [[Factory Pattern]] - How objects and renderers are created
-- [[Observer Pattern]] - How systems communicate via events
+- **Manager Pattern**: [[threejs-objects]], [[threejs-orbits]], [[threejs-lighting]]
+- **Strategy Pattern**: [[threejs-orbits]], [[threejs-celestial]]
+- **Factory Pattern**: [[threejs-objects]], [[threejs-celestial]]
+- **Observer Pattern**: [[threejs-core]], [[Modular Space Renderer]]
+
+### By Feature Category
+
+- **[[Celestial Objects]]** - Planets, stars, moons, and other bodies
+- **[[Orbital Systems]]** - Trajectories, predictions, and orbital mechanics
+- **[[Lighting System]]** - Dynamic lighting and shadows
+- **[[User Interface]]** - Labels, controls, and interaction
 
 ## 🚀 Getting Started
 
-1. Start with [[threejs-core]] to understand the foundation
-2. Explore [[threejs-celestial]] for the base rendering architecture
-3. Dive into [[threejs-objects]] to see how everything comes together
-4. Check out [[threejs-orbits]] for advanced visualization features
+### Learning Path
+
+1. **Start with [[threejs-core]]** to understand the foundation
+2. **Explore [[threejs-celestial]]** for the base rendering architecture
+3. **Dive into [[threejs-objects]]** to see how everything comes together
+4. **Check out [[threejs-orbits]]** for advanced visualization features
+5. **Understand [[Modular Space Renderer]]** as the central orchestrator
+
+### Key Concepts
+
+- **Manager Pattern**: How systems are organized and coordinated
+- **Strategy Pattern**: How different algorithms are selected
+- **State Management**: How data flows through the system
+- **Performance Optimization**: How the system maintains high performance
+- **Code Quality**: How the system maintains clean, maintainable code
+
+## Dependencies
+
+### Core Dependencies
+
+- **@teskooano/core-state** - Central state management for simulation data
+- **@teskooano/core-physics** - Physics calculations and orbital mechanics
+- **@teskooano/core-math** - Mathematical utilities and vector operations
+- **@teskooano/data-types** - Type definitions for celestial objects
+- **three** - Three.js 3D graphics library
+- **rxjs** - Reactive programming for state management
+
+### Development Dependencies
+
+- **typescript** - Type safety and modern JavaScript features
+- **vitest** - Testing framework with browser support
+- **@vitest/browser** - Browser testing capabilities
+- **@playwright/test** - End-to-end testing
+- **eslint** - Code quality and consistency
+
+## 🔮 Recent Improvements
+
+### Architecture Optimization
+
+- **Code Deduplication**: Eliminated duplicate files and redundant code paths across all renderer packages
+- **Documentation Standardization**: Implemented comprehensive documentation templates for consistency
+- **Package Cleanup**: Streamlined package structure with clear separation of concerns
+- **Performance Enhancement**: Optimized rendering pipeline with reduced memory footprint
+
+### Quality Improvements
+
+- **Template Compliance**: All documentation now follows standardized agent documentation templates
+- **Dependency Management**: Accurate dependency tracking and documentation
+- **Export Optimization**: Clean, well-organized export structures
+- **Maintainability**: Improved code organization and reduced complexity
+
+## 📚 Related Documentation
+
+### Architecture Guides
+
+- **[[Renderer Architecture Index]]** - Comprehensive system overview
+- **[[Manager Pattern]]** - Detailed explanation of the Manager pattern
+- **[[Strategy Pattern]]** - How strategies provide flexibility
+- **[[Factory Pattern]]** - Object creation patterns
+- **[[Observer Pattern]]** - Event-driven communication
+
+### Performance Guides
+
+- **[[Performance Optimization]]** - Techniques for maintaining high performance
+- **[[Memory Management]]** - Efficient resource management
+- **[[Web Worker Integration]]** - Background processing strategies
+- **[[LOD System]]** - Level of Detail implementation
 
 ---
 
-_This vault is automatically generated and maintained to reflect the current state of the Teskooano renderer architecture._
+_This vault is automatically generated and maintained to reflect the current state of the Teskooano renderer architecture. All documentation follows standardized templates for consistency and quality._

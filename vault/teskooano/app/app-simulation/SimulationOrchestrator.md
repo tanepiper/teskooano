@@ -619,26 +619,19 @@ simulationOrchestrator.onOrbitUpdate.subscribe((payload) => {
 
 ## 🔮 Future Enhancements
 
-### Planned Features
-
-- **Advanced Physics**: Enhanced n-body simulation algorithms
-- **Multi-Threading**: Web Workers for parallel processing
-- **Advanced Lagrange Points**: Support for more complex orbital mechanics
-- **Real-Time Collaboration**: Multi-user simulation support
-
 ### Optimization Opportunities
 
-- **Performance Optimization**: Further WASM optimizations
-- **Memory Optimization**: Advanced memory management strategies
-- **Code Optimization**: Additional algorithmic improvements
-- **Architecture Optimization**: Enhanced modular architecture
+- **Performance Optimization**: Further WASM optimizations and spatial partitioning improvements
+- **Memory Optimization**: Advanced memory management strategies and object pooling
+- **Code Optimization**: Additional algorithmic improvements for physics calculations
+- **Architecture Optimization**: Enhanced modular architecture and service separation
 
-### Advanced Features
+### Potential Improvements
 
-- **Machine Learning**: AI-powered simulation optimization
-- **Advanced Visualization**: Enhanced 3D rendering integration
-- **Data Export**: Comprehensive simulation data export
-- **Plugin System**: Extensible architecture for custom features
+- **Multi-Threading**: Web Workers for parallel processing of hierarchy updates
+- **Advanced Lagrange Points**: Support for more complex orbital mechanics scenarios
+- **Data Export**: Comprehensive simulation data export capabilities
+- **Plugin System**: Extensible architecture for custom simulation features
 
 ## 📚 Related Documentation
 

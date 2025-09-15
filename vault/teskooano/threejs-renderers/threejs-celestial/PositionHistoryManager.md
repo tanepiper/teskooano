@@ -34,6 +34,26 @@ The `PositionHistoryManager` serves as the central hub for all orbital-related d
 - **Performance Optimization**: Throttles updates and uses efficient data types for read/write operations
 - **Adaptive Sampling**: Dynamic sampling rate based on time scale and object movement
 
+## 🚀 Core Features
+
+### 1. Position History Management
+
+- **Efficient Storage**: Efficiently stores and manages position history using circular buffers
+- **Memory Management**: Uses pre-allocated buffers and efficient data structures
+- **Performance Optimization**: Throttles updates and uses efficient data types
+
+### 2. LOD Control
+
+- **Distance-based Visibility**: Determines visibility of orbit lines, trails, and predictions
+- **Camera Distance**: Based on camera distance for optimal performance
+- **Adaptive Rendering**: Dynamic rendering based on object importance
+
+### 3. Adaptive Sampling
+
+- **Dynamic Sampling**: Dynamic sampling rate based on time scale and object movement
+- **Intelligent Sampling**: Adjusts based on time scale, movement distance, and performance
+- **Performance Optimization**: Throttled updates to maintain 60fps
+
 ## 🏗️ Architecture
 
 ### Circular Buffer Implementation

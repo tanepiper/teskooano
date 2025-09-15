@@ -6,12 +6,32 @@ package: "@teskooano/renderer-threejs-orbits"
 name: KeplerianManager
 dependencies:
   [
+    "@teskooano/data-types",
+    "@teskooano/renderer-threejs-objects",
+    "@teskooano/core-state",
+    "@teskooano/renderer-threejs-helpers",
+    "@teskooano/renderer-threejs-core",
+    "@teskooano/data-values",
+    "@teskooano/core-math",
+    "three",
+    "rxjs",
+  ]
+classes:
+  [
     "OrbitCalculator",
     "SharedMaterials",
     "LineHelper",
     "RenderOrderManager",
     "TrailCurveInterpolator",
+    "ThreeVector3Converter",
+  ]
+types:
+  [
     "TrailCurveType",
+    "TrailCurveConfig",
+    "OrbitalParameters",
+    "RenderableCelestialObject",
+    "OSVector3",
   ]
 functions:
   [
@@ -38,176 +58,6 @@ Maintains static Keplerian orbit lines in world space, with caching and curve in
 - Caches raw OSVector3 points by `version` (e.g., semi-major axis) and THREE vectors to avoid recomputation
 - Converts to THREE arrays via converter; interpolates with [[TrailCurveInterpolator]]
 - Chooses materials by parent type (moon vs planet/star) and sets proper render order
-
----
-
-name: "KeplerianManager"
-description: "Manages static Keplerian orbit lines with curved trail interpolation"
-package: "@teskooano/renderer-threejs-orbits"
-dependencies:
-[
-"@teskooano/data-types",
-"@teskooano/renderer-threejs-objects",
-"@teskooano/renderer-threejs-helpers",
-"@teskooano/core-math",
-"@teskooano/data-values",
-"three",
-"rxjs",
-]
-classes:
-[
-"THREE.Line",
-"THREE.Group",
-"THREE.Color",
-"THREE.Vector3",
-"THREE.BufferAttribute",
-"THREE.BufferGeometry",
-"THREE.Material",
-"THREE.ShaderMaterial",
-"THREE.Scene",
-"THREE.PerspectiveCamera",
-"THREE.WebGLRenderer",
-"THREE.Object3D",
-"THREE.Raycaster",
-"THREE.Box3",
-"THREE.Light",
-"THREE.PointLight",
-"THREE.CanvasTexture",
-"THREE.Sprite",
-"THREE.LOD",
-"THREE.GridHelper",
-"THREE.Clock",
-"THREE.CSS2DRenderer",
-"THREE.CSS2DObject",
-"HTMLElement",
-"ShadowRoot",
-"HTMLSpanElement",
-"CSS2DObject",
-"Worker",
-"ObjectManager",
-"RenderOrderManager",
-"SharedMaterials",
-"LineHelper",
-"ThreeVector3Converter",
-"OSVector3",
-"OrbitCalculator",
-"TrailCurveInterpolator",
-]
-functions:
-[
-"calculateOrbitalPosition",
-"createOrbitLine",
-"updateOrbitLine",
-"setVisibility",
-"setHighlight",
-"setCurveConfig",
-"setTension",
-"setSegments",
-"setSmoothing",
-"setAdaptiveThreshold",
-"setOrbitalType",
-"setLinearType",
-"setSmoothType",
-"setAdaptiveType",
-"setOrbitalTension",
-"setOrbitalSegments",
-"setOrbitalSmoothing",
-"setOrbitalAdaptiveThreshold",
-"dispose",
-"initialize",
-"update",
-"addObject",
-"removeObject",
-"highlightObject",
-]
-constants:
-[
-"AU_METERS",
-"METERS_TO_SCENE_UNITS",
-"ORBITAL_TENSION",
-"ORBITAL_SEGMENTS",
-"ORBITAL_SMOOTHING",
-"ORBITAL_ADAPTIVE_THRESHOLD",
-]
-types:
-[
-"OrbitalParameters",
-"CelestialType",
-"RenderableCelestialObject",
-"CelestialObject",
-"CelestialStatus",
-"LODLevel",
-"MemoryStats",
-"RendererStats",
-"Callback",
-"RenderLoopPayload",
-"MaterialAnalysisResult",
-"RenderOrderAnalysisResult",
-"GridLevel",
-"SceneManagerOptions",
-"PerformanceOptimization",
-"DeviceTier",
-"WebGLCapabilities",
-"ResizePayload",
-"LabelSystem",
-"LabelSystemOptions",
-"LabelVisibilityConfig",
-"OcclusionConfig",
-"UIRegistryComponent",
-"VisibilityLevel",
-"LightSourceOptions",
-"LightActionPlan",
-"LightManagerConfig",
-"StarProperties",
-"ObjectLifecycleManagerConfig",
-"MeshFactoryConfig",
-"RendererUpdaterConfig",
-"DebrisEffectManagerConfig",
-"AccelerationVisualizerConfig",
-"GravitationalLensingHandlerConfig",
-"RenderableCacheEntry",
-"DestructionPayload",
-"LabelVisibilityManager",
-"CSS2DLayerType",
-"TrailCurveType",
-"TrailCurveConfig",
-"OrbitConfig",
-"CurveConfig",
-"InterpolationConfig",
-"SmoothingConfig",
-"AdaptiveConfig",
-"TensionConfig",
-"SegmentsConfig",
-"SmoothingFactor",
-"AdaptiveThreshold",
-"TensionFactor",
-"SegmentCount",
-"InterpolationType",
-"SmoothingType",
-"AdaptiveType",
-"TensionType",
-"SegmentType",
-"OrbitalType",
-"TrailType",
-"PredictionType",
-"LinearType",
-"SmoothType",
-"AdaptiveType",
-"OrbitalTension",
-"OrbitalSegments",
-"OrbitalSmoothing",
-"OrbitalAdaptiveThreshold",
-"TrailTension",
-"TrailSegments",
-"TrailSmoothing",
-"TrailAdaptiveThreshold",
-"PredictionTension",
-"PredictionSegments",
-"PredictionSmoothing",
-"PredictionAdaptiveThreshold",
-]
-
----
 
 # KeplerianManager
 

@@ -11,10 +11,14 @@
             "id": "6ecb65330d6d43b7",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "Welcome.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Welcome"
             }
           }
         ]
@@ -138,12 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "Welcome.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of Welcome"
             }
           }
         ],
@@ -166,33 +171,34 @@
   },
   "active": "6ecb65330d6d43b7",
   "lastOpenFiles": [
-    "_templates/agent-documentation-template.md",
     "Component View.base",
+    "threejs-renderers/threejs-celestial/threejs-celestial.md",
+    "threejs-renderers/threejs-celestial/createFallbackSphere.md",
+    "threejs-renderers/threejs-celestial/CelestialRendererDebugHelper.md",
+    "threejs-renderers/threejs-celestial/CircularBuffer.md",
+    "threejs-renderers/threejs-celestial/ShadowCasterUtils.md",
+    "threejs-renderers/threejs-celestial/LightingCalculator.md",
+    "threejs-renderers/threejs-celestial/LightArrayUtils.md",
+    "threejs-renderers/threejs-celestial/PerformanceMonitor.md",
+    "threejs-renderers/threejs-celestial/GeometryUtilities.md",
+    "threejs-renderers/threejs-celestial/TimeManager.md",
+    "threejs-renderers/threejs-celestial/LODManager.md",
+    "threejs-renderers/threejs-celestial/MaterialManager.md",
+    "threejs-renderers/threejs-camera/CameraManager.md",
+    "threejs-renderers/threejs-core/PerformanceOptimization.md",
+    "threejs-renderers/threejs/orchestrators.md",
+    "threejs-renderers/threejs/DebugOrchestrator.md",
+    "threejs-renderers/threejs/InteractionOrchestrator.md",
+    "threejs-renderers/threejs/RenderingOrchestrator.md",
+    "threejs-renderers/threejs/RenderPipeline.md",
+    "threejs-renderers/threejs/RendererStateAdapter.md",
+    "threejs-renderers/threejs/threejs.md",
+    "threejs-renderers/threejs/ModularSpaceRenderer.md",
+    "threejs-renderers/threejs",
+    "threejs-renderers/threejs-camera/threejs-camera.md",
+    "threejs-renderers/threejs-background/Field.md",
+    "_templates/agent-documentation-template.md",
     "_templates",
-    "threejs-renderers/threejs-orbits/threejs-orbits.md",
-    "data/data-values/Property Ranges.md",
-    "data/data-values/Physical Constants.md",
-    "data/data-values/Orbital Constants.md",
-    "data/data-values/Astronomical Constants.md",
-    "systems/procedural-generation/RoguePlanetGenerator.md",
-    "systems/solar-system/artificialSatellites.md",
-    "systems/solar-system/interstellarObjects.md",
-    "systems/solar-system/comets.md",
-    "systems/solar-system/asteroids.md",
-    "systems/solar-system/pluto.md",
-    "systems/solar-system/neptune.md",
-    "systems/solar-system/uranus.md",
-    "systems/solar-system/saturn.md",
-    "systems/solar-system/jupiter.md",
-    "systems/solar-system/mars.md",
-    "systems/solar-system/venus.md",
-    "systems/solar-system/mercury.md",
-    "systems/solar-system/earth.md",
-    "systems/solar-system/sol.md",
-    "systems/solar-system/solarSystemBodies.md",
-    "systems/solar-system/processSolarSystemToCurrentTime.md",
-    "systems/solar-system/fixEmptyEpochs.md",
-    "systems/solar-system/initializeSolarSystem.md",
     "threejs-renderers/threejs-helpers",
     "threejs-renderers/threejs-controls",
     "threejs-renderers/threejs-camera",
@@ -200,7 +206,6 @@
     "systems/solar-system",
     "systems/procedural-generation",
     "systems",
-    "data/data-values",
     "Untitled.canvas"
   ]
 }

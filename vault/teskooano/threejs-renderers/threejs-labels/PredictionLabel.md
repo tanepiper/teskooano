@@ -249,7 +249,93 @@ labelElement.setTimeCategory(86400); // 1 day in seconds
 - **[[CelestialLabelComponent]]** - Celestial body label component
 - **[[AuMarkerLabelComponent]]** - AU marker label component
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. Time-based Prediction Display
+
+- **Time Category System**: Color-coded styling based on prediction time distance
+- **Dynamic Styling**: CSS custom properties for time-based appearance
+- **Smooth Transitions**: CSS transitions for style changes
+- **Visual Indicators**: Intuitive color scheme for time categories
+
+### 2. Time Category System
+
+- **Short-term**: < 1 day (green styling)
+- **Medium-term**: 1 day to 90 days (yellow styling)
+- **Long-term**: > 90 days (red styling)
+- **Automatic Assignment**: Time category assigned automatically based on time value
+
+### 3. Performance Optimization
+
+- **Simple Design**: Minimal DOM structure for efficiency
+- **Direct Updates**: Direct text content assignment
+- **No Caching**: Simple component without complex state
+- **Efficient Rendering**: Hardware-accelerated transitions
+
+## ⚡ Performance Considerations
+
+### Shadow DOM Benefits
+
+- **Style Encapsulation**: Prevents style conflicts
+- **Performance**: Efficient style application
+- **Isolation**: Component styles don't affect other elements
+
+### CSS Transitions
+
+- **Hardware Acceleration**: GPU-accelerated transitions
+- **Smooth Changes**: Gradual style transitions for better UX
+- **Performance**: Efficient transition handling
+
+### Memory Management
+
+- **Minimal DOM**: Simple structure with single text span
+- **Efficient Updates**: Direct text content assignment
+- **No Caching**: Simple component without complex state
+
+## 🔌 Integration Points
+
+### Three.js Integration
+
+- **CSS2DObject**: Used with Three.js CSS2DObject for 3D positioning
+- **Scene Integration**: Labels positioned relative to 3D objects
+- **Camera Integration**: Camera position for visibility calculations
+
+### Web Component Integration
+
+- **Custom Element**: Registered as custom HTML element
+- **Method-based Updates**: Direct method calls for content updates
+- **Lifecycle Management**: Proper component lifecycle handling
+
+### Label System Integration
+
+- **PredictionLabelLayer**: Used by PredictionLabelLayer for trajectory predictions
+- **Data Binding**: Receives data from prediction system
+- **Visibility Control**: Controlled by layer visibility system
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Web Workers**: Offload time calculations to background threads
+- **GPU Rendering**: GPU-based rendering for better performance
+- **Predictive Updates**: Predict updates based on object movement
+- **Batch Updates**: Batch multiple attribute updates together
+
+### Feature Enhancements
+
+- **Interactive Labels**: Clickable labels with hover effects
+- **Label Animations**: Smooth transitions for label appearance/disappearance
+- **Custom Styling**: User-configurable styling options
+- **Accessibility**: Screen reader support and keyboard navigation
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly label interactions
+- **Internationalization**: Multi-language label support
+- **Theme Support**: Dark/light theme support
+
+## 📚 Architecture Patterns
 
 - **Web Component Pattern**: Custom HTML element with shadow DOM
 - **Category Pattern**: Time-based categorization system
@@ -257,5 +343,13 @@ labelElement.setTimeCategory(86400); // 1 day in seconds
 - **Transition Pattern**: Smooth style transitions
 - **Encapsulation Pattern**: Shadow DOM for style and structure isolation
 - **Performance Pattern**: Simple and efficient component design
+
+## 📚 Related Documentation
+
+- **[[PredictionLabelLayer]]** - Manages prediction labels with this component
+- **[[BaseLabelLayer]]** - Abstract base class for label layers
+- **[[Layer2DManager]]** - Manages all CSS2D layers
+- **[[CelestialLabelComponent]]** - Celestial body label component
+- **[[AuMarkerLabelComponent]]** - AU marker label component
 
 ---

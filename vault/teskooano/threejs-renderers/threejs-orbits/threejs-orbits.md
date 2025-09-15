@@ -17,6 +17,9 @@ dependencies:
   - three
   - rxjs
   - eventemitter3
+devDependencies:
+  - "@types/three"
+  - vitest
 components:
   - OrbitsManager
   - IdealStrategy
@@ -26,8 +29,6 @@ components:
   - PredictionManager
   - PredictionCalculator
   - PredictionRenderer
-  - NBodyTrailsRenderer
-  - NBodyPredictionRenderer
   - TrailDataPool
   - SimpleOrbitalRenderer
   - OrbitCalculator
@@ -48,9 +49,6 @@ classes:
   - PredictionAnimation
   - TrailCurveInterpolator
   - TrailDataPool
-  - NBodyTrailsRenderer
-  - NBodyPredictionRenderer
-  - IdealRenderer
   - OrbitCalculator
   - SharedMaterials
   - LineHelper
@@ -102,197 +100,12 @@ classes:
   - RenderOrderManager
   - StateSubscriptionMixin
 functions:
-  - calculateVisualIntensity
-  - calculateLightSourceMaps
-  - physicsToThreeJSPosition
-  - threeJSToPhysicsPosition
-  - createFallbackSphere
-  - createPointLight
-  - findBodiesInRange
-  - getPerformanceOptimization
-  - setText
-  - setTimeCategory
-  - simplifyTrail
-  - interpolateCurve
-  - calculateOrbitalPosition
-  - predictTrajectory
-  - updateTrailData
-  - processTrailBatch
-  - calculatePrediction
-  - renderPrediction
-  - animatePrediction
-  - updateLabels
-  - highlightObject
-  - setVisibility
-  - setTrailQuality
-  - setPredictionDuration
-  - switchMode
-  - updateOrbitLines
-  - createOrbitLine
-  - updateTrailLine
-  - createTrailLine
-  - updatePredictionLine
-  - createPredictionLine
-  - dispose
-  - initialize
-  - update
-  - addObject
-  - removeObject
-  - setHighlight
-  - setCurveConfig
-  - setTension
-  - setSegments
-  - setSmoothing
-  - setAdaptiveThreshold
-  - setTrailType
-  - setPredictionType
-  - setOrbitalType
-  - setLinearType
-  - setSmoothType
-  - setAdaptiveType
-  - setOrbitalTension
-  - setOrbitalSegments
-  - setOrbitalSmoothing
-  - setOrbitalAdaptiveThreshold
-  - setTrailTension
-  - setTrailSegments
-  - setTrailSmoothing
-  - setTrailAdaptiveThreshold
-  - setPredictionTension
-  - setPredictionSegments
-  - setPredictionSmoothing
-  - setPredictionAdaptiveThreshold
-constants:
-  - AU_METERS
-  - METERS_TO_SCENE_UNITS
-  - SECONDS_PER_YEAR
-  - MIN_SAMPLE_DISTANCE_SQ
-  - BATCH_INTERVAL
-  - MAX_BATCH_SIZE
-  - PERFORMANCE_CHECK_INTERVAL
-  - INFLUENCE_THRESHOLD
-  - MAX_INFLUENTIAL_LIGHTS
-  - SHADOW_DISTANCE_THRESHOLD
-  - SHADOW_UPDATE_INTERVAL
-  - DEBUG_SPHERE_CONFIG
-  - GRID_LEVELS
-  - GRID_COLORS
-  - logDepthVertexChunk
-  - logDepthFragmentChunk
-  - RENDER_ORDERS
-  - TAG_NAME
-  - CELESTIAL_LABEL_TAG
-  - PREDICTION_LABEL_TAG
-  - CSS2DLayerType
-  - SCALE
-  - TRAIL_QUALITY_HIGH
-  - TRAIL_QUALITY_MEDIUM
-  - TRAIL_QUALITY_LOW
-  - PREDICTION_STEPS
-  - PREDICTION_DURATION
-  - TRAIL_HISTORY_LENGTH
-  - CURVE_TENSION_DEFAULT
-  - CURVE_SEGMENTS_DEFAULT
-  - CURVE_SMOOTHING_DEFAULT
-  - CURVE_ADAPTIVE_THRESHOLD_DEFAULT
-  - ORBITAL_TENSION
-  - ORBITAL_SEGMENTS
-  - ORBITAL_SMOOTHING
-  - ORBITAL_ADAPTIVE_THRESHOLD
-  - TRAIL_TENSION
-  - TRAIL_SEGMENTS
-  - TRAIL_SMOOTHING
-  - TRAIL_ADAPTIVE_THRESHOLD
-  - PREDICTION_TENSION
-  - PREDICTION_SEGMENTS
-  - PREDICTION_SMOOTHING
-  - PREDICTION_ADAPTIVE_THRESHOLD
+  - simplifyPath
 types:
   - OrbitDisplayMode
   - TrailCurveType
   - TrailCurveConfig
-  - TrailQuality
-  - OrbitalParameters
-  - CelestialType
-  - RenderableCelestialObject
-  - CelestialObject
-  - CelestialStatus
-  - StellarType
-  - LODLevel
-  - LightSourcesMap
-  - LightSourceData
-  - ShadowCasterData
-  - TimePoint
-  - OrbitalConfig
-  - MemoryStats
-  - RendererStats
-  - Callback
-  - RenderLoopPayload
-  - MaterialAnalysisResult
-  - RenderOrderAnalysisResult
-  - GridLevel
-  - SceneManagerOptions
-  - PerformanceOptimization
-  - DeviceTier
-  - WebGLCapabilities
-  - ResizePayload
-  - LabelSystem
-  - LabelSystemOptions
-  - LabelVisibilityConfig
-  - OcclusionConfig
-  - UIRegistryComponent
-  - VisibilityLevel
-  - LightSourceOptions
-  - LightActionPlan
-  - LightManagerConfig
-  - StarProperties
-  - ObjectLifecycleManagerConfig
-  - MeshFactoryConfig
-  - RendererUpdaterConfig
-  - DebrisEffectManagerConfig
-  - AccelerationVisualizerConfig
-  - GravitationalLensingHandlerConfig
-  - RenderableCacheEntry
-  - DestructionPayload
-  - LabelVisibilityManager
-  - CSS2DLayerType
   - IOrbitVisualizationStrategy
-  - PredictionConfig
-  - TrailConfig
-  - OrbitConfig
-  - CurveConfig
-  - InterpolationConfig
-  - SmoothingConfig
-  - AdaptiveConfig
-  - TensionConfig
-  - SegmentsConfig
-  - SmoothingFactor
-  - AdaptiveThreshold
-  - TensionFactor
-  - SegmentCount
-  - InterpolationType
-  - SmoothingType
-  - AdaptiveType
-  - TensionType
-  - SegmentType
-  - OrbitalType
-  - TrailType
-  - PredictionType
-  - LinearType
-  - SmoothType
-  - AdaptiveType
-  - OrbitalTension
-  - OrbitalSegments
-  - OrbitalSmoothing
-  - OrbitalAdaptiveThreshold
-  - TrailTension
-  - TrailSegments
-  - TrailSmoothing
-  - TrailAdaptiveThreshold
-  - PredictionTension
-  - PredictionSegments
-  - PredictionSmoothing
-  - PredictionAdaptiveThreshold
 ---
 
 # Three.js Orbits (`@teskooano/renderer-threejs-orbits`)
@@ -661,6 +474,29 @@ if (currentStrategy instanceof NBodyStrategy) {
   currentStrategy.predictionManager.setPredictionSteps(120);
 }
 ```
+
+## Dependencies
+
+### Core Dependencies
+
+- **@teskooano/core-state** - Provides state management and physics state access
+- **@teskooano/data-types** - Provides celestial object type definitions
+- **@teskooano/core-math** - Provides mathematical utilities and vector operations
+- **@teskooano/core-physics** - Provides physics engine integration
+- **@teskooano/renderer-threejs-core** - Core Three.js renderer utilities
+- **@teskooano/renderer-threejs-helpers** - Helper utilities for Three.js rendering
+- **@teskooano/renderer-threejs-objects** - Object management and lifecycle
+- **@teskooano/renderer-threejs-labels** - 2D label rendering system
+- **@teskooano/renderer-threejs-celestial** - Celestial object rendering
+- **@teskooano/data-values** - Provides constant values and configurations
+- **three** - Three.js 3D graphics library
+- **rxjs** - Reactive programming library for state management
+- **eventemitter3** - Event handling utilities
+
+### Development Dependencies
+
+- **@types/three** - TypeScript definitions for Three.js
+- **vitest** - Testing framework
 
 ## 🔍 Debug Features
 

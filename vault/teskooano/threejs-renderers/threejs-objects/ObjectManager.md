@@ -6,16 +6,15 @@ package: "@teskooano/renderer-threejs-objects"
 name: ObjectManager
 dependencies:
   [
-    "GlobalLODManager",
-    "LightingManager",
-    "GravitationalLensingHandler",
-    "DebrisEffectManager",
-    "AccelerationVisualizer",
-    "MeshFactory",
-    "ObjectLifecycleManager",
-    "RendererUpdater",
+    "@teskooano/core-debug",
+    "@teskooano/core-math",
     "@teskooano/core-state",
-    "@teskooano/renderer-threejs",
+    "@teskooano/data-types",
+    "@teskooano/renderer-threejs-labels",
+    "@teskooano/renderer-threejs-lighting",
+    "@teskooano/renderer-threejs-celestial",
+    "rxjs",
+    "three",
   ]
 functions:
   [
@@ -51,46 +50,6 @@ Central orchestrator for Three.js scene objects representing celestial bodies. C
 - Create meshes via [[MeshFactory]] with registered celestial renderers and register [[GlobalLODManager]]
 - Manage effects: [[GravitationalLensingHandler]], [[DebrisEffectManager]], [[AccelerationVisualizer]]
 - Delegate per-frame updates to [[RendererUpdater]]; expose raw scene add/remove when needed
-
----
-
-aliases: [ObjectManager, object-manager, celestial-objects, scene-orchestrator]
-tags: [renderer, threejs, objects, manager, orchestrator, facade, lifecycle]
-type: Class
-package: "@teskooano/renderer-threejs-objects"
-name: ObjectManager
-dependencies:
-[
-"@teskooano/core-state",
-"@teskooano/data-types",
-"@teskooano/renderer-threejs-lighting",
-"@teskooano/renderer-threejs-labels",
-"three",
-"rxjs",
-]
-classes:
-[
-"StateSubscriptionMixin",
-"THREE.Scene",
-"THREE.PerspectiveCamera",
-"THREE.WebGLRenderer",
-"LightingManager",
-"Layer2DManager",
-"ObjectLifecycleManager",
-"MeshFactory",
-"RendererUpdater",
-"GlobalLODManager",
-"GravitationalLensingHandler",
-"DebrisEffectManager",
-"AccelerationVisualizer",
-]
-functions: []
-constants: []
-types:
-["RenderableCelestialObject", "DestructionPayload", "LabelVisibilityManager"]
-status: active
-
----
 
 # ObjectManager
 
@@ -344,6 +303,22 @@ public getCelestialRenderers(): Map<string, CelestialRenderer>
 - **Renderer Types**: Color-code objects by renderer type
 - **Light Sources**: Visualize light source positions and intensities
 - **Acceleration Vectors**: Debug arrows showing physics forces
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Performance Optimization**: Implement object culling based on camera frustum and distance to reduce unnecessary calculations
+- **Memory Optimization**: Add object pooling and reuse for frequently created/destroyed objects
+- **Code Optimization**: Optimize state synchronization calculations with spatial partitioning for large numbers of objects
+- **Architecture Optimization**: Implement object LOD system to reduce complexity for distant objects
+
+### Potential Improvements
+
+- **Feature Enhancement**: Add support for more celestial object types and specialized renderers
+- **Integration Enhancement**: Improve integration with physics engine for more accurate object positioning
+- **API Enhancement**: Add more granular control over object lifecycle and rendering
+- **User Experience**: Add more debug visualization options and performance monitoring tools
 
 ---
 

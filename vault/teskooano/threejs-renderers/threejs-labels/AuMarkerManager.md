@@ -255,7 +255,99 @@ this.mainGroup.renderOrder =
 - **[[RenderOrderManager]]** - Manages render order for effects
 - **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. AU Distance Marker System
+
+- **Ring Generation**: Creates AU markers in powers of 10 (0.1, 1, 10, 100, etc.)
+- **Instanced Rendering**: Single InstancedMesh for all rings with GPU instancing
+- **Color-coded System**: Green for decade markers, orange for others
+- **Label Integration**: 2D labels at cardinal directions around each ring
+
+### 2. Group Management
+
+- **Hierarchical Organization**: Labels organized by distance groups
+- **Scene Distance Storage**: Groups contain scene distance in userData
+- **Group-level Visibility**: Controls all labels within a group together
+- **Efficient Access**: O(1) access to groups by AU value
+
+### 3. Performance Optimization
+
+- **InstancedMesh**: Single geometry and material for all rings
+- **GPU Instancing**: Efficient rendering of large numbers of rings
+- **Memory Efficiency**: Minimal memory footprint for large numbers of rings
+- **Render Order Management**: Proper render order for effect layering
+
+## ⚡ Performance Considerations
+
+### InstancedMesh Optimization
+
+- **Single Geometry**: All rings share the same unit ring geometry
+- **Single Material**: All rings share the same material
+- **Efficient Rendering**: GPU instancing for optimal performance
+- **Memory Efficiency**: Minimal memory footprint for large numbers of rings
+
+### Render Order Management
+
+- **Effect Layering**: AU markers rendered behind celestial objects
+- **Depth Testing**: Enabled to prevent rings showing through objects
+- **Depth Writing**: Disabled to avoid interfering with celestial objects
+- **Tone Mapping**: Disabled for consistent UI appearance
+
+### Group Organization
+
+- **Hierarchical Structure**: Labels organized by distance groups
+- **Efficient Access**: O(1) access to groups by AU value
+- **Batch Updates**: All labels in a group updated together
+- **Scene Integration**: Efficient integration with Three.js scene graph
+
+## 🔌 Integration Points
+
+### Three.js Integration
+
+- **Scene Integration**: Rings and groups added to Three.js scene
+- **InstancedMesh**: Efficient rendering using Three.js InstancedMesh
+- **Material Configuration**: Transparent ring material with proper settings
+- **Render Order**: Integration with RenderOrderManager for effect layering
+
+### CSS2D Integration
+
+- **Layer2DManager**: Integration with CSS2D layer system
+- **Label Creation**: Creates 2D labels for each ring
+- **Group Management**: Manages label groups for efficient updates
+- **Visibility Control**: Controls label visibility through groups
+
+### System Integration
+
+- **Renderer Integration**: Integration with main renderer system
+- **State Management**: Integration with application state
+- **Event System**: Integration with renderer events
+- **Performance Monitoring**: Integration with performance systems
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Web Workers**: Offload ring generation to background threads
+- **GPU Calculations**: GPU-based ring generation and positioning
+- **Spatial Indexing**: Octree or BVH for faster group queries
+- **Predictive Updates**: Predict ring updates based on camera movement
+
+### Feature Enhancements
+
+- **Dynamic Ring Count**: Adjust number of rings based on camera distance
+- **Ring Clustering**: Group nearby rings for better performance
+- **Interactive Rings**: Clickable rings with hover effects
+- **Ring Animations**: Smooth transitions for ring appearance/disappearance
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly ring interactions
+- **Accessibility**: Screen reader support and keyboard navigation
+- **Internationalization**: Multi-language ring support
+
+## 📚 Architecture Patterns
 
 - **Manager Pattern**: Centralized management of AU marker system
 - **Factory Pattern**: Dynamic generation of AU marker data
@@ -263,5 +355,13 @@ this.mainGroup.renderOrder =
 - **Group Pattern**: Hierarchical organization of labels
 - **Integration Pattern**: Seamless integration with CSS2D system
 - **Resource Management Pattern**: Proper cleanup and disposal
+
+## 📚 Related Documentation
+
+- **[[AuMarkerLabelLayer]]** - Manages 2D labels for AU markers
+- **[[AuMarkerLabelComponent]]** - Custom HTML element for AU labels
+- **[[Layer2DManager]]** - Manages all CSS2D layers
+- **[[RenderOrderManager]]** - Manages render order for effects
+- **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
 ---

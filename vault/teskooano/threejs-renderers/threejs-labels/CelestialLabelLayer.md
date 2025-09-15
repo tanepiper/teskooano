@@ -367,7 +367,97 @@ celestialLayer.createLabel(earthData, earthObject);
 - **[[AuMarkerManager]]** - AU distance marker system
 - **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. Celestial Body Labeling
+
+- **Rich Information Display**: Names, distances, and speeds for all celestial objects
+- **Type-Specific Visibility**: Different visibility rules for planets, stars, moons, etc.
+- **Surface-to-Surface Distance**: Accurate distance calculations excluding object radius
+- **Real-time Updates**: Dynamic position and data updates as objects move
+
+### 2. Advanced Visibility System
+
+- **Hierarchical Rules**: Parent-child relationships for moons and satellites
+- **Distance-based Culling**: Type-specific distance thresholds for visibility
+- **Main Star Priority**: Main star always visible, secondary stars by distance
+- **Ejected Object Handling**: Special rules for objects ejected from their parent
+
+### 3. Performance Optimization
+
+- **Attribute Caching**: Only update DOM when values actually change
+- **Position Caching**: Skip position updates for stationary objects
+- **Visibility Caching**: Cache visibility states to prevent redundant updates
+- **Pre-allocated Vectors**: Reuse THREE.Vector3 instances for calculations
+
+## ⚡ Performance Considerations
+
+### Caching System
+
+- **Attribute Caching**: Prevents unnecessary DOM updates
+- **Position Caching**: Skips position updates for stationary objects
+- **Visibility Caching**: Caches visibility states to prevent redundant calculations
+- **Memory Management**: Automatic cache cleanup and management
+
+### Distance Calculations
+
+- **Surface-to-Surface**: Accurate distance calculations excluding object radius
+- **Pre-allocated Vectors**: Reuse THREE.Vector3 instances for performance
+- **Efficient Math**: Optimized distance and position calculations
+- **Type-specific Logic**: Efficient handling of different celestial types
+
+### Update Optimization
+
+- **Conditional Updates**: Only update when values change
+- **Batch Processing**: Process multiple labels efficiently
+- **Occlusion Integration**: Inherits optimized occlusion detection from base class
+- **Memory Efficiency**: Minimal memory footprint for large numbers of labels
+
+## 🔌 Integration Points
+
+### Object Manager Integration
+
+- **Object Data**: Access to RenderableCelestialObject data
+- **Mesh Access**: Direct access to Three.js meshes for positioning
+- **Parent Relationships**: Traversal of parent-child celestial relationships
+- **Real-time Updates**: Dynamic updates as objects move
+
+### Camera Integration
+
+- **Distance Calculation**: Camera position used for distance-based visibility
+- **Occlusion Testing**: Camera position used for occlusion raycasting
+- **Frustum Culling**: Labels outside camera frustum are not rendered
+
+### Scene Integration
+
+- **Group Positioning**: Labels positioned relative to object groups
+- **World Coordinates**: Labels follow objects in world space
+- **Scene Hierarchy**: Integration with Three.js scene graph
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Spatial Indexing**: Octree or BVH for faster distance calculations
+- **Web Workers**: Offload distance calculations to background threads
+- **GPU Calculations**: GPU-based distance and visibility calculations
+- **Predictive Caching**: Predict visibility changes based on object movement
+
+### Feature Enhancements
+
+- **Label Clustering**: Group nearby labels to reduce visual clutter
+- **Adaptive LOD**: Dynamic level-of-detail for labels based on distance
+- **Interactive Labels**: Clickable labels with hover effects
+- **Label Animations**: Smooth transitions for label appearance/disappearance
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly label interactions
+- **Accessibility**: Screen reader support and keyboard navigation
+- **Internationalization**: Multi-language label support
+
+## 📚 Architecture Patterns
 
 - **Template Method Pattern**: Extends BaseLabelLayer with specialized behavior
 - **Strategy Pattern**: Type-specific visibility rules
@@ -375,5 +465,13 @@ celestialLayer.createLabel(earthData, earthObject);
 - **Observer Pattern**: Updates triggered by camera and object changes
 - **Factory Pattern**: Automatic label creation from celestial objects
 - **Registry Pattern**: Map-based label management with caching
+
+## 📚 Related Documentation
+
+- **[[BaseLabelLayer]]** - Abstract base class with occlusion detection
+- **[[CelestialLabelComponent]]** - Custom HTML element for celestial labels
+- **[[Layer2DManager]]** - Manages all label layers
+- **[[AuMarkerManager]]** - AU distance marker system
+- **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
 ---

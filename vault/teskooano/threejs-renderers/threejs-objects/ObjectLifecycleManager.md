@@ -7,6 +7,7 @@ package: "@teskooano/renderer-threejs-objects"
 name: ObjectLifecycleManager
 dependencies:
   [
+    "@teskooano/core-state",
     "@teskooano/data-types",
     "@teskooano/renderer-threejs-lighting",
     "@teskooano/renderer-threejs-labels",
@@ -324,6 +325,22 @@ this.objects.delete(objectId);
 - **Disposal Failures**: Handles cases where disposal fails
 - **Reference Cleanup**: Ensures all references are properly cleared
 - **Memory Leak Prevention**: Prevents memory leaks through proper cleanup
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Performance Optimization**: Implement object culling based on camera frustum and distance to reduce unnecessary calculations
+- **Memory Optimization**: Add object pooling and reuse for frequently created/destroyed objects
+- **Code Optimization**: Optimize state synchronization calculations with spatial partitioning for large numbers of objects
+- **Architecture Optimization**: Implement object LOD system to reduce complexity for distant objects
+
+### Potential Improvements
+
+- **Feature Enhancement**: Add support for more celestial object types and specialized renderers
+- **Integration Enhancement**: Improve integration with physics engine for more accurate object positioning
+- **API Enhancement**: Add more granular control over object lifecycle and rendering
+- **User Experience**: Add more debug visualization options and performance monitoring tools
 
 ---
 

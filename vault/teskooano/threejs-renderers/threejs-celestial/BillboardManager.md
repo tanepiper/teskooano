@@ -35,6 +35,26 @@ The `BillboardManager` handles the lifecycle and visibility of billboard sprites
 - **Performance Optimized**: Minimal allocations during updates
 - **Light Integration**: Point lights for enhanced distant visibility
 
+## 🚀 Core Features
+
+### 1. Distance-based Visibility
+
+- **Configurable Distances**: Billboards activate at configurable distances
+- **Smooth Fading**: Gradual opacity and light intensity transitions
+- **Performance Optimization**: Minimal allocations during updates
+
+### 2. Resource Sharing
+
+- **Static Texture Caching**: Single texture instance for all billboards
+- **Memory Efficiency**: Minimizes memory usage and texture creation overhead
+- **Shared Resources**: Efficient resource sharing across all billboards
+
+### 3. Light Integration
+
+- **Point Light Creation**: Associated point lights for enhanced visibility
+- **Light Fading**: Smooth light intensity transitions
+- **Enhanced Visibility**: Improved distant object visibility
+
 ## 🏗️ Architecture
 
 ### Shared Texture System
@@ -265,6 +285,79 @@ billboardManager.dispose();
 - Applies correct render order for star billboards
 - Ensures proper depth sorting
 - Integrates with transparency rendering
+
+## ⚡ Performance Considerations
+
+### Efficiency
+
+- **Shared Textures**: Single texture instance for all billboards
+- **Static Caching**: Texture created once and reused
+- **Efficient Updates**: Minimal allocations during update loop
+- **Memory Management**: Automatic cleanup of materials
+
+### Quality Metrics
+
+- **Visual Quality**: High-quality billboard representations
+- **Performance**: Minimal performance impact on rendering
+- **Memory Usage**: Efficient memory usage with shared resources
+- **Smooth Transitions**: Seamless fade-in/out transitions
+
+### Performance Monitoring
+
+- **Billboard Count**: Track number of active billboards
+- **Memory Usage**: Monitor texture and material memory usage
+- **Update Performance**: Track update loop performance
+- **Transition Quality**: Monitor transition smoothness
+
+## 🔌 Integration Points
+
+### Primary Integration
+
+- **LOD System**: Integration with Level of Detail management
+- **Lighting System**: Integration with lighting calculations
+- **Render Order**: Integration with render order management
+
+### Secondary Integration
+
+- **Three.js Sprites**: Direct integration with Three.js sprite system
+- **Camera System**: Integration with camera management
+- **Performance Monitoring**: Integration with performance tracking
+
+## 🐛 Debug Features
+
+### Validation
+
+- **Billboard Validation**: Validates billboard configuration
+- **Texture Validation**: Validates texture creation and usage
+- **Light Validation**: Validates point light creation
+
+### Monitoring
+
+- **Billboard Stats**: Tracks billboard creation and usage statistics
+- **Memory Stats**: Monitors memory usage for billboards
+- **Performance Stats**: Tracks billboard update performance
+
+### Debugging Tools
+
+- **Billboard Info**: Get detailed billboard information
+- **Texture Info**: Get texture usage information
+- **Performance Info**: Get performance statistics
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Texture Compression**: Compress textures for better memory usage
+- **Advanced Caching**: More sophisticated texture caching
+- **Memory Optimization**: Optimize memory usage patterns
+- **Performance Profiling**: Enhanced performance monitoring
+
+### Potential Improvements
+
+- **Dynamic Textures**: Dynamic texture generation based on object properties
+- **Advanced Transitions**: More sophisticated transition effects
+- **Billboard Animation**: Animated billboard effects
+- **Advanced Debugging**: Enhanced debugging and visualization tools
 
 ## 🔗 Related Components
 

@@ -275,7 +275,97 @@ group.children.forEach((child) => {
 - **[[Layer2DManager]]** - Manages all label layers
 - **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. AU Distance Marker Labels
+
+- **Distance Display**: Shows AU values at cardinal directions around rings
+- **Group Management**: Hierarchical organization of labels within distance groups
+- **Color Configuration**: Dynamic color application based on marker configuration
+- **Occlusion Detection**: Smart visibility management to prevent labels showing through objects
+
+### 2. Group Integration
+
+- **AuMarkerManager Integration**: Receives groups from AuMarkerManager
+- **Scene Distance Storage**: Groups contain scene distance in userData for efficient access
+- **Group-level Visibility**: Controls all labels within a group together
+- **Cardinal Positioning**: Labels positioned at X+, X-, Z+, Z- around each ring
+
+### 3. Performance Optimization
+
+- **Distance Culling**: Quick distance check before expensive occlusion testing
+- **Group-based Updates**: All labels in a group updated together
+- **Occlusion Integration**: Inherits optimized occlusion detection from base class
+- **Efficient Access**: O(1) group access and retrieval
+
+## ⚡ Performance Considerations
+
+### Distance Culling
+
+- **Quick Check**: Distance-based visibility before expensive occlusion
+- **Threshold Optimization**: 5x AU distance provides good visibility range
+- **Performance Gain**: Avoids occlusion testing for distant markers
+
+### Occlusion Optimization
+
+- **Mesh Filtering**: Only tests relevant meshes for occlusion
+- **Name-based Exclusion**: Excludes AU marker meshes from testing
+- **Matrix Validation**: Only tests meshes with valid world matrices
+- **Single Raycast**: One raycast per marker per update
+
+### Group Management
+
+- **Map-based Access**: O(1) group access and retrieval
+- **Batch Updates**: All labels in a group updated together
+- **Scene Integration**: Efficient integration with Three.js scene graph
+
+## 🔌 Integration Points
+
+### AuMarkerManager Integration
+
+- **Group Structure**: Receives groups with scene distance in userData
+- **Label Positioning**: Labels positioned at cardinal directions around rings
+- **Visibility Synchronization**: Group visibility controls all labels within that group
+- **Color Configuration**: Dynamic color application based on marker configuration
+
+### Three.js Integration
+
+- **Scene Integration**: Labels positioned relative to 3D objects
+- **Camera Integration**: Camera position for distance and occlusion calculations
+- **CSS2DRenderer**: Underlying renderer for HTML element overlay
+- **ObjectManager**: Access to celestial objects for occlusion testing
+
+### Layer Integration
+
+- **BaseLabelLayer**: Inherits occlusion detection and performance optimization
+- **Component Registration**: Automatic web component registration
+- **Update Delegation**: Centralized update cycle management
+- **Resource Management**: Proper cleanup and disposal
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Spatial Indexing**: Octree or BVH for faster group queries
+- **Web Workers**: Offload occlusion calculations to background threads
+- **GPU Occlusion**: GPU-based occlusion detection using compute shaders
+- **Predictive Caching**: Predict visibility changes based on camera movement
+
+### Feature Enhancements
+
+- **Dynamic Label Count**: Adjust number of labels based on distance
+- **Label Clustering**: Group nearby labels to reduce visual clutter
+- **Interactive Labels**: Clickable labels with hover effects
+- **Label Animations**: Smooth transitions for label appearance/disappearance
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly label interactions
+- **Accessibility**: Screen reader support and keyboard navigation
+- **Internationalization**: Multi-language label support
+
+## 📚 Architecture Patterns
 
 - **Template Method Pattern**: Extends BaseLabelLayer with specialized behavior
 - **Group Pattern**: Hierarchical organization of labels within groups
@@ -283,5 +373,13 @@ group.children.forEach((child) => {
 - **Registry Pattern**: Map-based group and label management
 - **Observer Pattern**: Updates triggered by camera and object changes
 - **Factory Pattern**: Label creation with position and styling
+
+## 📚 Related Documentation
+
+- **[[BaseLabelLayer]]** - Abstract base class with occlusion detection
+- **[[AuMarkerLabelComponent]]** - Custom HTML element for AU markers
+- **[[AuMarkerManager]]** - Manages AU distance rings and groups
+- **[[Layer2DManager]]** - Manages all label layers
+- **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
 ---

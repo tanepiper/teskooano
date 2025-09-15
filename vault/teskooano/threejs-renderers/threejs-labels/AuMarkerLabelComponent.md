@@ -247,7 +247,93 @@ labelElement.toggleAttribute("visible", false);
 - **[[Layer2DManager]]** - Manages all CSS2D layers
 - **[[CelestialLabelComponent]]** - Celestial body label component
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. AU Distance Display
+
+- **Distance Formatting**: Displays AU values with proper formatting
+- **Dynamic Updates**: Real-time updates as distance values change
+- **Color Configuration**: Dynamic color application based on marker configuration
+- **Consistent Format**: Always includes "AU" unit suffix
+
+### 2. Styling System
+
+- **Shadow DOM**: Encapsulated styling and structure
+- **Smooth Transitions**: CSS transitions for visibility changes
+- **Modern Design**: Rounded corners and semi-transparent background
+- **Visual Consistency**: Consistent appearance across all AU markers
+
+### 3. Performance Optimization
+
+- **Lazy Initialization**: No rendering until connected to DOM
+- **Change Detection**: Only updates when values actually change
+- **Value Caching**: Caches last values to prevent redundant updates
+- **DOM Efficiency**: Minimizes unnecessary DOM manipulations
+
+## ⚡ Performance Considerations
+
+### Lazy Initialization
+
+- **Deferred Rendering**: No rendering until connected to DOM
+- **Single Initialization**: Component only initializes once
+- **Memory Efficiency**: Minimal memory usage before initialization
+
+### Change Detection
+
+- **Value Comparison**: Only updates when values actually change
+- **DOM Efficiency**: Minimizes unnecessary DOM manipulations
+- **Caching**: Caches last values to prevent redundant updates
+
+### Shadow DOM Benefits
+
+- **Style Encapsulation**: Prevents style conflicts
+- **Performance**: Efficient style application
+- **Isolation**: Component styles don't affect other elements
+
+## 🔌 Integration Points
+
+### Three.js Integration
+
+- **CSS2DObject**: Used with Three.js CSS2DObject for 3D positioning
+- **Scene Integration**: Labels positioned relative to 3D objects
+- **Camera Integration**: Camera position for visibility calculations
+
+### Web Component Integration
+
+- **Custom Element**: Registered as custom HTML element
+- **Attribute Observation**: Reactive updates based on data attributes
+- **Lifecycle Management**: Proper component lifecycle handling
+
+### Label System Integration
+
+- **AuMarkerLabelLayer**: Used by AuMarkerLabelLayer for AU distance markers
+- **Data Binding**: Receives data from AU marker system
+- **Visibility Control**: Controlled by layer visibility system
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Web Workers**: Offload formatting calculations to background threads
+- **GPU Rendering**: GPU-based rendering for better performance
+- **Predictive Updates**: Predict updates based on camera movement
+- **Batch Updates**: Batch multiple attribute updates together
+
+### Feature Enhancements
+
+- **Interactive Labels**: Clickable labels with hover effects
+- **Label Animations**: Smooth transitions for label appearance/disappearance
+- **Custom Styling**: User-configurable styling options
+- **Accessibility**: Screen reader support and keyboard navigation
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly label interactions
+- **Internationalization**: Multi-language label support
+- **Theme Support**: Dark/light theme support
+
+## 📚 Architecture Patterns
 
 - **Web Component Pattern**: Custom HTML element with shadow DOM
 - **Observer Pattern**: Attribute change observation and reaction
@@ -255,5 +341,13 @@ labelElement.toggleAttribute("visible", false);
 - **Lifecycle Pattern**: Component lifecycle management
 - **Encapsulation Pattern**: Shadow DOM for style and structure isolation
 - **Performance Pattern**: Lazy initialization and change detection
+
+## 📚 Related Documentation
+
+- **[[AuMarkerLabelLayer]]** - Manages AU marker labels with this component
+- **[[AuMarkerManager]]** - Manages AU distance rings and groups
+- **[[BaseLabelLayer]]** - Abstract base class for label layers
+- **[[Layer2DManager]]** - Manages all CSS2D layers
+- **[[CelestialLabelComponent]]** - Celestial body label component
 
 ---

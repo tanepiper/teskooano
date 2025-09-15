@@ -334,6 +334,91 @@ const performanceWarnings = rendererEvents.statsUpdated$.pipe(
 );
 ```
 
+## ⚡ Performance Considerations
+
+### Efficiency
+
+- **RxJS Subjects**: Efficient event broadcasting with minimal overhead
+- **Type Safety**: Compile-time checking prevents runtime errors
+- **Memory Management**: Proper subscription cleanup prevents memory leaks
+- **Event Frequency**: Optimized for high-frequency render events
+
+### Quality Metrics
+
+- **Reliability**: Robust error handling and recovery
+- **Consistency**: Stable event delivery across all components
+- **Scalability**: Efficient handling of multiple subscribers
+- **Performance**: Minimal impact on render loop performance
+
+### Performance Monitoring
+
+- **Event Frequency**: Monitor event emission rates
+- **Subscription Count**: Track active subscriptions
+- **Memory Usage**: Monitor subscription memory usage
+- **Error Rates**: Track event handling errors
+
+## 🔌 Integration Points
+
+### Primary Integration
+
+- **AnimationLoop**: Emits render loop events
+- **SceneManager**: Emits resize and disposal events
+- **Performance Systems**: Emits performance optimization events
+- **State Management**: Integrates with global state patterns
+
+### Secondary Integration
+
+- **Debug Systems**: Provides debugging event streams
+- **UI Components**: Reacts to renderer events
+- **External Systems**: Enables external system integration
+- **Monitoring Tools**: Provides monitoring event streams
+
+## 🔍 Debug Features
+
+### Event Monitoring
+
+- **Event Logging**: Log all events for debugging
+- **Performance Tracking**: Monitor event frequency and payload sizes
+- **Subscription Tracking**: Track active subscriptions
+- **Error Handling**: Comprehensive error reporting
+
+### Validation
+
+- **Type Checking**: Compile-time type validation
+- **Payload Validation**: Runtime payload validation
+- **Subscription Validation**: Validate subscription patterns
+- **Error Recovery**: Graceful error handling and recovery
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Event Batching**: Batch similar events for better performance
+- **Selective Broadcasting**: Only broadcast to relevant subscribers
+- **Memory Optimization**: Reduce event object allocations
+- **Performance Profiling**: Advanced event performance analysis
+
+### Potential Improvements
+
+- **Event Persistence**: Persist events for debugging and replay
+- **Advanced Filtering**: More sophisticated event filtering
+- **Event Replay**: Replay events for testing and debugging
+- **Performance Analytics**: Advanced performance analytics
+
+## 📚 Related Components
+
+- [[AnimationLoop]] - Emits render loop events
+- [[SceneManager]] - Emits resize and disposal events
+- [[PerformanceOptimization]] - Emits performance optimization events
+- [[core-state]] - Integrates with state management patterns
+
+## 🏛️ Architecture Patterns
+
+- **Event-Driven Architecture**: Decoupled communication between components
+- **Observer Pattern**: RxJS Subject-based event broadcasting
+- **Type Safety**: Fully typed event payloads and subscriptions
+- **Centralized Communication**: Single event bus for all renderer events
+
 ---
 
 _The rendererEvents system provides the communication backbone for the entire renderer, enabling loose coupling and type-safe event handling across all components._

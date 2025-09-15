@@ -310,7 +310,92 @@ layer.setNearbyDistanceThreshold(100);
 - **[[PredictionLabelLayer]]** - Prediction labels with occlusion
 - **[[Occlusion Detection System]]** - Detailed occlusion system documentation
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. Occlusion Detection System
+
+- **Raycasting-based Detection**: Camera-to-label raycasting for accurate occlusion
+- **Performance Optimization**: Throttled updates and result caching
+- **Spatial Culling**: Skip tests for nearby labels to improve performance
+- **Configurable Parameters**: Adjustable frequency, limits, and thresholds
+
+### 2. Element Management
+
+- **Map-based Registry**: Efficient element storage and retrieval
+- **Lifecycle Management**: Proper creation, update, and disposal
+- **Visibility Control**: Global and individual element visibility
+- **Component Registration**: Automatic web component registration
+
+### 3. Performance Optimization
+
+- **Pre-allocated Vectors**: Reuse THREE.Vector3 instances to reduce GC pressure
+- **Efficient Caching**: Map-based cache with automatic cleanup
+- **Queue Management**: Limited queue size to prevent memory growth
+- **Throttled Updates**: Configurable update frequency and limits
+
+## ⚡ Performance Considerations
+
+### Memory Management
+
+- **Pre-allocated Vectors**: Reuses THREE.Vector3 instances to reduce GC pressure
+- **Efficient Caching**: Map-based cache with automatic cleanup
+- **Queue Management**: Limited queue size to prevent memory growth
+- **Element Cleanup**: Proper disposal of CSS2DObject instances
+
+### CPU Optimization
+
+- **Throttled Updates**: Occlusion checks limited to prevent frame drops
+- **Spatial Culling**: Quick distance checks before expensive operations
+- **Batch Processing**: Multiple elements processed efficiently
+- **Configurable Limits**: Adjustable thresholds for different performance targets
+
+### Raycasting Optimization
+
+- **Object Filtering**: Only tests relevant objects near ray path
+- **Mesh Traversal**: Efficient child object testing
+- **Error Handling**: Graceful fallback prevents crashes
+- **Distance Calculation**: Optimized distance and direction calculations
+
+## 🔌 Integration Points
+
+### Three.js Integration
+
+- **Scene Integration**: Labels positioned relative to 3D objects
+- **Camera Integration**: Camera position for visibility and occlusion
+- **CSS2DRenderer**: Underlying renderer for HTML element overlay
+- **ObjectManager**: Access to celestial objects for occlusion testing
+
+### Layer Integration
+
+- **BaseLabelLayer**: All layers inherit from this abstract class
+- **Component Registration**: Automatic web component registration
+- **Update Delegation**: Centralized update cycle management
+- **Resource Management**: Proper cleanup and disposal
+
+### Performance Integration
+
+- **Update Throttling**: Layers handle their own update frequency
+- **Occlusion Testing**: Delegated to individual layers
+- **Visibility Culling**: Distance and LOD-based culling
+- **Memory Management**: Automatic cleanup of unused elements
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **WASM Integration**: WebAssembly-based occlusion detection for better performance
+- **Web Workers**: Offload occlusion calculations to background threads
+- **GPU Occlusion**: GPU-based occlusion detection using compute shaders
+- **Spatial Indexing**: Octree or BVH for faster spatial queries
+
+### Feature Enhancements
+
+- **Advanced Caching**: More sophisticated caching strategies
+- **Predictive Occlusion**: Predict occlusion based on object movement
+- **Adaptive Throttling**: Dynamic throttling based on performance
+- **Multi-threaded Processing**: Parallel processing of occlusion tests
+
+## 📚 Architecture Patterns
 
 - **Template Method Pattern**: Abstract base with specialized implementations
 - **Strategy Pattern**: Configurable occlusion detection strategies
@@ -318,5 +403,13 @@ layer.setNearbyDistanceThreshold(100);
 - **Queue Pattern**: Throttled processing with queue management
 - **Observer Pattern**: Element updates triggered by external changes
 - **Resource Management Pattern**: Proper cleanup and disposal methods
+
+## 📚 Related Documentation
+
+- **[[Layer2DManager]]** - Manages all label layers
+- **[[CelestialLabelLayer]]** - Celestial body labels with occlusion
+- **[[AuMarkerLabelLayer]]** - AU marker labels with occlusion
+- **[[PredictionLabelLayer]]** - Prediction labels with occlusion
+- **[[Occlusion Detection System]]** - Detailed occlusion system documentation
 
 ---

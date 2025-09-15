@@ -6,9 +6,8 @@ package: "@teskooano/renderer-threejs-objects"
 name: MeshFactory
 dependencies:
   [
-    "@teskooano/renderer-threejs-celestial",
+    "@teskooano/data-types",
     "@teskooano/renderer-threejs-lighting",
-    "@teskooano/renderer-threejs-lod",
     "@teskooano/celestials-stars",
     "@teskooano/celestials-terrestrial",
     "@teskooano/celestials-gas-giants",
@@ -348,6 +347,22 @@ try {
 - **Creation Logging**: Logs mesh creation attempts and results
 - **Error Reporting**: Provides detailed error information for debugging
 - **Performance Monitoring**: Tracks creation performance and success rates
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Performance Optimization**: Implement mesh caching and reuse for frequently created objects
+- **Memory Optimization**: Add mesh pooling and reuse for frequently created/destroyed objects
+- **Code Optimization**: Optimize mesh creation calculations with spatial partitioning for large numbers of objects
+- **Architecture Optimization**: Implement mesh LOD system to reduce complexity for distant objects
+
+### Potential Improvements
+
+- **Feature Enhancement**: Add support for more celestial object types and specialized renderers
+- **Integration Enhancement**: Improve integration with physics engine for more accurate mesh positioning
+- **API Enhancement**: Add more granular control over mesh creation and rendering
+- **User Experience**: Add more debug visualization options and performance monitoring tools
 
 ---
 

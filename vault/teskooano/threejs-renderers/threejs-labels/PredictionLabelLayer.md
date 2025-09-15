@@ -329,7 +329,97 @@ setTimeCategory(timeInSeconds: number) {
 - **[[AuMarkerManager]]** - AU distance marker system
 - **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
-## 🏛️ Architecture Patterns
+## 🚀 Core Features
+
+### 1. Trajectory Prediction Labels
+
+- **Time-based Markers**: Future position indicators with time information
+- **Velocity-scaled Visibility**: Visibility based on object speed and time distance
+- **Time Category Styling**: Color-coded by prediction time distance (short/medium/long)
+- **Occlusion Integration**: Smart visibility management to prevent labels showing through objects
+
+### 2. Active Object Management
+
+- **Object State Tracking**: Tracks current object being predicted
+- **Velocity Integration**: Uses object velocity for visibility calculations
+- **Radius Checking**: Prevents labels from appearing inside celestial objects
+- **Dynamic Updates**: Real-time updates as object state changes
+
+### 3. Performance Optimization
+
+- **Velocity Scaling**: Dynamic thresholds based on object velocity
+- **Distance Optimization**: Efficient distance calculations for visibility
+- **Occlusion Integration**: Inherits optimized occlusion detection from base class
+- **Memory Efficiency**: Minimal memory footprint for prediction labels
+
+## ⚡ Performance Considerations
+
+### Velocity Scaling
+
+- **Dynamic Thresholds**: Visibility thresholds scale with object velocity
+- **Clamped Factors**: Velocity factor clamped between 0.5x and 5.0x
+- **Performance**: Avoids extreme values for very slow or very fast objects
+- **Earth Reference**: Uses Earth's orbital velocity as reference point
+
+### Distance Optimization
+
+- **Baseline Thresholds**: Base distances for short and medium-term predictions
+- **Velocity Multiplication**: Thresholds multiplied by velocity factor
+- **Clamping**: Prevents extreme visibility ranges
+- **Efficient Calculation**: Simple multiplication for performance
+
+### Occlusion Integration
+
+- **Inherited System**: Uses BaseLabelLayer's optimized occlusion detection
+- **Unique IDs**: Each prediction label has unique occlusion ID
+- **Performance**: Inherits caching and throttling from base class
+- **Accuracy**: Prevents labels from showing through celestial objects
+
+## 🔌 Integration Points
+
+### Object Manager Integration
+
+- **Object Data**: Access to RenderableCelestialObject data
+- **Mesh Access**: Direct access to Three.js meshes for positioning
+- **Velocity Data**: Access to object velocity for visibility calculations
+- **Real-time Updates**: Dynamic updates as objects move
+
+### Camera Integration
+
+- **Distance Calculation**: Camera position used for distance-based visibility
+- **Occlusion Testing**: Camera position used for occlusion raycasting
+- **Frustum Culling**: Labels outside camera frustum are not rendered
+
+### Scene Integration
+
+- **Group Positioning**: Labels positioned relative to object groups
+- **World Coordinates**: Labels follow objects in world space
+- **Scene Hierarchy**: Integration with Three.js scene graph
+
+## 🔮 Future Enhancements
+
+### Performance Optimizations
+
+- **Spatial Indexing**: Octree or BVH for faster distance calculations
+- **Web Workers**: Offload velocity calculations to background threads
+- **GPU Calculations**: GPU-based distance and visibility calculations
+- **Predictive Caching**: Predict visibility changes based on object movement
+
+### Feature Enhancements
+
+- **Dynamic Time Categories**: Adjust time categories based on object type
+- **Label Clustering**: Group nearby labels to reduce visual clutter
+- **Interactive Labels**: Clickable labels with hover effects
+- **Label Animations**: Smooth transitions for label appearance/disappearance
+
+### Integration Improvements
+
+- **VR/AR Support**: Enhanced support for immersive environments
+- **Mobile Optimization**: Touch-friendly label interactions
+- **Accessibility**: Screen reader support and keyboard navigation
+- **Internationalization**: Multi-language label support
+
+## 📚 Architecture Patterns
 
 - **Template Method Pattern**: Extends BaseLabelLayer with specialized behavior
 - **Strategy Pattern**: Velocity-based visibility strategies
@@ -337,5 +427,13 @@ setTimeCategory(timeInSeconds: number) {
 - **Observer Pattern**: Updates triggered by camera and object changes
 - **Factory Pattern**: Label creation with time and position data
 - **Registry Pattern**: Map-based label management
+
+## 📚 Related Documentation
+
+- **[[BaseLabelLayer]]** - Abstract base class with occlusion detection
+- **[[PredictionLabel]]** - Custom HTML element for prediction labels
+- **[[Layer2DManager]]** - Manages all label layers
+- **[[AuMarkerManager]]** - AU distance marker system
+- **[[Occlusion Detection System]]** - Performance-optimized visibility management
 
 ---

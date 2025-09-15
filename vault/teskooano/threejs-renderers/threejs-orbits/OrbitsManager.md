@@ -6,11 +6,21 @@ package: "@teskooano/renderer-threejs-orbits"
 name: OrbitsManager
 dependencies:
   [
-    "IdealStrategy",
-    "NBodyStrategy",
+    "@teskooano/renderer-threejs",
+    "@teskooano/data-types",
+    "@teskooano/core-state",
     "@teskooano/renderer-threejs-objects",
     "@teskooano/renderer-threejs-labels",
-    "@teskooano/core-state",
+    "@teskooano/renderer-threejs-celestial",
+    "three",
+    "rxjs",
+  ]
+classes: ["IdealStrategy", "NBodyStrategy", "PredictionManager", "TrailManager"]
+types:
+  [
+    "IOrbitVisualizationStrategy",
+    "RenderableCelestialObject",
+    "TrailCurveConfig",
   ]
 functions:
   [

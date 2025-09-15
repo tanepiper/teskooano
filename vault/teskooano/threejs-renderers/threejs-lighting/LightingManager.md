@@ -4,8 +4,7 @@ tags: [renderer, threejs, lighting, manager, registry, shadows, performance]
 type: Class
 package: "@teskooano/renderer-threejs-lighting"
 name: LightingManager
-dependencies:
-  ["@teskooano/core-state", "@teskooano/data-types", "three", "rxjs"]
+dependencies: ["@teskooano/core-state", "@teskooano/data-types", "three"]
 classes:
   [
     "StateSubscriptionMixin",

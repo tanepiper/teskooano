@@ -554,26 +554,19 @@ celestialObjects$.subscribe((objects) => {
 
 ## 🔮 Future Enhancements
 
-### Planned Features
-
-- **Advanced Hierarchy Rules**: More sophisticated parent selection algorithms
-- **Multi-Threading**: Web Workers for parallel hierarchy processing
-- **Advanced Spatial Partitioning**: Enhanced spatial data structures
-- **Real-Time Analytics**: Hierarchy change analytics and reporting
-
 ### Optimization Opportunities
 
-- **Performance Optimization**: Further WASM optimizations
-- **Memory Optimization**: Advanced memory management strategies
-- **Algorithm Optimization**: Improved gravitational dominance calculations
-- **Architecture Optimization**: Enhanced modular architecture
+- **Performance Optimization**: Further WASM optimizations and spatial partitioning improvements
+- **Memory Optimization**: Advanced memory management strategies and object pooling
+- **Algorithm Optimization**: Improved gravitational dominance calculations and distance metrics
+- **Architecture Optimization**: Enhanced modular architecture and rule system separation
 
-### Advanced Features
+### Potential Improvements
 
-- **Machine Learning**: AI-powered hierarchy optimization
-- **Advanced Visualization**: Enhanced hierarchy visualization
-- **Data Export**: Comprehensive hierarchy data export
-- **Plugin System**: Extensible hierarchy rule system
+- **Advanced Hierarchy Rules**: More sophisticated parent selection algorithms based on orbital mechanics
+- **Multi-Threading**: Web Workers for parallel hierarchy processing
+- **Advanced Spatial Partitioning**: Enhanced spatial data structures for better performance
+- **Real-Time Analytics**: Hierarchy change analytics and reporting capabilities
 
 ## 📚 Related Documentation
 

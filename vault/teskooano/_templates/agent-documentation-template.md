@@ -61,11 +61,13 @@ graph TD
 
 Every documentation file MUST start with comprehensive YAML frontmatter:
 
+**Important**: For index/package-level documentation, ALWAYS include both `dependencies` and `devDependencies` from the actual `package.json` file to ensure accuracy and completeness.
+
 ```yaml
 ---
 aliases: [PrimaryName, AlternativeName1, AlternativeName2]
 tags: [category, subcategory, specific-tags, related-concepts]
-type: [Class|Function|Interface|System|Template|Guide|Index|Utility]
+type: [Class|Function|Interface|System|Template|Guide|Index|Utility|Object]
 package: "@teskooano/package-name"
 name: "ComponentName" # Optional: explicit name field
 version: "1.0.0" # Optional: for package-level docs
@@ -138,6 +140,18 @@ graph TD
 
 ### 5. Key Methods/Components Section
 
+**Note**: Choose between "Key Methods" or "API Reference" based on complexity:
+
+- **Key Methods**: For simple components with few methods
+- **API Reference**: For complex components with many methods or when you need more detailed API documentation
+
+**Additional Options for Function Documentation**:
+
+- **Core Methods**: For utility functions and helper functions
+- **Function Reference**: For complex functions with detailed parameters and return values
+
+#### Option A: Key Methods (Simple Components)
+
 ````markdown
 ## 🔧 Key Methods
 
@@ -147,6 +161,30 @@ graph TD
 
 ```typescript
 methodName(param1: Type1, param2: Type2): ReturnType
+```
+````
+
+#### Option B: API Reference (Complex Components)
+
+````markdown
+## API Reference
+
+### Lifecycle Management
+
+#### `methodName(): ReturnType`
+
+Clear explanation of what this method does and why it's important.
+
+**Process:**
+
+1. **Step 1**: Description of first step
+2. **Step 2**: Description of second step
+3. **Step 3**: Description of third step
+
+**Usage:**
+
+```typescript
+const result = component.methodName();
 ```
 ````
 
@@ -206,11 +244,46 @@ component.eventName$.subscribe((data) => {
 });
 ```
 
-````
+`````
+
+#### Option C: Core Methods (For Utility Functions)
+
+````markdown
+## 🔧 Core Methods
+
+### `functionName(parameters)`
+
+Determines/calculates/analyzes [specific functionality] based on [input parameters].
+
+```typescript
+functionName(param1: Type1, param2: Type2): ReturnType
+```
+
+**Parameters:**
+
+- `param1` - Description of parameter 1 and its role
+- `param2` - Description of parameter 2 and its role
+
+**Returns**: `ReturnType` - Description of what is returned and its purpose
+
+**Process:**
+
+1. **Step 1**: Description of first step in the function
+2. **Step 2**: Description of second step in the function
+3. **Step 3**: Description of third step in the function
+4. **Step 4**: Description of fourth step in the function
+5. **Step 5**: Description of final step in the function
+
+**Usage:**
+```typescript
+const result = functionName(input1, input2);
+console.log('Result:', result);
+```
+`````
 
 ### 6. Data Flow Section
 
-```markdown
+````markdown
 ## 🔄 Data Flow
 
 The [ComponentName] follows a systematic data flow:
@@ -225,6 +298,7 @@ graph LR
     F[Configuration] --> B
     G[Validation] --> C
     H[Optimization] --> D
+```
 ````
 
 ### Processing Pipeline
@@ -412,17 +486,44 @@ console.log("Analysis results:", analysis);
 - **Profiling**: Available profiling capabilities
 ```
 
+### 11a. Events Section (Optional - for Event-Driven Components)
+
+````markdown
+## 📡 Events
+
+### Event System
+
+- **Event Types**: Description of available event types
+- **Event Payloads**: Description of event data structures
+- **Event Lifecycle**: How events are emitted and handled
+- **Event Subscriptions**: How to subscribe to events
+
+### Event Examples
+
+#### `eventName$: Observable<EventType>`
+
+Description of when this event is emitted and what data it contains.
+
+**Event Data:**
+
+- `property1`: Description of event property
+- `property2`: Description of event property
+
+**Usage:**
+
+```typescript
+component.eventName$.subscribe((data) => {
+  console.log("Event received:", data);
+});
+```
+````
+
+````
+
 ### 12. Future Enhancements Section
 
 ```markdown
 ## 🔮 Future Enhancements
-
-### Planned Features
-
-- **Feature 1**: Description of planned feature
-- **Feature 2**: Description of another planned feature
-- **Feature 3**: Description of third planned feature
-- **Feature 4**: Description of fourth planned feature
 
 ### Optimization Opportunities
 
@@ -431,13 +532,15 @@ console.log("Analysis results:", analysis);
 - **Code Optimization**: Areas for code improvement
 - **Architecture Optimization**: Areas for architectural improvement
 
-### Advanced Features
+### Potential Improvements
 
-- **Advanced Feature 1**: Description of advanced feature
-- **Advanced Feature 2**: Description of another advanced feature
-- **Integration Enhancement**: Planned integration improvements
-- **API Enhancement**: Planned API improvements
-```
+- **Feature Enhancement**: Areas where current features could be enhanced
+- **Integration Enhancement**: Potential integration improvements
+- **API Enhancement**: Potential API improvements
+- **User Experience**: Potential UX improvements
+
+**Note**: Only document actual, known improvements or optimizations. Do not speculate about unknown future features or roadmap items.
+````
 
 ### 13. Architecture Patterns Section (Optional)
 
@@ -539,12 +642,80 @@ Use consistent emoji headers for all major sections:
 - ⚡ Performance Considerations
 - 🔌 Integration Points
 - 🐛 Debug Features
-- 🔮 Future Enhancements
+- 📡 Events (Optional - for event-driven components)
+- 🔮 Future Enhancements (Optimization Opportunities & Potential Improvements only)
 - 📚 Architecture Patterns (Optional)
 - Dependencies (For package-level docs)
 - 📚 Documentation Structure (For package-level docs)
 - 🔄 Quick Navigation (For package-level docs)
 - 📚 Related Documentation
+
+**Note**: The "Object" type is used for documentation of objects, constants, or collections (like event buses, configuration objects, etc.)
+
+### Additional Template Enhancements
+
+Based on the comprehensive documentation created for the `threejs-celestial` package, the following enhancements have been identified and added to the template:
+
+#### Enhanced Function Documentation
+
+For utility functions and helper functions, the template now includes:
+
+- **Core Methods Section**: Specifically designed for utility functions with detailed parameter descriptions, return value explanations, and step-by-step process documentation
+- **Function Reference**: Alternative approach for complex functions with detailed API documentation
+- **Process Documentation**: Step-by-step breakdown of function execution for better understanding
+
+#### Enhanced Object Documentation
+
+For objects, constants, and collections:
+
+- **Object Type**: Added to the type field options for documenting objects, constants, or collections
+- **Comprehensive Property Documentation**: Detailed documentation of object properties and their purposes
+- **Usage Examples**: Multiple usage scenarios for objects and their methods
+- **Integration Examples**: How objects integrate with other system components
+
+#### Enhanced Architecture Pattern Documentation
+
+- **Utility Pattern**: Added to the architecture patterns section for utility functions and helper classes
+- **Fallback Pattern**: Added for error recovery and graceful degradation systems
+- **Factory Pattern**: Added for object creation and management systems
+- **Error Recovery Pattern**: Added for systems that handle errors and provide fallbacks
+
+#### Enhanced Performance Documentation
+
+- **Quality Metrics**: Added specific quality metrics for different types of components
+- **Performance Monitoring**: Enhanced performance monitoring documentation
+- **Efficiency Metrics**: Added efficiency metrics for utility functions and helper classes
+
+#### Enhanced Integration Documentation
+
+- **Primary Integration**: Clear distinction between primary and secondary integration points
+- **Utility Integration**: Specific integration patterns for utility functions and helper classes
+- **Service Integration**: Integration patterns for service-based components
+- **Library Integration**: Integration patterns for library-based components
+
+#### Enhanced Debug Documentation
+
+- **Validation**: Enhanced validation documentation for different types of components
+- **Monitoring**: Enhanced monitoring capabilities documentation
+- **Debugging Tools**: Enhanced debugging tools documentation
+- **Error Handling**: Enhanced error handling documentation
+
+#### Enhanced Future Enhancements Documentation
+
+- **Optimization Opportunities**: Clear distinction between optimization opportunities and potential improvements
+- **Performance Optimization**: Specific performance optimization areas
+- **Memory Optimization**: Specific memory optimization areas
+- **Code Optimization**: Specific code optimization areas
+- **Architecture Optimization**: Specific architectural optimization areas
+
+#### Enhanced Related Documentation
+
+- **Cross-Reference Links**: Enhanced cross-reference linking between related components
+- **Architecture Relationships**: Clear documentation of architectural relationships
+- **Dependency Relationships**: Clear documentation of dependency relationships
+- **Integration Relationships**: Clear documentation of integration relationships
+
+These enhancements ensure that the template provides comprehensive coverage for all types of components, from simple utility functions to complex system objects, while maintaining consistency and quality across all documentation.
 
 ### Code Formatting
 
@@ -588,6 +759,7 @@ Before finalizing any documentation, ensure:
 - [ ] Usage examples are comprehensive and realistic
 - [ ] Performance considerations are addressed
 - [ ] Integration points are clearly defined
+- [ ] Dependencies and devDependencies match package.json (for index files)
 
 ### ✅ Technical Accuracy
 
@@ -616,8 +788,9 @@ Before finalizing any documentation, ensure:
 6. **Provide multiple usage scenarios**
 7. **Address performance and integration concerns**
 8. **Include debug and monitoring capabilities**
-9. **Plan for future enhancements**
+9. **Document only known optimization opportunities and potential improvements**
 10. **Link to related documentation**
+11. **Do not speculate about unknown future features or roadmap items**
 
 ### For Human Developers
 
@@ -695,7 +868,7 @@ Detailed explanation of the component's purpose and role.
 
 ## 🔮 Future Enhancements
 
-[Planned improvements]
+[Optimization opportunities and potential improvements only]
 
 ## 📚 Architecture Patterns
 
@@ -717,7 +890,7 @@ package: "@teskooano/package-name"
 name: "@teskooano/package-name"
 version: "1.0.0"
 dependencies: []
-devDependencies: []
+devDependencies: [] # REQUIRED: Always include dev dependencies from package.json
 classes: []
 functions: []
 events: [] # Optional: for event-driven packages
