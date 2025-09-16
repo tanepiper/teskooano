@@ -495,10 +495,10 @@ const currentLagrangePoints = stateSystem.getLagrangePoints();
 
 ## 🔗 Related Components
 
-- [[OrbitalParameters]] - Orbital element calculations
-- [[calculateOrbitalElements]] - Orbital mechanics functions
-- [[SimulationManager]] - Integration with simulation systems
-- [[PhysicsStateReal]] - Physics state representation
+- [[data/data-types/OrbitalParameters|OrbitalParameters]] - Orbital element calculations
+- [[core/core-physics/calculateOrbitalElements|calculateOrbitalElements]] - Orbital mechanics functions
+- [[core/core-physics/SimulationManager|SimulationManager]] - Integration with simulation systems
+- [[data/data-types/PhysicsStateReal|PhysicsStateReal]] - Physics state representation
 
 ## 📚 Architecture Patterns
 

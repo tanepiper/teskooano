@@ -644,10 +644,10 @@ Disposes of the renderer and cleans up resources.
 
 ## 🔗 Related
 
-- [[SatelliteMaterial]] - Material used by this renderer
-- [[createMesh]] - Factory function that creates this renderer
-- [[satellite.vertex.glsl]] - Vertex shader used by materials
-- [[satellite.fragment.glsl]] - Fragment shader used by materials
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/satellite/SatelliteMaterial|Satellite Material]] - Material used by this renderer
+- [[celestials/satellite/createMesh|Create Mesh Factory]] - Factory function that creates this renderer
+- [[celestials/satellite/satellite.vertex.glsl|Satellite Vertex Shader]] - Vertex shader used by materials
+- [[celestials/satellite/satellite.fragment.glsl|Satellite Fragment Shader]] - Fragment shader used by materials
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system
+- [[data/data-types/data-types|Data Types]] - Type definitions

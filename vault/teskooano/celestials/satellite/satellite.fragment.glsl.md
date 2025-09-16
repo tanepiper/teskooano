@@ -578,8 +578,8 @@ The fragment shader works with the vertex shader to provide:
 
 ## 🔗 Related
 
-- [[satellite.vertex.glsl]] - Vertex shader that provides data for this fragment shader
-- [[SatelliteMaterial]] - Material that uses this shader
-- [[SatelliteRenderer]] - Renderer that creates the geometry for this shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
+- [[celestials/satellite/satellite.vertex.glsl|Satellite Vertex Shader]] - Vertex shader that provides data for this fragment shader
+- [[celestials/satellite/SatelliteMaterial|Satellite Material]] - Material that uses this shader
+- [[celestials/satellite/SatelliteRenderer|Satellite Renderer]] - Renderer that creates the geometry for this shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system

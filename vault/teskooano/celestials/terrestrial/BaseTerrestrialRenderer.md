@@ -337,11 +337,11 @@ When rings are present:
 
 ## 🔗 Related
 
-- [[ProceduralPlanetMaterial]] - Material used by this renderer
-- [[AtmosphereMaterial]] - Atmosphere material used by this renderer
-- [[PlanetMaterialService]] - Service for creating materials
-- [[AtmosphereService]] - Service for creating atmospheres
-- [[createMesh]] - Factory function that creates this renderer
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/celestials-rings]] - Ring system integration
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/terrestrial/ProceduralPlanetMaterial|ProceduralPlanetMaterial]] - Material used by this renderer
+- [[celestials/terrestrial/AtmosphereMaterial|AtmosphereMaterial]] - Atmosphere material used by this renderer
+- [[celestials/terrestrial/PlanetMaterialService|PlanetMaterialService]] - Service for creating materials
+- [[celestials/terrestrial/AtmosphereService|AtmosphereService]] - Service for creating atmospheres
+- [[celestials/terrestrial/createMesh|createMesh]] - Factory function that creates this renderer
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[celestials/rings/celestials-rings|Celestials Rings]] - Ring system integration
+- [[data/data-types/data-types|Data Types]] - Type definitions

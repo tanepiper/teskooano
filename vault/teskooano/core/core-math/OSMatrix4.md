@@ -687,9 +687,9 @@ function renderFrame() {
 
 ## 🔗 Related
 
-- [[OSVector3]] - Vectors transformed by 4×4 matrices
-- [[OSMatrix3]] - 3×3 matrices for 2D transformations
-- [[OSQuaternion]] - Quaternions converted to rotation matrices
-- [[Constants]] - Mathematical constants
-- [[@teskooano/core-physics]] - Physics transformations using matrices
-- [[@teskooano/renderer-threejs]] - Rendering pipeline with matrices
+- [[core/core-math/OSVector3|OSVector3]] - Vectors transformed by 4×4 matrices
+- [[core/core-math/OSMatrix3|OSMatrix3]] - 3×3 matrices for 2D transformations
+- [[core/core-math/OSQuaternion|OSQuaternion]] - Quaternions converted to rotation matrices
+- [[core/core-math/Constants|Constants]] - Mathematical constants
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics transformations using matrices
+- [[threejs-renderers/threejs/threejs|@teskooano/renderer-threejs]] - Rendering pipeline with matrices

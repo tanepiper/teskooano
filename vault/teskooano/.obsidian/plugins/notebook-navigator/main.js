@@ -52305,12 +52305,10 @@ var mR,
             }));
         }),
           a.createDiv("nn-whats-new-divider"),
-          a
-            .createDiv("nn-whats-new-support")
-            .createEl("p", {
-              text: p.whatsNew.supportMessage,
-              cls: "nn-whats-new-support-text",
-            }));
+          a.createDiv("nn-whats-new-support").createEl("p", {
+            text: p.whatsNew.supportMessage,
+            cls: "nn-whats-new-support-text",
+          }));
         let i = a.createDiv("nn-whats-new-buttons"),
           s = i.createEl("button", {
             text: p.whatsNew.supportButton,

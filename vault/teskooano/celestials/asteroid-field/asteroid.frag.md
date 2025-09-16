@@ -35,7 +35,7 @@ Vertex color from the vertex shader.
 
 - **Type**: `vec3`
 - **Usage**: Color modulation for realistic appearance
-- **Source**: [[asteroid.vert]]
+- **Source**: [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]]
 
 ### vTextureIndex
 
@@ -48,7 +48,7 @@ Texture index for variant selection.
 - **Type**: `float`
 - **Usage**: Selects which texture variant to sample
 - **Range**: 0.0 to 4.0 (maps to 5 texture variants)
-- **Source**: [[asteroid.vert]]
+- **Source**: [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]]
 
 ### vInitialRotation
 
@@ -61,7 +61,7 @@ Initial rotation offset for animation.
 - **Type**: `float`
 - **Usage**: Base rotation for texture coordinate rotation
 - **Range**: 0.0 to 2π
-- **Source**: [[asteroid.vert]]
+- **Source**: [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]]
 
 ### vUv
 
@@ -73,7 +73,7 @@ Texture coordinates from the vertex shader.
 
 - **Type**: `vec2`
 - **Usage**: Base texture coordinates for sampling
-- **Source**: [[asteroid.vert]]
+- **Source**: [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]]
 
 ## Uniforms
 
@@ -87,7 +87,7 @@ Array of 5 asteroid texture variants.
 
 - **Type**: `sampler2D[5]`
 - **Usage**: Texture sampling for visual variety
-- **Source**: [[AsteroidFieldMaterial]]
+- **Source**: [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]]
 
 ### alphaTest
 
@@ -100,7 +100,7 @@ Alpha testing threshold for transparent pixels.
 - **Type**: `float`
 - **Usage**: Early pixel discard for performance
 - **Range**: 0.0 to 1.0
-- **Source**: [[AsteroidFieldMaterial]]
+- **Source**: [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]]
 
 ### time
 
@@ -112,7 +112,7 @@ Current simulation time for animation.
 
 - **Type**: `float`
 - **Usage**: Drives texture coordinate rotation
-- **Source**: [[AsteroidFieldMaterial]]
+- **Source**: [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]]
 
 ### particleRotationSpeed
 
@@ -124,7 +124,7 @@ Speed of individual particle rotation.
 
 - **Type**: `float`
 - **Usage**: Controls rotation animation speed
-- **Source**: [[AsteroidFieldMaterial]]
+- **Source**: [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]]
 
 ## Shader Implementation
 
@@ -267,7 +267,7 @@ This applies vertex color variations and a brightness boost for realistic appear
 
 ## Integration with Vertex Shader
 
-The fragment shader works with [[asteroid.vert]] to provide:
+The fragment shader works with [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]] to provide:
 
 1. **Position Data**: Transformed positions for rendering
 2. **Color Data**: Instance colors for modulation
@@ -285,12 +285,12 @@ The fragment shader works with [[asteroid.vert]] to provide:
 
 The fragment shader is used by:
 
-1. **[[AsteroidFieldMaterial]]**: Manages uniforms and texture loading
-2. **[[AsteroidFieldRenderer]]**: Creates instanced meshes with this shader
+1. **[[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]]**: Manages uniforms and texture loading
+2. **[[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]]**: Creates instanced meshes with this shader
 3. **THREE.InstancedMesh**: Provides instance data for rendering
 
 ## 🔗 Related
 
-- [[asteroid.vert]] - Vertex shader that provides input data
-- [[AsteroidFieldMaterial]] - Material that uses this shader
-- [[AsteroidFieldRenderer]] - Renderer that manages this shader
+- [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]] - Vertex shader that provides input data
+- [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] - Material that uses this shader
+- [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] - Renderer that manages this shader

@@ -122,7 +122,7 @@ constructor(baseColor: THREE.Color = new THREE.Color(0xffffff))
 
 - **Defines**: MAX_LIGHTS (4), MAX_SHADOW_CASTERS (8)
 - **Uniforms**: baseColor, time, uLights, uNumLights, uShadowCasters, uNumShadowCasters, uDynamicAmbientIntensity
-- **Shaders**: [[basic.vertex.glsl]], [[basic.fragment.glsl]]
+- **Shaders**: [[celestials/gas-giants/basic.vertex.glsl|Basic Vertex Shader]], [[celestials/gas-giants/basic.fragment.glsl|Basic Fragment Shader]]
 
 ## Class-Specific Materials
 
@@ -159,7 +159,7 @@ constructor(options: {
 
 - **Defines**: MAX_LIGHTS (4), MAX_SHADOW_CASTERS (16)
 - **Uniforms**: mainColor1, mainColor2, darkColor, uSeed, time, uLights, uNumLights, uShadowCasters, uNumShadowCasters, uWarpOctaves, uColorOctaves, stormMap, hasStormMap, uDynamicAmbientIntensity
-- **Shaders**: [[class-i.vertex.glsl]], [[class-i.fragment.glsl]]
+- **Shaders**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]], [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]]
 
 #### Noise Parameters
 
@@ -393,13 +393,13 @@ The materials are used by:
 
 ## 🔗 Related
 
-- [[BaseGasGiantRenderer]] - Renderer that uses these materials
-- [[ClassIGasGiantRenderer]] - Class I renderer implementation
-- [[ClassIIGasGiantRenderer]] - Class II renderer implementation
-- [[ClassIIIGasGiantRenderer]] - Class III renderer implementation
-- [[ClassIVGasGiantRenderer]] - Class IV renderer implementation
-- [[ClassVGasGiantRenderer]] - Class V renderer implementation
-- [[class-i.vertex.glsl]] - Class I vertex shader
-- [[class-i.fragment.glsl]] - Class I fragment shader
-- [[basic.vertex.glsl]] - Basic vertex shader
-- [[basic.fragment.glsl]] - Basic fragment shader
+- [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] - Renderer that uses these materials
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Class I renderer implementation
+- [[celestials/gas-giants/ClassIIGasGiantRenderer|Class II Gas Giant Renderer]] - Class II renderer implementation
+- [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] - Class III renderer implementation
+- [[celestials/gas-giants/ClassIVGasGiantRenderer|Class IV Gas Giant Renderer]] - Class IV renderer implementation
+- [[celestials/gas-giants/ClassVGasGiantRenderer|Class V Gas Giant Renderer]] - Class V renderer implementation
+- [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]] - Class I vertex shader
+- [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]] - Class I fragment shader
+- [[celestials/gas-giants/basic.vertex.glsl|Basic Vertex Shader]] - Basic vertex shader
+- [[celestials/gas-giants/basic.fragment.glsl|Basic Fragment Shader]] - Basic fragment shader

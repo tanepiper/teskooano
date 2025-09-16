@@ -211,10 +211,10 @@ protected createMaterial(
 
 ## 🔗 Related
 
-- [[EnhancedStarMaterial]] - Base enhanced star material
-- [[MainSequenceStarRenderer]] - Renderer that uses this material
-- [[BaseStarMaterial]] - Base star material
-- [[enhanced-star.vertex.glsl]] - Vertex shader
-- [[enhanced-star.fragment.glsl]] - Fragment shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]] - Base enhanced star material
+- [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]] - Renderer that uses this material
+- [[celestials/stars/BaseStarMaterial|Base Star Material]] - Base star material
+- [[celestials/stars/enhanced-star.vertex.glsl|Enhanced Star Vertex Shader]] - Vertex shader
+- [[celestials/stars/enhanced-star.fragment.glsl|Enhanced Star Fragment Shader]] - Fragment shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

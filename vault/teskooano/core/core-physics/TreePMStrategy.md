@@ -422,10 +422,10 @@ console.log(
 
 ## 🔗 Related Components
 
-- [[AlgorithmFactory]] - Intelligent algorithm selection
-- [[SimulationManager]] - Simulation orchestration
-- [[Octree]] - Tree method implementation
-- [[AlgorithmStrategy]] - Base interface for algorithms
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Intelligent algorithm selection
+- [[core/core-physics/SimulationManager|SimulationManager]] - Simulation orchestration
+- [[core/core-physics/Octree|Octree]] - Tree method implementation
+- [[core/core-physics/AlgorithmStrategy|AlgorithmStrategy]] - Base interface for algorithms
 
 ## 📚 Architecture Patterns
 

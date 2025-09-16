@@ -97,13 +97,13 @@ The asteroid material supports configurable parameters:
 
 ## Classes
 
-- [[AsteroidRenderer]] - Main renderer class for asteroid objects
-- [[AsteroidNucleusMaterial]] - Shader material for asteroid surface rendering
+- [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] - Main renderer class for asteroid objects
+- [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] - Shader material for asteroid surface rendering
 
 ## Shaders
 
-- [[nucleus.vertex.glsl]] - Vertex shader for world position and normal calculation
-- [[nucleus.fragment.glsl]] - Fragment shader for surface texturing and lighting
+- [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]] - Vertex shader for world position and normal calculation
+- [[celestials/asteroid/nucleus.fragment.glsl|Nucleus Fragment Shader]] - Fragment shader for surface texturing and lighting
 
 ## Dependencies
 
@@ -115,6 +115,6 @@ The asteroid material supports configurable parameters:
 
 ## 🔗 Related
 
-- Composable with [[threejs-objects]] factory
-- Uses [[BaseCelestialRenderer]] for core functionality
-- Integrates with [[LightingManager]] for dynamic lighting
+- Composable with [[renderer/threejs-objects|Three.js Objects]] factory
+- Uses [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] for core functionality
+- Integrates with [[renderer/threejs-lighting/LightingManager|Lighting Manager]] for dynamic lighting

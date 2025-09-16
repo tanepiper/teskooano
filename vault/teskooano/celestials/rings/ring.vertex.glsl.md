@@ -275,8 +275,8 @@ The vertex shader works in conjunction with fragment shaders to provide:
 
 ## 🔗 Related
 
-- [[ring.fragment.glsl]] - Ring fragment shader that uses this vertex shader output
-- [[accretion-disk.fragment.glsl]] - Accretion disk fragment shader that uses this vertex shader output
-- [[RingMaterial]] - Material that uses this shader
-- [[AccretionDiskMaterial]] - Material that uses this shader
-- [[RingSystemRenderer]] - Renderer that creates the geometry for this shader
+- [[celestials/rings/ring.fragment.glsl|Ring Fragment Shader]] - Ring fragment shader that uses this vertex shader output
+- [[celestials/rings/accretion-disk.fragment.glsl|Accretion Disk Fragment Shader]] - Accretion disk fragment shader that uses this vertex shader output
+- [[celestials/rings/RingMaterials|Ring Materials]] - Material that uses this shader
+- [[celestials/rings/RingMaterials|Accretion Disk Material]] - Material that uses this shader
+- [[celestials/rings/RingSystemRenderer|Ring System Renderer]] - Renderer that creates the geometry for this shader

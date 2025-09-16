@@ -496,8 +496,8 @@ test.testMemoryUsage();
 
 ## 🔗 Related
 
-- [[Utils]] - Utility functions for random number processing
-- [[Constants]] - Mathematical constants for random calculations
-- [[@teskooano/systems-procedural-generation]] - Procedural generation using seeded random
-- [[@teskooano/core-physics]] - Physics simulations with deterministic randomness
-- [[@teskooano/core-state]] - State management with random events
+- [[core/core-math/Utils|Utils]] - Utility functions for random number processing
+- [[core/core-math/Constants|Constants]] - Mathematical constants for random calculations
+- [[systems/procedural-generation/procedural-generation|@teskooano/systems-procedural-generation]] - Procedural generation using seeded random
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics simulations with deterministic randomness
+- [[core/core-state/core-state|@teskooano/core-state]] - State management with random events

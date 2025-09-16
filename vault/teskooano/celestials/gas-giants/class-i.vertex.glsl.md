@@ -204,7 +204,7 @@ The varying variables are used in the fragment shader for:
 
 ## Integration with Fragment Shader
 
-The vertex shader works in conjunction with [[class-i.fragment.glsl]] to provide:
+The vertex shader works in conjunction with [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]] to provide:
 
 1. **World-Space Data**: Position and normal data for lighting
 2. **Procedural Coordinates**: Object-space positions for noise generation
@@ -229,6 +229,6 @@ The vertex shader is optimized for Class I gas giants:
 
 ## 🔗 Related
 
-- [[class-i.fragment.glsl]] - Fragment shader that uses this vertex shader output
-- [[ClassIMaterial]] - Material that uses this shader
-- [[ClassIGasGiantRenderer]] - Renderer that creates the geometry for this shader
+- [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]] - Fragment shader that uses this vertex shader output
+- [[celestials/gas-giants/GasGiantMaterials|Class I Material]] - Material that uses this shader
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Renderer that creates the geometry for this shader

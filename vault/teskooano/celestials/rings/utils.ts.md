@@ -390,7 +390,7 @@ The utility functions provide data for shader uniforms:
 
 ## 🔗 Related
 
-- [[AccretionDiskMaterial]] - Material that uses these calculations
-- [[RingSystemRenderer]] - Renderer that uses these utilities
-- [[accretion-disk.fragment.glsl]] - Fragment shader that uses these calculations
-- [[ring.fragment.glsl]] - Fragment shader that may use these calculations
+- [[celestials/rings/RingMaterials|Accretion Disk Material]] - Material that uses these calculations
+- [[celestials/rings/RingSystemRenderer|Ring System Renderer]] - Renderer that uses these utilities
+- [[celestials/rings/accretion-disk.fragment.glsl|Accretion Disk Fragment Shader]] - Fragment shader that uses these calculations
+- [[celestials/rings/ring.fragment.glsl|Ring Fragment Shader]] - Fragment shader that may use these calculations

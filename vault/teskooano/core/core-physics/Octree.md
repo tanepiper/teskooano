@@ -401,10 +401,10 @@ const potentialCollisions = octree.findBodiesInRange(
 
 ## 🔗 Related Components
 
-- [[TreePMStrategy]] - Uses octree for high-density regions
-- [[WasmSpatialPartitioning]] - Alternative spatial structure
-- [[AlgorithmFactory]] - Recommends Barnes-Hut for medium systems
-- [[SimulationManager]] - Orchestrates octree usage
+- [[core/core-physics/TreePMStrategy|TreePMStrategy]] - Uses octree for high-density regions
+- [[core/core-physics/WasmSpatialPartitioning|WasmSpatialPartitioning]] - Alternative spatial structure
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Recommends Barnes-Hut for medium systems
+- [[core/core-physics/SimulationManager|SimulationManager]] - Orchestrates octree usage
 
 ## 📚 Architecture Patterns
 

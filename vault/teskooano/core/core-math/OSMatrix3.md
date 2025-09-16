@@ -510,9 +510,9 @@ function performTransformations() {
 
 ## 🔗 Related
 
-- [[OSVector3]] - Vectors transformed by matrices
-- [[OSMatrix4]] - 4×4 matrices for 3D transformations
-- [[OSQuaternion]] - Quaternions for 3D rotations
-- [[Constants]] - Mathematical constants
-- [[@teskooano/core-physics]] - Physics calculations using matrices
-- [[@teskooano/renderer-threejs]] - Rendering transformations
+- [[core/core-math/OSVector3|OSVector3]] - Vectors transformed by matrices
+- [[core/core-math/OSMatrix4|OSMatrix4]] - 4×4 matrices for 3D transformations
+- [[core/core-math/OSQuaternion|OSQuaternion]] - Quaternions for 3D rotations
+- [[core/core-math/Constants|Constants]] - Mathematical constants
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics calculations using matrices
+- [[threejs-renderers/threejs/threejs|@teskooano/renderer-threejs]] - Rendering transformations

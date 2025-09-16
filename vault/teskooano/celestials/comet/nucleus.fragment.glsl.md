@@ -35,7 +35,7 @@ varying vec3 vWorldPosition;
 World-space position from vertex shader.
 
 - **Usage**: Lighting calculations, distance-based effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ### vWorldNormal
 
@@ -46,7 +46,7 @@ varying vec3 vWorldNormal;
 World-space normal from vertex shader.
 
 - **Usage**: Lighting calculations, surface effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ### vUv
 
@@ -57,7 +57,7 @@ varying vec2 vUv;
 Texture coordinates from vertex shader.
 
 - **Usage**: Texture sampling, UV-based effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ### vObjectPosition
 
@@ -68,7 +68,7 @@ varying vec3 vObjectPosition;
 Normalized object-space position from vertex shader.
 
 - **Usage**: Noise generation, procedural effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ## Uniform Variables
 
@@ -262,9 +262,9 @@ gl_FragColor = vec4(finalColor * lighting, 1.0);
 
 The fragment shader works with:
 
-- **Vertex Shader**: [[nucleus.vertex.glsl]] provides world position and normal data
-- **Material**: [[CometNucleusMaterial]] manages uniforms and updates
-- **Renderer**: [[CometRenderer]] creates geometry and manages updates
+- **Vertex Shader**: [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]] provides world position and normal data
+- **Material**: [[celestials/comet/CometMaterials|Comet Nucleus Material]] manages uniforms and updates
+- **Renderer**: [[celestials/comet/CometRenderer|Comet Renderer]] creates geometry and manages updates
 
 ## Dependencies
 
@@ -274,6 +274,6 @@ The fragment shader works with:
 
 ## 🔗 Related
 
-- [[nucleus.vertex.glsl]] - Vertex shader that provides input data
-- [[CometNucleusMaterial]] - Material that uses this shader
-- [[CometRenderer]] - Renderer that manages this shader
+- [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]] - Vertex shader that provides input data
+- [[celestials/comet/CometMaterials|Comet Nucleus Material]] - Material that uses this shader
+- [[celestials/comet/CometRenderer|Comet Renderer]] - Renderer that manages this shader

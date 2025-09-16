@@ -402,8 +402,8 @@ float getShadow(vec3 fragPos, vec3 lightDir) {
 The fragment shader works with:
 
 - **Vertex Shader**: Class III vertex shader provides world position and normal data
-- **Material**: [[ClassIIIMaterial]] manages uniforms and updates
-- **Renderer**: [[ClassIIIGasGiantRenderer]] creates geometry and manages updates
+- **Material**: [[celestials/gas-giants/GasGiantMaterials|Class III Material]] manages uniforms and updates
+- **Renderer**: [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] creates geometry and manages updates
 
 ## Dependencies
 
@@ -414,8 +414,8 @@ The fragment shader works with:
 
 ## 🔗 Related
 
-- [[class-iii.vertex.glsl]] - Vertex shader that provides input data
-- [[ClassIIIMaterial]] - Material that uses this shader
-- [[ClassIIIGasGiantRenderer]] - Renderer that manages this shader
-- [[class-i.fragment.glsl]] - Class I fragment shader for comparison
-- [[class-ii.fragment.glsl]] - Class II fragment shader for comparison
+- [[celestials/gas-giants/class-iii.vertex.glsl|Class III Vertex Shader]] - Vertex shader that provides input data
+- [[celestials/gas-giants/GasGiantMaterials|Class III Material]] - Material that uses this shader
+- [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] - Renderer that manages this shader
+- [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]] - Class I fragment shader for comparison
+- [[celestials/gas-giants/class-ii.fragment.glsl|Class II Fragment Shader]] - Class II fragment shader for comparison

@@ -14,7 +14,7 @@ Main renderer class for comet objects with nucleus, coma, particle tails, and je
 
 ## Overview
 
-The `CometRenderer` extends [[BaseCelestialRenderer]] to provide specialized rendering capabilities for comet objects. It features procedurally displaced nucleus geometry, dynamic coma that scales with solar activity, particle-based tail systems with realistic physics, multiple gas jets emanating from the nucleus surface, and a comprehensive LOD system with activity-based visual changes.
+The `CometRenderer` extends [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] to provide specialized rendering capabilities for comet objects. It features procedurally displaced nucleus geometry, dynamic coma that scales with solar activity, particle-based tail systems with realistic physics, multiple gas jets emanating from the nucleus surface, and a comprehensive LOD system with activity-based visual changes.
 
 ## Features
 
@@ -157,7 +157,7 @@ Creates the shader material for the comet nucleus surface.
 
 - Extracts colors and heights from `CometProperties`
 - Provides fallback colors for procedurally generated comets
-- Creates [[CometNucleusMaterial]] instance with visual properties
+- Creates [[celestials/comet/CometMaterials|Comet Nucleus Material]] instance with visual properties
 
 ### createComa
 
@@ -170,7 +170,7 @@ Creates the coma (gas cloud) mesh if properties are available.
 #### Coma Creation Process
 
 1. Checks for coma properties (radius, color, opacity)
-2. Creates [[CometComaMaterial]] with specified properties
+2. Creates [[celestials/comet/CometMaterials|Comet Coma Material]] with specified properties
 3. Generates sphere geometry with optimized segments
 4. Scales geometry based on comet type and properties
 
@@ -186,7 +186,7 @@ Creates the particle tail system for dust and gas trails.
 
 1. Creates buffer geometry for up to 12,000 particles
 2. Initializes particle attributes (size, alpha, lifetime, velocity)
-3. Creates [[CometParticleMaterial]] for tail rendering
+3. Creates [[celestials/comet/CometMaterials|Comet Particle Material]] for tail rendering
 4. Sets up THREE.Points object for particle rendering
 
 ### \_createJets
@@ -201,7 +201,7 @@ Creates multiple gas jets emanating from the nucleus surface.
 
 1. Creates 3 gas jets with 200 particles each
 2. Sets up buffer geometry and attributes for each jet
-3. Creates [[CometJetMaterial]] for jet rendering
+3. Creates [[celestials/comet/CometMaterials|Comet Jet Material]] for jet rendering
 4. Initializes repositioning timers for dynamic emission points
 
 ### updateNucleus
@@ -408,19 +408,19 @@ renderer.update(
 
 ## Dependencies
 
-- [[BaseCelestialRenderer]] - Base rendering functionality
-- [[CometNucleusMaterial]] - Nucleus surface material
-- [[CometComaMaterial]] - Coma gas cloud material
-- [[CometParticleMaterial]] - Particle tail material
-- [[CometJetMaterial]] - Gas jet material
-- [[createSeededRandomSync]] - Seeded random number generation
-- [[SCALE]] - Render scale constants
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base rendering functionality
+- [[celestials/comet/CometMaterials|Comet Nucleus Material]] - Nucleus surface material
+- [[celestials/comet/CometMaterials|Comet Coma Material]] - Coma gas cloud material
+- [[celestials/comet/CometMaterials|Comet Particle Material]] - Particle tail material
+- [[celestials/comet/CometMaterials|Comet Jet Material]] - Gas jet material
+- [[core/core-math/Random|Random Utilities]] - Seeded random number generation
+- [[core/core-math/Constants|Constants]] - Render scale constants
 
 ## 🔗 Related
 
-- [[CometNucleusMaterial]] - Material used for nucleus rendering
-- [[CometComaMaterial]] - Material used for coma rendering
-- [[CometParticleMaterial]] - Material used for particle tail rendering
-- [[CometJetMaterial]] - Material used for gas jet rendering
-- [[BaseCelestialRenderer]] - Base class providing core functionality
-- [[createMesh]] - Factory function for creating comet meshes
+- [[celestials/comet/CometMaterials|Comet Nucleus Material]] - Material used for nucleus rendering
+- [[celestials/comet/CometMaterials|Comet Coma Material]] - Material used for coma rendering
+- [[celestials/comet/CometMaterials|Comet Particle Material]] - Material used for particle tail rendering
+- [[celestials/comet/CometMaterials|Comet Jet Material]] - Material used for gas jet rendering
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base class providing core functionality
+- [[celestials/comet/createMesh|Create Mesh Factory]] - Factory function for creating comet meshes

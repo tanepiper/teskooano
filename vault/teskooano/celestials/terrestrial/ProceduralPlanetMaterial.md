@@ -488,9 +488,9 @@ const parseColor = (
 
 ## 🔗 Related
 
-- [[BaseTerrestrialRenderer]] - Renderer that uses this material
-- [[procedural.vertex.glsl]] - Vertex shader used by this material
-- [[procedural.fragment.glsl]] - Fragment shader used by this material
-- [[PlanetMaterialService]] - Service that creates this material
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/terrestrial/BaseTerrestrialRenderer|BaseTerrestrialRenderer]] - Renderer that uses this material
+- [[celestials/terrestrial/procedural.vertex.glsl|Procedural Vertex Shader]] - Vertex shader used by this material
+- [[celestials/terrestrial/procedural.fragment.glsl|Procedural Fragment Shader]] - Fragment shader used by this material
+- [[celestials/terrestrial/PlanetMaterialService|PlanetMaterialService]] - Service that creates this material
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

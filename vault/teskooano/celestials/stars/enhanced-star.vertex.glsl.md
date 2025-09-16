@@ -291,11 +291,11 @@ The vertex shader works in conjunction with the fragment shader to provide:
 
 ## 🔗 Related
 
-- [[enhanced-star.fragment.glsl]] - Fragment shader that uses this vertex shader output
-- [[EnhancedStarMaterial]] - Material that uses this shader
-- [[BaseStarRenderer]] - Renderer that creates the geometry for this shader
-- [[MainSequenceStarRenderer]] - Main sequence star renderer
-- [[ClassGStarRenderer]] - G-class star renderer
-- [[ClassOStarRenderer]] - O-class star renderer
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/enhanced-star.fragment.glsl|Enhanced Star Fragment Shader]] - Fragment shader that uses this vertex shader output
+- [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]] - Material that uses this shader
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Renderer that creates the geometry for this shader
+- [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]] - Main sequence star renderer
+- [[celestials/stars/ClassGStarRenderer|Class G Star Renderer]] - G-class star renderer
+- [[celestials/stars/ClassOStarRenderer|Class O Star Renderer]] - O-class star renderer
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

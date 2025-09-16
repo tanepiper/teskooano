@@ -604,10 +604,10 @@ if (debugMode) {
 
 ## 🔗 Related Components
 
-- [[OrbitalParameters]] - Orbital element definitions
-- [[PhysicsStateReal]] - Physics state representation
-- [[SimulationManager]] - Integration with simulation systems
-- [[calculateOrbitalElements]] - Orbital calculations
+- [[data/data-types/OrbitalParameters|OrbitalParameters]] - Orbital element definitions
+- [[data/data-types/PhysicsStateReal|PhysicsStateReal]] - Physics state representation
+- [[core/core-physics/SimulationManager|SimulationManager]] - Integration with simulation systems
+- [[core/core-physics/calculateOrbitalElements|calculateOrbitalElements]] - Orbital calculations
 
 ## 📚 Architecture Patterns
 

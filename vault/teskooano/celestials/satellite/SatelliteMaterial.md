@@ -511,9 +511,9 @@ The material uses `satellite.fragment.glsl` which implements:
 
 ## 🔗 Related
 
-- [[SatelliteRenderer]] - Renderer that uses this material
-- [[satellite.vertex.glsl]] - Vertex shader used by this material
-- [[satellite.fragment.glsl]] - Fragment shader used by this material
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/satellite/SatelliteRenderer|Satellite Renderer]] - Renderer that uses this material
+- [[celestials/satellite/satellite.vertex.glsl|Satellite Vertex Shader]] - Vertex shader used by this material
+- [[celestials/satellite/satellite.fragment.glsl|Satellite Fragment Shader]] - Fragment shader used by this material
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system
+- [[data/data-types/data-types|Data Types]] - Type definitions

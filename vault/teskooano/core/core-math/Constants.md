@@ -424,9 +424,9 @@ function isNormalizedFast(value: number): boolean {
 
 ## 🔗 Related
 
-- [[OSVector3]] - Uses EPSILON for equality comparisons
-- [[OSQuaternion]] - Uses EPSILON for normalization checks
-- [[OSMatrix3]] - Uses EPSILON for determinant calculations
-- [[OSMatrix4]] - Uses EPSILON for matrix operations
-- [[Utils]] - Mathematical utilities using these constants
-- [[@teskooano/core-physics]] - Physics calculations with precision handling
+- [[core/core-math/OSVector3|OSVector3]] - Uses EPSILON for equality comparisons
+- [[core/core-math/OSQuaternion|OSQuaternion]] - Uses EPSILON for normalization checks
+- [[core/core-math/OSMatrix3|OSMatrix3]] - Uses EPSILON for determinant calculations
+- [[core/core-math/OSMatrix4|OSMatrix4]] - Uses EPSILON for matrix operations
+- [[core/core-math/Utils|Utils]] - Mathematical utilities using these constants
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics calculations with precision handling

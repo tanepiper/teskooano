@@ -3,4 +3,4 @@ export * from "./renderer";
 export * from "./createMesh";
 
 // Re-export the old factory function name for backward compatibility
-export { createMesh as createCometMesh } from "./createMesh";
+export { createMesh as createAsteroidMesh } from "./createMesh";

@@ -1,5 +1,5 @@
 ---
-aliases: [createMesh, createCometMesh]
+aliases: [createMesh, createAsteroidMesh]
 tags: [renderer, threejs, asteroids, factory, function]
 type: function
 package: "@teskooano/celestials-asteroid"
@@ -65,7 +65,7 @@ interface CreateMeshOptions {
 The function implements renderer caching to improve performance:
 
 1. **Cache Check**: First checks if a renderer already exists for the object ID
-2. **Renderer Creation**: Creates new [[AsteroidRenderer]] if not cached
+2. **Renderer Creation**: Creates new [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] if not cached
 3. **Cache Storage**: Stores the renderer in the `celestialRenderers` map
 4. **Error Handling**: Falls back to fallback sphere if renderer creation fails
 
@@ -82,9 +82,10 @@ The function handles LOD (Level of Detail) management:
 
 When debug mode is enabled:
 
-1. **Forced Fallback**: Always uses fallback sphere regardless of renderer creation
+1. **Forced Fallback**: Always uses fallback sphere regardless of renderer creation success
 2. **Additional Logging**: Provides detailed console output for debugging
 3. **Error Visibility**: Makes errors more visible during development
+4. **Bypass Normal Flow**: Completely bypasses the normal renderer creation and LOD generation process
 
 ## Implementation Details
 
@@ -179,21 +180,21 @@ const asteroidMesh = createMesh(asteroidObject, {
 
 ## Backward Compatibility
 
-The function also exports as `createCometMesh` for backward compatibility:
+The function also exports as `createAsteroidMesh` for backward compatibility:
 
 ```typescript
 // Backward compatible export
-export { createMesh as createCometMesh } from "./createMesh";
+export { createMesh as createAsteroidMesh } from "./createMesh";
 ```
 
-This allows existing code that references `createCometMesh` to continue working without modification.
+This allows existing code that references `createAsteroidMesh` to continue working without modification.
 
 ## Dependencies
 
-- [[AsteroidRenderer]] - Renderer class for asteroid objects
-- [[createFallbackSphere]] - Fallback sphere creation utility
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] - Renderer class for asteroid objects
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback sphere creation utility
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface
 
 ## Error Scenarios
 
@@ -223,7 +224,7 @@ If renderer doesn't provide LOD levels:
 
 ## 🔗 Related
 
-- [[AsteroidRenderer]] - Renderer class used by this factory
-- [[createFallbackSphere]] - Fallback utility for error cases
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] - Renderer class used by this factory
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback utility for error cases
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface

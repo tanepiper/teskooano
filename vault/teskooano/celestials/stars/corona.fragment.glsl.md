@@ -439,8 +439,8 @@ gl_FragColor = vec4(finalColor, alpha);
 
 ## 🔗 Related
 
-- [[corona.vertex.glsl]] - Vertex shader that provides data for this fragment shader
-- [[CoronaMaterial]] - Material that uses this shader
-- [[BaseStarRenderer]] - Renderer that creates the geometry for this shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/corona.vertex.glsl|Corona Vertex Shader]] - Vertex shader that provides data for this fragment shader
+- [[celestials/stars/CoronaMaterial|Corona Material]] - Material that uses this shader
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Renderer that creates the geometry for this shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

@@ -341,12 +341,12 @@ const predictedPoints = await predictTrajectory(
 
 ## 🔗 Related Components
 
-- [[AlgorithmFactory]] - Intelligent algorithm selection
-- [[IdealOrreryStrategy]] - Perfect orbital mechanics
-- [[WasmCollisionDetection]] - Optimized collision detection
-- [[WasmSpatialPartitioning]] - High-performance spatial operations
-- [[TreePMStrategy]] - Advanced hybrid algorithm
-- [[Octree]] - Spatial data structure
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Intelligent algorithm selection
+- [[core/core-physics/IdealOrreryStrategy|IdealOrreryStrategy]] - Perfect orbital mechanics
+- [[core/core-physics/WasmCollisionDetection|WasmCollisionDetection]] - Optimized collision detection
+- [[core/core-physics/WasmSpatialPartitioning|WasmSpatialPartitioning]] - High-performance spatial operations
+- [[core/core-physics/TreePMStrategy|TreePMStrategy]] - Advanced hybrid algorithm
+- [[core/core-physics/Octree|Octree]] - Spatial data structure
 
 ## 📚 Architecture Patterns
 

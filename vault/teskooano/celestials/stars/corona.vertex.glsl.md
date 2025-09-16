@@ -200,8 +200,8 @@ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 
 ## 🔗 Related
 
-- [[corona.fragment.glsl]] - Fragment shader that uses this vertex shader
-- [[CoronaMaterial]] - Material that uses this shader
-- [[BaseStarRenderer]] - Renderer that creates the geometry for this shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/corona.fragment.glsl|Corona Fragment Shader]] - Fragment shader that uses this vertex shader
+- [[celestials/stars/CoronaMaterial|Corona Material]] - Material that uses this shader
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Renderer that creates the geometry for this shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

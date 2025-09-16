@@ -361,9 +361,9 @@ The renderer creates multiple corona layers with different properties:
 
 ## 🔗 Related
 
-- [[BaseStarMaterial]] - Base star material
-- [[BaseStarRenderer]] - Base star renderer
-- [[corona.vertex.glsl]] - Corona vertex shader
-- [[corona.fragment.glsl]] - Corona fragment shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/BaseStarMaterial|Base Star Material]] - Base star material
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Base star renderer
+- [[celestials/stars/corona.vertex.glsl|Corona Vertex Shader]] - Corona vertex shader
+- [[celestials/stars/corona.fragment.glsl|Corona Fragment Shader]] - Corona fragment shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

@@ -556,11 +556,11 @@ class CacheManager {
 
 ## 🔗 Related Patterns
 
-- **[[Performance Pattern]]**: Caching is a key performance optimization technique
-- **[[Memory Management Pattern]]**: Intelligent cache management and cleanup
-- **[[Observer Pattern]]**: Cache invalidation based on state changes
-- **[[Strategy Pattern]]**: Different caching strategies for different use cases
-- **[[Factory Pattern]]**: Object pools and cache factories
+- **[[architecture/Performance Pattern|Performance Pattern]]**: Caching is a key performance optimization technique
+- **[[architecture/Memory Management Pattern|Memory Management Pattern]]**: Intelligent cache management and cleanup
+- **[[architecture/Observer Pattern|Observer Pattern]]**: Cache invalidation based on state changes
+- **[[architecture/Strategy Pattern|Strategy Pattern]]**: Different caching strategies for different use cases
+- **[[architecture/Factory Pattern|Factory Pattern]]**: Object pools and cache factories
 
 ## 🎯 Performance Considerations
 

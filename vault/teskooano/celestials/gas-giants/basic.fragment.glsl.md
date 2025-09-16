@@ -265,9 +265,9 @@ gl_FragColor = vec4(finalColor, 1.0);
 
 The fragment shader works with:
 
-- **Vertex Shader**: [[basic.vertex.glsl]] provides position and normal data
-- **Material**: [[BasicGasGiantMaterial]] manages uniforms and updates
-- **Renderer**: [[BaseGasGiantRenderer]] creates geometry and manages updates
+- **Vertex Shader**: [[celestials/gas-giants/basic.vertex.glsl|Basic Vertex Shader]] provides position and normal data
+- **Material**: [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]] manages uniforms and updates
+- **Renderer**: [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] creates geometry and manages updates
 
 ## Usage in LOD System
 
@@ -285,7 +285,7 @@ The basic fragment shader is used in:
 
 ## 🔗 Related
 
-- [[basic.vertex.glsl]] - Vertex shader that provides input data
-- [[BasicGasGiantMaterial]] - Material that uses this shader
-- [[BaseGasGiantRenderer]] - Renderer that manages this shader
-- [[class-i.fragment.glsl]] - Complex fragment shader for comparison
+- [[celestials/gas-giants/basic.vertex.glsl|Basic Vertex Shader]] - Vertex shader that provides input data
+- [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]] - Material that uses this shader
+- [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] - Renderer that manages this shader
+- [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]] - Complex fragment shader for comparison

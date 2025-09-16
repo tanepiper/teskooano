@@ -36,7 +36,7 @@ varying vec3 vWorldPosition;
 World-space position from vertex shader.
 
 - **Usage**: Lighting calculations, shadow casting, distance-based effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ### vWorldNormal
 
@@ -47,7 +47,7 @@ varying vec3 vWorldNormal;
 World-space normal from vertex shader.
 
 - **Usage**: Lighting calculations, surface effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ### vUv
 
@@ -58,7 +58,7 @@ varying vec2 vUv;
 Texture coordinates from vertex shader.
 
 - **Usage**: Texture sampling, UV-based effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ### vObjectPosition
 
@@ -69,7 +69,7 @@ varying vec3 vObjectPosition;
 Normalized object-space position from vertex shader.
 
 - **Usage**: Noise generation, procedural effects
-- **Source**: [[nucleus.vertex.glsl]]
+- **Source**: [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]]
 
 ## Uniform Variables
 
@@ -328,9 +328,9 @@ gl_FragColor = vec4(finalColor * lighting, 1.0);
 
 The fragment shader works with:
 
-- **Vertex Shader**: [[nucleus.vertex.glsl]] provides world position and normal data
-- **Material**: [[AsteroidNucleusMaterial]] manages uniforms and updates
-- **Renderer**: [[AsteroidRenderer]] creates geometry and manages updates
+- **Vertex Shader**: [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]] provides world position and normal data
+- **Material**: [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] manages uniforms and updates
+- **Renderer**: [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] creates geometry and manages updates
 
 ## Dependencies
 
@@ -341,6 +341,6 @@ The fragment shader works with:
 
 ## 🔗 Related
 
-- [[nucleus.vertex.glsl]] - Vertex shader that provides input data
-- [[AsteroidNucleusMaterial]] - Material that uses this shader
-- [[AsteroidRenderer]] - Renderer that manages this shader
+- [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]] - Vertex shader that provides input data
+- [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] - Material that uses this shader
+- [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] - Renderer that manages this shader

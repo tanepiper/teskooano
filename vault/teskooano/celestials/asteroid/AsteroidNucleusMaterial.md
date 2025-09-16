@@ -37,7 +37,7 @@ constructor(options: AsteroidNucleusMaterialOptions)
 ### Options Interface
 
 ```typescript
-interface AsteroidNucleusMaterialOptions {
+export interface AsteroidNucleusMaterialOptions {
   colors: THREE.Color[]; // Array of colors for the palette
   heights: number[]; // Height thresholds for each color
   noiseScale?: number; // Scale for base color layering noise
@@ -66,6 +66,12 @@ interface AsteroidNucleusMaterialOptions {
 - `roughness`: 0.5
 - `specularColor`: `new THREE.Color(0xffffff)`
 
+### Constants
+
+- `MAX_LIGHTS`: 4 - Maximum number of light sources
+- `MAX_COLORS`: 4 - Maximum number of colors in palette
+- `MAX_SHADOW_CASTERS`: 4 - Maximum number of shadow casters
+
 ## Shader Configuration
 
 ### Defines
@@ -77,7 +83,7 @@ interface AsteroidNucleusMaterialOptions {
 
 ### Vertex Shader
 
-Uses [[nucleus.vertex.glsl]] for:
+Uses [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]] for:
 
 - World position and normal calculation
 - UV coordinate passing
@@ -85,7 +91,7 @@ Uses [[nucleus.vertex.glsl]] for:
 
 ### Fragment Shader
 
-Uses [[nucleus.fragment.glsl]] for:
+Uses [[celestials/asteroid/nucleus.fragment.glsl|Nucleus Fragment Shader]] for:
 
 - Height-based color blending
 - Procedural noise texturing
@@ -248,12 +254,12 @@ material.update(time, timeScale, lightSources, camera, shadowCasters);
 
 ## Dependencies
 
-- [[LightArrayUtils]] - Utility functions for light array management
-- [[nucleus.vertex.glsl]] - Vertex shader source
-- [[nucleus.fragment.glsl]] - Fragment shader source
+- [[renderer/threejs-celestial/LightArrayUtils|Light Array Utils]] - Utility functions for light array management
+- [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]] - Vertex shader source
+- [[celestials/asteroid/nucleus.fragment.glsl|Nucleus Fragment Shader]] - Fragment shader source
 
 ## 🔗 Related
 
-- [[AsteroidRenderer]] - Renderer that uses this material
-- [[nucleus.vertex.glsl]] - Vertex shader implementation
-- [[nucleus.fragment.glsl]] - Fragment shader implementation
+- [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] - Renderer that uses this material
+- [[celestials/asteroid/nucleus.vertex.glsl|Nucleus Vertex Shader]] - Vertex shader implementation
+- [[celestials/asteroid/nucleus.fragment.glsl|Nucleus Fragment Shader]] - Fragment shader implementation

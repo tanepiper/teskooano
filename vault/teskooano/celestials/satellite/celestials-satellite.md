@@ -58,7 +58,7 @@ The `@teskooano/celestials-satellite` package provides comprehensive rendering s
 
 ### Core Components
 
-#### [[SatelliteRenderer]]
+#### [[celestials/satellite/SatelliteRenderer|Satellite Renderer]]
 
 Main renderer class that handles 3D model loading, scaling, and LOD management.
 
@@ -70,7 +70,7 @@ Main renderer class that handles 3D model loading, scaling, and LOD management.
 - Material enhancement and lighting integration
 - Fallback mesh creation
 
-#### [[SatelliteMaterial]]
+#### [[celestials/satellite/SatelliteMaterial|Satellite Material]]
 
 Advanced shader-based material with PBR lighting calculations and texture preservation.
 
@@ -82,7 +82,7 @@ Advanced shader-based material with PBR lighting calculations and texture preser
 - Dynamic emissive lighting
 - Environment map reflections
 
-#### [[createMesh]]
+#### [[celestials/satellite/createMesh|Create Mesh Factory]]
 
 Factory function for creating satellite meshes with the unified API.
 
@@ -95,11 +95,11 @@ Factory function for creating satellite meshes with the unified API.
 
 ### Shader System
 
-#### [[satellite.vertex.glsl]]
+#### [[celestials/satellite/satellite.vertex.glsl|Satellite Vertex Shader]]
 
 Vertex shader that provides world-space position, normal, and UV data for lighting calculations.
 
-#### [[satellite.fragment.glsl]]
+#### [[celestials/satellite/satellite.fragment.glsl|Satellite Fragment Shader]]
 
 Fragment shader that implements PBR lighting, shadow casting, and texture sampling.
 
@@ -352,11 +352,11 @@ const mesh = createMesh(satellite, {
 
 ## 🔗 Related
 
-- [[SatelliteRenderer]] - Main renderer class
-- [[SatelliteMaterial]] - Advanced shader material
-- [[createMesh]] - Factory function for mesh creation
-- [[satellite.vertex.glsl]] - Vertex shader
-- [[satellite.fragment.glsl]] - Fragment shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/satellite/SatelliteRenderer|Satellite Renderer]] - Main renderer class
+- [[celestials/satellite/SatelliteMaterial|Satellite Material]] - Advanced shader material
+- [[celestials/satellite/createMesh|Create Mesh Factory]] - Factory function for mesh creation
+- [[celestials/satellite/satellite.vertex.glsl|Satellite Vertex Shader]] - Vertex shader
+- [[celestials/satellite/satellite.fragment.glsl|Satellite Fragment Shader]] - Fragment shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system
+- [[data/data-types/data-types|Data Types]] - Type definitions

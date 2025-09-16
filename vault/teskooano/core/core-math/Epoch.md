@@ -682,8 +682,8 @@ const position = calculator.calculateOrbitalPosition(
 
 ## 🔗 Related
 
-- [[Constants]] - Mathematical constants for time calculations
-- [[Utils]] - Utility functions for time operations
-- [[@teskooano/core-physics]] - Physics calculations using epochs
-- [[@teskooano/core-state]] - State management with time references
-- [[@teskooano/systems-solar-system]] - Solar system data with epochs
+- [[core/core-math/Constants|Constants]] - Mathematical constants for time calculations
+- [[core/core-math/Utils|Utils]] - Utility functions for time operations
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics calculations using epochs
+- [[core/core-state/core-state|@teskooano/core-state]] - State management with time references
+- [[systems/solar-system/solar-system|@teskooano/systems-solar-system]] - Solar system data with epochs

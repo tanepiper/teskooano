@@ -387,10 +387,10 @@ export class DebugComponent extends StateSubscriptionMixin {
 
 ## 🔗 Related Components
 
-- [[StateAccessor]] - Provides observables for subscription
-- [[SimulationStateService]] - Source of simulation state
-- [[CelestialStore]] - Source of celestial object data
-- [[PhysicsStore]] - Source of physics data
+- [[core/core-state/StateAccessor|StateAccessor]] - Provides observables for subscription
+- [[core/core-state/SimulationStateService|SimulationStateService]] - Source of simulation state
+- [[core/core-state/CelestialStore|CelestialStore]] - Source of celestial object data
+- [[core/core-state/PhysicsStore|PhysicsStore]] - Source of physics data
 
 ## 📚 Architecture Patterns
 

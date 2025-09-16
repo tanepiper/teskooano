@@ -14,7 +14,7 @@ Main renderer class for planetary ring systems and accretion disks, providing LO
 
 ## Overview
 
-The `RingSystemRenderer` extends [[BaseCelestialRenderer]] to provide comprehensive ring system visualization with support for both standard planetary rings and accretion disks. It handles LOD management, dynamic lighting, shadow casting, and advanced axial inclination controls including parent tilt inheritance and precession.
+The `RingSystemRenderer` extends [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] to provide comprehensive ring system visualization with support for both standard planetary rings and accretion disks. It handles LOD management, dynamic lighting, shadow casting, and advanced axial inclination controls including parent tilt inheritance and precession.
 
 ## Features
 
@@ -206,15 +206,15 @@ ringRenderer.update(
 
 ## Dependencies
 
-- [[BaseCelestialRenderer]] - Base rendering functionality
-- [[RingMaterial]] - Standard ring material
-- [[AccretionDiskMaterial]] - Accretion disk material
-- [[calculateKeplerianRotationRate]] - Physics utility for rotation rates
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base rendering functionality
+- [[celestials/rings/RingMaterials|Ring Materials]] - Standard ring material
+- [[celestials/rings/RingMaterials|Accretion Disk Material]] - Accretion disk material
+- [[celestials/rings/utils.ts|Ring Utilities]] - Physics utility for rotation rates
 
 ## 🔗 Related
 
-- [[RingMaterial]] - Standard ring material class
-- [[AccretionDiskMaterial]] - Accretion disk material class
-- [[ring.vertex.glsl]] - Ring vertex shader
-- [[ring.fragment.glsl]] - Ring fragment shader
-- [[accretion-disk.fragment.glsl]] - Accretion disk fragment shader
+- [[celestials/rings/RingMaterials|Ring Materials]] - Standard ring material class
+- [[celestials/rings/RingMaterials|Accretion Disk Material]] - Accretion disk material class
+- [[celestials/rings/ring.vertex.glsl|Ring Vertex Shader]] - Ring vertex shader
+- [[celestials/rings/ring.fragment.glsl|Ring Fragment Shader]] - Ring fragment shader
+- [[celestials/rings/accretion-disk.fragment.glsl|Accretion Disk Fragment Shader]] - Accretion disk fragment shader

@@ -20,6 +20,43 @@ A comprehensive template and guidelines for creating high-quality, consistent do
 
 This document serves as the definitive guide for AI agents and developers to create consistent, comprehensive documentation that matches the high-quality standards established in the Open Space project. It ensures all documentation follows the same structure, style, and depth of detail.
 
+## 🔗 Obsidian MCP Server Integration
+
+### MCP Server Usage
+
+When working with Obsidian documentation, you have access to the MCP (Model Context Protocol) server for vault operations:
+
+- **Available Actions**: `vault`, `edit`, `view`, `workflow`, `system`
+- **Authentication Status**: The MCP server is **not authenticated** by default
+- **Limitations**: Some operations may fail with 401 errors due to lack of authentication
+- **Fallback**: Use direct file system operations when MCP operations fail
+
+### Link Formatting Standards
+
+**Important**: All Obsidian links must use the proper path format with descriptive labels:
+
+```markdown
+✅ Correct Format:
+[[path/to/file|Descriptive Label]]
+
+❌ Incorrect Format:
+[[filename]]
+[[path/to/file]]
+```
+
+**Examples**:
+
+- `[[celestials/asteroid/AsteroidRenderer|Asteroid Renderer Class]]`
+- `[[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]]`
+- `[[core/core-math/OSVector3|OSVector3 Math Class]]`
+
+**Benefits of Labeled Links**:
+
+- Better readability in raw markdown
+- Clearer navigation in Obsidian
+- More descriptive link previews
+- Consistent with project standards
+
 ## 🏗️ Documentation Architecture
 
 The documentation follows a structured, hierarchical approach with consistent formatting and comprehensive coverage:
@@ -727,24 +764,25 @@ These enhancements ensure that the template provides comprehensive coverage for 
 
 ### Obsidian Link Formatting
 
-**Important**: When creating links to other documentation files, use the proper Obsidian link format:
+**Important**: When creating links to other documentation files, use the proper Obsidian link format with descriptive labels:
 
-- **Basic Link**: `[[filename]]` - Links to a file with the same name
-- **Path Link**: `[[path/to/file]]` - Links to a file in a specific directory
-- **Labeled Link**: `[[path/to/file|Display Name]]` - Links to a file but displays custom text
+- **Required Format**: `[[path/to/file|Descriptive Label]]` - Always use labeled links
+- **Avoid**: `[[filename]]` or `[[path/to/file]]` without labels
 
 **Examples**:
 
-- `[[threejs-core/threejs-core]]` - Links to the threejs-core package index
-- `[[threejs-renderers/threejs-objects/ObjectManager]]` - Links to ObjectManager component
-- `[[core/core-state/core-state|Core State Management]]` - Links to core-state with custom label
+- `[[renderer/threejs-core/threejs-core|Three.js Core Package]]` - Links to the threejs-core package index
+- `[[renderer/threejs-objects/ObjectManager|Object Manager Class]]` - Links to ObjectManager component
+- `[[core/core-state/core-state|Core State Management]]` - Links to core-state with descriptive label
 
 **Best Practices**:
 
-- Use full paths for clarity: `[[threejs-renderers/threejs-core/threejs-core]]`
-- Use descriptive labels for better readability: `[[threejs-renderers/threejs-orbits/OrbitsManager|Orbital Visualization Manager]]`
-- Always verify links point to existing files
-- Use consistent path structure throughout documentation
+- **Always use labeled links**: `[[path/to/file|Descriptive Label]]`
+- **Use descriptive labels**: Make labels clear and informative
+- **Use full paths**: Include complete directory structure for clarity
+- **Verify links**: Always verify links point to existing files
+- **Consistent structure**: Use consistent path structure throughout documentation
+- **Meaningful labels**: Labels should describe what the linked content is, not just repeat the filename
 
 ### Diagram Standards
 

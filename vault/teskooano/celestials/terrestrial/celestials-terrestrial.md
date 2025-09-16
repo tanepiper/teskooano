@@ -71,7 +71,7 @@ The `@teskooano/celestials-terrestrial` package provides comprehensive rendering
 
 ### Core Components
 
-#### [[BaseTerrestrialRenderer]]
+#### [[celestials/terrestrial/BaseTerrestrialRenderer|BaseTerrestrialRenderer]]
 
 Main renderer class that orchestrates LOD creation, material management, and ring system composition.
 
@@ -83,7 +83,7 @@ Main renderer class that orchestrates LOD creation, material management, and rin
 - Lighting and shadow updates
 - Atmosphere mesh creation
 
-#### [[ProceduralPlanetMaterial]]
+#### [[celestials/terrestrial/ProceduralPlanetMaterial|ProceduralPlanetMaterial]]
 
 Shader-based material for procedural surface generation with noise-driven terrain and height-based color blending.
 
@@ -95,7 +95,7 @@ Shader-based material for procedural surface generation with noise-driven terrai
 - Shadow casting with soft penumbra
 - Configurable terrain parameters
 
-#### [[AtmosphereMaterial]]
+#### [[celestials/terrestrial/AtmosphereMaterial|AtmosphereMaterial]]
 
 Shader-based material for atmospheric scattering effects with multi-light support.
 
@@ -106,7 +106,7 @@ Shader-based material for atmospheric scattering effects with multi-light suppor
 - Configurable opacity and thickness
 - Planet type-based color adjustment
 
-#### [[PlanetMaterialService]]
+#### [[celestials/terrestrial/PlanetMaterialService|PlanetMaterialService]]
 
 Service for creating planet materials and determining base colors based on planet type.
 
@@ -117,7 +117,7 @@ Service for creating planet materials and determining base colors based on plane
 - Base color determination
 - Procedural parameter setup
 
-#### [[AtmosphereService]]
+#### [[celestials/terrestrial/AtmosphereService|AtmosphereService]]
 
 Service for creating atmosphere meshes and materials.
 
@@ -128,7 +128,7 @@ Service for creating atmosphere meshes and materials.
 - Planet type integration
 - Geometry optimization
 
-#### [[createMesh]]
+#### [[celestials/terrestrial/createMesh|createMesh]]
 
 Factory function for creating terrestrial meshes with the unified API.
 
@@ -141,12 +141,12 @@ Factory function for creating terrestrial meshes with the unified API.
 
 ## 🔗 Related
 
-- [[BaseTerrestrialRenderer]] - Main renderer class
-- [[ProceduralPlanetMaterial]] - Procedural surface material
-- [[AtmosphereMaterial]] - Atmospheric effects material
-- [[PlanetMaterialService]] - Material creation service
-- [[AtmosphereService]] - Atmosphere creation service
-- [[createMesh]] - Factory function for mesh creation
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/celestials-rings]] - Ring system integration
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/terrestrial/BaseTerrestrialRenderer|BaseTerrestrialRenderer]] - Main renderer class
+- [[celestials/terrestrial/ProceduralPlanetMaterial|ProceduralPlanetMaterial]] - Procedural surface material
+- [[celestials/terrestrial/AtmosphereMaterial|AtmosphereMaterial]] - Atmospheric effects material
+- [[celestials/terrestrial/PlanetMaterialService|PlanetMaterialService]] - Material creation service
+- [[celestials/terrestrial/AtmosphereService|AtmosphereService]] - Atmosphere creation service
+- [[celestials/terrestrial/createMesh|createMesh]] - Factory function for mesh creation
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[celestials/rings/celestials-rings|Celestials Rings]] - Ring system integration
+- [[data/data-types/data-types|Data Types]] - Type definitions

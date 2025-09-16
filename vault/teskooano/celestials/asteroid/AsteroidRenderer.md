@@ -14,7 +14,7 @@ Main renderer class for asteroid objects with procedural nucleus geometry and ad
 
 ## Overview
 
-The `AsteroidRenderer` extends [[BaseCelestialRenderer]] to provide specialized rendering capabilities for asteroid objects. It features procedural geometry generation, multi-layer surface texturing, and realistic lighting effects with shadow casting support.
+The `AsteroidRenderer` extends [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] to provide specialized rendering capabilities for asteroid objects. It features procedural geometry generation, multi-layer surface texturing, and realistic lighting effects with shadow casting support.
 
 ## Features
 
@@ -58,7 +58,7 @@ Returns an array of LOD (Level of Detail) levels for the asteroid.
 #### LOD Levels
 
 - **LOD 0** (0 distance): High detail with full nucleus geometry
-- **LOD 1** (5 AU): Lower detail with simplified mesh nucleus
+- **LOD 1** (5 \* SCALE.RENDER_SCALE_AU): Lower detail with simplified mesh nucleus
 
 #### Returns
 
@@ -141,7 +141,7 @@ Creates the shader material for the asteroid surface.
 
 - Extracts colors and heights from `AsteroidProperties`
 - Applies visual properties from the object's properties
-- Creates [[AsteroidNucleusMaterial]] instance
+- Creates [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] instance
 
 ### generateColorPalette
 
@@ -149,7 +149,7 @@ Creates the shader material for the asteroid surface.
 private generateColorPalette(): THREE.Color[]
 ```
 
-Generates a random palette of 2-4 colors suitable for rocky asteroids.
+**Note**: This is a private method that generates a random palette of 2-4 colors suitable for rocky asteroids. It's used internally by the renderer but not exposed in the public API.
 
 #### Color Generation
 
@@ -256,10 +256,11 @@ Seeded random number generator for deterministic color palette generation.
 
 ## Dependencies
 
-- [[BaseCelestialRenderer]] - Base rendering functionality
-- [[AsteroidNucleusMaterial]] - Surface material
-- [[LightingManager]] - Dynamic lighting calculations
-- [[ShadowCasterUtils]] - Shadow casting utilities
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base rendering functionality
+- [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] - Surface material
+- [[renderer/threejs-lighting/LightingManager|Lighting Manager]] - Dynamic lighting calculations
+- [[renderer/threejs-celestial/ShadowCasterUtils|Shadow Caster Utils]] - Shadow casting utilities
+- `SimplexNoise` - Three.js simplex noise for procedural geometry displacement
 
 ## Usage Example
 
@@ -287,6 +288,6 @@ renderer.update(
 
 ## 🔗 Related
 
-- [[AsteroidNucleusMaterial]] - Surface material used by this renderer
-- [[BaseCelestialRenderer]] - Base class providing core functionality
-- [[createMesh]] - Factory function for creating asteroid meshes
+- [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] - Surface material used by this renderer
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base class providing core functionality
+- [[celestials/asteroid/createMesh|Create Mesh Factory]] - Factory function for creating asteroid meshes

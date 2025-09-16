@@ -72,13 +72,13 @@ The function automatically detects the gas giant class and creates the appropria
 
 ### Supported Gas Giant Classes
 
-| Class                     | Renderer                     | Description                   |
-| ------------------------- | ---------------------------- | ----------------------------- |
-| `GasGiantClass.CLASS_I`   | [[ClassIGasGiantRenderer]]   | Ammonia Clouds (Jupiter-like) |
-| `GasGiantClass.CLASS_II`  | [[ClassIIGasGiantRenderer]]  | Water Clouds                  |
-| `GasGiantClass.CLASS_III` | [[ClassIIIGasGiantRenderer]] | Cloudless                     |
-| `GasGiantClass.CLASS_IV`  | [[ClassIVGasGiantRenderer]]  | Alkali Metals                 |
-| `GasGiantClass.CLASS_V`   | [[ClassVGasGiantRenderer]]   | Silicate Clouds               |
+| Class                     | Renderer                                         | Description                    |
+| ------------------------- | ------------------------------------------------ | ------------------------------ | ----------------------------- |
+| `GasGiantClass.CLASS_I`   | [[celestials/gas-giants/ClassIGasGiantRenderer   | Class I Gas Giant Renderer]]   | Ammonia Clouds (Jupiter-like) |
+| `GasGiantClass.CLASS_II`  | [[celestials/gas-giants/ClassIIGasGiantRenderer  | Class II Gas Giant Renderer]]  | Water Clouds                  |
+| `GasGiantClass.CLASS_III` | [[celestials/gas-giants/ClassIIIGasGiantRenderer | Class III Gas Giant Renderer]] | Cloudless                     |
+| `GasGiantClass.CLASS_IV`  | [[celestials/gas-giants/ClassIVGasGiantRenderer  | Class IV Gas Giant Renderer]]  | Alkali Metals                 |
+| `GasGiantClass.CLASS_V`   | [[celestials/gas-giants/ClassVGasGiantRenderer   | Class V Gas Giant Renderer]]   | Silicate Clouds               |
 
 ### LOD Management
 
@@ -226,15 +226,15 @@ This allows existing code that references `createGasGiantMesh` to continue worki
 
 ## Dependencies
 
-- [[BaseGasGiantRenderer]] - Base renderer class for all gas giant classes
-- [[ClassIGasGiantRenderer]] - Class I gas giant renderer
-- [[ClassIIGasGiantRenderer]] - Class II gas giant renderer
-- [[ClassIIIGasGiantRenderer]] - Class III gas giant renderer
-- [[ClassIVGasGiantRenderer]] - Class IV gas giant renderer
-- [[ClassVGasGiantRenderer]] - Class V gas giant renderer
-- [[createFallbackSphere]] - Fallback sphere creation utility
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] - Base renderer class for all gas giant classes
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Class I gas giant renderer
+- [[celestials/gas-giants/ClassIIGasGiantRenderer|Class II Gas Giant Renderer]] - Class II gas giant renderer
+- [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] - Class III gas giant renderer
+- [[celestials/gas-giants/ClassIVGasGiantRenderer|Class IV Gas Giant Renderer]] - Class IV gas giant renderer
+- [[celestials/gas-giants/ClassVGasGiantRenderer|Class V Gas Giant Renderer]] - Class V gas giant renderer
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback sphere creation utility
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface
 
 ## Error Scenarios
 
@@ -285,13 +285,13 @@ The factory function handles gas giant-specific requirements:
 
 ## 🔗 Related
 
-- [[BaseGasGiantRenderer]] - Base renderer class used by this factory
-- [[ClassIGasGiantRenderer]] - Class I gas giant renderer
-- [[ClassIIGasGiantRenderer]] - Class II gas giant renderer
-- [[ClassIIIGasGiantRenderer]] - Class III gas giant renderer
-- [[ClassIVGasGiantRenderer]] - Class IV gas giant renderer
-- [[ClassVGasGiantRenderer]] - Class V gas giant renderer
-- [[GasGiantMaterials]] - Materials used by the renderers
-- [[createFallbackSphere]] - Fallback utility for error cases
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] - Base renderer class used by this factory
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Class I gas giant renderer
+- [[celestials/gas-giants/ClassIIGasGiantRenderer|Class II Gas Giant Renderer]] - Class II gas giant renderer
+- [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] - Class III gas giant renderer
+- [[celestials/gas-giants/ClassIVGasGiantRenderer|Class IV Gas Giant Renderer]] - Class IV gas giant renderer
+- [[celestials/gas-giants/ClassVGasGiantRenderer|Class V Gas Giant Renderer]] - Class V gas giant renderer
+- [[celestials/gas-giants/GasGiantMaterials|Gas Giant Materials]] - Materials used by the renderers
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback utility for error cases
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface

@@ -722,10 +722,10 @@ class VectorUtils {
 
 ## 🔗 Related
 
-- [[Constants]] - Mathematical constants used by utilities
-- [[OSVector3]] - Vector operations using utility functions
-- [[OSQuaternion]] - Quaternion operations with angle utilities
-- [[OSMatrix3]] - Matrix operations with mathematical utilities
-- [[OSMatrix4]] - 4D matrix operations with utility functions
-- [[@teskooano/core-physics]] - Physics calculations using utilities
-- [[@teskooano/renderer-threejs]] - Rendering optimizations with utilities
+- [[core/core-math/Constants|Constants]] - Mathematical constants used by utilities
+- [[core/core-math/OSVector3|OSVector3]] - Vector operations using utility functions
+- [[core/core-math/OSQuaternion|OSQuaternion]] - Quaternion operations with angle utilities
+- [[core/core-math/OSMatrix3|OSMatrix3]] - Matrix operations with mathematical utilities
+- [[core/core-math/OSMatrix4|OSMatrix4]] - 4D matrix operations with utility functions
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics calculations using utilities
+- [[threejs-renderers/threejs/threejs|@teskooano/renderer-threejs]] - Rendering optimizations with utilities

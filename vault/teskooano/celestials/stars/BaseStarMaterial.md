@@ -356,9 +356,9 @@ class MyStarMaterial extends BaseStarMaterial {
 
 ## 🔗 Related
 
-- [[EnhancedStarMaterial]] - Enhanced star material implementation
-- [[BaseStarRenderer]] - Base star renderer
-- [[enhanced-star.vertex.glsl]] - Vertex shader
-- [[enhanced-star.fragment.glsl]] - Fragment shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]] - Enhanced star material implementation
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Base star renderer
+- [[celestials/stars/enhanced-star.vertex.glsl|Enhanced Star Vertex Shader]] - Vertex shader
+- [[celestials/stars/enhanced-star.fragment.glsl|Enhanced Star Fragment Shader]] - Fragment shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

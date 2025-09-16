@@ -723,9 +723,9 @@ const projectedPoint = planePoint.clone().add(projection);
 
 ## 🔗 Related
 
-- [[OSQuaternion]] - Quaternion rotations applied to vectors
-- [[OSMatrix3]] - 2D transformations using vectors
-- [[OSMatrix4]] - 3D transformations using vectors
-- [[Constants]] - EPSILON constant for precision
-- [[@teskooano/core-physics]] - Physics calculations using vectors
-- [[@teskooano/core-state]] - State management with vector operations
+- [[core/core-math/OSQuaternion|OSQuaternion]] - Quaternion rotations applied to vectors
+- [[core/core-math/OSMatrix3|OSMatrix3]] - 2D transformations using vectors
+- [[core/core-math/OSMatrix4|OSMatrix4]] - 3D transformations using vectors
+- [[core/core-math/Constants|Constants]] - EPSILON constant for precision
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics calculations using vectors
+- [[core/core-state/core-state|@teskooano/core-state]] - State management with vector operations

@@ -68,7 +68,7 @@ constructor(
 
 - **Defines**: MAX_LIGHTS (4), MAX_SHADOW_CASTERS (4)
 - **Uniforms**: color, opacity, time, rotationAngle, rotationRate, uParentPosition, uParentRadius, uNumLights, uLightSources, uNumShadowCasters, uShadowCasters, uDynamicAmbientIntensity, uAxialInclination, uRingTilt, uInheritParentTilt, uParentAxialTilt, uPrecessionAngle, uPrecessionRate, uSegmentDensity, uSegmentWidth, uParticleDetail, uDensityVariation
-- **Shaders**: [[ring.vertex.glsl]], [[ring.fragment.glsl]]
+- **Shaders**: [[celestials/rings/ring.vertex.glsl|Ring Vertex Shader]], [[celestials/rings/ring.fragment.glsl|Ring Fragment Shader]]
 
 ### AccretionDiskMaterial
 
@@ -117,7 +117,7 @@ constructor(
 
 - **Defines**: MAX_LIGHTS (4), MAX_SHADOW_CASTERS (4)
 - **Uniforms**: color, opacity, time, rotationAngle, rotationRate, uParentPosition, uParentRadius, uNumLights, uLightSources, uNumShadowCasters, uShadowCasters, uDynamicAmbientIntensity, uIsAccretionDisk, uTemperature, uAccretionRate, uEmissionType, uIsRelativistic, uInnerEdgeRadius, uAxialInclination, uRingTilt, uInheritParentTilt, uParentAxialTilt, uPrecessionAngle, uPrecessionRate
-- **Shaders**: [[ring.vertex.glsl]], [[accretion-disk.fragment.glsl]]
+- **Shaders**: [[celestials/rings/ring.vertex.glsl|Ring Vertex Shader]], [[celestials/rings/accretion-disk.fragment.glsl|Accretion Disk Fragment Shader]]
 
 ## Common Features
 
@@ -260,7 +260,7 @@ The materials are used by:
 
 ## 🔗 Related
 
-- [[RingSystemRenderer]] - Renderer that uses these materials
-- [[ring.vertex.glsl]] - Ring vertex shader
-- [[ring.fragment.glsl]] - Ring fragment shader
-- [[accretion-disk.fragment.glsl]] - Accretion disk fragment shader
+- [[celestials/rings/RingSystemRenderer|Ring System Renderer]] - Renderer that uses these materials
+- [[celestials/rings/ring.vertex.glsl|Ring Vertex Shader]] - Ring vertex shader
+- [[celestials/rings/ring.fragment.glsl|Ring Fragment Shader]] - Ring fragment shader
+- [[celestials/rings/accretion-disk.fragment.glsl|Accretion Disk Fragment Shader]] - Accretion disk fragment shader

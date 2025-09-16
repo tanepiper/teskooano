@@ -426,10 +426,10 @@ function simulationStep(bodies: PhysicsStateReal[]) {
 
 ## 🔗 Related Components
 
-- [[WasmSpatialPartitioning]] - High-performance spatial operations
-- [[SimulationManager]] - Orchestrates WASM usage
-- [[Collision]] - Traditional collision detection
-- [[WasmSpatialService]] - WASM service wrapper
+- [[core/core-physics/WasmSpatialPartitioning|WasmSpatialPartitioning]] - High-performance spatial operations
+- [[core/core-physics/SimulationManager|SimulationManager]] - Orchestrates WASM usage
+- [[core/core-physics/Collision|Collision]] - Traditional collision detection
+- [[core/core-physics/WasmSpatialService|WasmSpatialService]] - WASM service wrapper
 
 ## 📚 Architecture Patterns
 

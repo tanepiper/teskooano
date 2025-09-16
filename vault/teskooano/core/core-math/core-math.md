@@ -5,6 +5,7 @@ type: index
 package: "@teskooano/core-math"
 version: "0.4.0-dev.0"
 dependencies: ["three"]
+devDependencies: ["typescript", "@types/node", "@types/three", "vitest"]
 classes: ["OSVector3", "OSMatrix3", "OSMatrix4", "OSQuaternion"]
 modules: ["constants", "utils", "epoch", "random"]
 status: active
@@ -22,17 +23,17 @@ The `@teskooano/core-math` package provides essential mathematical building bloc
 
 ### Mathematical Primitives
 
-- **[[OSVector3]]**: 3D vector class with comprehensive operations and Y-up coordinate system
-- **[[OSQuaternion]]**: Quaternion class for 3D rotations with spherical interpolation
-- **[[OSMatrix3]]**: 3×3 matrix class for 2D transformations and linear algebra
-- **[[OSMatrix4]]**: 4×4 matrix class for 3D transformations and projections
+- **[[core/core-math/OSVector3|OSVector3]]**: 3D vector class with comprehensive operations and Y-up coordinate system
+- **[[core/core-math/OSQuaternion|OSQuaternion]]**: Quaternion class for 3D rotations with spherical interpolation
+- **[[core/core-math/OSMatrix3|OSMatrix3]]**: 3×3 matrix class for 2D transformations and linear algebra
+- **[[core/core-math/OSMatrix4|OSMatrix4]]**: 4×4 matrix class for 3D transformations and projections
 
 ### Utility Modules
 
-- **[[Constants]]**: Mathematical constants including PI, EPSILON, and conversion factors
-- **[[Utils]]**: Mathematical utilities including interpolation, clamping, and power-of-two functions
-- **[[Epoch]]**: Astronomical epoch utilities for time calculations and validation
-- **[[Random]]**: Seeded random number generators for deterministic simulations
+- **[[core/core-math/Constants|Constants]]**: Mathematical constants including PI, EPSILON, and conversion factors
+- **[[core/core-math/Utils|Utils]]**: Mathematical utilities including interpolation, clamping, and power-of-two functions
+- **[[core/core-math/Epoch|Epoch]]**: Astronomical epoch utilities for time calculations and validation
+- **[[core/core-math/Random|Random]]**: Seeded random number generators for deterministic simulations
 
 ### Design Principles
 
@@ -45,7 +46,7 @@ The `@teskooano/core-math` package provides essential mathematical building bloc
 
 ### Core Classes
 
-#### [[OSVector3]]
+#### [[core/core-math/OSVector3|OSVector3]]
 
 3D vector class implementing the engine's Y-up coordinate system with comprehensive vector operations.
 
@@ -57,7 +58,7 @@ The `@teskooano/core-math` package provides essential mathematical building bloc
 - Utility methods: distance calculations, equality checking, array conversion
 - Three.js interoperability: `toThreeJS()` and `fromThreeJS()` methods
 
-#### [[OSQuaternion]]
+#### [[core/core-math/OSQuaternion|OSQuaternion]]
 
 Quaternion class for 3D rotations with support for axis-angle, Euler angles, and spherical interpolation.
 
@@ -68,7 +69,7 @@ Quaternion class for 3D rotations with support for axis-angle, Euler angles, and
 - Interpolation: spherical linear interpolation (slerp)
 - Three.js compatibility: seamless conversion to/from Three.Quaternion
 
-#### [[OSMatrix3]]
+#### [[core/core-math/OSMatrix3|OSMatrix3]]
 
 3×3 matrix class for 2D transformations and linear algebra operations.
 
@@ -79,7 +80,7 @@ Quaternion class for 3D rotations with support for axis-angle, Euler angles, and
 - Three.js integration: conversion to/from Three.Matrix3
 - Performance optimized: allocation-free operations where possible
 
-#### [[OSMatrix4]]
+#### [[core/core-math/OSMatrix4|OSMatrix4]]
 
 4×4 matrix class for 3D transformations, projections, and complex geometric operations.
 
@@ -92,7 +93,7 @@ Quaternion class for 3D rotations with support for axis-angle, Euler angles, and
 
 ### Utility Modules
 
-#### [[Constants]]
+#### [[core/core-math/Constants|Constants]]
 
 Mathematical constants used throughout the engine.
 
@@ -104,7 +105,7 @@ Mathematical constants used throughout the engine.
 - **HALF_PI**: π/2 for right-angle calculations
 - **DEG_TO_RAD**: Degree to radian conversion factor
 
-#### [[Utils]]
+#### [[core/core-math/Utils|Utils]]
 
 Mathematical utility functions for common operations.
 
@@ -118,7 +119,7 @@ Mathematical utility functions for common operations.
 - **UUID Generation**: Version 4 UUID creation
 - **Function Modifiers**: Debounce, throttle, memoize
 
-#### [[Epoch]]
+#### [[core/core-math/Epoch|Epoch]]
 
 Astronomical epoch utilities for time calculations and validation.
 
@@ -129,7 +130,7 @@ Astronomical epoch utilities for time calculations and validation.
 - **Validation**: Epoch consistency checking across celestial objects
 - **Analysis**: Comprehensive epoch statistics and reporting
 
-#### [[Random]]
+#### [[core/core-math/Random|Random]]
 
 Seeded random number generators for deterministic simulations.
 
@@ -338,21 +339,21 @@ const value2 = random(); // Always same sequence
 
 ### Core Classes
 
-- [[OSVector3]] - 3D vector operations and Y-up coordinate system
-- [[OSQuaternion]] - 3D rotations and spherical interpolation
-- [[OSMatrix3]] - 3×3 matrix operations and linear algebra
-- [[OSMatrix4]] - 4×4 matrix transformations and projections
+- [[core/core-math/OSVector3|OSVector3]] - 3D vector operations and Y-up coordinate system
+- [[core/core-math/OSQuaternion|OSQuaternion]] - 3D rotations and spherical interpolation
+- [[core/core-math/OSMatrix3|OSMatrix3]] - 3×3 matrix operations and linear algebra
+- [[core/core-math/OSMatrix4|OSMatrix4]] - 4×4 matrix transformations and projections
 
 ### Utility Modules
 
-- [[Constants]] - Mathematical constants and conversion factors
-- [[Utils]] - Mathematical utilities and function modifiers
-- [[Epoch]] - Astronomical epoch calculations and validation
-- [[Random]] - Seeded random number generators
+- [[core/core-math/Constants|Constants]] - Mathematical constants and conversion factors
+- [[core/core-math/Utils|Utils]] - Mathematical utilities and function modifiers
+- [[core/core-math/Epoch|Epoch]] - Astronomical epoch calculations and validation
+- [[core/core-math/Random|Random]] - Seeded random number generators
 
 ### Integration Points
 
-- [[@teskooano/core-physics]] - Physics calculations using math primitives
-- [[@teskooano/core-state]] - State management with mathematical operations
-- [[@teskooano/data-types]] - Type definitions using math primitives
-- [[@teskooano/renderer-threejs]] - Rendering system with Three.js integration
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics calculations using math primitives
+- [[core/core-state/core-state|@teskooano/core-state]] - State management with mathematical operations
+- [[data/data-types/data-types|@teskooano/data-types]] - Type definitions using math primitives
+- [[threejs-renderers/threejs/threejs|@teskooano/renderer-threejs]] - Rendering system with Three.js integration

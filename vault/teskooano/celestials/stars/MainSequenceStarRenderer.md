@@ -345,9 +345,9 @@ const lodLevels = renderer.getLODLevels(starObject, {
 
 ## 🔗 Related
 
-- [[MainSequenceStarMaterial]] - Material used by this renderer
-- [[BaseStarRenderer]] - Base star renderer
-- [[EnhancedStarMaterial]] - Enhanced star material
-- [[CoronaMaterial]] - Corona material
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/MainSequenceStarMaterial|Main Sequence Star Material]] - Material used by this renderer
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Base star renderer
+- [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]] - Enhanced star material
+- [[celestials/stars/CoronaMaterial|Corona Material]] - Corona material
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

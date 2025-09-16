@@ -4,21 +4,20 @@
     "type": "split",
     "children": [
       {
-        "id": "6c29bc90ea5a4e75",
+        "id": "004ed12fe2a9f469",
         "type": "tabs",
         "children": [
           {
-            "id": "5d22e2346294cbc4",
+            "id": "6ea16438f15ecb15",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "bases",
               "state": {
-                "file": "Welcome.md",
-                "mode": "source",
-                "source": false
+                "file": "Component View.base",
+                "viewName": "Table"
               },
-              "icon": "lucide-file",
-              "title": "Welcome"
+              "icon": "lucide-table",
+              "title": "Component View"
             }
           }
         ]
@@ -84,8 +83,7 @@
               "title": "Notebook Navigator"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -153,13 +151,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Welcome.md",
+                "file": "Component View.base",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Welcome"
+              "title": "Outline of Component View"
             }
           }
         ],
@@ -181,35 +179,35 @@
       "notebook-navigator:Notebook Navigator": false
     }
   },
-  "active": "a9c16a1bc8a536cb",
+  "active": "6ea16438f15ecb15",
   "lastOpenFiles": [
-    "renderer/threejs-core/RendererStateAdapter.md",
+    "celestials/stars/KerrBlackHoleRenderer.md",
+    "celestials/stars/WhiteDwarfRenderer.md",
+    "celestials/stars/WolfRayetRenderer.md",
+    "celestials/stars/HypergiantRenderer.md",
+    "celestials/stars/SupergiantRenderer.md",
+    "celestials/stars/PostAGBRenderer.md",
+    "celestials/stars/AGBRenderer.md",
+    "celestials/stars/HorizontalBranchRenderer.md",
+    "celestials/stars/RedGiantRenderer.md",
+    "celestials/stars/SubgiantRenderer.md",
+    "celestials/stars/ClassMStarRenderer.md",
+    "celestials/stars/ClassKStarRenderer.md",
+    "celestials/stars/ClassFStarRenderer.md",
+    "celestials/stars/ClassAStarRenderer.md",
+    "celestials/stars/ClassBStarRenderer.md",
+    "celestials/stars/SchwarzschildBlackHoleRenderer.md",
+    "celestials/stars/NeutronStarRenderer.md",
+    "celestials/stars/ClassOStarRenderer.md",
+    "Dependencies Data View.md",
     "Welcome.md",
+    "OBSIDIAN_AUDIT_PROGRESS.md",
+    "renderer/threejs-core/RendererStateAdapter.md",
     "Component View.base",
     "renderer/threejs-orbits/threejs-orbits.md",
     "renderer/threejs-orbits/simplify.md",
     "renderer/threejs-orbits/TrailManager.md",
     "renderer/threejs-orbits/TrailDataPool.md",
-    "renderer/threejs-orbits/TrailCurveInterpolator.md",
-    "renderer/threejs-orbits/SimpleOrbitalRenderer.md",
-    "renderer/threejs-orbits/SharedMaterials.md",
-    "renderer/threejs-orbits/README.md",
-    "renderer/threejs-orbits/PredictionRenderer.md",
-    "renderer/threejs-orbits/PredictionManager.md",
-    "renderer/threejs-orbits/PredictionCalculator.md",
-    "renderer/threejs-orbits/OrbitsManager.md",
-    "renderer/threejs-orbits/OrbitCalculator.md",
-    "renderer/threejs-orbits/NBodyTrailsRenderer.md",
-    "renderer/threejs-orbits/NBodyStrategy.md",
-    "renderer/threejs-orbits/NBodyPredictionRenderer.md",
-    "renderer/threejs-orbits/KeplerianManager.md",
-    "renderer/threejs-orbits/IdealStrategy.md",
-    "renderer/threejs-orbits/IOrbitVisualizationStrategy.md",
-    "renderer/threejs/threejs.md",
-    "renderer/threejs/orchestrators.md",
-    "renderer/threejs/RenderingOrchestrator.md",
-    "renderer/threejs/RendererStateAdapter.md",
-    "renderer/threejs/RenderPipeline.md",
     "renderer/threejs-orbits",
     "renderer/threejs-objects",
     "renderer/threejs-lighting",

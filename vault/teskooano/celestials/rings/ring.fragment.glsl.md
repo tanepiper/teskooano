@@ -429,7 +429,7 @@ The fragment shader works with the vertex shader to provide:
 
 ## 🔗 Related
 
-- [[ring.vertex.glsl]] - Vertex shader that provides data for this fragment shader
-- [[RingMaterial]] - Material that uses this shader
-- [[RingSystemRenderer]] - Renderer that creates the geometry for this shader
-- [[utils.ts]] - Utility functions for ring calculations
+- [[celestials/rings/ring.vertex.glsl|Ring Vertex Shader]] - Vertex shader that provides data for this fragment shader
+- [[celestials/rings/RingMaterials|Ring Materials]] - Material that uses this shader
+- [[celestials/rings/RingSystemRenderer|Ring System Renderer]] - Renderer that creates the geometry for this shader
+- [[celestials/rings/utils.ts|Ring Utilities]] - Utility functions for ring calculations

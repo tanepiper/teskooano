@@ -423,8 +423,8 @@ The function is also exported as `createSatelliteMesh` for backward compatibilit
 
 ## 🔗 Related
 
-- [[SatelliteRenderer]] - Main renderer class used by this function
-- [[SatelliteMaterial]] - Material used by the renderer
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/satellite/SatelliteRenderer|Satellite Renderer]] - Main renderer class used by this function
+- [[celestials/satellite/SatelliteMaterial|Satellite Material]] - Material used by the renderer
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system
+- [[data/data-types/data-types|Data Types]] - Type definitions

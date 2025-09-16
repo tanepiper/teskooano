@@ -253,6 +253,6 @@ uNumLights = 1;                    // Single light source (Sun)
 
 ## 🔗 Related
 
-- [[CometComaMaterial]] - Material that uses this shader
-- [[CometRenderer]] - Renderer that manages this shader
-- [[CometMaterials]] - Collection of all comet materials
+- [[celestials/comet/CometMaterials|Comet Coma Material]] - Material that uses this shader
+- [[celestials/comet/CometRenderer|Comet Renderer]] - Renderer that manages this shader
+- [[celestials/comet/CometMaterials|Comet Materials]] - Collection of all comet materials

@@ -13,6 +13,16 @@ dependencies:
     "rxjs",
     "three",
   ]
+devDependencies:
+  [
+    "@playwright/test",
+    "@vitest/ui",
+    "eslint",
+    "jsdom",
+    "typescript",
+    "vite-tsconfig-paths",
+    "vitest",
+  ]
 classes:
   [
     "SimulationStateService",
@@ -114,49 +124,49 @@ src/
 
 Core business logic services:
 
-- **[[SimulationStateService]]** - Manages simulation control state
-- **[[PhysicsStateCalculator]]** - Calculates physics state from celestial objects
-- **[[PhysicsStateProvider]]** - Provides physics state with intelligent caching
+- **[[core/core-state/SimulationStateService|SimulationStateService]]** - Manages simulation control state
+- **[[core/core-state/PhysicsStateCalculator|PhysicsStateCalculator]]** - Calculates physics state from celestial objects
+- **[[core/core-state/PhysicsStateProvider|PhysicsStateProvider]]** - Provides physics state with intelligent caching
 
 ### **Stores** (`stores/`)
 
 Pure data storage with RxJS observables:
 
-- **[[CelestialStore]]** - Manages celestial objects, hierarchy, and destruction events
-- **[[SeedStore]]** - Manages seed state with localStorage persistence
-- **[[PhysicsStore]]** - Manages physics-related state (acceleration vectors)
-- **[[RenderableStore]]** - Manages renderable celestial objects
+- **[[core/core-state/CelestialStore|CelestialStore]]** - Manages celestial objects, hierarchy, and destruction events
+- **[[core/core-state/SeedStore|SeedStore]]** - Manages seed state with localStorage persistence
+- **[[core/core-state/PhysicsStore|PhysicsStore]]** - Manages physics-related state (acceleration vectors)
+- **[[core/core-state/RenderableStore|RenderableStore]]** - Manages renderable celestial objects
 
 ### **Managers** (`managers/`)
 
 Business logic and complex operations:
 
-- **[[CelestialManager]]** - Consolidates celestial object lifecycle operations using shared utilities
+- **[[core/core-state/CelestialManager|CelestialManager]]** - Consolidates celestial object lifecycle operations using shared utilities
 
 ### **Adapters** (`adapters/`)
 
 Bridge components between different systems:
 
-- **[[PhysicsSystemAdapter]]** - Bridges core state and physics engine with centralized destruction handling
+- **[[core/core-state/PhysicsSystemAdapter|PhysicsSystemAdapter]]** - Bridges core state and physics engine with centralized destruction handling
 
 ### **Shared Utilities** (`utils/`)
 
 Centralized utilities for code reuse:
 
-- **[[StoreFilters]]** - Shared filtering functions and RxJS operators
-- **[[CelestialUtils]]** - Shared validation, processing, hierarchy, and event utilities
+- **[[core/core-state/StoreFilters|StoreFilters]]** - Shared filtering functions and RxJS operators
+- **[[core/core-state/CelestialUtils|CelestialUtils]]** - Shared validation, processing, hierarchy, and event utilities
 
 ### **Types** (`types/`)
 
 Type definitions and utilities:
 
-- **[[SimulationTypes]]** - Simulation state type definitions
-- **[[SimulationUtils]]** - Configuration validation and utilities
+- **[[core/core-state/SimulationTypes|SimulationTypes]]** - Simulation state type definitions
+- **[[core/core-state/SimulationUtils|SimulationUtils]]** - Configuration validation and utilities
 
 ### **Utilities**
 
-- **[[StateAccessor]]** - Unified access to all application state
-- **[[StateSubscriptionMixin]]** - Standardized RxJS subscription management
+- **[[core/core-state/StateAccessor|StateAccessor]]** - Unified access to all application state
+- **[[core/core-state/StateSubscriptionMixin|StateSubscriptionMixin]]** - Standardized RxJS subscription management
 
 ## 📊 Store Architecture
 
@@ -392,13 +402,13 @@ class MyComponent extends StateSubscriptionMixin {
 
 ## 🔗 Related Components
 
-- [[SimulationStateService]] - Core simulation state management
-- [[CelestialManager]] - Celestial object lifecycle management
-- [[PhysicsSystemAdapter]] - Physics engine integration
-- [[StateAccessor]] - Unified state access
-- [[StateSubscriptionMixin]] - Subscription management
-- [[StoreFilters]] - Shared filtering utilities
-- [[CelestialUtils]] - Shared validation and processing utilities
+- [[core/core-state/SimulationStateService|SimulationStateService]] - Core simulation state management
+- [[core/core-state/CelestialManager|CelestialManager]] - Celestial object lifecycle management
+- [[core/core-state/PhysicsSystemAdapter|PhysicsSystemAdapter]] - Physics engine integration
+- [[core/core-state/StateAccessor|StateAccessor]] - Unified state access
+- [[core/core-state/StateSubscriptionMixin|StateSubscriptionMixin]] - Subscription management
+- [[core/core-state/StoreFilters|StoreFilters]] - Shared filtering utilities
+- [[core/core-state/CelestialUtils|CelestialUtils]] - Shared validation and processing utilities
 
 ## 📚 Architecture Patterns
 

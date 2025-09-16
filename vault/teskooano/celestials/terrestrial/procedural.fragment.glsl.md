@@ -556,8 +556,8 @@ The fragment shader works with the vertex shader to provide:
 
 ## 🔗 Related
 
-- [[procedural.vertex.glsl]] - Vertex shader that provides data for this fragment shader
-- [[ProceduralPlanetMaterial]] - Material that uses this shader
-- [[BaseTerrestrialRenderer]] - Renderer that creates the geometry for this shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/terrestrial/procedural.vertex.glsl|Procedural Vertex Shader]] - Vertex shader that provides data for this fragment shader
+- [[celestials/terrestrial/ProceduralPlanetMaterial|ProceduralPlanetMaterial]] - Material that uses this shader
+- [[celestials/terrestrial/BaseTerrestrialRenderer|BaseTerrestrialRenderer]] - Renderer that creates the geometry for this shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

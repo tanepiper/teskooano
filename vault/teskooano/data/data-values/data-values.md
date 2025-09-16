@@ -5,6 +5,7 @@ type: index
 package: "@teskooano/data-values"
 version: "0.1.0"
 dependencies: ["three"]
+devDependencies: ["typescript", "vitest", "eslint", "@types/three"]
 classes: []
 status: active
 ---

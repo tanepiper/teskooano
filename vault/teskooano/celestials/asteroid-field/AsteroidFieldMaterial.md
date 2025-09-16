@@ -67,7 +67,7 @@ The constructor:
 
 ### Vertex Shader
 
-Uses [[asteroid.vert]] for:
+Uses [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]] for:
 
 - Instance matrix transformations
 - Belt rotation calculations
@@ -75,7 +75,7 @@ Uses [[asteroid.vert]] for:
 
 ### Fragment Shader
 
-Uses [[asteroid.frag]] for:
+Uses [[celestials/asteroid-field/asteroid.frag|Asteroid Fragment Shader]] for:
 
 - Texture sampling from multiple variants
 - Rotation animation of texture coordinates
@@ -355,13 +355,13 @@ material.dispose();
 
 ## Dependencies
 
-- [[asteroid.vert]] - Vertex shader source
-- [[asteroid.frag]] - Fragment shader source
+- [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]] - Vertex shader source
+- [[celestials/asteroid-field/asteroid.frag|Asteroid Fragment Shader]] - Fragment shader source
 - THREE.TextureLoader - Texture loading utility
 - THREE.CanvasTexture - Fallback texture generation
 
 ## 🔗 Related
 
-- [[AsteroidFieldRenderer]] - Renderer that uses this material
-- [[asteroid.vert]] - Vertex shader implementation
-- [[asteroid.frag]] - Fragment shader implementation
+- [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] - Renderer that uses this material
+- [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]] - Vertex shader implementation
+- [[celestials/asteroid-field/asteroid.frag|Asteroid Fragment Shader]] - Fragment shader implementation

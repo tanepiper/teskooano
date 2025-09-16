@@ -441,13 +441,13 @@ The corona system creates multiple layers:
 
 ## 🔗 Related
 
-- [[BaseStarMaterial]] - Base material class used by this renderer
-- [[CoronaMaterial]] - Corona material used by this renderer
-- [[MainSequenceStarRenderer]] - Concrete implementation for main sequence stars
-- [[ClassGStarRenderer]] - Concrete implementation for G-class stars
-- [[ClassOStarRenderer]] - Concrete implementation for O-class stars
-- [[NeutronStarRenderer]] - Concrete implementation for neutron stars
-- [[createMesh]] - Factory function that creates this renderer
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/BaseStarMaterial|Base Star Material]] - Base material class used by this renderer
+- [[celestials/stars/CoronaMaterial|Corona Material]] - Corona material used by this renderer
+- [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]] - Concrete implementation for main sequence stars
+- [[celestials/stars/ClassGStarRenderer|Class G Star Renderer]] - Concrete implementation for G-class stars
+- [[celestials/stars/ClassOStarRenderer|Class O Star Renderer]] - Concrete implementation for O-class stars
+- [[celestials/stars/NeutronStarRenderer|Neutron Star Renderer]] - Concrete implementation for neutron stars
+- [[celestials/stars/createMesh|Create Mesh Factory]] - Factory function that creates this renderer
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system
+- [[data/data-types/data-types|Data Types]] - Type definitions

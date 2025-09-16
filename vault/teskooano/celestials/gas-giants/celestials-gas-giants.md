@@ -155,37 +155,37 @@ The renderer uses a 3-tier LOD system for optimal performance:
 
 ### Base Classes
 
-- [[BaseGasGiantRenderer]] - Abstract base renderer for all gas giant classes
-- [[BaseGasGiantMaterial]] - Abstract base material with dynamic light/shadow support
-- [[BasicGasGiantMaterial]] - Simple material for LOD levels
+- [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] - Abstract base renderer for all gas giant classes
+- [[celestials/gas-giants/GasGiantMaterials|Base Gas Giant Material]] - Abstract base material with dynamic light/shadow support
+- [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]] - Simple material for LOD levels
 
 ### Class-Specific Renderers
 
-- [[ClassIGasGiantRenderer]] - Renderer for Class I gas giants (Ammonia Clouds)
-- [[ClassIIGasGiantRenderer]] - Renderer for Class II gas giants (Water Clouds)
-- [[ClassIIIGasGiantRenderer]] - Renderer for Class III gas giants (Cloudless)
-- [[ClassIVGasGiantRenderer]] - Renderer for Class IV gas giants (Alkali Metals)
-- [[ClassVGasGiantRenderer]] - Renderer for Class V gas giants (Silicate Clouds)
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Renderer for Class I gas giants (Ammonia Clouds)
+- [[celestials/gas-giants/ClassIIGasGiantRenderer|Class II Gas Giant Renderer]] - Renderer for Class II gas giants (Water Clouds)
+- [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] - Renderer for Class III gas giants (Cloudless)
+- [[celestials/gas-giants/ClassIVGasGiantRenderer|Class IV Gas Giant Renderer]] - Renderer for Class IV gas giants (Alkali Metals)
+- [[celestials/gas-giants/ClassVGasGiantRenderer|Class V Gas Giant Renderer]] - Renderer for Class V gas giants (Silicate Clouds)
 
 ### Class-Specific Materials
 
-- [[ClassIMaterial]] - Material for Class I gas giants with 4D fractal noise
-- [[ClassIIMaterial]] - Material for Class II gas giants
-- [[ClassIIIMaterial]] - Material for Class III gas giants
-- [[ClassIVMaterial]] - Material for Class IV gas giants
-- [[ClassVMaterial]] - Material for Class V gas giants
+- [[celestials/gas-giants/GasGiantMaterials|Class I Material]] - Material for Class I gas giants with 4D fractal noise
+- [[celestials/gas-giants/GasGiantMaterials|Class II Material]] - Material for Class II gas giants
+- [[celestials/gas-giants/GasGiantMaterials|Class III Material]] - Material for Class III gas giants
+- [[celestials/gas-giants/GasGiantMaterials|Class IV Material]] - Material for Class IV gas giants
+- [[celestials/gas-giants/GasGiantMaterials|Class V Material]] - Material for Class V gas giants
 
 ## Shaders
 
 ### Class I Shaders
 
-- [[class-i.vertex.glsl]] - Vertex shader for Class I gas giants
-- [[class-i.fragment.glsl]] - Fragment shader with 4D fractal simplex noise
+- [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]] - Vertex shader for Class I gas giants
+- [[celestials/gas-giants/class-i.fragment.glsl|Class I Fragment Shader]] - Fragment shader with 4D fractal simplex noise
 
 ### Basic Shaders
 
-- [[basic.vertex.glsl]] - Basic vertex shader for LOD levels
-- [[basic.fragment.glsl]] - Basic fragment shader for LOD levels
+- [[celestials/gas-giants/basic.vertex.glsl|Basic Vertex Shader]] - Basic vertex shader for LOD levels
+- [[celestials/gas-giants/basic.fragment.glsl|Basic Fragment Shader]] - Basic fragment shader for LOD levels
 
 ## Dependencies
 
@@ -196,7 +196,7 @@ The renderer uses a 3-tier LOD system for optimal performance:
 
 ## 🔗 Related
 
-- Composes with [[celestials-rings|RingSystemRenderer]] when rings present
-- Uses [[BaseCelestialRenderer]] for core functionality
-- Integrates with [[LightingManager]] for dynamic lighting
-- Works with [[threejs-objects]] factory system
+- Composes with [[celestials/rings/RingSystemRenderer|Ring System Renderer]] when rings present
+- Uses [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] for core functionality
+- Integrates with [[renderer/threejs-lighting/LightingManager|Lighting Manager]] for dynamic lighting
+- Works with [[renderer/threejs-objects/threejs-objects|Three.js Objects]] factory system

@@ -432,12 +432,12 @@ material.update(time, timeScale, lightSources, camera);
 
 ## 🔗 Related
 
-- [[BaseStarMaterial]] - Base material class
-- [[BaseStarRenderer]] - Renderer that uses this material
-- [[MainSequenceStarRenderer]] - Renderer that uses this material
-- [[ClassGStarRenderer]] - G-class star renderer that uses this material
-- [[ClassOStarRenderer]] - O-class star renderer that uses this material
-- [[enhanced-star.vertex.glsl]] - Vertex shader used by this material
-- [[enhanced-star.fragment.glsl]] - Fragment shader used by this material
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/BaseStarMaterial|Base Star Material]] - Base material class
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Renderer that uses this material
+- [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]] - Renderer that uses this material
+- [[celestials/stars/ClassGStarRenderer|Class G Star Renderer]] - G-class star renderer that uses this material
+- [[celestials/stars/ClassOStarRenderer|Class O Star Renderer]] - O-class star renderer that uses this material
+- [[celestials/stars/enhanced-star.vertex.glsl|Enhanced Star Vertex Shader]] - Vertex shader used by this material
+- [[celestials/stars/enhanced-star.fragment.glsl|Enhanced Star Fragment Shader]] - Fragment shader used by this material
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

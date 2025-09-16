@@ -523,11 +523,11 @@ class OcclusionCache {
 
 ## 🔗 Related Patterns
 
-- **[[Layer Pattern]]**: Occlusion detection is implemented within layers
-- **[[Caching Pattern]]**: Result caching for performance optimization
-- **[[Strategy Pattern]]**: Different occlusion strategies for different use cases
-- **[[Observer Pattern]]**: Occlusion results trigger visibility updates
-- **[[Performance Pattern]]**: Performance optimization techniques
+- **[[architecture/Layer Pattern|Layer Pattern]]**: Occlusion detection is implemented within layers
+- **[[architecture/Caching Pattern|Caching Pattern]]**: Result caching for performance optimization
+- **[[architecture/Strategy Pattern|Strategy Pattern]]**: Different occlusion strategies for different use cases
+- **[[architecture/Observer Pattern|Observer Pattern]]**: Occlusion results trigger visibility updates
+- **[[architecture/Performance Pattern|Performance Pattern]]**: Performance optimization techniques
 
 ## 🎯 Performance Considerations
 

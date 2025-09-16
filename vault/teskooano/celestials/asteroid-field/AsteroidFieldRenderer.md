@@ -14,7 +14,7 @@ Main renderer class for asteroid field objects using instanced meshes with LOD s
 
 ## Overview
 
-The `AsteroidFieldRenderer` extends [[BaseCelestialRenderer]] to provide specialized rendering capabilities for asteroid field objects. It creates multiple LOD levels with varying particle counts to provide optimal performance at different viewing distances using THREE.InstancedMesh for efficient particle rendering.
+The `AsteroidFieldRenderer` extends [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] to provide specialized rendering capabilities for asteroid field objects. It creates multiple LOD levels with varying particle counts to provide optimal performance at different viewing distances using THREE.InstancedMesh for efficient particle rendering.
 
 ## Features
 
@@ -153,7 +153,7 @@ Creates the material for the asteroid field.
 #### Material Creation Process
 
 1. Extracts asteroid field properties from the object
-2. Creates [[AsteroidFieldMaterial]] with default options
+2. Creates [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] with default options
 3. Loads textures from provided paths if available
 4. Returns the configured material
 
@@ -317,13 +317,13 @@ renderer.dispose();
 
 ## Dependencies
 
-- [[BaseCelestialRenderer]] - Base rendering functionality
-- [[AsteroidFieldMaterial]] - Surface material
-- [[createSeededRandomSync]] - Seeded random number generation
-- [[SCALE]] - Render scale constants
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base rendering functionality
+- [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] - Surface material
+- [[core/core-math/Random|Random Utilities]] - Seeded random number generation
+- [[core/core-math/Constants|Constants]] - Render scale constants
 
 ## 🔗 Related
 
-- [[AsteroidFieldMaterial]] - Material used by this renderer
-- [[BaseCelestialRenderer]] - Base class providing core functionality
-- [[createMesh]] - Factory function for creating asteroid field meshes
+- [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] - Material used by this renderer
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base class providing core functionality
+- [[celestials/asteroid-field/createMesh|Create Mesh Factory]] - Factory function for creating asteroid field meshes

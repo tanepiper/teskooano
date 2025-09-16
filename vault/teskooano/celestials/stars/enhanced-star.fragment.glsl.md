@@ -410,11 +410,11 @@ finalColor *= uLightingIntensity;
 
 ## 🔗 Related
 
-- [[enhanced-star.vertex.glsl]] - Vertex shader that provides data for this fragment shader
-- [[EnhancedStarMaterial]] - Material that uses this shader
-- [[BaseStarRenderer]] - Renderer that creates the geometry for this shader
-- [[MainSequenceStarRenderer]] - Main sequence star renderer
-- [[ClassGStarRenderer]] - G-class star renderer
-- [[ClassOStarRenderer]] - O-class star renderer
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/enhanced-star.vertex.glsl|Enhanced Star Vertex Shader]] - Vertex shader that provides data for this fragment shader
+- [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]] - Material that uses this shader
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Renderer that creates the geometry for this shader
+- [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]] - Main sequence star renderer
+- [[celestials/stars/ClassGStarRenderer|Class G Star Renderer]] - G-class star renderer
+- [[celestials/stars/ClassOStarRenderer|Class O Star Renderer]] - O-class star renderer
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[data/data-types/data-types|Data Types]] - Type definitions

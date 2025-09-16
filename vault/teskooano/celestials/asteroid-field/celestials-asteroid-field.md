@@ -108,13 +108,13 @@ The asteroid field material supports configurable parameters:
 
 ## Classes
 
-- [[AsteroidFieldRenderer]] - Main renderer class for asteroid field objects
-- [[AsteroidFieldMaterial]] - Shader material for asteroid field rendering
+- [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] - Main renderer class for asteroid field objects
+- [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] - Shader material for asteroid field rendering
 
 ## Shaders
 
-- [[asteroid.vert]] - Vertex shader for particle positioning and belt rotation
-- [[asteroid.frag]] - Fragment shader for texture rendering and rotation
+- [[celestials/asteroid-field/asteroid.vert|Asteroid Vertex Shader]] - Vertex shader for particle positioning and belt rotation
+- [[celestials/asteroid-field/asteroid.frag|Asteroid Fragment Shader]] - Fragment shader for texture rendering and rotation
 
 ## Dependencies
 
@@ -125,6 +125,6 @@ The asteroid field material supports configurable parameters:
 
 ## 🔗 Related
 
-- Composable with [[threejs-objects]] factory
-- Uses [[BaseCelestialRenderer]] for core functionality
-- Integrates with [[LightingManager]] for dynamic lighting
+- Composable with [[renderer/threejs-objects/threejs-objects|Three.js Objects]] factory
+- Uses [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] for core functionality
+- Integrates with [[renderer/threejs-lighting/LightingManager|Lighting Manager]] for dynamic lighting

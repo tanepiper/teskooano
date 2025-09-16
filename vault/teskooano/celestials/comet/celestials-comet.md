@@ -113,24 +113,24 @@ All materials support configurable parameters:
 
 ## Classes
 
-- [[CometRenderer]] - Main renderer class for comet objects
-- [[CometNucleusMaterial]] - Shader material for comet nucleus rendering
-- [[CometComaMaterial]] - Shader material for comet coma rendering
-- [[CometParticleMaterial]] - Shader material for particle tail rendering
-- [[CometJetMaterial]] - Shader material for gas jet rendering
-- [[CometSimplifiedTailMaterial]] - Shader material for LOD tail rendering
+- [[celestials/comet/CometRenderer|Comet Renderer]] - Main renderer class for comet objects
+- [[celestials/comet/CometMaterials|Comet Nucleus Material]] - Shader material for comet nucleus rendering
+- [[celestials/comet/CometMaterials|Comet Coma Material]] - Shader material for comet coma rendering
+- [[celestials/comet/CometMaterials|Comet Particle Material]] - Shader material for particle tail rendering
+- [[celestials/comet/CometMaterials|Comet Jet Material]] - Shader material for gas jet rendering
+- [[celestials/comet/CometMaterials|Comet Simplified Tail Material]] - Shader material for LOD tail rendering
 
 ## Shaders
 
-- [[nucleus.vertex.glsl]] - Vertex shader for nucleus world position and normal calculation
-- [[nucleus.fragment.glsl]] - Fragment shader for nucleus surface texturing and lighting
-- [[coma.fragment.glsl]] - Fragment shader for volumetric gas effect with density noise
-- [[particle.vertex.glsl]] - Vertex shader for particle tail positioning
-- [[particle.fragment.glsl]] - Fragment shader for soft particle rendering
-- [[jet.vertex.glsl]] - Vertex shader for gas jet positioning
-- [[jet.fragment.glsl]] - Fragment shader for cloudy gas jet particles
-- [[simplified-tail.vertex.glsl]] - Vertex shader for LOD tail positioning
-- [[simplified-tail.fragment.glsl]] - Fragment shader for LOD tail with noise shimmer
+- [[celestials/comet/nucleus.vertex.glsl|Nucleus Vertex Shader]] - Vertex shader for nucleus world position and normal calculation
+- [[celestials/comet/nucleus.fragment.glsl|Nucleus Fragment Shader]] - Fragment shader for nucleus surface texturing and lighting
+- [[celestials/comet/coma.fragment.glsl|Coma Fragment Shader]] - Fragment shader for volumetric gas effect with density noise
+- [[celestials/comet/particle.vertex.glsl|Particle Vertex Shader]] - Vertex shader for particle tail positioning
+- [[celestials/comet/particle.fragment.glsl|Particle Fragment Shader]] - Fragment shader for soft particle rendering
+- [[celestials/comet/jet.vertex.glsl|Jet Vertex Shader]] - Vertex shader for gas jet positioning
+- [[celestials/comet/jet.fragment.glsl|Jet Fragment Shader]] - Fragment shader for cloudy gas jet particles
+- [[celestials/comet/simplified-tail.vertex.glsl|Simplified Tail Vertex Shader]] - Vertex shader for LOD tail positioning
+- [[celestials/comet/simplified-tail.fragment.glsl|Simplified Tail Fragment Shader]] - Fragment shader for LOD tail with noise shimmer
 
 ## Dependencies
 
@@ -142,7 +142,7 @@ All materials support configurable parameters:
 
 ## 🔗 Related
 
-- Works with [[threejs-orbits|NBodyStrategy]] for trail visualization
-- Composable with [[threejs-objects]] factory
-- Uses [[BaseCelestialRenderer]] for core functionality
-- Integrates with [[LightingManager]] for dynamic lighting
+- Works with [[renderer/threejs-orbits/threejs-orbits|Three.js Orbits]] for trail visualization
+- Composable with [[renderer/threejs-objects/threejs-objects|Three.js Objects]] factory
+- Uses [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] for core functionality
+- Integrates with [[renderer/threejs-lighting/LightingManager|Lighting Manager]] for dynamic lighting

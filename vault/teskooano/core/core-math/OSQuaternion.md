@@ -563,9 +563,9 @@ if (validateQuaternion(q)) {
 
 ## 🔗 Related
 
-- [[OSVector3]] - Vectors that can be rotated by quaternions
-- [[OSMatrix3]] - 2D transformations using quaternions
-- [[OSMatrix4]] - 3D transformations using quaternions
-- [[Constants]] - EPSILON constant for precision
-- [[@teskooano/core-physics]] - Physics rotations using quaternions
-- [[@teskooano/core-state]] - State management with quaternion operations
+- [[core/core-math/OSVector3|OSVector3]] - Vectors that can be rotated by quaternions
+- [[core/core-math/OSMatrix3|OSMatrix3]] - 2D transformations using quaternions
+- [[core/core-math/OSMatrix4|OSMatrix4]] - 3D transformations using quaternions
+- [[core/core-math/Constants|Constants]] - EPSILON constant for precision
+- [[core/core-physics/core-physics|@teskooano/core-physics]] - Physics rotations using quaternions
+- [[core/core-state/core-state|@teskooano/core-state]] - State management with quaternion operations

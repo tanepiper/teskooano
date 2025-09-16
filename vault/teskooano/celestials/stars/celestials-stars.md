@@ -65,7 +65,7 @@ The `@teskooano/celestials-stars` package provides a complete star rendering sys
 
 ### Base Classes
 
-#### [[BaseStarRenderer]]
+#### [[celestials/stars/BaseStarRenderer|Base Star Renderer]]
 
 Abstract base class for all star renderers with common functionality.
 
@@ -76,7 +76,7 @@ Abstract base class for all star renderers with common functionality.
 - Material management and uniform updates
 - Lighting integration
 
-#### [[BaseStarMaterial]]
+#### [[celestials/stars/BaseStarMaterial|Base Star Material]]
 
 Base material class for star rendering with plasma effects.
 
@@ -87,7 +87,7 @@ Base material class for star rendering with plasma effects.
 - Time-based animation
 - Uniform lighting
 
-#### [[EnhancedStarMaterial]]
+#### [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]]
 
 Advanced material with 3-color plasma system and spectral properties.
 
@@ -100,57 +100,57 @@ Advanced material with 3-color plasma system and spectral properties.
 
 ### Main Sequence Stars
 
-#### [[MainSequenceStarRenderer]]
+#### [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]]
 
 Base renderer for main sequence stars with corona effects.
 
 #### Spectral Class Renderers
 
-- **[[ClassOStarRenderer]]**: O-class stars (30,000-50,000K, blue-white)
-- **[[ClassBStarRenderer]]**: B-class stars (10,000-30,000K, blue-white)
-- **[[ClassAStarRenderer]]**: A-class stars (7,500-10,000K, white)
-- **[[ClassFStarRenderer]]**: F-class stars (6,000-7,500K, yellow-white)
-- **[[ClassGStarRenderer]]**: G-class stars (5,200-6,000K, yellow) - includes our Sun
-- **[[ClassKStarRenderer]]**: K-class stars (3,700-5,200K, orange)
-- **[[ClassMStarRenderer]]**: M-class stars (2,400-3,700K, red)
+- **[[celestials/stars/ClassOStarRenderer|Class O Star Renderer]]**: O-class stars (30,000-50,000K, blue-white)
+- **[[celestials/stars/ClassBStarRenderer|Class B Star Renderer]]**: B-class stars (10,000-30,000K, blue-white)
+- **[[celestials/stars/ClassAStarRenderer|Class A Star Renderer]]**: A-class stars (7,500-10,000K, white)
+- **[[celestials/stars/ClassFStarRenderer|Class F Star Renderer]]**: F-class stars (6,000-7,500K, yellow-white)
+- **[[celestials/stars/ClassGStarRenderer|Class G Star Renderer]]**: G-class stars (5,200-6,000K, yellow) - includes our Sun
+- **[[celestials/stars/ClassKStarRenderer|Class K Star Renderer]]**: K-class stars (3,700-5,200K, orange)
+- **[[celestials/stars/ClassMStarRenderer|Class M Star Renderer]]**: M-class stars (2,400-3,700K, red)
 
 ### Post-Main Sequence Stars
 
-#### [[SubgiantRenderer]]
+#### [[celestials/stars/SubgiantRenderer|Subgiant Renderer]]
 
 Stars transitioning from main sequence to giant phase.
 
-#### [[RedGiantRenderer]]
+#### [[celestials/stars/RedGiantRenderer|Red Giant Renderer]]
 
 Large, cool stars in the red giant phase.
 
-#### [[HorizontalBranchRenderer]]
+#### [[celestials/stars/HorizontalBranchRenderer|Horizontal Branch Renderer]]
 
 Stars in the horizontal branch phase of evolution.
 
-#### [[AGBRenderer]]
+#### [[celestials/stars/AGBRenderer|AGB Renderer]]
 
 Asymptotic Giant Branch stars with complex evolution.
 
-#### [[PostAGBRenderer]]
+#### [[celestials/stars/PostAGBRenderer|Post-AGB Renderer]]
 
 Post-AGB stars transitioning to planetary nebulae.
 
-#### [[SupergiantRenderer]]
+#### [[celestials/stars/SupergiantRenderer|Supergiant Renderer]]
 
 Massive stars in the supergiant phase.
 
-#### [[HypergiantRenderer]]
+#### [[celestials/stars/HypergiantRenderer|Hypergiant Renderer]]
 
 Extremely massive hypergiant stars.
 
-#### [[WolfRayetRenderer]]
+#### [[celestials/stars/WolfRayetRenderer|Wolf-Rayet Renderer]]
 
 Wolf-Rayet stars with strong stellar winds.
 
 ### Stellar Remnants
 
-#### [[NeutronStarRenderer]]
+#### [[celestials/stars/NeutronStarRenderer|Neutron Star Renderer]]
 
 Neutron star renderer with subtype support.
 
@@ -160,21 +160,21 @@ Neutron star renderer with subtype support.
 - **Pulsar**: Rotating neutron star with emission beams
 - **Magnetar**: Neutron star with extremely strong magnetic fields
 
-#### [[WhiteDwarfRenderer]]
+#### [[celestials/stars/WhiteDwarfRenderer|White Dwarf Renderer]]
 
 White dwarf star renderer with cooling effects.
 
-#### [[SchwarzschildBlackHoleRenderer]]
+#### [[celestials/stars/SchwarzschildBlackHoleRenderer|Schwarzschild Black Hole Renderer]]
 
 Non-rotating black hole with Schwarzschild geometry.
 
-#### [[KerrBlackHoleRenderer]]
+#### [[celestials/stars/KerrBlackHoleRenderer|Kerr Black Hole Renderer]]
 
 Rotating black hole with Kerr geometry and frame dragging.
 
 ### Corona System
 
-#### [[CoronaMaterial]]
+#### [[celestials/stars/CoronaMaterial|Corona Material]]
 
 Material for atmospheric corona effects around stars.
 
@@ -187,19 +187,19 @@ Material for atmospheric corona effects around stars.
 
 ## 🔗 Related
 
-- [[BaseStarRenderer]] - Base renderer class
-- [[BaseStarMaterial]] - Base material class
-- [[EnhancedStarMaterial]] - Advanced material with plasma effects
-- [[MainSequenceStarRenderer]] - Main sequence star renderer
-- [[ClassGStarRenderer]] - G-class star renderer
-- [[ClassOStarRenderer]] - O-class star renderer
-- [[NeutronStarRenderer]] - Neutron star renderer
-- [[CoronaMaterial]] - Corona effect material
-- [[createMesh]] - Factory function for mesh creation
-- [[enhanced-star.vertex.glsl]] - Enhanced star vertex shader
-- [[enhanced-star.fragment.glsl]] - Enhanced star fragment shader
-- [[corona.vertex.glsl]] - Corona vertex shader
-- [[corona.fragment.glsl]] - Corona fragment shader
-- [[@teskooano/renderer-threejs-celestial]] - Base renderer system
-- [[@teskooano/renderer-threejs-lighting]] - Lighting system
-- [[@teskooano/data-types]] - Type definitions
+- [[celestials/stars/BaseStarRenderer|Base Star Renderer]] - Base renderer class
+- [[celestials/stars/BaseStarMaterial|Base Star Material]] - Base material class
+- [[celestials/stars/EnhancedStarMaterial|Enhanced Star Material]] - Advanced material with plasma effects
+- [[celestials/stars/MainSequenceStarRenderer|Main Sequence Star Renderer]] - Main sequence star renderer
+- [[celestials/stars/ClassGStarRenderer|Class G Star Renderer]] - G-class star renderer
+- [[celestials/stars/ClassOStarRenderer|Class O Star Renderer]] - O-class star renderer
+- [[celestials/stars/NeutronStarRenderer|Neutron Star Renderer]] - Neutron star renderer
+- [[celestials/stars/CoronaMaterial|Corona Material]] - Corona effect material
+- [[celestials/stars/createMesh|Create Mesh Factory]] - Factory function for mesh creation
+- [[celestials/stars/enhanced-star.vertex.glsl|Enhanced Star Vertex Shader]] - Enhanced star vertex shader
+- [[celestials/stars/enhanced-star.fragment.glsl|Enhanced Star Fragment Shader]] - Enhanced star fragment shader
+- [[celestials/stars/corona.vertex.glsl|Corona Vertex Shader]] - Corona vertex shader
+- [[celestials/stars/corona.fragment.glsl|Corona Fragment Shader]] - Corona fragment shader
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial Renderer]] - Base renderer system
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting System]] - Lighting system
+- [[data/data-types/data-types|Data Types]] - Type definitions

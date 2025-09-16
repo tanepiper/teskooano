@@ -501,12 +501,12 @@ const objectCount = Object.keys(celestialStore.getObjects()).length;
 
 ## 🔗 Related Components
 
-- [[CelestialManager]] - Uses this store for object operations
-- [[StateAccessor]] - Provides unified access to this store
-- [[PhysicsSystemAdapter]] - Reads object data for physics
-- [[RenderableStore]] - Stores derived renderable data
-- [[StoreFilters]] - Shared filtering utilities
-- [[CelestialUtils]] - Shared event dispatching utilities
+- [[core/core-state/CelestialManager|CelestialManager]] - Uses this store for object operations
+- [[core/core-state/StateAccessor|StateAccessor]] - Provides unified access to this store
+- [[core/core-state/PhysicsSystemAdapter|PhysicsSystemAdapter]] - Reads object data for physics
+- [[core/core-state/RenderableStore|RenderableStore]] - Stores derived renderable data
+- [[core/core-state/StoreFilters|StoreFilters]] - Shared filtering utilities
+- [[core/core-state/CelestialUtils|CelestialUtils]] - Shared event dispatching utilities
 
 ## 📚 Architecture Patterns
 

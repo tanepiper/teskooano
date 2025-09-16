@@ -1,61 +1,59 @@
-# @teskooano/celestials-comet
+# @teskooano/celestials-asteroid
 
-A comprehensive comet rendering system for the Teskooano N-Body simulation, featuring realistic comet physics and visual effects.
+A comprehensive asteroid rendering system for the Teskooano N-Body simulation, featuring procedural geometry generation, advanced surface texturing, and realistic lighting effects.
 
 ## Features
 
 ### Visual Components
 
-- **Nucleus**: Procedurally displaced, irregular rocky surface with noise-based detail
-- **Coma**: Dynamic gas cloud that scales with solar activity and distance
-- **Particle Tails**: Physics-based particle systems simulating dust and gas trails
-- **Gas Jets**: Multiple surface emission points with realistic particle behavior
+- **Procedural Nucleus**: Irregular rocky surface with noise-based displacement and detail
+- **Multi-Layer Texturing**: Height-based color blending with crater and crack effects
+- **Advanced Lighting**: Dynamic ambient lighting with shadow casting support
 - **LOD System**: Automatic detail reduction for distant viewing performance
+- **Realistic Rotation**: Tumbling motion with configurable rotation periods
 
 ### Rendering Architecture
 
-- **Shader-based Materials**: All visual effects use custom GLSL shaders for optimal performance
-- **Activity-based Rendering**: Visual intensity changes based on distance from stars
-- **Extinct Comet Support**: Special rendering mode for inactive/dead comets
-- **Multi-LOD Design**: High-detail particle tails for close viewing, simplified mesh tails for distance
+- **Shader-based Materials**: Custom GLSL shaders for optimal performance
+- **Procedural Geometry**: Noise-displaced cube geometry for irregular asteroid shapes
+- **Multi-Color Palettes**: Height-based color blending with configurable transitions
+- **Shadow Integration**: Support for shadows cast by other celestial bodies
+- **Performance Optimization**: LOD switching at 5 AU render distance
 
 ## Package Structure
 
 ```
 src/
 ├── shaders/                    # GLSL shader files
-│   ├── nucleus.vertex.glsl     # Nucleus vertex shader
-│   ├── nucleus.fragment.glsl   # Nucleus surface with noise and lighting
-│   ├── coma.vertex.glsl        # Coma vertex shader
-│   ├── coma.fragment.glsl      # Volumetric gas effect with density noise
-│   ├── particle.vertex.glsl    # Particle tail vertex shader
-│   ├── particle.fragment.glsl  # Soft particle rendering
-│   ├── jet.vertex.glsl         # Gas jet vertex shader
-│   ├── jet.fragment.glsl       # Cloudy gas jet particles
-│   ├── simplified-tail.vertex.glsl    # LOD tail vertex shader
-│   └── simplified-tail.fragment.glsl  # LOD tail with noise shimmer
-├── material.ts                 # Material classes for all components
-├── renderer.ts                 # Main CometRenderer class
-├── createCometMesh.ts          # Factory function for mesh creation
+│   ├── nucleus.vertex.glsl     # Nucleus vertex shader with world position/normal
+│   └── nucleus.fragment.glsl   # Surface texturing with noise, lighting, and shadows
+├── shared/                     # Shared shader utilities
+│   ├── lighting.glsl           # Lighting utilities
+│   ├── noise.glsl              # Noise generation functions
+│   └── simplex/                # Simplex noise implementation
+│       └── 3d.glsl
+├── material.ts                 # AsteroidNucleusMaterial class
+├── renderer.ts                 # Main AsteroidRenderer class
+├── createMesh.ts               # Factory function for mesh creation
 └── index.ts                    # Package exports
 ```
 
 ## Usage
 
 ```typescript
-import { createCometMesh } from "@teskooano/celestials-comet";
+import { createMesh } from "@teskooano/celestials-asteroid";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 
-// Create comet mesh with automatic LOD
-const cometMesh = createCometMesh(cometObject, {
+// Create asteroid mesh with automatic LOD
+const asteroidMesh = createMesh(asteroidObject, {
   celestialRenderers: renderersMap,
   createLodObject: lodFactory,
 });
 
 // The mesh automatically handles:
-// - Activity-based visual changes
-// - Particle system updates
-// - Lighting integration
+// - Procedural geometry generation
+// - Multi-layer surface texturing
+// - Dynamic lighting and shadows
 // - Performance optimization
 ```
 
@@ -63,32 +61,47 @@ const cometMesh = createCometMesh(cometObject, {
 
 ### Performance Considerations
 
-- Uses instanced rendering for particle systems (up to 12,000 particles)
+- Uses procedural geometry generation for unique asteroid shapes
 - Automatic LOD switching at 5 AU render distance
-- Particle lifetime management to prevent memory leaks
-- Shader-based lighting calculations for efficiency
+- Efficient shader-based lighting calculations
+- Optimized noise functions for surface detail
 
 ### Physics Integration
 
-- Particle velocities based on solar wind and radiation pressure
-- Activity factor calculated from stellar distance
-- Realistic tail orientation (always pointing away from nearest star)
-- Dynamic gas jet repositioning on nucleus surface
+- Rotation based on actual sidereal rotation periods
+- Tumbling motion simulation with multi-axis rotation
+- Dynamic lighting based on distance to light sources
+- Shadow casting from other celestial bodies
 
 ### Material Properties
 
-All materials support configurable parameters:
+The asteroid material supports configurable parameters:
 
-- **Nucleus**: Color variations, surface noise scales, lighting response
-- **Coma**: Opacity, animated density patterns, spherical falloff
-- **Particles**: Size variations, alpha blending, emissive lighting
-- **Jets**: Cloudy texture patterns, emission rates, particle lifetimes
+- **Colors**: Multi-color palette with height-based blending
+- **Surface Detail**: Noise scales, crater strength, and undulation
+- **Lighting**: Ambient strength, metallic factor, and roughness
+- **Shadows**: Support for multiple shadow casters
+
+## Classes
+
+- `AsteroidRenderer` - Main renderer class for asteroid objects
+- `AsteroidNucleusMaterial` - Shader material for asteroid surface rendering
+
+## Shaders
+
+- `nucleus.vertex.glsl` - Vertex shader for world position and normal calculation
+- `nucleus.fragment.glsl` - Fragment shader for surface texturing and lighting
 
 ## Dependencies
 
 - `@teskooano/data-types` - Core data structures
 - `@teskooano/renderer-threejs-celestial` - Base rendering framework
-- `@teskooano/renderer-threejs-lod` - Level of detail system
 - `@teskooano/core-math` - Seeded random number generation
 - `three` - Three.js 3D library
 - `simplex-noise` - Procedural noise generation
+
+## 🔗 Related
+
+- Composable with `threejs-objects` factory
+- Uses `BaseCelestialRenderer` for core functionality
+- Integrates with `LightingManager` for dynamic lighting

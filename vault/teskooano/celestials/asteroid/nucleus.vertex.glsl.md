@@ -161,7 +161,7 @@ The varying variables are used in the fragment shader for:
 
 ## Integration with Fragment Shader
 
-The vertex shader works in conjunction with [[nucleus.fragment.glsl]] to provide:
+The vertex shader works in conjunction with [[celestials/asteroid/nucleus.fragment.glsl|Nucleus Fragment Shader]] to provide:
 
 1. **World-Space Data**: Position and normal data for lighting
 2. **Procedural Coordinates**: Object-space positions for noise generation
@@ -177,6 +177,6 @@ The vertex shader works in conjunction with [[nucleus.fragment.glsl]] to provide
 
 ## 🔗 Related
 
-- [[nucleus.fragment.glsl]] - Fragment shader that uses this vertex shader output
-- [[AsteroidNucleusMaterial]] - Material that uses this shader
-- [[AsteroidRenderer]] - Renderer that creates the geometry for this shader
+- [[celestials/asteroid/nucleus.fragment.glsl|Nucleus Fragment Shader]] - Fragment shader that uses this vertex shader output
+- [[celestials/asteroid/AsteroidNucleusMaterial|Asteroid Nucleus Material]] - Material that uses this shader
+- [[celestials/asteroid/AsteroidRenderer|Asteroid Renderer]] - Renderer that creates the geometry for this shader

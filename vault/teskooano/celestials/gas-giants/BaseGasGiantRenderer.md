@@ -14,7 +14,7 @@ Abstract base renderer for gas giants, implementing the LOD system with ring sys
 
 ## Overview
 
-The `BaseGasGiantRenderer` is an abstract base class that provides the foundation for all gas giant renderers. It extends [[BaseCelestialRenderer]] and implements a comprehensive LOD system, ring system integration, and dynamic lighting with shadow casting support. This class serves as the template for specialized gas giant renderers for each class (I-V).
+The `BaseGasGiantRenderer` is an abstract base class that provides the foundation for all gas giant renderers. It extends [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] and implements a comprehensive LOD system, ring system integration, and dynamic lighting with shadow casting support. This class serves as the template for specialized gas giant renderers for each class (I-V).
 
 ## Features
 
@@ -81,7 +81,7 @@ The specific gas giant material instance
 
 #### Implementation
 
-Subclasses must implement this method to create their class-specific material (e.g., [[ClassIMaterial]], [[ClassIIMaterial]], etc.).
+Subclasses must implement this method to create their class-specific material (e.g., [[celestials/gas-giants/GasGiantMaterials|Class I Material]], [[celestials/gas-giants/GasGiantMaterials|Class II Material]], etc.).
 
 ## Public Methods
 
@@ -208,7 +208,7 @@ Creates the array of LOD levels for the planet body itself.
 2. **Level 1 (Medium Detail)**:
    - Distance: 800 × radius
    - Geometry: Medium detail sphere (32 segments)
-   - Material: [[BasicGasGiantMaterial]]
+   - Material: [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]]
 
 3. **Level 2 (Billboard)**:
    - Distance: 2000 × radius
@@ -268,14 +268,14 @@ Ring system renderer instance, lazily initialized when rings are present.
 
 - **Distance**: 0 (always visible when object is in view)
 - **Geometry**: High detail sphere with optimized segments
-- **Material**: Class-specific material (e.g., [[ClassIMaterial]])
+- **Material**: Class-specific material (e.g., [[celestials/gas-giants/GasGiantMaterials|Class I Material]])
 - **Use Case**: Close inspection and detailed viewing
 
 ### LOD Level 1 (Medium Detail)
 
 - **Distance**: 800 × object radius
 - **Geometry**: Medium detail sphere with reduced segments
-- **Material**: [[BasicGasGiantMaterial]] for performance
+- **Material**: [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]] for performance
 - **Use Case**: Normal viewing distance
 
 ### LOD Level 2 (Billboard)
@@ -361,20 +361,20 @@ renderer.update(
 
 ## Dependencies
 
-- [[BaseCelestialRenderer]] - Base rendering functionality
-- [[RingSystemRenderer]] - Ring system integration
-- [[BaseGasGiantMaterial]] - Base material functionality
-- [[BasicGasGiantMaterial]] - Basic material for LOD levels
-- [[LightArrayUtils]] - Light array management utilities
-- [[ShadowCasterUtils]] - Shadow caster management utilities
+- [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] - Base rendering functionality
+- [[celestials/rings/RingSystemRenderer|Ring System Renderer]] - Ring system integration
+- [[celestials/gas-giants/GasGiantMaterials|Base Gas Giant Material]] - Base material functionality
+- [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]] - Basic material for LOD levels
+- [[renderer/threejs-celestial/LightArrayUtils|Light Array Utils]] - Light array management utilities
+- [[renderer/threejs-celestial/ShadowCasterUtils|Shadow Caster Utils]] - Shadow caster management utilities
 
 ## 🔗 Related
 
-- [[ClassIGasGiantRenderer]] - Class I gas giant renderer implementation
-- [[ClassIIGasGiantRenderer]] - Class II gas giant renderer implementation
-- [[ClassIIIGasGiantRenderer]] - Class III gas giant renderer implementation
-- [[ClassIVGasGiantRenderer]] - Class IV gas giant renderer implementation
-- [[ClassVGasGiantRenderer]] - Class V gas giant renderer implementation
-- [[BaseGasGiantMaterial]] - Base material class
-- [[BasicGasGiantMaterial]] - Basic material for LOD levels
-- [[createMesh]] - Factory function for creating gas giant meshes
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Class I gas giant renderer implementation
+- [[celestials/gas-giants/ClassIIGasGiantRenderer|Class II Gas Giant Renderer]] - Class II gas giant renderer implementation
+- [[celestials/gas-giants/ClassIIIGasGiantRenderer|Class III Gas Giant Renderer]] - Class III gas giant renderer implementation
+- [[celestials/gas-giants/ClassIVGasGiantRenderer|Class IV Gas Giant Renderer]] - Class IV gas giant renderer implementation
+- [[celestials/gas-giants/ClassVGasGiantRenderer|Class V Gas Giant Renderer]] - Class V gas giant renderer implementation
+- [[celestials/gas-giants/GasGiantMaterials|Base Gas Giant Material]] - Base material class
+- [[celestials/gas-giants/GasGiantMaterials|Basic Gas Giant Material]] - Basic material for LOD levels
+- [[celestials/gas-giants/createMesh|Create Mesh Factory]] - Factory function for creating gas giant meshes

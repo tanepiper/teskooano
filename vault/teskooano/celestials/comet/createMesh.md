@@ -65,7 +65,7 @@ interface CreateMeshOptions {
 The function implements renderer caching to improve performance:
 
 1. **Cache Check**: First checks if a renderer already exists for the object ID
-2. **Renderer Creation**: Creates new [[CometRenderer]] if not cached
+2. **Renderer Creation**: Creates new [[celestials/comet/CometRenderer|Comet Renderer]] if not cached
 3. **Cache Storage**: Stores the renderer in the `celestialRenderers` map
 4. **Error Handling**: Falls back to fallback sphere if renderer creation fails
 
@@ -188,10 +188,10 @@ This allows existing code that references `createCometMesh` to continue working 
 
 ## Dependencies
 
-- [[CometRenderer]] - Renderer class for comet objects
-- [[createFallbackSphere]] - Fallback sphere creation utility
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/comet/CometRenderer|Comet Renderer]] - Renderer class for comet objects
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback sphere creation utility
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface
 
 ## Error Scenarios
 
@@ -223,7 +223,7 @@ If renderer doesn't provide LOD levels:
 
 The factory function integrates with the comet rendering system:
 
-1. **Renderer Creation**: Creates [[CometRenderer]] instances
+1. **Renderer Creation**: Creates [[celestials/comet/CometRenderer|Comet Renderer]] instances
 2. **LOD Management**: Handles 2-tier LOD system (high detail → simplified)
 3. **Material Integration**: Uses multiple comet materials for different components
 4. **Performance Optimization**: Implements caching and fallback strategies
@@ -239,8 +239,8 @@ The factory function handles comet-specific requirements:
 
 ## 🔗 Related
 
-- [[CometRenderer]] - Renderer class used by this factory
-- [[CometMaterials]] - Materials used by the renderer
-- [[createFallbackSphere]] - Fallback utility for error cases
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/comet/CometRenderer|Comet Renderer]] - Renderer class used by this factory
+- [[celestials/comet/CometMaterials|Comet Materials]] - Materials used by the renderer
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback utility for error cases
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface

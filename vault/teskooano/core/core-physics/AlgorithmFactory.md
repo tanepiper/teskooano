@@ -437,10 +437,10 @@ if (!validation.isValid) {
 
 ## 🔗 Related Components
 
-- [[SimulationManager]] - Uses factory for configuration optimization
-- [[TreePMStrategy]] - Advanced hybrid algorithm
-- [[Octree]] - Barnes-Hut implementation
-- [[AlgorithmStrategy]] - Base interface for algorithms
+- [[core/core-physics/SimulationManager|SimulationManager]] - Uses factory for configuration optimization
+- [[core/core-physics/TreePMStrategy|TreePMStrategy]] - Advanced hybrid algorithm
+- [[core/core-physics/Octree|Octree]] - Barnes-Hut implementation
+- [[core/core-physics/AlgorithmStrategy|AlgorithmStrategy]] - Base interface for algorithms
 
 ## 📚 Architecture Patterns
 

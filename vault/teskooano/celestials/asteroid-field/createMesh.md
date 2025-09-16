@@ -65,7 +65,7 @@ interface CreateMeshOptions {
 The function implements renderer caching to improve performance:
 
 1. **Cache Check**: First checks if a renderer already exists for the object ID
-2. **Renderer Creation**: Creates new [[AsteroidFieldRenderer]] if not cached
+2. **Renderer Creation**: Creates new [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] if not cached
 3. **Cache Storage**: Stores the renderer in the `celestialRenderers` map
 4. **Error Handling**: Falls back to fallback sphere if renderer creation fails
 
@@ -190,10 +190,10 @@ This allows existing code that references `createAsteroidFieldMesh` to continue 
 
 ## Dependencies
 
-- [[AsteroidFieldRenderer]] - Renderer class for asteroid field objects
-- [[createFallbackSphere]] - Fallback sphere creation utility
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] - Renderer class for asteroid field objects
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback sphere creation utility
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface
 
 ## Error Scenarios
 
@@ -225,15 +225,15 @@ If renderer doesn't provide LOD levels:
 
 The factory function integrates with the asteroid field rendering system:
 
-1. **Renderer Creation**: Creates [[AsteroidFieldRenderer]] instances
+1. **Renderer Creation**: Creates [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] instances
 2. **LOD Management**: Handles 4-tier LOD system (50k → 1k particles)
-3. **Material Integration**: Uses [[AsteroidFieldMaterial]] for rendering
+3. **Material Integration**: Uses [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] for rendering
 4. **Performance Optimization**: Implements caching and fallback strategies
 
 ## 🔗 Related
 
-- [[AsteroidFieldRenderer]] - Renderer class used by this factory
-- [[AsteroidFieldMaterial]] - Material used by the renderer
-- [[createFallbackSphere]] - Fallback utility for error cases
-- [[LODLevel]] - LOD level data structure
-- [[CelestialRenderer]] - Base renderer interface
+- [[celestials/asteroid-field/AsteroidFieldRenderer|Asteroid Field Renderer]] - Renderer class used by this factory
+- [[celestials/asteroid-field/AsteroidFieldMaterial|Asteroid Field Material]] - Material used by the renderer
+- [[renderer/threejs-celestial/createFallbackSphere|Create Fallback Sphere]] - Fallback utility for error cases
+- [[renderer/threejs-celestial/LODLevel|LOD Level]] - LOD level data structure
+- [[renderer/threejs-celestial/CelestialRenderer|Celestial Renderer]] - Base renderer interface

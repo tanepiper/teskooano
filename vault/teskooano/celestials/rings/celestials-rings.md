@@ -158,24 +158,24 @@ The renderer uses a 3-tier LOD system for optimal performance:
 
 ### Core Classes
 
-- [[RingSystemRenderer]] - Main renderer class for ring systems
-- [[RingMaterial]] - Shader material for standard planetary rings
-- [[AccretionDiskMaterial]] - Specialized material for accretion disks
+- [[celestials/rings/RingSystemRenderer|Ring System Renderer]] - Main renderer class for ring systems
+- [[celestials/rings/RingMaterials|Ring Materials]] - Shader material for standard planetary rings
+- [[celestials/rings/RingMaterials|Accretion Disk Material]] - Specialized material for accretion disks
 
 ## Shaders
 
 ### Ring Shaders
 
-- [[ring.vertex.glsl]] - Vertex shader with enhanced axial inclination controls
-- [[ring.fragment.glsl]] - Fragment shader with ring segmentation and density variations
+- [[celestials/rings/ring.vertex.glsl|Ring Vertex Shader]] - Vertex shader with enhanced axial inclination controls
+- [[celestials/rings/ring.fragment.glsl|Ring Fragment Shader]] - Fragment shader with ring segmentation and density variations
 
 ### Accretion Disk Shaders
 
-- [[accretion-disk.fragment.glsl]] - Fragment shader for physics-based accretion disk rendering
+- [[celestials/rings/accretion-disk.fragment.glsl|Accretion Disk Fragment Shader]] - Fragment shader for physics-based accretion disk rendering
 
 ## Utilities
 
-- [[utils.ts]] - Physics utilities including Keplerian calculations and accretion disk properties
+- [[celestials/rings/utils.ts|Ring Utilities]] - Physics utilities including Keplerian calculations and accretion disk properties
 
 ## Usage Examples
 
@@ -371,8 +371,8 @@ const gasGiantProperties: GasGiantProperties = {
 
 ## 🔗 Related
 
-- Composes with [[celestials-gas-giants|BaseGasGiantRenderer]] for gas giant ring systems
-- Composes with [[celestials-terrestrial|BaseTerrestrialRenderer]] for terrestrial ring systems
-- Uses [[BaseCelestialRenderer]] for core functionality
-- Integrates with [[LightingManager]] for dynamic lighting
-- Works with [[threejs-objects]] factory system
+- Composes with [[celestials/gas-giants/BaseGasGiantRenderer|Base Gas Giant Renderer]] for gas giant ring systems
+- Composes with [[celestials/terrestrial/BaseTerrestrialRenderer|Base Terrestrial Renderer]] for terrestrial ring systems
+- Uses [[renderer/threejs-celestial/BaseCelestialRenderer|Base Celestial Renderer]] for core functionality
+- Integrates with [[renderer/threejs-lighting/LightingManager|Lighting Manager]] for dynamic lighting
+- Works with [[renderer/threejs-objects/threejs-objects|Three.js Objects]] factory system

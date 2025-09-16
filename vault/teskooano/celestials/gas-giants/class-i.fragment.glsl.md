@@ -36,7 +36,7 @@ varying vec3 vNormal;
 Vertex normal in world space.
 
 - **Usage**: Specular lighting calculations
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ### vWorldPosition
 
@@ -47,7 +47,7 @@ varying vec3 vWorldPosition;
 Vertex position in world space.
 
 - **Usage**: Lighting calculations, distance-based effects
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ### vViewDirection
 
@@ -58,7 +58,7 @@ varying vec3 vViewDirection;
 Direction from camera to vertex.
 
 - **Usage**: View-dependent effects
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ### vUnitSamplePoint
 
@@ -69,7 +69,7 @@ varying vec3 vUnitSamplePoint;
 Normalized local position for noise sampling.
 
 - **Usage**: Procedural noise generation
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ### vSphereNormalW
 
@@ -80,7 +80,7 @@ varying vec3 vSphereNormalW;
 Normalized world normal assuming perfect sphere.
 
 - **Usage**: Diffuse lighting calculations
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ### vPosition
 
@@ -91,7 +91,7 @@ varying vec3 vPosition;
 Vertex position in world space.
 
 - **Usage**: Lighting and shadow calculations
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ### vUv
 
@@ -102,7 +102,7 @@ varying vec2 vUv;
 Texture coordinates.
 
 - **Usage**: Texture sampling
-- **Source**: [[class-i.vertex.glsl]]
+- **Source**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]]
 
 ## Uniform Variables
 
@@ -389,9 +389,9 @@ float getShadow(vec3 fragPos, vec3 lightDir) {
 
 The fragment shader works with:
 
-- **Vertex Shader**: [[class-i.vertex.glsl]] provides world position and normal data
-- **Material**: [[ClassIMaterial]] manages uniforms and updates
-- **Renderer**: [[ClassIGasGiantRenderer]] creates geometry and manages updates
+- **Vertex Shader**: [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]] provides world position and normal data
+- **Material**: [[celestials/gas-giants/GasGiantMaterials|Class I Material]] manages uniforms and updates
+- **Renderer**: [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] creates geometry and manages updates
 
 ## Dependencies
 
@@ -402,6 +402,6 @@ The fragment shader works with:
 
 ## 🔗 Related
 
-- [[class-i.vertex.glsl]] - Vertex shader that provides input data
-- [[ClassIMaterial]] - Material that uses this shader
-- [[ClassIGasGiantRenderer]] - Renderer that manages this shader
+- [[celestials/gas-giants/class-i.vertex.glsl|Class I Vertex Shader]] - Vertex shader that provides input data
+- [[celestials/gas-giants/GasGiantMaterials|Class I Material]] - Material that uses this shader
+- [[celestials/gas-giants/ClassIGasGiantRenderer|Class I Gas Giant Renderer]] - Renderer that manages this shader

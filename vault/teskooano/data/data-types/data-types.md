@@ -5,6 +5,7 @@ type: index
 package: "@teskooano/data-types"
 version: "0.4.0-dev.0"
 dependencies: ["three", "@teskooano/data-values", "@teskooano/core-math"]
+devDependencies: ["typescript", "vitest", "eslint", "@types/three"]
 classes: []
 status: active
 ---
