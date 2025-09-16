@@ -1,6 +1,58 @@
+---
+aliases: [HMRManager, HMR Manager, Hot Module Replacement Manager]
+tags: [plugin, hmr, hot-reload, development, lifecycle]
+type: Class
+package: "@teskooano/ui-plugin"
+dependencies: []
+devDependencies: ["typescript", "eslint", "prettier", "vite"]
+classes: ["HMRManager"]
+functions:
+  [
+    "setCallbacks",
+    "reloadPlugin",
+    "unloadPlugin",
+    "setupHMRListeners",
+    "loadAndRegisterPlugin",
+  ]
+events: ["teskooano-plugin-update"]
+constants: []
+types: ["PluginRegistrationStatus", "TeskooanoPlugin"]
+status: active
+---
+
 # HMRManager
 
 Handles Hot Module Replacement (HMR) functionality for plugins during development. Manages the reload/unload/dispose lifecycle, ensuring smooth plugin updates without requiring full page reloads.
+
+## 🎯 Purpose
+
+The HMRManager is responsible for managing Hot Module Replacement functionality for plugins during development. It handles the complete lifecycle of plugin reloading, including unloading existing plugins, loading new versions, and managing the dispose/initialize cycle to ensure smooth updates without requiring full page reloads.
+
+## 🏗️ Architecture
+
+The HMRManager follows an event-driven architecture with lifecycle management:
+
+```mermaid
+graph TD
+    A[HMRManager] --> B[HMR Listeners]
+    A --> C[Plugin Reloading]
+    A --> D[Lifecycle Management]
+    A --> E[Status Tracking]
+
+    B --> F[Vite HMR Events]
+    B --> G[Plugin Update Events]
+
+    C --> H[Plugin Unloading]
+    C --> I[Plugin Loading]
+    C --> J[Plugin Registration]
+
+    D --> K[Dispose Method]
+    D --> L[Initialize Method]
+    D --> M[Resource Cleanup]
+
+    E --> N[Status Callbacks]
+    E --> O[Error Reporting]
+```
 
 ## Class Definition
 
@@ -363,9 +415,160 @@ if (customElements.get(componentName)) {
 4. **Plugin Reload**: HMRManager handles reload
 5. **UI Update**: Application reflects changes
 
-## Related
+## 🔄 Data Flow
+
+The HMRManager follows a systematic data flow for Hot Module Replacement:
+
+```mermaid
+graph LR
+    A[File Change] --> B[HMR Event]
+    B --> C[Plugin Reload]
+    C --> D[Plugin Unload]
+    D --> E[Dispose Method]
+    E --> F[Plugin Load]
+    F --> G[Plugin Registration]
+    G --> H[Initialize Method]
+    H --> I[Status Update]
+
+    J[Vite HMR] --> B
+    K[Status Callbacks] --> I
+    L[Error Handling] --> C
+```
+
+### Processing Pipeline
+
+1. **File Change**: Vite detects plugin file change
+2. **HMR Event**: Vite sends `teskooano-plugin-update` event
+3. **Plugin Reload**: HMRManager receives event and triggers reload
+4. **Plugin Unload**: Unload existing plugin version
+5. **Dispose Method**: Call plugin's dispose method for cleanup
+6. **Plugin Load**: Load new plugin version
+7. **Plugin Registration**: Register new plugin contributions
+8. **Initialize Method**: Call plugin's initialize method
+9. **Status Update**: Emit status updates and completion
+
+## 📊 Technical Specifications
+
+### Interface/Type Definitions
+
+```typescript
+interface HMRCallbacks {
+  onPluginStatusChange?: (status: PluginRegistrationStatus) => void;
+  onPluginsChanged?: () => void;
+}
+
+type PluginRegistrationStatus =
+  | { type: "reloading"; pluginId: string }
+  | { type: "reloaded"; pluginId: string }
+  | { type: "reload_error"; pluginId: string; error: Error }
+  | { type: "unloading"; pluginId: string }
+  | { type: "unloaded"; pluginId: string }
+  | { type: "disposing"; pluginId: string }
+  | { type: "disposed"; pluginId: string }
+  | { type: "dispose_error"; pluginId: string; error: any };
+
+interface TeskooanoPlugin {
+  id: string;
+  name: string;
+  initialize?: (...args: any[]) => void;
+  dispose?: () => void;
+  // ... other plugin properties
+}
+```
+
+### Configuration Options
+
+```typescript
+interface HMRManagerConfig {
+  enableHMR?: boolean;
+  enableStatusCallbacks?: boolean;
+  enableErrorHandling?: boolean;
+  maxReloadRetries?: number;
+}
+```
+
+## ⚡ Performance Considerations
+
+### Efficiency
+
+- **Fast Reloading**: Only reloads changed plugins, not the entire application
+- **Resource Cleanup**: Proper disposal prevents memory leaks
+- **Error Recovery**: Continues operation even if individual plugins fail to reload
+- **Status Tracking**: Provides detailed status information for debugging
+- **Event-Driven**: Efficient event-based architecture for HMR
+
+### Quality Metrics
+
+- **Accuracy**: Precise plugin reloading with proper lifecycle management
+- **Reliability**: Robust error handling and graceful degradation
+- **Consistency**: Standardized HMR behavior across all plugins
+- **Scalability**: Efficient handling of multiple plugin reloads
+
+### Performance Monitoring
+
+- **Reload Time Metrics**: Measurement of plugin reload and HMR times
+- **Memory Usage Monitoring**: Tracking of memory usage during reloads
+- **Error Rate Monitoring**: Monitoring of HMR failures and errors
+- **Status Tracking**: Real-time monitoring of HMR status and progress
+
+## 🔌 Integration Points
+
+### Primary Integration
+
+- **Vite HMR**: Integration with Vite's Hot Module Replacement system
+- **PluginLoader**: Uses PluginLoader for loading updated plugin modules
+- **RegistrationManager**: Uses RegistrationManager for plugin registration/unregistration
+
+### Secondary Integration
+
+- **Plugin Lifecycle**: Integration with plugin initialize/dispose methods
+- **Error Handling**: Integration with comprehensive error reporting
+- **Status Management**: Integration with plugin status tracking
+
+## 🐛 Debug Features
+
+### Validation
+
+- **HMR Validation**: Comprehensive validation of HMR events and data
+- **Plugin Validation**: Validation of plugin lifecycle methods
+- **Status Validation**: Validation of HMR status updates
+- **Runtime Validation**: Runtime validation of HMR operations
+
+### Monitoring
+
+- **HMR Status Monitoring**: Real-time monitoring of HMR states and progress
+- **Error Monitoring**: Comprehensive error tracking and reporting for HMR failures
+- **Performance Monitoring**: Monitoring of HMR performance metrics
+- **Lifecycle Monitoring**: Monitoring of plugin lifecycle operations
+
+### Debugging Tools
+
+- **Debug Mode**: Comprehensive debug mode with detailed HMR logging
+- **HMR Inspector**: Tools for inspecting HMR state and configuration
+- **Lifecycle Visualizer**: Visualization of plugin lifecycle operations
+- **Error Reporter**: Detailed error reporting for HMR failures
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Performance Optimization**: Enhanced HMR algorithms and faster reloading
+- **Memory Optimization**: Improved memory management during HMR operations
+- **Code Optimization**: Enhanced HMR strategies and reduced overhead
+- **Architecture Optimization**: Improved HMR lifecycle management
+
+### Potential Improvements
+
+- **State Preservation**: Enhanced state preservation during plugin reloads
+- **Parallel Reloading**: Potential for parallel reloading of independent plugins
+- **HMR Analytics**: Analytics and usage tracking for HMR performance
+- **Advanced Debugging**: Enhanced debugging tools and development experience
+
+## 📚 Related Documentation
 
 - [[PluginManager]] - Uses HMRManager for plugin reloading
 - [[PluginLoader]] - Loads updated plugin modules
 - [[RegistrationManager]] - Handles plugin registration/unregistration
+- [[VitePlugin]] - Generates HMR events for plugin updates
 - [[TeskooanoPlugin]] - Plugin configuration with dispose method
+- [[Types]] - Type definitions and interfaces for the plugin system

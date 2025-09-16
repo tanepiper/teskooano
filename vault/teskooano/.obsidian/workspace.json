@@ -4,20 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "381419f3b9bfe300",
+        "id": "6c29bc90ea5a4e75",
         "type": "tabs",
         "children": [
           {
-            "id": "a527e49f28b0834e",
+            "id": "5d22e2346294cbc4",
             "type": "leaf",
             "state": {
-              "type": "bases",
+              "type": "markdown",
               "state": {
-                "file": "Component View.base",
-                "viewName": "Table"
+                "file": "Welcome.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-table",
-              "title": "Component View"
+              "icon": "lucide-file",
+              "title": "Welcome"
             }
           }
         ]
@@ -72,8 +73,19 @@
               "icon": "lucide-bookmark",
               "title": "Bookmarks"
             }
+          },
+          {
+            "id": "a9c16a1bc8a536cb",
+            "type": "leaf",
+            "state": {
+              "type": "notebook-navigator",
+              "state": {},
+              "icon": "notebook",
+              "title": "Notebook Navigator"
+            }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -141,13 +153,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Component View.base",
+                "file": "Welcome.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Component View"
+              "title": "Outline of Welcome"
             }
           }
         ],
@@ -165,47 +177,48 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "notebook-navigator:Notebook Navigator": false
     }
   },
-  "active": "a527e49f28b0834e",
+  "active": "a9c16a1bc8a536cb",
   "lastOpenFiles": [
-    "Dependencies Data View.md",
-    "threejs-renderers/threejs/ModularSpaceRenderer.md",
+    "renderer/threejs-core/RendererStateAdapter.md",
     "Welcome.md",
-    "threejs-renderers/threejs-camera/threejs-camera.md",
-    "threejs-renderers/threejs-orbits/IdealStrategy.md",
-    "threejs-renderers/threejs-orbits/TrailManager.md",
-    "threejs-renderers/threejs-core/threejs-core.md",
-    "@teskooano/core-state.md",
-    "threejs-renderers/threejs-camera/CameraManager.md",
-    "@teskooano",
     "Component View.base",
-    "threejs-renderers/threejs-celestial/threejs-celestial.md",
-    "threejs-renderers/threejs-celestial/createFallbackSphere.md",
-    "threejs-renderers/threejs-celestial/CelestialRendererDebugHelper.md",
-    "threejs-renderers/threejs-celestial/CircularBuffer.md",
-    "threejs-renderers/threejs-celestial/ShadowCasterUtils.md",
-    "threejs-renderers/threejs-celestial/LightingCalculator.md",
-    "threejs-renderers/threejs-celestial/LightArrayUtils.md",
-    "threejs-renderers/threejs-celestial/PerformanceMonitor.md",
-    "threejs-renderers/threejs-celestial/GeometryUtilities.md",
-    "threejs-renderers/threejs-celestial/TimeManager.md",
-    "threejs-renderers/threejs-celestial/LODManager.md",
-    "threejs-renderers/threejs-celestial/MaterialManager.md",
-    "threejs-renderers/threejs-core/PerformanceOptimization.md",
-    "threejs-renderers/threejs/orchestrators.md",
-    "threejs-renderers/threejs/DebugOrchestrator.md",
-    "threejs-renderers/threejs/InteractionOrchestrator.md",
-    "threejs-renderers/threejs/RenderingOrchestrator.md",
-    "threejs-renderers/threejs",
-    "_templates",
-    "threejs-renderers/threejs-helpers",
-    "threejs-renderers/threejs-controls",
-    "threejs-renderers/threejs-camera",
-    "threejs-renderers/threejs-background",
-    "systems/solar-system",
-    "systems/procedural-generation",
+    "renderer/threejs-orbits/threejs-orbits.md",
+    "renderer/threejs-orbits/simplify.md",
+    "renderer/threejs-orbits/TrailManager.md",
+    "renderer/threejs-orbits/TrailDataPool.md",
+    "renderer/threejs-orbits/TrailCurveInterpolator.md",
+    "renderer/threejs-orbits/SimpleOrbitalRenderer.md",
+    "renderer/threejs-orbits/SharedMaterials.md",
+    "renderer/threejs-orbits/README.md",
+    "renderer/threejs-orbits/PredictionRenderer.md",
+    "renderer/threejs-orbits/PredictionManager.md",
+    "renderer/threejs-orbits/PredictionCalculator.md",
+    "renderer/threejs-orbits/OrbitsManager.md",
+    "renderer/threejs-orbits/OrbitCalculator.md",
+    "renderer/threejs-orbits/NBodyTrailsRenderer.md",
+    "renderer/threejs-orbits/NBodyStrategy.md",
+    "renderer/threejs-orbits/NBodyPredictionRenderer.md",
+    "renderer/threejs-orbits/KeplerianManager.md",
+    "renderer/threejs-orbits/IdealStrategy.md",
+    "renderer/threejs-orbits/IOrbitVisualizationStrategy.md",
+    "renderer/threejs/threejs.md",
+    "renderer/threejs/orchestrators.md",
+    "renderer/threejs/RenderingOrchestrator.md",
+    "renderer/threejs/RendererStateAdapter.md",
+    "renderer/threejs/RenderPipeline.md",
+    "renderer/threejs-orbits",
+    "renderer/threejs-objects",
+    "renderer/threejs-lighting",
+    "renderer/threejs-labels",
+    "renderer/threejs-helpers",
+    "renderer/threejs-core",
+    "renderer/threejs-controls",
+    "renderer/threejs-celestial",
+    "renderer/threejs-camera",
     "Untitled.canvas"
   ]
 }

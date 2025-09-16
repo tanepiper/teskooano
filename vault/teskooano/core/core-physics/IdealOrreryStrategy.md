@@ -12,7 +12,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: IdealOrreryStrategy
 dependencies: ["@teskooano/core-math", "@teskooano/data-types"]
-classes: []
+classes: ["IdealOrreryStrategy"]
 functions: []
 constants: []
 types:

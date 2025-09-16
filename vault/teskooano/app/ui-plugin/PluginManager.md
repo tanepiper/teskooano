@@ -1,6 +1,65 @@
+---
+aliases: [PluginManager, Plugin Manager, Main Plugin Manager]
+tags: [plugin, manager, singleton, lifecycle, orchestration]
+type: Class
+package: "@teskooano/ui-plugin"
+dependencies: ["dockview-core", "rxjs"]
+devDependencies: ["typescript", "eslint", "prettier"]
+classes: ["PluginManager"]
+functions:
+  [
+    "getInstance",
+    "setAppDependencies",
+    "registerPlugin",
+    "loadAndRegisterPlugins",
+    "reloadPlugin",
+    "unloadPlugin",
+    "getPlugins",
+    "getPanelConfig",
+    "getFunctionConfig",
+    "execute",
+    "getToolbarItemsForTarget",
+    "getToolbarWidgetsForTarget",
+    "getManagerInstance",
+  ]
+events: ["pluginStatus$", "pluginsChanged$"]
+constants: []
+types: ["PluginManagerProxy", "PluginRegistrationStatus", "TeskooanoPlugin"]
+status: active
+---
+
 # PluginManager
 
 The main singleton class that orchestrates the entire plugin system, managing plugin lifecycle, registration, execution, and state. Provides a centralized API for loading, registering, and interacting with plugins throughout the Open Space engine.
+
+## 🎯 Purpose
+
+The PluginManager serves as the central orchestrator for the entire UI plugin system. It manages the complete lifecycle of plugins from loading and registration through execution and disposal. As a singleton, it provides a unified interface for all plugin-related operations while maintaining system state and coordinating between different plugin management components.
+
+## 🏗️ Architecture
+
+The PluginManager follows a singleton pattern with delegated responsibilities to specialized manager classes:
+
+```mermaid
+graph TD
+    A[PluginManager] --> B[PluginLoader]
+    A --> C[RegistrationManager]
+    A --> D[PluginExecutor]
+    A --> E[HMRManager]
+    A --> F[EventBus]
+    A --> G[ReactiveState]
+
+    A --> H[Plugin Registry]
+    A --> I[Status Observables]
+    A --> J[Dependency Injection]
+
+    B --> K[Dynamic Loading]
+    C --> L[Component Registration]
+    D --> M[Function Execution]
+    E --> N[Hot Reloading]
+    F --> O[Event Distribution]
+    G --> P[State Management]
+```
 
 ## Class Definition
 
@@ -505,10 +564,157 @@ pluginManager.pluginStatus$.subscribe((status) => {
 
 The PluginManager is designed for single-threaded JavaScript environments. All operations are synchronous or properly handled with Promises for async operations.
 
-## Related
+## 🔄 Data Flow
+
+The PluginManager follows a systematic data flow for plugin lifecycle management:
+
+```mermaid
+graph LR
+    A[Plugin Request] --> B[Dependency Resolution]
+    B --> C[Plugin Loading]
+    C --> D[Plugin Registration]
+    D --> E[Context Injection]
+    E --> F[Plugin Execution]
+    F --> G[State Management]
+    G --> H[Event Distribution]
+
+    I[Configuration] --> B
+    J[Validation] --> C
+    K[Lifecycle Management] --> D
+    L[HMR Events] --> C
+```
+
+### Processing Pipeline
+
+1. **Plugin Request**: Application requests plugin loading with specific IDs
+2. **Dependency Resolution**: PluginLoader resolves dependencies using topological sorting
+3. **Plugin Loading**: Dynamic import of plugin modules with error handling
+4. **Plugin Registration**: RegistrationManager processes all plugin contributions
+5. **Context Injection**: Application dependencies injected into plugin context
+6. **Plugin Execution**: PluginExecutor handles function calls with proper context
+7. **State Management**: ReactiveState tracks plugin state and changes
+8. **Event Distribution**: EventBus distributes plugin events throughout system
+
+## 📊 Technical Specifications
+
+### Interface/Type Definitions
+
+```typescript
+interface PluginManagerProxy {
+  execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined;
+  getManagerInstance<T = any>(id: string): T | undefined;
+  registerPlugin(plugin: TeskooanoPlugin): void;
+  pluginsChanged$: Observable<void>;
+  getToolbarItemsForTarget(target: ToolbarTarget): ToolbarItemConfig[];
+  getToolbarWidgetsForTarget(target: ToolbarTarget): ToolbarWidgetConfig[];
+}
+
+type PluginRegistrationStatus =
+  | { type: "loading_started"; pluginIds: string[] }
+  | { type: "registered_plugin"; pluginId: string }
+  | { type: "load_error"; pluginId: string; error: Error }
+  | {
+      type: "dependency_error";
+      pluginId: string;
+      missingDependencies: string[];
+    };
+```
+
+### Configuration Options
+
+```typescript
+interface PluginManagerConfig {
+  enableHMR?: boolean;
+  enableDebugMode?: boolean;
+  dependencyResolution?: boolean;
+  circularDependencyDetection?: boolean;
+}
+```
+
+## ⚡ Performance Considerations
+
+### Efficiency
+
+- **Singleton Pattern**: Single instance reduces memory overhead and ensures consistency
+- **Lazy Loading**: Plugins are loaded only when requested, reducing initial bundle size
+- **Dependency Resolution**: Efficient topological sorting prevents redundant loading
+- **Resource Cleanup**: Proper disposal prevents memory leaks during plugin unloading
+- **HMR Optimization**: Fast plugin reloading during development without full page refresh
+
+### Quality Metrics
+
+- **Accuracy**: Plugin loading and execution with comprehensive error handling
+- **Reliability**: Robust dependency resolution and circular dependency detection
+- **Consistency**: Standardized plugin lifecycle management across all plugin types
+- **Scalability**: Efficient handling of multiple plugins and complex dependency graphs
+
+### Performance Monitoring
+
+- **Plugin Status Tracking**: Real-time monitoring of plugin loading states through observables
+- **Dependency Graph Analysis**: Visualization of plugin dependencies and resolution order
+- **Memory Usage Monitoring**: Tracking of plugin resource consumption and cleanup
+- **Load Time Metrics**: Measurement of plugin loading and initialization times
+
+## 🔌 Integration Points
+
+### Primary Integration
+
+- **dockview-core**: Panel management and layout system integration for UI panels
+- **rxjs**: Reactive programming for state management and event distribution
+- **Application Context**: Dependency injection for application services and APIs
+
+### Secondary Integration
+
+- **Event System**: Integration with centralized event bus for plugin communication
+- **State Management**: Integration with reactive state management patterns
+- **Development Tools**: Integration with development workflow and debugging tools
+
+## 🐛 Debug Features
+
+### Validation
+
+- **Plugin Validation**: Comprehensive validation of plugin definitions and configurations
+- **Dependency Validation**: Validation of plugin dependencies and circular dependency detection
+- **Configuration Validation**: Validation of plugin registry and configuration options
+- **Runtime Validation**: Runtime validation of plugin execution and state management
+
+### Monitoring
+
+- **Plugin Status Monitoring**: Real-time monitoring of plugin loading and execution states
+- **Error Monitoring**: Comprehensive error tracking and reporting for plugin failures
+- **Performance Monitoring**: Monitoring of plugin performance metrics and resource usage
+- **Dependency Monitoring**: Monitoring of plugin dependencies and resolution status
+
+### Debugging Tools
+
+- **Debug Mode**: Comprehensive debug mode with detailed logging and state inspection
+- **Plugin Inspector**: Tools for inspecting plugin state and configuration
+- **Dependency Visualizer**: Visualization of plugin dependency graphs
+- **HMR Debugger**: Debugging tools for Hot Module Replacement functionality
+
+## 🔮 Future Enhancements
+
+### Optimization Opportunities
+
+- **Performance Optimization**: Enhanced lazy loading strategies and bundle optimization
+- **Memory Optimization**: Improved memory management and resource cleanup
+- **Code Optimization**: Enhanced plugin factory functions and reduced boilerplate
+- **Architecture Optimization**: Improved plugin lifecycle management and state handling
+
+### Potential Improvements
+
+- **Plugin Marketplace**: Potential for a plugin marketplace or registry system
+- **Enhanced HMR**: Improved Hot Module Replacement with better state preservation
+- **Plugin Analytics**: Analytics and usage tracking for plugin performance
+- **Advanced Debugging**: Enhanced debugging tools and development experience
+
+## 📚 Related Documentation
 
 - [[PluginLoader]] - Handles plugin loading and dependency resolution
 - [[RegistrationManager]] - Manages plugin contribution registration
 - [[PluginExecutor]] - Executes plugin functions with context injection
 - [[HMRManager]] - Handles Hot Module Replacement
+- [[EventBus]] - Centralized event system for plugin communication
+- [[ReactiveState]] - Reactive state management with computed properties
 - [[TeskooanoPlugin]] - Plugin configuration interface
+- [[Types]] - Type definitions and interfaces for the plugin system

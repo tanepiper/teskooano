@@ -87,7 +87,7 @@ graph TD
 - **Use Case**: Trojan asteroids, space colonies
 - **Example**: Jupiter's Trojan asteroids
 
-## Architecture
+### Implementation Details
 
 ### Core Function
 
@@ -144,8 +144,6 @@ for (const state of activeBodiesArray) {
 // Process Lagrange point objects
 processLagrangeObjects(celestialObjectsMap, physicsStatesMap);
 ```
-
-## Implementation Details
 
 ### Object Validation
 
@@ -301,21 +299,7 @@ if (!realLPoint) {
 }
 ```
 
-## Performance Considerations
-
-### Processing Efficiency
-
-- **Single Pass**: Processes all Lagrange objects in one iteration
-- **Early Exit**: Skips objects without Lagrange point designation
-- **Validation**: Minimal validation to avoid unnecessary calculations
-
-### Memory Management
-
-- **Object Reuse**: Reuses existing physics state objects
-- **Vector Cloning**: Properly clones OSVector3 objects to avoid reference issues
-- **Map Operations**: Efficient Map-based lookups for object retrieval
-
-## Real-World Examples
+### Real-World Examples
 
 ### Sun-Earth System
 
@@ -349,7 +333,7 @@ const trojanAsteroid: CelestialObject = {
 };
 ```
 
-## Mathematical Background
+### Mathematical Background
 
 ### Lagrange Point Calculation
 
@@ -399,36 +383,6 @@ The Lagrange points are calculated using the restricted three-body problem, wher
 - **Early Exit**: Skips objects without Lagrange point designation
 - **Memory Efficiency**: Reuses existing physics state objects
 - **Vector Cloning**: Properly handles OSVector3 object cloning
-
-## 🔧 Key Methods
-
-### `processLagrangeObjects(celestialObjects, physicsStates)`
-
-**Purpose**: Processes all celestial objects designated to be at Lagrange points.
-
-```typescript
-function processLagrangeObjects(
-  celestialObjects: Map<string, CelestialObject>,
-  physicsStates: Map<string, PhysicsStateReal>,
-): void;
-```
-
-**Parameters**:
-
-- `celestialObjects` - Map of all celestial object definitions
-- `physicsStates` - Map of physics states (mutated during processing)
-
-**Returns**: `void` - Modifies physics states in place
-
-**Process**:
-
-1. **Object Iteration**: Loops through all celestial objects
-2. **Filtering**: Identifies objects with `lagrangePointType` property
-3. **Validation**: Ensures required parent and target objects exist
-4. **Physics State Retrieval**: Gets current positions and velocities
-5. **Two-Body System Creation**: Creates simplified two-body system
-6. **Lagrange Point Calculation**: Computes all five Lagrange points
-7. **Position Update**: Updates object's physics state with calculated position
 
 ## 🔄 Data Flow
 
@@ -649,7 +603,7 @@ private processLagrangeObjects(): void {
 
 ## 📚 Related Documentation
 
-- [[SimulationOrchestrator]] - Main simulation coordinator that calls this processor
-- [[@teskooano/core-physics]] - Provides `createTwoBodySystem` and `calculateAllLagrangePoints`
-- [[@teskooano/core-math]] - OSVector3 for position and velocity vectors
-- [[@teskooano/data-types]] - CelestialObject and LagrangePointType definitions
+- [[app/app-simulation/SimulationOrchestrator|SimulationOrchestrator]] - Main simulation coordinator that calls this processor
+- [[core/core-physics/core-physics|Core Physics]] - Provides `createTwoBodySystem` and `calculateAllLagrangePoints`
+- [[core/math/core-math|Core Math]] - OSVector3 for position and velocity vectors
+- [[data/types/data-types|Data Types]] - CelestialObject and LagrangePointType definitions

@@ -16,7 +16,7 @@ dependencies:
     "@teskooano/data-types",
     "@robertaron/spacial-partitioning",
   ]
-classes: []
+classes: ["WasmSpatialPartitioning"]
 functions: []
 constants: []
 types: ["PhysicsStateReal", "WasmPartitioningConfig", "PerformanceMetrics"]

@@ -11,6 +11,7 @@ dependencies:
     "@teskooano/data-types",
     "@teskooano/data-values",
   ]
+classes: ["HierarchyManager"]
 functions: ["updateHierarchies"]
 status: active
 ---
@@ -81,85 +82,15 @@ graph TD
 - **Event-Free Updates**: Minimizes event overhead by using direct state manipulation
 - **Consistency**: Ensures state consistency across all hierarchy changes
 
-## Hierarchy Rules
+## 🔧 Key Methods
 
-### Core Principles
+### `updateHierarchies(): void`
 
-- **Main Star**: The largest star serves as the system root
-- **Binary Systems**: Other stars can orbit the main star
-- **Planetary Systems**: Celestials (planets, gas giants, comets, asteroids) orbit stars
-- **Satellite Systems**: Moons orbit planets/gas giants
-- **Dynamic Reassignment**: Objects can change parents based on gravitational dominance
-
-### Escape Scenarios
-
-#### Moon Escape (> 0.1 AU)
-
-When a moon moves more than 0.1 AU from its parent:
-
-- **Type Change**: Moon → Dwarf Planet
-- **Parent Reassignment**: Finds new parent via gravitational dominance
-- **Threshold**: 0.1 AU (1.496×10¹⁰ meters)
-
-#### Satellite Escape (> 0.05 AU)
-
-When a satellite moves more than 0.05 AU from its parent:
-
-- **Type Change**: Satellite → Asteroid
-- **Parent Reassignment**: Finds new parent via gravitational dominance
-- **Threshold**: 0.05 AU (7.48×10⁹ meters)
-
-#### Orphaned Objects
-
-When an object's parent is destroyed or removed:
-
-- **Automatic Reassignment**: Finds new parent via gravitational dominance
-- **Status Preservation**: Maintains object type and properties
-- **Immediate Processing**: Handled as soon as parent removal is detected
-
-## Architecture
-
-### Performance Optimization
+**Purpose**: Updates the hierarchies of all celestial objects based on established rules.
 
 ```typescript
-export class HierarchyManager {
-  private updateIndex = 0;
-  private wasmSpatialService: WasmSpatialService;
-
-  public updateHierarchies(): void {
-    // Process one object per tick to spread computational load
-    const objectId = objectIds[this.updateIndex];
-    // ... process single object
-    this.updateIndex++;
-  }
-}
+public updateHierarchies(): void
 ```
-
-### Spatial Partitioning Integration
-
-The manager uses centralized WASM spatial partitioning for efficient neighbor queries:
-
-```typescript
-private findBestParent(child: CelestialObject, childState: PhysicsStateReal): CelestialObject | null {
-  if (!this.wasmSpatialService.isInitialized()) {
-    return this.findBestParentTraditional(child, childState, allObjects, allPhysicsStates);
-  }
-
-  // Use WASM spatial partitioning for O(log n) performance
-  const nearbyBodies = this.wasmSpatialService.findBodiesInRange(
-    childState.position_m,
-    searchDistance
-  );
-}
-```
-
-## API Reference
-
-### Main Interface
-
-#### `updateHierarchies(): void`
-
-Updates the hierarchies of all celestial objects based on established rules.
 
 **Process:**
 
@@ -173,6 +104,39 @@ Updates the hierarchies of all celestial objects based on established rules.
 - **Incremental Processing**: One object per tick to maintain 60 FPS
 - **Index Cycling**: Automatically cycles through all objects
 - **Early Termination**: Skips inactive or invalid objects
+
+### Hierarchy Rules
+
+#### Core Principles
+
+- **Main Star**: The largest star serves as the system root
+- **Binary Systems**: Other stars can orbit the main star
+- **Planetary Systems**: Celestials (planets, gas giants, comets, asteroids) orbit stars
+- **Satellite Systems**: Moons orbit planets/gas giants
+- **Dynamic Reassignment**: Objects can change parents based on gravitational dominance
+
+#### Escape Scenarios
+
+**Moon Escape (> 0.1 AU)**
+When a moon moves more than 0.1 AU from its parent:
+
+- **Type Change**: Moon → Dwarf Planet
+- **Parent Reassignment**: Finds new parent via gravitational dominance
+- **Threshold**: 0.1 AU (1.496×10¹⁰ meters)
+
+**Satellite Escape (> 0.05 AU)**
+When a satellite moves more than 0.05 AU from its parent:
+
+- **Type Change**: Satellite → Asteroid
+- **Parent Reassignment**: Finds new parent via gravitational dominance
+- **Threshold**: 0.05 AU (7.48×10⁹ meters)
+
+**Orphaned Objects**
+When an object's parent is destroyed or removed:
+
+- **Automatic Reassignment**: Finds new parent via gravitational dominance
+- **Status Preservation**: Maintains object type and properties
+- **Immediate Processing**: Handled as soon as parent removal is detected
 
 ### Internal Methods
 
@@ -220,7 +184,7 @@ Handles objects whose parents have been destroyed or removed.
 3. **Reassignment**: Finds new parent via gravitational dominance
 4. **State Update**: Updates parent relationship without type change
 
-## Gravitational Dominance Calculation
+### Gravitational Dominance Calculation
 
 ### WASM Spatial Partitioning (Preferred)
 
@@ -265,7 +229,7 @@ private findBestParentTraditional(child: CelestialObject, childState: PhysicsSta
 }
 ```
 
-## Search Distance Configuration
+### Search Distance Configuration
 
 The manager uses type-specific search distances for efficient gravitational influence calculations:
 
@@ -294,7 +258,7 @@ private getSearchDistance(obj: CelestialObject): number {
 }
 ```
 
-## Performance Optimizations
+### Performance Optimizations
 
 ### Incremental Processing
 
@@ -337,41 +301,6 @@ try {
 - **Physics State**: Ensures physics states are available
 - **Active Status**: Only processes active (non-destroyed) objects
 - **Distance Validation**: Prevents division by zero in force calculations
-
-## Integration Examples
-
-### Basic Usage
-
-```typescript
-import { HierarchyManager } from "@teskooano/app-simulation";
-
-const hierarchyManager = new HierarchyManager();
-
-// Called once per simulation tick
-hierarchyManager.updateHierarchies();
-```
-
-### Integration with Simulation Loop
-
-```typescript
-// In SimulationOrchestrator
-private updateHierarchies(): void {
-  const simulationConfig = coreSimulationManager.getSimulationState().simulationConfig;
-  if (simulationConfig.mode !== "ideal") {
-    this.hierarchyManager.updateHierarchies();
-  }
-}
-```
-
-### Monitoring Hierarchy Changes
-
-```typescript
-// Listen for celestial object changes
-celestialObjects$.subscribe((objects) => {
-  // UI automatically updates when hierarchy changes
-  updateHierarchyDisplay(objects);
-});
-```
 
 ## Configuration Constants
 
@@ -570,8 +499,8 @@ celestialObjects$.subscribe((objects) => {
 
 ## 📚 Related Documentation
 
-- [[SimulationOrchestrator]] - Main simulation coordinator
-- [[@teskooano/core-physics]] - WASM spatial partitioning service
-- [[@teskooano/core-state]] - State management and celestial manager
-- [[@teskooano/data-types]] - CelestialType and object definitions
-- [[@teskooano/data-values]] - AU_METERS constant
+- [[app/app-simulation/SimulationOrchestrator|SimulationOrchestrator]] - Main simulation coordinator
+- [[core/core-physics/core-physics|Core Physics]] - WASM spatial partitioning service
+- [[core/core-state/core-state|Core State]] - State management and celestial manager
+- [[data/types/data-types|Data Types]] - CelestialType and object definitions
+- [[data/values/data-values|Data Values]] - AU_METERS constant

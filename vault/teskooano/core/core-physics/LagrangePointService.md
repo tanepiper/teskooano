@@ -12,7 +12,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: LagrangePointService
 dependencies: ["@teskooano/core-math", "@teskooano/data-types"]
-classes: []
+classes: ["LagrangePointService"]
 functions: []
 constants: []
 types:

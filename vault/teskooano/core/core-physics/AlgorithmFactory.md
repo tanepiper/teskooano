@@ -6,7 +6,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: AlgorithmFactory
 dependencies: ["@teskooano/core-state", "@teskooano/data-types"]
-classes: []
+classes: ["AlgorithmFactory"]
 functions: []
 constants: []
 types:

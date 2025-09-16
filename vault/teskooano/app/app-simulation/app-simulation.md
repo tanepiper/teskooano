@@ -394,18 +394,18 @@ simulationOrchestrator.onOrbitUpdate.subscribe((payload) => {
 
 ### Core Classes
 
-- [[SimulationOrchestrator]] - Main simulation coordinator
-- [[HierarchyManager]] - Dynamic hierarchy management
-- [[LagrangeProcessor]] - Lagrange point calculations
+- [[app/app-simulation/SimulationOrchestrator|SimulationOrchestrator]] - Main simulation coordinator
+- [[app/app-simulation/HierarchyManager|HierarchyManager]] - Dynamic hierarchy management
+- [[app/app-simulation/LagrangeProcessor|LagrangeProcessor]] - Lagrange point calculations
 
 ### Core Dependencies
 
-- [[@teskooano/core-physics]] - Physics simulation engine
-- [[@teskooano/core-state]] - State management system
-- [[@teskooano/data-types]] - Type definitions
-- [[@teskooano/data-values]] - Constants and utilities
+- [[core/core-physics/core-physics|Core Physics]] - Physics simulation engine
+- [[core/core-state/core-state|Core State]] - State management system
+- [[data/types/data-types|Data Types]] - Type definitions
+- [[data/values/data-values|Data Values]] - Constants and utilities
 
 ### Integration Points
 
-- [[@teskooano/renderer-threejs]] - 3D rendering system
-- [[@teskooano/app-simulation/systems]] - System initializers
+- [[renderer/threejs/threejs|Three.js Renderer]] - 3D rendering system
+- [[app/app-simulation/systems|System Initializers]] - System initializers

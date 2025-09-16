@@ -12,6 +12,7 @@ dependencies:
     "@teskooano/data-values",
     "rxjs",
   ]
+classes: ["SimulationOrchestrator"]
 functions:
   [
     "getInstance",
@@ -90,60 +91,6 @@ graph TD
 - **Initialization**: Proper service startup and configuration
 - **Cleanup**: Resource disposal and memory management
 - **Disposal**: Complete system shutdown and cleanup
-
-## 🔧 Key Methods
-
-### `getInstance()`
-
-**Purpose**: Returns the singleton instance of the SimulationOrchestrator.
-
-```typescript
-public static getInstance(): SimulationOrchestrator
-```
-
-**Returns**: `SimulationOrchestrator` - The singleton instance
-
-**Process**:
-
-1. **Instance Check**: Checks if instance already exists
-2. **Creation**: Creates new instance if none exists
-3. **Return**: Returns the singleton instance
-
-### `startLoop()`
-
-**Purpose**: Initializes and starts the simulation loop with proper service initialization.
-
-```typescript
-public startLoop(): Promise<void>
-```
-
-**Returns**: `Promise<void>` - Resolves when initialization is complete
-
-**Process**:
-
-1. **WASM Initialization**: Initializes spatial service with 1000 AU neighbor distance
-2. **Physics Setup**: Initializes simulation manager with fallback support
-3. **State Subscriptions**: Sets up reactive state management
-4. **Loop Activation**: Enables the main simulation loop
-
-### `createPhysicsCallback()`
-
-**Purpose**: Creates a physics callback function for external animation loop integration.
-
-```typescript
-public createPhysicsCallback(): (deltaTime: number) => void
-```
-
-**Returns**: `(deltaTime: number) => void` - Physics callback function
-
-**Process**:
-
-1. **Time Management**: Tracks real time and applies scaling
-2. **Lagrange Processing**: Updates Lagrange point objects
-3. **Parameter Preparation**: Converts state to physics parameters
-4. **Physics Simulation**: Runs core physics calculations
-5. **State Updates**: Updates state with results
-6. **Event Broadcasting**: Emits orbit updates
 
 ## 🔄 Data Flow
 
@@ -324,7 +271,7 @@ Cleans up all resources and stops the simulation.
 3. Disposes of subscriptions
 4. Cleans up internal resources
 
-## Internal Architecture
+### Internal Architecture
 
 ### Time Management
 
@@ -372,7 +319,7 @@ private processLagrangeObjects(): void {
 }
 ```
 
-## Performance Optimizations
+### Performance Optimizations
 
 ### Centralized Spatial Partitioning
 
@@ -391,59 +338,6 @@ private processLagrangeObjects(): void {
 - Proper real-time to simulation-time conversion
 - Pause state handling with time jump prevention
 - Configurable time scale for different simulation speeds
-
-## Integration Examples
-
-### Basic Simulation Setup
-
-```typescript
-import { simulationOrchestrator } from "@teskooano/app-simulation";
-import { initializeSolarSystem } from "@teskooano/app-simulation/systems";
-
-// Initialize system
-initializeSolarSystem();
-
-// Start simulation
-await simulationOrchestrator.startLoop();
-
-// Listen for updates
-simulationOrchestrator.onOrbitUpdate.subscribe((payload) => {
-  console.log("Updated positions:", payload.positions);
-});
-```
-
-### Custom Animation Loop Integration
-
-```typescript
-const physicsCallback = simulationOrchestrator.createPhysicsCallback();
-
-function animationLoop(timestamp: number) {
-  const deltaTime = (timestamp - lastTimestamp) / 1000;
-  physicsCallback(deltaTime);
-
-  // Render frame
-  renderer.render(scene, camera);
-
-  lastTimestamp = timestamp;
-  requestAnimationFrame(animationLoop);
-}
-```
-
-### Event-Driven UI Updates
-
-```typescript
-// Listen for time resets
-simulationOrchestrator.onResetTime.subscribe(() => {
-  updateTimeDisplay(0);
-  resetTrailVisualizations();
-});
-
-// Listen for orbit updates
-simulationOrchestrator.onOrbitUpdate.subscribe((payload) => {
-  updateObjectPositions(payload.positions);
-  updateTrailHistory(payload.positions);
-});
-```
 
 ## Error Handling
 
@@ -475,7 +369,7 @@ try {
 }
 ```
 
-## Configuration
+### Configuration
 
 ### Spatial Partitioning
 
@@ -635,9 +529,9 @@ simulationOrchestrator.onOrbitUpdate.subscribe((payload) => {
 
 ## 📚 Related Documentation
 
-- [[HierarchyManager]] - Dynamic hierarchy management
-- [[LagrangeProcessor]] - Lagrange point calculations
-- [[@teskooano/core-physics]] - Physics simulation engine
-- [[@teskooano/core-state]] - State management system
-- [[@teskooano/data-types]] - Type definitions
-- [[@teskooano/data-values]] - Constants and utilities
+- [[app/app-simulation/HierarchyManager|HierarchyManager]] - Dynamic hierarchy management
+- [[app/app-simulation/LagrangeProcessor|LagrangeProcessor]] - Lagrange point calculations
+- [[core/core-physics/core-physics|Core Physics]] - Physics simulation engine
+- [[core/core-state/core-state|Core State]] - State management system
+- [[data/types/data-types|Data Types]] - Type definitions
+- [[data/values/data-values|Data Values]] - Constants and utilities

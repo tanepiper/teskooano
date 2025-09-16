@@ -6,7 +6,7 @@ type: Class
 package: "@teskooano/renderer-threejs-celestial"
 name: TimeManager
 dependencies: []
-classes: []
+classes: ["TimeManager"]
 functions: []
 constants: []
 types: []

@@ -11,7 +11,7 @@ type: Class
 package: "@teskooano/core-state"
 name: PhysicsSystemAdapter
 dependencies: ["@teskooano/data-types", "@teskooano/core-physics", "rxjs"]
-classes: []
+classes: ["PhysicsSystemAdapter"]
 functions: []
 constants: []
 types:

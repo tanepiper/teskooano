@@ -6,7 +6,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: Octree
 dependencies: ["@teskooano/core-math", "@teskooano/data-types"]
-classes: []
+classes: ["Octree"]
 functions: []
 constants: []
 types: ["PhysicsStateReal", "OctreeNode"]

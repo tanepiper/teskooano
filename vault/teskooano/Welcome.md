@@ -41,22 +41,22 @@ The Teskooano renderer system is built on a modular, package-based architecture 
 
 ### Core Infrastructure
 
-- [[threejs-core]] - Foundational Three.js scene and animation management
-- [[threejs-celestial]] - Base classes and interfaces for celestial object rendering
-- [[threejs-lighting]] - Dynamic lighting system for stars and celestial bodies
+- [[renderer/threejs-core/threejs-core|Three.js Core]] - Foundational Three.js scene and animation management
+- [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial]] - Base classes and interfaces for celestial object rendering
+- [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting]] - Dynamic lighting system for stars and celestial bodies
 
 ### Specialized Renderers
 
-- [[threejs-objects]] - Main object management and mesh creation
-- [[threejs-orbits]] - Orbital path visualization (Keplerian and N-body) with optimized rendering pipeline
-- [[threejs-labels]] - 2D label rendering and occlusion
-- [[threejs-background]] - Space background and star field rendering
+- [[renderer/threejs-objects/threejs-objects|Three.js Objects]] - Main object management and mesh creation
+- [[renderer/threejs-orbits/threejs-orbits|Three.js Orbits]] - Orbital path visualization (Keplerian and N-body) with optimized rendering pipeline
+- [[renderer/threejs-labels/threejs-labels|Three.js Labels]] - 2D label rendering and occlusion
+- [[renderer/threejs-background/threejs-background|Three.js Background]] - Space background and star field rendering
 
 ### Support Systems
 
-- [[threejs-camera]] - Camera management and controls
-- [[threejs-controls]] - User interaction and input handling
-- [[threejs-helpers]] - Utility functions and debugging tools
+- [[renderer/threejs-camera/threejs-camera|Three.js Camera]] - Camera management and controls
+- [[renderer/threejs-controls/threejs-controls|Three.js Controls]] - User interaction and input handling
+- [[renderer/threejs-helpers/threejs-helpers|Three.js Helpers]] - Utility functions and debugging tools
 
 ## 🔄 Data Flow
 
@@ -70,50 +70,50 @@ The Teskooano renderer system is built on a modular, package-based architecture 
 
 ### Key Integration Points
 
-- [[Renderer State Adapter]] - Bridges core state with renderer systems
-- [[Modular Space Renderer]] - Main orchestrator component
-- [[Animation Loop]] - Drives the entire rendering pipeline
+- [[renderer/threejs/RendererStateAdapter|Renderer State Adapter]] - Bridges core state with renderer systems
+- [[renderer/threejs/ModularSpaceRenderer|Modular Space Renderer]] - Main orchestrator component
+- [[renderer/threejs-core/AnimationLoop|Animation Loop]] - Drives the entire rendering pipeline
 
 ## 📚 Documentation Structure
 
 ### Core Infrastructure
 
-- **[[threejs-renderers/threejs-core/threejs-core|Three.js Core]]** - Foundational Three.js scene and animation management
-- **[[threejs-renderers/threejs-celestial/threejs-celestial|Three.js Celestial]]** - Base classes and interfaces for celestial object rendering
-- **[[threejs-renderers/threejs-lighting/threejs-lighting|Three.js Lighting]]** - Dynamic lighting system for stars and celestial bodies
+- **[[renderer/threejs-core/threejs-core|Three.js Core]]** - Foundational Three.js scene and animation management
+- **[[renderer/threejs-celestial/threejs-celestial|Three.js Celestial]]** - Base classes and interfaces for celestial object rendering
+- **[[renderer/threejs-lighting/threejs-lighting|Three.js Lighting]]** - Dynamic lighting system for stars and celestial bodies
 
 ### Specialized Renderers
 
-- **[[threejs-renderers/threejs-objects/threejs-objects|Three.js Objects]]** - Main object management and mesh creation
-- **[[threejs-renderers/threejs-orbits/threejs-orbits|Three.js Orbits]]** - Orbital path visualization (Keplerian and N-body) with optimized rendering pipeline
-- **[[threejs-renderers/threejs-labels/threejs-labels|Three.js Labels]]** - 2D label rendering and occlusion
-- **[[threejs-renderers/threejs-background/threejs-background|Three.js Background]]** - Space background and star field rendering
+- **[[renderer/threejs-objects/threejs-objects|Three.js Objects]]** - Main object management and mesh creation
+- **[[renderer/threejs-orbits/threejs-orbits|Three.js Orbits]]** - Orbital path visualization (Keplerian and N-body) with optimized rendering pipeline
+- **[[renderer/threejs-labels/threejs-labels|Three.js Labels]]** - 2D label rendering and occlusion
+- **[[renderer/threejs-background/threejs-background|Three.js Background]]** - Space background and star field rendering
 
 ### Support Systems
 
-- **[[threejs-renderers/threejs-camera/threejs-camera|Three.js Camera]]** - Camera management and controls
-- **[[threejs-renderers/threejs-controls/threejs-controls|Three.js Controls]]** - User interaction and input handling
-- **[[threejs-renderers/threejs-helpers/threejs-helpers|Three.js Helpers]]** - Utility functions and debugging tools
+- **[[renderer/threejs-camera/threejs-camera|Three.js Camera]]** - Camera management and controls
+- **[[renderer/threejs-controls/threejs-controls|Three.js Controls]]** - User interaction and input handling
+- **[[renderer/threejs-helpers/threejs-helpers|Three.js Helpers]]** - Utility functions and debugging tools
 
 ### Main Orchestrator
 
-- **[[threejs-renderers/threejs/ModularSpaceRenderer|Modular Space Renderer]]** - Central orchestrator that coordinates all systems
+- **[[renderer/threejs/ModularSpaceRenderer|Modular Space Renderer]]** - Central orchestrator that coordinates all systems
 
 ## 🔄 Quick Navigation
 
 ### By Component Type
 
-- **Core Systems**: [[threejs-renderers/threejs-core/threejs-core|Three.js Core]], [[threejs-renderers/threejs-celestial/threejs-celestial|Three.js Celestial]], [[threejs-renderers/threejs-lighting/threejs-lighting|Three.js Lighting]]
-- **Rendering**: [[threejs-renderers/threejs-objects/threejs-objects|Three.js Objects]], [[threejs-renderers/threejs-orbits/threejs-orbits|Three.js Orbits]], [[threejs-renderers/threejs-labels/threejs-labels|Three.js Labels]], [[threejs-renderers/threejs-background/threejs-background|Three.js Background]]
-- **Support**: [[threejs-renderers/threejs-camera/threejs-camera|Three.js Camera]], [[threejs-renderers/threejs-controls/threejs-controls|Three.js Controls]], [[threejs-renderers/threejs-helpers/threejs-helpers|Three.js Helpers]]
-- **Orchestration**: [[threejs-renderers/threejs/ModularSpaceRenderer|Modular Space Renderer]]
+- **Core Systems**: [[renderer/threejs-core/threejs-core|Three.js Core]], [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial]], [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting]]
+- **Rendering**: [[renderer/threejs-objects/threejs-objects|Three.js Objects]], [[renderer/threejs-orbits/threejs-orbits|Three.js Orbits]], [[renderer/threejs-labels/threejs-labels|Three.js Labels]], [[renderer/threejs-background/threejs-background|Three.js Background]]
+- **Support**: [[renderer/threejs-camera/threejs-camera|Three.js Camera]], [[renderer/threejs-controls/threejs-controls|Three.js Controls]], [[renderer/threejs-helpers/threejs-helpers|Three.js Helpers]]
+- **Orchestration**: [[renderer/threejs/ModularSpaceRenderer|Modular Space Renderer]]
 
 ### By Architecture Pattern
 
-- **Manager Pattern**: [[threejs-renderers/threejs-objects/threejs-objects|Three.js Objects]], [[threejs-renderers/threejs-orbits/threejs-orbits|Three.js Orbits]], [[threejs-renderers/threejs-lighting/threejs-lighting|Three.js Lighting]]
-- **Strategy Pattern**: [[threejs-renderers/threejs-orbits/threejs-orbits|Three.js Orbits]], [[threejs-renderers/threejs-celestial/threejs-celestial|Three.js Celestial]]
-- **Factory Pattern**: [[threejs-renderers/threejs-objects/threejs-objects|Three.js Objects]], [[threejs-renderers/threejs-celestial/threejs-celestial|Three.js Celestial]]
-- **Observer Pattern**: [[threejs-renderers/threejs-core/threejs-core|Three.js Core]], [[threejs-renderers/threejs/ModularSpaceRenderer|Modular Space Renderer]]
+- **Manager Pattern**: [[renderer/threejs-objects/threejs-objects|Three.js Objects]], [[renderer/threejs-orbits/threejs-orbits|Three.js Orbits]], [[renderer/threejs-lighting/threejs-lighting|Three.js Lighting]]
+- **Strategy Pattern**: [[renderer/threejs-orbits/threejs-orbits|Three.js Orbits]], [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial]]
+- **Factory Pattern**: [[renderer/threejs-objects/threejs-objects|Three.js Objects]], [[renderer/threejs-celestial/threejs-celestial|Three.js Celestial]]
+- **Observer Pattern**: [[renderer/threejs-core/threejs-core|Three.js Core]], [[renderer/threejs/ModularSpaceRenderer|Modular Space Renderer]]
 
 ### By Feature Category
 

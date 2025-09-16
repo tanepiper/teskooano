@@ -15,7 +15,7 @@ type: Class
 package: "@teskooano/renderer-threejs-celestial"
 name: CircularBuffer
 dependencies: []
-classes: []
+classes: ["CircularBuffer"]
 functions: []
 constants: []
 types: ["TimePoint"]

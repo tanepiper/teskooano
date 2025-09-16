@@ -15,8 +15,6 @@ views:
     sort:
       - property: formula.Number of Classes
         direction: DESC
-      - property: package
-        direction: ASC
     columnSize:
       note.package: 279
   - type: cards

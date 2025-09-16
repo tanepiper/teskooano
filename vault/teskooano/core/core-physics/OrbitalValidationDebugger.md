@@ -13,7 +13,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: OrbitalValidationDebugger
 dependencies: ["@teskooano/core-math", "@teskooano/data-types"]
-classes: []
+classes: ["OrbitalValidationDebugger"]
 functions: []
 constants: []
 types:
