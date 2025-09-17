@@ -298,11 +298,11 @@ class ComponentRegistry<T> {
 
 ## 🔗 Related Patterns
 
-- **[[Factory Pattern]]**: Managers often use factories to create components
-- **[[Registry Pattern]]**: Component registries for efficient lookup
-- **[[Observer Pattern]]**: Managers observe state changes and update components
-- **[[Strategy Pattern]]**: Managers can switch between different strategies
-- **[[Facade Pattern]]**: Managers provide simplified interface to complex subsystems
+- **[[architecture/Factory Pattern|Factory Pattern]]**: Managers often use factories to create components
+- **[[architecture/Registry Pattern|Registry Pattern]]**: Component registries for efficient lookup
+- **[[architecture/Observer Pattern|Observer Pattern]]**: Managers observe state changes and update components
+- **[[architecture/Strategy Pattern|Strategy Pattern]]**: Managers can switch between different strategies
+- **[[architecture/Facade Pattern|Facade Pattern]]**: Managers provide simplified interface to complex subsystems
 
 ## 🎯 Performance Considerations
 

@@ -16,7 +16,7 @@ dependencies:
     "@teskooano/data-types",
     "@robertaron/spacial-partitioning",
   ]
-classes: []
+classes: ["WasmSpatialPartitioning"]
 functions: []
 constants: []
 types: ["PhysicsStateReal", "WasmPartitioningConfig", "PerformanceMetrics"]
@@ -424,10 +424,10 @@ const result = manager.simulate(params);
 
 ## 🔗 Related Components
 
-- [[WasmCollisionDetection]] - WASM-enhanced collision detection
-- [[SimulationManager]] - Orchestrates WASM usage
-- [[Octree]] - Traditional spatial structure
-- [[TreePMStrategy]] - Uses spatial partitioning for optimization
+- [[core/core-physics/WasmCollisionDetection|WasmCollisionDetection]] - WASM-enhanced collision detection
+- [[core/core-physics/SimulationManager|SimulationManager]] - Orchestrates WASM usage
+- [[core/core-physics/Octree|Octree]] - Traditional spatial structure
+- [[core/core-physics/TreePMStrategy|TreePMStrategy]] - Uses spatial partitioning for optimization
 
 ## 📚 Architecture Patterns
 

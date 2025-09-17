@@ -56,7 +56,7 @@ export class DynamicEpochProcessor {
       return object;
     }
 
-    const originalEpoch = object.orbit.epoch;
+    const originalEpoch = object?.orbit?.epoch ?? "";
     const epochJulianDay = getJulianDayForEpoch(originalEpoch);
 
     // Calculate time difference in seconds for precise positioning

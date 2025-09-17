@@ -382,11 +382,11 @@ celestialManager.clearState({
 
 ## 🔗 Related Components
 
-- [[CelestialStore]] - Stores celestial object data
-- [[PhysicsStateProvider]] - Manages physics state calculations
-- [[SimulationStateService]] - Manages simulation state
-- [[StateAccessor]] - Provides unified state access
-- [[CelestialUtils]] - Shared utilities for validation, processing, and events
+- [[core/core-state/CelestialStore|CelestialStore]] - Stores celestial object data
+- [[core/core-state/PhysicsStateProvider|PhysicsStateProvider]] - Manages physics state calculations
+- [[core/core-state/SimulationStateService|SimulationStateService]] - Manages simulation state
+- [[core/core-state/StateAccessor|StateAccessor]] - Provides unified state access
+- [[core/core-state/CelestialUtils|CelestialUtils]] - Shared utilities for validation, processing, and events
 
 ## 📚 Architecture Patterns
 

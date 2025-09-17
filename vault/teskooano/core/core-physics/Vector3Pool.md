@@ -563,10 +563,10 @@ class GravitationalForceCalculator {
 
 ## 🔗 Related Components
 
-- [[OSVector3]] - Core vector class
-- [[SimulationManager]] - Integration with simulation systems
-- [[PhysicsStateReal]] - Physics state representation
-- [[Integrators]] - Numerical integration methods
+- [[core/core-math/OSVector3|OSVector3]] - Core vector class
+- [[core/core-physics/SimulationManager|SimulationManager]] - Integration with simulation systems
+- [[data/data-types/PhysicsStateReal|PhysicsStateReal]] - Physics state representation
+- [[core/core-physics/Integrators|Integrators]] - Numerical integration methods
 
 ## 📚 Architecture Patterns
 

@@ -474,11 +474,11 @@ class LayerFactory {
 
 ## 🔗 Related Patterns
 
-- **[[Manager Pattern]]**: Layer managers often implement the Manager pattern
-- **[[Strategy Pattern]]**: Layers can use different strategies for their functionality
-- **[[Factory Pattern]]**: Layer factories for creating specialized layers
-- **[[Template Method Pattern]]**: Base layers define common structure
-- **[[Observer Pattern]]**: Layers observe state changes and update accordingly
+- **[[architecture/Manager Pattern|Manager Pattern]]**: Layer managers often implement the Manager pattern
+- **[[architecture/Strategy Pattern|Strategy Pattern]]**: Layers can use different strategies for their functionality
+- **[[architecture/Factory Pattern|Factory Pattern]]**: Layer factories for creating specialized layers
+- **[[architecture/Template Method Pattern|Template Method Pattern]]**: Base layers define common structure
+- **[[architecture/Observer Pattern|Observer Pattern]]**: Layers observe state changes and update accordingly
 
 ## 🎯 Performance Considerations
 

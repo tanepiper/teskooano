@@ -11,7 +11,7 @@ type: Class
 package: "@teskooano/core-state"
 name: PhysicsSystemAdapter
 dependencies: ["@teskooano/data-types", "@teskooano/core-physics", "rxjs"]
-classes: []
+classes: ["PhysicsSystemAdapter"]
 functions: []
 constants: []
 types:
@@ -341,12 +341,12 @@ try {
 
 ## 🔗 Related Components
 
-- [[CelestialStore]] - Source of celestial object data and destruction processing
-- [[PhysicsStore]] - Stores acceleration vectors
-- [[PhysicsStateProvider]] - Manages physics state calculations
-- [[SimulationStateService]] - Controls simulation configuration
-- [[StoreFilters]] - Shared filtering utilities
-- [[CelestialUtils]] - Shared event dispatching utilities
+- [[core/core-state/CelestialStore|CelestialStore]] - Source of celestial object data and destruction processing
+- [[core/core-state/PhysicsStore|PhysicsStore]] - Stores acceleration vectors
+- [[core/core-state/PhysicsStateProvider|PhysicsStateProvider]] - Manages physics state calculations
+- [[core/core-state/SimulationStateService|SimulationStateService]] - Controls simulation configuration
+- [[core/core-state/StoreFilters|StoreFilters]] - Shared filtering utilities
+- [[core/core-state/CelestialUtils|CelestialUtils]] - Shared event dispatching utilities
 
 ## 📚 Architecture Patterns
 

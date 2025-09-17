@@ -14,6 +14,7 @@ dependencies:
     "three",
     "@robertaron/spacial-partitioning",
   ]
+devDependencies: ["eslint", "typescript", "vitest"]
 classes:
   [
     "SimulationManager",
@@ -186,7 +187,7 @@ src/
 
 ## 🔧 Core Components
 
-### [[SimulationManager]]
+### [[core/core-physics/SimulationManager|SimulationManager]]
 
 **Location**: `src/simulation/simulation-manager.ts`
 
@@ -197,7 +198,7 @@ The main orchestrator that provides a high-level API for physics simulations:
 - Result assembly with metadata
 - WASM integration for enhanced performance
 
-### [[AlgorithmFactory]]
+### [[core/core-physics/AlgorithmFactory|AlgorithmFactory]]
 
 **Location**: `src/algorithms/algorithm-factory.ts`
 
@@ -207,7 +208,7 @@ Intelligent selection and validation of force calculation algorithms:
 - Performance estimation and validation
 - Configuration optimization recommendations
 
-### [[TreePMStrategy]]
+### [[core/core-physics/TreePMStrategy|TreePMStrategy]]
 
 **Location**: `src/algorithms/tree-pm.ts`
 
@@ -217,7 +218,7 @@ Advanced Tree-PM hybrid algorithm combining Tree and Particle-Mesh methods:
 - Automatic density-based partitioning
 - High accuracy in both dense and sparse regions
 
-### [[Octree]]
+### [[core/core-physics/Octree|Octree]]
 
 **Location**: `src/spatial/octree.ts`
 
@@ -227,7 +228,7 @@ Hierarchical spatial data structure for O(N log N) force calculations:
 - Efficient force approximation
 - Configurable accuracy vs performance trade-offs
 
-### [[WasmSpatialPartitioning]]
+### [[core/core-physics/WasmSpatialPartitioning|WasmSpatialPartitioning]]
 
 **Location**: `src/spatial/wasm-partitioning.ts`
 
@@ -237,7 +238,7 @@ High-performance spatial partitioning using WebAssembly:
 - Fast neighbor finding and proximity detection
 - Significant performance improvements for large systems
 
-### [[WasmCollisionDetection]]
+### [[core/core-physics/WasmCollisionDetection|WasmCollisionDetection]]
 
 **Location**: `src/collision/wasm-collision.ts`
 
@@ -247,7 +248,7 @@ Optimized collision detection using spatial partitioning:
 - Automatic fallback to traditional methods
 - Comprehensive collision resolution rules
 
-### [[IdealOrreryStrategy]]
+### [[core/core-physics/IdealOrreryStrategy|IdealOrreryStrategy]]
 
 **Location**: `src/modes/ideal/ideal-orrery.ts`
 
@@ -257,7 +258,7 @@ Perfect Keplerian orbital mechanics with analytical solutions:
 - Sequential Keplerian calculations
 - Exact analytical position/velocity computation
 
-### [[LagrangePointService]]
+### [[core/core-physics/LagrangePointService|LagrangePointService]]
 
 **Location**: `src/orbital/lagrange-service.ts`
 
@@ -267,7 +268,7 @@ Comprehensive Lagrange point management and calculations:
 - Stability analysis and classification
 - Historical tracking and optimization
 
-### [[OrbitalValidationDebugger]]
+### [[core/core-physics/OrbitalValidationDebugger|OrbitalValidationDebugger]]
 
 **Location**: `src/debug/orbitalValidation.ts`
 
@@ -277,7 +278,7 @@ Debugging and validation tools for orbital mechanics:
 - Eccentricity-angular momentum orthogonality
 - Comprehensive conservation law testing
 
-### [[Vector3Pool]]
+### [[core/core-physics/Vector3Pool|Vector3Pool]]
 
 **Location**: `src/utils/vectorPool.ts`
 
@@ -364,16 +365,16 @@ Memory optimization through vector pooling:
 
 ## 📚 Related Components
 
-- [[SimulationManager]] - Main simulation orchestrator
-- [[AlgorithmFactory]] - Intelligent algorithm selection
-- [[TreePMStrategy]] - Advanced hybrid algorithm
-- [[Octree]] - Spatial data structure
-- [[WasmSpatialPartitioning]] - High-performance spatial operations
-- [[WasmCollisionDetection]] - Optimized collision detection
-- [[IdealOrreryStrategy]] - Perfect orbital mechanics
-- [[LagrangePointService]] - Lagrange point management
-- [[OrbitalValidationDebugger]] - Debugging and validation
-- [[Vector3Pool]] - Memory optimization
+- [[core/core-physics/SimulationManager|SimulationManager]] - Main simulation orchestrator
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Intelligent algorithm selection
+- [[core/core-physics/TreePMStrategy|TreePMStrategy]] - Advanced hybrid algorithm
+- [[core/core-physics/Octree|Octree]] - Spatial data structure
+- [[core/core-physics/WasmSpatialPartitioning|WasmSpatialPartitioning]] - High-performance spatial operations
+- [[core/core-physics/WasmCollisionDetection|WasmCollisionDetection]] - Optimized collision detection
+- [[core/core-physics/IdealOrreryStrategy|IdealOrreryStrategy]] - Perfect orbital mechanics
+- [[core/core-physics/LagrangePointService|LagrangePointService]] - Lagrange point management
+- [[core/core-physics/OrbitalValidationDebugger|OrbitalValidationDebugger]] - Debugging and validation
+- [[core/core-physics/Vector3Pool|Vector3Pool]] - Memory optimization
 
 ## 📚 Architecture Patterns
 

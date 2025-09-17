@@ -17,7 +17,7 @@ dependencies:
     "@teskooano/core-physics",
     "@teskooano/data-values",
   ]
-classes: []
+classes: ["PhysicsStateCalculator"]
 functions: []
 constants: ["AU_METERS", "MIN_ROGUE_DISTANCE_AU"]
 types:

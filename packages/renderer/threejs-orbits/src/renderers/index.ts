@@ -7,3 +7,4 @@ export * from "./PredictionLabels";
 export * from "./PredictionAnimation";
 export * from "./TrailCurveInterpolator";
 export * from "./TrailDataPool";
+export * from "./SimpleOrbitalRenderer";

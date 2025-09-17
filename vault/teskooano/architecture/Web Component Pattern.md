@@ -517,11 +517,11 @@ class ComponentRegistry {
 
 ## 🔗 Related Patterns
 
-- **[[Layer Pattern]]**: Web components are used within specialized layers
-- **[[Observer Pattern]]**: Attribute observers react to changes
-- **[[Factory Pattern]]**: Component factories for creating elements
-- **[[Registry Pattern]]**: Component registries for management
-- **[[Template Method Pattern]]**: Base component classes define structure
+- **[[architecture/Layer Pattern|Layer Pattern]]**: Web components are used within specialized layers
+- **[[architecture/Observer Pattern|Observer Pattern]]**: Attribute observers react to changes
+- **[[architecture/Factory Pattern|Factory Pattern]]**: Component factories for creating elements
+- **[[architecture/Registry Pattern|Registry Pattern]]**: Component registries for management
+- **[[architecture/Template Method Pattern|Template Method Pattern]]**: Base component classes define structure
 
 ## 🎯 Performance Considerations
 
