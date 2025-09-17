@@ -1,3 +1,37 @@
+---
+aliases: [interstellar-objects, interstellar-visitors, hyperbolic-objects]
+tags: [systems, solar-system, interstellar, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "oumuamua",
+    "atlas",
+    "borisov",
+  ]
+types:
+  [
+    "CelestialObject",
+    "AsteroidProperties",
+    "CometProperties",
+  ]
+status: active
+---
+
 # Interstellar Objects
 
 A collection of interstellar objects that have entered our solar system from other star systems. These objects provide unique insights into the composition and formation of other planetary systems.

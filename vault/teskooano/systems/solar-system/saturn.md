@@ -1,3 +1,44 @@
+---
+aliases: [saturn, saturn-system, gas-giant, ringed-planet]
+tags: [systems, solar-system, saturn, gas-giant, rings, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "saturn",
+    "titan",
+    "enceladus",
+    "mimas",
+    "dione",
+    "rhea",
+    "tethys",
+    "iapetus",
+    "hyperion",
+    "phoebe",
+  ]
+types:
+  [
+    "CelestialObject",
+    "GasGiantProperties",
+    "PlanetProperties",
+  ]
+status: active
+---
+
 # Saturn System
 
 The Saturn system containing the planet Saturn and all of its 82+ known moons. Saturn is the sixth planet from the Sun and is famous for its prominent ring system and the moon Titan.

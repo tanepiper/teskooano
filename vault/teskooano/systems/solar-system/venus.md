@@ -1,3 +1,34 @@
+---
+aliases: [venus, venus-system, morning-star, evening-star]
+tags: [systems, solar-system, venus, terrestrial, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "venus",
+  ]
+types:
+  [
+    "CelestialObject",
+    "PlanetProperties",
+  ]
+status: active
+---
+
 # Venus System
 
 The Venus system containing the planet Venus and its associated objects. Venus is the second planet from the Sun and is often called Earth's "sister planet" due to similar size and composition.

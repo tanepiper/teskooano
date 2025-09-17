@@ -1,3 +1,31 @@
+---
+aliases: [fixEmptyEpochs]
+tags: [systems, solar-system, epoch, function, astronomy, physics]
+type: Function
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "fixEmptyEpochs",
+  ]
+constants:
+  [
+    "J2000",
+  ]
+types:
+  [
+    "CelestialObject",
+  ]
+status: active
+---
+
 # fixEmptyEpochs
 
 A utility function that standardizes epoch values for celestial objects by setting empty or missing epochs to the standard astronomical epoch (J2000).
@@ -281,10 +309,10 @@ result.forEach((obj) => {
 });
 ```
 
-## Related
+## 📚 Related Documentation
 
-- [[DynamicEpochProcessor]] - Processes objects from their epochs to current time
-- [[processSolarSystemToCurrentTime]] - Main function that uses fixEmptyEpochs
-- [[initializeSolarSystem]] - Uses fixEmptyEpochs in the initialization process
-- [[@teskooano/core-physics]] - Provides orbital mechanics calculations
-- [[@teskooano/core-math]] - Provides epoch conversion utilities
+- **[[systems/solar-system/DynamicEpochProcessor|Dynamic Epoch Processor]]** - Processes objects from their epochs to current time
+- **[[systems/solar-system/processSolarSystemToCurrentTime|Process Solar System to Current Time]]** - Main function that uses fixEmptyEpochs
+- **[[systems/solar-system/initializeSolarSystem|Solar System Initialization]]** - Uses fixEmptyEpochs in the initialization process
+- **[[core/core-physics/core-physics|Core Physics Engine]]** - Provides orbital mechanics calculations
+- **[[core/core-math/core-math|Core Math Library]]** - Provides epoch conversion utilities

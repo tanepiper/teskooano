@@ -1,3 +1,38 @@
+---
+aliases: [sol, sun, solar-star, g2v-star]
+tags: [systems, solar-system, sun, star, g2v, main-sequence, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "sun",
+    "asteroidBelt",
+    "oortCloud",
+  ]
+types:
+  [
+    "CelestialObject",
+    "StarProperties",
+    "AsteroidFieldProperties",
+    "OortCloudProperties",
+  ]
+status: active
+---
+
 # Sol System
 
 The central star system containing the Sun and the main asteroid belt. This is the core of our solar system, providing the gravitational anchor and energy source for all other celestial bodies.
@@ -8,7 +43,7 @@ The Sol system represents the central components of our solar system, including 
 
 ## Components
 
-### Sun (Sol)
+# Sun (Sol)
 
 The central star of our solar system, a G-type main-sequence star that provides the gravitational anchor and energy source for all other celestial bodies.
 

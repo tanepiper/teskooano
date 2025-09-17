@@ -1,3 +1,40 @@
+---
+aliases: [uranus, uranus-system, ice-giant]
+tags: [systems, solar-system, uranus, ice-giant, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "uranus",
+    "ariel",
+    "umbriel",
+    "titania",
+    "oberon",
+    "miranda",
+  ]
+types:
+  [
+    "CelestialObject",
+    "GasGiantProperties",
+    "PlanetProperties",
+  ]
+status: active
+---
+
 # Uranus System
 
 The Uranus system containing the planet Uranus and all of its 27+ known moons. Uranus is the seventh planet from the Sun and is unique for its extreme axial tilt and retrograde rotation.

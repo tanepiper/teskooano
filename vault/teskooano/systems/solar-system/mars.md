@@ -1,3 +1,50 @@
+---
+aliases: [mars, mars-system, red-planet]
+tags: [systems, solar-system, mars, phobos, deimos, terrestrial, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/data-values",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+    "PhysicsStateReal",
+    "OrbitalParameters",
+    "OSVector3",
+    "OSQuaternion",
+  ]
+functions:
+  [
+    "createMarsSystem",
+    "calculateMarsPosition",
+    "calculatePhobosPosition",
+    "calculateDeimosPosition",
+  ]
+constants:
+  [
+    "MARS_MASS",
+    "MARS_RADIUS",
+    "MARS_DENSITY",
+    "PHOBOS_MASS",
+    "DEIMOS_MASS",
+    "MARS_ORBITAL_PERIOD",
+  ]
+types:
+  [
+    "MarsData",
+    "PhobosData",
+    "DeimosData",
+    "MarsSystemData",
+    "TerrestrialProperties",
+  ]
+status: active
+---
+
 # Mars System
 
 The Mars system containing the planet Mars and its two natural satellites, Phobos and Deimos. Mars is the fourth planet from the Sun and is often called the "Red Planet" due to its reddish appearance.

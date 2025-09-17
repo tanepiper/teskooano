@@ -1,3 +1,52 @@
+---
+aliases: [initializeSolarSystem]
+tags: [systems, solar-system, initialization, function, astronomy, physics]
+type: Function
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+    "@teskooano/core-state",
+  ]
+classes:
+  [
+    "DynamicEpochProcessor",
+  ]
+functions:
+  [
+    "initializeSolarSystem",
+    "processSolarSystemToCurrentTime",
+    "fixEmptyEpochs",
+  ]
+constants:
+  [
+    "solarSystemBodies",
+    "systemCelestials",
+    "earthSystemBodies",
+    "jupiterSystemBodies",
+    "marsSystemBodies",
+    "mercurySystemBodies",
+    "neptuneSystemBodies",
+    "plutoSystemBodies",
+    "saturnSystemBodies",
+    "uranusSystemBodies",
+    "venusSystemBodies",
+    "allSatellites",
+    "allComets",
+    "minorBodies",
+    "interstellarObjects",
+    "asteroids",
+    "planetNineSystemBodies",
+  ]
+types:
+  [
+    "CelestialObject",
+  ]
+status: active
+---
+
 # initializeSolarSystem
 
 The main initialization function for the complete solar system. Processes all celestial objects to their current positions and initializes them in the celestial manager with proper dependency sorting.
@@ -316,9 +365,9 @@ const currentPositionBodies = processSolarSystemToCurrentTime(fixedEpochBodies);
 4. **Verification**: Verify initialization success by checking object count
 5. **Synchronization**: Ensure simulation time is synchronized with processed positions
 
-## Related
+## 📚 Related Documentation
 
-- [[DynamicEpochProcessor]] - Handles epoch processing and position calculations
-- [[processSolarSystemToCurrentTime]] - Processes objects to current positions
-- [[@teskooano/core-state]] - Manages celestial objects and simulation state
-- [[@teskooano/core-physics]] - Provides orbital mechanics calculations
+- **[[systems/solar-system/DynamicEpochProcessor|Dynamic Epoch Processor]]** - Handles epoch processing and position calculations
+- **[[systems/solar-system/processSolarSystemToCurrentTime|Process Solar System to Current Time]]** - Processes objects to current positions
+- **[[core/core-state/core-state|Core State Management]]** - Manages celestial objects and simulation state
+- **[[core/core-physics/core-physics|Core Physics Engine]]** - Provides orbital mechanics calculations

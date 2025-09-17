@@ -1,3 +1,35 @@
+---
+aliases: [processSolarSystemToCurrentTime]
+tags: [systems, solar-system, epoch, function, astronomy, physics]
+type: Function
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "DynamicEpochProcessor",
+  ]
+functions:
+  [
+    "processSolarSystemToCurrentTime",
+  ]
+constants:
+  [
+    "currentJulianDay",
+    "currentPreciseEpoch",
+  ]
+types:
+  [
+    "CelestialObject",
+    "EpochProcessingStats",
+  ]
+status: active
+---
+
 # processSolarSystemToCurrentTime
 
 A high-level function that processes all solar system celestial objects from their original epochs to their current positions based on the actual current time.
@@ -260,10 +292,10 @@ console.assert(result[0].orbit.epoch !== "J2000");
 console.assert(result[0].orbit.meanAnomalyDeg !== 358.617);
 ```
 
-## Related
+## 📚 Related Documentation
 
-- [[DynamicEpochProcessor]] - The underlying processor class
-- [[fixEmptyEpochs]] - Standardizes epochs before processing
-- [[initializeSolarSystem]] - Main function that uses this processor
-- [[@teskooano/core-physics]] - Provides orbital mechanics calculations
-- [[@teskooano/core-math]] - Provides epoch conversion utilities
+- **[[systems/solar-system/DynamicEpochProcessor|Dynamic Epoch Processor]]** - The underlying processor class
+- **[[systems/solar-system/fixEmptyEpochs|Fix Empty Epochs]]** - Standardizes epochs before processing
+- **[[systems/solar-system/initializeSolarSystem|Solar System Initialization]]** - Main function that uses this processor
+- **[[core/core-physics/core-physics|Core Physics Engine]]** - Provides orbital mechanics calculations
+- **[[core/core-math/core-math|Core Math Library]]** - Provides epoch conversion utilities

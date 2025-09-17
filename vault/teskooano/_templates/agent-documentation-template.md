@@ -27,8 +27,6 @@ This document serves as the definitive guide for AI agents and developers to cre
 When working with Obsidian documentation, you have access to the MCP (Model Context Protocol) server for vault operations:
 
 - **Available Actions**: `vault`, `edit`, `view`, `workflow`, `system`
-- **Authentication Status**: The MCP server is **not authenticated** by default
-- **Limitations**: Some operations may fail with 401 errors due to lack of authentication
 - **Fallback**: Use direct file system operations when MCP operations fail
 
 ### Link Formatting Standards

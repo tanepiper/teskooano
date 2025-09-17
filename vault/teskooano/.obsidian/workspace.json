@@ -11,13 +11,10 @@
             "id": "6ea16438f15ecb15",
             "type": "leaf",
             "state": {
-              "type": "bases",
-              "state": {
-                "file": "Component View.base",
-                "viewName": "Table"
-              },
-              "icon": "lucide-table",
-              "title": "Component View"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -151,13 +148,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Component View.base",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Component View"
+              "title": "Outline"
             }
           }
         ],
@@ -181,6 +177,26 @@
   },
   "active": "6ea16438f15ecb15",
   "lastOpenFiles": [
+    "core/core-physics/Vector3Pool.md",
+    "core/core-physics/SimulationManager.md",
+    "core/core-physics/OrbitalValidationDebugger.md",
+    "core/core-physics/Octree.md",
+    "core/core-physics/LagrangePointService.md",
+    "core/core-physics/IdealOrreryStrategy.md",
+    "core/core-physics/core-physics.md",
+    "core/core-physics/AlgorithmFactory.md",
+    "core/core-debug/core-debug.md",
+    "systems/solar-system/jupiter.md",
+    "systems/solar-system/earth.md",
+    "systems/solar-system/asteroids.md",
+    "systems/solar-system/artificialSatellites.md",
+    "systems/solar-system/sol.md",
+    "systems/solar-system/systems-solar-system.md",
+    "systems/solar-system/fixEmptyEpochs.md",
+    "systems/solar-system/initializeSolarSystem.md",
+    "systems/solar-system/interstellarObjects.md",
+    "systems/solar-system/solarSystemBodies.md",
+    "Component View.base",
     "celestials/stars/KerrBlackHoleRenderer.md",
     "celestials/stars/WhiteDwarfRenderer.md",
     "celestials/stars/WolfRayetRenderer.md",
@@ -188,26 +204,6 @@
     "celestials/stars/SupergiantRenderer.md",
     "celestials/stars/PostAGBRenderer.md",
     "celestials/stars/AGBRenderer.md",
-    "celestials/stars/HorizontalBranchRenderer.md",
-    "celestials/stars/RedGiantRenderer.md",
-    "celestials/stars/SubgiantRenderer.md",
-    "celestials/stars/ClassMStarRenderer.md",
-    "celestials/stars/ClassKStarRenderer.md",
-    "celestials/stars/ClassFStarRenderer.md",
-    "celestials/stars/ClassAStarRenderer.md",
-    "celestials/stars/ClassBStarRenderer.md",
-    "celestials/stars/SchwarzschildBlackHoleRenderer.md",
-    "celestials/stars/NeutronStarRenderer.md",
-    "celestials/stars/ClassOStarRenderer.md",
-    "Dependencies Data View.md",
-    "Welcome.md",
-    "OBSIDIAN_AUDIT_PROGRESS.md",
-    "renderer/threejs-core/RendererStateAdapter.md",
-    "Component View.base",
-    "renderer/threejs-orbits/threejs-orbits.md",
-    "renderer/threejs-orbits/simplify.md",
-    "renderer/threejs-orbits/TrailManager.md",
-    "renderer/threejs-orbits/TrailDataPool.md",
     "renderer/threejs-orbits",
     "renderer/threejs-objects",
     "renderer/threejs-lighting",

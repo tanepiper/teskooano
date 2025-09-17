@@ -1,3 +1,39 @@
+---
+aliases: [comets, icy-bodies, short-period, long-period]
+tags: [systems, solar-system, comets, minor-bodies, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "halley",
+    "haleBopp",
+    "encke",
+    "temple2",
+    "borrelly",
+    "whipple",
+  ]
+types:
+  [
+    "CelestialObject",
+    "CometProperties",
+  ]
+status: active
+---
+
 # Comets
 
 A collection of comets in our solar system, including periodic comets, long-period comets, and other significant cometary objects. Comets are icy bodies that develop tails when they approach the Sun.

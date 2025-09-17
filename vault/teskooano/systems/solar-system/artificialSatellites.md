@@ -1,3 +1,41 @@
+---
+aliases: [artificial-satellites, satellites, space-probes, spacecraft]
+tags: [systems, solar-system, satellites, spacecraft, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElementsFromTLE",
+  ]
+constants:
+  [
+    "iss",
+    "hubble",
+    "noaa19",
+    "ses1",
+    "terra",
+    "jwst",
+    "voyager1",
+    "voyager2",
+  ]
+types:
+  [
+    "CelestialObject",
+    "SatelliteProperties",
+  ]
+status: active
+---
+
 # Artificial Satellites
 
 A collection of artificial satellites and space probes that orbit Earth and other celestial bodies. These human-made objects represent our exploration and utilization of space.

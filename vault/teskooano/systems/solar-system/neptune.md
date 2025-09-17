@@ -1,3 +1,41 @@
+---
+aliases: [neptune, neptune-system, ice-giant]
+tags: [systems, solar-system, neptune, ice-giant, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "neptune",
+    "triton",
+    "nereid",
+    "naiad",
+    "thalassa",
+    "despina",
+    "galatea",
+  ]
+types:
+  [
+    "CelestialObject",
+    "GasGiantProperties",
+    "PlanetProperties",
+  ]
+status: active
+---
+
 # Neptune System
 
 The Neptune system containing the planet Neptune and all of its 14+ known moons. Neptune is the eighth and outermost planet in our solar system and is known for its deep blue color and strong winds.

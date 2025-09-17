@@ -1,3 +1,41 @@
+---
+aliases: [DynamicEpochProcessor]
+tags: [systems, solar-system, epoch, processing, time, astronomy, physics]
+type: Class
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "DynamicEpochProcessor",
+  ]
+functions:
+  [
+    "processObjects",
+    "processObject",
+    "getProcessingStats",
+    "getObjectInfo",
+    "validateProcessing",
+    "processSolarSystemToCurrentTime",
+  ]
+constants:
+  [
+    "currentJulianDay",
+    "currentPreciseEpoch",
+    "processedObjects",
+  ]
+types:
+  [
+    "CelestialObject",
+    "EpochProcessingStats",
+  ]
+status: active
+---
+
 # DynamicEpochProcessor
 
 A sophisticated class for processing celestial objects to calculate their current positions based on the actual current time. Handles different epoch types and converts them to current positions using precise time calculations for maximum accuracy.
@@ -364,9 +402,9 @@ import { calculateCurrentPositionPrecise } from "@teskooano/core-physics";
 4. **Handle Errors**: Implement proper error handling for processing failures
 5. **Log Processing**: Use logging for debugging and monitoring
 
-## Related
+## 📚 Related Documentation
 
-- [[processSolarSystemToCurrentTime]] - Convenience function for processing
-- [[@teskooano/core-math]] - Epoch and time calculation utilities
-- [[@teskooano/core-physics]] - Orbital mechanics calculations
-- [[EpochProcessingStats]] - Processing statistics interface
+- **[[systems/solar-system/processSolarSystemToCurrentTime|Process Solar System to Current Time]]** - Convenience function for processing
+- **[[core/core-math/core-math|Core Math Library]]** - Epoch and time calculation utilities
+- **[[core/core-physics/core-physics|Core Physics Engine]]** - Orbital mechanics calculations
+- **[[data/types/data-types|Data Type Definitions]]** - Processing statistics interface

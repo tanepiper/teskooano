@@ -1,3 +1,57 @@
+---
+aliases: [systems-solar-system, solar-system, solar-system-data]
+tags: [systems, solar-system, data, astronomy, physics, nasa, jpl]
+type: Package
+package: "@teskooano/systems-solar-system"
+version: "0.4.0-dev.0"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+    "@teskooano/core-state",
+  ]
+classes:
+  [
+    "DynamicEpochProcessor",
+  ]
+functions:
+  [
+    "initializeSolarSystem",
+    "processSolarSystemToCurrentTime",
+    "fixEmptyEpochs",
+    "standardizeSolarSystemEpochs",
+    "getEpochSummary",
+    "logEpochInformation",
+  ]
+constants:
+  [
+    "solarSystemBodies",
+    "systemCelestials",
+    "earthSystemBodies",
+    "jupiterSystemBodies",
+    "marsSystemBodies",
+    "mercurySystemBodies",
+    "neptuneSystemBodies",
+    "plutoSystemBodies",
+    "saturnSystemBodies",
+    "uranusSystemBodies",
+    "venusSystemBodies",
+    "allSatellites",
+    "allComets",
+    "minorBodies",
+    "interstellarObjects",
+    "asteroids",
+    "planetNineSystemBodies",
+  ]
+types:
+  [
+    "CelestialObject",
+    "EpochProcessingStats",
+  ]
+status: active
+---
+
 # Solar System (`@teskooano/systems-solar-system`)
 
 A comprehensive, scientifically accurate solar system data package providing curated celestial objects, dynamic epoch processing, and real-time position calculations. Includes all major planets, moons, asteroids, comets, and artificial satellites with precise orbital mechanics.
@@ -23,20 +77,26 @@ The `@teskooano/systems-solar-system` package provides a complete, scientificall
 
 ### Core Components
 
-- **[[DynamicEpochProcessor]]**: Processes celestial objects to current positions
-- **[[initializeSolarSystem]]**: Main initialization function for the complete solar system
+- **[[systems/solar-system/DynamicEpochProcessor|Dynamic Epoch Processor]]**: Processes celestial objects to current positions
+- **[[systems/solar-system/initializeSolarSystem|Solar System Initialization]]**: Main initialization function for the complete solar system
 - **Epoch Standardization**: Ensures consistent epoch handling across all objects
 
 ### Celestial Body Organization
 
-- **[[Sol]]**: Sun and solar system structure (asteroid belt, Oort cloud)
-- **[[Planets]]**: All eight planets with their systems
-- **[[Moons]]**: Natural satellites organized by parent planet
-- **[[Asteroids]]**: Major asteroids and minor bodies
-- **[[Comets]]**: Periodic and long-period comets
-- **[[Satellites]]**: Artificial satellites and space probes
-- **[[Interstellar Objects]]**: Objects from outside our solar system
-- **[[Minor Bodies]]**: Dwarf planets and Kuiper Belt objects
+- **[[systems/solar-system/sol|Sun and Solar System]]**: Sun and solar system structure (asteroid belt, Oort cloud)
+- **[[systems/solar-system/earth|Earth System]]**: Earth and its moon
+- **[[systems/solar-system/mars|Mars System]]**: Mars and its moons
+- **[[systems/solar-system/jupiter|Jupiter System]]**: Jupiter and its moons
+- **[[systems/solar-system/saturn|Saturn System]]**: Saturn and its moons
+- **[[systems/solar-system/uranus|Uranus System]]**: Uranus and its moons
+- **[[systems/solar-system/neptune|Neptune System]]**: Neptune and its moons
+- **[[systems/solar-system/mercury|Mercury System]]**: Mercury
+- **[[systems/solar-system/venus|Venus System]]**: Venus
+- **[[systems/solar-system/pluto|Pluto System]]**: Pluto and its moons
+- **[[systems/solar-system/asteroids|Asteroids]]**: Major asteroids and minor bodies
+- **[[systems/solar-system/comets|Comets]]**: Periodic and long-period comets
+- **[[systems/solar-system/artificialSatellites|Artificial Satellites]]**: Artificial satellites and space probes
+- **[[systems/solar-system/interstellarObjects|Interstellar Objects]]**: Objects from outside our solar system
 
 ## Usage Examples
 
@@ -320,9 +380,9 @@ npm run test:browser
 - **@teskooano/core-physics**: Orbital mechanics and physics calculations
 - **rxjs**: Reactive programming for state management
 
-## Related
+## 📚 Related Documentation
 
-- [[@teskooano/core-state]] - Uses solar system data for initialization
-- [[@teskooano/core-physics]] - Orbital mechanics calculations
-- [[@teskooano/core-math]] - Epoch processing and time calculations
-- [[@teskooano/data-types]] - Celestial object type definitions
+- **[[core/core-state/core-state|Core State Management]]** - Uses solar system data for initialization
+- **[[core/core-physics/core-physics|Core Physics Engine]]** - Orbital mechanics calculations
+- **[[core/core-math/core-math|Core Math Library]]** - Epoch processing and time calculations
+- **[[data/types/data-types|Data Type Definitions]]** - Celestial object type definitions

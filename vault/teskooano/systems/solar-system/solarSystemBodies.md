@@ -1,3 +1,55 @@
+---
+aliases: [solar-system-bodies, celestial-objects, solar-system-data]
+tags: [systems, solar-system, data, astronomy, physics]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "solarSystemBodies",
+    "systemCelestials",
+    "earthSystemBodies",
+    "jupiterSystemBodies",
+    "marsSystemBodies",
+    "mercurySystemBodies",
+    "neptuneSystemBodies",
+    "plutoSystemBodies",
+    "saturnSystemBodies",
+    "uranusSystemBodies",
+    "venusSystemBodies",
+    "allSatellites",
+    "allComets",
+    "minorBodies",
+    "interstellarObjects",
+    "asteroids",
+    "planetNineSystemBodies",
+  ]
+types:
+  [
+    "CelestialObject",
+    "PlanetProperties",
+    "GasGiantProperties",
+    "StarProperties",
+    "AsteroidProperties",
+    "CometProperties",
+    "SatelliteProperties",
+  ]
+status: active
+---
+
 # solarSystemBodies
 
 The complete array of all celestial objects in the solar system, including the Sun, planets, moons, asteroids, comets, and artificial satellites.

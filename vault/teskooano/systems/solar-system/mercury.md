@@ -1,3 +1,34 @@
+---
+aliases: [mercury, mercury-system, innermost-planet]
+tags: [systems, solar-system, mercury, terrestrial, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "mercury",
+  ]
+types:
+  [
+    "CelestialObject",
+    "PlanetProperties",
+  ]
+status: active
+---
+
 # Mercury System
 
 The Mercury system containing the planet Mercury and its associated objects. Mercury is the innermost planet in our solar system, orbiting closest to the Sun.

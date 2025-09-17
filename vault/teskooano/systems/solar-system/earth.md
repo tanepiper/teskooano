@@ -1,3 +1,50 @@
+---
+aliases: [earth, earth-system, earth-moon-system]
+tags: [systems, solar-system, earth, moon, terrestrial, habitable, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/data-values",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+    "PhysicsStateReal",
+    "OrbitalParameters",
+    "OSVector3",
+    "OSQuaternion",
+  ]
+functions:
+  [
+    "createEarthSystem",
+    "calculateEarthPosition",
+    "calculateMoonPosition",
+    "updateEarthSystem",
+  ]
+constants:
+  [
+    "EARTH_MASS",
+    "EARTH_RADIUS",
+    "EARTH_DENSITY",
+    "MOON_MASS",
+    "MOON_RADIUS",
+    "EARTH_MOON_DISTANCE",
+  ]
+types:
+  [
+    "EarthData",
+    "MoonData",
+    "EarthSystemData",
+    "TerrestrialProperties",
+    "AtmosphericComposition",
+  ]
+status: active
+---
+
 # Earth System
 
 The Earth system containing Earth, its Moon, and all associated artificial satellites. This represents our home planet and its immediate celestial environment.

@@ -1,3 +1,51 @@
+---
+aliases: [jupiter, jupiter-system, gas-giant]
+tags: [systems, solar-system, jupiter, galilean-moons, gas-giant, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/data-values",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+    "PhysicsStateReal",
+    "OrbitalParameters",
+    "OSVector3",
+    "OSQuaternion",
+  ]
+functions:
+  [
+    "createJupiterSystem",
+    "calculateJupiterPosition",
+    "calculateGalileanMoons",
+    "calculateJupiterMoons",
+  ]
+constants:
+  [
+    "JUPITER_MASS",
+    "JUPITER_RADIUS",
+    "JUPITER_DENSITY",
+    "IO_MASS",
+    "EUROPA_MASS",
+    "GANYMEDE_MASS",
+    "CALLISTO_MASS",
+  ]
+types:
+  [
+    "JupiterData",
+    "GalileanMoonData",
+    "JupiterSystemData",
+    "GasGiantProperties",
+    "MoonSystemData",
+  ]
+status: active
+---
+
 # Jupiter System
 
 The Jupiter system containing the planet Jupiter and all of its 79+ known moons. Jupiter is the largest planet in our solar system and has a complex system of satellites, including the famous Galilean moons.

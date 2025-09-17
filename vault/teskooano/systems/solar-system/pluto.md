@@ -1,3 +1,35 @@
+---
+aliases: [pluto, pluto-system, dwarf-planet]
+tags: [systems, solar-system, pluto, dwarf-planet, kuiper-belt, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "pluto",
+    "charon",
+  ]
+types:
+  [
+    "CelestialObject",
+    "PlanetProperties",
+  ]
+status: active
+---
+
 # Pluto System
 
 The Pluto system containing the dwarf planet Pluto and its largest moon Charon, along with four smaller moons. Pluto is the largest known object in the Kuiper Belt and was reclassified as a dwarf planet in 2006.

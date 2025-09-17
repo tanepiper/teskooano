@@ -1,3 +1,37 @@
+---
+aliases: [asteroids, asteroid-belt, minor-planets]
+tags: [systems, solar-system, asteroids, minor-bodies, astronomy]
+type: Data
+package: "@teskooano/systems-solar-system"
+dependencies:
+  [
+    "@teskooano/data-types",
+    "@teskooano/core-math",
+    "@teskooano/core-physics",
+  ]
+classes:
+  [
+    "CelestialObject",
+  ]
+functions:
+  [
+    "createOrbitalElements",
+  ]
+constants:
+  [
+    "eros",
+    "apophis",
+    "vesta",
+    "pallas",
+  ]
+types:
+  [
+    "CelestialObject",
+    "AsteroidProperties",
+  ]
+status: active
+---
+
 # Asteroids
 
 A collection of major asteroids in our solar system, including the largest asteroids in the main belt and other significant minor planets. These objects provide insights into the early solar system and planetary formation.
