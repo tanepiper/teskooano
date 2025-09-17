@@ -6,3 +6,4 @@ export * from "./LogarithmicDepthMaterial";
 export * from "./events";
 export * from "./helpers/GridManager";
 export * from "./helpers/DebugSphereManager";
+export * from "./helpers/performance";

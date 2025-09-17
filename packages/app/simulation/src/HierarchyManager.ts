@@ -10,7 +10,7 @@ import {
   PhysicsStateReal,
 } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-values";
-import { WasmSpatialService } from "@teskooano/core-physics";
+import { CelestialDistanceService } from "@teskooano/core-physics";
 
 /**
  * Manages the dynamic hierarchy of celestial objects within the simulation.
@@ -25,10 +25,10 @@ import { WasmSpatialService } from "@teskooano/core-physics";
  */
 export class HierarchyManager {
   private updateIndex = 0;
-  private wasmSpatialService: WasmSpatialService;
+  private CelestialDistanceService: CelestialDistanceService;
 
   constructor() {
-    this.wasmSpatialService = WasmSpatialService.getInstance();
+    this.CelestialDistanceService = CelestialDistanceService.getInstance();
   }
 
   /**
@@ -224,7 +224,7 @@ export class HierarchyManager {
     allObjects: Record<string, CelestialObject>,
     allPhysicsStates: PhysicsStateReal[],
   ): CelestialObject | null {
-    if (!this.wasmSpatialService.isInitialized()) {
+    if (!this.CelestialDistanceService.isInitialized()) {
       return this.findBestParentTraditional(
         child,
         childState,
@@ -235,11 +235,11 @@ export class HierarchyManager {
 
     try {
       // Update the centralized WASM spatial service with current positions
-      this.wasmSpatialService.update(allPhysicsStates);
+      this.CelestialDistanceService.update(allPhysicsStates);
 
       // Use centralized WASM service to find nearby bodies
       const searchDistance = this.getSearchDistance(child);
-      const nearbyBodies = this.wasmSpatialService.findBodiesInRange(
+      const nearbyBodies = this.CelestialDistanceService.findBodiesInRange(
         childState.position_m,
         searchDistance,
       );

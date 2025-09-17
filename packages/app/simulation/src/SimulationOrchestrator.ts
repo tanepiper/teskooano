@@ -1,8 +1,8 @@
-import { SimulationManager, WasmSpatialService } from "@teskooano/core-physics";
+import { SimulationManager } from "@teskooano/core-physics";
 import {
   celestialManager,
-  physicsSystemAdapter,
   simulationManager as coreSimulationManager,
+  physicsSystemAdapter,
   simulationStore,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
@@ -11,7 +11,6 @@ import {
   OrbitUpdatePayload,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { AU_METERS } from "@teskooano/data-values";
 import { Observable, Subject } from "rxjs";
 import { HierarchyManager } from "./HierarchyManager";
 import { processLagrangeObjects } from "./LagrangeProcessor";
@@ -21,20 +20,39 @@ import { processLagrangeObjects } from "./LagrangeProcessor";
  * Implemented as a singleton.
  */
 export class SimulationOrchestrator {
+  /**
+   * The singleton instance of the SimulationOrchestrator.
+   */
   private static instance: SimulationOrchestrator;
 
-  // Loop properties
+  /**
+   * Whether the simulation loop is running.
+   */
   private isRunning = false;
+
+  /**
+   * The subscription manager for the SimulationOrchestrator.
+   */
   private subscriptionManager = new StateSubscriptionMixin();
+  /**
+   * The hierarchy manager for the SimulationOrchestrator.
+   */
   private hierarchyManager: HierarchyManager;
+
+  /**
+   * The core simulation manager for the SimulationOrchestrator.
+   */
   private coreSimulationManager: SimulationManager;
-  private wasmSpatialService: WasmSpatialService;
 
   // Time tracking for proper simulation scaling
   private lastRealTime: number = 0;
 
   // Event Subjects
   private readonly _resetTime$ = new Subject<void>();
+
+  /**
+   * The subject for the orbit update event.
+   */
   private readonly _orbitUpdate$ = new Subject<OrbitUpdatePayload>();
 
   /**
@@ -44,7 +62,6 @@ export class SimulationOrchestrator {
     // Private constructor for singleton
     this.hierarchyManager = new HierarchyManager();
     this.coreSimulationManager = new SimulationManager();
-    this.wasmSpatialService = WasmSpatialService.getInstance();
   }
 
   /**
@@ -58,7 +75,6 @@ export class SimulationOrchestrator {
     return SimulationOrchestrator.instance;
   }
 
-  // Public Observables for events
   /**
    * Observable that emits when the simulation time is reset.
    */
@@ -89,26 +105,12 @@ export class SimulationOrchestrator {
     // Reset time tracking
     this.lastRealTime = 0;
 
-    // Initialize centralized WASM spatial service
-    try {
-      await this.wasmSpatialService.initialize({
-        neighborDistance: 1000 * AU_METERS, // 1 trillion meters (~6700 AU)
-      });
-    } catch (error) {
-      console.warn(
-        "Failed to initialize centralized WASM spatial service:",
-        error,
-      );
-    }
-
-    // Initialize WASM simulation manager if not already initialized
+    // Initialize the core simulation manager
     try {
       await this.coreSimulationManager.initialize();
+      console.log("SimulationManager initialized successfully");
     } catch (error) {
-      console.warn(
-        "Failed to initialize WASM simulation manager, falling back to traditional methods:",
-        error,
-      );
+      console.warn("Failed to initialize SimulationManager:", error);
     }
 
     this.isRunning = true;

@@ -430,11 +430,11 @@ class StrategyFactory {
 
 ## 🔗 Related Patterns
 
-- **[[Manager Pattern]]**: Context classes often implement the Manager pattern
-- **[[Factory Pattern]]**: Strategy factories for creating strategies
-- **[[State Pattern]]**: Similar to Strategy but focuses on state transitions
-- **[[Template Method Pattern]]**: Base classes can define strategy structure
-- **[[Observer Pattern]]**: Strategies can observe state changes
+- **[[architecture/Manager Pattern|Manager Pattern]]**: Context classes often implement the Manager pattern
+- **[[architecture/Factory Pattern|Factory Pattern]]**: Strategy factories for creating strategies
+- **[[architecture/State Pattern|State Pattern]]**: Similar to Strategy but focuses on state transitions
+- **[[architecture/Template Method Pattern|Template Method Pattern]]**: Base classes can define strategy structure
+- **[[architecture/Observer Pattern|Observer Pattern]]**: Strategies can observe state changes
 
 ## 🎯 Performance Considerations
 

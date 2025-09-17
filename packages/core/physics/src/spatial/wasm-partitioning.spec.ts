@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { WasmSpatialPartitioning } from "./wasm-partitioning";
+import { SpatialPartitioning } from "./spatial-partitioning";
 import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "@teskooano/data-types";
 
@@ -13,16 +13,16 @@ vi.mock("@robertaron/spacial-partitioning", () => ({
   ]),
 }));
 
-describe("WasmSpatialPartitioning", () => {
-  let spatialPartitioning: WasmSpatialPartitioning;
+describe("SpatialPartitioning", () => {
+  let spatialPartitioning: SpatialPartitioning;
 
   beforeEach(async () => {
-    spatialPartitioning = new WasmSpatialPartitioning(1000);
+    spatialPartitioning = new SpatialPartitioning(1000);
     await spatialPartitioning.initialize();
   });
 
   it("should initialize successfully", async () => {
-    const newPartitioning = new WasmSpatialPartitioning(1000);
+    const newPartitioning = new SpatialPartitioning(1000);
     await expect(newPartitioning.initialize()).resolves.not.toThrow();
   });
 

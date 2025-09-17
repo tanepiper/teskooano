@@ -12,7 +12,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: IdealOrreryStrategy
 dependencies: ["@teskooano/core-math", "@teskooano/data-types"]
-classes: []
+classes: ["IdealOrreryStrategy"]
 functions: []
 constants: []
 types:
@@ -477,10 +477,10 @@ const referenceStates = idealOrrery.simulate(referenceParams);
 
 ## 🔗 Related Components
 
-- [[SimulationManager]] - Orchestrates ideal mode simulation
-- [[OrbitalParameters]] - Orbital element definitions
-- [[calculateKeplerianStateAtTime]] - Core orbital calculations
-- [[calculateElementsFromStateVectors]] - Inverse orbital calculations
+- [[core/core-physics/SimulationManager|SimulationManager]] - Orchestrates ideal mode simulation
+- [[data/data-types/OrbitalParameters|OrbitalParameters]] - Orbital element definitions
+- [[core/core-physics/calculateKeplerianStateAtTime|calculateKeplerianStateAtTime]] - Core orbital calculations
+- [[core/core-physics/calculateElementsFromStateVectors|calculateElementsFromStateVectors]] - Inverse orbital calculations
 
 ## 📚 Architecture Patterns
 

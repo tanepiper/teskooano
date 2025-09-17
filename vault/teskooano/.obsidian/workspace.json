@@ -4,21 +4,31 @@
     "type": "split",
     "children": [
       {
-        "id": "61a94be4c4c02a04",
+        "id": "004ed12fe2a9f469",
         "type": "tabs",
         "children": [
           {
-            "id": "6ecb65330d6d43b7",
+            "id": "6ea16438f15ecb15",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "core/core-physics/AlgorithmFactory.md",
+                "file": "core/core-physics/IdealOrreryStrategy.md",
                 "mode": "source",
-                "source": false
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
               },
               "icon": "lucide-file",
-              "title": "AlgorithmFactory"
+              "title": "IdealOrreryStrategy"
             }
           }
         ]
@@ -72,6 +82,26 @@
               "state": {},
               "icon": "lucide-bookmark",
               "title": "Bookmarks"
+            }
+          },
+          {
+            "id": "a9c16a1bc8a536cb",
+            "type": "leaf",
+            "state": {
+              "type": "notebook-navigator",
+              "state": {},
+              "icon": "lucide-ghost",
+              "title": "notebook-navigator"
+            }
+          },
+          {
+            "id": "0395633ea680b036",
+            "type": "leaf",
+            "state": {
+              "type": "notebook-navigator",
+              "state": {},
+              "icon": "notebook",
+              "title": "Notebook Navigator"
             }
           }
         ]
@@ -142,13 +172,27 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "core/core-physics/AlgorithmFactory.md",
+                "file": "core/core-physics/IdealOrreryStrategy.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of AlgorithmFactory"
+              "title": "Outline of IdealOrreryStrategy"
+            }
+          },
+          {
+            "id": "d47e01a66f0282da",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
             }
           }
         ],
@@ -166,47 +210,51 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "notebook-navigator:Notebook Navigator": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false,
+      "obsidian-kanban:Create new board": false,
+      "templater-obsidian:Templater": false
     }
   },
-  "active": "6ecb65330d6d43b7",
+  "active": "6ea16438f15ecb15",
   "lastOpenFiles": [
-    "core/core-state/CelestialUtils.md",
-    "core/core-state/StoreFilters.md",
-    "core/core-physics/Vector3Pool.md",
-    "core/core-physics/OrbitalValidationDebugger.md",
-    "core/core-physics/LagrangePointService.md",
-    "core/core-physics/IdealOrreryStrategy.md",
-    "core/core-physics/WasmCollisionDetection.md",
-    "core/core-physics/WasmSpatialPartitioning.md",
-    "core/core-state/StateAccessor.md",
-    "core/core-physics/Octree.md",
-    "core/core-physics/TreePMStrategy.md",
-    "core/core-physics/AlgorithmFactory.md",
-    "core/core-physics/SimulationManager.md",
-    "core/core-physics/core-physics.md",
-    "core/core-physics",
-    "core/core-state/StateSubscriptionMixin.md",
-    "core/core-state/CelestialManager.md",
-    "core/core-state/SimulationTypes.md",
-    "core/core-state/SimulationUtils.md",
-    "core/core-state/RenderableStore.md",
-    "core/core-state/PhysicsStore.md",
-    "core/core-state/SeedStore.md",
-    "core/core-state/PhysicsStateProvider.md",
-    "core/core-state/PhysicsStateCalculator.md",
-    "threejs-renderers/threejs-orbits/IdealStrategy.md",
-    "threejs-renderers/threejs-orbits/IOrbitVisualizationStrategy.md",
-    "threejs-renderers/threejs-orbits/threejs-orbits.md",
-    "Untitled.base",
-    "Component View.base",
-    "Untitled.canvas",
-    "architecture",
-    "threejs-renderers/threejs-orbits",
-    "threejs-renderers/threejs-objects",
-    "threejs-renderers/threejs-lighting",
-    "threejs-renderers/threejs-labels",
-    "threejs-renderers/threejs-core",
-    "threejs-renderers/threejs-celestial"
+    "systems/solar-system/venus.md",
+    "systems/solar-system/uranus.md",
+    "systems/solar-system/systems-solar-system.md",
+    "systems/solar-system/solarSystemBodies.md",
+    "systems/solar-system/sol.md",
+    "systems/solar-system/saturn.md",
+    "systems/solar-system/processSolarSystemToCurrentTime.md",
+    "systems/solar-system/pluto.md",
+    "systems/solar-system/neptune.md",
+    "systems/solar-system/mercury.md",
+    "systems/solar-system/mars.md",
+    "systems/solar-system/jupiter.md",
+    "systems/solar-system/interstellarObjects.md",
+    "systems/solar-system/initializeSolarSystem.md",
+    "systems/solar-system/fixEmptyEpochs.md",
+    "systems/solar-system/earth.md",
+    "systems/solar-system/comets.md",
+    "systems/solar-system/asteroids.md",
+    "systems/solar-system/artificialSatellites.md",
+    "systems/solar-system/DynamicEpochProcessor.md",
+    "systems/procedural-generation/systems-procedural-generation.md",
+    "systems/procedural-generation/ZoneSelector.md",
+    "systems/procedural-generation/ZoneScaler.md",
+    "systems/procedural-generation/StellarSystemConfigurator.md",
+    "systems/procedural-generation/StarZoneFactory.md",
+    "systems/procedural-generation/RoguePlanetGenerator.md",
+    "systems/solar-system",
+    "systems/procedural-generation",
+    "systems",
+    "renderer/threejs-orbits",
+    "renderer/threejs-objects",
+    "renderer/threejs-lighting",
+    "renderer/threejs-labels",
+    "renderer/threejs-helpers",
+    "renderer/threejs-core",
+    "renderer/threejs-controls",
+    "Untitled.canvas"
   ]
 }

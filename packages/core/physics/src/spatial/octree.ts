@@ -1,41 +1,11 @@
 import { OSVector3 } from "@teskooano/core-math";
-
-import { calculateNewtonianGravitationalForce } from "../forces/gravity";
 import { PhysicsStateReal } from "@teskooano/data-types";
 import {
   GRAVITATIONAL_CONSTANT,
   GRAVITATIONAL_SOFTENING_SQUARED,
 } from "@teskooano/data-values";
-
-/**
- * Represents a node in the octree
- */
-interface OctreeNode {
-  /** The center point of this node (OSVector3, meters) */
-  center: OSVector3;
-  /** The size of this node (half-width, meters) */
-  size: number;
-  /** The bodies contained directly in this node */
-  bodies: PhysicsStateReal[];
-  /** Child nodes (if any) */
-  children?: OctreeNode[];
-  /** The total mass of all bodies within this node and its children (kg) */
-  totalMass_kg: number;
-  /** The center of mass of all bodies within this node and its children (OSVector3, meters) */
-  centerOfMass_m: OSVector3;
-  /** The minimum x coordinate of this node */
-  minX: number;
-  /** The maximum x coordinate of this node */
-  maxX: number;
-  /** The minimum y coordinate of this node */
-  minY: number;
-  /** The maximum y coordinate of this node */
-  maxY: number;
-  /** The minimum z coordinate of this node */
-  minZ: number;
-  /** The maximum z coordinate of this node */
-  maxZ: number;
-}
+import { calculateNewtonianGravitationalForce } from "../forces/gravity";
+import { OctreeNode } from "./types";
 
 /**
  * Creates a new octree node
@@ -128,34 +98,37 @@ const subdivide = (
     }
   });
 
+  // Recalculate mass properties from children and retained bodies
   node.totalMass_kg = 0;
   node.centerOfMass_m.set(0, 0, 0);
-  let totalMassForParent = 0;
-  const weightedCOMParent = new OSVector3(0, 0, 0);
 
+  let totalMass = 0;
+  const weightedCOM = new OSVector3(0, 0, 0);
+
+  // Add mass from children
   if (assignedChildren) {
     assignedChildren.forEach((child) => {
       if (child.totalMass_kg > 0) {
-        weightedCOMParent.add(
+        weightedCOM.add(
           child.centerOfMass_m.clone().multiplyScalar(child.totalMass_kg),
         );
-        totalMassForParent += child.totalMass_kg;
+        totalMass += child.totalMass_kg;
       }
     });
   }
 
+  // Add mass from retained bodies
   node.bodies.forEach((retainedBody) => {
-    weightedCOMParent.add(
+    weightedCOM.add(
       retainedBody.position_m.clone().multiplyScalar(retainedBody.mass_kg),
     );
-    totalMassForParent += retainedBody.mass_kg;
+    totalMass += retainedBody.mass_kg;
   });
 
-  if (totalMassForParent > 0) {
-    node.centerOfMass_m.copy(
-      weightedCOMParent.multiplyScalar(1 / totalMassForParent),
-    );
-    node.totalMass_kg = totalMassForParent;
+  // Set final mass properties
+  if (totalMass > 0) {
+    node.centerOfMass_m.copy(weightedCOM.multiplyScalar(1 / totalMass));
+    node.totalMass_kg = totalMass;
   } else {
     node.centerOfMass_m.copy(node.center);
     node.totalMass_kg = 0;
@@ -206,10 +179,14 @@ const insertBody = (
     return;
   }
 
-  if (!node.children && node.bodies.length + 1 > 1 && node.size > 0.1) {
-    if (node.bodies.length > 0) {
-      subdivide(node, currentDepth + 1, maxDepth);
-    }
+  // Subdivide if we have multiple bodies and haven't reached max depth
+  if (
+    !node.children &&
+    node.bodies.length > 1 &&
+    currentDepth < maxDepth &&
+    node.size > 0.1
+  ) {
+    subdivide(node, currentDepth, maxDepth);
   }
 
   if (node.children) {
@@ -245,34 +222,37 @@ const insertBody = (
       }
     });
 
-    // Recalculate mass properties from children
+    // Recalculate mass properties from children and direct bodies
     node.totalMass_kg = 0;
-    node.centerOfMass_m = new OSVector3(0, 0, 0);
+    node.centerOfMass_m.set(0, 0, 0);
+
+    let totalMass = 0;
+    const weightedCOM = new OSVector3(0, 0, 0);
 
     // Add mass from direct bodies
     node.bodies.forEach((b) => {
-      updateMassProperties(node, b);
+      weightedCOM.add(b.position_m.clone().multiplyScalar(b.mass_kg));
+      totalMass += b.mass_kg;
     });
 
     // Add mass from children
     node.children.forEach((child) => {
       if (child.totalMass_kg > 0) {
-        const weightedChildCM = child.centerOfMass_m
-          .clone()
-          .multiplyScalar(child.totalMass_kg);
-        const weightedNodeCM = node.centerOfMass_m
-          .clone()
-          .multiplyScalar(node.totalMass_kg);
-
-        const newTotalMass = node.totalMass_kg + child.totalMass_kg;
-        const newCenterOfMass = weightedNodeCM
-          .add(weightedChildCM)
-          .multiplyScalar(1 / newTotalMass);
-
-        node.totalMass_kg = newTotalMass;
-        node.centerOfMass_m = newCenterOfMass;
+        weightedCOM.add(
+          child.centerOfMass_m.clone().multiplyScalar(child.totalMass_kg),
+        );
+        totalMass += child.totalMass_kg;
       }
     });
+
+    // Set final mass properties
+    if (totalMass > 0) {
+      node.centerOfMass_m.copy(weightedCOM.multiplyScalar(1 / totalMass));
+      node.totalMass_kg = totalMass;
+    } else {
+      node.centerOfMass_m.copy(node.center);
+      node.totalMass_kg = 0;
+    }
   } else {
     node.bodies.push(body);
   }

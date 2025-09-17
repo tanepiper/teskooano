@@ -23,6 +23,10 @@ export interface SimulationConfiguration {
   mode: SimulationMode;
   integrator?: IntegratorType;
   algorithm?: AlgorithmType;
+  /** Distance threshold for neighbor finding (in meters) */
+  neighborDistance?: number;
+  /** Whether to enable collision detection */
+  collisionDetection?: boolean;
 }
 
 /**
@@ -40,3 +44,68 @@ export interface SimulationParameters {
   orbitalParameters?: Map<string | number, OrbitalParameters>;
   currentTime_s?: number;
 }
+
+/**
+ * Enhanced simulation result with performance metrics and metadata
+ */
+export interface EnhancedSimulationResult {
+  states: PhysicsStateReal[];
+  accelerations: Map<string, OSVector3>;
+  destroyedIds: Set<string>;
+  destructionEvents: any[];
+  metadata: {
+    mode: SimulationMode;
+    algorithm?: string;
+    integrator?: string;
+    executionTime: number;
+    bodyCount: number;
+    performanceProfile?: {
+      relativeSpeed: number;
+      memoryUsage: string;
+      accuracy: string;
+      isOptimal: boolean;
+    };
+    recommendations?: string[];
+    warnings?: string[];
+  };
+}
+
+/**
+ * Parameters for the simulation manager
+ */
+export interface SimulationManagerParams {
+  bodies: PhysicsStateReal[];
+  deltaTime: number;
+  configuration: SimulationConfiguration;
+
+  // Required for ideal mode
+  orbitalParameters?: Map<string, OrbitalParameters>;
+  parentIds?: Map<string, string>;
+  currentTime_s?: number;
+
+  // Required for N-body mode
+  radii?: Map<string, number>;
+  isStar?: Map<string, boolean>;
+  bodyTypes?: Map<string, any>;
+  octreeSize?: number;
+  barnesHutTheta?: number;
+  ignoreCollisions?: Map<string, boolean>;
+
+  // Optional preferences
+  autoSelectAlgorithm?: boolean;
+  performancePreferences?: {
+    prioritizeAccuracy?: boolean;
+    prioritizeSpeed?: boolean;
+    maxMemoryUsage?: "low" | "medium" | "high";
+  };
+}
+
+/**
+ * Type for cached integrator functions
+ */
+export type IntegratorFunction = (
+  body: PhysicsStateReal,
+  currentAcceleration: OSVector3,
+  calculateNewAcceleration: (stateGuess: PhysicsStateReal) => OSVector3,
+  dt: number,
+) => PhysicsStateReal;

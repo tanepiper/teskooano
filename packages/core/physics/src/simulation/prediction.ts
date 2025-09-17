@@ -1,6 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { type PhysicsStateReal } from "@teskooano/data-types";
-import { WasmSpatialPartitioning } from "../spatial/wasm-partitioning";
+import { SpatialPartitioning } from "../spatial/spatial-partitioning";
 import { velocityVerletIntegrate } from "../integrators";
 import { CelestialType } from "@teskooano/data-types";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
@@ -61,16 +61,16 @@ export async function predictTrajectory(
   const relativeObjectPath: OSVector3[] = [];
 
   // Initialize WASM spatial partitioning with fallback
-  let wasmSpatialPartitioning: WasmSpatialPartitioning | null = null;
+  let SpatialPartitioning: SpatialPartitioning | null = null;
   try {
-    wasmSpatialPartitioning = new WasmSpatialPartitioning(1e12); // 1 trillion meters
-    await wasmSpatialPartitioning.initialize();
+    SpatialPartitioning = new SpatialPartitioning(1e12); // 1 trillion meters
+    await SpatialPartitioning.initialize();
   } catch (error) {
     console.warn(
       "WASM spatial partitioning failed to initialize, using traditional method:",
       error,
     );
-    wasmSpatialPartitioning = null;
+    SpatialPartitioning = null;
   }
 
   // Make a deep copy of the initial states to avoid modifying the original data
@@ -124,12 +124,12 @@ export async function predictTrajectory(
     // Calculate accelerations using WASM spatial partitioning or traditional method
     accelerations.clear();
 
-    if (wasmSpatialPartitioning) {
+    if (SpatialPartitioning) {
       // Use WASM spatial partitioning
-      wasmSpatialPartitioning.update(currentStates);
+      SpatialPartitioning.update(currentStates);
 
       for (const body of currentStates) {
-        const neighborIds = wasmSpatialPartitioning.findNeighbors(body.id);
+        const neighborIds = SpatialPartitioning.findNeighbors(body.id);
         const netForce = new OSVector3(0, 0, 0);
 
         // Create a map for fast body lookup
@@ -202,11 +202,9 @@ export async function predictTrajectory(
       ): OSVector3 => {
         const netForce = new OSVector3(0, 0, 0);
 
-        if (wasmSpatialPartitioning) {
+        if (SpatialPartitioning) {
           // Use WASM spatial partitioning
-          const neighborIds = wasmSpatialPartitioning.findNeighbors(
-            stateGuess.id,
-          );
+          const neighborIds = SpatialPartitioning.findNeighbors(stateGuess.id);
 
           // Create a map for fast body lookup
           const bodyMap = new Map<string | number, PhysicsStateReal>();

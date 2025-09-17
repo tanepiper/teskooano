@@ -6,7 +6,7 @@ type: Class
 package: "@teskooano/core-physics"
 name: Octree
 dependencies: ["@teskooano/core-math", "@teskooano/data-types"]
-classes: []
+classes: ["Octree"]
 functions: []
 constants: []
 types: ["PhysicsStateReal", "OctreeNode"]
@@ -15,9 +15,11 @@ status: active
 
 # Octree
 
-Hierarchical spatial data structure implementing the Barnes-Hut algorithm for O(N log N) gravitational force calculations.
+Hierarchical spatial data structure implementing the Barnes-Hut algorithm for O(N log N) gravitational force calculations. **Note**: This implementation is deprecated in favor of WASM-based spatial partitioning used by all algorithms.
 
 **Location**: `src/spatial/octree.ts`
+
+**Status**: Deprecated - All algorithms now use WASM spatial partitioning for improved performance
 
 ## 🎯 Purpose
 
@@ -29,6 +31,8 @@ The `Octree` provides efficient spatial organization and force approximation:
 - **Configurable Accuracy**: Adjustable opening angle for accuracy vs performance
 - **Range Queries**: Fast neighbor finding and spatial searches
 - **Dynamic Updates**: Efficient insertion and removal of bodies
+
+**⚠️ Deprecation Notice**: This implementation is deprecated. All force calculation algorithms now use WASM-based spatial partitioning (`@robertaron/spacial-partitioning`) for significantly improved performance. The `BarnesHutAlgorithm` class provides the modern implementation using WASM spatial partitioning.
 
 ## 🏗️ Architecture
 
@@ -44,12 +48,12 @@ interface OctreeNode {
   children?: OctreeNode[]; // Child nodes (if subdivided)
   totalMass_kg: number; // Total mass of all bodies in subtree
   centerOfMass_m: OSVector3; // Center of mass of all bodies in subtree
-  minX;
-  maxX;
-  minY;
-  maxY;
-  minZ;
-  maxZ: number; // Bounding box
+  minX: number; // Minimum x coordinate of bounding box
+  maxX: number; // Maximum x coordinate of bounding box
+  minY: number; // Minimum y coordinate of bounding box
+  maxY: number; // Maximum y coordinate of bounding box
+  minZ: number; // Minimum z coordinate of bounding box
+  maxZ: number; // Maximum z coordinate of bounding box
 }
 ```
 
@@ -61,6 +65,7 @@ Implements the Barnes-Hut approximation for force calculations:
 export class Octree {
   private root: OctreeNode;
   private maxDepth: number;
+  // Performance optimizations: pre-allocated objects to avoid garbage collection
   private _tempForce: OSVector3;
   private _tempNodePointMass: PhysicsStateReal;
 }
@@ -76,14 +81,25 @@ const subdivide = (
   currentDepth: number,
   maxDepth: number,
 ): void => {
-  // Stop subdivision conditions
-  if (node.bodies.length <= 1 || currentDepth >= maxDepth) {
-    return;
+  // Create 8 child octants
+  const halfSize = node.size / 2;
+  const children: OctreeNode[] = [];
+
+  for (let x = -1; x <= 1; x += 2) {
+    for (let y = -1; y <= 1; y += 2) {
+      for (let z = -1; z <= 1; z += 2) {
+        const childCenter = new OSVector3(
+          node.center.x + x * halfSize,
+          node.center.y + y * halfSize,
+          node.center.z + z * halfSize,
+        );
+        children.push(createNode(childCenter, halfSize));
+      }
+    }
   }
 
-  // Create 8 child octants
   // Assign bodies to appropriate children
-  // Recursively subdivide children
+  // Recalculate mass properties from children and retained bodies
 };
 ```
 
@@ -401,10 +417,10 @@ const potentialCollisions = octree.findBodiesInRange(
 
 ## 🔗 Related Components
 
-- [[TreePMStrategy]] - Uses octree for high-density regions
-- [[WasmSpatialPartitioning]] - Alternative spatial structure
-- [[AlgorithmFactory]] - Recommends Barnes-Hut for medium systems
-- [[SimulationManager]] - Orchestrates octree usage
+- [[core/core-physics/BarnesHutAlgorithm|BarnesHutAlgorithm]] - Modern WASM-based Barnes-Hut implementation
+- [[core/core-physics/SpatialPartitioning|SpatialPartitioning]] - WASM-based spatial partitioning (replacement)
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Creates modern algorithm instances
+- [[core/core-physics/SimulationManager|SimulationManager]] - Uses WASM-based algorithms
 
 ## 📚 Architecture Patterns
 
@@ -414,6 +430,65 @@ const potentialCollisions = octree.findBodiesInRange(
 - **Builder Pattern**: Incremental tree construction
 - **Memory Pool Pattern**: Efficient vector reuse
 
+## 🚀 Performance Optimizations
+
+### Pre-allocated Objects
+
+The octree uses pre-allocated objects to minimize garbage collection:
+
+```typescript
+export class Octree {
+  // Pre-allocate OSVector3 instances for performance
+  private _tempForce: OSVector3 = new OSVector3();
+  private _tempNodePointMass: PhysicsStateReal = {
+    id: "",
+    mass_kg: 0,
+    position_m: new OSVector3(),
+    velocity_mps: new OSVector3(),
+  };
+}
+```
+
+**Benefits:**
+
+- Eliminates object allocation during force calculations
+- Reduces garbage collection pressure
+- Improves performance in tight loops
+
+### Efficient Mass Property Calculation
+
+The octree uses optimized mass property calculations:
+
+```typescript
+// Efficient center of mass calculation
+let totalMass = 0;
+const weightedCOM = new OSVector3(0, 0, 0);
+
+// Add mass from children and bodies
+children.forEach((child) => {
+  if (child.totalMass_kg > 0) {
+    weightedCOM.add(
+      child.centerOfMass_m.clone().multiplyScalar(child.totalMass_kg),
+    );
+    totalMass += child.totalMass_kg;
+  }
+});
+
+// Set final properties
+if (totalMass > 0) {
+  node.centerOfMass_m.copy(weightedCOM.multiplyScalar(1 / totalMass));
+  node.totalMass_kg = totalMass;
+}
+```
+
+**Benefits:**
+
+- Single-pass mass property calculation
+- Minimal object creation
+- Accurate center of mass computation
+
 ---
 
-_The Octree provides efficient spatial organization and force approximation through the Barnes-Hut algorithm, offering excellent performance for medium-scale N-body simulations._
+**⚠️ Deprecation Notice**: The Octree implementation is deprecated. All force calculation algorithms now use WASM-based spatial partitioning for significantly improved performance. Use the `BarnesHutAlgorithm` class for modern Barnes-Hut implementation with WASM integration.
+
+_The Octree provided efficient spatial organization and force approximation through the Barnes-Hut algorithm, but has been superseded by WASM-based implementations for better performance._

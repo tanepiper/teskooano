@@ -16,10 +16,10 @@ export { standardEuler } from "./integrators/euler";
 export { symplecticEuler } from "./integrators/symplecticEuler";
 
 export * from "./spatial/octree";
-export * from "./spatial/wasm-partitioning";
-export * from "./spatial/wasm-spatial-service";
+export * from "./spatial/spatial-partitioning";
+export * from "./spatial/celestial-distance-service";
 export * from "./spatial/wasm-test";
-export * from "./collision/wasm-collision";
+export * from "./collision/collision-service";
 
 export * from "./utils/vectorPool";
 export * from "./debug/orbitalValidation";

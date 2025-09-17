@@ -1,6 +1,6 @@
 import { CelestialObject, CelestialType } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import { WasmSpatialService } from "@teskooano/core-physics";
+import { CelestialDistanceService } from "@teskooano/core-physics";
 import { physicsSystemAdapter } from "@teskooano/core-state";
 import type { PhysicsStateReal } from "@teskooano/data-types";
 
@@ -17,7 +17,7 @@ export class DistanceUpdateManager {
   private _parentPanel: CompositeEnginePanel | null = null;
   private _listUpdateInterval: number | null = null;
   private _getCurrentObjects: () => Record<string, CelestialObject>;
-  private _wasmSpatialService: WasmSpatialService;
+  private _CelestialDistanceService: CelestialDistanceService;
 
   constructor(
     treeListContainer: HTMLUListElement,
@@ -27,7 +27,7 @@ export class DistanceUpdateManager {
     this._treeListContainer = treeListContainer;
     this._destroyedListContainer = destroyedListContainer;
     this._getCurrentObjects = getCurrentObjects;
-    this._wasmSpatialService = WasmSpatialService.getInstance();
+    this._CelestialDistanceService = CelestialDistanceService.getInstance();
   }
 
   /**
@@ -87,7 +87,7 @@ export class DistanceUpdateManager {
    * distances from each object to its parent (or main star if no parent).
    */
   private _updateDistancesFromPhysicsState(): void {
-    if (!this._wasmSpatialService.isInitialized()) return;
+    if (!this._CelestialDistanceService.isInitialized()) return;
 
     try {
       // Get current physics bodies from the state
@@ -98,7 +98,7 @@ export class DistanceUpdateManager {
       const allObjects = this._getCurrentObjects();
 
       // Update WASM spatial partitioning with current positions
-      this._wasmSpatialService.update(physicsBodies);
+      this._CelestialDistanceService.update(physicsBodies);
 
       // Calculate distances from each object to its parent
       const distances = new Map<string | number, number>();

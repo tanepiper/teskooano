@@ -13,14 +13,14 @@ The WASM integration provides significant performance improvements for spatial o
 
 ## Components
 
-### 1. WasmSpatialPartitioning
+### 1. SpatialPartitioning
 
 High-performance spatial partitioning using WebAssembly.
 
 ```typescript
-import { WasmSpatialPartitioning } from "@teskooano/core-physics";
+import { SpatialPartitioning } from "@teskooano/core-physics";
 
-const spatialPartitioning = new WasmSpatialPartitioning(1e6); // 1 million meter neighbor distance
+const spatialPartitioning = new SpatialPartitioning(1e6); // 1 million meter neighbor distance
 await spatialPartitioning.initialize();
 
 // Update with current body positions
@@ -36,14 +36,14 @@ const bodiesInRange = spatialPartitioning.findBodiesInRange(point, distance);
 const collisionPairs = spatialPartitioning.getPotentialCollisionPairs();
 ```
 
-### 2. WasmCollisionDetection
+### 2. CollisionDetectionService
 
 Optimized collision detection using spatial partitioning.
 
 ```typescript
-import { WasmCollisionDetection } from "@teskooano/core-physics";
+import { CollisionDetectionService } from "@teskooano/core-physics";
 
-const collisionDetection = new WasmCollisionDetection({
+const collisionDetection = new CollisionDetectionService({
   collisionDistance: 1e6,
   useWasmPartitioning: true,
   fallbackToTraditional: true,
@@ -69,7 +69,7 @@ Complete WASM-enhanced simulation manager.
 import { WasmSimulationManager } from "@teskooano/core-physics";
 
 const simulationManager = new WasmSimulationManager({
-  useWasmCollisionDetection: true,
+  useCollisionDetectionService: true,
   useWasmNeighborFinding: true,
   neighborDistance: 1e9, // 1 billion meters
   collisionDistance: 1e6, // 1 million meters
@@ -150,7 +150,7 @@ interface WasmCollisionConfig {
 
 ```typescript
 interface WasmSimulationConfig {
-  useWasmCollisionDetection: boolean; // Enable WASM collision detection
+  useCollisionDetectionService: boolean; // Enable WASM collision detection
   useWasmNeighborFinding: boolean; // Enable WASM neighbor finding
   neighborDistance: number; // Neighbor detection distance
   collisionDistance: number; // Collision detection distance
@@ -163,17 +163,17 @@ interface WasmSimulationConfig {
 ### Basic Spatial Partitioning
 
 ```typescript
-import { WasmSpatialPartitioning } from "@teskooano/core-physics";
+import { SpatialPartitioning } from "@teskooano/core-physics";
 
 async function setupSpatialPartitioning() {
-  const spatialPartitioning = new WasmSpatialPartitioning(1e6);
+  const spatialPartitioning = new SpatialPartitioning(1e6);
   await spatialPartitioning.initialize();
 
   return spatialPartitioning;
 }
 
 function updateSpatialPartitioning(
-  spatialPartitioning: WasmSpatialPartitioning,
+  spatialPartitioning: SpatialPartitioning,
   bodies: PhysicsStateReal[],
 ) {
   spatialPartitioning.update(bodies);
@@ -189,10 +189,10 @@ function updateSpatialPartitioning(
 ### Enhanced Collision Detection
 
 ```typescript
-import { WasmCollisionDetection } from "@teskooano/core-physics";
+import { CollisionDetectionService } from "@teskooano/core-physics";
 
 async function setupCollisionDetection() {
-  const collisionDetection = new WasmCollisionDetection({
+  const collisionDetection = new CollisionDetectionService({
     collisionDistance: 1e6,
     useWasmPartitioning: true,
     fallbackToTraditional: true,
@@ -203,7 +203,7 @@ async function setupCollisionDetection() {
 }
 
 function handleCollisions(
-  collisionDetection: WasmCollisionDetection,
+  collisionDetection: CollisionDetectionService,
   bodies: PhysicsStateReal[],
   radii: Map<string, number>,
   isStar: Map<string, boolean>,
@@ -223,7 +223,7 @@ import { WasmSimulationManager } from "@teskooano/core-physics";
 
 async function setupWasmSimulation() {
   const simulationManager = new WasmSimulationManager({
-    useWasmCollisionDetection: true,
+    useCollisionDetectionService: true,
     useWasmNeighborFinding: true,
     neighborDistance: 1e9,
     collisionDistance: 1e6,
@@ -259,7 +259,7 @@ The WASM integration includes robust fallback mechanisms:
 3. **Performance Monitoring**: Provides statistics to monitor WASM performance
 
 ```typescript
-const collisionDetection = new WasmCollisionDetection({
+const collisionDetection = new CollisionDetectionService({
   fallbackToTraditional: true, // Enable fallback
 });
 
@@ -278,7 +278,7 @@ Monitor WASM performance with built-in statistics:
 const stats = simulationManager.getStats();
 console.log({
   initialized: stats.initialized,
-  usingWasmCollisionDetection: stats.usingWasmCollisionDetection,
+  usingCollisionDetectionService: stats.usingCollisionDetectionService,
   usingWasmNeighborFinding: stats.usingWasmNeighborFinding,
   collisionDetectionStats: stats.collisionDetectionStats,
   spatialPartitioningStats: stats.spatialPartitioningStats,
@@ -306,9 +306,9 @@ const [updatedBodies, destroyedIds] = handleCollisions(
 **After:**
 
 ```typescript
-import { WasmCollisionDetection } from "@teskooano/core-physics";
+import { CollisionDetectionService } from "@teskooano/core-physics";
 
-const collisionDetection = new WasmCollisionDetection();
+const collisionDetection = new CollisionDetectionService();
 await collisionDetection.initialize();
 
 collisionDetection.update(bodies, radii, isStar, bodyTypes);
@@ -360,7 +360,7 @@ const result = simulationManager.updateSimulation(bodies, dt, params);
 
 ```typescript
 // Enable debug logging
-const collisionDetection = new WasmCollisionDetection({
+const collisionDetection = new CollisionDetectionService({
   fallbackToTraditional: true,
 });
 

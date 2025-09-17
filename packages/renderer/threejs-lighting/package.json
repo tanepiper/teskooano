@@ -36,6 +36,7 @@
     "@teskooano/core-state": "file:../../core/state",
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
+    "@teskooano/renderer-threejs-helpers": "file:../threejs-helpers",
     "three": "0.179.1"
   },
   "devDependencies": {

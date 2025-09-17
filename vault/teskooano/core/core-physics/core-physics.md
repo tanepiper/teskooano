@@ -14,14 +14,19 @@ dependencies:
     "three",
     "@robertaron/spacial-partitioning",
   ]
+devDependencies: ["eslint", "typescript", "vitest"]
 classes:
   [
     "SimulationManager",
     "AlgorithmFactory",
-    "TreePMStrategy",
+    "NeighborBasedAlgorithm",
+    "BarnesHutAlgorithm",
+    "FMMAlgorithm",
+    "P3MAlgorithm",
+    "TreePMAlgorithm",
     "Octree",
-    "WasmSpatialPartitioning",
-    "WasmCollisionDetection",
+    "SpatialPartitioning",
+    "CollisionDetectionService",
     "IdealOrreryStrategy",
     "LagrangePointService",
     "OrbitalValidationDebugger",
@@ -74,12 +79,12 @@ Comprehensive physics simulation engine for celestial mechanics, featuring dual 
 
 ## 🎯 Purpose
 
-The `@teskooano/core-physics` package provides a complete physics simulation engine:
+The `@teskooano/core-physics` package provides a physics simulation engine with two distinct modes:
 
 - **Dual Simulation Modes**: Perfect Keplerian orbits (ideal) and full N-body dynamics
-- **Multiple Algorithms**: Direct, Barnes-Hut, FMM, P3M, and Tree-PM hybrid
-- **Advanced Integrators**: Velocity Verlet, RK4, adaptive methods, and symplectic integrators
-- **Intelligent Selection**: Automatic algorithm and integrator optimization
+- **Complete Algorithm Suite**: 5 algorithms implemented (Neighbor-based, Barnes-Hut, FMM, P3M, Tree-PM) with WASM integration
+- **Integrator Selection**: 9 integrators with automatic optimization (Euler, Symplectic, Verlet, RK4, Adaptive, Yoshida4, Forest-Ruth, PEFRL, Leapfrog)
+- **Spatial Optimization**: WASM-based spatial partitioning for efficient neighbor finding
 - **Real SI Units**: All calculations in meters, kilograms, and seconds
 - **Performance Analysis**: Built-in profiling and optimization recommendations
 - **WASM Integration**: High-performance spatial partitioning and collision detection
@@ -95,7 +100,8 @@ All simulation behavior is controlled through configuration objects:
 interface SimulationConfiguration {
   mode: "ideal" | "nbody";
   integrator?: IntegratorType;
-  algorithm?: AlgorithmType;
+  neighborDistance?: number; // Distance threshold for neighbor finding
+  collisionDetection?: boolean; // Enable collision detection
 }
 ```
 
@@ -103,7 +109,7 @@ interface SimulationConfiguration {
 
 Different algorithms and integrators are implemented as strategies:
 
-- **Algorithm Strategies**: Direct, Barnes-Hut, FMM, P3M, Tree-PM
+- **Algorithm Strategies**: Neighbor-based, Barnes-Hut, FMM, P3M, Tree-PM
 - **Integration Strategies**: Euler variants, Verlet, RK4, Adaptive, Symplectic methods
 - **Simulation Strategies**: Ideal mode (analytical) vs N-body mode (numerical)
 
@@ -126,6 +132,11 @@ All internal calculations use SI units (meters, kg, seconds) for physical accura
 src/
 ├── algorithms/                 # Force calculation algorithms
 │   ├── algorithm-factory.ts   # Intelligent algorithm selection
+│   ├── force-calculation-algorithm.ts # Common algorithm interface
+│   ├── neighbor-based-algorithm.ts # Neighbor-based force calculation
+│   ├── barnes-hut-algorithm.ts # Barnes-Hut tree algorithm
+│   ├── fmm-algorithm.ts       # Fast Multipole Method
+│   ├── p3m-algorithm.ts       # Particle-Particle Particle-Mesh
 │   └── tree-pm.ts            # Tree-PM hybrid implementation
 ├── collision/                 # Collision detection and resolution
 │   ├── collision.ts          # Traditional collision handling
@@ -186,7 +197,7 @@ src/
 
 ## 🔧 Core Components
 
-### [[SimulationManager]]
+### [[core/core-physics/SimulationManager|SimulationManager]]
 
 **Location**: `src/simulation/simulation-manager.ts`
 
@@ -197,17 +208,61 @@ The main orchestrator that provides a high-level API for physics simulations:
 - Result assembly with metadata
 - WASM integration for enhanced performance
 
-### [[AlgorithmFactory]]
+### [[core/core-physics/AlgorithmFactory|AlgorithmFactory]]
 
 **Location**: `src/algorithms/algorithm-factory.ts`
 
 Intelligent selection and validation of force calculation algorithms:
 
-- Automatic algorithm selection based on body count
-- Performance estimation and validation
-- Configuration optimization recommendations
+- Creates instances of all 5 implemented algorithms
+- WASM dependency injection for optimized performance
+- Algorithm validation and performance estimation
 
-### [[TreePMStrategy]]
+### [[core/core-physics/NeighborBasedAlgorithm|NeighborBasedAlgorithm]]
+
+**Location**: `src/algorithms/neighbor-based-algorithm.ts`
+
+Simple, reliable force calculation using direct neighbor interactions:
+
+- Direct gravitational force calculation between neighbors
+- O(K) complexity where K is average number of neighbors
+- Best for small systems with < 100 bodies
+- Uses WASM spatial partitioning for neighbor finding
+
+### [[core/core-physics/BarnesHutAlgorithm|BarnesHutAlgorithm]]
+
+**Location**: `src/algorithms/barnes-hut-algorithm.ts`
+
+Hierarchical force calculation using Barnes-Hut tree approximation:
+
+- O(N log N) complexity for efficient large system simulation
+- Tree-based force approximation with configurable accuracy
+- Best for medium systems with 100-10,000 bodies
+- Uses WASM spatial partitioning for tree construction
+
+### [[core/core-physics/FMMAlgorithm|FMMAlgorithm]]
+
+**Location**: `src/algorithms/fmm-algorithm.ts`
+
+Fast Multipole Method for large-scale gravitational simulations:
+
+- O(N log N) complexity with multipole expansions
+- Hierarchical clustering for distant force approximation
+- Best for large systems with 10,000-1,000,000 bodies
+- Uses WASM spatial partitioning for neighbor finding
+
+### [[core/core-physics/P3MAlgorithm|P3MAlgorithm]]
+
+**Location**: `src/algorithms/p3m-algorithm.ts`
+
+Particle-Particle Particle-Mesh hybrid method:
+
+- Combines direct particle interactions with mesh-based long-range forces
+- O(N log N) complexity with mesh-based force calculation
+- Best for systems with varying density distributions
+- Uses WASM spatial partitioning for neighbor finding
+
+### [[core/core-physics/TreePMAlgorithm|TreePMAlgorithm]]
 
 **Location**: `src/algorithms/tree-pm.ts`
 
@@ -216,8 +271,9 @@ Advanced Tree-PM hybrid algorithm combining Tree and Particle-Mesh methods:
 - Multi-scale approach for optimal performance
 - Automatic density-based partitioning
 - High accuracy in both dense and sparse regions
+- Uses WASM spatial partitioning for efficient neighbor finding
 
-### [[Octree]]
+### [[core/core-physics/Octree|Octree]]
 
 **Location**: `src/spatial/octree.ts`
 
@@ -227,7 +283,7 @@ Hierarchical spatial data structure for O(N log N) force calculations:
 - Efficient force approximation
 - Configurable accuracy vs performance trade-offs
 
-### [[WasmSpatialPartitioning]]
+### [[core/core-physics/SpatialPartitioning|SpatialPartitioning]]
 
 **Location**: `src/spatial/wasm-partitioning.ts`
 
@@ -237,7 +293,7 @@ High-performance spatial partitioning using WebAssembly:
 - Fast neighbor finding and proximity detection
 - Significant performance improvements for large systems
 
-### [[WasmCollisionDetection]]
+### [[core/core-physics/CollisionDetectionService|CollisionDetectionService]]
 
 **Location**: `src/collision/wasm-collision.ts`
 
@@ -247,7 +303,7 @@ Optimized collision detection using spatial partitioning:
 - Automatic fallback to traditional methods
 - Comprehensive collision resolution rules
 
-### [[IdealOrreryStrategy]]
+### [[core/core-physics/IdealOrreryStrategy|IdealOrreryStrategy]]
 
 **Location**: `src/modes/ideal/ideal-orrery.ts`
 
@@ -257,7 +313,7 @@ Perfect Keplerian orbital mechanics with analytical solutions:
 - Sequential Keplerian calculations
 - Exact analytical position/velocity computation
 
-### [[LagrangePointService]]
+### [[core/core-physics/LagrangePointService|LagrangePointService]]
 
 **Location**: `src/orbital/lagrange-service.ts`
 
@@ -267,7 +323,7 @@ Comprehensive Lagrange point management and calculations:
 - Stability analysis and classification
 - Historical tracking and optimization
 
-### [[OrbitalValidationDebugger]]
+### [[core/core-physics/OrbitalValidationDebugger|OrbitalValidationDebugger]]
 
 **Location**: `src/debug/orbitalValidation.ts`
 
@@ -277,7 +333,7 @@ Debugging and validation tools for orbital mechanics:
 - Eccentricity-angular momentum orthogonality
 - Comprehensive conservation law testing
 
-### [[Vector3Pool]]
+### [[core/core-physics/Vector3Pool|Vector3Pool]]
 
 **Location**: `src/utils/vectorPool.ts`
 
@@ -285,7 +341,6 @@ Memory optimization through vector pooling:
 
 - Reuse OSVector3 instances to reduce GC pressure
 - Efficient memory management for intensive calculations
-- Performance monitoring and statistics
 
 ## 🚀 Key Features
 
@@ -305,15 +360,19 @@ Memory optimization through vector pooling:
 - Collision detection and resolution
 - Performance optimization for large systems
 
-### Advanced Algorithms
+### N-Body Force Calculation
 
-| Algorithm  | Complexity | Best For             | Accuracy |
-| ---------- | ---------- | -------------------- | -------- |
-| Direct     | O(N²)      | Small systems        | Exact    |
-| Barnes-Hut | O(N log N) | Medium systems       | High     |
-| FMM        | O(N)       | Large systems        | High     |
-| P3M        | O(N log N) | Medium-large systems | Medium   |
-| Tree-PM    | O(N log N) | Multi-scale systems  | High     |
+The N-body mode supports multiple force calculation algorithms:
+
+| Algorithm      | Complexity    | Best For                     | WASM Integration |
+| -------------- | ------------- | ---------------------------- | ---------------- |
+| Neighbor-based | O(K) per body | Small systems (< 100 bodies) | ✅               |
+| Barnes-Hut     | O(N log N)    | Medium systems (100-10K)     | ✅               |
+| FMM            | O(N log N)    | Large systems (10K-1M)       | ✅               |
+| P3M            | O(N log N)    | Varying density systems      | ✅               |
+| Tree-PM        | O(N log N)    | Complex multi-scale systems  | ✅               |
+
+**All algorithms use WASM spatial partitioning** for efficient neighbor finding and force calculations.
 
 ### Numerical Integrators
 
@@ -329,10 +388,9 @@ Memory optimization through vector pooling:
 
 ### WASM Integration
 
-- **Spatial Partitioning**: O(n log n) collision detection
+- **Spatial Partitioning**: Efficient neighbor finding within configurable distance
 - **Neighbor Finding**: Fast spatial queries for gravitational calculations
-- **Proximity Detection**: Efficient range-based searches
-- **Performance Monitoring**: Built-in statistics and optimization
+- **Proximity Detection**: Range-based searches for collision detection
 
 ### Orbital Mechanics
 
@@ -364,23 +422,26 @@ Memory optimization through vector pooling:
 
 ## 📚 Related Components
 
-- [[SimulationManager]] - Main simulation orchestrator
-- [[AlgorithmFactory]] - Intelligent algorithm selection
-- [[TreePMStrategy]] - Advanced hybrid algorithm
-- [[Octree]] - Spatial data structure
-- [[WasmSpatialPartitioning]] - High-performance spatial operations
-- [[WasmCollisionDetection]] - Optimized collision detection
-- [[IdealOrreryStrategy]] - Perfect orbital mechanics
-- [[LagrangePointService]] - Lagrange point management
-- [[OrbitalValidationDebugger]] - Debugging and validation
-- [[Vector3Pool]] - Memory optimization
+- [[core/core-physics/SimulationManager|SimulationManager]] - Main simulation orchestrator
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Intelligent algorithm selection
+- [[core/core-physics/NeighborBasedAlgorithm|NeighborBasedAlgorithm]] - Simple neighbor-based force calculation
+- [[core/core-physics/BarnesHutAlgorithm|BarnesHutAlgorithm]] - Hierarchical tree-based algorithm
+- [[core/core-physics/FMMAlgorithm|FMMAlgorithm]] - Fast Multipole Method implementation
+- [[core/core-physics/P3MAlgorithm|P3MAlgorithm]] - Particle-Particle Particle-Mesh hybrid
+- [[core/core-physics/TreePMAlgorithm|TreePMAlgorithm]] - Advanced Tree-PM hybrid algorithm
+- [[core/core-physics/Octree|Octree]] - Spatial data structure
+- [[core/core-physics/SpatialPartitioning|SpatialPartitioning]] - High-performance spatial operations
+- [[core/core-physics/CollisionDetectionService|CollisionDetectionService]] - Optimized collision detection
+- [[core/core-physics/IdealOrreryStrategy|IdealOrreryStrategy]] - Perfect orbital mechanics
+- [[core/core-physics/LagrangePointService|LagrangePointService]] - Lagrange point management
+- [[core/core-physics/OrbitalValidationDebugger|OrbitalValidationDebugger]] - Debugging and validation
+- [[core/core-physics/Vector3Pool|Vector3Pool]] - Memory optimization
 
 ## 📚 Architecture Patterns
 
 - **Strategy Pattern**: Algorithm and integrator selection
 - **Factory Pattern**: Configuration and object creation
 - **Singleton Pattern**: Service management and caching
-- **Observer Pattern**: Performance monitoring and statistics
 - **Resource Management**: Vector pooling and memory optimization
 - **Bridge Pattern**: WASM integration and fallback mechanisms
 - **Template Method**: Simulation pipeline orchestration

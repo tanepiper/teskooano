@@ -18,7 +18,7 @@ dependencies:
     "@robertaron/spacial-partitioning",
   ]
 classes:
-  ["IdealOrreryStrategy", "WasmCollisionDetection", "WasmSpatialPartitioning"]
+  ["IdealOrreryStrategy", "CollisionDetectionService", "SpatialPartitioning"]
 functions: []
 constants: []
 types:
@@ -34,7 +34,7 @@ status: active
 
 # SimulationManager
 
-High-level orchestrator that provides a unified API for physics simulations, featuring intelligent configuration selection, performance analysis, and WASM integration.
+High-level orchestrator that provides a unified API for physics simulations, featuring simplified configuration and WASM integration with all 5 implemented algorithms.
 
 **Location**: `src/simulation/simulation-manager.ts`
 
@@ -43,38 +43,70 @@ High-level orchestrator that provides a unified API for physics simulations, fea
 The `SimulationManager` serves as the main entry point for all physics simulations:
 
 - **Unified API**: Single interface for both ideal and N-body simulations
-- **Intelligent Selection**: Automatic algorithm and integrator optimization
-- **Performance Analysis**: Built-in profiling and optimization recommendations
+- **Algorithm Management**: Creates and manages all 5 implemented force calculation algorithms
 - **WASM Integration**: Seamless integration with high-performance spatial operations
-- **Configuration Management**: Validation and optimization of simulation parameters
-- **Result Enhancement**: Comprehensive metadata and analysis for simulation results
+- **Simplified Configuration**: Streamlined configuration with sensible defaults
+- **User-Driven Choices**: No automatic performance analysis - user selects based on their needs
 
 ## 🏗️ Architecture
 
-### Singleton Pattern
+### Instance Management
 
-Uses singleton pattern for global access and resource management:
+Uses standard instantiation with proper initialization:
 
 ```typescript
 export class SimulationManager {
-  private static instance: SimulationManager | null = null;
+  private initialized = false;
+  private spatialPartitioning: SpatialPartitioning;
+  private collisionDetectionService: CollisionDetectionService;
+  private celestialDistanceService: CelestialDistanceService;
+  private algorithmInstances: Map<string, ForceCalculationAlgorithm> =
+    new Map();
 
-  public static getInstance(): SimulationManager {
-    if (!SimulationManager.instance) {
-      SimulationManager.instance = new SimulationManager();
-    }
-    return SimulationManager.instance;
+  constructor() {
+    // Initialize WASM systems
+    this.celestialDistanceService = CelestialDistanceService.getInstance();
+    this.collisionDetectionService = new CollisionDetectionService({
+      collisionDistance: 0.1 * AU_METERS,
+    });
+    this.spatialPartitioning = new SpatialPartitioning(1000 * AU_METERS);
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    await this.celestialDistanceService.initialize({
+      neighborDistance: 1000 * AU_METERS,
+    });
+    await this.collisionDetectionService.initialize();
+    await this.spatialPartitioning.initialize();
+
+    this.initialized = true;
   }
 }
 ```
 
-### Strategy Delegation
+### Algorithm Management
 
-Delegates to appropriate strategies based on simulation mode:
+Manages algorithm instances and delegates to appropriate algorithms:
 
 ```typescript
-private executeIdealMode(params: SimulationManagerParams): EnhancedSimulationResult {
-  return this.idealOrreryStrategy.simulate(params);
+private getAlgorithmInstance(algorithmType: string): ForceCalculationAlgorithm {
+  if (!this.algorithmInstances.has(algorithmType)) {
+    const dependencies = {
+      spatialPartitioning: this.spatialPartitioning,
+      bodiesToFloat32Array: this.bodiesToFloat32Array.bind(this)
+    };
+
+    const algorithm = AlgorithmFactory.createAlgorithm(
+      algorithmType as AlgorithmType,
+      dependencies
+    );
+
+    this.algorithmInstances.set(algorithmType, algorithm);
+  }
+
+  return this.algorithmInstances.get(algorithmType)!;
 }
 
 private executeNBodyMode(params: SimulationManagerParams): EnhancedSimulationResult {
@@ -84,15 +116,30 @@ private executeNBodyMode(params: SimulationManagerParams): EnhancedSimulationRes
 
 ### WASM Integration
 
-Integrates WASM components for enhanced performance:
+Integrates WASM components with proper initialization checks and fallback behavior:
 
 ```typescript
-private wasmCollisionDetection: WasmCollisionDetection;
-private wasmSpatialPartitioning: WasmSpatialPartitioning;
+private collisionDetectionService: CollisionDetectionService;
+private spatialPartitioning: SpatialPartitioning;
+private celestialDistanceService: CelestialDistanceService;
 
 async initialize(): Promise<void> {
-  await this.wasmCollisionDetection.initialize();
-  await this.wasmSpatialPartitioning.initialize();
+  if (this.initialized) return;
+
+  await this.celestialDistanceService.initialize({
+    neighborDistance: 1000 * AU_METERS,
+  });
+  await this.collisionDetectionService.initialize();
+  await this.spatialPartitioning.initialize();
+
+  this.initialized = true;
+}
+
+// In simulation methods, check initialization before using WASM
+if (this.spatialPartitioning.isInitialized()) {
+  this.spatialPartitioning.update(params.bodies);
+} else {
+  console.warn("WASM spatial partitioning not initialized, skipping update");
 }
 ```
 
@@ -111,43 +158,26 @@ simulate(params: SimulationManagerParams): EnhancedSimulationResult;
 - `configuration`: Simulation mode and settings
 - `orbitalParameters`: Required for ideal mode
 - `radii`, `isStar`, `bodyTypes`: Required for N-body mode
-- `performancePreferences`: Optimization preferences
 
 **Returns:**
 
 - Updated physics states
 - Acceleration vectors
 - Collision information
-- Performance metadata
-- Optimization recommendations
+- Basic execution metadata
 
-### Configuration Optimization
-
-```typescript
-createOptimalConfiguration(params: SimulationManagerParams): SimulationConfiguration;
-```
-
-Automatically selects optimal configuration based on:
-
-- Body count and system characteristics
-- Performance preferences (accuracy vs speed)
-- Memory constraints
-- Available algorithms and integrators
-
-### Performance Analysis
+### Configuration Creation
 
 ```typescript
-getPerformanceComparison(params: SimulationManagerParams): {
-  ideal?: { available: boolean; reason?: string; estimatedSpeed: number };
-  configurations: Array<{
-    config: SimulationConfiguration;
-    estimate: PerformanceEstimate;
-    validation: ValidationResult;
-  }>;
-};
+createDefaultConfiguration(): SimulationConfiguration;
 ```
 
-Provides comprehensive performance analysis and recommendations.
+Creates default configuration with sensible defaults:
+
+- Default neighbor-based algorithm for reliability
+- Symplectic integrator for good performance
+- Configurable neighbor distance and collision detection
+- User can customize as needed
 
 ### Initialization
 
@@ -165,7 +195,7 @@ Initializes WASM components and prepares the simulation manager for use.
 import { SimulationManager } from "@teskooano/core-physics";
 
 const manager = new SimulationManager();
-await manager.initialize();
+await manager.initialize(); // Must initialize before use
 
 const params = {
   bodies: [
@@ -185,8 +215,9 @@ const params = {
   deltaTime: 3600, // 1 hour
   configuration: {
     mode: "nbody",
-    algorithm: "barnes-hut",
-    integrator: "verlet",
+    integrator: "symplectic",
+    neighborDistance: 1000 * AU_METERS,
+    collisionDetection: true,
   },
   radii: new Map([
     ["sun", 6.96e8],
@@ -229,27 +260,17 @@ const idealParams = {
 const result = manager.simulate(idealParams);
 ```
 
-### Performance Optimization
+// Get default configuration
+const defaultConfig = manager.createDefaultConfiguration();
+console.log("Default config:", defaultConfig);
 
-```typescript
-// Get optimal configuration
-const optimalConfig = manager.createOptimalConfiguration(params);
+// Use default configuration
+const result = manager.simulate({
+...params,
+configuration: defaultConfig,
+});
 
-// Compare different approaches
-const comparison = manager.getPerformanceComparison(params);
-console.log("Best algorithm:", comparison.configurations[0].config.algorithm);
-
-// Use performance preferences
-const optimizedParams = {
-  ...params,
-  performancePreferences: {
-    prioritizeAccuracy: true,
-    maxMemoryUsage: "medium",
-  },
-};
-
-const optimizedResult = manager.simulate(optimizedParams);
-```
+````
 
 ### WASM-Enhanced Simulation
 
@@ -259,44 +280,46 @@ const wasmResult = manager.simulate({
   ...params,
   configuration: {
     mode: "nbody",
-    algorithm: "barnes-hut",
-    integrator: "verlet",
+    integrator: "symplectic",
+    neighborDistance: 1000 * AU_METERS,
+    collisionDetection: true,
   },
 });
 
-// Check WASM usage statistics
-const stats = manager.getStats();
-console.log("WASM collision detection:", stats.usingWasmCollisionDetection);
-console.log("WASM spatial partitioning:", stats.usingWasmNeighborFinding);
-```
+// WASM components are automatically used when available
+console.log("WASM spatial partitioning and collision detection enabled");
+````
 
-## 🎯 Performance Considerations
+## 🎯 Algorithm Considerations
 
-### Algorithm Selection
+### Algorithm Management
 
-The manager automatically selects optimal algorithms:
+The manager creates and manages all 5 implemented algorithms:
 
-- **≤ 100 bodies**: Direct (exact calculations)
-- **100-1,000 bodies**: Barnes-Hut (good balance)
-- **1,000-10,000 bodies**: Barnes-Hut or Tree-PM
-- **> 10,000 bodies**: FMM or Tree-PM
+- **Neighbor-based**: Simple, reliable for small systems
+- **Barnes-Hut**: Hierarchical tree-based for medium systems
+- **FMM**: Fast Multipole Method for large systems
+- **P3M**: Particle-Particle Particle-Mesh for varying density
+- **Tree-PM**: Advanced hybrid for complex systems
 
-### WASM Performance Benefits
+### WASM Benefits
 
-- **Collision Detection**: O(n log n) instead of O(n²)
-- **Neighbor Finding**: Fast spatial queries
+- **Neighbor Finding**: Efficient spatial queries within distance threshold
 - **Memory Efficiency**: Optimized data structures
 - **Fallback Support**: Graceful degradation to traditional methods
 
-### Configuration Optimization
+### Configuration Simplification
 
 ```typescript
-// Performance preferences influence selection
-const config = manager.createOptimalConfiguration(params, {
-  prioritizeAccuracy: true, // Favors exact methods
-  prioritizeSpeed: false, // Not speed-focused
-  maxMemoryUsage: "medium", // Memory constraint
-});
+// Default configuration with sensible defaults
+const config = manager.createDefaultConfiguration();
+console.log(config);
+// {
+//   mode: "nbody",
+//   integrator: "symplectic",
+//   neighborDistance: 1000 * AU_METERS,
+//   collisionDetection: true
+// }
 ```
 
 ## 🔗 Integration Points
@@ -341,22 +364,25 @@ const predictedPoints = await predictTrajectory(
 
 ## 🔗 Related Components
 
-- [[AlgorithmFactory]] - Intelligent algorithm selection
-- [[IdealOrreryStrategy]] - Perfect orbital mechanics
-- [[WasmCollisionDetection]] - Optimized collision detection
-- [[WasmSpatialPartitioning]] - High-performance spatial operations
-- [[TreePMStrategy]] - Advanced hybrid algorithm
-- [[Octree]] - Spatial data structure
+- [[core/core-physics/AlgorithmFactory|AlgorithmFactory]] - Creates and manages algorithm instances
+- [[core/core-physics/NeighborBasedAlgorithm|NeighborBasedAlgorithm]] - Simple neighbor-based algorithm
+- [[core/core-physics/BarnesHutAlgorithm|BarnesHutAlgorithm]] - Hierarchical tree-based algorithm
+- [[core/core-physics/FMMAlgorithm|FMMAlgorithm]] - Fast Multipole Method implementation
+- [[core/core-physics/P3MAlgorithm|P3MAlgorithm]] - Particle-Particle Particle-Mesh hybrid
+- [[core/core-physics/TreePMAlgorithm|TreePMAlgorithm]] - Advanced Tree-PM hybrid algorithm
+- [[core/core-physics/IdealOrreryStrategy|IdealOrreryStrategy]] - Perfect orbital mechanics
+- [[core/core-physics/CollisionDetectionService|CollisionDetectionService]] - Optimized collision detection
+- [[core/core-physics/SpatialPartitioning|SpatialPartitioning]] - High-performance spatial operations
 
 ## 📚 Architecture Patterns
 
-- **Singleton Pattern**: Global access and resource management
+- **Manager Pattern**: Centralized simulation orchestration
+- **Factory Pattern**: Algorithm creation and management
 - **Strategy Pattern**: Mode selection and algorithm delegation
-- **Factory Pattern**: Configuration creation and optimization
 - **Bridge Pattern**: WASM integration and fallback mechanisms
 - **Template Method**: Simulation pipeline orchestration
-- **Observer Pattern**: Performance monitoring and statistics
+- **Dependency Injection**: Algorithm dependencies and WASM services
 
 ---
 
-_The SimulationManager provides a unified, intelligent interface for all physics simulations with automatic optimization and comprehensive performance analysis._
+_The SimulationManager provides a unified interface for all physics simulations with simplified configuration and algorithm management._

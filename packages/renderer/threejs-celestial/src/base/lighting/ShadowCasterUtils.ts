@@ -1,6 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
-import { WasmSpatialService } from "@teskooano/core-physics";
+import { CelestialDistanceService } from "@teskooano/core-physics";
 import * as THREE from "three";
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
@@ -19,7 +19,7 @@ export interface ShadowCasterData {
  * efficient shadow caster detection using the WASM spatial service.
  */
 export class ShadowCasterUtils {
-  private spatialService: WasmSpatialService;
+  private spatialService: CelestialDistanceService;
   private object: RenderableCelestialObject;
   private allObjects?: Record<string, RenderableCelestialObject>;
 
@@ -30,7 +30,7 @@ export class ShadowCasterUtils {
 
   constructor(object: RenderableCelestialObject) {
     this.object = object;
-    this.spatialService = WasmSpatialService.getInstance();
+    this.spatialService = CelestialDistanceService.getInstance();
   }
 
   /**

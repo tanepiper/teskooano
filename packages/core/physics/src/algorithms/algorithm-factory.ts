@@ -1,310 +1,127 @@
-import type {
-  AlgorithmType,
-  SimulationConfiguration,
-} from "@teskooano/core-state";
-import { SimulationMode, IntegratorType } from "@teskooano/data-types";
+import { algorithms } from "../simulation/constants";
+import { AlgorithmType } from "@teskooano/data-types";
+import {
+  ForceCalculationAlgorithm,
+  AlgorithmDependencies,
+} from "./force-calculation-algorithm";
+import { NeighborBasedAlgorithm } from "./neighbor-based-algorithm";
+import { BarnesHutAlgorithm } from "./barnes-hut-algorithm";
+import { FMMAlgorithm } from "./fmm-algorithm";
+import { P3MAlgorithm } from "./p3m-algorithm";
+import { TreePMAlgorithm } from "./tree-pm";
 
 /**
- * Algorithm performance characteristics and recommendations
- */
-interface AlgorithmSpec {
-  type: AlgorithmType;
-  complexity: string;
-  minBodies: number;
-  maxBodies: number;
-  optimalRange: [number, number];
-  description: string;
-  memoryUsage: "low" | "medium" | "high";
-  accuracy: "exact" | "high" | "medium";
-}
-
-/**
- * Algorithm specifications based on research and implementation characteristics
- */
-const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
-  "barnes-hut": {
-    type: "barnes-hut",
-    complexity: "O(N log N)",
-    minBodies: 2,
-    maxBodies: 100000,
-    optimalRange: [2, 10000],
-    description: "Tree-based approximation, good balance of speed and accuracy",
-    memoryUsage: "medium",
-    accuracy: "high",
-  },
-  fmm: {
-    type: "fmm",
-    complexity: "O(N)",
-    minBodies: 1000,
-    maxBodies: 1000000,
-    optimalRange: [5000, 500000],
-    description: "Fast Multipole Method, best for very large systems",
-    memoryUsage: "medium",
-    accuracy: "high",
-  },
-  p3m: {
-    type: "p3m",
-    complexity: "O(N log N)",
-    minBodies: 500,
-    maxBodies: 100000,
-    optimalRange: [2000, 50000],
-    description: "Particle-Mesh hybrid, efficient for medium-large systems",
-    memoryUsage: "medium",
-    accuracy: "medium",
-  },
-  "tree-pm": {
-    type: "tree-pm",
-    complexity: "O(N log N)",
-    minBodies: 2,
-    maxBodies: 1000000,
-    optimalRange: [2, 500000],
-    description: "Tree-PM hybrid, optimal for multi-scale problems",
-    memoryUsage: "medium",
-    accuracy: "high",
-  },
-};
-
-/**
- * Performance thresholds for algorithm selection
- */
-const PERFORMANCE_THRESHOLDS = {
-  small: 100, // Bodies ≤ 100: Use barnes-hut
-  medium: 1000, // Bodies 100-1000: Use Barnes-Hut
-  large: 10000, // Bodies 1000-10000: Use Barnes-Hut or P3M
-  huge: 50000, // Bodies > 10000: Use FMM or P3M
-};
-
-/**
- * Factory class for algorithm selection and management
+ * Factory for creating force calculation algorithms
+ *
+ * Centralized creation and management of algorithm instances.
+ * All algorithms use the same WASM spatial partitioning for consistency.
  */
 export class AlgorithmFactory {
   /**
-   * Automatically selects the best algorithm based on body count and configuration
+   * Create an algorithm instance for the specified algorithm type
+   *
+   * @param algorithmType - The type of algorithm to create
+   * @param dependencies - Dependencies needed by the algorithm
+   * @returns Algorithm instance implementing ForceCalculationAlgorithm
    */
-  static selectOptimalAlgorithm(
-    bodyCount: number,
-    preferences?: {
-      prioritizeAccuracy?: boolean;
-      prioritizeSpeed?: boolean;
-      maxMemoryUsage?: "low" | "medium" | "high";
-    },
-  ): AlgorithmType {
-    const {
-      prioritizeAccuracy = false,
-      prioritizeSpeed = true,
-      maxMemoryUsage = "high",
-    } = preferences || {};
+  static createAlgorithm(
+    algorithmType: AlgorithmType,
+    dependencies: AlgorithmDependencies,
+  ): ForceCalculationAlgorithm {
+    // All algorithms use the same WASM spatial partitioning
+    const spatialPartitioning = dependencies.spatialPartitioning;
 
-    // Filter algorithms by memory constraints
-    const availableAlgorithms = Object.values(ALGORITHM_SPECS).filter(
-      (spec) => {
-        const memoryOk = this.isMemoryUsageAcceptable(
-          spec.memoryUsage,
-          maxMemoryUsage,
-        );
-        const bodyCountOk =
-          bodyCount >= spec.minBodies && bodyCount <= spec.maxBodies;
-        return memoryOk && bodyCountOk;
-      },
-    );
+    switch (algorithmType) {
+      case AlgorithmType.BARNES_HUT:
+        return new BarnesHutAlgorithm(spatialPartitioning, dependencies);
 
-    if (availableAlgorithms.length === 0) {
-      console.warn(
-        `No suitable algorithm found for ${bodyCount} bodies with memory constraint ${maxMemoryUsage}. Falling back to barnes-hut.`,
-      );
-      return "barnes-hut";
+      case AlgorithmType.FMM:
+        return new FMMAlgorithm(spatialPartitioning, dependencies);
+
+      case AlgorithmType.P3M:
+        return new P3MAlgorithm(spatialPartitioning, dependencies);
+
+      case AlgorithmType.TREE_PM:
+        return new TreePMAlgorithm(spatialPartitioning, dependencies);
+
+      default:
+        // Default to neighbor-based algorithm
+        return new NeighborBasedAlgorithm(spatialPartitioning);
     }
-
-    // Sort by preference
-    availableAlgorithms.sort((a, b) => {
-      // Primary: Is body count in optimal range?
-      const aInOptimal =
-        bodyCount >= a.optimalRange[0] && bodyCount <= a.optimalRange[1];
-      const bInOptimal =
-        bodyCount >= b.optimalRange[0] && bodyCount <= b.optimalRange[1];
-
-      if (aInOptimal && !bInOptimal) return -1;
-      if (!aInOptimal && bInOptimal) return 1;
-
-      // Secondary: Speed preference (O(N) algorithms first)
-      if (prioritizeSpeed) {
-        const complexityScore: Record<string, number> = {
-          "O(N)": 1,
-          "O(N log N)": 2,
-        };
-        const complexityDiff =
-          (complexityScore[a.complexity] || 2) -
-          (complexityScore[b.complexity] || 2);
-        if (complexityDiff !== 0) return complexityDiff;
-      }
-
-      // Tertiary: Accuracy preference
-      if (prioritizeAccuracy) {
-        const accuracyScore = { exact: 3, high: 2, medium: 1 };
-        const accuracyDiff =
-          accuracyScore[b.accuracy] - accuracyScore[a.accuracy];
-        if (accuracyDiff !== 0) return accuracyDiff;
-      }
-
-      // Quaternary: Memory usage (lower is better)
-      const memoryScore = { low: 1, medium: 2, high: 3 };
-      return memoryScore[a.memoryUsage] - memoryScore[b.memoryUsage];
-    });
-
-    return availableAlgorithms[0].type;
   }
 
   /**
-   * Gets performance estimate for a given algorithm and body count
+   * Get the list of implemented algorithms
+   *
+   * @returns Array of algorithm types that are fully implemented
    */
-  static getPerformanceEstimate(
-    algorithm: AlgorithmType,
-    bodyCount: number,
-  ): {
-    relativeSpeed: number; // 1.0 = baseline (barnes-hut at 1000 bodies)
-    memoryUsage: string;
-    accuracy: string;
-    isOptimal: boolean;
-  } {
-    const spec = ALGORITHM_SPECS[algorithm];
-    const isOptimal =
-      bodyCount >= spec.optimalRange[0] && bodyCount <= spec.optimalRange[1];
+  static getImplementedAlgorithms(): AlgorithmType[] {
+    return [
+      AlgorithmType.BARNES_HUT,
+      AlgorithmType.FMM,
+      AlgorithmType.P3M,
+      AlgorithmType.TREE_PM,
+    ];
+  }
 
-    // Calculate relative speed compared to Barnes-Hut at 1000 bodies
-    let relativeSpeed: number;
-    switch (algorithm) {
-      case "barnes-hut":
-        relativeSpeed =
-          ((1000 / bodyCount) * Math.log(1000)) /
-          Math.log(Math.max(2, bodyCount)); // O(N log N)
-        break;
-      case "fmm":
-        relativeSpeed = 1000 / bodyCount; // O(N)
-        break;
-      case "p3m":
-        relativeSpeed =
-          (((1000 / bodyCount) * Math.log(1000)) /
-            Math.log(Math.max(2, bodyCount))) *
-          0.8; // Slightly worse than Barnes-Hut
-        break;
-      default: // tree-pm
-        relativeSpeed =
-          (((1000 / bodyCount) * Math.log(1000)) /
-            Math.log(Math.max(2, bodyCount))) *
-          1.1; // Slightly better than Barnes-Hut
-    }
+  /**
+   * Check if an algorithm is implemented
+   *
+   * @param algorithmType - The algorithm type to check
+   * @returns True if the algorithm is fully implemented
+   */
+  static isAlgorithmImplemented(algorithmType: AlgorithmType): boolean {
+    return this.getImplementedAlgorithms().includes(algorithmType);
+  }
 
+  /**
+   * Create optimal configuration for simulation
+   * TODO: Implement proper configuration optimization
+   */
+  static createOptimalConfiguration(bodyCount: number, mode: any): any {
+    // Placeholder implementation
     return {
-      relativeSpeed: Math.max(0.01, relativeSpeed), // Minimum threshold
-      memoryUsage: spec.memoryUsage,
-      accuracy: spec.accuracy,
-      isOptimal,
+      mode,
+      algorithm: "barnes-hut",
+      integrator: "verlet",
+      neighborDistance: 1000 * 1.496e11, // 1000 AU
+      barnesHutThreshold: 1000 * 1.496e11, // 1000 AU
     };
   }
 
   /**
-   * Validates if a manual algorithm selection is reasonable
+   * Get performance estimate for algorithm
+   * TODO: Implement proper performance estimation
    */
-  static validateAlgorithmChoice(
-    algorithm: AlgorithmType,
-    bodyCount: number,
-  ): {
-    isValid: boolean;
-    warnings: string[];
-    recommendations: string[];
-  } {
-    const spec = ALGORITHM_SPECS[algorithm];
-    const warnings: string[] = [];
-    const recommendations: string[] = [];
-
-    // Check body count limits
-    let isValid = true;
-    if (bodyCount < spec.minBodies) {
-      isValid = false;
-      warnings.push(
-        `${algorithm} is not recommended for ${bodyCount} bodies (minimum: ${spec.minBodies})`,
-      );
-    }
-    if (bodyCount > spec.maxBodies) {
-      isValid = false;
-      warnings.push(
-        `${algorithm} may not scale well for ${bodyCount} bodies (maximum: ${spec.maxBodies})`,
-      );
-    }
-
-    // Check optimal range
-    if (bodyCount < spec.optimalRange[0] || bodyCount > spec.optimalRange[1]) {
-      const optimal = this.selectOptimalAlgorithm(bodyCount);
-      recommendations.push(
-        `For ${bodyCount} bodies, ${optimal} might be more efficient than ${algorithm}`,
-      );
-    }
-
-    // Performance warnings - only for clearly suboptimal choices
-    if (algorithm === "barnes-hut" && bodyCount > 10000) {
-      warnings.push(
-        "Barnes-Hut algorithm with >10000 bodies will be very slow",
-      );
-    }
-    if (algorithm === "fmm" && bodyCount < 1000) {
-      warnings.push("FMM overhead may not be worth it for <1000 bodies");
-    }
-
-    return { isValid, warnings, recommendations };
-  }
-
-  /**
-   * Gets detailed information about an algorithm
-   */
-  static getAlgorithmInfo(algorithm: AlgorithmType): AlgorithmSpec {
-    return { ...ALGORITHM_SPECS[algorithm] };
-  }
-
-  /**
-   * Lists all available algorithms with their specifications
-   */
-  static getAllAlgorithms(): Record<AlgorithmType, AlgorithmSpec> {
-    return { ...ALGORITHM_SPECS };
-  }
-
-  /**
-   * Creates a complete configuration with optimal algorithm selection
-   */
-  static createOptimalConfiguration(
-    bodyCount: number,
-    mode: SimulationMode = SimulationMode.NBODY,
-    preferences?: {
-      prioritizeAccuracy?: boolean;
-      prioritizeSpeed?: boolean;
-      maxMemoryUsage?: "low" | "medium" | "high";
-    },
-  ): SimulationConfiguration {
-    if (mode === SimulationMode.IDEAL) {
-      return { mode: SimulationMode.IDEAL };
-    }
-
-    const algorithm = this.selectOptimalAlgorithm(bodyCount, preferences);
-
-    // Select optimal integrator based on accuracy requirements
-    const integrator: IntegratorType = preferences?.prioritizeAccuracy
-      ? IntegratorType.RK4
-      : IntegratorType.VERLET;
-
+  static getPerformanceEstimate(algorithm: string, bodyCount: number): any {
+    // Placeholder implementation
     return {
-      mode: SimulationMode.NBODY,
-      algorithm,
-      integrator,
+      relativeSpeed: 1,
+      memoryUsage: "medium",
+      accuracy: "high",
+      isOptimal: true,
     };
   }
 
   /**
-   * Helper method to check if memory usage is acceptable
+   * Validate algorithm choice
+   * TODO: Implement proper validation
    */
-  private static isMemoryUsageAcceptable(
-    algorithmMemory: "low" | "medium" | "high",
-    maxMemory: "low" | "medium" | "high",
-  ): boolean {
-    const memoryLevels = { low: 1, medium: 2, high: 3 };
-    return memoryLevels[algorithmMemory] <= memoryLevels[maxMemory];
+  static validateAlgorithmChoice(algorithm: string, bodyCount: number): any {
+    // Placeholder implementation
+    return {
+      isValid: true,
+      warnings: [],
+      recommendations: [],
+    };
+  }
+
+  /**
+   * Select optimal algorithm
+   * TODO: Implement proper algorithm selection
+   */
+  static selectOptimalAlgorithm(bodyCount: number, preferences?: any): string {
+    // Placeholder implementation
+    return "barnes-hut";
   }
 }

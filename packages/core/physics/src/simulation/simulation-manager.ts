@@ -1,134 +1,97 @@
 import { OSVector3 } from "@teskooano/core-math";
+import { CelestialDistanceService } from "@teskooano/core-physics";
+import type { SimulationConfiguration } from "./types";
 import {
-  type PhysicsStateReal,
-  type OrbitalParameters,
-  SimulationMode,
   AlgorithmType,
   IntegratorType,
-  CelestialType,
+  SimulationMode,
+  type PhysicsStateReal,
 } from "@teskooano/data-types";
-import type { SimulationConfiguration } from "@teskooano/core-state";
+import { AU_METERS } from "@teskooano/data-values";
 import { AlgorithmFactory } from "../algorithms/algorithm-factory";
+import {
+  AlgorithmDependencies,
+  ForceCalculationAlgorithm,
+} from "../algorithms/force-calculation-algorithm";
+import { CollisionDetectionService } from "../collision/collision-service";
+import {
+  adaptiveRKIntegrate,
+  forestRuthIntegrate,
+  leapfrogIntegrate,
+  pefrlIntegrate,
+  rk4Integrate,
+  standardEuler,
+  symplecticEuler,
+  velocityVerletIntegrate,
+  yoshida4Integrate,
+} from "../integrators";
 import {
   IdealOrreryStrategy,
   type IdealOrbitParams,
 } from "../modes/ideal/ideal-orrery";
-import { WasmCollisionDetection } from "../collision/wasm-collision";
-import { WasmSpatialPartitioning } from "../spatial/wasm-partitioning";
-import { calculateNewtonianGravitationalForce } from "../forces/gravity";
+import { SpatialPartitioning } from "../spatial/spatial-partitioning";
 import {
-  velocityVerletIntegrate,
-  standardEuler,
-  symplecticEuler,
-  idealOrbit,
-  rk4Integrate,
-  adaptiveRKIntegrate,
-  yoshida4Integrate,
-  forestRuthIntegrate,
-  pefrlIntegrate,
-  leapfrogIntegrate,
-} from "../integrators";
-import { sortBodiesByHierarchy } from "../utils";
-import {
-  AU_METERS,
-  GRAVITATIONAL_CONSTANT,
-  GRAVITATIONAL_SOFTENING_SQUARED,
-} from "@teskooano/data-values";
-
-/**
- * Enhanced simulation result with performance metrics and metadata
- */
-export interface EnhancedSimulationResult {
-  states: PhysicsStateReal[];
-  accelerations: Map<string, OSVector3>;
-  destroyedIds: Set<string>;
-  destructionEvents: any[];
-  metadata: {
-    mode: SimulationMode;
-    algorithm?: string;
-    integrator?: string;
-    executionTime: number;
-    bodyCount: number;
-    performanceProfile?: {
-      relativeSpeed: number;
-      memoryUsage: string;
-      accuracy: string;
-      isOptimal: boolean;
-    };
-    recommendations?: string[];
-    warnings?: string[];
-  };
-}
-
-/**
- * Parameters for the simulation manager
- */
-export interface SimulationManagerParams {
-  bodies: PhysicsStateReal[];
-  deltaTime: number;
-  configuration: SimulationConfiguration;
-
-  // Required for ideal mode
-  orbitalParameters?: Map<string, OrbitalParameters>;
-  parentIds?: Map<string, string>;
-  currentTime_s?: number;
-
-  // Required for N-body mode
-  radii?: Map<string, number>;
-  isStar?: Map<string, boolean>;
-  bodyTypes?: Map<string, any>;
-  octreeSize?: number;
-  barnesHutTheta?: number;
-  ignoreCollisions?: Map<string, boolean>;
-
-  // Optional preferences
-  autoSelectAlgorithm?: boolean;
-  performancePreferences?: {
-    prioritizeAccuracy?: boolean;
-    prioritizeSpeed?: boolean;
-    maxMemoryUsage?: "low" | "medium" | "high";
-  };
-}
-
-/**
- * Type for cached integrator functions
- */
-type IntegratorFunction = (
-  body: PhysicsStateReal,
-  currentAcceleration: OSVector3,
-  calculateNewAcceleration: (stateGuess: PhysicsStateReal) => OSVector3,
-  dt: number,
-) => PhysicsStateReal;
+  EnhancedSimulationResult,
+  IntegratorFunction,
+  SimulationManagerParams,
+} from "./types";
 
 /**
  * Unified WASM-optimized simulation manager
- * Provides intelligent algorithm selection, performance monitoring, and validation
- * with high-performance WASM spatial partitioning and collision detection
+ * Provides high-performance WASM spatial partitioning and collision detection
+ * with configurable algorithms and integrators
  */
 export class SimulationManager {
+  /**
+   * The ideal orrery strategy for the SimulationManager.
+   */
   private idealOrreryStrategy: IdealOrreryStrategy;
 
-  // WASM systems
-  private wasmCollisionDetection: WasmCollisionDetection;
-  private wasmSpatialPartitioning: WasmSpatialPartitioning;
+  /**
+   * The WASM spatial service for the SimulationOrchestrator.
+   */
+  private celestialDistanceService: CelestialDistanceService;
+
+  /**
+   * The WASM collision detection for the SimulationManager.
+   */
+  private collisionDetectionService: CollisionDetectionService;
+  /**
+   * The WASM spatial partitioning for the SimulationManager.
+   */
+  private spatialPartitioning: SpatialPartitioning;
+
+  /**
+   * Cache of algorithm instances for reuse
+   */
+  private algorithmInstances: Map<AlgorithmType, ForceCalculationAlgorithm> =
+    new Map();
+
+  /**
+   * Pre-allocated vectors for force calculations to reduce memory allocation
+   */
+  private tempPositions = new Float32Array(1000 * 3); // Pre-allocate for WASM
+
+  /**
+   * Whether the SimulationManager is initialized.
+   */
   private initialized = false;
 
-  // Caching for performance optimization
+  /**
+   * The integrator function for the SimulationManager.
+   */
   private integratorFunction: IntegratorFunction;
 
   constructor() {
     this.idealOrreryStrategy = new IdealOrreryStrategy();
 
-    // Initialize WASM systems
-    this.wasmCollisionDetection = new WasmCollisionDetection({
-      collisionDistance: 0.1 * AU_METERS, // 0.1 AU
+    this.celestialDistanceService = CelestialDistanceService.getInstance();
+    this.collisionDetectionService = new CollisionDetectionService({
+      collisionDistance: 0.1 * AU_METERS,
     });
 
-    this.wasmSpatialPartitioning = new WasmSpatialPartitioning(
-      1000 * AU_METERS,
-    ); // 1000 AU
+    this.spatialPartitioning = new SpatialPartitioning(1000 * AU_METERS);
 
-    // Initialize with default integrator
     this.integratorFunction = this.createIntegratorFunction(
       IntegratorType.PEFRL,
     );
@@ -142,8 +105,13 @@ export class SimulationManager {
       return;
     }
 
-    await this.wasmCollisionDetection.initialize();
-    await this.wasmSpatialPartitioning.initialize();
+    await this.celestialDistanceService.initialize({
+      neighborDistance: 1000 * AU_METERS,
+    });
+
+    await this.collisionDetectionService.initialize();
+    await this.spatialPartitioning.initialize();
+
     this.initialized = true;
   }
 
@@ -235,48 +203,63 @@ export class SimulationManager {
   }
 
   /**
-   * Calculate acceleration for a body using WASM spatial partitioning
+   * Calculate acceleration for a body using the configured algorithm
    */
   private calculateAccelerationForBody_NBody(
     targetBodyState: PhysicsStateReal,
     allBodies: PhysicsStateReal[],
+    config: SimulationConfiguration,
   ): OSVector3 {
-    // Use WASM spatial partitioning for neighbor finding, then calculate forces
-    const neighborIds = this.wasmSpatialPartitioning.findNeighbors(
-      targetBodyState.id,
-    );
+    // Use the algorithm specified in configuration, default to neighbor-based
+    const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
+    const algorithm = this.getAlgorithmInstance(algorithmType);
+    const result = algorithm.calculateAcceleration(targetBodyState, allBodies, {
+      neighborDistance: config.neighborDistance,
+      barnesHutThreshold: config.neighborDistance, // Use neighborDistance as threshold
+    });
 
-    const netForce = new OSVector3(0, 0, 0);
+    return result;
+  }
 
-    // Create a map for fast body lookup
-    const bodyMap = new Map<string | number, PhysicsStateReal>();
-    for (const body of allBodies) {
-      bodyMap.set(body.id, body);
-    }
-
-    // Calculate forces from all neighboring bodies
-    for (const neighborId of neighborIds) {
-      // Skip self-interaction
-      if (neighborId === targetBodyState.id) continue;
-
-      // Get neighbor body from the bodies array
-      const neighborBody = bodyMap.get(neighborId);
-      if (!neighborBody) continue;
-
-      // Calculate gravitational force using standardized function
-      const force = calculateNewtonianGravitationalForce(
-        neighborBody,
-        targetBodyState,
-        GRAVITATIONAL_CONSTANT,
+  /**
+   * Get or create an algorithm instance for the specified algorithm type
+   */
+  private getAlgorithmInstance(
+    algorithmType: AlgorithmType = AlgorithmType.NEIGHBOR_BASED,
+  ): ForceCalculationAlgorithm {
+    if (!this.algorithmInstances.has(algorithmType)) {
+      const dependencies: AlgorithmDependencies = {
+        spatialPartitioning: this.spatialPartitioning,
+        bodiesToFloat32Array: this.bodiesToFloat32Array.bind(this),
+      };
+      const algorithm = AlgorithmFactory.createAlgorithm(
+        algorithmType,
+        dependencies,
       );
-      netForce.add(force);
+      this.algorithmInstances.set(algorithmType, algorithm);
+    }
+    return this.algorithmInstances.get(algorithmType)!;
+  }
+
+  /**
+   * Efficiently convert bodies to Float32Array for WASM library
+   * Reuses pre-allocated array to minimize memory allocation
+   */
+  private bodiesToFloat32Array(bodies: PhysicsStateReal[]): Float32Array {
+    // Reuse pre-allocated array if possible
+    if (bodies.length * 3 > this.tempPositions.length) {
+      this.tempPositions = new Float32Array(bodies.length * 3);
     }
 
-    const acceleration = new OSVector3(0, 0, 0);
-    if (targetBodyState.mass_kg !== 0) {
-      acceleration.copy(netForce).multiplyScalar(1 / targetBodyState.mass_kg);
+    for (let i = 0; i < bodies.length; i++) {
+      const body = bodies[i];
+      const idx = i * 3;
+      this.tempPositions[idx] = body.position_m.x;
+      this.tempPositions[idx + 1] = body.position_m.y;
+      this.tempPositions[idx + 2] = body.position_m.z;
     }
-    return acceleration;
+
+    return this.tempPositions.slice(0, bodies.length * 3);
   }
 
   /**
@@ -286,14 +269,6 @@ export class SimulationManager {
     const startTime = performance.now();
     const { bodies, deltaTime, configuration } = params;
 
-    // Validate configuration
-    const validation = this.validateConfiguration(configuration, params);
-    if (!validation.isValid) {
-      throw new Error(
-        `Invalid simulation configuration: ${validation.errors.join(", ")}`,
-      );
-    }
-
     let result: EnhancedSimulationResult;
 
     if (configuration.mode === SimulationMode.IDEAL) {
@@ -302,180 +277,19 @@ export class SimulationManager {
       result = this.executeNBodyMode(params, startTime);
     }
 
-    // Add performance analysis and recommendations
-    this.enhanceResultWithAnalysis(result, params);
-
     return result;
   }
 
   /**
-   * Automatically creates optimal configuration based on current simulation state
+   * Creates a default configuration - user should customize as needed
    */
-  createOptimalConfiguration(
-    params: SimulationManagerParams,
-  ): SimulationConfiguration {
-    return AlgorithmFactory.createOptimalConfiguration(
-      params.bodies.length,
-      SimulationMode.NBODY,
-      params.performancePreferences,
-    );
-  }
-
-  /**
-   * Provides performance estimates for different configurations
-   */
-  getPerformanceComparison(params: SimulationManagerParams): {
-    ideal?: { available: boolean; reason?: string; estimatedSpeed: number };
-    configurations: Array<{
-      config: SimulationConfiguration;
-      estimate: {
-        relativeSpeed: number;
-        memoryUsage: string;
-        accuracy: string;
-        isOptimal: boolean;
-      };
-      validation: {
-        isValid: boolean;
-        warnings: string[];
-        recommendations: string[];
-      };
-    }>;
-  } {
-    const bodyCount = params.bodies.length;
-    const hasOrbitalData = params.orbitalParameters && params.parentIds;
-
-    const result: any = {
-      configurations: [],
-    };
-
-    // Check ideal mode availability
-    if (hasOrbitalData) {
-      result.ideal = {
-        available: true,
-        estimatedSpeed: bodyCount, // Linear time for ideal mode
-      };
-    } else {
-      result.ideal = {
-        available: false,
-        reason: "Missing orbital parameters or parent hierarchy",
-        estimatedSpeed: 0,
-      };
-    }
-
-    // Generate estimates for all N-body configurations
-    const algorithms = [
-      AlgorithmType.BARNES_HUT,
-      AlgorithmType.FMM,
-      AlgorithmType.P3M,
-      AlgorithmType.TREE_PM,
-    ] as const;
-    const integrators = [
-      IntegratorType.EULER,
-      IntegratorType.SYMPLECTIC,
-      IntegratorType.VERLET,
-      IntegratorType.RK4,
-      IntegratorType.ADAPTIVE,
-      IntegratorType.YOSHIDA4,
-      IntegratorType.FOREST_RUTH,
-      IntegratorType.PEFRL,
-      IntegratorType.LEAPFROG,
-    ] as const;
-
-    for (const algorithm of algorithms) {
-      for (const integrator of integrators) {
-        const config: SimulationConfiguration = {
-          mode: SimulationMode.NBODY,
-          algorithm,
-          integrator,
-        };
-
-        const estimate = AlgorithmFactory.getPerformanceEstimate(
-          algorithm,
-          bodyCount,
-        );
-        const validation = AlgorithmFactory.validateAlgorithmChoice(
-          algorithm,
-          bodyCount,
-        );
-
-        result.configurations.push({
-          config,
-          estimate,
-          validation,
-        });
-      }
-    }
-
-    // Sort by relative speed (best first)
-    result.configurations.sort(
-      (a: any, b: any) => b.estimate.relativeSpeed - a.estimate.relativeSpeed,
-    );
-
-    return result;
-  }
-
-  /**
-   * Validates simulation configuration and parameters
-   */
-  private validateConfiguration(
-    config: SimulationConfiguration,
-    params: SimulationManagerParams,
-  ): { isValid: boolean; errors: string[]; warnings: string[] } {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // Basic configuration validation
-    if (!config.mode) {
-      errors.push("Simulation mode is required");
-    }
-
-    if (config.mode === SimulationMode.IDEAL) {
-      if (!params.orbitalParameters) {
-        errors.push("Orbital parameters required for ideal mode");
-      }
-      if (!params.parentIds) {
-        errors.push("Parent hierarchy required for ideal mode");
-      }
-      if (params.currentTime_s === undefined) {
-        errors.push("Current time required for ideal mode");
-      }
-    }
-
-    if (config.mode === SimulationMode.NBODY) {
-      if (!config.algorithm) {
-        errors.push("Algorithm required for N-body mode");
-      }
-      if (!config.integrator) {
-        errors.push("Integrator required for N-body mode");
-      }
-      if (!params.radii) {
-        warnings.push(
-          "Body radii not provided - collision detection will be skipped",
-        );
-      }
-    }
-
-    // Body count validation
-    if (params.bodies.length === 0) {
-      warnings.push("No bodies provided for simulation");
-    }
-
-    // Algorithm-specific validation
-    if (config.mode === SimulationMode.NBODY && config.algorithm) {
-      const validation = AlgorithmFactory.validateAlgorithmChoice(
-        config.algorithm,
-        params.bodies.length,
-      );
-      errors.push(
-        ...validation.warnings.filter((w) => w.includes("not recommended")),
-      );
-      warnings.push(...validation.recommendations);
-    }
-
+  createDefaultConfiguration(): SimulationConfiguration {
     return {
-      isValid: errors.length === 0,
-      errors,
-      warnings,
+      mode: SimulationMode.NBODY,
+      integrator: IntegratorType.SYMPLECTIC,
+      algorithm: AlgorithmType.NEIGHBOR_BASED,
+      neighborDistance: 1000 * AU_METERS,
+      collisionDetection: true,
     };
   }
 
@@ -507,12 +321,6 @@ export class SimulationManager {
         mode: SimulationMode.IDEAL,
         executionTime: endTime - startTime,
         bodyCount: params.bodies.length,
-        performanceProfile: {
-          relativeSpeed: params.bodies.length, // Linear time
-          memoryUsage: "low",
-          accuracy: "exact",
-          isOptimal: true,
-        },
       },
     };
   }
@@ -524,43 +332,49 @@ export class SimulationManager {
     params: SimulationManagerParams,
     startTime: number,
   ): EnhancedSimulationResult {
-    // Auto-select algorithm if requested
-    let config = params.configuration;
-    if (params.autoSelectAlgorithm && config.mode === SimulationMode.NBODY) {
-      const optimalAlgorithm = AlgorithmFactory.selectOptimalAlgorithm(
-        params.bodies.length,
-        params.performancePreferences,
+    if (!this.initialized) {
+      console.warn(
+        "SimulationManager not initialized, skipping N-body mode simulation",
       );
-      config = {
-        ...config,
-        algorithm: optimalAlgorithm,
+      // Return a minimal result to prevent crashes
+      return {
+        states: params.bodies,
+        accelerations: new Map(),
+        destroyedIds: new Set(),
+        destructionEvents: [],
+        metadata: {
+          mode: SimulationMode.NBODY,
+          executionTime: performance.now() - startTime,
+          bodyCount: params.bodies.length,
+          warnings: ["SimulationManager not initialized"],
+        },
       };
     }
 
-    // Use enhanced simulation wrapper
-    const simulationParams = {
-      ...params,
-      simulationConfig: config,
-      radii: params.radii || new Map(),
-      isStar: params.isStar || new Map(),
-      bodyTypes: params.bodyTypes || new Map(),
-      parentIds: params.parentIds || new Map(),
-      octreeSize: params.octreeSize || 5e13,
-      barnesHutTheta: params.barnesHutTheta || 0.7,
-    };
+    const config = params.configuration;
 
     // Update integrator if needed
     if (config.integrator) {
       this.updateIntegratorFunction(config.integrator as IntegratorType);
     }
 
-    // Update WASM spatial partitioning
-    this.wasmSpatialPartitioning.update(params.bodies);
+    // Update WASM spatial partitioning (only if initialized)
+    if (this.spatialPartitioning.isInitialized()) {
+      this.spatialPartitioning.update(params.bodies);
+    } else {
+      console.warn(
+        "WASM spatial partitioning not initialized, skipping update",
+      );
+    }
 
     // Calculate accelerations using WASM spatial partitioning
     const accelerations = new Map<string, OSVector3>();
     params.bodies.forEach((body) => {
-      const acc = this.calculateAccelerationForBody_NBody(body, params.bodies);
+      const acc = this.calculateAccelerationForBody_NBody(
+        body,
+        params.bodies,
+        params.configuration,
+      );
       accelerations.set(body.id, acc);
     });
 
@@ -575,6 +389,7 @@ export class SimulationManager {
         return this.calculateAccelerationForBody_NBody(
           stateGuess,
           params.bodies,
+          params.configuration,
         );
       };
 
@@ -587,14 +402,14 @@ export class SimulationManager {
     });
 
     // Update collision detection with integrated states
-    this.wasmCollisionDetection.update(
+    this.collisionDetectionService.update(
       integratedStates,
       params.radii || new Map(),
       params.isStar || new Map(),
       params.bodyTypes || new Map(),
     );
     const [finalStates, destroyedIds] =
-      this.wasmCollisionDetection.handleCollisions(params.ignoreCollisions);
+      this.collisionDetectionService.handleCollisions(params.ignoreCollisions);
 
     const result = {
       states: finalStates,
@@ -603,19 +418,6 @@ export class SimulationManager {
     };
 
     const endTime = performance.now();
-
-    // Get performance profile for the algorithm used
-    const performanceProfile = config.algorithm
-      ? AlgorithmFactory.getPerformanceEstimate(
-          config.algorithm,
-          params.bodies.length,
-        )
-      : {
-          relativeSpeed: 1,
-          memoryUsage: "medium",
-          accuracy: "high",
-          isOptimal: true,
-        };
 
     return {
       states: result.states,
@@ -628,69 +430,16 @@ export class SimulationManager {
         integrator: config.integrator,
         executionTime: endTime - startTime,
         bodyCount: params.bodies.length,
-        performanceProfile,
       },
     };
-  }
-
-  /**
-   * Adds performance analysis and recommendations to the result
-   */
-  private enhanceResultWithAnalysis(
-    result: EnhancedSimulationResult,
-    params: SimulationManagerParams,
-  ): void {
-    const recommendations: string[] = [];
-    const warnings: string[] = [];
-
-    // Performance analysis
-    if (
-      result.metadata.mode === SimulationMode.NBODY &&
-      result.metadata.algorithm
-    ) {
-      const validation = AlgorithmFactory.validateAlgorithmChoice(
-        result.metadata.algorithm as any,
-        params.bodies.length,
-      );
-      recommendations.push(...validation.recommendations);
-      warnings.push(...validation.warnings);
-    }
-
-    // Execution time analysis
-    if (result.metadata.executionTime > 100) {
-      // > 100ms
-      warnings.push(
-        `Simulation step took ${result.metadata.executionTime.toFixed(1)}ms - consider optimizing`,
-      );
-
-      if (result.metadata.mode === SimulationMode.NBODY) {
-        recommendations.push(
-          "Consider using a faster algorithm or reducing time step",
-        );
-      }
-    }
-
-    // Mode recommendations
-    if (
-      result.metadata.mode === SimulationMode.NBODY &&
-      params.orbitalParameters &&
-      params.bodies.length < 100
-    ) {
-      recommendations.push(
-        "Consider using ideal mode for better performance with this system size",
-      );
-    }
-
-    result.metadata.recommendations = recommendations;
-    result.metadata.warnings = warnings;
   }
 
   /**
    * Clean up resources
    */
   dispose(): void {
-    this.wasmCollisionDetection.dispose();
-    this.wasmSpatialPartitioning.dispose();
+    this.collisionDetectionService.dispose();
+    this.spatialPartitioning.dispose();
     this.initialized = false;
   }
 }

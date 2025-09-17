@@ -5,7 +5,7 @@ type: Class
 package: "@teskooano/core-state"
 name: PhysicsStateProvider
 dependencies: ["@teskooano/data-types", "rxjs"]
-classes: []
+classes: ["PhysicsStateProvider"]
 functions: []
 constants: []
 types:

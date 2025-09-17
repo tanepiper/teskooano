@@ -333,10 +333,10 @@ StateAccessor.simulation$()
 
 ## 🔗 Related Components
 
-- [[CelestialStore]] - Source of celestial object data
-- [[SimulationStateService]] - Source of simulation state
-- [[StateSubscriptionMixin]] - Manages subscriptions to state
-- [[PhysicsStore]] - Source of physics data
+- [[core/core-state/CelestialStore|CelestialStore]] - Source of celestial object data
+- [[core/core-state/SimulationStateService|SimulationStateService]] - Source of simulation state
+- [[core/core-state/StateSubscriptionMixin|StateSubscriptionMixin]] - Manages subscriptions to state
+- [[core/core-state/PhysicsStore|PhysicsStore]] - Source of physics data
 
 ## 📚 Architecture Patterns
 

@@ -1,1 +1,8 @@
-["dataview"]
+[
+  "dataview",
+  "obsidian-local-rest-api",
+  "notebook-navigator",
+  "table-editor-obsidian",
+  "obsidian-kanban",
+  "templater-obsidian"
+]

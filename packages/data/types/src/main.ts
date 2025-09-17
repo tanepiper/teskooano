@@ -62,7 +62,7 @@ export enum IntegratorType {
  * The force calculation algorithm used for N-Body simulations.
  */
 export enum AlgorithmType {
-  DIRECT = "direct", // Direct N² calculation (for small systems)
+  NEIGHBOR_BASED = "neighbor-based", // Direct N² calculation (for small systems)
   BARNES_HUT = "barnes-hut", // O(N log N) - tree-based approximation
   FMM = "fmm", // O(N) - Fast Multipole Method
   P3M = "p3m", // O(N log N) - Particle-Mesh hybrid
@@ -76,6 +76,8 @@ export interface SimulationConfiguration {
   mode: SimulationMode;
   integrator?: IntegratorType;
   algorithm?: AlgorithmType;
+  neighborDistance?: number;
+  collisionDetection?: boolean;
 }
 
 // Note: Validation utilities are available in @teskooano/core-state

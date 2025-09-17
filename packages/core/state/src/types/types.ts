@@ -21,9 +21,14 @@ export interface SimulationConfiguration {
    */
   integrator?: string;
   /**
-   * The algorithm type to use for the simulation.
+   * Distance threshold for neighbor finding (in meters)
+   * Used for both neighbor-based and Barnes-Hut algorithms
    */
-  algorithm?: string;
+  neighborDistance?: number;
+  /**
+   * Whether to enable collision detection
+   */
+  collisionDetection?: boolean;
 }
 
 /**
