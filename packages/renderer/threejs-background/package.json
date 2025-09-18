@@ -29,10 +29,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "three": "0.179.1"
+    "three": "0.180.0"
   },
   "devDependencies": {
-    "@types/three": "0.179.0",
+    "@types/three": "0.180.0",
     "vitest": "3.2.4"
   }
 }

@@ -24,11 +24,11 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/data-values": "file:../../data/values",
     "rxjs": "7.8.2",
-    "three": "0.179.1",
+    "three": "0.180.0",
     "@robertaron/spacial-partitioning": "0.0.4"
   },
   "devDependencies": {
-    "eslint": "9.34.0",
+    "eslint": "9.35.0",
     "typescript": "5.9.2",
     "vitest": "3.2.4"
   }

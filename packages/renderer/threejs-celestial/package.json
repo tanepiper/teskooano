@@ -30,14 +30,14 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-lighting": "file:../threejs-lighting",
     "@teskooano/web-apis": "file:../../web-apis",
-    "three": "0.179.1"
+    "three": "0.180.0"
   },
   "devDependencies": {
-    "@types/three": "0.179.0",
+    "@types/three": "0.180.0",
     "@playwright/test": "1.55.0",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.34.0",
+    "eslint": "9.35.0",
     "happy-dom": "18.0.1",
     "playwright": "1.55.0",
     "typescript": "5.9.2",

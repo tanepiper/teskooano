@@ -22,10 +22,10 @@
   "dependencies": {
     "@teskooano/data-types": "file:../../../data/types",
     "@teskooano/renderer-threejs-objects": "file:../../threejs-objects",
-    "three": "0.179.1"
+    "three": "0.180.0"
   },
   "devDependencies": {
-    "@types/three": "0.179.0",
+    "@types/three": "0.180.0",
     "typescript": "5.9.2",
     "vitest": "3.2.4"
   }

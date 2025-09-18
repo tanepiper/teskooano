@@ -22,13 +22,13 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/data-values": "file:../../data/values",
     "rxjs": "7.8.2",
-    "three": "0.179.1"
+    "three": "0.180.0"
   },
   "devDependencies": {
     "@playwright/test": "1.55.0",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.34.0",
-    "jsdom": "26.1.0",
+    "eslint": "9.35.0",
+    "jsdom": "27.0.0",
     "typescript": "5.9.2",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.2.4"
