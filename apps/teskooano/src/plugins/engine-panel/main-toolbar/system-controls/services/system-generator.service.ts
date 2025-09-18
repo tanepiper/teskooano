@@ -75,11 +75,7 @@ export class SystemGenerator {
     const finalSeed = StateAccessor.getCurrentSeed();
 
     // Reset the application state before generating a new system.
-    celestialManager.clearState({
-      resetCamera: false,
-      resetTime: true,
-      resetSelection: true,
-    });
+    celestialManager.clearState();
     actions.resetTime();
     SystemGenerator.dispatchSimulationTimeReset();
 
@@ -104,8 +100,8 @@ export class SystemGenerator {
               celestialManager.createSolarSystem(creationInput);
               isSystemInitialized = true;
             } else {
-              // Subsequent stars: don't clear state, just add to existing system
-              celestialManager.createSolarSystem(creationInput, false);
+              // Subsequent stars: add to existing system without clearing state
+              celestialManager.addObject(creationInput);
             }
           } else {
             // All other objects (planets, moons, etc.) use addCelestial

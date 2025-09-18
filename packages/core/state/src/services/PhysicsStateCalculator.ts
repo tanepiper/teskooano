@@ -17,6 +17,10 @@ import { AU_METERS, MIN_ROGUE_DISTANCE_AU } from "@teskooano/data-values";
  */
 export class PhysicsStateCalculator {
   /**
+   * Track which objects we've already warned about missing parents to avoid console spam
+   */
+  private static missingParentWarnings = new Set<string>();
+  /**
    * Calculates physics state for a celestial object based on its orbital parameters
    */
   public static calculatePhysicsState<
@@ -101,6 +105,7 @@ export class PhysicsStateCalculator {
 
   private static isSpecialObject(type: CelestialType): boolean {
     return [
+      CelestialType.STAR,
       CelestialType.RING_SYSTEM,
       CelestialType.OORT_CLOUD,
       CelestialType.ASTEROID_FIELD,
@@ -111,9 +116,25 @@ export class PhysicsStateCalculator {
     data: CelestialObject,
     allObjects: Record<string, CelestialObject>,
   ): PhysicsStateReal | null {
+    // Stars are root objects and don't need parents
+    if (data.type === CelestialType.STAR) {
+      return {
+        id: data.id,
+        mass_kg: data.realMass_kg,
+        position_m: new OSVector3().setZero(),
+        velocity_mps: new OSVector3().setZero(),
+      };
+    }
+
     const parent = data.parentId ? allObjects[data.parentId] : undefined;
     if (!parent) {
-      console.error(`[PhysicsStateCalculator] Parent not found for ${data.id}`);
+      // Only log error once per object to avoid console spam
+      if (!this.missingParentWarnings.has(data.id)) {
+        console.error(
+          `[PhysicsStateCalculator] Parent not found for ${data.id} (type: ${data.type})`,
+        );
+        this.missingParentWarnings.add(data.id);
+      }
       return null;
     }
 
@@ -185,7 +206,25 @@ export class PhysicsStateCalculator {
 
     const parent = data.parentId ? allObjects[data.parentId] : undefined;
     if (!parent) {
-      console.error(`[PhysicsStateCalculator] Parent not found for ${data.id}`);
+      // For planets without parents, make them rogue objects instead of failing
+      if (data.type === CelestialType.PLANET) {
+        // Only warn once per planet to avoid console spam
+        if (!this.missingParentWarnings.has(data.id)) {
+          console.warn(
+            `[PhysicsStateCalculator] Parent not found for planet ${data.id}, making it a rogue object`,
+          );
+          this.missingParentWarnings.add(data.id);
+        }
+        return this.calculateRogueObjectPhysics(data);
+      }
+
+      // For other object types, log error but don't spam the console
+      if (!this.missingParentWarnings.has(data.id)) {
+        console.error(
+          `[PhysicsStateCalculator] Parent not found for ${data.id} (type: ${data.type})`,
+        );
+        this.missingParentWarnings.add(data.id);
+      }
       return null;
     }
 

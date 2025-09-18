@@ -118,7 +118,7 @@ export class LogarithmicDepthMaterial {
       #endif
     `;
 
-    // Add to main function
+    // Add to main function - inject before the final closing brace
     const mainInjection = `
       #ifdef USE_LOGDEPTHBUF
         vFragDepth = 1.0 + gl_Position.w;
@@ -135,10 +135,11 @@ export class LogarithmicDepthMaterial {
       `$1${uniformDeclaration}\n`,
     );
 
-    // Insert log depth calculation before the end of main()
+    // Insert log depth calculation before the end of main() function
+    // Look for the closing brace of main() and inject before it
     modifiedShader = modifiedShader.replace(
-      /(\s*gl_Position\s*=.*?;)/,
-      `$1\n${mainInjection}`,
+      /(\s*}\s*$)/m,
+      `${mainInjection}\n$1`,
     );
 
     return modifiedShader;

@@ -5,6 +5,7 @@ import type {
 } from "@teskooano/data-types";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
+import { FlatHierarchyService } from "../services/FlatHierarchyService";
 import { celestialStore } from "../stores/CelestialStore";
 import {
   dispatchObjectDestroyedEvent,
@@ -41,7 +42,9 @@ export class CelestialManager {
     try {
       celestialStore.setObject(object.id, object);
 
-      // Note: Hierarchy management is now handled by FlatHierarchyService
+      // Update the flat hierarchy service with the new object
+      const hierarchyService = FlatHierarchyService.getInstance();
+      hierarchyService.addObject(object);
 
       dispatchObjectsLoadedEventFromMap(celestialStore.getObjects());
     } catch (error) {
@@ -68,6 +71,15 @@ export class CelestialManager {
       if (hasChanges) {
         const updatedObject = { ...object, ...updates };
         celestialStore.setObject(id, updatedObject);
+
+        // Update hierarchy if parentId changed
+        if (
+          updates.parentId !== undefined &&
+          updates.parentId !== object.parentId
+        ) {
+          const hierarchyService = FlatHierarchyService.getInstance();
+          hierarchyService.updateParent(id, updates.parentId);
+        }
       }
     } else {
       console.warn(`[CelestialManager] Object ${id} not found for update.`);
@@ -105,6 +117,10 @@ export class CelestialManager {
    */
   public removeObject(id: string): void {
     if (celestialStore.getObject(id)) {
+      // Remove from hierarchy service first
+      const hierarchyService = FlatHierarchyService.getInstance();
+      hierarchyService.removeObject(id);
+
       celestialStore.removeObject(id);
       dispatchObjectDestroyedEvent(id);
     }
@@ -162,6 +178,12 @@ export class CelestialManager {
 
     // Update objects store.
     celestialStore.setAllObjects(newObjectsMap);
+
+    // Update hierarchy service with all new objects
+    const hierarchyService = FlatHierarchyService.getInstance();
+    for (const objectData of sortedData) {
+      hierarchyService.addObject(objectData);
+    }
 
     // Clear the physics state cache to force recalculation with complete object set
     PhysicsStateProvider.clearCache();
