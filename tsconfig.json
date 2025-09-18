@@ -158,9 +158,6 @@
       "path": "./packages/app/web-apis"
     },
     {
-      "path": "./packages/app/design-system"
-    },
-    {
       "path": "./packages/systems/procedural-generation"
     },
     {

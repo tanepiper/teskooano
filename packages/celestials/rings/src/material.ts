@@ -76,7 +76,7 @@ export class RingMaterial extends ShaderMaterial {
       fragmentShader: ringFragmentShader,
       transparent: true,
       side: DoubleSide,
-      depthWrite: true,
+      depthWrite: false,
     });
 
     this.currentNumLights = MAX_LIGHTS;
@@ -248,7 +248,7 @@ export class AccretionDiskMaterial extends ShaderMaterial {
       fragmentShader: accretionDiskFragmentShader,
       transparent: true,
       side: DoubleSide,
-      depthWrite: true,
+      depthWrite: false,
     });
 
     this.currentNumLights = MAX_LIGHTS;

@@ -148,16 +148,10 @@ void main() {
         vec3 lightDir = normalize(light.position - vPosition);
         vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
 
-        // Lift the light direction slightly to illuminate both sides of the flat disk plane
-        vec3 lightLift = vWorldNormal * 0.15;
-        vec3 lightDirUp = normalize(lightDir + lightLift);
-        vec3 lightDirDown = normalize(lightDir - lightLift);
+        // Calculate dot product for lighting direction
+        float dotProduct = dot(faceNormal, lightDir);
 
-        float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
-        float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
-        float diffuse = (diffuseUp + diffuseDown) * 1.5;
-
-        // Calculate Shadows
+        // Calculate Shadows (always calculate, regardless of lighting direction)
         float shadow = 1.0;
         
         // Shadow from the parent body (black hole/star)
@@ -169,8 +163,29 @@ void main() {
             shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
         }
 
-        // Combine lighting
-        totalLight += light.color * diffuse * light.intensity * shadow;
+        // Apply lighting based on direction
+        if (dotProduct > 0.0) {
+            // Day side - full lighting with lifted light direction for disk plane illumination
+            vec3 lightLift = vWorldNormal * 0.15;
+            vec3 lightDirUp = normalize(lightDir + lightLift);
+            vec3 lightDirDown = normalize(lightDir - lightLift);
+
+            float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
+            float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
+            float diffuse = (diffuseUp + diffuseDown) * 1.5;
+
+            totalLight += light.color * diffuse * light.intensity * shadow;
+        } else {
+            // Night side - reduced lighting but not completely dark
+            // Use a small amount of back-lighting to simulate light scattering
+            float backLighting = abs(dotProduct) * 0.5; // 50% of the light intensity for back-lighting (higher than rings due to hot gas)
+            totalLight += light.color * backLighting * light.intensity * shadow;
+        }
+        
+        // Add light transmission through accretion disk (regardless of direction)
+        // Hot gas in accretion disks scatters light more effectively than ring particles
+        float lightTransmission = 0.4; // 40% of light passes through hot gas (higher than rings)
+        totalLight += light.color * lightTransmission * light.intensity * shadow;
     }
 
     // For accretion disks, add self-emission

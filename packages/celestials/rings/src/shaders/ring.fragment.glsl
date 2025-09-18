@@ -205,10 +205,24 @@ void main() {
         vec3 lightDir = normalize(light.position - vPosition);
         vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
 
-        // Only calculate lighting if the ring surface is facing the light (day side)
+        // Calculate dot product for lighting direction
         float dotProduct = dot(faceNormal, lightDir);
+        
+        // *** 2. Calculate Shadows (always calculate, regardless of lighting direction) ***
+        float shadow = 1.0;
+        
+        // Shadow from the parent planet
+        shadow = min(shadow, getShadow(vPosition, light.position, uParentPosition, uParentRadius));
+
+        // Shadows from moons
+        for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
+            if (j >= uNumShadowCasters) break;
+            shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
+        }
+
+        // *** 3. Apply Lighting Based on Direction ***
         if (dotProduct > 0.0) {
-            // Lift the light direction slightly to illuminate both sides of the flat ring plane
+            // Day side - full lighting with lifted light direction for ring plane illumination
             vec3 lightLift = vWorldNormal * 0.15;
             vec3 lightDirUp = normalize(lightDir + lightLift);
             vec3 lightDirDown = normalize(lightDir - lightLift);
@@ -217,22 +231,26 @@ void main() {
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
             float diffuse = (diffuseUp + diffuseDown) * 1.2; // Reduced for sharper terminators
 
-            // *** 2. Calculate Shadows ***
-            float shadow = 1.0;
-            
-            // Shadow from the parent planet
-            shadow = min(shadow, getShadow(vPosition, light.position, uParentPosition, uParentRadius));
+            totalLight += light.color * diffuse * light.intensity * shadow;
+        } else {
+            // Night side - reduced lighting but not completely dark
+            // Use a small amount of back-lighting to simulate light scattering
+            vec3 lightLift = vWorldNormal * 0.05;
+            vec3 lightDirUp = normalize(lightDir + lightLift);
+            vec3 lightDirDown = normalize(lightDir - lightLift);
 
-            // Shadows from moons
-            for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
-                if (j >= uNumShadowCasters) break;
-                shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
-            }
+            float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
+            float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
+            float diffuse = (diffuseUp + diffuseDown) * 0.8; // Reduced for sharper terminators
 
-            // *** 3. Combine and Add to Total ***
             totalLight += light.color * diffuse * light.intensity * shadow;
         }
-        // Night side gets no direct lighting, only the very low ambient
+        
+        // *** 4. Add Light Transmission Through Rings (regardless of direction) ***
+        // Rings scatter light even when not directly illuminated
+        // This simulates light passing through the ring particles
+        float lightTransmission = 0.25; // 25% of light passes through ring material
+        totalLight += light.color * lightTransmission * light.intensity * shadow;
     }
 
     // Calculate distance from center for radial patterns

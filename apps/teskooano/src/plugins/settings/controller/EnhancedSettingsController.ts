@@ -1,13 +1,13 @@
 import {
   simulationManager,
   simulationState$,
-  type SimulationConfiguration,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import type {
   AlgorithmType,
   DeviceTier,
   IntegratorType,
+  SimulationConfiguration,
   SimulationMode,
 } from "@teskooano/data-types";
 
