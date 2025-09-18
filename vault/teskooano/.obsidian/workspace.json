@@ -11,24 +11,10 @@
             "id": "6ea16438f15ecb15",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "core/core-state/FlatHierarchyService.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "FlatHierarchyService"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -162,13 +148,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "core/core-state/FlatHierarchyService.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of FlatHierarchyService"
+              "title": "Outline"
             }
           }
         ],
@@ -192,8 +177,8 @@
   },
   "active": "6ea16438f15ecb15",
   "lastOpenFiles": [
-    "app/app-simulation/HierarchyManager-Updated.md",
     "core/core-state/FlatHierarchyService.md",
+    "app/app-simulation/HierarchyManager-Updated.md",
     "systems/solar-system/venus.md",
     "systems/solar-system/uranus.md",
     "systems/solar-system/systems-solar-system.md",
