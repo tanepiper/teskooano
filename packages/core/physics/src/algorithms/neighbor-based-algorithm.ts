@@ -23,26 +23,45 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
   // Pre-allocated body map to avoid creating new Map every call
   private bodyMap = new Map<string | number, PhysicsStateReal>();
 
+  // Performance optimization caches
+  private lastNeighborIds: (string | number)[] = [];
+  private lastTargetBodyId: string | number = "";
+  private neighborCache: Map<string | number, (string | number)[]> = new Map();
+
   constructor(private spatialPartitioning: SpatialPartitioning) {}
 
   /**
    * Calculate acceleration for a target body using neighbor-based approach
+   * Optimized with neighbor caching to reduce WASM calls
    */
   calculateAcceleration(
     targetBody: PhysicsStateReal,
     allBodies: PhysicsStateReal[],
     config: AlgorithmConfig,
   ): OSVector3 {
-    // Use WASM spatial partitioning for neighbor finding
+    // Use cached neighbors if available
     let neighborIds: (string | number)[] = [];
 
-    if (this.spatialPartitioning.isInitialized()) {
-      neighborIds = this.spatialPartitioning.findNeighbors(targetBody.id);
+    if (
+      targetBody.id === this.lastTargetBodyId &&
+      this.lastNeighborIds.length > 0
+    ) {
+      // Reuse cached neighbors
+      neighborIds = this.lastNeighborIds;
     } else {
-      console.warn(
-        "WASM spatial partitioning not initialized, skipping acceleration calculation",
-      );
-      return new OSVector3(0, 0, 0);
+      // Use WASM spatial partitioning for neighbor finding
+      if (this.spatialPartitioning.isInitialized()) {
+        neighborIds = this.spatialPartitioning.findNeighbors(targetBody.id);
+        // Cache the result
+        this.lastNeighborIds = neighborIds;
+        this.lastTargetBodyId = targetBody.id;
+        this.neighborCache.set(targetBody.id, neighborIds);
+      } else {
+        console.warn(
+          "WASM spatial partitioning not initialized, skipping acceleration calculation",
+        );
+        return new OSVector3(0, 0, 0);
+      }
     }
 
     const netForce = new OSVector3(0, 0, 0);

@@ -10,11 +10,45 @@ status: implemented
 
 # NeighborBasedAlgorithm
 
-Simple, reliable force calculation algorithm using direct neighbor interactions with WASM spatial partitioning.
+Simple, reliable force calculation algorithm using direct neighbor interactions with WASM spatial partitioning. **Recently optimized** with neighbor caching and enhanced performance.
 
 ## 🎯 Purpose
 
-The `NeighborBasedAlgorithm` provides a straightforward approach to gravitational force calculation by computing direct interactions between neighboring bodies. It's optimized for small to medium systems where simplicity and reliability are more important than extreme performance.
+The `NeighborBasedAlgorithm` provides a straightforward approach to gravitational force calculation by directly computing forces between a target body and its neighbors. It's optimized for small systems where simplicity and accuracy are paramount.
+
+## 🚀 Performance Optimizations
+
+### Neighbor Caching
+
+The algorithm implements intelligent caching to reduce expensive WASM operations:
+
+```typescript
+// Caching properties
+private lastNeighborIds: (string | number)[] = []
+private lastTargetBodyId: string | number = ''
+private neighborCache: Map<string | number, (string | number)[]> = new Map()
+
+// Caching logic in calculateAcceleration
+calculateAcceleration(
+  targetBody: PhysicsStateReal,
+  allBodies: PhysicsStateReal[],
+  config: AlgorithmConfig,
+): OSVector3 {
+  let neighborIds: (string | number)[] = [];
+
+  if (targetBody.id === this.lastTargetBodyId && this.lastNeighborIds.length > 0) {
+    neighborIds = this.lastNeighborIds; // Reuse cached neighbors
+  } else {
+    if (this.spatialPartitioning.isInitialized()) {
+      neighborIds = this.spatialPartitioning.findNeighbors(targetBody.id);
+      this.lastNeighborIds = neighborIds;
+      this.lastTargetBodyId = targetBody.id;
+      this.neighborCache.set(targetBody.id, neighborIds);
+    }
+    // ... rest of calculation
+  }
+}
+```
 
 ## 🏗️ Architecture
 
@@ -171,6 +205,20 @@ const result = simulationManager.simulate({
 | FMM                | O(N log N) | Large systems   | Good      | High   |
 | P3M                | O(N log N) | Varying density | Good      | Medium |
 | Tree-PM            | O(N log N) | Complex systems | Excellent | High   |
+
+## 🐛 Recent Fixes
+
+### Performance Optimizations
+
+- **Neighbor Caching**: Added intelligent caching to reduce repeated WASM calls to `findNeighbors`
+- **Cache Management**: Implemented `neighborCache` Map to store and reuse neighbor lists
+- **Target Body Tracking**: Added `lastTargetBodyId` to track when to reuse cached neighbors
+
+### Enhanced Reliability
+
+- **Fallback Mechanisms**: Graceful handling when WASM spatial partitioning is not available
+- **Error Handling**: Improved error handling for missing neighbor bodies
+- **Data Validation**: Enhanced validation of neighbor IDs and body references
 
 ---
 

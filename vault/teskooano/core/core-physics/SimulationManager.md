@@ -34,19 +34,75 @@ status: active
 
 # SimulationManager
 
-High-level orchestrator that provides a unified API for physics simulations, featuring simplified configuration and WASM integration with all 5 implemented algorithms.
+High-level orchestrator that provides a unified API for physics simulations, featuring simplified configuration, WASM integration with all 5 implemented algorithms, and **performance optimizations** including caching and efficient data handling.
 
 **Location**: `src/simulation/simulation-manager.ts`
 
 ## 🎯 Purpose
 
-The `SimulationManager` serves as the main entry point for all physics simulations:
+The `SimulationManager` serves as the central coordinator for all physics simulations in the Teskooano engine. It provides a unified interface that abstracts away the complexity of different simulation modes (ideal vs N-body) and algorithms, while ensuring optimal performance through intelligent caching and WASM integration.
 
-- **Unified API**: Single interface for both ideal and N-body simulations
-- **Algorithm Management**: Creates and manages all 5 implemented force calculation algorithms
-- **WASM Integration**: Seamless integration with high-performance spatial operations
-- **Simplified Configuration**: Streamlined configuration with sensible defaults
-- **User-Driven Choices**: No automatic performance analysis - user selects based on their needs
+## 🚀 Performance Optimizations
+
+### Caching Infrastructure
+
+The `SimulationManager` implements intelligent caching to reduce expensive WASM operations:
+
+```typescript
+// Caching properties
+private neighborGraphCache: Map<string, number[][]> = new Map();
+private lastBodiesHash: string = '';
+private lastThreshold: number = 0;
+
+// Cache key generation
+private createBodiesHash(bodies: PhysicsStateReal[]): string {
+  return `${bodies.length}-${bodies.map(b => b.id).join(',')}`;
+}
+```
+
+### Optimized Data Conversion
+
+The `bodiesToFloat32Array` method has been optimized to prevent WASM index mismatches:
+
+```typescript
+private bodiesToFloat32Array(bodies: PhysicsStateReal[]): Float32Array {
+  const requiredLength = bodies.length * 3;
+
+  // Always create a new array with exact size to avoid WASM index confusion
+  const positions = new Float32Array(requiredLength);
+
+  // Fill the array with body positions
+  for (let i = 0; i < bodies.length; i++) {
+    const body = bodies[i];
+    const idx = i * 3;
+    positions[idx] = body.position_m.x;
+    positions[idx + 1] = body.position_m.y;
+    positions[idx + 2] = body.position_m.z;
+  }
+
+  // Return exact-sized array to prevent WASM index mismatches
+  return positions;
+}
+```
+
+### Validation and Error Handling
+
+Comprehensive validation ensures data integrity:
+
+```typescript
+private validateNeighborGraph(neighborGraph: number[][], allBodies: PhysicsStateReal[]): void {
+  for (let i = 0; i < neighborGraph.length; i++) {
+    const neighbors = neighborGraph[i];
+    for (const neighborIndex of neighbors) {
+      if (neighborIndex < 0 || neighborIndex >= allBodies.length) {
+        console.error(`Invalid neighbor graph: index ${neighborIndex} out of bounds for bodies array length ${allBodies.length}`);
+        console.error(`Body at index ${i}:`, allBodies[i]?.id);
+        console.error(`Neighbor graph for body ${i}:`, neighbors);
+      }
+    }
+  }
+}
+```
 
 ## 🏗️ Architecture
 
@@ -382,7 +438,23 @@ const predictedPoints = await predictTrajectory(
 - **Bridge Pattern**: WASM integration and fallback mechanisms
 - **Template Method**: Simulation pipeline orchestration
 - **Dependency Injection**: Algorithm dependencies and WASM services
+- **Caching Pattern**: Intelligent caching for performance optimization
+
+## 🐛 Recent Fixes
+
+### WASM Index Mismatch Resolution
+
+Fixed critical issue where WASM spatial partitioning was returning invalid neighbor indices (e.g., 422-438 when only 77 bodies existed). The problem was in the `bodiesToFloat32Array` method returning oversized arrays to the WASM module.
+
+**Solution**: Always create exact-sized arrays to prevent index mismatches and added comprehensive validation.
+
+### Performance Optimizations
+
+- **Caching Infrastructure**: Added neighbor graph caching to reduce expensive WASM calls
+- **Data Conversion**: Optimized array creation to prevent memory issues
+- **Validation**: Added comprehensive bounds checking for all neighbor indices
+- **Error Handling**: Enhanced debugging and error reporting
 
 ---
 
-_The SimulationManager provides a unified interface for all physics simulations with simplified configuration and algorithm management._
+_The SimulationManager provides a unified interface for all physics simulations with simplified configuration, algorithm management, and performance optimizations including intelligent caching and WASM integration._

@@ -57,6 +57,29 @@ export class FMMAlgorithm implements ForceCalculationAlgorithm {
       threshold,
     );
 
+    // Validate that neighbor graph indices are within bounds
+    if (neighborGraph.length !== allBodies.length) {
+      console.warn(
+        `Neighbor graph length (${neighborGraph.length}) doesn't match bodies length (${allBodies.length})`,
+      );
+    }
+
+    // Additional validation: check if any neighbor indices are out of bounds
+    for (let i = 0; i < neighborGraph.length; i++) {
+      const neighbors = neighborGraph[i];
+      for (const neighborIndex of neighbors) {
+        if (neighborIndex >= allBodies.length) {
+          console.error(
+            `CRITICAL: Neighbor graph contains invalid index ${neighborIndex} for body ${i} (${allBodies[i]?.id}), bodies length: ${allBodies.length}`,
+          );
+          console.error(
+            `Positions array length: ${positions.length / 3}, Bodies count: ${allBodies.length}`,
+          );
+          break;
+        }
+      }
+    }
+
     // Find the index of the target body
     const targetIndex = allBodies.findIndex(
       (body) => body.id === targetBody.id,
@@ -100,7 +123,24 @@ export class FMMAlgorithm implements ForceCalculationAlgorithm {
     for (const neighborIndex of neighbors) {
       if (neighborIndex === targetIndex) continue;
 
+      // Bounds check to ensure neighborIndex is valid
+      if (neighborIndex < 0 || neighborIndex >= allBodies.length) {
+        console.warn(
+          `Invalid neighbor index: ${neighborIndex}, bodies length: ${allBodies.length}`,
+        );
+        continue;
+      }
+
       const neighborBody = allBodies[neighborIndex];
+
+      // Additional safety check
+      if (!neighborBody || !neighborBody.position_m) {
+        console.warn(
+          `Invalid neighbor body at index ${neighborIndex}:`,
+          neighborBody,
+        );
+        continue;
+      }
 
       // Use pre-allocated vector for position difference
       this.tempPosition.set(

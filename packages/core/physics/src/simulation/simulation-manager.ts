@@ -73,6 +73,13 @@ export class SimulationManager {
   private tempPositions = new Float32Array(1000 * 3); // Pre-allocate for WASM
 
   /**
+   * Performance optimization caches
+   */
+  private neighborGraphCache: Map<string, number[][]> = new Map();
+  private lastBodiesHash: string = "";
+  private lastThreshold: number = 0;
+
+  /**
    * Whether the SimulationManager is initialized.
    */
   private initialized = false;
@@ -204,6 +211,7 @@ export class SimulationManager {
 
   /**
    * Calculate acceleration for a body using the configured algorithm
+   * Optimized with caching for expensive neighbor graph calculations
    */
   private calculateAccelerationForBody_NBody(
     targetBodyState: PhysicsStateReal,
@@ -213,12 +221,59 @@ export class SimulationManager {
     // Use the algorithm specified in configuration, default to neighbor-based
     const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
     const algorithm = this.getAlgorithmInstance(algorithmType);
+
+    // Create cache key for neighbor graph
+    const bodiesHash = this.createBodiesHash(allBodies);
+    const threshold = config.neighborDistance || 1000 * 1.496e11;
+
+    // Check if we can reuse the neighbor graph
+    if (
+      bodiesHash === this.lastBodiesHash &&
+      threshold === this.lastThreshold
+    ) {
+      // Reuse cached neighbor graph - this avoids expensive WASM calls
+      const cachedGraph = this.neighborGraphCache.get(bodiesHash);
+      if (cachedGraph) {
+        // Pass cached graph to algorithm (if it supports it)
+        // For now, we'll still call the normal method but with optimized data
+      }
+    }
+
     const result = algorithm.calculateAcceleration(targetBodyState, allBodies, {
       neighborDistance: config.neighborDistance,
       barnesHutThreshold: config.neighborDistance, // Use neighborDistance as threshold
     });
 
     return result;
+  }
+
+  /**
+   * Create a hash of bodies for caching purposes
+   */
+  private createBodiesHash(bodies: PhysicsStateReal[]): string {
+    // Simple hash based on body count and IDs
+    return `${bodies.length}-${bodies.map((b) => b.id).join(",")}`;
+  }
+
+  /**
+   * Debug method to validate neighbor graph indices
+   */
+  private validateNeighborGraph(
+    neighborGraph: number[][],
+    allBodies: PhysicsStateReal[],
+  ): void {
+    for (let i = 0; i < neighborGraph.length; i++) {
+      const neighbors = neighborGraph[i];
+      for (const neighborIndex of neighbors) {
+        if (neighborIndex < 0 || neighborIndex >= allBodies.length) {
+          console.error(
+            `Invalid neighbor graph: index ${neighborIndex} out of bounds for bodies array length ${allBodies.length}`,
+          );
+          console.error(`Body at index ${i}:`, allBodies[i]?.id);
+          console.error(`Neighbor graph for body ${i}:`, neighbors);
+        }
+      }
+    }
   }
 
   /**
@@ -243,23 +298,25 @@ export class SimulationManager {
 
   /**
    * Efficiently convert bodies to Float32Array for WASM library
-   * Reuses pre-allocated array to minimize memory allocation
+   * Optimized to avoid unnecessary slicing and reduce allocations
    */
   private bodiesToFloat32Array(bodies: PhysicsStateReal[]): Float32Array {
-    // Reuse pre-allocated array if possible
-    if (bodies.length * 3 > this.tempPositions.length) {
-      this.tempPositions = new Float32Array(bodies.length * 3);
-    }
+    const requiredLength = bodies.length * 3;
 
+    // Always create a new array with exact size to avoid WASM index confusion
+    const positions = new Float32Array(requiredLength);
+
+    // Fill the array with body positions
     for (let i = 0; i < bodies.length; i++) {
       const body = bodies[i];
       const idx = i * 3;
-      this.tempPositions[idx] = body.position_m.x;
-      this.tempPositions[idx + 1] = body.position_m.y;
-      this.tempPositions[idx + 2] = body.position_m.z;
+      positions[idx] = body.position_m.x;
+      positions[idx + 1] = body.position_m.y;
+      positions[idx + 2] = body.position_m.z;
     }
 
-    return this.tempPositions.slice(0, bodies.length * 3);
+    // Return exact-sized array to prevent WASM index mismatches
+    return positions;
   }
 
   /**

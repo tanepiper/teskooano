@@ -133,6 +133,29 @@ export class TreePMAlgorithm implements ForceCalculationAlgorithm {
       threshold,
     );
 
+    // Validate that neighbor graph indices are within bounds
+    if (neighborGraph.length !== allBodies.length) {
+      console.warn(
+        `Neighbor graph length (${neighborGraph.length}) doesn't match bodies length (${allBodies.length})`,
+      );
+    }
+
+    // Additional validation: check if any neighbor indices are out of bounds
+    for (let i = 0; i < neighborGraph.length; i++) {
+      const neighbors = neighborGraph[i];
+      for (const neighborIndex of neighbors) {
+        if (neighborIndex >= allBodies.length) {
+          console.error(
+            `CRITICAL: Neighbor graph contains invalid index ${neighborIndex} for body ${i} (${allBodies[i]?.id}), bodies length: ${allBodies.length}`,
+          );
+          console.error(
+            `Positions array length: ${positions.length / 3}, Bodies count: ${allBodies.length}`,
+          );
+          break;
+        }
+      }
+    }
+
     // Find the index of the target body
     const targetIndex = allBodies.findIndex(
       (body) => body.id === targetBody.id,
@@ -154,6 +177,7 @@ export class TreePMAlgorithm implements ForceCalculationAlgorithm {
 
   /**
    * Calculate Tree-PM forces for a target body
+   * Optimized to reduce vector allocations and improve performance
    */
   private calculateTreePMForces(
     targetBody: PhysicsStateReal,
@@ -164,6 +188,7 @@ export class TreePMAlgorithm implements ForceCalculationAlgorithm {
   ): OSVector3 {
     const acceleration = new OSVector3(0, 0, 0);
     const G = GRAVITATIONAL_CONSTANT;
+    const softeningSquared = 0.1 * 1.496e11 * (0.1 * 1.496e11); // Pre-calculate softening squared
 
     // Get neighbors from the graph
     const neighbors = neighborGraph[targetIndex] || [];
@@ -176,16 +201,44 @@ export class TreePMAlgorithm implements ForceCalculationAlgorithm {
     for (const neighborIndex of neighbors) {
       if (neighborIndex === targetIndex) continue;
 
-      const neighborBody = allBodies[neighborIndex];
-      const r = neighborBody.position_m.clone().sub(targetBody.position_m);
-      const rMag = r.length();
+      // Bounds check to ensure neighborIndex is valid
+      if (neighborIndex < 0 || neighborIndex >= allBodies.length) {
+        console.warn(
+          `Invalid neighbor index: ${neighborIndex}, bodies length: ${allBodies.length}`,
+        );
+        continue;
+      }
 
-      if (rMag > 0) {
-        // Apply softening to avoid singularities
-        const softening = 0.1 * 1.496e11; // 0.1 AU softening
-        const rSoft = Math.sqrt(rMag * rMag + softening * softening);
-        const forceMag = (G * neighborBody.mass_kg) / (rSoft * rSoft);
-        acceleration.add(r.clone().multiplyScalar(forceMag / rMag));
+      const neighborBody = allBodies[neighborIndex];
+
+      // Additional safety check
+      if (!neighborBody || !neighborBody.position_m) {
+        console.warn(
+          `Invalid neighbor body at index ${neighborIndex}:`,
+          neighborBody,
+        );
+        continue;
+      }
+
+      // Calculate distance vector components directly
+      const dx = neighborBody.position_m.x - targetBody.position_m.x;
+      const dy = neighborBody.position_m.y - targetBody.position_m.y;
+      const dz = neighborBody.position_m.z - targetBody.position_m.z;
+
+      const rMagSquared = dx * dx + dy * dy + dz * dz;
+
+      if (rMagSquared > 0) {
+        // Apply softening to avoid singularities (using squared values)
+        const rSoftSquared = rMagSquared + softeningSquared;
+        const forceMag = (G * neighborBody.mass_kg) / rSoftSquared;
+
+        // Calculate force components directly without creating intermediate vectors
+        const rMag = Math.sqrt(rMagSquared);
+        const forceScale = forceMag / rMag;
+
+        acceleration.x += dx * forceScale;
+        acceleration.y += dy * forceScale;
+        acceleration.z += dz * forceScale;
       }
     }
 

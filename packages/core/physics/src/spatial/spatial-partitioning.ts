@@ -134,6 +134,7 @@ export class SpatialPartitioning {
 
   /**
    * Find all bodies within a specific distance of a given point
+   * Optimized to avoid expensive square root calculations
    * @param point The point to search around
    * @param distance The search distance (meters)
    * @returns Array of body IDs within the distance
@@ -144,7 +145,7 @@ export class SpatialPartitioning {
     }
 
     const bodiesInRange: (string | number)[] = [];
-    const distances: number[] = [];
+    const distanceSquared = distance * distance; // Pre-calculate to avoid repeated multiplication
 
     // Calculate distances to all stored bodies
     for (let i = 0; i < this.bodyIds.length; i++) {
@@ -157,11 +158,10 @@ export class SpatialPartitioning {
       const dy = point.y - bodyY;
       const dz = point.z - bodyZ;
       const distanceSq = dx * dx + dy * dy + dz * dz;
-      const actualDistance = Math.sqrt(distanceSq);
 
-      if (distanceSq <= distance * distance) {
+      // Compare squared distances to avoid expensive sqrt operation
+      if (distanceSq <= distanceSquared) {
         bodiesInRange.push(this.bodyIds[i]);
-        distances.push(actualDistance);
       }
     }
 

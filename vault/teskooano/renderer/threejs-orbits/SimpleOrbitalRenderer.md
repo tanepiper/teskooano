@@ -39,11 +39,144 @@ types: ["RenderableCelestialObject"]
 
 # SimpleOrbitalRenderer
 
-Simple orbital line renderer that creates trail visualizations using data from the PositionHistoryManager, providing efficient rendering of historical orbital paths for N-body simulation objects.
+Simple orbital line renderer that creates trail visualizations using data from the PositionHistoryManager, providing efficient rendering of historical orbital paths for N-body simulation objects. **Recently optimized** with object pooling, adaptive quality, and performance monitoring for enhanced performance.
 
 ## 🎯 Purpose
 
 `SimpleOrbitalRenderer` is a lightweight renderer that creates orbital trail lines by directly accessing position history data from celestial object renderers. It provides a simple, efficient way to visualize the historical paths of objects in N-body simulation mode without the complexity of the full TrailManager.
+
+## 🚀 Performance Optimizations
+
+### Object Pooling System
+
+The renderer implements intelligent object pooling to reduce garbage collection pressure:
+
+```typescript
+// Object pooling properties
+private vectorPool: THREE.Vector3[] = [];
+private readonly maxPoolSize: number = 5000;
+private reusablePointArrays: Map<number, THREE.Vector3[]> = new Map();
+
+// Get pooled vector or create new one
+private getPooledVector(): THREE.Vector3 {
+  if (this.vectorPool.length > 0) {
+    return this.vectorPool.pop()!;
+  }
+  return new THREE.Vector3();
+}
+
+// Return vector to pool for reuse
+private returnToPool(vector: THREE.Vector3): void {
+  if (this.vectorPool.length < this.maxPoolSize) {
+    vector.set(0, 0, 0); // Reset vector
+    this.vectorPool.push(vector);
+  }
+}
+
+// Get reusable array of specific size
+private getReusableArray(size: number): THREE.Vector3[] {
+  let array = this.reusablePointArrays.get(size);
+  if (!array) {
+    array = new Array(size);
+    this.reusablePointArrays.set(size, array);
+  }
+  return array;
+}
+```
+
+### Adaptive Quality System
+
+Dynamic quality adjustment based on real-time performance:
+
+```typescript
+// Performance monitoring
+private frameTimeHistory: number[] = [];
+private readonly maxFrameTimeHistory: number = 60;
+private lastFrameTime: number = 0;
+
+// Record frame time for performance analysis
+private recordFrameTime(): void {
+  const currentTime = performance.now();
+  if (this.lastFrameTime > 0) {
+    const frameTime = currentTime - this.lastFrameTime;
+    this.frameTimeHistory.push(frameTime);
+
+    // Keep only recent frame times
+    if (this.frameTimeHistory.length > this.maxFrameTimeHistory) {
+      this.frameTimeHistory.shift();
+    }
+  }
+  this.lastFrameTime = currentTime;
+}
+
+// Get adaptive sampling interval based on performance
+private getAdaptiveSamplingInterval(): number {
+  if (this.frameTimeHistory.length < 10) {
+    return this.samplingInterval; // Use default if not enough data
+  }
+
+  const avgFrameTime =
+    this.frameTimeHistory.reduce((a, b) => a + b, 0) /
+    this.frameTimeHistory.length;
+
+  if (avgFrameTime > 16.67) { // More than 60fps target
+    return Math.min(this.samplingInterval * 2, 8); // Cap at 8x sampling
+  }
+  return this.samplingInterval;
+}
+```
+
+### Optimized Data Conversion
+
+Efficient conversion of position history to vectors:
+
+```typescript
+private convertPositionsToVectors(
+  positionHistory: any[],
+  startIndex: number,
+): THREE.Vector3[] {
+  const pointCount = positionHistory.length - startIndex;
+  const points = this.getReusableArray(pointCount); // Use reusable array
+
+  for (let i = 0; i < pointCount; i++) {
+    const sourcePos = positionHistory[startIndex + i];
+    if (!points[i]) {
+      points[i] = this.getPooledVector(); // Get from pool
+    }
+    points[i].set(sourcePos.x, sourcePos.y, sourcePos.z); // Set values directly
+  }
+  return points;
+}
+```
+
+### Early Exit Conditions
+
+Optimized processing with early exits for performance:
+
+```typescript
+private updateOrbitalLine(
+  objectId: string,
+  positionHistoryManager: PositionHistoryManager
+): void {
+  // Early exit if visualization is disabled
+  if (!this.visualizationVisible) return;
+
+  const positionHistory = positionHistoryManager.getPositionHistory();
+
+  // Early exit if insufficient history
+  if (positionHistory.length < 2) return;
+
+  // Early exit for very small trails
+  const effectiveMaxPoints = this.cachedEffectiveMaxTrailPoints;
+  if (positionHistory.length < effectiveMaxPoints * 0.1) return;
+
+  // Record performance and get adaptive sampling
+  this.recordFrameTime();
+  const adaptiveInterval = this.getAdaptiveSamplingInterval();
+
+  // ... rest of processing
+}
+```
 
 ## 🏗️ Architecture
 
@@ -472,3 +605,34 @@ console.log("Parent group children:", parentGroup?.children);
 - **Temporal Effects**: Time-based trail visualization
 - **Trail Effects**: Particle effects for trail visualization
 - **Interactive Trails**: User-controlled trail parameters
+
+## 🐛 Recent Optimizations
+
+### Object Pooling Implementation
+
+- **Vector Pooling**: Added `vectorPool` with 5000 vector capacity to reduce garbage collection
+- **Reusable Arrays**: Implemented `reusablePointArrays` Map to reuse point arrays of specific sizes
+- **Memory Management**: Proper cleanup in `dispose()` method to clear pools
+
+### Adaptive Quality System
+
+- **Performance Monitoring**: Added `frameTimeHistory` to track recent frame times
+- **Dynamic Sampling**: `getAdaptiveSamplingInterval()` adjusts quality based on performance
+- **60fps Target**: Automatically reduces quality when frame time exceeds 16.67ms
+
+### Enhanced Data Processing
+
+- **Optimized Conversion**: `convertPositionsToVectors` now uses pooled vectors and reusable arrays
+- **Early Exit Conditions**: Added multiple early exit conditions to avoid unnecessary processing
+- **Efficient Sampling**: `sampleAndInterpolatePoints` uses pooled vectors for better performance
+
+### Performance Benefits
+
+- **Reduced GC Pressure**: Object pooling significantly reduces garbage collection overhead
+- **Adaptive Quality**: Maintains 60fps target by dynamically adjusting rendering quality
+- **Memory Efficiency**: Reusable arrays prevent repeated memory allocations
+- **Smart Processing**: Early exits avoid processing when not needed
+
+---
+
+_The SimpleOrbitalRenderer provides efficient orbital trail visualization with intelligent performance optimizations including object pooling, adaptive quality, and comprehensive performance monitoring._

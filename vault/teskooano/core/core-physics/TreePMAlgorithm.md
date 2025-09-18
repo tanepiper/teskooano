@@ -10,11 +10,98 @@ status: implemented
 
 # TreePMAlgorithm
 
-Advanced Tree-PM hybrid algorithm combining Tree and Particle-Mesh methods for optimal performance across different density scales.
+Advanced Tree-PM hybrid algorithm combining Tree and Particle-Mesh methods for optimal performance across different density scales. **Recently optimized** with performance improvements, bounds checking, and enhanced error handling.
 
 ## 🎯 Purpose
 
-The `TreePMAlgorithm` implements a sophisticated hybrid approach that combines the strengths of both Tree and Particle-Mesh methods. It automatically partitions space based on density thresholds, providing optimal performance across different density scales while maintaining high accuracy in both dense and sparse regions.
+The `TreePMAlgorithm` implements a sophisticated hybrid approach that combines the best aspects of Tree and Particle-Mesh methods. It provides excellent accuracy and performance for complex multi-scale systems with varying density distributions.
+
+## 🚀 Performance Optimizations
+
+### Optimized Force Calculations
+
+The algorithm has been optimized to reduce `OSVector3` allocations:
+
+```typescript
+private calculateTreePMForces(
+  targetBody: PhysicsStateReal,
+  allBodies: PhysicsStateReal[],
+  neighborGraph: number[][],
+  targetIndex: number,
+  threshold: number,
+): OSVector3 {
+  const acceleration = new OSVector3(0, 0, 0);
+  const G = GRAVITATIONAL_CONSTANT;
+  const softeningSquared = (0.1 * 1.496e11) * (0.1 * 1.496e11); // Pre-calculate
+
+  for (const neighborIndex of neighbors) {
+    // Bounds check to ensure neighborIndex is valid
+    if (neighborIndex < 0 || neighborIndex >= allBodies.length) {
+      console.warn(`Invalid neighbor index: ${neighborIndex}, bodies length: ${allBodies.length}`);
+      continue;
+    }
+
+    const neighborBody = allBodies[neighborIndex];
+
+    // Additional safety check
+    if (!neighborBody || !neighborBody.position_m) {
+      console.warn(`Invalid neighbor body at index ${neighborIndex}:`, neighborBody);
+      continue;
+    }
+
+    // Calculate distance vector components directly
+    const dx = neighborBody.position_m.x - targetBody.position_m.x;
+    const dy = neighborBody.position_m.y - targetBody.position_m.y;
+    const dz = neighborBody.position_m.z - targetBody.position_m.z;
+
+    const rMagSquared = dx * dx + dy * dy + dz * dz;
+
+    if (rMagSquared > 0) {
+      // Apply softening to avoid singularities (using squared values)
+      const rSoftSquared = rMagSquared + softeningSquared;
+      const forceMag = (G * neighborBody.mass_kg) / rSoftSquared;
+      const rMag = Math.sqrt(rMagSquared);
+      const forceScale = forceMag / rMag;
+
+      // Direct component-wise accumulation to avoid OSVector3 allocations
+      acceleration.x += dx * forceScale;
+      acceleration.y += dy * forceScale;
+      acceleration.z += dz * forceScale;
+    }
+  }
+
+  return acceleration;
+}
+```
+
+### Enhanced Validation
+
+Comprehensive validation ensures data integrity:
+
+```typescript
+// Validate that neighbor graph indices are within bounds
+if (neighborGraph.length !== allBodies.length) {
+  console.warn(
+    `Neighbor graph length (${neighborGraph.length}) doesn't match bodies length (${allBodies.length})`,
+  );
+}
+
+// Additional validation: check if any neighbor indices are out of bounds
+for (let i = 0; i < neighborGraph.length; i++) {
+  const neighbors = neighborGraph[i];
+  for (const neighborIndex of neighbors) {
+    if (neighborIndex >= allBodies.length) {
+      console.error(
+        `CRITICAL: Neighbor graph contains invalid index ${neighborIndex} for body ${i} (${allBodies[i]?.id}), bodies length: ${allBodies.length}`,
+      );
+      console.error(
+        `Positions array length: ${positions.length / 3}, Bodies count: ${allBodies.length}`,
+      );
+      break;
+    }
+  }
+}
+```
 
 ## 🏗️ Architecture
 
@@ -341,6 +428,25 @@ private applyForceCorrections(
 | FMM            | O(N log N) | Large systems   | Good      | High   |
 | P3M            | O(N log N) | Varying density | Good      | Medium |
 | **Tree-PM**    | O(N log N) | Complex systems | Excellent | High   |
+
+## 🐛 Recent Fixes
+
+### Performance Optimizations
+
+- **Reduced Allocations**: Optimized force calculations to avoid unnecessary `OSVector3` object creation
+- **Pre-calculated Values**: Softening squared values are pre-calculated to avoid repeated computation
+- **Direct Component Operations**: Force accumulation uses direct component-wise operations
+
+### Enhanced Error Handling
+
+- **Bounds Checking**: Comprehensive validation of neighbor indices to prevent out-of-bounds access
+- **Data Integrity**: Additional safety checks for body objects and position data
+- **Debug Information**: Enhanced logging for troubleshooting data inconsistencies
+
+### WASM Integration Improvements
+
+- **Index Validation**: Added validation to ensure WASM neighbor graph indices match body array bounds
+- **Error Recovery**: Graceful handling of invalid neighbor indices with detailed error reporting
 
 ---
 

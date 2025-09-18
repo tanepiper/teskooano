@@ -18,7 +18,7 @@ status: active
 
 # HierarchyManager
 
-Manages the dynamic hierarchy of celestial objects within the simulation, applying simple rules to maintain realistic orbital parentage and handle escape scenarios.
+Manages the dynamic hierarchy of celestial objects within the simulation, applying simple rules to maintain realistic orbital parentage and handle escape scenarios. **Recently updated** to integrate with the new `FlatHierarchyService` and includes cycle detection to prevent invalid parent-child relationships.
 
 ## 🎯 Purpose
 
@@ -502,5 +502,30 @@ celestialObjects$.subscribe((objects) => {
 - [[app/app-simulation/SimulationOrchestrator|SimulationOrchestrator]] - Main simulation coordinator
 - [[core/core-physics/core-physics|Core Physics]] - WASM spatial partitioning service
 - [[core/core-state/core-state|Core State]] - State management and celestial manager
+- [[core/core-state/FlatHierarchyService|FlatHierarchyService]] - New flat hierarchy state management
 - [[data/types/data-types|Data Types]] - CelestialType and object definitions
 - [[data/values/data-values|Data Values]] - AU_METERS constant
+
+## 🐛 Recent Updates
+
+### FlatHierarchyService Integration
+
+- **New State Management**: Integrated with the new `FlatHierarchyService` for efficient hierarchy queries
+- **Bidirectional Relationships**: Maintains both parent-child and child-parent relationships
+- **Atomic Updates**: Ensures consistency across all hierarchy operations
+
+### Cycle Detection
+
+- **Prevention Logic**: Added `wouldCreateCycle` method to prevent circular parent-child relationships
+- **Integration**: Cycle detection is integrated into both WASM and traditional parent finding methods
+- **Error Prevention**: Prevents runtime errors from invalid hierarchy structures
+
+### Enhanced Debugging
+
+- **Comprehensive Logging**: Added detailed logging for hierarchy initialization and updates
+- **Error Handling**: Enhanced error handling for failed parent updates
+- **State Validation**: Added validation for hierarchy state consistency
+
+---
+
+_The HierarchyManager provides dynamic hierarchy management with performance optimization, cycle detection, and integration with the new FlatHierarchyService for efficient state management._
