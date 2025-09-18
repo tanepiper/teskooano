@@ -6,17 +6,13 @@ import type {
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
 import { celestialStore } from "../stores/CelestialStore";
-import { ClearStateOptions } from "../types/types";
 import {
-  validateCelestialData,
-  processStarData,
-  processCelestialData,
-  sortByDependency,
-  createHierarchyFromObjects,
   dispatchObjectDestroyedEvent,
   dispatchObjectsLoadedEvent,
   dispatchObjectsLoadedEventFromMap,
-  isValidRootObject,
+  processCelestialData,
+  processStarData,
+  sortByDependency,
 } from "../utils/CelestialUtils";
 
 /**
@@ -110,7 +106,6 @@ export class CelestialManager {
   public removeObject(id: string): void {
     if (celestialStore.getObject(id)) {
       celestialStore.removeObject(id);
-      // Note: Hierarchy cleanup is now handled by FlatHierarchyService
       dispatchObjectDestroyedEvent(id);
     }
   }
@@ -118,18 +113,8 @@ export class CelestialManager {
   /**
    * Clears all celestial objects and optionally resets other state.
    */
-  public clearState(options: ClearStateOptions = {}): void {
-    const {
-      resetCamera = false,
-      resetTime = true,
-      resetSelection = true,
-    } = options;
-
+  public clearState(): void {
     celestialStore.setAllObjects({});
-
-    // Note: Time and camera reset would be handled by simulation manager
-    // This keeps the celestial manager focused on celestial data only
-
     dispatchObjectsLoadedEvent(0);
   }
 
@@ -138,7 +123,6 @@ export class CelestialManager {
    */
   public createSolarSystem<T extends CelestialSpecificPropertiesUnion>(
     data: CelestialObject<T>,
-    clearStateFirst = true,
   ): string {
     if (data.type !== CelestialType.STAR) {
       console.error(
@@ -147,14 +131,10 @@ export class CelestialManager {
       return "";
     }
 
-    if (clearStateFirst) {
-      this.clearState();
-    }
+    this.clearState();
 
     const processedObject = processStarData(data);
     this.addObject(processedObject);
-
-    // Note: Hierarchy management is now handled by FlatHierarchyService
 
     dispatchObjectsLoadedEvent(1, data.id);
 
@@ -171,17 +151,16 @@ export class CelestialManager {
 
     const sortedData = sortByDependency(data);
 
-    // Build the complete objects map first
+    // Build the complete objects map first.
     const allObjects = celestialStore.getObjects();
     const newObjectsMap: Record<string, CelestialObject> = { ...allObjects };
-    const newHierarchy = createHierarchyFromObjects(sortedData);
 
-    // Add all objects to the map without triggering store updates
+    // Add all objects to the map without triggering store updates.
     for (const objectData of sortedData) {
       newObjectsMap[objectData.id] = objectData;
     }
 
-    // Update objects store
+    // Update objects store.
     celestialStore.setAllObjects(newObjectsMap);
 
     // Clear the physics state cache to force recalculation with complete object set

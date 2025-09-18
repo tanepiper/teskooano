@@ -1,5 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { CameraStore, type CameraState } from "../stores/CameraStore";
+import { CameraStore } from "../stores/CameraStore";
+import type { CameraState } from "../types";
 
 /**
  * @class CameraManager
@@ -7,7 +8,14 @@ import { CameraStore, type CameraState } from "../stores/CameraStore";
  * and focused objects. Each engine panel should have its own instance.
  */
 export class CameraManager {
+  /**
+   * The panel ID this camera manager is associated with.
+   */
   private readonly panelId: string;
+
+  /**
+   * The camera store instance for this camera manager.
+   */
   private readonly cameraStore: CameraStore;
 
   /**

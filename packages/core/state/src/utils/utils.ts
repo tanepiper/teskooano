@@ -29,7 +29,7 @@ export function getDefaultConfiguration(): SimulationConfiguration {
   return {
     mode: SimulationMode.NBODY,
     integrator: IntegratorType.PEFRL,
-    algorithm: AlgorithmType.TREE_PM,
+    algorithm: AlgorithmType.BARNES_HUT,
   };
 }
 

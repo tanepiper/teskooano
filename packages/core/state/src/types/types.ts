@@ -3,33 +3,12 @@ import {
   CelestialObject,
   DeviceTier,
   SimulationMode,
+  SimulationConfiguration,
 } from "@teskooano/data-types";
 
 // CameraState has been moved to stores/CameraStore.ts to support enhanced camera state management
 
-/**
- * Configuration for the simulation physics system.
- * Supports both ideal (Keplerian) and N-body physics modes.
- */
-export interface SimulationConfiguration {
-  /**
-   * The mode of the simulation.
-   */
-  mode: SimulationMode;
-  /**
-   * The integrator type to use for the simulation.
-   */
-  integrator?: string;
-  /**
-   * Distance threshold for neighbor finding (in meters)
-   * Used for both neighbor-based and Barnes-Hut algorithms
-   */
-  neighborDistance?: number;
-  /**
-   * Whether to enable collision detection
-   */
-  collisionDetection?: boolean;
-}
+// SimulationConfiguration is imported from @teskooano/data-types
 
 /**
  * Defines settings related to visual aspects of the simulation, like trails.

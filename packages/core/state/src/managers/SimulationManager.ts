@@ -1,10 +1,11 @@
-import { SimulationState, SimulationConfiguration } from "../types/types";
+import { SimulationState } from "../types/types";
 import { getDefaultConfiguration, isValidConfiguration } from "../utils";
 import {
   AlgorithmType,
   DeviceTier,
   IntegratorType,
   SimulationMode,
+  SimulationConfiguration,
 } from "@teskooano/data-types";
 import { simulationStore } from "../stores/SimulationStore";
 
@@ -152,7 +153,7 @@ export class SimulationManager {
       // For n-body mode, preserve existing algorithm/integrator or use defaults
       newConfig = {
         mode: SimulationMode.NBODY,
-        algorithm: currentConfig.algorithm || AlgorithmType.TREE_PM,
+        algorithm: currentConfig.algorithm || AlgorithmType.BARNES_HUT,
         integrator: currentConfig.integrator || IntegratorType.PEFRL,
       };
     }
@@ -195,7 +196,7 @@ export class SimulationManager {
 
     const newConfig: SimulationConfiguration = {
       mode: SimulationMode.NBODY,
-      algorithm: currentConfig.algorithm || AlgorithmType.TREE_PM,
+      algorithm: currentConfig.algorithm || AlgorithmType.BARNES_HUT,
       integrator,
     };
 

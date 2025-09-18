@@ -1,7 +1,6 @@
 import type {
   CelestialObject,
   CelestialSpecificPropertiesUnion,
-  OrbitalParameters,
   PlanetAtmosphereProperties,
   StarProperties,
 } from "@teskooano/data-types";
@@ -184,50 +183,6 @@ export function sortByDependency(
   }
 
   return sorted;
-}
-
-/**
- * Creates hierarchy entries for a set of objects.
- */
-export function createHierarchyFromObjects(
-  objects: CelestialObject[],
-): Record<string, string[]> {
-  const hierarchy: Record<string, string[]> = {};
-
-  // Pre-allocate arrays for better performance
-  const parentIds = new Set<string>();
-  const starIds = new Set<string>();
-
-  // First pass: collect all parent IDs and star IDs
-  for (const objectData of objects) {
-    if (objectData.parentId) {
-      parentIds.add(objectData.parentId);
-    }
-    if (objectData.type === CelestialType.STAR) {
-      starIds.add(objectData.id);
-    }
-  }
-
-  // Pre-allocate hierarchy entries
-  for (const parentId of parentIds) {
-    if (!hierarchy[parentId]) {
-      hierarchy[parentId] = [];
-    }
-  }
-  for (const starId of starIds) {
-    if (!hierarchy[starId]) {
-      hierarchy[starId] = [];
-    }
-  }
-
-  // Add all objects to hierarchy
-  for (const objectData of objects) {
-    if (objectData.parentId) {
-      hierarchy[objectData.parentId].push(objectData.id);
-    }
-  }
-
-  return hierarchy;
 }
 
 // =============================================================================

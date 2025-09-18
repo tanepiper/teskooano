@@ -231,7 +231,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       this.elements.algorithmSelectElement.value =
         this.currentConfig.algorithm || "barnes-hut";
       this.elements.integratorSelectElement.value =
-        this.currentConfig.integrator || "verlet";
+        this.currentConfig.integrator || "pefrl";
     }
   }
 
