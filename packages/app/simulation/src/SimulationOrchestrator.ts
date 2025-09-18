@@ -113,6 +113,9 @@ export class SimulationOrchestrator {
       console.warn("Failed to initialize SimulationManager:", error);
     }
 
+    // Initialize the flat hierarchy service with current celestial objects
+    this.hierarchyManager.initializeHierarchy();
+
     this.isRunning = true;
 
     this.subscriptionManager.subscribeToStateComposition(
@@ -317,6 +320,11 @@ export class SimulationOrchestrator {
         });
       }
     }
+
+    // Re-initialize the flat hierarchy service after system reset
+    // This ensures the hierarchy is properly populated with any new objects
+    this.hierarchyManager.initializeHierarchy();
+
     // Always emit reset event
     this._resetTime$.next();
   }

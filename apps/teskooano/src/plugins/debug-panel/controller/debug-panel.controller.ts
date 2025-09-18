@@ -32,6 +32,7 @@ export class DebugPanelController {
   public updateData(): void {
     this.renderSystemHierarchy();
     this.renderRendererStats();
+    this.renderHierarchyStats();
   }
 
   private renderRendererStats(): void {
@@ -46,5 +47,17 @@ export class DebugPanelController {
   public renderSystemHierarchy(): void {
     const hierarchy = celestialDebugger.getSystemHierarchy();
     this.view.renderHierarchy(hierarchy);
+  }
+
+  public renderHierarchyStats(): void {
+    const hierarchyStatsComponent = this.view.shadowRoot?.querySelector(
+      "hierarchy-stats",
+    ) as any;
+    if (
+      hierarchyStatsComponent &&
+      typeof hierarchyStatsComponent.updateStats === "function"
+    ) {
+      hierarchyStatsComponent.updateStats();
+    }
   }
 }

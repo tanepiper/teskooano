@@ -24,6 +24,7 @@ template.innerHTML = `
   </style>
   <teskooano-renderer-stats></teskooano-renderer-stats>
   <teskooano-system-hierarchy></teskooano-system-hierarchy>
+  <hierarchy-stats></hierarchy-stats>
 `;
 
 export class DebugPanel extends HTMLElement implements IContentRenderer {

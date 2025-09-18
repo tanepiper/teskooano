@@ -21,7 +21,7 @@ import type { CameraState } from "../stores/CameraStore";
 // Re-export observables for convenience
 export const currentSeed$ = seed.currentSeed$;
 export const celestialObjects$ = celestialStore.objects$;
-export const celestialHierarchy$ = celestialStore.hierarchy$;
+// Note: Hierarchy is now managed by FlatHierarchyService
 export const accelerationVectors$ = physics.accelerationVectors$;
 export const simulationState$ = simulationStore.simulationState$;
 
@@ -80,16 +80,22 @@ export class StateAccessor {
   // Celestial Hierarchy
   /**
    * Gets a reactive stream of celestial hierarchy.
+   * Note: Use FlatHierarchyService.getInstance().hierarchyState$ instead.
    */
-  static celestialHierarchy$(): Observable<Record<string, string[]>> {
-    return celestialHierarchy$;
+  static celestialHierarchy$(): Observable<any> {
+    throw new Error(
+      "Use FlatHierarchyService.getInstance().hierarchyState$ instead",
+    );
   }
 
   /**
    * Gets the current celestial hierarchy imperatively.
+   * Note: Use FlatHierarchyService.getInstance().getHierarchyState() instead.
    */
-  static getCelestialHierarchy(): Record<string, string[]> {
-    return celestialStore.getHierarchy();
+  static getCelestialHierarchy(): any {
+    throw new Error(
+      "Use FlatHierarchyService.getInstance().getHierarchyState() instead",
+    );
   }
 
   // Acceleration Vectors

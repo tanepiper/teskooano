@@ -1,8 +1,3 @@
-export {
-  type SimulationState,
-  type SimulationConfiguration,
-  type CameraState,
-  type VisualSettingsState,
-  type ClearStateOptions,
-  type CelestialRegistry,
-} from "./types";
+export * from "./types";
+export * from "./hierarchy.types";
+export * from "./camera";

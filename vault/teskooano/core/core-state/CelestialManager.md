@@ -200,6 +200,8 @@ Uses shared `createHierarchyFromObjects` utility:
 const newHierarchy = createHierarchyFromObjects(sortedData);
 ```
 
+**Note**: The hierarchy is created but not used by CelestialStore. Hierarchy management is now handled by `FlatHierarchyService`.
+
 ### Event Dispatching
 
 Uses shared event dispatching utilities:
@@ -358,7 +360,7 @@ celestialManager.clearState({
 ### With Stores
 
 - Updates `celestialStore` with object data
-- Manages `celestialHierarchyStore` for parent-child relationships
+- **Note**: Hierarchy management is now handled by `FlatHierarchyService`
 - Integrates with `renderableStore` for rendering data
 
 ### With Physics System

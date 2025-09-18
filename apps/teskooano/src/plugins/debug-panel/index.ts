@@ -3,6 +3,7 @@ import { DebugPanel } from "./view/debug-panel.view";
 import bugIcon from "./assets/bug_icon.svg?raw";
 import { RendererStatsComponent } from "./components/renderer-stats/renderer-stats.component";
 import { SystemHierarchyComponent } from "./components/system-hierarchy/system-hierarchy.component";
+import { HierarchyStatsComponent } from "./components/hierarchy-stats/hierarchy-stats.component";
 
 const COMPONENT_NAME = "teskooano-debug-panel";
 
@@ -29,6 +30,10 @@ export const plugin = createPanelPlugin({
     {
       tagName: "teskooano-system-hierarchy",
       componentClass: SystemHierarchyComponent,
+    },
+    {
+      tagName: "hierarchy-stats",
+      componentClass: HierarchyStatsComponent,
     },
   ],
 });

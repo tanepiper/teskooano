@@ -30,7 +30,7 @@ describe("Factory functions", () => {
       },
     } as any);
     celestialStore.setAllObjects({});
-    celestialStore.setHierarchy({});
+    // Note: Hierarchy is now managed by FlatHierarchyService
   });
 
   describe("clearState", () => {
@@ -70,9 +70,7 @@ describe("Factory functions", () => {
           },
         } as any,
       });
-      celestialStore.setHierarchy({
-        "parent-1": ["test-1"],
-      });
+      // Note: Hierarchy is now managed by FlatHierarchyService
       simulationStateService.setSimulationState({
         ...simulationStateService.getSimulationState(),
         time: 100,
@@ -83,7 +81,7 @@ describe("Factory functions", () => {
       });
 
       expect(Object.keys(celestialStore.getObjects()).length).toBe(1);
-      expect(Object.keys(celestialStore.getHierarchy()).length).toBe(1);
+      // Note: Hierarchy is now managed by FlatHierarchyService
       expect(simulationStateService.getSimulationState().timeScale).toBe(2);
       expect(simulationStateService.getSimulationState().selectedObject).toBe(
         "test-1",
@@ -92,7 +90,7 @@ describe("Factory functions", () => {
       celestialManager.clearState();
 
       expect(Object.keys(celestialStore.getObjects()).length).toBe(0);
-      expect(Object.keys(celestialStore.getHierarchy()).length).toBe(0);
+      // Note: Hierarchy is now managed by FlatHierarchyService
       expect(simulationStateService.getSimulationState().timeScale).toBe(1);
       expect(
         simulationStateService.getSimulationState().selectedObject,

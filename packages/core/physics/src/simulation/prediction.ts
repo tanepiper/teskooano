@@ -61,16 +61,16 @@ export async function predictTrajectory(
   const relativeObjectPath: OSVector3[] = [];
 
   // Initialize WASM spatial partitioning with fallback
-  let SpatialPartitioning: SpatialPartitioning | null = null;
+  let spatialPartitioning: SpatialPartitioning | null = null;
   try {
-    SpatialPartitioning = new SpatialPartitioning(1e12); // 1 trillion meters
-    await SpatialPartitioning.initialize();
+    spatialPartitioning = new SpatialPartitioning(1e12); // 1 trillion meters
+    await spatialPartitioning.initialize();
   } catch (error) {
     console.warn(
       "WASM spatial partitioning failed to initialize, using traditional method:",
       error,
     );
-    SpatialPartitioning = null;
+    spatialPartitioning = null;
   }
 
   // Make a deep copy of the initial states to avoid modifying the original data
@@ -124,12 +124,12 @@ export async function predictTrajectory(
     // Calculate accelerations using WASM spatial partitioning or traditional method
     accelerations.clear();
 
-    if (SpatialPartitioning) {
+    if (spatialPartitioning) {
       // Use WASM spatial partitioning
-      SpatialPartitioning.update(currentStates);
+      spatialPartitioning.update(currentStates);
 
       for (const body of currentStates) {
-        const neighborIds = SpatialPartitioning.findNeighbors(body.id);
+        const neighborIds = spatialPartitioning.findNeighbors(body.id);
         const netForce = new OSVector3(0, 0, 0);
 
         // Create a map for fast body lookup
@@ -202,9 +202,9 @@ export async function predictTrajectory(
       ): OSVector3 => {
         const netForce = new OSVector3(0, 0, 0);
 
-        if (SpatialPartitioning) {
+        if (spatialPartitioning) {
           // Use WASM spatial partitioning
-          const neighborIds = SpatialPartitioning.findNeighbors(stateGuess.id);
+          const neighborIds = spatialPartitioning.findNeighbors(stateGuess.id);
 
           // Create a map for fast body lookup
           const bodyMap = new Map<string | number, PhysicsStateReal>();

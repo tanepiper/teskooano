@@ -1,16 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
-
-/**
- * Camera state interface
- */
-export interface CameraState {
-  position: OSVector3;
-  target: OSVector3;
-  fov: number;
-  selectedObject: string | null;
-  focusedObjectId: string | null;
-}
+import { CameraState } from "../types";
 
 /**
  * @class CameraStore

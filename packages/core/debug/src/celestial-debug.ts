@@ -5,14 +5,13 @@
  * in the Teskooano engine.
  */
 import { OSVector3 } from "@teskooano/core-math";
-import {
-  threeVectorDebug,
-  isVisualizationEnabled,
-  createLogger,
-} from "./index";
+import { isVisualizationEnabled, createLogger } from "./index";
 import { vectorDebug } from "./vector-debug";
-import { ThreeVector3 } from "./three-vector-debug";
-import { physicsSystemAdapter } from "@teskooano/core-state";
+import { threeVectorDebug } from "./three-vector-debug";
+import {
+  physicsSystemAdapter,
+  FlatHierarchyService,
+} from "@teskooano/core-state";
 import type { CelestialObject, CelestialType } from "@teskooano/data-types";
 
 /**
@@ -51,11 +50,11 @@ export enum CelestialDebugDataType {
  * Interface for debug vector pairs commonly used in celestial renderers
  */
 export interface CelestialVectorPairs {
-  lightDirection?: ThreeVector3;
-  parentPosition?: ThreeVector3;
-  orbitNormal?: ThreeVector3;
-  velocity?: ThreeVector3;
-  angularMomentum?: ThreeVector3;
+  lightDirection?: OSVector3;
+  parentPosition?: OSVector3;
+  orbitNormal?: OSVector3;
+  velocity?: OSVector3;
+  angularMomentum?: OSVector3;
 }
 
 /**
@@ -133,7 +132,7 @@ export class CelestialDebugger {
       threeVectorDebug.setVector(
         debugName,
         "lightDirection",
-        vectors.lightDirection,
+        vectors.lightDirection.toThreeJS(),
       );
     }
 
@@ -141,23 +140,31 @@ export class CelestialDebugger {
       threeVectorDebug.setVector(
         debugName,
         "parentPosition",
-        vectors.parentPosition,
+        vectors.parentPosition.toThreeJS(),
       );
     }
 
     if (vectors.orbitNormal) {
-      threeVectorDebug.setVector(debugName, "orbitNormal", vectors.orbitNormal);
+      threeVectorDebug.setVector(
+        debugName,
+        "orbitNormal",
+        vectors.orbitNormal.toThreeJS(),
+      );
     }
 
     if (vectors.velocity) {
-      threeVectorDebug.setVector(debugName, "velocity", vectors.velocity);
+      threeVectorDebug.setVector(
+        debugName,
+        "velocity",
+        vectors.velocity.toThreeJS(),
+      );
     }
 
     if (vectors.angularMomentum) {
       threeVectorDebug.setVector(
         debugName,
         "angularMomentum",
-        vectors.angularMomentum,
+        vectors.angularMomentum.toThreeJS(),
       );
     }
   }
@@ -240,18 +247,19 @@ export class CelestialDebugger {
   /**
    * Builds and returns a hierarchical tree structure of the current celestial system.
    * This is useful for building a debug UI that displays the system hierarchy.
+   * Now uses the FlatHierarchyService for improved performance and consistency.
    *
    * @returns An array of root nodes representing the system's hierarchy.
    */
   public getSystemHierarchy(): SystemHierarchyNode[] {
+    const flatHierarchyService = FlatHierarchyService.getInstance();
+    const hierarchyState = flatHierarchyService.getHierarchyState();
     const allObjects = physicsSystemAdapter.getCelestialObjectsSnapshot();
-    const objectMap = new Map<string, CelestialObject>(
-      Object.entries(allObjects),
-    );
+
     const nodes = new Map<string, SystemHierarchyNode>();
 
     // First pass: create a node for each object
-    objectMap.forEach((object) => {
+    Object.values(allObjects).forEach((object) => {
       nodes.set(object.id, {
         id: object.id,
         name: object.name,
@@ -262,24 +270,42 @@ export class CelestialDebugger {
 
     const rootNodes: SystemHierarchyNode[] = [];
 
-    // Second pass: build the hierarchy by linking children to parents
-    nodes.forEach((node) => {
-      const object = objectMap.get(node.id)!;
-      if (object.parentId && nodes.has(object.parentId)) {
-        const parentNode = nodes.get(object.parentId)!;
-        parentNode.children.push(node);
-      } else {
-        rootNodes.push(node);
+    // Second pass: build the hierarchy using the flat hierarchy service
+    hierarchyState.roots.forEach((rootId) => {
+      const rootNode = nodes.get(rootId);
+      if (rootNode) {
+        rootNodes.push(rootNode);
+        this.buildHierarchyRecursively(rootNode, hierarchyState.entries, nodes);
       }
     });
 
-    // Optional: Sort children alphabetically by name for consistent display
+    // Sort children alphabetically by name for consistent display
     nodes.forEach((node) => {
       node.children.sort((a, b) => a.name.localeCompare(b.name));
     });
     rootNodes.sort((a, b) => a.name.localeCompare(b.name));
 
     return rootNodes;
+  }
+
+  /**
+   * Recursively builds the hierarchy tree using the flat hierarchy service data.
+   */
+  private buildHierarchyRecursively(
+    parentNode: SystemHierarchyNode,
+    entries: Record<string, any>,
+    nodes: Map<string, SystemHierarchyNode>,
+  ): void {
+    const parentEntry = entries[parentNode.id];
+    if (!parentEntry) return;
+
+    parentEntry.children.forEach((childId: string) => {
+      const childNode = nodes.get(childId);
+      if (childNode) {
+        parentNode.children.push(childNode);
+        this.buildHierarchyRecursively(childNode, entries, nodes);
+      }
+    });
   }
 
   /**
@@ -298,6 +324,93 @@ export class CelestialDebugger {
   public clearAllCelestialDebugData(): void {
     const trackedIds = this.getTrackedObjectIds();
     trackedIds.forEach((id) => this.clearObjectDebugData(id));
+  }
+
+  /**
+   * Gets detailed hierarchy information for debugging purposes.
+   * This provides comprehensive information about the flat hierarchy state.
+   *
+   * @returns A detailed hierarchy debug object
+   */
+  public getHierarchyDebugInfo(): {
+    totalObjects: number;
+    maxDepth: number;
+    rootCount: number;
+    entries: Array<{
+      id: string;
+      name: string;
+      type: string;
+      parentId?: string;
+      childrenCount: number;
+      depth: number;
+      path: string[];
+      descendantCount: number;
+      isRoot: boolean;
+    }>;
+  } {
+    const flatHierarchyService = FlatHierarchyService.getInstance();
+    const hierarchyState = flatHierarchyService.getHierarchyState();
+    const allObjects = physicsSystemAdapter.getCelestialObjectsSnapshot();
+
+    const entries = Object.values(hierarchyState.entries).map((entry) => {
+      const object = allObjects[entry.id];
+      return {
+        id: entry.id,
+        name: object?.name || "Unknown",
+        type: object?.type || "Unknown",
+        parentId: entry.parentId,
+        childrenCount: entry.children.length,
+        depth: entry.depth,
+        path: entry.path,
+        descendantCount: entry.descendantCount,
+        isRoot: entry.isRoot,
+      };
+    });
+
+    return {
+      totalObjects: hierarchyState.totalObjects,
+      maxDepth: hierarchyState.maxDepth,
+      rootCount: hierarchyState.roots.length,
+      entries: entries.sort(
+        (a, b) => a.depth - b.depth || a.name.localeCompare(b.name),
+      ),
+    };
+  }
+
+  /**
+   * Gets hierarchy statistics for performance monitoring.
+   *
+   * @returns Hierarchy performance statistics
+   */
+  public getHierarchyStats(): {
+    totalObjects: number;
+    maxDepth: number;
+    rootCount: number;
+    averageChildrenPerParent: number;
+    objectsWithChildren: number;
+    leafNodes: number;
+  } {
+    const flatHierarchyService = FlatHierarchyService.getInstance();
+    const hierarchyState = flatHierarchyService.getHierarchyState();
+    const entries = Object.values(hierarchyState.entries);
+
+    const objectsWithChildren = entries.filter((e) => e.hasChildren).length;
+    const leafNodes = entries.filter((e) => !e.hasChildren).length;
+    const totalChildren = entries.reduce(
+      (sum, e) => sum + e.children.length,
+      0,
+    );
+    const averageChildrenPerParent =
+      objectsWithChildren > 0 ? totalChildren / objectsWithChildren : 0;
+
+    return {
+      totalObjects: hierarchyState.totalObjects,
+      maxDepth: hierarchyState.maxDepth,
+      rootCount: hierarchyState.roots.length,
+      averageChildrenPerParent,
+      objectsWithChildren,
+      leafNodes,
+    };
   }
 }
 

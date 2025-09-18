@@ -45,18 +45,7 @@ export class CelestialManager {
     try {
       celestialStore.setObject(object.id, object);
 
-      // Update hierarchy efficiently
-      if (object.parentId) {
-        celestialStore.addChild(object.parentId, object.id);
-      } else if (object.type === CelestialType.STAR) {
-        // Root stars get their own hierarchy entry
-        const hierarchy = celestialStore.getHierarchy();
-        if (!(object.id in hierarchy)) {
-          const newHierarchy = { ...hierarchy };
-          newHierarchy[object.id] = [];
-          celestialStore.setHierarchy(newHierarchy);
-        }
-      }
+      // Note: Hierarchy management is now handled by FlatHierarchyService
 
       dispatchObjectsLoadedEventFromMap(celestialStore.getObjects());
     } catch (error) {
@@ -121,7 +110,7 @@ export class CelestialManager {
   public removeObject(id: string): void {
     if (celestialStore.getObject(id)) {
       celestialStore.removeObject(id);
-      celestialStore.removeHierarchyEntry(id);
+      // Note: Hierarchy cleanup is now handled by FlatHierarchyService
       dispatchObjectDestroyedEvent(id);
     }
   }
@@ -137,7 +126,6 @@ export class CelestialManager {
     } = options;
 
     celestialStore.setAllObjects({});
-    celestialStore.setHierarchy({});
 
     // Note: Time and camera reset would be handled by simulation manager
     // This keeps the celestial manager focused on celestial data only
@@ -166,12 +154,7 @@ export class CelestialManager {
     const processedObject = processStarData(data);
     this.addObject(processedObject);
 
-    // Create hierarchy entry for the star
-    const hierarchy = celestialStore.getHierarchy();
-    celestialStore.setHierarchy({
-      ...hierarchy,
-      [data.id]: [],
-    });
+    // Note: Hierarchy management is now handled by FlatHierarchyService
 
     dispatchObjectsLoadedEvent(1, data.id);
 
@@ -198,9 +181,8 @@ export class CelestialManager {
       newObjectsMap[objectData.id] = objectData;
     }
 
-    // Update both stores at once to trigger only one renderer update
+    // Update objects store
     celestialStore.setAllObjects(newObjectsMap);
-    celestialStore.setHierarchy(newHierarchy);
 
     // Clear the physics state cache to force recalculation with complete object set
     PhysicsStateProvider.clearCache();

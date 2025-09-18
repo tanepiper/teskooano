@@ -194,6 +194,8 @@ export function createHierarchyFromObjects(
 - **Consistency**: Ensures consistent hierarchy structure
 - **Performance**: Efficient object mapping
 
+**Note**: This function is used by CelestialManager but the resulting hierarchy is not stored in CelestialStore. Hierarchy management is now handled by `FlatHierarchyService`.
+
 ### **Event Dispatching**
 
 #### **dispatchObjectDestroyedEvent()**

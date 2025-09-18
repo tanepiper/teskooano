@@ -5,7 +5,7 @@ import {
 } from "@teskooano/data-types";
 import { generateIconConfig } from "../../celestial-icons";
 import { formatDetailedType } from "../utils/type-formatter";
-import { StateAccessor } from "@teskooano/core-state";
+import { StateAccessor, FlatHierarchyService } from "@teskooano/core-state";
 
 /**
  * Manages the DOM representation of the celestial object list.
@@ -15,6 +15,7 @@ import { StateAccessor } from "@teskooano/core-state";
 export class FocusListManager {
   private _rootUlElement: HTMLElement;
   private _destroyedUlElement: HTMLElement;
+  private _flatHierarchyService: FlatHierarchyService;
 
   /**
    * Creates an instance of FocusListManager.
@@ -24,6 +25,7 @@ export class FocusListManager {
   constructor(rootUlElement: HTMLElement, destroyedUlElement: HTMLElement) {
     this._rootUlElement = rootUlElement;
     this._destroyedUlElement = destroyedUlElement;
+    this._flatHierarchyService = FlatHierarchyService.getInstance();
   }
 
   /**
@@ -78,6 +80,7 @@ export class FocusListManager {
 
   /**
    * Populates the focus list container with a collapsible tree structure.
+   * Now uses the FlatHierarchyService for improved performance and consistency.
    * @param objects The current map of all active celestial objects.
    * @param currentFocusedId The ID of the currently focused object, if any.
    */
@@ -87,35 +90,13 @@ export class FocusListManager {
   ): void {
     this._rootUlElement.innerHTML = "";
 
-    const objectMap = new Map(Object.entries(objects));
-    const dynamicHierarchy = new Map<string | null, string[]>();
-    objectMap.forEach((obj, id) => {
-      const parentKey = obj.parentId ?? null;
-      if (!dynamicHierarchy.has(parentKey)) {
-        dynamicHierarchy.set(parentKey, []);
-      }
-      dynamicHierarchy.get(parentKey)!.push(id);
-    });
+    const hierarchyState = this._flatHierarchyService.getHierarchyState();
+    const rootIds = hierarchyState.roots;
 
-    const rootIds = dynamicHierarchy.get(null) || [];
-    dynamicHierarchy.forEach((children, parentId) => {
-      if (parentId !== null && !objectMap.has(parentId)) {
-        rootIds.push(...children);
-      }
-    });
-    objectMap.forEach((obj, id) => {
-      if (
-        obj.type === CelestialType.STAR &&
-        !obj.parentId &&
-        !rootIds.includes(id)
-      ) {
-        rootIds.push(id);
-      }
-    });
-
+    // Sort root objects (stars first, then alphabetically)
     rootIds.sort((a, b) => {
-      const objA = objectMap.get(a);
-      const objB = objectMap.get(b);
+      const objA = objects[a];
+      const objB = objects[b];
       if (!objA || !objB) return 0;
       if (objA.type === CelestialType.STAR && objB.type !== CelestialType.STAR)
         return -1;
@@ -124,10 +105,10 @@ export class FocusListManager {
       return (objA.name ?? "").localeCompare(objB.name ?? "");
     });
 
-    if (rootIds.length === 0 && objectMap.size > 0) {
+    if (rootIds.length === 0 && Object.keys(objects).length > 0) {
       this._rootUlElement.innerHTML =
         '<li class="empty-message">Loading hierarchy...</li>';
-    } else if (objectMap.size === 0) {
+    } else if (Object.keys(objects).length === 0) {
       this._rootUlElement.innerHTML =
         '<li class="empty-message">No active celestial objects loaded.</li>';
     } else {
@@ -137,7 +118,8 @@ export class FocusListManager {
           obj.status === CelestialStatus.ANNIHILATED;
         if (isInactive) return; // Should not happen with pre-filtered list, but good safeguard.
 
-        const childrenIds = dynamicHierarchy.get(obj.id) || [];
+        const hierarchyEntry = hierarchyState.entries[obj.id];
+        const childrenIds = hierarchyEntry?.children || [];
         const hasChildren = childrenIds.length > 0;
         const isFocused = obj.id === currentFocusedId;
 
@@ -184,12 +166,10 @@ export class FocusListManager {
           }
 
           childrenIds.sort((a, b) =>
-            (objectMap.get(a)?.name ?? "").localeCompare(
-              objectMap.get(b)?.name ?? "",
-            ),
+            (objects[a]?.name ?? "").localeCompare(objects[b]?.name ?? ""),
           );
           childrenIds.forEach((childId) => {
-            const childObj = objectMap.get(childId);
+            const childObj = objects[childId];
             if (childObj) addItem(childObj, nestedUl);
           });
           listItem.appendChild(nestedUl);
@@ -203,7 +183,7 @@ export class FocusListManager {
       };
 
       rootIds.forEach((id) => {
-        const rootObj = objectMap.get(id);
+        const rootObj = objects[id];
         if (rootObj) addItem(rootObj, this._rootUlElement);
       });
     }

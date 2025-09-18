@@ -132,7 +132,7 @@ Core business logic services:
 
 Pure data storage with RxJS observables:
 
-- **[[core/core-state/CelestialStore|CelestialStore]]** - Manages celestial objects, hierarchy, and destruction events
+- **[[core/core-state/CelestialStore|CelestialStore]]** - Manages celestial objects and destruction events
 - **[[core/core-state/SeedStore|SeedStore]]** - Manages seed state with localStorage persistence
 - **[[core/core-state/PhysicsStore|PhysicsStore]]** - Manages physics-related state (acceleration vectors)
 - **[[core/core-state/RenderableStore|RenderableStore]]** - Manages renderable celestial objects
@@ -142,6 +142,7 @@ Pure data storage with RxJS observables:
 Business logic and complex operations:
 
 - **[[core/core-state/CelestialManager|CelestialManager]]** - Consolidates celestial object lifecycle operations using shared utilities
+- **[[core/core-state/FlatHierarchyService|FlatHierarchyService]]** - Manages flat hierarchy state with bidirectional relationships
 
 ### **Adapters** (`adapters/`)
 
@@ -154,7 +155,7 @@ Bridge components between different systems:
 Centralized utilities for code reuse:
 
 - **[[core/core-state/StoreFilters|StoreFilters]]** - Shared filtering functions and RxJS operators
-- **[[core/core-state/CelestialUtils|CelestialUtils]]** - Shared validation, processing, hierarchy, and event utilities
+- **[[core/core-state/CelestialUtils|CelestialUtils]]** - Shared validation, processing, and event utilities
 
 ### **Types** (`types/`)
 
@@ -162,6 +163,7 @@ Type definitions and utilities:
 
 - **[[core/core-state/SimulationTypes|SimulationTypes]]** - Simulation state type definitions
 - **[[core/core-state/SimulationUtils|SimulationUtils]]** - Configuration validation and utilities
+- **[[core/core-state/hierarchy.types|hierarchy.types]]** - Flat hierarchy type definitions
 
 ### **Utilities**
 

@@ -25,7 +25,6 @@ import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
  *
  * The store uses RxJS BehaviorSubjects to maintain state and provide reactive streams:
  * - `_objects`: Stores the complete map of celestial objects by ID
- * - `_hierarchy`: Stores parent-child relationships as a map of parent ID to child ID arrays
  *
  * ## Filtered Observables
  *
@@ -64,7 +63,6 @@ import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
  *
  * // Modify state
  * celestialStore.setObject('earth', earthObject);
- * celestialStore.addChild('sun', 'earth');
  * ```
  *
  * ## Singleton Pattern
@@ -80,7 +78,6 @@ import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
  * // Add a new planet
  * const mars = createMarsObject();
  * celestialStore.setObject('mars', mars);
- * celestialStore.addChild('sun', 'mars');
  *
  * // React to changes with filtered data
  * celestialStore.activeObjects$.subscribe(objects => {
@@ -100,12 +97,6 @@ export class CelestialStore {
 
   /** Observable stream of celestial objects that emits on every change */
   public readonly objects$: Observable<Record<string, CelestialObject>>;
-
-  /** BehaviorSubject holding the current hierarchy relationships */
-  private readonly _hierarchy: BehaviorSubject<Record<string, string[]>>;
-
-  /** Observable stream of hierarchy relationships that emits on every change */
-  public readonly hierarchy$: Observable<Record<string, string[]>>;
 
   // =============================================================================
   // FILTERED OBSERVABLES
@@ -146,9 +137,6 @@ export class CelestialStore {
   private constructor() {
     this._objects = new BehaviorSubject<Record<string, CelestialObject>>({});
     this.objects$ = this._objects.asObservable();
-
-    this._hierarchy = new BehaviorSubject<Record<string, string[]>>({});
-    this.hierarchy$ = this._hierarchy.asObservable();
 
     // Set up filtered observables using shared operators
     this.activeObjects$ = filterActiveCelestialObjects$(this.objects$);
@@ -375,185 +363,8 @@ export class CelestialStore {
   }
 
   // =============================================================================
-  // HIERARCHY OPERATIONS
-  // =============================================================================
-
-  /**
-   * Gets the current hierarchy relationships.
-   *
-   * Returns a map where keys are parent object IDs and values are arrays
-   * of child object IDs.
-   *
-   * @returns A record mapping parent IDs to arrays of child IDs
-   *
-   * @example
-   * ```typescript
-   * const hierarchy = celestialStore.getHierarchy();
-   *
-   * // Check what orbits the sun
-   * const sunChildren = hierarchy['sun'] || [];
-   * console.log(`Sun has ${sunChildren.length} orbiting bodies`);
-   *
-   * // Check what orbits Earth
-   * const earthChildren = hierarchy['earth'] || [];
-   * console.log(`Earth has ${earthChildren.length} moons`);
-   * ```
-   */
-  public getHierarchy(): Record<string, string[]> {
-    return this._hierarchy.getValue();
-  }
-
-  /**
-   * Sets the complete hierarchy relationships.
-   *
-   * This method completely replaces the current hierarchy map. Use with caution
-   * as it will trigger emissions on the `hierarchy$` observable for all subscribers.
-   *
-   * @param hierarchy The new complete hierarchy map
-   *
-   * @example
-   * ```typescript
-   * const newHierarchy = {
-   *   'sun': ['mercury', 'venus', 'earth', 'mars'],
-   *   'earth': ['moon'],
-   *   'mars': ['phobos', 'deimos']
-   * };
-   *
-   * celestialStore.setHierarchy(newHierarchy);
-   * ```
-   */
-  public setHierarchy(hierarchy: Record<string, string[]>): void {
-    this._hierarchy.next(hierarchy);
-  }
-
-  /**
-   * Adds a child object to a parent's hierarchy.
-   *
-   * This method establishes a parent-child relationship between two celestial objects.
-   * The change will trigger emissions on the `hierarchy$` observable.
-   *
-   * @param parentId The ID of the parent object
-   * @param childId The ID of the child object
-   *
-   * @example
-   * ```typescript
-   * // Make Earth orbit the Sun
-   * celestialStore.addChild('sun', 'earth');
-   *
-   * // Make the Moon orbit Earth
-   * celestialStore.addChild('earth', 'moon');
-   *
-   * // Add a new satellite to Earth
-   * celestialStore.addChild('earth', 'iss');
-   * ```
-   */
-  public addChild(parentId: string, childId: string): void {
-    const current = this._hierarchy.getValue();
-    const children = current[parentId] || [];
-    if (!children.includes(childId)) {
-      this._hierarchy.next({
-        ...current,
-        [parentId]: [...children, childId],
-      });
-    }
-  }
-
-  /**
-   * Removes a child object from a parent's hierarchy.
-   *
-   * This method removes a parent-child relationship between two celestial objects.
-   * The change will trigger emissions on the `hierarchy$` observable.
-   *
-   * @param parentId The ID of the parent object
-   * @param childId The ID of the child object to remove
-   *
-   * @example
-   * ```typescript
-   * // Remove Earth from Sun's orbit (e.g., if it becomes rogue)
-   * celestialStore.removeChild('sun', 'earth');
-   *
-   * // Remove a destroyed satellite
-   * celestialStore.removeChild('earth', 'destroyed-satellite');
-   * ```
-   */
-  public removeChild(parentId: string, childId: string): void {
-    const current = this._hierarchy.getValue();
-    const children = current[parentId];
-    if (children) {
-      this._hierarchy.next({
-        ...current,
-        [parentId]: children.filter((id) => id !== childId),
-      });
-    }
-  }
-
-  /**
-   * Removes all hierarchy entries for a specific object.
-   *
-   * This method removes the object from all parent-child relationships,
-   * both as a parent and as a child. Useful when an object is destroyed
-   * or removed from the simulation.
-   *
-   * @param objectId The ID of the object to remove from all hierarchies
-   *
-   * @example
-   * ```typescript
-   * // Remove a destroyed planet from all hierarchies
-   * celestialStore.removeHierarchyEntry('destroyed-planet');
-   *
-   * // This is equivalent to:
-   * // - Removing it as a child from its parent
-   * // - Removing all its children from its hierarchy entry
-   * ```
-   */
-  public removeHierarchyEntry(objectId: string): void {
-    const current = this._hierarchy.getValue();
-    const newHierarchy = { ...current };
-
-    // Remove the object's own entry
-    delete newHierarchy[objectId];
-
-    // Remove from all parent lists
-    Object.keys(newHierarchy).forEach((parentId) => {
-      newHierarchy[parentId] = newHierarchy[parentId].filter(
-        (childId) => childId !== objectId,
-      );
-    });
-
-    this._hierarchy.next(newHierarchy);
-  }
-
-  // =============================================================================
   // UTILITY OPERATIONS
   // =============================================================================
-
-  /**
-   * Gets all children of a specific parent object.
-   *
-   * This method combines hierarchy and object data to return the actual
-   * celestial objects that are children of the specified parent.
-   *
-   * @param parentId The ID of the parent object
-   * @returns An array of celestial objects that are children of the parent
-   *
-   * @example
-   * ```typescript
-   * // Get all planets orbiting the sun
-   * const planets = celestialStore.getChildren('sun');
-   * console.log(`Sun has ${planets.length} planets:`);
-   * planets.forEach(planet => console.log(`- ${planet.id}`));
-   *
-   * // Get all moons of Earth
-   * const moons = celestialStore.getChildren('earth');
-   * console.log(`Earth has ${moons.length} moons`);
-   * ```
-   */
-  public getChildren(parentId: string): CelestialObject[] {
-    const hierarchy = this._hierarchy.getValue();
-    const objects = this._objects.getValue();
-    const childIds = hierarchy[parentId] || [];
-    return childIds.map((id) => objects[id]).filter(Boolean);
-  }
 
   /**
    * Gets the parent of a specific child object.

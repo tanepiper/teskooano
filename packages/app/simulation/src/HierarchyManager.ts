@@ -2,6 +2,8 @@ import {
   celestialManager,
   physicsSystemAdapter,
   StateAccessor,
+  HierarchyEntry,
+  FlatHierarchyService,
 } from "@teskooano/core-state";
 import {
   CelestialObject,
@@ -26,9 +28,11 @@ import { CelestialDistanceService } from "@teskooano/core-physics";
 export class HierarchyManager {
   private updateIndex = 0;
   private CelestialDistanceService: CelestialDistanceService;
+  private flatHierarchyService: FlatHierarchyService;
 
   constructor() {
     this.CelestialDistanceService = CelestialDistanceService.getInstance();
+    this.flatHierarchyService = FlatHierarchyService.getInstance();
   }
 
   /**
@@ -133,12 +137,28 @@ export class HierarchyManager {
         allPhysicsStates,
       );
       if (newParent) {
-        celestialManager.updateObject(obj.id, {
-          type: CelestialType.DWARF_PLANET,
-          parentId: newParent.id,
-        });
+        // Update the object type and parent using the flat hierarchy service
+        const updateResult = this.flatHierarchyService.updateParent(
+          obj.id,
+          newParent.id,
+          { validate: true, emitEvents: true },
+        );
 
-        // No need to dispatch events - UI will update via celestialObjects$ subscription
+        if (updateResult.success) {
+          celestialManager.updateObject(obj.id, {
+            type: CelestialType.DWARF_PLANET,
+            parentId: newParent.id,
+          });
+        } else {
+          console.warn(
+            `[HierarchyManager] Failed to update parent for ${obj.id}:`,
+            updateResult.error,
+          );
+          console.log(
+            `[HierarchyManager] Current hierarchy state:`,
+            this.flatHierarchyService.getHierarchyState(),
+          );
+        }
       }
     }
   }
@@ -172,12 +192,28 @@ export class HierarchyManager {
         allPhysicsStates,
       );
       if (newParent) {
-        celestialManager.updateObject(obj.id, {
-          type: CelestialType.ASTEROID, // Satellites become asteroids when they escape
-          parentId: newParent.id,
-        });
+        // Update the object type and parent using the flat hierarchy service
+        const updateResult = this.flatHierarchyService.updateParent(
+          obj.id,
+          newParent.id,
+          { validate: true, emitEvents: true },
+        );
 
-        // No need to dispatch events - UI will update via celestialObjects$ subscription
+        if (updateResult.success) {
+          celestialManager.updateObject(obj.id, {
+            type: CelestialType.ASTEROID, // Satellites become asteroids when they escape
+            parentId: newParent.id,
+          });
+        } else {
+          console.warn(
+            `[HierarchyManager] Failed to update parent for ${obj.id}:`,
+            updateResult.error,
+          );
+          console.log(
+            `[HierarchyManager] Current hierarchy state:`,
+            this.flatHierarchyService.getHierarchyState(),
+          );
+        }
       }
     }
   }
@@ -206,11 +242,27 @@ export class HierarchyManager {
         allPhysicsStates,
       );
       if (newParent) {
-        celestialManager.updateObject(obj.id, {
-          parentId: newParent.id,
-        });
+        // Update the parent using the flat hierarchy service
+        const updateResult = this.flatHierarchyService.updateParent(
+          obj.id,
+          newParent.id,
+          { validate: true, emitEvents: true },
+        );
 
-        // No need to dispatch events - UI will update via celestialObjects$ subscription
+        if (updateResult.success) {
+          celestialManager.updateObject(obj.id, {
+            parentId: newParent.id,
+          });
+        } else {
+          console.warn(
+            `[HierarchyManager] Failed to update parent for ${obj.id}:`,
+            updateResult.error,
+          );
+          console.log(
+            `[HierarchyManager] Current hierarchy state:`,
+            this.flatHierarchyService.getHierarchyState(),
+          );
+        }
       }
     }
   }
@@ -257,6 +309,20 @@ export class HierarchyManager {
         const activeObjects = StateAccessor.getActiveObjects();
         if (!potentialParent || !parentState || !activeObjects[nearbyId]) {
           continue;
+        }
+
+        // Check if this would create a cycle in the hierarchy
+        const hierarchyState = this.flatHierarchyService.getHierarchyState();
+        const childEntry = hierarchyState.entries[child.id];
+        if (
+          childEntry &&
+          this.wouldCreateCycle(
+            childEntry,
+            String(nearbyId),
+            hierarchyState.entries,
+          )
+        ) {
+          continue; // Skip this potential parent as it would create a cycle
         }
 
         // Calculate gravitational force
@@ -317,6 +383,20 @@ export class HierarchyManager {
         continue;
       }
 
+      // Check if this would create a cycle in the hierarchy
+      const hierarchyState = this.flatHierarchyService.getHierarchyState();
+      const childEntry = hierarchyState.entries[child.id];
+      if (
+        childEntry &&
+        this.wouldCreateCycle(
+          childEntry,
+          String(potentialParentId),
+          hierarchyState.entries,
+        )
+      ) {
+        continue; // Skip this potential parent as it would create a cycle
+      }
+
       const distanceVec = childState.position_m
         .clone()
         .sub(parentState.position_m);
@@ -360,5 +440,163 @@ export class HierarchyManager {
       default:
         return 10 * AU_METERS; // 10 AU default
     }
+  }
+
+  // =============================================================================
+  // FLAT HIERARCHY UTILITY METHODS
+  // =============================================================================
+
+  /**
+   * Gets all children of a specific object using the flat hierarchy service.
+   * This is more efficient than the traditional method as it uses pre-calculated relationships.
+   */
+  public getChildren(parentId: string): CelestialObject[] {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const entry = hierarchyState.entries[parentId];
+
+    if (!entry) return [];
+
+    const allObjects = StateAccessor.getCelestialObjects();
+    return entry.children
+      .map((childId: string) => allObjects[childId])
+      .filter(Boolean);
+  }
+
+  /**
+   * Gets the parent of a specific object using the flat hierarchy service.
+   */
+  public getParent(childId: string): CelestialObject | undefined {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const entry = hierarchyState.entries[childId];
+
+    if (!entry || !entry.parentId) return undefined;
+
+    const allObjects = StateAccessor.getCelestialObjects();
+    return allObjects[entry.parentId];
+  }
+
+  /**
+   * Gets the path from root to a specific object.
+   */
+  public getPathToRoot(objectId: string): string[] {
+    return this.flatHierarchyService.getPathToRoot(objectId);
+  }
+
+  /**
+   * Gets all root objects (objects with no parent).
+   */
+  public getRootObjects(): CelestialObject[] {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const allObjects = StateAccessor.getCelestialObjects();
+
+    return hierarchyState.roots
+      .map((rootId: string) => allObjects[rootId])
+      .filter(Boolean);
+  }
+
+  /**
+   * Gets all objects at a specific depth level in the hierarchy.
+   */
+  public getObjectsAtDepth(depth: number): CelestialObject[] {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const allObjects = StateAccessor.getCelestialObjects();
+
+    return Object.values(hierarchyState.entries)
+      .filter((entry: HierarchyEntry) => entry.depth === depth)
+      .map((entry: HierarchyEntry) => allObjects[entry.id])
+      .filter(Boolean);
+  }
+
+  /**
+   * Gets the total number of descendants for an object.
+   */
+  public getDescendantCount(objectId: string): number {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const entry = hierarchyState.entries[objectId];
+
+    return entry ? entry.descendantCount : 0;
+  }
+
+  /**
+   * Checks if an object is a root object (has no parent).
+   */
+  public isRootObject(objectId: string): boolean {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const entry = hierarchyState.entries[objectId];
+
+    return entry ? entry.isRoot : false;
+  }
+
+  /**
+   * Checks if an object has children.
+   */
+  public hasChildren(objectId: string): boolean {
+    const hierarchyState = this.flatHierarchyService.getHierarchyState();
+    const entry = hierarchyState.entries[objectId];
+
+    return entry ? entry.hasChildren : false;
+  }
+
+  /**
+   * Gets the current hierarchy state for debugging or analysis.
+   */
+  public getHierarchyState() {
+    return this.flatHierarchyService.getHierarchyState();
+  }
+
+  /**
+   * Initializes the flat hierarchy from the current celestial objects.
+   * This should be called when loading a new system.
+   */
+  public initializeHierarchy(): void {
+    const allObjects = StateAccessor.getCelestialObjects();
+    const objectCount = Object.keys(allObjects).length;
+
+    console.log(
+      `[HierarchyManager] Initializing hierarchy with ${objectCount} objects:`,
+      Object.keys(allObjects),
+    );
+
+    const result = this.flatHierarchyService.initializeFromObjects(allObjects, {
+      validate: true,
+      emitEvents: true,
+    });
+
+    if (!result.success) {
+      console.error(
+        "[HierarchyManager] Failed to initialize hierarchy:",
+        result.error,
+      );
+    } else {
+      console.log(
+        `[HierarchyManager] Successfully initialized hierarchy with ${result.affectedObjects.length} objects`,
+      );
+    }
+  }
+
+  /**
+   * Checks if making a potential parent the parent of a child would create a cycle.
+   * This is a simplified version of the cycle detection logic from FlatHierarchyService.
+   */
+  private wouldCreateCycle(
+    childEntry: HierarchyEntry,
+    potentialParentId: string,
+    entries: Record<string, HierarchyEntry>,
+  ): boolean {
+    // Check if the potential parent is a descendant of the child
+    const isDescendant = (parentId: string, childId: string): boolean => {
+      const parent = entries[parentId];
+      if (!parent) return false;
+
+      if (parent.children.includes(childId)) return true;
+
+      for (const grandchildId of parent.children) {
+        if (isDescendant(grandchildId, childId)) return true;
+      }
+
+      return false;
+    };
+
+    return isDescendant(childEntry.id, potentialParentId);
   }
 }

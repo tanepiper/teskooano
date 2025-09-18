@@ -51,11 +51,7 @@
   "previewProperties": [],
   "previewRows": 2,
   "showFeatureImage": true,
-  "featureImageProperties": [
-    "thumbnail",
-    "featureResized",
-    "feature"
-  ],
+  "featureImageProperties": ["thumbnail", "featureResized", "feature"],
   "useEmbeddedImageFallback": true,
   "confirmBeforeDelete": true,
   "searchActive": false,
