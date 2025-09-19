@@ -1,12 +1,10 @@
 import { ActionMenuController } from "../controller/action-menu.controller.js";
-import {
-  type ActionMenuConfig,
-  type ActionMenuItem,
-} from "../controller/types.js";
+import { type ActionMenuConfig } from "../controller/types.js";
 import { template } from "./action-menu.template.js";
 
 /**
  * Custom element for a configurable action menu.
+ * This component is purely slot-based - buttons are provided via the default slot.
  *
  * @attr button-size - The size of buttons in the menu (xs, sm, md, lg)
  * @attr direction - The direction the menu appears (left, right, top, bottom)
@@ -15,7 +13,8 @@ import { template } from "./action-menu.template.js";
  * @attr instance-id - The unique instance ID for this menu
  * @attr icon - The SVG icon to use for the toggle button (defaults to more horizontal icon)
  *
- * @fires action-triggered - Dispatched when an action is clicked
+ * @slot - The default slot for action buttons
+ * @fires menu-toggled - Dispatched when the menu is opened or closed
  */
 export class ActionMenuComponent extends HTMLElement {
   static readonly componentName = "teskooano-action-menu";
@@ -30,7 +29,6 @@ export class ActionMenuComponent extends HTMLElement {
 
   private _controller: ActionMenuController;
   private _instanceId: string;
-  private _pluginManager: any = null;
 
   constructor() {
     super();
@@ -57,17 +55,15 @@ export class ActionMenuComponent extends HTMLElement {
     if (config.toggleIconSvg) {
       this._updateIcon(config.toggleIconSvg);
     }
-    this._controller.actionTriggered$.subscribe(
-      ({ action, event, instanceId }) => {
-        this.dispatchEvent(
-          new CustomEvent("action-triggered", {
-            bubbles: true,
-            composed: true,
-            detail: { action, event, instanceId },
-          }),
-        );
-      },
-    );
+    this._controller.menuToggled$.subscribe(({ isExpanded, instanceId }) => {
+      this.dispatchEvent(
+        new CustomEvent("menu-toggled", {
+          bubbles: true,
+          composed: true,
+          detail: { isExpanded, instanceId },
+        }),
+      );
+    });
   }
 
   /**
@@ -82,113 +78,6 @@ export class ActionMenuComponent extends HTMLElement {
    */
   public setConfig(config: Partial<ActionMenuConfig>): void {
     this._controller.setConfig(config);
-  }
-
-  /**
-   * Sets the actions to display in the menu.
-   */
-  public setActions(actions: ActionMenuItem[]): void {
-    this._controller.setActions(actions);
-  }
-
-  /**
-   * Sets the plugin manager context for this action menu.
-   * This allows the menu to fetch and display plugin-registered actions.
-   */
-  public setPluginManager(pluginManager: any): void {
-    this._pluginManager = pluginManager;
-  }
-
-  /**
-   * Sets the actions and integrates plugin-registered actions for the action-menu target.
-   * This combines built-in actions with plugin-registered actions.
-   */
-  public setActionsWithPlugins(actions: ActionMenuItem[]): void {
-    // Get plugin-registered actions for the action-menu target
-    const pluginActions = this._getPluginActions();
-
-    // Combine built-in actions with plugin actions
-    const allActions = [...actions, ...pluginActions];
-
-    console.log(allActions);
-
-    this._controller.setActions(allActions);
-  }
-
-  /**
-   * Gets plugin-registered actions for the action-menu target.
-   */
-  private _getPluginActions(): ActionMenuItem[] {
-    try {
-      if (!this._pluginManager) {
-        return [];
-      }
-
-      // Get toolbar items for the action-menu target
-      const toolbarItems =
-        this._pluginManager.getToolbarItemsForTarget("action-menu");
-
-      if (!toolbarItems || toolbarItems.length === 0) {
-        return [];
-      }
-
-      // Convert toolbar items to ActionMenuItem format
-      const pluginActions: ActionMenuItem[] = toolbarItems
-        .filter((item: any) => item.type === "function") // Only function-type items
-        .map((item: any) => ({
-          id: item.id,
-          title: item.title || item.tooltipText || "Plugin Action",
-          iconSvg: item.iconSvg || "",
-          active: false,
-          disabled: false,
-          action: async () => {
-            try {
-              await this._pluginManager.execute(item.functionId);
-            } catch (error) {
-              console.error(
-                `[ActionMenuComponent] Error executing plugin action ${item.id}:`,
-                error,
-              );
-            }
-          },
-        }));
-
-      return pluginActions;
-    } catch (error) {
-      console.warn(
-        "[ActionMenuComponent] Error getting plugin actions:",
-        error,
-      );
-      return [];
-    }
-  }
-
-  /**
-   * Adds a single action to the menu.
-   */
-  public addAction(action: ActionMenuItem): void {
-    this._controller.addAction(action);
-  }
-
-  /**
-   * Removes an action from the menu by ID.
-   */
-  public removeAction(actionId: string): void {
-    this._controller.removeAction(actionId);
-  }
-
-  /**
-   * Updates the active state of an action.
-   */
-  public setActionActive(actionId: string, active: boolean): void {
-    this._controller.setActionActive(actionId, active);
-  }
-
-  /**
-   * Updates the disabled state of an action.
-   */
-  public setActionDisabled(actionId: string, disabled: boolean): void {
-    this._controller.setActionDisabled(actionId, disabled);
   }
 
   /**
@@ -297,79 +186,6 @@ export class ActionMenuComponent extends HTMLElement {
    */
   private _generateInstanceId(): string {
     return `action-menu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-}
-
-/**
- * Factory function for creating Action Menu instances with specific configurations.
- * This allows for creating multiple menu instances with different configurations.
- */
-export class ActionMenuFactory {
-  private _baseConfig: ActionMenuConfig;
-  private _pluginManager: any = null;
-
-  constructor(baseConfig: ActionMenuConfig = {}) {
-    this._baseConfig = baseConfig;
-  }
-
-  /**
-   * Sets the plugin manager for this factory.
-   * All instances created by this factory will have access to plugin actions.
-   */
-  public setPluginManager(pluginManager: any): void {
-    this._pluginManager = pluginManager;
-  }
-
-  /**
-   * Creates a new Action Menu instance with the given instance ID.
-   */
-  public createInstance(
-    instanceId: string,
-    config: Partial<ActionMenuConfig> = {},
-  ): ActionMenuComponent {
-    const menu = new ActionMenuComponent();
-    menu.setAttribute("instance-id", instanceId);
-
-    // Apply base config and instance-specific config
-    const finalConfig = { ...this._baseConfig, ...config };
-    menu.setConfig(finalConfig);
-
-    // Set plugin manager if available
-    if (this._pluginManager) {
-      menu.setPluginManager(this._pluginManager);
-    }
-
-    return menu;
-  }
-
-  /**
-   * Creates a factory for celestial-specific action menus.
-   */
-  public forCelestial(
-    celestialId: string,
-    config: Partial<ActionMenuConfig> = {},
-  ): ActionMenuComponent {
-    return this.createInstance(`celestial-${celestialId}`, config);
-  }
-
-  /**
-   * Creates a factory for hierarchy-specific action menus.
-   */
-  public forHierarchy(
-    hierarchyId: string,
-    config: Partial<ActionMenuConfig> = {},
-  ): ActionMenuComponent {
-    return this.createInstance(`hierarchy-${hierarchyId}`, config);
-  }
-
-  /**
-   * Creates a factory for toolbar-specific action menus.
-   */
-  public forToolbar(
-    toolbarId: string,
-    config: Partial<ActionMenuConfig> = {},
-  ): ActionMenuComponent {
-    return this.createInstance(`toolbar-${toolbarId}`, config);
   }
 }
 

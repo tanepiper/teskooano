@@ -28,6 +28,11 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
   private lastTargetBodyId: string | number = "";
   private neighborCache: Map<string | number, (string | number)[]> = new Map();
 
+  // Cache for spatial partitioning updates to reduce WASM calls
+  private lastBodiesHash: string = "";
+  private lastUpdateTime: number = 0;
+  private updateThrottleMs: number = 16; // Only update every 16ms (60fps)
+
   constructor(private spatialPartitioning: SpatialPartitioning) {}
 
   /**
@@ -39,12 +44,31 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
     allBodies: PhysicsStateReal[],
     config: AlgorithmConfig,
   ): OSVector3 {
+    // Create hash of current bodies state for caching
+    const currentBodiesHash = this.createBodiesHash(allBodies);
+    const currentTime = performance.now();
+
+    // Throttle spatial partitioning updates to reduce WASM calls
+    const shouldUpdateSpatialPartitioning =
+      currentBodiesHash !== this.lastBodiesHash ||
+      currentTime - this.lastUpdateTime > this.updateThrottleMs;
+
+    if (shouldUpdateSpatialPartitioning) {
+      // Update spatial partitioning only when necessary
+      if (this.spatialPartitioning.isInitialized()) {
+        this.spatialPartitioning.update(allBodies);
+        this.lastBodiesHash = currentBodiesHash;
+        this.lastUpdateTime = currentTime;
+      }
+    }
+
     // Use cached neighbors if available
     let neighborIds: (string | number)[] = [];
 
     if (
       targetBody.id === this.lastTargetBodyId &&
-      this.lastNeighborIds.length > 0
+      this.lastNeighborIds.length > 0 &&
+      currentBodiesHash === this.lastBodiesHash
     ) {
       // Reuse cached neighbors
       neighborIds = this.lastNeighborIds;
@@ -107,5 +131,13 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
     if (this.spatialPartitioning.isInitialized()) {
       this.spatialPartitioning.update(bodies);
     }
+  }
+
+  /**
+   * Create a hash of bodies for caching purposes
+   */
+  private createBodiesHash(bodies: PhysicsStateReal[]): string {
+    // Simple hash based on body count and IDs
+    return `${bodies.length}-${bodies.map((b) => b.id).join(",")}`;
   }
 }

@@ -1,11 +1,11 @@
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
-import { ActionMenuComponent, ActionMenuFactory } from "./view";
-import { ActionMenuItem, type ActionMenuConfig } from "./controller";
+import { ActionMenuComponent } from "./view";
+import { type ActionMenuConfig } from "./controller";
 
 /**
  * Manages the lifecycle of multiple {@link ActionMenuComponent} instances.
- * This class acts as a factory and state manager for action menus that are
- * associated with specific targets (like celestial rows or toolbar areas).
+ * This class provides a centralized way to create and manage slot-based action menus
+ * that are associated with specific targets (like celestial rows or toolbar areas).
  *
  * This class is designed to be a singleton, instantiated via the
  * `action-menu:initialize` plugin function, which provides the
@@ -14,44 +14,14 @@ import { ActionMenuItem, type ActionMenuConfig } from "./controller";
 export class ActionMenuManager {
   private activeMenus: Map<string, ActionMenuComponent> = new Map();
   private menuConfigs: Map<string, ActionMenuConfig> = new Map();
-  private menuFactories: Map<string, ActionMenuFactory> = new Map();
-  private _context: PluginExecutionContext;
 
   /**
    * Initializes a new instance of the ActionMenuManager.
-   * @param context - The plugin execution context from the PluginManager.
+   * @param _context - The plugin execution context from the PluginManager (unused in slot-based approach).
    * @remark This constructor should only be called by its initialization function.
    */
-  constructor(context: PluginExecutionContext) {
-    this._context = context;
-  }
-
-  /**
-   * Creates a factory for a specific menu type with base configuration.
-   * @param factoryId - Unique identifier for the factory.
-   * @param baseConfig - Base configuration for all menus created by this factory.
-   * @returns The created factory instance.
-   */
-  public createFactory(
-    factoryId: string,
-    baseConfig: ActionMenuConfig = {},
-  ): ActionMenuFactory {
-    const factory = new ActionMenuFactory(baseConfig);
-
-    // Set plugin manager for plugin integration
-    factory.setPluginManager(this._context.pluginManager);
-
-    this.menuFactories.set(factoryId, factory);
-    return factory;
-  }
-
-  /**
-   * Gets a factory by ID.
-   * @param factoryId - The unique identifier of the factory.
-   * @returns The factory instance, or undefined if not found.
-   */
-  public getFactory(factoryId: string): ActionMenuFactory | undefined {
-    return this.menuFactories.get(factoryId);
+  constructor(_context: PluginExecutionContext) {
+    // Context is kept for compatibility with plugin system but not used in slot-based approach
   }
 
   /**
@@ -81,9 +51,6 @@ export class ActionMenuManager {
       // Apply configuration
       newMenu.setConfig(config);
 
-      // Set plugin manager context for plugin integration
-      newMenu.setPluginManager(this._context.pluginManager);
-
       // Store configuration for later reference
       this.menuConfigs.set(menuId, config);
 
@@ -106,45 +73,6 @@ export class ActionMenuManager {
 
       return null;
     }
-  }
-
-  /**
-   * Creates a hierarchy action menu factory with default configuration.
-   * @returns A factory configured for hierarchy menus.
-   */
-  public createHierarchyFactory(): ActionMenuFactory {
-    return this.createFactory("hierarchy", {
-      buttonSize: "xs",
-      direction: "right",
-      closeOnAction: false,
-      toggleTitle: "More Options",
-    });
-  }
-
-  /**
-   * Creates a celestial action menu factory with default configuration.
-   * @returns A factory configured for celestial object menus.
-   */
-  public createCelestialFactory(): ActionMenuFactory {
-    return this.createFactory("celestial", {
-      buttonSize: "xs",
-      direction: "right",
-      closeOnAction: false,
-      toggleTitle: "Celestial Actions",
-    });
-  }
-
-  /**
-   * Creates a toolbar action menu factory with default configuration.
-   * @returns A factory configured for toolbar menus.
-   */
-  public createToolbarFactory(): ActionMenuFactory {
-    return this.createFactory("toolbar", {
-      buttonSize: "sm",
-      direction: "bottom",
-      closeOnAction: true,
-      toggleTitle: "More Tools",
-    });
   }
 
   /**
@@ -206,54 +134,6 @@ export class ActionMenuManager {
   }
 
   /**
-   * Sets actions for a specific menu.
-   * @param menuId - The unique identifier of the menu.
-   * @param actions - The actions to set.
-   */
-  public setMenuActions(menuId: string, actions: ActionMenuItem[]): void {
-    const menu = this.activeMenus.get(menuId);
-    if (menu) {
-      menu.setActions(actions);
-    } else {
-      console.warn(
-        `[ActionMenuManager] Menu not found for action update: ${menuId}`,
-      );
-    }
-  }
-
-  /**
-   * Adds an action to a specific menu.
-   * @param menuId - The unique identifier of the menu.
-   * @param action - The action to add.
-   */
-  public addMenuAction(menuId: string, action: ActionMenuItem): void {
-    const menu = this.activeMenus.get(menuId);
-    if (menu) {
-      menu.addAction(action);
-    } else {
-      console.warn(
-        `[ActionMenuManager] Menu not found for action add: ${menuId}`,
-      );
-    }
-  }
-
-  /**
-   * Removes an action from a specific menu.
-   * @param menuId - The unique identifier of the menu.
-   * @param actionId - The ID of the action to remove.
-   */
-  public removeMenuAction(menuId: string, actionId: string): void {
-    const menu = this.activeMenus.get(menuId);
-    if (menu) {
-      menu.removeAction(actionId);
-    } else {
-      console.warn(
-        `[ActionMenuManager] Menu not found for action remove: ${menuId}`,
-      );
-    }
-  }
-
-  /**
    * Gets all active menu IDs.
    * @returns An array of active menu IDs.
    */
@@ -267,13 +147,5 @@ export class ActionMenuManager {
    */
   public getActiveMenuCount(): number {
     return this.activeMenus.size;
-  }
-
-  /**
-   * Gets all factory IDs.
-   * @returns An array of factory IDs.
-   */
-  public getFactoryIds(): string[] {
-    return Array.from(this.menuFactories.keys());
   }
 }

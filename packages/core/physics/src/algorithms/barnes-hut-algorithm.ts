@@ -50,7 +50,7 @@ export class BarnesHutAlgorithm implements ForceCalculationAlgorithm {
     const positions = this.bodiesToFloat32Array
       ? this.bodiesToFloat32Array(allBodies)
       : this.bodiesToFloat32ArrayFallback(allBodies);
-    const threshold = config.barnesHutThreshold || 1000 * 1.496e11; // Default 1000 AU
+    const threshold = config.barnesHutThreshold || 1000; // Default 1000 AU
     const neighborGraph = this.spatialPartitioning.createNearByGraph(
       positions,
       threshold,

@@ -54,6 +54,15 @@ export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
 
   /** The axial tilt of the object (copied from orbit.axialTilt for convenience). */
   axialTilt?: OSVector3 | number;
+
+  /** Whether to show the label for this object. */
+  showLabel?: boolean;
+
+  /** Whether to show the orbit line for this object. */
+  showOrbit?: boolean;
+
+  /** Whether to show the prediction line for this object. */
+  showPrediction?: boolean;
 }
 
 /**

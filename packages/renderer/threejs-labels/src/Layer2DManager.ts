@@ -100,7 +100,18 @@ export class Layer2DManager {
    * Set visibility for a specific layer
    */
   setLayerVisibility(layerType: CSS2DLayerType, visible: boolean): void {
-    this.layers.get(layerType)?.setVisibility(visible);
+    const layer = this.layers.get(layerType);
+    if (layer) {
+      layer.setVisibility(visible);
+
+      // Special handling for celestial labels layer to pass global state
+      if (
+        layerType === CSS2DLayerType.CELESTIAL_LABELS &&
+        "setGlobalLabelsEnabled" in layer
+      ) {
+        (layer as any).setGlobalLabelsEnabled(visible);
+      }
+    }
   }
 
   /**

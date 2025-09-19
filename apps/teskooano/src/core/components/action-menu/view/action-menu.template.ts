@@ -1,4 +1,4 @@
-import MoreHorizontalIcon from "@fluentui/svg-icons/icons/more_horizontal_16_regular.svg?raw";
+import MoreHorizontalIcon from "@fluentui/svg-icons/icons/more_horizontal_20_regular.svg?raw";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -115,12 +115,12 @@ template.innerHTML = `
     title="More Options" 
     appearance="stealth" 
     class="menu-toggle-button"
-    size="xs">
+    size="sm">
     <span slot="icon" id="menu-icon">${MoreHorizontalIcon}</span>
   </teskooano-button>
   
   <div class="menu-container" id="menu-container" data-direction="right">
-    <!-- Dynamic action buttons will be inserted here -->
+    <slot></slot>
   </div>
 </div>
 `;

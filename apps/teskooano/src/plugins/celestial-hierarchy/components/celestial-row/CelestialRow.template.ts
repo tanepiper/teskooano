@@ -1,5 +1,5 @@
-import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
-import PersonRunningFilledIcon from "@fluentui/svg-icons/icons/person_running_20_regular.svg?raw";
+import EyeIcon from "@fluentui/svg-icons/icons/eye_20_regular.svg?raw";
+import ArrowStepOverRegular from "@fluentui/svg-icons/icons/arrow_step_over_20_regular.svg?raw";
 
 import { CelestialType } from "@teskooano/data-types";
 
@@ -107,12 +107,14 @@ template.innerHTML = `
   <span id="distance" class="object-distance"></span>
 </div>
 <div class="action-buttons">
-  <teskooano-button size="xs" id="focus-btn" title="Focus Camera" appearance="stealth">
-    <span slot="icon">${EyeIcon}</span>
+  <teskooano-button size="sm" id="follow-btn" title="Follow Object" appearance="stealth">
+    <span slot="icon">${ArrowStepOverRegular}</span>
   </teskooano-button>
-  <teskooano-button size="xs" id="follow-btn" title="Follow Object" appearance="stealth">
-    <span slot="icon">${PersonRunningFilledIcon}</span>
-  </teskooano-button>
+   <teskooano-action-menu id="celestial-menu" direction="left">
+    <teskooano-button size="sm" id="focus-btn" title="Focus Camera" appearance="stealth">
+      <span slot="icon">${EyeIcon}</span>
+    </teskooano-button>
+  </teskooano-action-menu>
 </div>
 `;
 

@@ -177,6 +177,9 @@ export class RenderableObjectFactory {
       isTargetable: true,
       isSelected: false,
       isFocused: false,
+      showLabel: true, // Default to labels shown
+      showOrbit: false, // Default to orbits hidden
+      showPrediction: false, // Default to predictions hidden
       uniforms: {},
       radius: cached.radius,
       mass: cached.mass,
@@ -239,6 +242,9 @@ export class RenderableObjectFactory {
       isTargetable: false,
       isSelected: false,
       isFocused: false,
+      showLabel: true, // Default to labels shown
+      showOrbit: false, // Default to orbits hidden
+      showPrediction: false, // Default to predictions hidden
       uniforms: {},
       radius: 0,
       mass: 0,

@@ -12,6 +12,9 @@ import {
 } from "../components/celestial-label/CelestialLabelComponent";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { AU_METERS, SCALE } from "@teskooano/data-values";
+import { Subscription } from "rxjs";
+import { StateAccessor } from "@teskooano/core-state";
+import { renderableStore } from "@teskooano/core-state";
 
 export interface LabelVisibilityConfig {
   planet?: number;
@@ -34,13 +37,18 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       lastDistance: string;
       lastSpeed: string;
       lastVisible: boolean;
-      lastPosition?: THREE.Vector3; // Add caching for last position
+      lastPosition?: THREE.Vector3;
     }
   >();
 
-  // Pre-allocated vectors for performance in calculateLabelPosition
+  // Pre-allocated vectors for performance
   private _tempPos1 = new THREE.Vector3();
   private _tempPos2 = new THREE.Vector3();
+
+  // State management
+  private renderableSubscription: Subscription | null = null;
+  private globalLabelsEnabled: boolean = true; // Default to true
+  private lastGlobalState: boolean = true;
 
   constructor(scene: THREE.Scene, config: LabelVisibilityConfig = {}) {
     super(scene);
@@ -54,8 +62,11 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       default: config.default ?? 400,
       satellite: config.satellite ?? 1,
       ejectedSatellite: config.ejectedSatellite ?? 200000000,
-      asteroid: config.asteroid ?? 100, // Increase asteroid visibility to 100 AU for practical viewing
+      asteroid: config.asteroid ?? 100,
     };
+
+    // Subscribe to renderable object changes
+    this.subscribeToStateChanges();
   }
 
   /**
@@ -81,7 +92,9 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       throw new Error("No scene to create celestial labels with");
     }
 
-    const labelElement = document.createElement(CELESTIAL_LABEL_TAG);
+    const labelElement = document.createElement(
+      CELESTIAL_LABEL_TAG,
+    ) as CelestialLabelComponent;
     labelElement.setAttribute("data-object-id", object.id);
     labelElement.setAttribute("data-object-type", object.type);
     labelElement.setAttribute("data-name", object.name);
@@ -105,7 +118,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       lastDistance: "",
       lastSpeed: "",
       lastVisible: false,
-      lastPosition: css2dObject.position.clone(), // Cache initial position
+      lastPosition: css2dObject.position.clone(),
     });
   }
 
@@ -119,78 +132,41 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
 
-    const config = this._getLabelVisibilityConfig();
     const allObjects = objectManager.getLatestRenderableObjects();
-    const mainStarId = Object.values(allObjects).find(
-      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
-    )?.id;
 
     this.elements.forEach((label) => {
-      const type = label.element.getAttribute(
-        "data-object-type",
-      ) as CelestialType;
       const objectId = label.element.getAttribute("data-object-id")!;
       const ownObject = objectManager.getObject(objectId);
+      const renderableObject = allObjects[objectId];
 
-      let visible = false;
-
-      if (!ownObject) {
-        label.element.toggleAttribute("visible", false);
+      if (!ownObject || !renderableObject) {
         return;
       }
 
-      // Update label position to follow the celestial object ONLY IF it has moved significantly
-      const renderableObject = allObjects[objectId];
-      if (renderableObject) {
-        const newLabelPosition = this.calculateLabelPosition(
-          renderableObject,
-          ownObject,
-          objectManager,
-        );
+      // Update label position if object has moved
+      const newLabelPosition = this.calculateLabelPosition(
+        renderableObject,
+        ownObject,
+        objectManager,
+      );
 
-        const cache = this.labelCache.get(objectId)!;
-        if (
-          !cache.lastPosition ||
-          !cache.lastPosition.equals(newLabelPosition)
-        ) {
-          label.position.copy(newLabelPosition);
-          cache.lastPosition = newLabelPosition.clone(); // Update cached position
-        }
+      const cache = this.labelCache.get(objectId)!;
+      if (!cache.lastPosition || !cache.lastPosition.equals(newLabelPosition)) {
+        label.position.copy(newLabelPosition);
+        cache.lastPosition = newLabelPosition.clone();
       }
 
-      // For label distance, measure from camera to object's surface
-      // This gives the actual distance the user would experience
+      // Update distance and speed display
       const centerDistance = cameraPosition.distanceTo(ownObject.position);
-
-      // For solid bodies, subtract the object's radius to get distance to surface
-      // For stars, gas giants, and comets, use center distance (no meaningful surface for comets)
-      const solidBodyTypes = [
-        CelestialType.PLANET,
-        CelestialType.DWARF_PLANET,
-        CelestialType.MOON,
-        CelestialType.SATELLITE,
-        CelestialType.ASTEROID, // Include ASTEROID for surface distance calculation
-      ];
-
-      let distanceToSelf = centerDistance;
-      if (solidBodyTypes.includes(type) && renderableObject?.realRadius_m) {
-        // Convert radius from meters to scene units and subtract from center distance
-        const radiusInSceneUnits =
-          renderableObject.realRadius_m * (1 / AU_METERS);
-        distanceToSelf = Math.max(0, centerDistance - radiusInSceneUnits);
-      }
-      const distanceInAu = this.sceneUnitsToAu(distanceToSelf);
+      const distanceInAu = this.sceneUnitsToAu(centerDistance);
       const formattedDistance = this._formatDistance(distanceInAu);
 
-      // Calculate and format speed
       let formattedSpeed = "";
-      if (renderableObject?.velocityMagnitude_mps !== undefined) {
-        const speed = renderableObject.velocityMagnitude_mps; // Raw velocity in m/s
-        formattedSpeed = this._formatSpeed(speed);
+      if (renderableObject.velocityMagnitude_mps !== undefined) {
+        formattedSpeed = this._formatSpeed(
+          renderableObject.velocityMagnitude_mps,
+        );
       }
-
-      // Get cached values for this label (re-fetch as it might have been updated above for lastPosition)
-      const cache = this.labelCache.get(objectId)!;
 
       // Only update attributes if values have changed
       if (cache.lastDistance !== formattedDistance) {
@@ -206,146 +182,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         cache.lastSpeed = formattedSpeed;
       }
 
-      switch (type) {
-        case CelestialType.STAR: {
-          if (objectId === mainStarId) {
-            visible = true;
-          } else {
-            // It's a secondary star, apply distance check
-            visible = distanceToSelf < config.secondaryStar;
-          }
-          break;
-        }
-
-        case CelestialType.COMET: {
-          visible = distanceToSelf < config.comet;
-          break;
-        }
-
-        case CelestialType.PLANET: {
-          visible = distanceToSelf < config.planet;
-          break;
-        }
-
-        case CelestialType.DWARF_PLANET: {
-          visible = distanceToSelf < config.planet;
-          break;
-        }
-
-        case CelestialType.ASTEROID: {
-          visible = distanceToSelf < config.asteroid;
-          break;
-        }
-
-        case CelestialType.SATELLITE: {
-          const parentId = label.element.getAttribute("data-parent-id")!;
-          const allObjects = objectManager.getLatestRenderableObjects();
-          const parentData = allObjects[parentId];
-          const parentObject = objectManager.getObject(parentId);
-
-          if (parentObject && parentData) {
-            if (
-              [CelestialType.PLANET, CelestialType.GAS_GIANT].includes(
-                parentData.type,
-              )
-            ) {
-              // Rule: Visible if camera is close to the PARENT planet.
-              const parentCenterDistance = cameraPosition.distanceTo(
-                parentObject.position,
-              );
-              const parentRadiusInSceneUnits =
-                parentData.realRadius_m * (1 / AU_METERS);
-              const distanceToParent = Math.max(
-                0,
-                parentCenterDistance - parentRadiusInSceneUnits,
-              );
-              visible = distanceToParent < config.satellite;
-            } else if (parentData.type === CelestialType.STAR) {
-              // Rule: Ejected moon, visible if camera is close to the MOON itself.
-              visible = true;
-            }
-          } else {
-            visible = true;
-          }
-          break;
-        }
-        case CelestialType.GAS_GIANT: {
-          visible = distanceToSelf < config.gasGiant;
-          break;
-        }
-
-        case CelestialType.MOON: {
-          const parentId = label.element.getAttribute("data-parent-id")!;
-          const allObjects = objectManager.getLatestRenderableObjects();
-          const parentData = allObjects[parentId];
-          const parentObject = objectManager.getObject(parentId);
-
-          if (parentObject && parentData) {
-            if (
-              [CelestialType.PLANET, CelestialType.GAS_GIANT].includes(
-                parentData.type,
-              )
-            ) {
-              // Rule: Visible if camera is close to the PARENT planet.
-              const parentCenterDistance = cameraPosition.distanceTo(
-                parentObject.position,
-              );
-              const parentRadiusInSceneUnits =
-                parentData.realRadius_m * (1 / AU_METERS);
-              const distanceToParent = Math.max(
-                0,
-                parentCenterDistance - parentRadiusInSceneUnits,
-              );
-              visible = distanceToParent < config.moon;
-            } else if (parentData.type === CelestialType.STAR) {
-              // Rule: Ejected moon, visible if camera is close to the MOON itself.
-              visible = distanceToSelf < config.ejectedMoon;
-            }
-          }
-          break;
-        }
-        case CelestialType.ASTEROID_FIELD:
-        case CelestialType.OORT_CLOUD: {
-          // These objects typically don't have labels, or are handled differently.
-          // Explicitly set to false to avoid displaying labels for them.
-          visible = false;
-          break;
-        }
-        default: {
-          // Rule: Default for all other objects.
-          visible = distanceToSelf < config.default;
-        }
-      }
-
-      // Apply occlusion checking if the label would otherwise be visible
-      if (visible && this.isVisible) {
-        // Get the label's world position
-        const labelWorldPosition = new THREE.Vector3();
-        label.getWorldPosition(labelWorldPosition);
-
-        // Generate a unique ID for this label
-        const labelId = `celestial_${objectId}`;
-
-        // Check if the label is occluded by celestial objects
-        const isOccluded = this.isLabelOccludedOptimized(
-          labelId,
-          OSVector3.fromThreeJS(labelWorldPosition),
-          camera,
-          objectManager,
-          objectId,
-        );
-
-        if (isOccluded) {
-          visible = false;
-        }
-      }
-
-      // Only update visibility if it has changed
-      if (cache.lastVisible !== visible) {
-        label.element.toggleAttribute("visible", visible);
-        cache.lastVisible = visible;
-      }
-
       // Update cache
       this.labelCache.set(objectId, cache);
     });
@@ -353,8 +189,65 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
   public override clear(): void {
     super.clear();
-    // Clean up cache
     this.labelCache.clear();
+    this.unsubscribeFromStateChanges();
+  }
+
+  /**
+   * Set the global labels enabled state
+   */
+  public setGlobalLabelsEnabled(enabled: boolean): void {
+    if (this.globalLabelsEnabled !== enabled) {
+      this.globalLabelsEnabled = enabled;
+      this.updateAllLabelVisibility();
+    }
+  }
+
+  /**
+   * Subscribe to renderable object state changes
+   */
+  private subscribeToStateChanges(): void {
+    this.unsubscribeFromStateChanges();
+
+    this.renderableSubscription = renderableStore.renderableObjects$.subscribe(
+      (renderableObjects) => {
+        this.updateAllLabelVisibility();
+      },
+    );
+  }
+
+  /**
+   * Unsubscribe from state changes
+   */
+  private unsubscribeFromStateChanges(): void {
+    if (this.renderableSubscription) {
+      this.renderableSubscription.unsubscribe();
+      this.renderableSubscription = null;
+    }
+  }
+
+  /**
+   * Update visibility for all labels based on global and individual state
+   */
+  private updateAllLabelVisibility(): void {
+    this.elements.forEach((label) => {
+      const objectId = label.element.getAttribute("data-object-id");
+      if (!objectId) return;
+
+      const renderableObject = StateAccessor.getRenderableObject(objectId);
+      if (!renderableObject) return;
+
+      // AND logic: global labels enabled AND individual showLabel
+      const shouldBeVisible =
+        this.globalLabelsEnabled && (renderableObject.showLabel ?? true);
+
+      // Update the component's visibility using CSS class
+      const component = label.element as CelestialLabelComponent;
+      component.setVisible(shouldBeVisible);
+
+      // Update CSS2DObject visibility
+      label.visible = shouldBeVisible;
+    });
   }
 
   /**
@@ -413,27 +306,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     } else {
       return `${speedInMps.toFixed(2)} m/s`;
     }
-  }
-
-  /**
-   * Defines the visibility rules for different celestial object types.
-   * @returns An object with distance thresholds in scene units.
-   */
-  private _getLabelVisibilityConfig() {
-    return {
-      planet: this.auToSceneUnits(this.visibilityConfig.planet),
-      gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
-      comet: this.auToSceneUnits(this.visibilityConfig.comet),
-      moon: this.auToSceneUnits(this.visibilityConfig.moon),
-      ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
-      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
-      default: this.auToSceneUnits(this.visibilityConfig.default),
-      satellite: this.auToSceneUnits(this.visibilityConfig.satellite),
-      ejectedSatellite: this.auToSceneUnits(
-        this.visibilityConfig.ejectedSatellite,
-      ),
-      asteroid: this.auToSceneUnits(this.visibilityConfig.asteroid), // Add asteroid visibility config
-    };
   }
 
   private calculateLabelPosition(

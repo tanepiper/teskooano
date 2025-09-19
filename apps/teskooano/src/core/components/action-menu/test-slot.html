@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Action Menu Slot Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #1a1a1a;
+        color: white;
+      }
+      .test-container {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #333;
+        border-radius: 8px;
+      }
+      .test-button {
+        background: #007acc;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .test-button:hover {
+        background: #005a9e;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Action Menu Slot Test</h1>
+
+    <div class="test-container">
+      <h2>Basic Slot-based Action Menu</h2>
+      <teskooano-action-menu
+        instance-id="test-menu-1"
+        button-size="sm"
+        direction="right"
+        close-on-action="true"
+        toggle-title="Test Actions"
+      >
+        <button class="test-button" data-action="focus">Focus Camera</button>
+        <button class="test-button" data-action="follow">Follow Object</button>
+        <button class="test-button" data-action="info">Show Info</button>
+      </teskooano-action-menu>
+    </div>
+
+    <div class="test-container">
+      <h2>Action Menu with Custom Icon</h2>
+      <teskooano-action-menu
+        instance-id="test-menu-2"
+        button-size="md"
+        direction="left"
+        close-on-action="false"
+        toggle-title="Custom Actions"
+        icon="<svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z'/></svg>"
+      >
+        <button class="test-button" data-action="expand">Expand All</button>
+        <button class="test-button" data-action="collapse">Collapse All</button>
+        <button class="test-button" data-action="sort">Sort by Name</button>
+      </teskooano-action-menu>
+    </div>
+
+    <div class="test-container">
+      <h2>Programmatically Created Menu</h2>
+      <div id="programmatic-menu-container"></div>
+      <button class="test-button" onclick="createProgrammaticMenu()">
+        Create Programmatic Menu
+      </button>
+    </div>
+
+    <div class="test-container">
+      <h2>Event Log</h2>
+      <div
+        id="event-log"
+        style="
+          background: #2a2a2a;
+          padding: 10px;
+          border-radius: 4px;
+          max-height: 200px;
+          overflow-y: auto;
+        "
+      ></div>
+      <button class="test-button" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script type="module">
+      // Import the action menu component
+      import { ActionMenuComponent } from "./view/action-menu.component.js";
+
+      // Log events
+      function logEvent(message) {
+        const log = document.getElementById("event-log");
+        const timestamp = new Date().toLocaleTimeString();
+        log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        log.scrollTop = log.scrollHeight;
+      }
+
+      // Listen for menu toggle events
+      document.addEventListener("menu-toggled", (event) => {
+        const { isExpanded, instanceId } = event.detail;
+        logEvent(
+          `Menu ${instanceId} toggled: ${isExpanded ? "opened" : "closed"}`,
+        );
+      });
+
+      // Listen for button clicks in action menus
+      document.addEventListener("click", (event) => {
+        if (event.target.hasAttribute("data-action")) {
+          const action = event.target.getAttribute("data-action");
+          logEvent(`Action button clicked: ${action}`);
+        }
+      });
+
+      // Create programmatic menu
+      window.createProgrammaticMenu = function () {
+        const container = document.getElementById(
+          "programmatic-menu-container",
+        );
+        container.innerHTML = "";
+
+        const menu = new ActionMenuComponent();
+        menu.setAttribute("instance-id", "programmatic-menu");
+        menu.setConfig({
+          buttonSize: "sm",
+          direction: "right",
+          closeOnAction: true,
+          toggleTitle: "Programmatic Actions",
+        });
+
+        // Add buttons to the default slot
+        const actions = ["Action 1", "Action 2", "Action 3"];
+        actions.forEach((actionName, index) => {
+          const button = document.createElement("button");
+          button.className = "test-button";
+          button.setAttribute("data-action", `programmatic-${index + 1}`);
+          button.textContent = actionName;
+          menu.appendChild(button);
+        });
+
+        container.appendChild(menu);
+        logEvent("Programmatic menu created");
+      };
+
+      // Clear log
+      window.clearLog = function () {
+        document.getElementById("event-log").innerHTML = "";
+      };
+
+      // Log initial load
+      logEvent("Action Menu Slot Test loaded");
+    </script>
+  </body>
+</html>

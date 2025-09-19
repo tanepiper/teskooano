@@ -1,11 +1,6 @@
 export class CelestialLabelComponent extends HTMLElement {
   static get observedAttributes() {
-    return [
-      "data-name",
-      "data-distance-formatted",
-      "data-speed-formatted",
-      "visible",
-    ];
+    return ["data-name", "data-distance-formatted", "data-speed-formatted"];
   }
 
   private nameSpan!: HTMLSpanElement;
@@ -21,7 +16,6 @@ export class CelestialLabelComponent extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    // Don't render during construction - wait for connectedCallback
   }
 
   connectedCallback() {
@@ -67,7 +61,8 @@ export class CelestialLabelComponent extends HTMLElement {
           margin-left: 8px;
         }
 
-        :host(:not([visible])) {
+        /* Use CSS class for visibility control */
+        :host(.hidden) {
           opacity: 0;
         }
       </style>
@@ -85,8 +80,8 @@ export class CelestialLabelComponent extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue === newValue) return; // Skip if no change
-    if (!this.isInitialized) return; // Skip if not yet initialized
+    if (oldValue === newValue) return;
+    if (!this.isInitialized) return;
 
     switch (name) {
       case "data-name":
@@ -133,7 +128,6 @@ export class CelestialLabelComponent extends HTMLElement {
   }
 
   private render() {
-    // Initialize with current attribute values
     const name = this.getAttribute("data-name") || "Unknown";
     const distance = this.getAttribute("data-distance-formatted") || "";
     const speed = this.getAttribute("data-speed-formatted") || "";
@@ -141,6 +135,17 @@ export class CelestialLabelComponent extends HTMLElement {
     this.updateName(name);
     this.updateDistance(distance);
     this.updateSpeed(speed);
+  }
+
+  /**
+   * Set visibility using CSS class instead of attributes
+   */
+  setVisible(visible: boolean): void {
+    if (visible) {
+      this.classList.remove("hidden");
+    } else {
+      this.classList.add("hidden");
+    }
   }
 }
 
