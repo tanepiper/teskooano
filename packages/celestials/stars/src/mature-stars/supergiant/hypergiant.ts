@@ -82,32 +82,35 @@ export class HypergiantMaterial extends EnhancedStarMaterial {
   ): void {
     super.update(time, timeScale, lightSources, camera, allObjects, allMeshes);
 
-    // Add hypergiant-specific instability effects
+    // Add hypergiant-specific instability effects using available uniforms
     const instabilityPhase = Math.sin(time * 0.001) * 0.5 + 0.5;
 
-    // Variable brightness (hypergiants are unstable)
+    // Variable brightness (hypergiants are unstable) - use uLightingIntensity
     const brightnessVariation = 0.3 * instabilityPhase;
-    this.uniforms.glowIntensity.value = 1.8 + brightnessVariation;
+    if (this.uniforms.uLightingIntensity) {
+      this.uniforms.uLightingIntensity.value = 1.8 + brightnessVariation;
+    }
 
-    // Variable size pulsations
+    // Variable plasma turbulence - use uPlasmaTurbulence
     const pulsationVariation = 0.2 * Math.sin(time * 0.002);
-    this.uniforms.pulseSpeed.value = 1.2 + pulsationVariation;
+    if (this.uniforms.uPlasmaTurbulence) {
+      this.uniforms.uPlasmaTurbulence.value = 1.5 + pulsationVariation;
+    }
 
-    // Increased mass loss events
+    // Variable noise intensity for mass loss events - use uNoiseIntensity
     const massLossEvent = Math.random() < 0.001; // Rare but dramatic events
     if (massLossEvent) {
-      this.uniforms.cmeIntensity.value = 5.0; // Massive ejection
-      this.uniforms.stellarWindStrength.value = 5.0;
+      if (this.uniforms.uNoiseIntensity) {
+        this.uniforms.uNoiseIntensity.value = 0.8; // Increased noise for dramatic effect
+      }
     } else {
       // Gradually return to normal
-      this.uniforms.cmeIntensity.value = Math.max(
-        2.5,
-        this.uniforms.cmeIntensity.value * 0.99,
-      );
-      this.uniforms.stellarWindStrength.value = Math.max(
-        3.0,
-        this.uniforms.stellarWindStrength.value * 0.99,
-      );
+      if (this.uniforms.uNoiseIntensity) {
+        this.uniforms.uNoiseIntensity.value = Math.max(
+          0.2,
+          this.uniforms.uNoiseIntensity.value * 0.99,
+        );
+      }
     }
   }
 }
