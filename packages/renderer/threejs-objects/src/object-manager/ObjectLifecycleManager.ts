@@ -33,7 +33,7 @@ export interface ObjectLifecycleManagerConfig {
   lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
   camera: THREE.PerspectiveCamera;
-  css2DManager?: Layer2DManager;
+  css2DManager: Layer2DManager;
 }
 
 /**
@@ -50,7 +50,7 @@ export class ObjectLifecycleManager {
   private lensingHandler: GravitationalLensingHandler;
   private renderer: THREE.WebGLRenderer | null;
   private camera: THREE.PerspectiveCamera;
-  private css2DManager?: Layer2DManager;
+  private css2DManager: Layer2DManager;
 
   constructor(config: ObjectLifecycleManagerConfig) {
     this.objects = config.objects;
@@ -185,7 +185,7 @@ export class ObjectLifecycleManager {
 
     // For comets, the mesh is an LOD object. The label should be added
     // to the LOD object itself so it's not affected by level switching.
-    const celestialLayer = this.css2DManager?.getLayer(
+    const celestialLayer = this.css2DManager.getLayer(
       CSS2DLayerType.CELESTIAL_LABELS,
     ) as CelestialLabelLayer;
     if (celestialLayer) {

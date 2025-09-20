@@ -62,7 +62,7 @@ export class CompositeEnginePanel
   private _subscriptionManager = new StateSubscriptionMixin();
   private _isInitialized = false;
 
-  private _cameraCoordinator: PanelCameraCoordinator | undefined = undefined;
+  private _cameraCoordinator!: PanelCameraCoordinator;
   private _lifecycleManager: PanelLifecycleManager;
   private _eventManager: PanelEventManager;
 
@@ -175,7 +175,9 @@ export class CompositeEnginePanel
       ...currentState,
       ...updates,
     });
-    applyViewStateToRenderer(this._renderer, updates);
+    if (this._renderer) {
+      applyViewStateToRenderer(this._renderer, updates);
+    }
   }
 
   /**
@@ -227,10 +229,10 @@ export class CompositeEnginePanel
 
   /**
    * Provides access to the EngineCameraManager instance.
-   * @returns The EngineCameraManager instance or undefined if not initialized.
+   * @returns The EngineCameraManager instance.
    */
-  public get engineCameraManager(): EngineCameraManager | undefined {
-    return this._cameraCoordinator?.engineCameraManager;
+  public get engineCameraManager(): EngineCameraManager {
+    return this._cameraCoordinator.engineCameraManager;
   }
 
   /**
@@ -372,15 +374,24 @@ export class CompositeEnginePanel
     }
 
     // 4. Finalize setup.
+    if (!this._api?.id) {
+      console.error(
+        `[CompositePanel] Cannot initialize camera systems without panel API ID.`,
+      );
+      this._renderer.dispose();
+      this._renderer = undefined;
+      return;
+    }
+
     this._cameraCoordinator = new PanelCameraCoordinator(
       this,
       this._renderer,
-      this._api?.id,
+      this._api.id,
     );
 
     if (!this._cameraCoordinator.initialize()) {
       console.error(
-        `[CompositePanel ${this._api?.id}] Failed to initialize camera systems.`,
+        `[CompositePanel ${this._api.id}] Failed to initialize camera systems.`,
       );
       this._renderer.dispose();
       this._renderer = undefined;
@@ -484,8 +495,7 @@ export class CompositeEnginePanel
     this._renderer = undefined;
 
     // Dispose camera coordinator
-    this._cameraCoordinator?.dispose();
-    this._cameraCoordinator = undefined;
+    this._cameraCoordinator.dispose();
 
     // Dispose toolbar
     const toolbarManager = this._params?.params?.engineToolbarManager;
@@ -500,7 +510,6 @@ export class CompositeEnginePanel
 
     // Nullify references to allow garbage collection
     (this._renderer as any) = null;
-    (this._cameraCoordinator as any) = null;
     (this._engineToolbar as any) = null;
     (this._resizeObserver as any) = null;
   }

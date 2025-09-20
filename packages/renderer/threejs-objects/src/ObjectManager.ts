@@ -132,9 +132,9 @@ export class ObjectManager extends StateSubscriptionMixin {
    * @param camera - The main perspective camera.
    * @param renderableObjects$ - Observable stream of renderable celestial object data.
    * @param renderer - The WebGLRenderer instance.
-   * @param css2DManager - Optional manager for CSS2D labels and interactions.
-   * @param acceleration$ - Optional observable stream for acceleration vectors.
-   * @param lightingManager - Optional lighting manager to use. If not provided, creates its own.
+   * @param css2DManager - Manager for CSS2D labels and interactions.
+   * @param acceleration$ - Observable stream for acceleration vectors.
+   * @param lightingManager - Lighting manager to use.
    */
   constructor(
     scene: THREE.Scene,
@@ -142,9 +142,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     renderer: THREE.WebGLRenderer,
     css2DManager: LabelVisibilityManager & Layer2DManager,
-    acceleration$: Observable<
-      Record<string, OSVector3>
-    > = StateAccessor.accelerationVectors$(),
+    acceleration$: Observable<Record<string, OSVector3>>,
     lightingManager: LightingManager,
   ) {
     super();

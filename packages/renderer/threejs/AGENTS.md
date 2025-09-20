@@ -10,6 +10,8 @@ The **ThreeJS package** (`@teskooano/renderer-threejs`) serves as the **integrat
 
 - **Modular Architecture**: Composes specialized managers from sub-packages into a cohesive system
 - **Orchestrator Pattern**: Groups related managers into focused orchestrators (Rendering, Interaction, Debug)
+- **Constructor Injection**: Eliminates circular dependencies through proper dependency injection
+- **Service Container**: Manages shared and panel-specific services with clear boundaries
 - **State Bridge**: Transforms core application state into renderable format through RendererStateAdapter
 - **Render Pipeline**: Orchestrates frame-by-frame updates in the correct sequence
 - **Unified API**: Provides a clean facade for controlling the entire rendering system
@@ -52,6 +54,9 @@ src/
 ├── RendererStateAdapter.ts            # State bridge and transformation
 ├── events.ts                          # Type-safe event bus
 ├── types.ts                           # Type definitions and interfaces
+├── services/                          # Service container and dependency injection
+│   ├── index.ts                       # Service exports
+│   └── RendererServiceContainer.ts    # Manages shared and panel-specific services
 └── orchestrators/                     # Orchestrator pattern implementation
     ├── index.ts                       # Barrel exports
     ├── README.md                      # Orchestrator architecture documentation
@@ -62,12 +67,13 @@ src/
 
 ### Data Flow
 
-1. **Initialization**: ModularSpaceRenderer creates orchestrators in dependency order
-2. **State Subscription**: RendererStateAdapter subscribes to core state observables
-3. **Data Transformation**: Raw celestial objects transformed into renderable format
-4. **Manager Coordination**: Orchestrators coordinate specialized managers
-5. **Render Pipeline**: Frame-by-frame updates in correct sequence
-6. **Event Broadcasting**: Type-safe events for internal communication
+1. **Service Creation**: RendererServiceContainer creates all services with proper dependencies
+2. **Constructor Injection**: Orchestrators receive services via constructor injection
+3. **State Subscription**: RendererStateAdapter subscribes to core state observables
+4. **Data Transformation**: Raw celestial objects transformed into renderable format
+5. **Manager Coordination**: Orchestrators coordinate specialized managers
+6. **Render Pipeline**: Frame-by-frame updates in correct sequence
+7. **Event Broadcasting**: Type-safe events for internal communication
 
 ## Code Style & Conventions
 
@@ -119,6 +125,40 @@ export class ModularSpaceRenderer {
 }
 ```
 
+### RendererServiceContainer
+
+```typescript
+export class RendererServiceContainer {
+  public static getInstance(): RendererServiceContainer;
+  public getSharedServices(): SharedRendererServices;
+  public createPanelServices(
+    options: PanelServiceOptions,
+  ): PanelRendererServices;
+  public createRendererServices(container: HTMLElement): RendererServices;
+  public disposeSharedServices(): void;
+  public disposePanelServices(services: PanelRendererServices): void;
+  public disposeAll(services?: PanelRendererServices): void;
+}
+
+export interface SharedRendererServices {
+  readonly stateAdapter: RendererStateAdapter;
+  readonly lodManager: LODManager;
+}
+
+export interface PanelRendererServices {
+  readonly sceneManager: SceneManager;
+  readonly lightingManager: LightingManager;
+  readonly gridManager: GridManager;
+  readonly backgroundManager: BackgroundManager;
+  readonly objectManager: ObjectManager;
+  readonly orbitManager: OrbitsManager;
+  readonly controlsManager: ControlsManager;
+  readonly css2DManager: Layer2DManager;
+  readonly auMarkerManager: AuMarkerManager;
+  readonly renderPipeline: RenderPipeline;
+}
+```
+
 ### RenderPipeline
 
 ```typescript
@@ -163,19 +203,9 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
 
 ```typescript
 export class RenderingOrchestrator {
-  private _sceneManager: SceneManager;
-  private _objectManager: ObjectManager;
-  private _orbitManager: OrbitsManager;
-  private _backgroundManager: BackgroundManager;
-  private _lightingManager: LightingManager;
-  private _lodManager: LODManager;
-  private _gridManager: GridManager;
-  private _stateAdapter: RendererStateAdapter;
-  private _renderPipeline: RenderPipeline;
+  private readonly services: RendererServices;
 
-  constructor(container: HTMLElement);
-  initializeManagersWithCss2D(css2DManager: any): void;
-  setControlsManager(controlsManager: any): void;
+  constructor(services: RendererServices);
   setDebugMode(enabled: boolean): void;
   getTriangleCount(): number;
   dispose(): void;
@@ -197,11 +227,9 @@ export class RenderingOrchestrator {
 
 ```typescript
 export class InteractionOrchestrator {
-  private controlsManager: ControlsManager;
-  private css2DManager: Layer2DManager;
-  private auMarkerManager: AuMarkerManager;
+  private readonly services: RendererServices;
 
-  constructor(container: HTMLElement, renderingOrchestrator: any);
+  constructor(services: RendererServices);
   setDebugMode(enabled: boolean): void;
   onResize(width: number, height: number): void;
   dispose(): void;
@@ -292,8 +320,17 @@ moon run threejs:test:watch
 
 - **Group Related Managers**: Organize managers by functional responsibility
 - **Implement Standard Interface**: Follow established orchestrator patterns
-- **Handle Dependencies**: Manage circular dependencies between orchestrators
+- **Constructor Injection**: Use constructor injection for all dependencies
+- **Service Boundaries**: Clear separation between shared and panel-specific services
 - **Resource Management**: Proper cleanup of managed resources
+
+### Service Container Development
+
+- **Singleton Pattern**: Use singleton pattern for shared services (stateAdapter, lodManager)
+- **Instance Pattern**: Create new instances for panel-specific services (scene, lighting, etc.)
+- **Dependency Injection**: All services receive dependencies via constructor
+- **Service Interfaces**: Define clear interfaces for service boundaries
+- **Resource Disposal**: Proper cleanup through service container
 
 ### Pipeline Development
 
@@ -304,30 +341,64 @@ moon run threejs:test:watch
 
 ## Common Patterns
 
-### Orchestrator Pattern
+### Constructor Injection Pattern
 
 ```typescript
 export class CustomOrchestrator {
-  private _manager1: Manager1;
-  private _manager2: Manager2;
+  private readonly services: CustomServices;
 
-  constructor(dependencies: CustomOrchestratorOptions) {
-    this._manager1 = new Manager1(dependencies.param1);
-    this._manager2 = new Manager2(dependencies.param2);
+  constructor(services: CustomServices) {
+    this.services = services;
   }
 
   public getManager1(): Manager1 {
-    return this._manager1;
+    return this.services.manager1;
   }
 
   public setDebugMode(enabled: boolean): void {
-    this._manager1.setDebugMode(enabled);
-    this._manager2.setDebugMode(enabled);
+    this.services.manager1.setDebugMode(enabled);
+    this.services.manager2.setDebugMode(enabled);
   }
 
   public dispose(): void {
-    this._manager1.dispose();
-    this._manager2.dispose();
+    // Disposal handled by service container
+    console.log("[CustomOrchestrator] Disposal handled by service container");
+  }
+}
+```
+
+### Service Container Pattern
+
+```typescript
+export class CustomServiceContainer {
+  private static instance: CustomServiceContainer;
+  private _sharedServices: SharedServices | null = null;
+
+  public static getInstance(): CustomServiceContainer {
+    if (!CustomServiceContainer.instance) {
+      CustomServiceContainer.instance = new CustomServiceContainer();
+    }
+    return CustomServiceContainer.instance;
+  }
+
+  public getSharedServices(): SharedServices {
+    if (!this._sharedServices) {
+      this._sharedServices = {
+        stateManager: new StateManager(),
+        eventBus: new EventBus(),
+      };
+    }
+    return this._sharedServices;
+  }
+
+  public createPanelServices(options: PanelOptions): PanelServices {
+    const sharedServices = this.getSharedServices();
+
+    return {
+      sceneManager: new SceneManager(options.container),
+      controlsManager: new ControlsManager(options.camera),
+      // ... other panel-specific services
+    };
   }
 }
 ```
@@ -416,14 +487,59 @@ export class CustomPipeline {
 - **Callback Optimization**: Efficient callback execution
 - **Memory Allocation**: Minimize allocations in hot paths
 
+## Architectural Improvements
+
+### Circular Dependencies Resolution
+
+The renderer system has been refactored to eliminate circular dependencies:
+
+**Before (Problematic):**
+
+```typescript
+// ❌ Circular dependency
+RenderingOrchestrator -> needs css2DManager from InteractionOrchestrator
+InteractionOrchestrator -> needs RenderingOrchestrator for scene/camera
+```
+
+**After (Fixed):**
+
+```typescript
+// ✅ Constructor injection
+RendererServiceContainer -> creates all services upfront
+RenderingOrchestrator -> receives services via constructor
+InteractionOrchestrator -> receives services via constructor
+```
+
+### Service Boundaries
+
+Clear separation between shared and panel-specific services:
+
+**Shared Services (Singletons):**
+
+- `RendererStateAdapter`: State management across all panels
+- `LODManager`: Level of detail management
+
+**Panel-Specific Services (Instances):**
+
+- `SceneManager`: Three.js scene for each panel
+- `ControlsManager`: Camera controls for each panel
+- `ObjectManager`: Object lifecycle for each panel
+
+### Constructor Injection Benefits
+
+- **No setDependencies() calls**: All dependencies injected at construction
+- **Clear service boundaries**: Explicit interfaces for service contracts
+- **Better testability**: Easy to mock dependencies for testing
+- **Improved maintainability**: Clear dependency relationships
+
 ## Troubleshooting
 
 ### Common Issues
 
-- **Circular Dependencies**: Manage dependencies between orchestrators
-- **State Synchronization**: Ensure proper state transformation
-- **Performance Issues**: Monitor frame rate and optimize pipeline
-- **Memory Leaks**: Check resource disposal and subscription cleanup
+- **Service Creation**: Ensure services are created through RendererServiceContainer
+- **Memory Leaks**: Ensure proper disposal through service container
+- **Performance Issues**: Monitor frame rate and optimize LOD settings
+- **State Synchronization**: Verify state adapter subscriptions
 
 ### Debug Tools
 

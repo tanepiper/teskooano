@@ -5,6 +5,7 @@ import {
   CelestialLabelLayer,
   CSS2DLayerType,
 } from "@teskooano/renderer-threejs-labels";
+import type { RendererServices } from "../services/RendererServiceContainer";
 
 /**
  * Orchestrates all user interaction and interface-related managers.
@@ -13,61 +14,24 @@ import {
  * - Camera controls and user input
  * - 2D labels and overlays
  * - AU markers and distance indicators
+ *
+ * **Constructor Injection:**
+ *
+ * This orchestrator now uses constructor injection to receive all its dependencies,
+ * eliminating the circular dependency issues and setDependencies() anti-pattern.
  */
 export class InteractionOrchestrator {
   /**
-   * Handles the camera controls and user input.
+   * All renderer services are injected via constructor.
+   * This eliminates circular dependencies and provides clear service boundaries.
    */
-  private controlsManager: ControlsManager;
+  private readonly services: RendererServices;
 
   /**
-   * Handles the 2D labels and overlays.
+   * Initializes the interaction orchestrator with injected services.
    */
-  private css2DManager: Layer2DManager;
-
-  /**
-   * Handles the AU markers and distance indicators.
-   */
-  private auMarkerManager: AuMarkerManager;
-
-  /**
-   * Initializes the interaction orchestrator.
-   */
-  constructor(
-    container: HTMLElement,
-    renderingOrchestrator: any, // Pass the entire orchestrator
-  ) {
-    // Initialize 2D layer manager
-    this.css2DManager = new Layer2DManager(
-      renderingOrchestrator.sceneManager.scene,
-      container,
-    );
-    const celestialLayer = new CelestialLabelLayer(
-      renderingOrchestrator.sceneManager.scene,
-    );
-    this.css2DManager.registerLayer(
-      CSS2DLayerType.CELESTIAL_LABELS,
-      celestialLayer,
-    );
-
-    // Initialize controls manager
-    this.controlsManager = new ControlsManager(
-      renderingOrchestrator.sceneManager.camera,
-      renderingOrchestrator.sceneManager.renderer.domElement,
-    );
-
-    // Initialize AU marker manager
-    this.auMarkerManager = new AuMarkerManager(
-      renderingOrchestrator.sceneManager.scene,
-      this.css2DManager,
-    );
-    this.auMarkerManager.createMarkers();
-
-    // Initialize the managers in RenderingOrchestrator with the real css2DManager
-    renderingOrchestrator.initializeManagersWithCss2D(this.css2DManager);
-
-    // Set the controls manager in RenderingOrchestrator
-    renderingOrchestrator.setControlsManager(this.controlsManager);
+  constructor(services: RendererServices) {
+    this.services = services;
 
     // @ts-ignore
     if (window.teskooano) {
@@ -80,43 +44,47 @@ export class InteractionOrchestrator {
    * Gets the controls manager for direct access when needed.
    */
   getControlsManager(): ControlsManager {
-    return this.controlsManager;
+    return this.services.controlsManager;
   }
 
   /**
    * Gets the 2D layer manager for direct access when needed.
    */
   getLayer2DManager(): Layer2DManager {
-    return this.css2DManager;
+    return this.services.css2DManager;
   }
 
   /**
    * Gets the AU marker manager for direct access when needed.
    */
   getAuMarkerManager(): AuMarkerManager | undefined {
-    return this.auMarkerManager;
+    return this.services.auMarkerManager;
   }
 
   /**
    * Sets debug mode for interaction components.
    */
   setDebugMode(enabled: boolean): void {
-    this.controlsManager.setDebugMode(enabled);
+    this.services.controlsManager.setDebugMode(enabled);
   }
 
   /**
    * Handles window resize events for all interaction components.
    */
   onResize(width: number, height: number): void {
-    this.css2DManager?.onResize(width, height);
+    this.services.css2DManager?.onResize(width, height);
   }
 
   /**
    * Disposes all interaction resources.
+   * Note: This orchestrator no longer manages disposal directly.
+   * Disposal is handled by the service container.
    */
   dispose(): void {
-    this.controlsManager.dispose();
-    this.css2DManager?.dispose();
-    this.auMarkerManager?.dispose();
+    // Disposal is now handled by the service container
+    // This method is kept for backward compatibility
+    console.log(
+      "[InteractionOrchestrator] Disposal handled by service container",
+    );
   }
 }

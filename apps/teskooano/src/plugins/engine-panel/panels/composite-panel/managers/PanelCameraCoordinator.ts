@@ -17,10 +17,10 @@ import type { CompositeEnginePanel } from "../CompositeEnginePanel";
 export class PanelCameraCoordinator {
   private _panel: CompositeEnginePanel;
   private _renderer: ModularSpaceRenderer;
-  private _panelApiId: string | undefined;
+  private _panelApiId: string;
 
-  private _cameraManagerInstance: CameraManager | undefined;
-  private _engineCameraManager: EngineCameraManager | undefined;
+  private _cameraManagerInstance!: CameraManager;
+  private _engineCameraManager!: EngineCameraManager;
   private _subscription = new Subscription();
 
   /**
@@ -32,7 +32,7 @@ export class PanelCameraCoordinator {
   constructor(
     panel: CompositeEnginePanel,
     renderer: ModularSpaceRenderer,
-    panelApiId: string | undefined,
+    panelApiId: string,
   ) {
     this._panel = panel;
     this._renderer = renderer;
@@ -44,92 +44,64 @@ export class PanelCameraCoordinator {
    * @returns True if successful, false otherwise.
    */
   public initialize(): boolean {
-    if (!this._initializeSystems()) return false;
-    if (!this._configureAndLinkState()) return false;
-    return true;
+    return this._initializeSystems();
   }
 
   /**
    * Provides access to the CameraManager instance.
    */
-  public get cameraManager(): CameraManager | undefined {
+  public get cameraManager(): CameraManager {
     return this._cameraManagerInstance;
   }
 
   /**
    * Provides access to the EngineCameraManager instance.
    */
-  public get engineCameraManager(): EngineCameraManager | undefined {
+  public get engineCameraManager(): EngineCameraManager {
     return this._engineCameraManager;
   }
 
   /** Disposes of all resources and subscriptions held by the coordinator. */
   public dispose(): void {
     this._subscription.unsubscribe();
-    this._cameraManagerInstance?.destroy();
-    this._engineCameraManager?.dispose();
+    this._cameraManagerInstance.dispose();
+    this._engineCameraManager.dispose();
   }
 
   /** Initializes the main CameraManager and the panel-specific EngineCameraManager. */
   private _initializeSystems(): boolean {
-    this._cameraManagerInstance = new CameraManager();
-    this._engineCameraManager = new EngineCameraManager(
-      this._panel,
-      this._cameraManagerInstance,
-      this._panelApiId,
-    );
-
-    if (!this._cameraManagerInstance || !this._engineCameraManager) {
-      console.error(
-        `[PanelCameraCoordinator for ${this._panelApiId}] Failed to create camera management instances.`,
-      );
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Sets dependencies for the renderer CameraManager and subscribes to its state changes.
-   * Uses the centralized per-panel camera state via core-state's CameraManager.
-   */
-  private _configureAndLinkState(): boolean {
-    if (!this._cameraManagerInstance) return false;
-
-    const panelId = this._panelApiId;
     try {
-      if (panelId) {
-        const coreCameraManager = StateAccessor.getCameraManager(panelId);
-        const coreCameraState = coreCameraManager.getCameraState();
+      // Get core camera state for initialization
+      const coreCameraManager = StateAccessor.getCameraManager(
+        this._panelApiId,
+      );
+      const coreCameraState = coreCameraManager.getCameraState();
 
-        this._cameraManagerInstance.setDependencies({
-          renderer: this._renderer,
-          panelId,
-          initialFov: coreCameraState.fov,
-          initialFocusedObjectId: coreCameraState.focusedObjectId,
-          initialCameraPosition: coreCameraState.position,
-          initialCameraTarget: coreCameraState.target,
-          onFocusChangeCallback: (focusedId: string | null) => {
-            // Update core-state camera focus when engine camera focus changes
-            coreCameraManager.setFocusedObject(focusedId);
-          },
-        });
-      } else {
-        // Fallback if panelId is missing: still set renderer dependency with default panelId
-        this._cameraManagerInstance.setDependencies({
-          renderer: this._renderer,
-          panelId: this._panelApiId || "default",
-        });
-      }
+      // Create CameraManager with all required dependencies
+      this._cameraManagerInstance = new CameraManager({
+        renderer: this._renderer,
+        panelId: this._panelApiId,
+        initialFov: coreCameraState.fov,
+        initialFocusedObjectId: coreCameraState.focusedObjectId,
+        initialCameraPosition: coreCameraState.position,
+        initialCameraTarget: coreCameraState.target,
+        onFocusChangeCallback: (focusedId: string | null) => {
+          // Update core-state camera focus when engine camera focus changes
+          coreCameraManager.setFocusedObject(focusedId);
+        },
+      });
 
-      this._cameraManagerInstance.initializeCameraPosition();
+      // Create EngineCameraManager with the CameraManager instance
+      this._engineCameraManager = new EngineCameraManager(
+        this._panel,
+        this._cameraManagerInstance,
+        this._panelApiId,
+      );
 
-      // Note: No need to subscribe to renderer camera state and push back to core-state
-      // since the renderer CameraManager now uses the same CameraStore as the core CameraManager.
-      // This prevents circular feedback loops while maintaining state synchronization.
       return true;
     } catch (error) {
       console.error(
-        `[PanelCameraCoordinator for ${this._panelApiId}] Failed to set CameraManager dependencies or subscribe to state:`,
+        `[PanelCameraCoordinator for ${this._panelApiId}] Failed to create camera managers:`,
         error,
       );
       return false;

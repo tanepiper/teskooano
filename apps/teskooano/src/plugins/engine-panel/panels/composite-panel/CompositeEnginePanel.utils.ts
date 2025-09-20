@@ -20,15 +20,13 @@ export const createDefaultViewState = (): CompositeEngineState => ({
 /**
  * Applies specific view state updates by calling the public API of the ModularSpaceRenderer.
  * This ensures that the renderer properly orchestrates all its sub-managers.
- * @param renderer - The ModularSpaceRenderer instance.
+ * @param renderer - The ModularSpaceRenderer instance (required).
  * @param updates - The partial view state containing changes to apply.
  */
 export function applyViewStateToRenderer(
-  renderer: ModularSpaceRenderer | undefined,
+  renderer: ModularSpaceRenderer,
   updates: Partial<CompositeEngineState>,
 ): void {
-  if (!renderer) return;
-
   if (updates.showGrid !== undefined) {
     renderer.renderingOrchestrator.gridManager.setVisible(updates.showGrid);
   }

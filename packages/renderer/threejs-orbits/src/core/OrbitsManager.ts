@@ -78,8 +78,8 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /** State adapter for accessing visualization settings */
   private stateAdapter: RendererStateAdapter;
-  /** The optional manager for 2D labels, passed to strategies. */
-  private layer2DManager?: Layer2DManager;
+  /** The manager for 2D labels, passed to strategies. */
+  private layer2DManager: Layer2DManager;
 
   /** Shared orbit lines group for all orbit-related visualizations */
   private idealOrbitLinesGroup: THREE.Group;

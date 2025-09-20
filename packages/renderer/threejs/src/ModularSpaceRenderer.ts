@@ -4,7 +4,7 @@ import {
   InteractionOrchestrator,
   DebugOrchestrator,
 } from "./orchestrators";
-
+import { RendererServiceContainer } from "./services/RendererServiceContainer";
 import { simulationOrchestrator } from "@teskooano/app-simulation";
 
 /**
@@ -14,9 +14,15 @@ import { simulationOrchestrator } from "@teskooano/app-simulation";
  * related managers together. It provides a unified API for controlling the
  * entire rendering process while maintaining a clean, modular architecture.
  *
+ * **Constructor Injection Architecture:**
+ *
+ * This renderer now uses constructor injection to eliminate circular dependencies
+ * and provide clear service boundaries. All services are created through the
+ * RendererServiceContainer which manages both shared and panel-specific services.
+ *
  * @example
- * const renderer = new ModularSpaceRenderer(containerElement, { antialias: true });
- * renderer.startRenderLoop();
+ * const renderer = new ModularSpaceRenderer(containerElement);
+ * renderer.start();
  */
 export class ModularSpaceRenderer {
   /** Orchestrates all rendering-related managers and operations. */
@@ -28,29 +34,27 @@ export class ModularSpaceRenderer {
 
   private container?: HTMLElement;
   private resizeHandler?: () => void;
+  private serviceContainer: RendererServiceContainer;
+  private services: any; // Store services reference for proper disposal
 
   /**
    * Initializes the renderer and all its subordinate orchestrators.
+   * Uses constructor injection to eliminate circular dependencies.
    *
    * @param container The HTML element that will host the renderer's canvas.
    */
   constructor(container: HTMLElement) {
     this.container = container;
+    this.serviceContainer = RendererServiceContainer.getInstance();
 
-    // Initialize orchestrators in dependency order
-    // 1. Initialize RenderingOrchestrator first (creates the main scene manager)
-    this.renderingOrchestrator = new RenderingOrchestrator(container);
+    // Create all services through the service container
+    this.services = this.serviceContainer.createRendererServices(container);
 
-    // 2. Initialize InteractionOrchestrator (passes the entire RenderingOrchestrator)
-    this.interactionOrchestrator = new InteractionOrchestrator(
-      container,
-      this.renderingOrchestrator,
-    );
-
-    // 3. Initialize DebugOrchestrator (needs scene manager from RenderingOrchestrator)
-    this.debugOrchestrator = new DebugOrchestrator(
-      this.renderingOrchestrator.sceneManager,
-    );
+    // Initialize orchestrators with injected services
+    // No more circular dependencies - all services are created upfront
+    this.renderingOrchestrator = new RenderingOrchestrator(this.services);
+    this.interactionOrchestrator = new InteractionOrchestrator(this.services);
+    this.debugOrchestrator = new DebugOrchestrator(this.services.sceneManager);
 
     this.setupAnimationCallbacks();
   }
@@ -131,13 +135,18 @@ export class ModularSpaceRenderer {
   /**
    * Cleans up resources used by the renderer and its orchestrators.
    * Stops the animation loop and removes event listeners.
+   * Now uses the service container for proper resource management.
    */
   dispose(): void {
     console.log("[ModularSpaceRenderer] Disposing resources...");
 
+    // Dispose orchestrators (they no longer manage their own disposal)
     this.renderingOrchestrator.dispose();
     this.interactionOrchestrator.dispose();
     this.debugOrchestrator.dispose();
+
+    // Dispose services through the service container
+    this.serviceContainer.disposeAll(this.services);
 
     if (this.resizeHandler) {
       window.removeEventListener("resize", this.resizeHandler);
