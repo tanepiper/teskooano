@@ -4,7 +4,8 @@ import {
   InteractionOrchestrator,
   DebugOrchestrator,
 } from "./orchestrators";
-import { RendererServiceContainer } from "./services/RendererServiceContainer";
+import { RendererContainer } from "./services/RendererContainer";
+import type { RendererServices } from "./services/RendererServiceContainer";
 import { simulationOrchestrator } from "@teskooano/app-simulation";
 
 /**
@@ -34,8 +35,9 @@ export class ModularSpaceRenderer {
 
   private container?: HTMLElement;
   private resizeHandler?: () => void;
-  private serviceContainer: RendererServiceContainer;
-  private services: any; // Store services reference for proper disposal
+  private diContainer: RendererContainer;
+  private services: RendererServices; // Store services reference for proper disposal
+  private panelId: string;
 
   /**
    * Initializes the renderer and all its subordinate orchestrators.
@@ -45,10 +47,14 @@ export class ModularSpaceRenderer {
    */
   constructor(container: HTMLElement) {
     this.container = container;
-    this.serviceContainer = RendererServiceContainer.getInstance();
+    this.diContainer = RendererContainer.getInstance();
+    this.panelId = `panel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create all services through the service container
-    this.services = this.serviceContainer.createRendererServices(container);
+    // Create all services through the DI container
+    this.services = this.diContainer.createPanelServices(
+      container,
+      this.panelId,
+    );
 
     // Initialize orchestrators with injected services
     // No more circular dependencies - all services are created upfront
@@ -145,8 +151,8 @@ export class ModularSpaceRenderer {
     this.interactionOrchestrator.dispose();
     this.debugOrchestrator.dispose();
 
-    // Dispose services through the service container
-    this.serviceContainer.disposeAll(this.services);
+    // Dispose panel-specific services through the DI container
+    this.diContainer.disposeScope(this.panelId);
 
     if (this.resizeHandler) {
       window.removeEventListener("resize", this.resizeHandler);

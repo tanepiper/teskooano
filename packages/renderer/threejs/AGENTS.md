@@ -58,7 +58,10 @@ src/
 ├── services/                          # Service container and dependency injection
 │   ├── index.ts                       # Service exports
 │   ├── RendererServiceContainer.ts    # Manages shared and panel-specific services
-│   └── SERVICE_BOUNDARIES.md          # Service architecture documentation
+│   ├── RendererContainer.ts           # Advanced DI container with scopes
+│   ├── ServiceFactories.ts            # Factory methods for complex object creation
+│   ├── SERVICE_BOUNDARIES.md          # Service architecture documentation
+│   └── DI_CONTAINER.md                # Dependency injection container documentation
 └── orchestrators/                     # Orchestrator pattern implementation
     ├── index.ts                       # Barrel exports
     ├── README.md                      # Orchestrator architecture documentation
@@ -166,10 +169,12 @@ export interface PanelRendererServices {
 The renderer system uses a **dual-service architecture** with clear separation between:
 
 #### Shared Services (Singletons)
+
 - **`RendererStateAdapter`**: Bridges core state to renderer format
 - **`LODManager`**: Manages Level of Detail calculations globally
 
 #### Panel Services (Instances)
+
 - **`SceneManager`**: Three.js scene, camera, renderer per panel
 - **`LightingManager`**: Panel-specific lighting setup
 - **`ObjectManager`**: Celestial object rendering per panel
@@ -180,12 +185,102 @@ The renderer system uses a **dual-service architecture** with clear separation b
 - **`RenderPipeline`**: Rendering orchestration per panel
 
 **Key Benefits:**
+
 - **Resource Efficiency**: Shared services avoid duplication
 - **State Isolation**: Each panel maintains independent state
 - **Clear Dependencies**: Explicit boundaries prevent coupling
 - **Testability**: Services can be tested in isolation
 
 See `services/SERVICE_BOUNDARIES.md` for comprehensive documentation.
+
+### RendererContainer (Advanced DI Container)
+
+```typescript
+export class RendererContainer {
+  public static getInstance(): RendererContainer;
+  public register<T>(
+    token: string | symbol | Function,
+    factory: (...args: any[]) => T,
+    scope: ServiceScope,
+    dependencies: (string | symbol | Function)[],
+  ): void;
+  public resolve<T>(
+    token: string | symbol | Function,
+    context?: ServiceContext,
+  ): T;
+  public createPanelServices(
+    container: HTMLElement,
+    panelId: string,
+  ): { shared: SharedServices; panel: PanelServices };
+  public disposeScope(scopeId: string): void;
+  public disposeSingletons(): void;
+  public disposeAll(): void;
+  public getServiceInfo(): ServiceInfo[];
+}
+
+export enum ServiceScope {
+  SINGLETON = "singleton", // One instance shared across all panels
+  TRANSIENT = "transient", // New instance for each request
+  SCOPED = "scoped", // One instance per panel/scope
+}
+```
+
+**Key Features:**
+
+- **Service Registration**: Register services with different scopes and dependencies
+- **Automatic Resolution**: Automatically resolve and inject dependencies
+- **Service Factories**: Complex object creation with proper configuration
+- **Lifecycle Management**: Proper service disposal and cleanup
+- **Context Support**: Scoped services with panel-specific context
+
+See `services/DI_CONTAINER.md` for comprehensive documentation.
+
+### ServiceFactories
+
+```typescript
+export class ServiceFactories {
+  static createSceneManager(container: HTMLElement): SceneManager;
+  static createLightingManager(scene: THREE.Scene): LightingManager;
+  static createGridManager(scene: THREE.Scene): GridManager;
+  static createBackgroundManager(scene: THREE.Scene): BackgroundManager;
+  static createControlsManager(
+    camera: THREE.PerspectiveCamera,
+    renderer: THREE.WebGLRenderer,
+  ): ControlsManager;
+  static createLayer2DManager(
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+  ): Layer2DManager;
+  static createObjectManager(
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    renderer: THREE.WebGLRenderer,
+    css2DManager: Layer2DManager,
+    lightingManager: LightingManager,
+  ): ObjectManager;
+  static createOrbitsManager(
+    objectManager: ObjectManager,
+    stateAdapter: RendererStateAdapter,
+    css2DManager: Layer2DManager,
+  ): OrbitsManager;
+  static createAuMarkerManager(
+    scene: THREE.Scene,
+    css2DManager: Layer2DManager,
+  ): AuMarkerManager;
+  static createRenderPipeline(options: RenderPipelineOptions): RenderPipeline;
+  static createRendererStateAdapter(): RendererStateAdapter;
+  static createLODManager(): LODManager;
+  static createPanelServices(container: HTMLElement): PanelServices;
+  static createSharedServices(): SharedServices;
+}
+```
+
+**Key Features:**
+
+- **Complex Initialization**: Encapsulates complex Three.js setup and configuration
+- **Consistent Configuration**: Ensures all services are properly configured
+- **Dependency Management**: Handles complex dependency relationships
+- **Alternative to DI Container**: Provides simpler factory-based approach
 
 ### RenderPipeline
 

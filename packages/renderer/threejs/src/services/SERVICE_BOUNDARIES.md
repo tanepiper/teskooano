@@ -10,6 +10,7 @@ The renderer system uses a **dual-service architecture** with clear separation b
 2. **Panel Services (Instances)** - Services that are unique to each panel
 
 This separation ensures:
+
 - **Resource Efficiency**: Shared services avoid duplication
 - **State Isolation**: Panel services maintain independent state
 - **Clear Dependencies**: Explicit boundaries prevent coupling issues
@@ -20,12 +21,14 @@ This separation ensures:
 These services are **singletons** and are shared across all renderer instances:
 
 ### `RendererStateAdapter`
+
 - **Purpose**: Bridges between core state and renderer services
 - **Why Singleton**: State is global across the application
 - **Lifecycle**: Created once, shared across all panels
 - **Dependencies**: Core state management system
 
 ### `LODManager`
+
 - **Purpose**: Manages Level of Detail calculations and strategies
 - **Why Singleton**: LOD strategies are global and don't vary per panel
 - **Lifecycle**: Created once, shared across all panels
@@ -36,60 +39,70 @@ These services are **singletons** and are shared across all renderer instances:
 These services are **created per panel** and maintain independent state:
 
 ### `SceneManager`
+
 - **Purpose**: Manages Three.js scene, camera, and renderer for a specific panel
 - **Why Instance**: Each panel has its own Three.js context
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: HTML container element, panel-specific configuration
 
 ### `LightingManager`
+
 - **Purpose**: Manages lighting setup and calculations for a specific panel
 - **Why Instance**: Each panel may have different lighting requirements
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, celestial object data
 
 ### `GridManager`
+
 - **Purpose**: Manages grid visualization for a specific panel
 - **Why Instance**: Each panel may have different grid settings
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, panel view state
 
 ### `BackgroundManager`
+
 - **Purpose**: Manages background rendering (stars, nebula, etc.) for a specific panel
 - **Why Instance**: Each panel may have different background settings
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, panel view state
 
 ### `ObjectManager`
+
 - **Purpose**: Manages celestial object rendering and lifecycle for a specific panel
 - **Why Instance**: Each panel maintains its own object instances
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, shared state adapter, lighting manager
 
 ### `OrbitsManager`
+
 - **Purpose**: Manages orbit visualization and prediction for a specific panel
 - **Why Instance**: Each panel may have different orbit display settings
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Object manager, shared state adapter, CSS2D manager
 
 ### `ControlsManager`
+
 - **Purpose**: Manages camera controls and user interaction for a specific panel
 - **Why Instance**: Each panel has its own camera and interaction state
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, camera state
 
 ### `Layer2DManager` (CSS2DManager)
+
 - **Purpose**: Manages 2D label layers and CSS2D rendering for a specific panel
 - **Why Instance**: Each panel has its own label system
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, panel view state
 
 ### `AuMarkerManager`
+
 - **Purpose**: Manages AU distance markers for a specific panel
 - **Why Instance**: Each panel may have different marker settings
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
 - **Dependencies**: Scene manager, CSS2D manager
 
 ### `RenderPipeline`
+
 - **Purpose**: Orchestrates the rendering pipeline for a specific panel
 - **Why Instance**: Each panel has its own rendering pipeline
 - **Lifecycle**: Created per panel, disposed when panel is destroyed
@@ -98,6 +111,7 @@ These services are **created per panel** and maintain independent state:
 ## 🔧 Service Container Architecture
 
 ### `RendererServiceContainer`
+
 - **Pattern**: Singleton container that manages service creation
 - **Responsibilities**:
   - Creates and manages shared services (singletons)
@@ -129,12 +143,12 @@ graph TB
     subgraph "Application Level"
         CS[Core State System]
     end
-    
+
     subgraph "Shared Services (Singletons)"
         RSA[RendererStateAdapter]
         LOD[LODManager]
     end
-    
+
     subgraph "Panel 1 Services (Instances)"
         SM1[SceneManager]
         LM1[LightingManager]
@@ -145,7 +159,7 @@ graph TB
         AM1[AuMarkerManager]
         RP1[RenderPipeline]
     end
-    
+
     subgraph "Panel 2 Services (Instances)"
         SM2[SceneManager]
         LM2[LightingManager]
@@ -156,21 +170,21 @@ graph TB
         AM2[AuMarkerManager]
         RP2[RenderPipeline]
     end
-    
+
     CS --> RSA
     CS --> LOD
     RSA --> OM1
     RSA --> OM2
     LOD --> OM1
     LOD --> OM2
-    
+
     SM1 --> LM1
     SM1 --> OM1
     SM1 --> ORM1
     SM1 --> CM1
     SM1 --> CSS1
     SM1 --> AM1
-    
+
     SM2 --> LM2
     SM2 --> OM2
     SM2 --> ORM2
@@ -182,10 +196,12 @@ graph TB
 ## 🎯 Service Dependencies
 
 ### Shared Service Dependencies
+
 - **RendererStateAdapter**: Core state system
 - **LODManager**: Core state, celestial data
 
 ### Panel Service Dependencies
+
 - **SceneManager**: HTML container, panel configuration
 - **LightingManager**: Scene manager, celestial data
 - **GridManager**: Scene manager, panel view state
@@ -200,21 +216,25 @@ graph TB
 ## 🚀 Benefits of This Architecture
 
 ### Resource Efficiency
+
 - Shared services avoid duplication across panels
 - Memory usage scales linearly with panel count
 - CPU usage for shared calculations is minimized
 
 ### State Isolation
+
 - Each panel maintains independent state
 - No cross-panel interference
 - Clear boundaries prevent state leakage
 
 ### Testability
+
 - Services can be tested in isolation
 - Mock dependencies are clearly defined
 - Integration tests can focus on specific service combinations
 
 ### Maintainability
+
 - Clear service boundaries make code easier to understand
 - Changes to shared services affect all panels consistently
 - Panel-specific changes are isolated and don't affect other panels
@@ -257,16 +277,19 @@ graph TB
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 - Test each service in isolation
 - Mock all dependencies
 - Verify proper disposal behavior
 
 ### Integration Tests
+
 - Test service combinations
 - Verify shared service sharing
 - Test panel service isolation
 
 ### End-to-End Tests
+
 - Test complete panel lifecycle
 - Verify resource cleanup
 - Test multiple panel scenarios
