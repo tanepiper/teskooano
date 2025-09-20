@@ -11,10 +11,24 @@
             "id": "6ea16438f15ecb15",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "core/core-state/StateSubscriptionMixin.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "StateSubscriptionMixin"
             }
           }
         ]
@@ -148,12 +162,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "core/core-state/StateSubscriptionMixin.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of StateSubscriptionMixin"
             }
           }
         ],
@@ -177,6 +192,7 @@
   },
   "active": "6ea16438f15ecb15",
   "lastOpenFiles": [
+    "core/core-state/StoreFilters.md",
     "teskooano/initialization.md",
     "teskooano/WasmInitializer.md",
     "teskooano/EventSetup.md",
@@ -203,7 +219,6 @@
     "systems/solar-system/jupiter.md",
     "systems/solar-system/interstellarObjects.md",
     "systems/solar-system/initializeSolarSystem.md",
-    "systems/solar-system/fixEmptyEpochs.md",
     "systems/solar-system",
     "systems/procedural-generation",
     "systems",
