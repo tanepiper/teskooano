@@ -12,6 +12,7 @@ The **ThreeJS package** (`@teskooano/renderer-threejs`) serves as the **integrat
 - **Orchestrator Pattern**: Groups related managers into focused orchestrators (Rendering, Interaction, Debug)
 - **Constructor Injection**: Eliminates circular dependencies through proper dependency injection
 - **Service Container**: Manages shared and panel-specific services with clear boundaries
+- **Dual-Service Architecture**: Clear separation between singleton (shared) and instance (panel-specific) services
 - **State Bridge**: Transforms core application state into renderable format through RendererStateAdapter
 - **Render Pipeline**: Orchestrates frame-by-frame updates in the correct sequence
 - **Unified API**: Provides a clean facade for controlling the entire rendering system
@@ -56,7 +57,8 @@ src/
 ├── types.ts                           # Type definitions and interfaces
 ├── services/                          # Service container and dependency injection
 │   ├── index.ts                       # Service exports
-│   └── RendererServiceContainer.ts    # Manages shared and panel-specific services
+│   ├── RendererServiceContainer.ts    # Manages shared and panel-specific services
+│   └── SERVICE_BOUNDARIES.md          # Service architecture documentation
 └── orchestrators/                     # Orchestrator pattern implementation
     ├── index.ts                       # Barrel exports
     ├── README.md                      # Orchestrator architecture documentation
@@ -158,6 +160,32 @@ export interface PanelRendererServices {
   readonly renderPipeline: RenderPipeline;
 }
 ```
+
+### Service Boundaries Architecture
+
+The renderer system uses a **dual-service architecture** with clear separation between:
+
+#### Shared Services (Singletons)
+- **`RendererStateAdapter`**: Bridges core state to renderer format
+- **`LODManager`**: Manages Level of Detail calculations globally
+
+#### Panel Services (Instances)
+- **`SceneManager`**: Three.js scene, camera, renderer per panel
+- **`LightingManager`**: Panel-specific lighting setup
+- **`ObjectManager`**: Celestial object rendering per panel
+- **`OrbitsManager`**: Orbit visualization per panel
+- **`ControlsManager`**: Camera controls per panel
+- **`Layer2DManager`**: 2D labels per panel
+- **`AuMarkerManager`**: Distance markers per panel
+- **`RenderPipeline`**: Rendering orchestration per panel
+
+**Key Benefits:**
+- **Resource Efficiency**: Shared services avoid duplication
+- **State Isolation**: Each panel maintains independent state
+- **Clear Dependencies**: Explicit boundaries prevent coupling
+- **Testability**: Services can be tested in isolation
+
+See `services/SERVICE_BOUNDARIES.md` for comprehensive documentation.
 
 ### RenderPipeline
 
