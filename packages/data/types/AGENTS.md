@@ -378,7 +378,7 @@ export interface BaseUIComponent {
 
 ### Event Types (`events.ts`)
 
-Event system definitions:
+Event system definitions for cross-system communication:
 
 ```typescript
 export const CustomEvents = {
@@ -388,13 +388,30 @@ export const CustomEvents = {
   SIMULATION_RESET_TIME: "resetSimulationTime",
   ORBIT_UPDATE: "orbitUpdate",
   RENDERER_READY: "renderer-ready",
+  CELESTIAL_OBJECT_DESTROYED: "celestial-object-destroyed",
+  CELESTIAL_OBJECTS_LOADED: "celestial-objects-loaded",
   // ... extensive event definitions
 } as const;
 
 export interface OrbitUpdatePayload {
   positions: Record<string, { x: number; y: number; z: number }>;
 }
+
+export interface SliderValueChangePayload {
+  value: number;
+}
 ```
+
+#### Event System Integration
+
+The `CustomEvents` object provides constants for DOM events used throughout the system:
+
+- **Core State Events**: `CELESTIAL_OBJECT_DESTROYED`, `CELESTIAL_OBJECTS_LOADED`
+- **UI Events**: `UI_PANEL_OPEN`, `UI_BUTTON_CLICK`, `UI_MODAL_SHOW`
+- **System Events**: `SYSTEM_GENERATION_START`, `SYSTEM_GENERATION_COMPLETE`
+- **Custom Events**: `teskooano-clear-orbit-trails`, `teskooano-clear-predictions`
+
+These events are consumed by the renderer's EventBridge and converted to RxJS events for internal communication.
 
 ## Testing Strategy
 

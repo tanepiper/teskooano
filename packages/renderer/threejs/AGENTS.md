@@ -17,7 +17,7 @@ The **ThreeJS package** (`@teskooano/renderer-threejs`) serves as the **integrat
 - **Render Pipeline**: Orchestrates frame-by-frame updates in the correct sequence
 - **Unified API**: Provides a clean facade for controlling the entire rendering system
 - **Performance Optimization**: Implements throttling and caching for expensive operations
-- **Event-Driven Architecture**: Uses RxJS for type-safe internal communication
+- **Event-Driven Architecture**: Comprehensive RxJS-based event system with dual event bridges
 
 ## Setup Commands
 
@@ -53,7 +53,7 @@ src/
 ├── ModularSpaceRenderer.ts            # Primary facade class
 ├── RenderPipeline.ts                  # Frame-by-frame orchestrator
 ├── RendererStateAdapter.ts            # State bridge and transformation
-├── events.ts                          # Type-safe event bus
+├── events.ts                          # Type-safe event bus and pipeline events
 ├── types.ts                           # Type definitions and interfaces
 ├── services/                          # Service container and dependency injection
 │   ├── index.ts                       # Service exports
@@ -78,7 +78,7 @@ src/
 4. **Data Transformation**: Raw celestial objects transformed into renderable format
 5. **Manager Coordination**: Orchestrators coordinate specialized managers
 6. **Render Pipeline**: Frame-by-frame updates in correct sequence
-7. **Event Broadcasting**: Type-safe events for internal communication
+7. **Event Broadcasting**: Comprehensive event system with RxJS observables and dual event bridges
 
 ## Code Style & Conventions
 
@@ -726,8 +726,77 @@ Clear separation between shared and panel-specific services:
 
 - **State Management**: Transforms core state into renderable format
 - **Simulation System**: Integrates with physics simulation
-- **Event System**: Uses RxJS for internal communication
+- **Event System**: Comprehensive RxJS-based event system with dual event bridges
 - **Performance System**: Optimizes based on device capabilities
+
+## Event System Architecture
+
+The renderer uses a comprehensive event-driven architecture with three types of events:
+
+### Event Types
+
+1. **RxJS Events** (`rendererEvents`) - Type-safe observables for internal renderer communication
+2. **Pipeline Events** (`renderPipelineEvents`) - Stage-specific events for render pipeline coordination
+3. **DOM Events** - Custom events for cross-system communication via event bridges
+
+### Key Components
+
+#### Event Bridges (from `@teskooano/core-state`)
+
+- **SystemEventBridge**: Handles system-level operations (object lifecycle, hierarchy changes)
+- **CelestialEventBridge**: Handles celestial-specific operations (show/hide labels, orbits, predictions)
+- **Features**: Automatic initialization, lifecycle management, error handling
+- **Usage**: Automatically managed by ModularSpaceRenderer
+
+#### Renderer Events (`events.ts`)
+
+- **`destruction$`**: Emits when celestial objects are destroyed
+- **Purpose**: Trigger visual effects like explosions or particle systems
+
+#### Pipeline Events (`RenderPipeline.ts`)
+
+- **10 stage-specific events**: beforeUpdate, afterControlsUpdate, afterOrbitsUpdate, etc.
+- **Purpose**: Allow components to react to specific rendering stages
+- **Payload**: `{ deltaTime, elapsedTime, frameCount }`
+
+### Usage Patterns
+
+```typescript
+// Subscribe to system events
+import { SystemEventBridge } from "@teskooano/core-state";
+SystemEventBridge.getInstance().celestialObjectDestroyed$.subscribe(
+  (payload) => {
+    console.log(`Object ${payload.objectId} was destroyed`);
+    this.createExplosionEffect(payload.object?.position);
+  },
+);
+
+// Subscribe to celestial events
+import { CelestialEventBridge } from "@teskooano/core-state";
+CelestialEventBridge.getInstance().clearOrbitTrails$.subscribe(() => {
+  console.log("Clearing orbit trails");
+  this.clearAllOrbitTrails();
+});
+
+// Subscribe to pipeline events
+import { renderPipelineEvents } from "@teskooano/renderer-threejs";
+renderPipelineEvents.afterObjectsUpdate$.subscribe((payload) => {
+  console.log(`Objects updated at frame ${payload.frameCount}`);
+  this.updateObjectUI();
+});
+```
+
+### Best Practices
+
+- **Use StateSubscriptionMixin**: Automatic subscription cleanup
+- **Validate payloads**: Always check event data validity
+- **Throttle expensive operations**: Use RxJS operators for performance
+- **Handle errors**: Implement proper error handling in subscriptions
+- **Use appropriate bridge**: System events use SystemEventBridge, celestial events use CelestialEventBridge
+
+### Documentation
+
+See `@teskooano/core-state/services/EVENT_SYSTEM.md` for comprehensive documentation of the event system architecture, usage patterns, and best practices.
 
 ## Architecture Documentation
 

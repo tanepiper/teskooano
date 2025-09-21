@@ -2,6 +2,10 @@ import { CustomEvents } from "@teskooano/data-types";
 import { CelestialIconComponent } from "../../../celestial-icons";
 import { FormatUtils } from "../../../celestial-info/utils/formatters";
 import { template } from "./CelestialRow.template.js";
+import { buttonTemplate } from "./CelestialRow.buttons.js";
+import { DistanceStateService } from "../../services/DistanceStateService.js";
+import { Subscription } from "rxjs";
+import { distinctUntilChanged } from "rxjs/operators";
 
 /**
  * A custom element to display a single row in the celestial hierarchy list.
@@ -50,6 +54,10 @@ export class CelestialRowComponent extends HTMLElement {
   private focusBtn: HTMLElement | null = null;
   /** Reference to the follow button */
   private followBtn: HTMLElement | null = null;
+  /** Subscription to distance updates */
+  private distanceSubscription: Subscription | null = null;
+  /** Reference to the distance state service */
+  private distanceService: DistanceStateService;
 
   /**
    * Creates an instance of CelestialRowComponent.
@@ -58,6 +66,12 @@ export class CelestialRowComponent extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
+
+    // Append the button template
+    this.shadowRoot!.appendChild(buttonTemplate.content.cloneNode(true));
+
+    // Initialize distance service
+    this.distanceService = DistanceStateService.getInstance();
 
     // Cache element references
     this.iconEl = this.shadowRoot!.getElementById(
@@ -84,6 +98,7 @@ export class CelestialRowComponent extends HTMLElement {
     }
 
     this.updateButtonTitles();
+    this.setupDistanceSubscription();
   }
 
   /**
@@ -93,6 +108,7 @@ export class CelestialRowComponent extends HTMLElement {
   disconnectedCallback() {
     this.focusBtn?.removeEventListener("click", this.handleFocusClick);
     this.followBtn?.removeEventListener("click", this.handleFollowClick);
+    this.cleanupDistanceSubscription();
   }
 
   /**
@@ -114,6 +130,7 @@ export class CelestialRowComponent extends HTMLElement {
       case "object-id":
         this._objectId = newValue;
         this.updateButtonTitles();
+        this.setupDistanceSubscription();
         break;
       case "object-name":
         this.updateName(newValue);
@@ -215,14 +232,42 @@ export class CelestialRowComponent extends HTMLElement {
   };
 
   /**
-   * Updates the displayed distance from the system origin.
-   *
-   * @param distanceInMeters - The distance in meters
+   * Sets up the subscription to distance updates for this object.
+   * Only updates the DOM when the formatted distance string actually changes.
    */
-  public updateDistance(distanceInMeters: number) {
-    if (this.distanceEl) {
-      this.distanceEl.textContent =
-        FormatUtils.formatDistanceAdaptive(distanceInMeters);
+  private setupDistanceSubscription(): void {
+    this.cleanupDistanceSubscription();
+
+    if (!this._objectId) return;
+
+    this.distanceSubscription = this.distanceService
+      .getDistance$(this._objectId)
+      .pipe(
+        // Only emit when the formatted distance string changes
+        distinctUntilChanged((prev, curr) => {
+          if (prev === undefined && curr === undefined) return true;
+          if (prev === undefined || curr === undefined) return false;
+
+          const prevFormatted = FormatUtils.formatDistanceAdaptive(prev);
+          const currFormatted = FormatUtils.formatDistanceAdaptive(curr);
+          return prevFormatted === currFormatted;
+        }),
+      )
+      .subscribe((distance) => {
+        if (distance !== undefined && this.distanceEl) {
+          this.distanceEl.textContent =
+            FormatUtils.formatDistanceAdaptive(distance);
+        }
+      });
+  }
+
+  /**
+   * Cleans up the distance subscription to prevent memory leaks.
+   */
+  private cleanupDistanceSubscription(): void {
+    if (this.distanceSubscription) {
+      this.distanceSubscription.unsubscribe();
+      this.distanceSubscription = null;
     }
   }
 

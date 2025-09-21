@@ -55,6 +55,9 @@ src/
 │   ├── PhysicsStateProvider.ts    # Physics state calculations with caching
 │   ├── PhysicsStateCalculator.ts  # Physics state computation logic
 │   ├── FlatHierarchyService.ts    # Optimized hierarchy management
+│   ├── SystemEventBridge.ts       # System-level DOM to RxJS event bridge
+│   ├── CelestialEventBridge.ts    # Celestial-specific DOM to RxJS event bridge
+│   ├── EVENT_SYSTEM.md            # Comprehensive event system documentation
 │   └── index.ts                   # Re-exports all services
 ├── stores/
 │   ├── CelestialStore.ts          # Celestial object data and hierarchy
@@ -94,6 +97,7 @@ src/
 - **Global Access**: All stores and services use singleton pattern for global access
 - **Consistent State**: Single instance ensures consistent state across the application
 - **Memory Efficiency**: Prevents multiple instances and memory leaks
+- **Event System**: Dual event bridges (SystemEventBridge, CelestialEventBridge) for cross-system communication
 
 #### 3. Separation of Concerns
 
@@ -985,6 +989,88 @@ System Generation → Managers → Stores → Observables → Subscribers → UI
 - **TypeScript Handbook**: Official TypeScript documentation
 - **Type Safety**: Best practices for type-safe state management
 - **Interface Design**: Principles of interface design for state management
+
+## Event System Integration
+
+The core state package provides a comprehensive event system with dual event bridges for system-level and celestial-specific operations.
+
+### Event Bridge Architecture
+
+#### SystemEventBridge (`SystemEventBridge.ts`)
+
+- **Purpose**: Handles system-level operations and bridges DOM events to RxJS events
+- **Events**: `CELESTIAL_OBJECT_DESTROYED`, `CELESTIAL_OBJECTS_LOADED`
+- **RxJS Events**: `celestialObjectDestroyed$`, `celestialObjectsLoaded$`
+- **Usage**: System-wide operations that affect the entire simulation
+
+#### CelestialEventBridge (`CelestialEventBridge.ts`)
+
+- **Purpose**: Handles celestial-specific operations and bridges DOM events to RxJS events
+- **Events**: `teskooano-clear-orbit-trails`, `teskooano-clear-predictions`
+- **RxJS Events**: `clearOrbitTrails$`, `clearPredictions$`
+- **Usage**: Celestial-specific UI interactions and visual operations
+
+### Event Dispatching Functions
+
+#### `dispatchObjectDestroyedEvent(objectId: string)`
+
+- **Purpose**: Dispatches when a celestial object is destroyed
+- **Event**: `CELESTIAL_OBJECT_DESTROYED`
+- **Detail**: `{ objectId: string }`
+- **Usage**: Automatically called by `CelestialStore.processDestructionEvents()`
+
+#### `dispatchObjectsLoadedEvent(count: number, systemId?: string)`
+
+- **Purpose**: Dispatches when objects are loaded into the system
+- **Event**: `CELESTIAL_OBJECTS_LOADED`
+- **Detail**: `{ count: number, systemId?: string }`
+- **Usage**: Called when systems are loaded or generated
+
+#### `dispatchObjectsLoadedEventFromMap(objects, systemId?: string)`
+
+- **Purpose**: Dispatches when objects are loaded from a map
+- **Event**: `CELESTIAL_OBJECTS_LOADED`
+- **Detail**: `{ count: number, systemId?: string }`
+- **Usage**: Called when objects are loaded from existing data
+
+### Event Flow
+
+```
+Core State (DOM Events) → SystemEventBridge → RxJS Events → Components
+UI Components (DOM Events) → CelestialEventBridge → RxJS Events → Components
+```
+
+### Integration with Renderer
+
+The renderer system automatically initializes both event bridges:
+
+```typescript
+// System events
+SystemEventBridge.getInstance().celestialObjectDestroyed$.subscribe(
+  (payload) => {
+    console.log(`Object ${payload.objectId} was destroyed`);
+    // Handle system-level destruction
+  },
+);
+
+// Celestial events
+CelestialEventBridge.getInstance().clearOrbitTrails$.subscribe(() => {
+  console.log("Clearing orbit trails");
+  // Handle orbit trail clearing
+});
+```
+
+### Best Practices
+
+- **Use appropriate bridge**: System events use SystemEventBridge, celestial events use CelestialEventBridge
+- **Always dispatch events**: Use event dispatching functions for state changes
+- **Consistent payloads**: Ensure event details match expected format
+- **Error handling**: Validate object existence before dispatching
+- **Performance**: Events are lightweight and don't impact performance
+
+### Documentation
+
+See `services/EVENT_SYSTEM.md` for comprehensive documentation of the event system architecture, usage patterns, and best practices.
 
 ---
 

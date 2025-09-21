@@ -6,6 +6,7 @@ import {
 } from "./orchestrators";
 import { RendererContainer } from "./services/RendererContainer";
 import type { RendererServices } from "./services/RendererServiceContainer";
+import { SystemEventBridge, CelestialEventBridge } from "@teskooano/core-state";
 import { simulationOrchestrator } from "@teskooano/app-simulation";
 
 /**
@@ -61,6 +62,11 @@ export class ModularSpaceRenderer {
     this.renderingOrchestrator = new RenderingOrchestrator(this.services);
     this.interactionOrchestrator = new InteractionOrchestrator(this.services);
     this.debugOrchestrator = new DebugOrchestrator(this.services.sceneManager);
+
+    // Initialize event bridge to connect DOM events to RxJS events
+    // Initialize event bridges
+    SystemEventBridge.getInstance().initialize();
+    CelestialEventBridge.getInstance().initialize();
 
     this.setupAnimationCallbacks();
   }
@@ -153,6 +159,11 @@ export class ModularSpaceRenderer {
 
     // Dispose panel-specific services through the DI container
     this.diContainer.disposeScope(this.panelId);
+
+    // Dispose event bridge
+    // Dispose event bridges
+    SystemEventBridge.getInstance().dispose();
+    CelestialEventBridge.getInstance().dispose();
 
     if (this.resizeHandler) {
       window.removeEventListener("resize", this.resizeHandler);

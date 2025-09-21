@@ -26,3 +26,6 @@ export const rendererEvents = {
    */
   destruction$: new Subject<DestructionPayload>(),
 };
+
+// Re-export render pipeline events for convenience
+export { renderPipelineEvents } from "./RenderPipeline";

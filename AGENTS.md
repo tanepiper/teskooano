@@ -220,6 +220,79 @@ plugin-name/
 - **Garbage Collection**: Minimize object creation in hot paths
 - **Algorithm Efficiency**: Use appropriate data structures (Octrees, spatial hashing)
 
+## Event System Architecture
+
+Teskooano uses a comprehensive event-driven architecture with three types of events for different communication patterns:
+
+### Event Types
+
+1. **RxJS Events** - Type-safe observables for internal renderer communication
+2. **DOM Events** - Custom events for cross-system communication
+3. **Pipeline Events** - Stage-specific events for render pipeline coordination
+
+### Event Flow
+
+```
+Core State (DOM Events) → EventBridge → Renderer (RxJS Events) → Components
+                    ↓
+            Custom DOM Events ← UI Components
+```
+
+### Key Components
+
+#### EventBridge (`@teskooano/renderer-threejs`)
+
+- **Purpose**: Connects DOM events from core state to RxJS events for renderer
+- **Features**: Automatic initialization, lifecycle management, error handling
+- **Usage**: Automatically managed by ModularSpaceRenderer
+
+#### Renderer Events (`@teskooano/renderer-threejs`)
+
+- **`destruction$`**: Emits when celestial objects are destroyed
+- **Purpose**: Trigger visual effects like explosions or particle systems
+
+#### Pipeline Events (`@teskooano/renderer-threejs`)
+
+- **10 stage-specific events**: beforeUpdate, afterControlsUpdate, afterOrbitsUpdate, etc.
+- **Purpose**: Allow components to react to specific rendering stages
+- **Payload**: `{ deltaTime, elapsedTime, frameCount }`
+
+#### Core State Events (`@teskooano/core-state`)
+
+- **DOM Events**: `CELESTIAL_OBJECT_DESTROYED`, `CELESTIAL_OBJECTS_LOADED`
+- **Purpose**: Cross-system communication for state changes
+- **Usage**: Automatically dispatched by state management functions
+
+### Usage Patterns
+
+```typescript
+// Subscribe to destruction events
+import { rendererEvents } from "@teskooano/renderer-threejs";
+rendererEvents.destruction$.subscribe((payload) => {
+  console.log(`Object ${payload.object.id} was destroyed`);
+  this.createExplosionEffect(payload.object.position);
+});
+
+// Subscribe to pipeline events
+import { renderPipelineEvents } from "@teskooano/renderer-threejs";
+renderPipelineEvents.afterObjectsUpdate$.subscribe((payload) => {
+  console.log(`Objects updated at frame ${payload.frameCount}`);
+  this.updateObjectUI();
+});
+
+// Dispatch custom DOM events
+import { CustomEvents } from "@teskooano/data-types";
+document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
+```
+
+### Best Practices
+
+- **Use StateSubscriptionMixin**: Automatic subscription cleanup
+- **Validate payloads**: Always check event data validity
+- **Throttle expensive operations**: Use RxJS operators for performance
+- **Handle errors**: Implement proper error handling in subscriptions
+- **Event documentation**: See `packages/renderer/threejs/src/EVENT_SYSTEM.md` for comprehensive documentation
+
 ## Documentation Standards
 
 ### Package Documentation

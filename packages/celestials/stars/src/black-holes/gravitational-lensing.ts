@@ -120,6 +120,10 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
       blendSrc: THREE.SrcAlphaFactor,
       blendDst: THREE.OneMinusSrcAlphaFactor,
     });
+
+    // Mark this as an effect material to skip logarithmic depth processing
+    this.userData.isEffectMaterial = true;
+    this.userData.skipLogDepth = true;
   }
 
   /**
@@ -158,7 +162,7 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
 }
 
 function createBlurMaterial(fragmentShader: string): THREE.ShaderMaterial {
-  return new THREE.ShaderMaterial({
+  const material = new THREE.ShaderMaterial({
     uniforms: {
       tDiffuse: { value: null },
       blurSize: { value: 1.0 / 2048.0 }, // less blur
@@ -175,6 +179,12 @@ function createBlurMaterial(fragmentShader: string): THREE.ShaderMaterial {
     depthTest: false,
     transparent: false,
   });
+
+  // Mark blur materials as effect materials to skip logarithmic depth processing
+  material.userData.isEffectMaterial = true;
+  material.userData.skipLogDepth = true;
+
+  return material;
 }
 
 /**

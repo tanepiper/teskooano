@@ -6,44 +6,68 @@ import * as THREE from "three";
  * This provides much better depth precision across huge distance ranges
  * like those found in space simulations, where objects can range from
  * meters to astronomical units in distance.
+ *
+ * Note: This class now works with the built-in Three.js logarithmic depth buffer
+ * system (enabled via renderer.logarithmicDepthBuffer = true). It only sets
+ * the necessary defines on materials - the actual shader injection is handled
+ * by Three.js for shaders that include the standard logdepthbuf includes.
  */
 export class LogarithmicDepthMaterial {
   /**
-   * Logarithmic depth vertex shader chunk to replace the default depth calculation.
-   */
-  private static readonly logDepthVertexChunk = `
-    #ifdef USE_LOGDEPTHBUF
-      gl_Position.z = log2( max( EPSILON, gl_Position.w + 1.0 ) ) * logDepthBufFC * 0.5;
-    #endif
-  `;
-
-  /**
-   * Logarithmic depth fragment shader chunk.
-   */
-  private static readonly logDepthFragmentChunk = `
-    #ifdef USE_LOGDEPTHBUF
-      gl_FragDepthEXT = log2( vFragDepth ) * logDepthBufFC * 0.5;
-    #endif
-  `;
-
-  /**
    * Enables logarithmic depth buffer for a material.
    * This modifies the material to use log depth calculations for better precision.
+   *
+   * Note: Since the renderer already has logarithmicDepthBuffer: true, we only need
+   * to set the defines. The built-in Three.js system handles the shader injection.
    */
   public static enableLogDepth(material: THREE.Material): void {
     if (!material) return;
 
-    // Enable logarithmic depth buffer
+    // Skip materials that don't support logarithmic depth
+    if (this.shouldSkipMaterial(material)) {
+      return;
+    }
+
+    // Enable logarithmic depth buffer defines
     (material as any).defines = (material as any).defines || {};
     (material as any).defines.USE_LOGDEPTHBUF = true;
     (material as any).defines.USE_LOGDEPTHBUF_EXT = true;
 
-    // For custom shader materials, we need to inject the log depth code
-    if (material instanceof THREE.ShaderMaterial) {
-      this.injectLogDepthIntoShader(material);
-    }
+    // Note: We don't inject custom shader code anymore since the renderer
+    // already has logarithmicDepthBuffer: true and the built-in system works
+    // with shaders that include <logdepthbuf_pars_fragment> and <logdepthbuf_fragment>
 
     material.needsUpdate = true;
+  }
+
+  /**
+   * Determines if a material should be skipped for logarithmic depth processing.
+   * Some materials (like effect materials) don't need or support logarithmic depth.
+   */
+  private static shouldSkipMaterial(material: THREE.Material): boolean {
+    // Skip materials that are effect materials or have custom shaders without log depth support
+    if (material instanceof THREE.ShaderMaterial) {
+      // Check if this is a gravitational lensing material or similar effect material
+      if (
+        material.userData?.isEffectMaterial ||
+        material.userData?.skipLogDepth ||
+        material.name?.includes("lensing") ||
+        material.name?.includes("effect")
+      ) {
+        return true;
+      }
+
+      // Skip materials with inline shaders that don't include log depth support
+      if (
+        material.fragmentShader &&
+        !material.fragmentShader.includes("logdepthbuf_pars_fragment") &&
+        !material.fragmentShader.includes("logdepthbuf_fragment")
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -76,110 +100,11 @@ export class LogarithmicDepthMaterial {
   }
 
   /**
-   * Injects logarithmic depth calculations into a shader material.
+   * Note: Shader injection methods removed since we now use the built-in
+   * Three.js logarithmic depth buffer system instead of custom injection.
+   * The renderer has logarithmicDepthBuffer: true and shaders use the
+   * standard <logdepthbuf_pars_fragment> and <logdepthbuf_fragment> includes.
    */
-  private static injectLogDepthIntoShader(
-    material: THREE.ShaderMaterial,
-  ): void {
-    // Add the necessary uniforms
-    material.uniforms.logDepthBufFC = {
-      value:
-        2.0 / (Math.log(material.userData.far || 1000000 + 1.0) / Math.LN2),
-    };
-
-    // Inject vertex shader modifications
-    if (
-      material.vertexShader &&
-      !material.vertexShader.includes("USE_LOGDEPTHBUF")
-    ) {
-      material.vertexShader = this.injectVertexLogDepth(material.vertexShader);
-    }
-
-    // Inject fragment shader modifications
-    if (
-      material.fragmentShader &&
-      !material.fragmentShader.includes("USE_LOGDEPTHBUF")
-    ) {
-      material.fragmentShader = this.injectFragmentLogDepth(
-        material.fragmentShader,
-      );
-    }
-  }
-
-  /**
-   * Injects log depth calculations into vertex shader.
-   */
-  private static injectVertexLogDepth(vertexShader: string): string {
-    // Add uniform declaration
-    const uniformDeclaration = `
-      #ifdef USE_LOGDEPTHBUF
-        uniform float logDepthBufFC;
-        varying float vFragDepth;
-      #endif
-    `;
-
-    // Add to main function - inject before the final closing brace
-    const mainInjection = `
-      #ifdef USE_LOGDEPTHBUF
-        vFragDepth = 1.0 + gl_Position.w;
-        gl_Position.z = log2( max( EPSILON, vFragDepth ) ) * logDepthBufFC - 1.0;
-        gl_Position.z *= gl_Position.w;
-      #endif
-    `;
-
-    let modifiedShader = vertexShader;
-
-    // Insert uniform declarations after version directive
-    modifiedShader = modifiedShader.replace(
-      /(#version\s+\d+.*?\n)/,
-      `$1${uniformDeclaration}\n`,
-    );
-
-    // Insert log depth calculation before the end of main() function
-    // Look for the closing brace of main() and inject before it
-    modifiedShader = modifiedShader.replace(
-      /(\s*}\s*$)/m,
-      `${mainInjection}\n$1`,
-    );
-
-    return modifiedShader;
-  }
-
-  /**
-   * Injects log depth calculations into fragment shader.
-   */
-  private static injectFragmentLogDepth(fragmentShader: string): string {
-    // Add varying declaration and extension
-    const declarations = `
-      #ifdef USE_LOGDEPTHBUF
-        #extension GL_EXT_frag_depth : enable
-        varying float vFragDepth;
-      #endif
-    `;
-
-    // Add depth calculation
-    const depthCalculation = `
-      #ifdef USE_LOGDEPTHBUF
-        gl_FragDepthEXT = log2( vFragDepth ) * logDepthBufFC * 0.5;
-      #endif
-    `;
-
-    let modifiedShader = fragmentShader;
-
-    // Insert declarations after version directive
-    modifiedShader = modifiedShader.replace(
-      /(#version\s+\d+.*?\n)/,
-      `$1${declarations}\n`,
-    );
-
-    // Insert depth calculation at the end of main(), before the final brace
-    modifiedShader = modifiedShader.replace(
-      /(\s*}\s*$)/,
-      `${depthCalculation}\n$1`,
-    );
-
-    return modifiedShader;
-  }
 
   /**
    * Creates a test material with logarithmic depth enabled.

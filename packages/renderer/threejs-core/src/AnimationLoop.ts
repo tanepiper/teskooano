@@ -282,8 +282,6 @@ export class AnimationLoop {
     const deltaTime = this.clock.getDelta();
     const elapsedTime = this.clock.getElapsedTime();
 
-    rendererEvents.beforeRender$.next({ deltaTime, elapsedTime });
-
     this._updateStats();
 
     // Execute physics callbacks first (simulation updates)
@@ -300,7 +298,5 @@ export class AnimationLoop {
     for (const callback of this.onRenderCallbacks) {
       callback();
     }
-
-    rendererEvents.afterRender$.next({ deltaTime, elapsedTime });
   };
 }

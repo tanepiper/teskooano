@@ -1,12 +1,6 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import { SimulationState, SimulationConfiguration } from "../types/types";
-import { getDefaultConfiguration, isValidConfiguration } from "../utils";
-import {
-  AlgorithmType,
-  DeviceTier,
-  IntegratorType,
-  SimulationMode,
-} from "@teskooano/data-types";
+import { SimulationState } from "../types/types";
+import { getDefaultConfiguration } from "../utils";
 
 /**
  * @class SimulationStore

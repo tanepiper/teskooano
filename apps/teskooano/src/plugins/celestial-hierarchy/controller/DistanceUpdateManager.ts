@@ -3,6 +3,7 @@ import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-p
 import { CelestialDistanceService } from "@teskooano/core-physics";
 import { physicsSystemAdapter } from "@teskooano/core-state";
 import type { PhysicsStateReal } from "@teskooano/data-types";
+import { DistanceStateService } from "../services/DistanceStateService.js";
 
 /**
  * Manages distance calculations and list reordering for celestial objects.
@@ -13,21 +14,22 @@ import type { PhysicsStateReal } from "@teskooano/data-types";
  */
 export class DistanceUpdateManager {
   private _treeListContainer: HTMLUListElement;
-  private _destroyedListContainer: HTMLUListElement;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _listUpdateInterval: number | null = null;
   private _getCurrentObjects: () => Record<string, CelestialObject>;
   private _CelestialDistanceService: CelestialDistanceService;
+  private _distanceStateService: DistanceStateService;
 
   constructor(
     treeListContainer: HTMLUListElement,
-    destroyedListContainer: HTMLUListElement,
+    _destroyedListContainer: HTMLUListElement,
     getCurrentObjects: () => Record<string, CelestialObject>,
   ) {
     this._treeListContainer = treeListContainer;
-    this._destroyedListContainer = destroyedListContainer;
+    // Note: _destroyedListContainer parameter kept for API compatibility but not used
     this._getCurrentObjects = getCurrentObjects;
     this._CelestialDistanceService = CelestialDistanceService.getInstance();
+    this._distanceStateService = DistanceStateService.getInstance();
   }
 
   /**
@@ -101,11 +103,13 @@ export class DistanceUpdateManager {
       this._CelestialDistanceService.update(physicsBodies);
 
       // Calculate distances from each object to its parent
-      const distances = new Map<string | number, number>();
+      const distances = new Map<string, number>();
 
       physicsBodies.forEach((body) => {
         const celestialObj = allObjects[body.id];
         if (!celestialObj) return;
+
+        const bodyId = String(body.id);
 
         if (celestialObj.parentId) {
           // Object has a parent - calculate distance to parent
@@ -114,54 +118,23 @@ export class DistanceUpdateManager {
           );
           if (parentBody) {
             const distance = body.position_m.distanceTo(parentBody.position_m);
-            distances.set(body.id, distance);
+            distances.set(bodyId, distance);
           }
         } else {
           // Object has no parent - calculate distance to main star
           const mainStar = this._findMainStar(physicsBodies);
           if (mainStar && mainStar.id !== body.id) {
             const distance = body.position_m.distanceTo(mainStar.position_m);
-            distances.set(body.id, distance);
+            distances.set(bodyId, distance);
           } else {
             // This is the main star itself
-            distances.set(body.id, 0);
+            distances.set(bodyId, 0);
           }
         }
       });
 
-      // Update all list items with calculated distances
-      const treeItems = Array.from(
-        this._treeListContainer.querySelectorAll<HTMLLIElement>("li[data-id]"),
-      );
-      const destroyedItems = Array.from(
-        this._destroyedListContainer.querySelectorAll<HTMLLIElement>(
-          "li[data-id]",
-        ),
-      );
-      const allListItems = [...treeItems, ...destroyedItems];
-
-      allListItems.forEach((li) => {
-        const id = li.dataset.id;
-        if (!id) return;
-
-        // Try both string and number ID formats
-        let distanceMeters = distances.get(id);
-        if (distanceMeters === undefined) {
-          // Try converting to number if it's a numeric ID
-          const numericId = parseInt(id, 10);
-          if (!isNaN(numericId)) {
-            distanceMeters = distances.get(numericId);
-          }
-        }
-
-        if (distanceMeters !== undefined) {
-          li.dataset.distance = distanceMeters.toString();
-          const row = li.querySelector<any>("celestial-row");
-          if (row && typeof row.updateDistance === "function") {
-            row.updateDistance(distanceMeters);
-          }
-        }
-      });
+      // Update the distance state service with calculated distances
+      this._distanceStateService.updateDistances(distances);
     } catch (error) {
       console.error(
         "[DistanceUpdateManager] Distance calculation failed:",
@@ -224,9 +197,15 @@ export class DistanceUpdateManager {
 
       // Create a new array that can be sorted without affecting the live NodeList
       const sortedChildren = [...currentChildren];
+      const currentDistances = this._distanceStateService.getCurrentDistances();
+
       sortedChildren.sort((a, b) => {
-        const distA = parseFloat(a.dataset.distance ?? "0");
-        const distB = parseFloat(b.dataset.distance ?? "0");
+        const idA = a.dataset.id;
+        const idB = b.dataset.id;
+        if (!idA || !idB) return 0;
+
+        const distA = currentDistances.get(idA) ?? 0;
+        const distB = currentDistances.get(idB) ?? 0;
         return distA - distB;
       });
 
