@@ -186,7 +186,9 @@ export class EngineSettingsController extends StateSubscriptionMixin {
     const key = target.name as keyof CompositeEngineState;
     if (key && this._parentPanel) {
       const nextValue: boolean = !!target.checked;
-      this._parentPanel.setProperty(key, nextValue);
+      this._parentPanel.updateViewState({
+        [key]: nextValue,
+      } as Partial<CompositeEngineState>);
     }
   };
 
@@ -228,8 +230,11 @@ export class EngineSettingsController extends StateSubscriptionMixin {
             // Ignore; core camera may not yet be available
           }
         }
-        this._parentPanel.engineCameraManager?.setFov(newValue);
-        this.clearError();
+
+        if (this._parentPanel?.engineCameraManager) {
+          this._parentPanel.engineCameraManager.setFov(newValue);
+          this.clearError();
+        }
       }
     } catch (error) {
       this.showError("An error occurred while updating slider value.");
