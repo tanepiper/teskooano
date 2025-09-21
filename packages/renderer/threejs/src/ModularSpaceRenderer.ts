@@ -1,9 +1,5 @@
 import * as THREE from "three";
-import {
-  RenderingOrchestrator,
-  InteractionOrchestrator,
-  DebugOrchestrator,
-} from "./orchestrators";
+import { RenderingOrchestrator, DebugOrchestrator } from "./orchestrators";
 import { RendererContainer } from "./services/RendererContainer";
 import type { RendererServices } from "./services/RendererServiceContainer";
 import { SystemEventBridge, CelestialEventBridge } from "@teskooano/core-state";
@@ -29,8 +25,6 @@ import { simulationOrchestrator } from "@teskooano/app-simulation";
 export class ModularSpaceRenderer {
   /** Orchestrates all rendering-related managers and operations. */
   public renderingOrchestrator: RenderingOrchestrator;
-  /** Orchestrates all user interaction and interface-related managers. */
-  public interactionOrchestrator: InteractionOrchestrator;
   /** Orchestrates debug and analysis tools. */
   public debugOrchestrator: DebugOrchestrator;
 
@@ -60,7 +54,6 @@ export class ModularSpaceRenderer {
     // Initialize orchestrators with injected services
     // No more circular dependencies - all services are created upfront
     this.renderingOrchestrator = new RenderingOrchestrator(this.services);
-    this.interactionOrchestrator = new InteractionOrchestrator(this.services);
     this.debugOrchestrator = new DebugOrchestrator(this.services.sceneManager);
 
     // Initialize event bridge to connect DOM events to RxJS events
@@ -117,7 +110,31 @@ export class ModularSpaceRenderer {
    * @returns The controls instance.
    */
   get controls() {
-    return this.interactionOrchestrator.getControlsManager().controls;
+    return this.services.controlsManager.controls;
+  }
+
+  /**
+   * Gets the controls manager for direct access.
+   * @returns The controls manager instance.
+   */
+  get controlsManager() {
+    return this.services.controlsManager;
+  }
+
+  /**
+   * Gets the 2D layer manager for direct access.
+   * @returns The 2D layer manager instance.
+   */
+  get css2DManager() {
+    return this.services.css2DManager;
+  }
+
+  /**
+   * Gets the AU marker manager for direct access.
+   * @returns The AU marker manager instance.
+   */
+  get auMarkerManager() {
+    return this.services.auMarkerManager;
   }
 
   /**
@@ -141,7 +158,7 @@ export class ModularSpaceRenderer {
    */
   onResize(width: number, height: number): void {
     this.renderingOrchestrator.sceneManager.onResize(width, height);
-    this.interactionOrchestrator.onResize(width, height);
+    this.services.css2DManager?.onResize(width, height);
   }
 
   /**
@@ -154,7 +171,6 @@ export class ModularSpaceRenderer {
 
     // Dispose orchestrators (they no longer manage their own disposal)
     this.renderingOrchestrator.dispose();
-    this.interactionOrchestrator.dispose();
     this.debugOrchestrator.dispose();
 
     // Dispose panel-specific services through the DI container
@@ -171,7 +187,6 @@ export class ModularSpaceRenderer {
 
     // Nullify references to allow garbage collection
     (this.renderingOrchestrator as any) = null;
-    (this.interactionOrchestrator as any) = null;
     (this.debugOrchestrator as any) = null;
     (this.container as any) = null;
     (this.resizeHandler as any) = null;
@@ -198,6 +213,6 @@ export class ModularSpaceRenderer {
    */
   public setDebugMode(enabled: boolean): void {
     this.renderingOrchestrator.setDebugMode(enabled);
-    this.interactionOrchestrator.setDebugMode(enabled);
+    this.services.controlsManager.setDebugMode(enabled);
   }
 }

@@ -31,17 +31,13 @@ export function applyViewStateToRenderer(
     renderer.renderingOrchestrator.gridManager.setVisible(updates.showGrid);
   }
   if (updates.showCelestialLabels !== undefined) {
-    renderer.interactionOrchestrator
-      .getLayer2DManager()
-      .setLayerVisibility(
-        CSS2DLayerType.CELESTIAL_LABELS,
-        updates.showCelestialLabels,
-      );
+    renderer.css2DManager.setLayerVisibility(
+      CSS2DLayerType.CELESTIAL_LABELS,
+      updates.showCelestialLabels,
+    );
   }
   if (updates.showAuMarkers !== undefined) {
-    renderer.interactionOrchestrator
-      .getAuMarkerManager()
-      ?.setVisible(updates.showAuMarkers);
+    renderer.auMarkerManager?.setVisible(updates.showAuMarkers);
   }
   if (updates.showDebrisEffects !== undefined) {
     renderer.renderingOrchestrator.objectManager.setDebrisEffectsEnabled(
@@ -57,12 +53,10 @@ export function applyViewStateToRenderer(
     renderer.renderingOrchestrator.orbitManager.setPredictionVisibility(
       updates.showPredictionLines,
     );
-    renderer.interactionOrchestrator
-      .getLayer2DManager()
-      .setLayerVisibility(
-        CSS2DLayerType.PREDICTION_LABELS,
-        updates.showPredictionLines,
-      );
+    renderer.css2DManager.setLayerVisibility(
+      CSS2DLayerType.PREDICTION_LABELS,
+      updates.showPredictionLines,
+    );
   }
   if (updates.isDebugMode !== undefined) {
     renderer.setDebugMode(updates.isDebugMode);

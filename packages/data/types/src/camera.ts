@@ -15,37 +15,32 @@ export interface ICameraRenderer {
   /**
    * Gets the controls manager from the renderer.
    */
-  interactionOrchestrator: {
-    getControlsManager(): {
-      dispose(): void;
-      controls?: {
-        target: THREE.Vector3;
-        update(): void;
-      };
-      updateMinDistance(minDistance: number): void;
-      stopFollowing(): void;
-      moveToPosition(
-        position: any,
-        target: any,
-        withTransition: boolean,
-        options?: any,
-      ): void;
-      calculateTransitionDuration(startPos: any, endPos: any): number;
-      startFollowing(
-        object: THREE.Object3D | null,
-        offset: THREE.Vector3,
-      ): void;
-      transitionToWithLookAtFirst(
-        position: any,
-        target: any,
-        options?: any,
-      ): void;
-      transitionTargetTo(
-        target: any,
-        withTransition: boolean,
-        options?: any,
-      ): void;
-    } | null;
+  controlsManager: {
+    dispose(): void;
+    controls?: {
+      target: THREE.Vector3;
+      update(): void;
+    };
+    updateMinDistance(minDistance: number): void;
+    stopFollowing(): void;
+    moveToPosition(
+      position: any,
+      target: any,
+      withTransition: boolean,
+      options?: any,
+    ): void;
+    calculateTransitionDuration(startPos: any, endPos: any): number;
+    startFollowing(object: THREE.Object3D | null, offset: THREE.Vector3): void;
+    transitionToWithLookAtFirst(
+      position: any,
+      target: any,
+      options?: any,
+    ): void;
+    transitionTargetTo(
+      target: any,
+      withTransition: boolean,
+      options?: any,
+    ): void;
   };
 
   /**

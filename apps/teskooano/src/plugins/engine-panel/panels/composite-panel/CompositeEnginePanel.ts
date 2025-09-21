@@ -1,6 +1,8 @@
 import {
   type SimulationState,
+  StateAccessor,
   StateSubscriptionMixin,
+  simulationState$,
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
@@ -10,9 +12,7 @@ import {
 } from "dockview-core";
 import { BehaviorSubject, Subscription } from "rxjs";
 import { panelService } from "../../../../core/controllers/dockview/panel.service";
-
-import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import { layoutOrientation$ } from "../state/layoutStore";
 
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
@@ -21,53 +21,51 @@ import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import "../../../../core/interface/engine-toolbar/view/engine-toolbar.component";
 import { EngineToolbar } from "../../../../core/interface/engine-toolbar";
 import { EngineCameraManager } from "../camera-manager";
-import { PlaceholderManager } from "../placeholder-manager";
 import { CompositeEngineState, CompositePanelParams } from "../types";
 import { template } from "./CompositeEnginePanel.template";
 import {
   applyViewStateToRenderer,
   createDefaultViewState,
 } from "./CompositeEnginePanel.utils";
-import {
-  PanelCameraCoordinator,
-  PanelEventManager,
-  PanelLifecycleManager,
-} from "./managers";
+import { PanelCameraCoordinator } from "./managers";
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
- * with a dynamically generated UI controls section. This component acts as an
- * orchestrator for several manager classes that handle specific responsibilities.
+ * with a dynamically generated UI controls section. This component manages its own
+ * lifecycle and handles most responsibilities directly for simplicity.
  *
  * Responsibilities:
  * - Acts as the `IContentRenderer` for Dockview, managing the component's lifecycle.
  * - Owns the shadow DOM and the core HTML elements for the panel.
- * - Orchestrates the `PanelLifecycleManager`, `PanelCameraCoordinator`, and `PanelEventManager`.
+ * - Directly manages renderer lifecycle based on celestial objects state.
+ * - Handles simulation state and layout orientation subscriptions.
+ * - Orchestrates only the `PanelCameraCoordinator` for camera management.
  * - Manages its own independent view state via an RxJS BehaviorSubject.
  */
 export class CompositeEnginePanel
   extends HTMLElement
   implements IContentRenderer
 {
+  // Core elements
   private _engineContainer: HTMLElement | null = null;
-  private _placeholderManager: PlaceholderManager | undefined = undefined;
-
-  private _params:
-    | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
-    | undefined;
-  private _api: DockviewPanelApi | undefined;
+  private _homeComponent: HTMLElement | null = null;
   private _renderer: ModularSpaceRenderer | undefined;
   private _resizeObserver: ResizeObserver | undefined;
 
+  // State management
   private _subscriptionManager = new StateSubscriptionMixin();
+  private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
+  private _clearTimeout: number | null = null;
+
+  // Dockview integration
+  private _api: DockviewPanelApi | undefined;
+  private _params:
+    | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
+    | undefined;
   private _isInitialized = false;
 
+  // Managers
   private _cameraCoordinator!: PanelCameraCoordinator;
-  private _lifecycleManager: PanelLifecycleManager;
-  private _eventManager: PanelEventManager;
-
-  private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
-
   private _engineToolbar: EngineToolbar | null = null;
 
   /**
@@ -78,200 +76,79 @@ export class CompositeEnginePanel
   }
 
   constructor() {
-    super(); // Call super for HTMLElement
+    super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
+    // Initialize state
     this._viewStateSubject = new BehaviorSubject<CompositeEngineState>(
       createDefaultViewState(),
     );
 
-    // Get references to elements in the shadow DOM
+    // Get DOM references
     this._engineContainer = this.shadowRoot!.querySelector(".engine-container");
-
-    // Query placeholder elements locally for manager initialization
-    const placeholderWrapperEl = this.shadowRoot!.querySelector<HTMLElement>(
+    this._homeComponent = this.shadowRoot!.querySelector(
       "#engine-placeholder-wrapper",
     );
-    const placeholderMessageEl =
-      this.shadowRoot!.querySelector<HTMLParagraphElement>(
-        "#placeholder-message",
-      );
-    const placeholderActionAreaEl =
-      this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#placeholder-action-area",
-      );
-
-    if (
-      this._engineContainer &&
-      placeholderWrapperEl &&
-      placeholderMessageEl &&
-      placeholderActionAreaEl
-    ) {
-      this._placeholderManager = new PlaceholderManager(
-        placeholderWrapperEl,
-        placeholderMessageEl,
-        placeholderActionAreaEl,
-        this._engineContainer,
-      );
-    } else {
-      console.error(
-        `[CompositePanel ${this.id || "constructor"}] Critical elements for PlaceholderManager not found. Placeholder will not function.`,
-      );
-    }
-
-    // Bind handlers once
-    this.handleSimulationStateChange =
-      this.handleSimulationStateChange.bind(this);
-
-    // Instantiate managers
-    this._lifecycleManager = new PanelLifecycleManager({
-      getIsConnected: () => this.isConnected,
-      getRenderer: () => this._renderer,
-      placeholderManager: this._placeholderManager,
-      initializeRendererAndUI: () => this.initializeRendererAndUI(),
-      disposeRendererAndUI: () => this.disposeRendererAndUI(),
-    });
-
-    this._eventManager = new PanelEventManager({
-      panelIsConnected: () => this.isConnected,
-      triggerResize: () => this.triggerResize(),
-      handleSimulationStateChange: this.handleSimulationStateChange,
-    });
   }
 
   connectedCallback(): void {
     if (this._isInitialized) {
-      // If re-connected after being initialized, ensure subscriptions are active.
       this.setupSubscriptions();
     }
   }
 
   disconnectedCallback(): void {
-    // Unsubscribe from everything when removed from the DOM.
-    // `dispose` will handle the final cleanup if the panel is permanently removed.
     this._subscriptionManager.dispose();
-    // Re-create subscription manager for re-attachment
     this._subscriptionManager = new StateSubscriptionMixin();
   }
 
-  /**
-   * Retrieves the current view state of the panel.
-   * @returns A read-only copy of the current PanelViewState.
-   */
+  // Public API - simplified
   public getViewState(): Readonly<CompositeEngineState> {
     return this._viewStateSubject.getValue();
   }
 
-  /**
-   * Updates the panel's view state with the provided partial state.
-   * Merges the updates with the existing state and applies relevant changes
-   * to the underlying renderer instance.
-   * @param updates - An object containing the state properties to update.
-   */
   public updateViewState(updates: Partial<CompositeEngineState>): void {
     const currentState = this._viewStateSubject.getValue();
-    this._viewStateSubject.next({
-      ...currentState,
-      ...updates,
-    });
+    this._viewStateSubject.next({ ...currentState, ...updates });
     if (this._renderer) {
       applyViewStateToRenderer(this._renderer, updates);
     }
   }
 
-  /**
-   * Subscribes a callback function to changes in the panel's view state.
-   * @param callback - The function to call whenever the state changes.
-   * @returns An unsubscribe function to stop listening to state updates.
-   */
   public subscribeToViewState(
     callback: (state: CompositeEngineState) => void,
   ): Subscription {
     return this._viewStateSubject.subscribe(callback);
   }
 
-  /**
-   * Returns the internal ModularSpaceRenderer instance, if initialized.
-   * @returns The renderer instance or undefined.
-   */
   public getRenderer(): ModularSpaceRenderer | undefined {
     return this._renderer;
   }
 
-  /**
-   * Retrieves performance statistics from the renderer's animation loop.
-   * @returns An object containing stats like FPS, draw calls, etc., or null if unavailable.
-   */
   public getRendererStats(): RendererStats | null {
-    if (this._renderer?.renderingOrchestrator?.sceneManager?.animationLoop) {
-      return this._renderer.renderingOrchestrator.sceneManager.animationLoop.getCurrentStats();
-    } else {
-      return null;
-    }
+    return (
+      this._renderer?.renderingOrchestrator?.sceneManager?.animationLoop?.getCurrentStats() ||
+      null
+    );
   }
 
-  /**
-   * Provides access to the OrbitsManager instance within the renderer, if available.
-   * Useful for direct manipulation or querying of orbit visualization data.
-   */
-  public get orbitManager(): OrbitsManager | undefined {
-    return this._renderer?.renderingOrchestrator?.orbitManager;
-  }
-
-  /**
-   * Provides access to the LightSourceManager instance within the renderer, if available.
-   * Useful for direct manipulation or querying of lighting data.
-   */
-  public get lightSourceManager(): LightingManager | undefined {
-    return this._renderer?.renderingOrchestrator?.lightingManager;
-  }
-
-  /**
-   * Provides access to the EngineCameraManager instance.
-   * @returns The EngineCameraManager instance.
-   */
   public get engineCameraManager(): EngineCameraManager {
     return this._cameraCoordinator.engineCameraManager;
   }
 
-  /**
-   * Provides access to the view state subject.
-   * @returns The view state BehaviorSubject.
-   */
   public get viewState$(): BehaviorSubject<CompositeEngineState> {
     return this._viewStateSubject;
   }
 
-  /**
-   * Provides access to the EngineToolbar instance.
-   * @returns The EngineToolbar instance or null if not initialized.
-   */
   public get toolbar(): EngineToolbar | null {
     return this._engineToolbar;
   }
 
-  /**
-   * Updates a single property of the panel's view state.
-   * This provides a generic public interface for modifying view state.
-   *
-   * @param key The key of the view state property to update.
-   * @param value The new value for the property.
-   */
-  public setProperty<K extends keyof CompositeEngineState>(
-    key: K,
-    value: CompositeEngineState[K],
-  ): void {
-    // The cast is necessary because of how TypeScript handles computed
-    // property names in object literals.
-    this.updateViewState({ [key]: value } as Partial<CompositeEngineState>);
+  public setGenerating(isGenerating: boolean): void {
+    (this._homeComponent as any)?.setGenerating(isGenerating);
   }
 
-  /**
-   * Dockview lifecycle method: Initializes the panel's content and renderer.
-   * Sets up data listeners, placeholders, and the PanelResizer.
-   * @param parameters - Initialization parameters provided by Dockview.
-   */
   public init(
     parameters: GroupPanelPartInitParameters & {
       context: PluginExecutionContext;
@@ -285,43 +162,31 @@ export class CompositeEnginePanel
     }
 
     this._api = parameters.api;
-    if (!this.id) this.id = `composite-engine-view-${this._api.id}`;
-
     this._params = parameters as GroupPanelPartInitParameters & {
       params?: CompositePanelParams;
     };
+    if (!this.id) this.id = `composite-engine-view-${this._api.id}`;
 
     this.setupSubscriptions();
-
     this._isInitialized = true;
   }
 
-  /**
-   * Dockview lifecycle method: Cleans up all resources associated with the panel.
-   * Stops listeners, disposes the renderer, and unregisters the panel.
-   */
   dispose(): void {
     this.disposeRendererAndUI();
-
-    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
     this._subscriptionManager.dispose();
-    this._lifecycleManager.dispose();
-    this._eventManager.dispose();
 
-    this._placeholderManager?.dispose();
+    if (this._clearTimeout) {
+      clearTimeout(this._clearTimeout);
+      this._clearTimeout = null;
+    }
 
     panelService.unregisterPanelInstance(this._api?.id ?? "unknown");
   }
 
-  /**
-   * Requests the renderer to resize on the next animation frame.
-   * Ensures rendering adapts to container size changes.
-   */
   private triggerResize(): void {
     requestAnimationFrame(() => {
       if (this._engineContainer && this._renderer) {
         const { clientWidth, clientHeight } = this._engineContainer;
-
         if (clientWidth > 0 && clientHeight > 0) {
           this._renderer.onResize(clientWidth, clientHeight);
         }
@@ -329,43 +194,68 @@ export class CompositeEnginePanel
     });
   }
 
-  /**
-   * Sets up all RxJS subscriptions for the panel by delegating to managers.
-   */
   private setupSubscriptions(): void {
-    // Ensure existing subscriptions are cleaned up before creating new ones.
     this._subscriptionManager.dispose();
     this._subscriptionManager = new StateSubscriptionMixin();
 
-    this._lifecycleManager.listen();
-    this._eventManager.listen();
+    // Manage renderer lifecycle based on celestial objects
+    this._subscriptionManager.subscribeToStateComposition(
+      StateAccessor.celestialObjects$(),
+      (celestialObjects: Record<string, any>) => {
+        if (!this.isConnected) return;
+
+        const hasObjects = Object.keys(celestialObjects).length > 0;
+        const rendererExists = !!this._renderer;
+
+        if (hasObjects) {
+          if (this._clearTimeout) {
+            clearTimeout(this._clearTimeout);
+            this._clearTimeout = null;
+          }
+          if (!rendererExists) {
+            this.initializeRendererAndUI();
+          }
+          this._homeComponent?.setAttribute("hidden", "");
+        } else {
+          if (rendererExists) {
+            if (this._clearTimeout) {
+              clearTimeout(this._clearTimeout);
+            }
+            this._clearTimeout = window.setTimeout(() => {
+              this.disposeRendererAndUI();
+              this._clearTimeout = null;
+            }, 50);
+          }
+          this._homeComponent?.removeAttribute("hidden");
+        }
+      },
+    );
+
+    // Subscribe to simulation state
+    this._subscriptionManager.subscribeToStateComposition(
+      simulationState$,
+      (state: SimulationState) => {
+        if (this.isConnected) {
+          this.handleSimulationStateChange(state);
+        }
+      },
+    );
+
+    // Subscribe to layout changes
+    this._subscriptionManager.subscribeToStateComposition(
+      layoutOrientation$,
+      () => {
+        if (this.isConnected) {
+          this.triggerResize();
+        }
+      },
+    );
   }
 
-  /**
-   * Creates the renderer, camera, and toolbar. This is called by the
-   * `PanelLifecycleManager` when celestial objects are available.
-   */
   private initializeRendererAndUI(): void {
-    if (this._renderer || !this._engineContainer) {
-      return;
-    }
-    this.initializeRenderer();
-    this.createEngineToolbar();
-  }
+    if (this._renderer || !this._engineContainer) return;
 
-  /**
-   * Initializes the `ModularSpaceRenderer` instance and sets up
-   * its initial state and event listeners.
-   */
-  private initializeRenderer(): void {
-    if (this._renderer || !this._engineContainer) {
-      return; // Already initialized or container not ready
-    }
-    const viewState = this.getViewState();
-
-    // 2. Decide if the label system is needed and initialize it.
-
-    // 3. Create the main renderer, injecting the dependencies.
+    // Create renderer
     this._renderer = new ModularSpaceRenderer(this._engineContainer);
     // @ts-ignore
     if (window.teskooano) {
@@ -373,7 +263,7 @@ export class CompositeEnginePanel
       window.teskooano.renderer = this._renderer;
     }
 
-    // 4. Finalize setup.
+    // Initialize camera coordinator
     if (!this._api?.id) {
       console.error(
         `[CompositePanel] Cannot initialize camera systems without panel API ID.`,
@@ -388,7 +278,6 @@ export class CompositeEnginePanel
       this._renderer,
       this._api.id,
     );
-
     if (!this._cameraCoordinator.initialize()) {
       console.error(
         `[CompositePanel ${this._api.id}] Failed to initialize camera systems.`,
@@ -398,55 +287,39 @@ export class CompositeEnginePanel
       return;
     }
 
-    // Apply the complete initial view state to the newly created renderer.
-    applyViewStateToRenderer(this._renderer, viewState);
-
+    // Apply initial view state and finalize
+    applyViewStateToRenderer(this._renderer, this.getViewState());
     this._finalizeRendererInitialization();
+    this.createEngineToolbar();
   }
 
-  /**
-   * Finishes the renderer and panel setup by dispatching events,
-   * starting the render loop, and setting up observers.
-   * Assumes _renderer and _engineContainer are initialized.
-   */
   private _finalizeRendererInitialization(): void {
     if (!this._renderer || !this._engineContainer) return;
 
+    // Dispatch initialization event
     if (this.element.isConnected && this._api?.id) {
       this.dispatchEvent(
         new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
           bubbles: true,
           composed: true,
-          detail: {
-            panelId: this._api.id,
-            parentInstance: this,
-          },
+          detail: { panelId: this._api.id, parentInstance: this },
         }),
       );
     }
 
+    // Start renderer and monitoring
     this._renderer.start();
-
-    // Start performance monitoring after renderer is ready
     PerformanceMonitor.getInstance().startMonitoring();
 
-    this._resizeObserver = new ResizeObserver(() => {
-      this.triggerResize();
-    });
+    // Setup resize observer
+    this._resizeObserver = new ResizeObserver(() => this.triggerResize());
     this._resizeObserver.observe(this._engineContainer);
   }
 
-  /**
-   * Handles changes in the global simulation state, updating the renderer as needed.
-   * @param newState The latest simulation state.
-   */
   private handleSimulationStateChange = (_: SimulationState): void => {
     if (!this._renderer?.renderingOrchestrator?.orbitManager) return;
   };
 
-  /**
-   * Initializes the overlay toolbar using the EngineToolbar component.
-   */
   private createEngineToolbar(): void {
     if (!this._api?.id) {
       console.error(
@@ -456,7 +329,6 @@ export class CompositeEnginePanel
     }
 
     const toolbarManager = this._params?.params?.engineToolbarManager;
-
     if (!toolbarManager) {
       console.error(
         "[CompositeEnginePanel] EngineToolbarManager not found! Cannot create toolbar.",
@@ -467,7 +339,6 @@ export class CompositeEnginePanel
     const toolbarContainer = this.shadowRoot!.querySelector(
       "teskooano-engine-toolbar",
     );
-
     if (!toolbarContainer) {
       console.error(
         "[CompositeEnginePanel] Could not find 'teskooano-engine-toolbar' element in shadow DOM.",
@@ -482,35 +353,21 @@ export class CompositeEnginePanel
     );
   }
 
-  /**
-   * Cleans up the renderer instance, UI controls, and associated observers/listeners.
-   * Called when data disappears or the panel is disposed.
-   */
   private disposeRendererAndUI(): void {
-    // Stop performance monitoring first
     PerformanceMonitor.getInstance().stopMonitoring();
 
-    // Dispose renderer (this should handle most cleanup)
     this._renderer?.dispose?.();
     this._renderer = undefined;
 
-    // Dispose camera coordinator
-    this._cameraCoordinator.dispose();
+    this._cameraCoordinator?.dispose();
 
-    // Dispose toolbar
     const toolbarManager = this._params?.params?.engineToolbarManager;
     if (toolbarManager && this._api?.id) {
       toolbarManager.disposeToolbarForPanel(this._api.id);
       this._engineToolbar = null;
     }
 
-    // Disconnect resize observer
     this._resizeObserver?.disconnect();
     this._resizeObserver = undefined;
-
-    // Nullify references to allow garbage collection
-    (this._renderer as any) = null;
-    (this._engineToolbar as any) = null;
-    (this._resizeObserver as any) = null;
   }
 }

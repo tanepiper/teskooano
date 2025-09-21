@@ -30,22 +30,6 @@ Groups all rendering-related managers and operations:
 - `getTriangleCount()` - Performance debugging
 - `dispose()` - Cleanup all rendering resources
 
-### `InteractionOrchestrator`
-
-Groups all user interaction and interface-related managers:
-
-- **Camera Controls**: `ControlsManager`, user input handling
-- **2D Labels**: `Layer2DManager`, HTML overlays
-- **AU Markers**: `AuMarkerManager`, distance indicators
-
-**Key Methods:**
-
-- `getControlsManager()` - Access to camera controls
-- `getLayer2DManager()` - Access to 2D label system
-- `setDebugMode()` - Enable debug mode for interactions
-- `onResize()` - Handle window resize events
-- `dispose()` - Cleanup all interaction resources
-
 ### `DebugOrchestrator`
 
 Groups debug and analysis tools:
@@ -65,7 +49,7 @@ Groups debug and analysis tools:
 ### 1. Reduced API Surface
 
 - **Before**: 10+ public managers exposed directly
-- **After**: 3 orchestrators with focused responsibilities
+- **After**: 2 orchestrators with focused responsibilities
 
 ### 2. Better Encapsulation
 
@@ -112,7 +96,8 @@ For advanced use cases that require direct manager access, getter methods are pr
 // Access to specific managers when needed
 const sceneManager = renderer.renderingOrchestrator.getSceneManager();
 const objectManager = renderer.renderingOrchestrator.getObjectManager();
-const controlsManager = renderer.interactionOrchestrator.getControlsManager();
+const controlsManager = renderer.controlsManager;
+const css2DManager = renderer.css2DManager;
 ```
 
 ## Future Extensions

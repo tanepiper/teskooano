@@ -9,7 +9,7 @@ The **ThreeJS package** (`@teskooano/renderer-threejs`) serves as the **integrat
 ## Key Features
 
 - **Modular Architecture**: Composes specialized managers from sub-packages into a cohesive system
-- **Orchestrator Pattern**: Groups related managers into focused orchestrators (Rendering, Interaction, Debug)
+- **Orchestrator Pattern**: Groups related managers into focused orchestrators (Rendering, Debug)
 - **Constructor Injection**: Eliminates circular dependencies through proper dependency injection
 - **Service Container**: Manages shared and panel-specific services with clear boundaries
 - **Dual-Service Architecture**: Clear separation between singleton (shared) and instance (panel-specific) services
@@ -66,7 +66,6 @@ src/
     ├── index.ts                       # Barrel exports
     ├── README.md                      # Orchestrator architecture documentation
     ├── RenderingOrchestrator.ts       # Groups rendering-related managers
-    ├── InteractionOrchestrator.ts     # Groups interaction-related managers
     └── DebugOrchestrator.ts           # Groups debug and analysis tools
 ```
 
@@ -111,7 +110,6 @@ src/
 ```typescript
 export class ModularSpaceRenderer {
   public renderingOrchestrator: RenderingOrchestrator;
-  public interactionOrchestrator: InteractionOrchestrator;
   public debugOrchestrator: DebugOrchestrator;
 
   constructor(container: HTMLElement);
@@ -343,24 +341,6 @@ export class RenderingOrchestrator {
   get backgroundManager(): BackgroundManager;
   get lightingManager(): LightingManager;
   get lodManager(): LODManager;
-}
-```
-
-### InteractionOrchestrator
-
-```typescript
-export class InteractionOrchestrator {
-  private readonly services: RendererServices;
-
-  constructor(services: RendererServices);
-  setDebugMode(enabled: boolean): void;
-  onResize(width: number, height: number): void;
-  dispose(): void;
-
-  // Getters for manager access
-  getControlsManager(): ControlsManager;
-  getLayer2DManager(): Layer2DManager;
-  getAuMarkerManager(): AuMarkerManager;
 }
 ```
 
@@ -627,10 +607,10 @@ InteractionOrchestrator -> needs RenderingOrchestrator for scene/camera
 **After (Fixed):**
 
 ```typescript
-// ✅ Constructor injection
+// ✅ Constructor injection + Direct service access
 RendererServiceContainer -> creates all services upfront
 RenderingOrchestrator -> receives services via constructor
-InteractionOrchestrator -> receives services via constructor
+ModularSpaceRenderer -> accesses interaction services directly
 ```
 
 ### Service Boundaries

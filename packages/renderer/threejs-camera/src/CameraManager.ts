@@ -135,9 +135,9 @@ export class CameraManager {
    * Disposes of the CameraManager and cleans up resources.
    */
   public dispose(): void {
-    if (this.renderer?.interactionOrchestrator) {
+    if (this.renderer?.controlsManager) {
       // Assuming controlsManager.dispose() handles OrbitControls cleanup and listener removal from its DOM element.
-      this.renderer.interactionOrchestrator.getControlsManager()?.dispose();
+      this.renderer.controlsManager?.dispose();
     }
     // Remove document-level listeners
     document.removeEventListener(
@@ -164,8 +164,7 @@ export class CameraManager {
     }
     // This check for this.renderer.controlsManager.controls might be too early if controls are async
     // but for now, we assume it's available after renderer is set.
-    const controlsManager =
-      this.renderer.interactionOrchestrator.getControlsManager();
+    const controlsManager = this.renderer.controlsManager;
     if (!controlsManager?.controls) {
       console.warn(
         "[CameraManager] Cannot initialize camera position: controlsManager or controls not available on renderer.",
@@ -244,8 +243,7 @@ export class CameraManager {
     );
 
     // Update orbit controls min distance
-    const controlsManager =
-      this.renderer?.interactionOrchestrator.getControlsManager();
+    const controlsManager = this.renderer?.controlsManager;
     if (controlsManager) {
       const minDistance =
         CameraHelper.getMinDistanceForCelestialType(celestialType);
@@ -261,8 +259,7 @@ export class CameraManager {
    * @param {number} [distance] - Optional distance multiplier. If not provided, `DEFAULT_CAMERA_DISTANCE` is used to calculate the offset.
    */
   public followObject(objectId: string | null, distance?: number): void {
-    const controlsManager =
-      this.renderer?.interactionOrchestrator.getControlsManager();
+    const controlsManager = this.renderer?.controlsManager;
     if (!controlsManager) {
       console.warn(
         "[CameraManager] Cannot focus on object: Manager or renderer components not initialized.",
@@ -409,8 +406,7 @@ export class CameraManager {
    * @param {THREE.Vector3} targetPosition - The world coordinates to point the camera towards.
    */
   public pointCameraAt(targetPosition: THREE.Vector3): void {
-    const controlsManager =
-      this.renderer?.interactionOrchestrator.getControlsManager();
+    const controlsManager = this.renderer?.controlsManager;
     if (!controlsManager) {
       console.warn(
         "[CameraManager] Cannot point camera: Manager or renderer components not initialized.",
@@ -428,8 +424,7 @@ export class CameraManager {
    * Uses a smooth transition.
    */
   public resetCameraView(): void {
-    const controlsManager =
-      this.renderer?.interactionOrchestrator.getControlsManager();
+    const controlsManager = this.renderer?.controlsManager;
     if (!controlsManager) {
       console.warn(
         "[CameraManager] Cannot reset camera view: Manager or renderer components not initialized.",
@@ -563,7 +558,7 @@ export class CameraManager {
    * Updates the internal state and clears any active semantic focus.
    */
   private handleUserCameraManipulation = (event: Event): void => {
-    if (!this.renderer?.interactionOrchestrator || !this.cameraStore) return;
+    if (!this.renderer?.controlsManager || !this.cameraStore) return;
 
     const detail = (event as CustomEvent).detail;
     const newPosition = OSVector3.fromThreeJS(detail.position);

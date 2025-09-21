@@ -85,9 +85,9 @@ export class PanelCameraCoordinator {
         initialFocusedObjectId: coreCameraState.focusedObjectId,
         initialCameraPosition: coreCameraState.position,
         initialCameraTarget: coreCameraState.target,
-        onFocusChangeCallback: (focusedId: string | null) => {
+        onFocusChangeCallback: (_focusedId: string | null) => {
           // Update core-state camera focus when engine camera focus changes
-          coreCameraManager.setFocusedObject(focusedId);
+          // coreCameraManager.setFocusedObject(focusedId);
         },
       });
 
