@@ -77,7 +77,6 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
       const animationTime = ((time * timeScale) / 1000) * 0.01; // Scale for visible animation
       this.uniforms.uTime.value = animationTime;
     }
-    console.log("base star animationTime", this.uniforms.uTime.value);
   }
 
   /**
@@ -132,7 +131,6 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
     // Use a very small scale to create fast, visible animation cycles
     const animationTime = ((time * timeScale) / 1000) * 0.001; // Scale down much more for faster animation
     this.uniforms.uTime.value = animationTime;
-    console.log("corona animationTime", animationTime);
   }
 
   /**

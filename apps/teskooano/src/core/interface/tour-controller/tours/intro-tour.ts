@@ -126,10 +126,23 @@ export function createIntroTour(
         side: "bottom",
         align: "center",
       },
+      onNextClick: () => {
+        driverObj.moveNext();
+      },
     },
     {
       id: "ui-settings-1",
-      element: ".engine-view teskooano-engine-toolbar",
+      element: () => {
+        const engineView = document.querySelector("teskooano-engine-view");
+        const toolbar = engineView?.shadowRoot?.querySelector(
+          "teskooano-engine-toolbar",
+        ) as Element;
+        const containers = toolbar?.shadowRoot?.querySelectorAll(
+          ".engine-overlay-toolbar-container",
+        );
+        // Return the second container (index 1) which has the actual components, not the slot
+        return containers?.[1] as Element;
+      },
       popover: {
         title: "📦 Engine Toolbar",
         description:
@@ -137,11 +150,26 @@ export function createIntroTour(
         side: "bottom",
         align: "center",
       },
+      onPopoverRender: function () {
+        // @ts-ignore
+        engineToolbar = this.element();
+      },
     },
     {
       id: "ui-settings-2",
-      element:
-        ".engine-view teskooano-engine-toolbar #engine-toolbar-toggle-button",
+      element: () => {
+        const engineView = document.querySelector("teskooano-engine-view");
+        const toolbar = engineView?.shadowRoot?.querySelector(
+          "teskooano-engine-toolbar",
+        ) as Element;
+        const containers = toolbar?.shadowRoot?.querySelectorAll(
+          ".engine-overlay-toolbar-container",
+        );
+        // Look for the toggle button in the second container (index 1) which has the actual components
+        return containers?.[1]?.querySelector(
+          "#engine-toolbar-toggle-button",
+        ) as Element;
+      },
       popover: {
         title: "☾ Toggle the Toolbar",
         description:
@@ -153,8 +181,18 @@ export function createIntroTour(
 
     {
       id: "focus-control",
-      element:
-        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-focus-control-button",
+      element: () => {
+        const engineView = document.querySelector("teskooano-engine-view");
+        const toolbar = engineView?.shadowRoot?.querySelector(
+          "teskooano-engine-toolbar",
+        ) as Element;
+        const containers = toolbar?.shadowRoot?.querySelectorAll(
+          ".engine-overlay-toolbar-container",
+        );
+        return containers?.[1]?.querySelector(
+          "#engine-toolbar-button-teskooano-celestial-hierarchy-button",
+        ) as Element;
+      },
       overlayColor: "rgba(0, 0, 0, 0.3)",
       disableActiveInteraction: false,
       popover: {
@@ -182,21 +220,19 @@ export function createIntroTour(
       },
     },
     {
-      id: "celestial-info",
-      element:
-        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-celestial-info-button",
-      popover: {
-        title: "ℹ️ Celestial Info",
-        description:
-          "This is the celestial info section, it displays information about the currently focused object.",
-        side: "left",
-        align: "start",
-      },
-    },
-    {
       id: "renderer-info",
-      element:
-        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-engine-info-button",
+      element: () => {
+        const engineView = document.querySelector("teskooano-engine-view");
+        const toolbar = engineView?.shadowRoot?.querySelector(
+          "teskooano-engine-toolbar",
+        ) as Element;
+        const containers = toolbar?.shadowRoot?.querySelectorAll(
+          ".engine-overlay-toolbar-container",
+        );
+        return containers?.[1]?.querySelector(
+          "#engine-toolbar-button-teskooano-engine-info-button",
+        ) as Element;
+      },
       popover: {
         title: "🎨 Renderer & Performance",
         description:
@@ -207,8 +243,18 @@ export function createIntroTour(
     },
     {
       id: "engine-settings",
-      element:
-        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-engine_settings",
+      element: () => {
+        const engineView = document.querySelector("teskooano-engine-view");
+        const toolbar = engineView?.shadowRoot?.querySelector(
+          "teskooano-engine-toolbar",
+        ) as Element;
+        const containers = toolbar?.shadowRoot?.querySelectorAll(
+          ".engine-overlay-toolbar-container",
+        );
+        return containers?.[1]?.querySelector(
+          "#engine-toolbar-button-teskooano-engine-settings-button",
+        ) as Element;
+      },
       popover: {
         title: "⚙️ Engine Settings",
         description:
