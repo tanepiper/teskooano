@@ -45,7 +45,7 @@ export class AsteroidFieldMaterial extends THREE.ShaderMaterial {
       vertexShader: asteroidVertexShader,
       fragmentShader: asteroidFragmentShader,
       transparent: false, // Not transparent
-      depthWrite: true, // Enable depth writing
+      depthWrite: false, // Enable depth writing
       blending: THREE.NormalBlending, // Use normal blending
       vertexColors: true,
     });

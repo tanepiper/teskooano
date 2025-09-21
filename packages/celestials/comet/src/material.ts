@@ -79,6 +79,7 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
       fragmentShader: nucleusFragmentShader,
       depthWrite: true,
       depthTest: true,
+      vertexColors: true,
     });
   }
 }
