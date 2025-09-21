@@ -622,7 +622,8 @@ import { notificationManager } from "@teskooano/notifications";
 import { pluginManager } from "@teskooano/ui-plugin";
 
 // Notify on plugin events
-pluginManager.pluginsChanged$.subscribe((plugins) => {
+pluginManager.pluginsChanged$.subscribe(() => {
+  const plugins = pluginManager.getPlugins();
   notificationManager.addNotification({
     title: "Plugin System",
     message: `Loaded ${plugins.length} plugins`,

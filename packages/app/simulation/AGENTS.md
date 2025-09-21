@@ -24,11 +24,7 @@ packages/app/simulation/
 │   ├── index.ts                    # Main package exports
 │   ├── SimulationOrchestrator.ts   # Core simulation management singleton
 │   ├── HierarchyManager.ts         # Dynamic hierarchy management
-│   ├── LagrangeProcessor.ts        # Lagrange point processing
-│   └── systems/                    # System initializers
-│       ├── solar-system/           # Solar system initialization
-│       ├── red-dwarf-system/       # Red dwarf system initialization
-│       └── blue-giant-system/      # Blue giant system initialization
+│   └── LagrangeProcessor.ts        # Lagrange point processing
 ├── package.json
 ├── moon.yml
 ├── tsconfig.json
@@ -131,22 +127,11 @@ export function processLagrangeObjects(
 
 #### 4. System Initializers
 
-Functions for initializing predefined star systems:
+Predefined system initializers are provided by `@teskooano/systems-solar-system` (and other `@teskooano/systems-*` packages).
 
 ```typescript
-// Example: systems/solar-system/index.ts
 export function initializeSolarSystem(): void;
-
-// Example: systems/red-dwarf-system/index.ts
-export function initializeRedDwarfSystem(): void;
 ```
-
-**Features:**
-
-- **Data-Driven Initialization**: Uses actions from `@teskooano/core-state`
-- **System-Specific Logic**: Tailored initialization for different system types
-- **State Population**: Populates celestial objects and physics states
-- **Modular Design**: Each system type has its own initializer
 
 ### Simulation Lifecycle
 
@@ -209,7 +194,7 @@ simulationStore.setSimulationState({ ...currentState, time: newTime });
 
 ```typescript
 import { simulationOrchestrator } from "@teskooano/app-simulation";
-import { initializeSolarSystem } from "@teskooano/app-simulation/systems";
+import { initializeSolarSystem } from "@teskooano/systems-solar-system";
 
 // Load initial system
 initializeSolarSystem();
@@ -242,16 +227,8 @@ simulationOrchestrator.onResetTime.subscribe(() => {
 
 ```typescript
 // Solar system
-import { initializeSolarSystem } from "@teskooano/app-simulation/systems/solar-system";
+import { initializeSolarSystem } from "@teskooano/systems-solar-system";
 initializeSolarSystem();
-
-// Red dwarf system
-import { initializeRedDwarfSystem } from "@teskooano/app-simulation/systems/red-dwarf-system";
-initializeRedDwarfSystem();
-
-// Blue giant system
-import { initializeBlueGiantSystem } from "@teskooano/app-simulation/systems/blue-giant-system";
-initializeBlueGiantSystem();
 ```
 
 ### 4. Hierarchy Management

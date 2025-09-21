@@ -240,11 +240,13 @@ Core State (DOM Events) → EventBridge → Renderer (RxJS Events) → Component
 
 ### Key Components
 
-#### EventBridge (`@teskooano/renderer-threejs`)
+#### Event Bridges (in `@teskooano/core-state`)
 
-- **Purpose**: Connects DOM events from core state to RxJS events for renderer
-- **Features**: Automatic initialization, lifecycle management, error handling
-- **Usage**: Automatically managed by ModularSpaceRenderer
+- **Purpose**: Bridge DOM events to RxJS for system and celestial operations
+- **Components**:
+  - `SystemEventBridge` – system-wide events (e.g., objects loaded/destroyed)
+  - `CelestialEventBridge` – celestial/UI events (e.g., clear trails/predictions)
+- **Usage**: Initialized by `ModularSpaceRenderer` at startup
 
 #### Renderer Events (`@teskooano/renderer-threejs`)
 
@@ -253,7 +255,7 @@ Core State (DOM Events) → EventBridge → Renderer (RxJS Events) → Component
 
 #### Pipeline Events (`@teskooano/renderer-threejs`)
 
-- **10 stage-specific events**: beforeUpdate, afterControlsUpdate, afterOrbitsUpdate, etc.
+- **10 stage-specific events**: beforeUpdate, afterControlsUpdate, afterOrbitsUpdate, afterObjectsUpdate, afterBackgroundUpdate, afterGridUpdate, beforeRender, afterRender, afterOverlaysRender, afterUpdate
 - **Purpose**: Allow components to react to specific rendering stages
 - **Payload**: `{ deltaTime, elapsedTime, frameCount }`
 
@@ -261,7 +263,7 @@ Core State (DOM Events) → EventBridge → Renderer (RxJS Events) → Component
 
 - **DOM Events**: `CELESTIAL_OBJECT_DESTROYED`, `CELESTIAL_OBJECTS_LOADED`
 - **Purpose**: Cross-system communication for state changes
-- **Usage**: Automatically dispatched by state management functions
+- **Usage**: Dispatched by state management functions and bridged to RxJS via `SystemEventBridge`/`CelestialEventBridge`
 
 ### Usage Patterns
 
@@ -291,7 +293,7 @@ document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
 - **Validate payloads**: Always check event data validity
 - **Throttle expensive operations**: Use RxJS operators for performance
 - **Handle errors**: Implement proper error handling in subscriptions
-- **Event documentation**: See `packages/renderer/threejs/src/EVENT_SYSTEM.md` for comprehensive documentation
+- **Event documentation**: See `packages/core/state/src/services/EVENT_SYSTEM.md` for comprehensive documentation
 
 ## Documentation Standards
 

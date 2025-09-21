@@ -60,7 +60,7 @@ src/
 
 ### Data Flow
 
-1. **Initialization**: CameraManager receives renderer instance and panel ID through setDependencies
+1. **Initialization**: CameraManager is constructed with `CameraManagerOptions` including renderer instance and panel ID
 2. **State Management**: Delegates to core-state CameraStore for per-panel camera state
 3. **Camera Operations**: High-level operations (focus, move, FOV) delegate to low-level controls
 4. **Event Handling**: Listens for transition completion and user manipulation events
@@ -97,8 +97,7 @@ src/
 
 ```typescript
 export class CameraManager {
-  constructor();
-  setDependencies(options: CameraManagerOptions): void;
+  constructor(options: CameraManagerOptions);
   initializeCameraPosition(): void;
   getCameraState$(): BehaviorSubject<CameraState>;
   followObject(objectId: string | null, distance?: number): void;
@@ -348,9 +347,8 @@ export class CameraManager {
       this.handleUserCameraManipulation,
     );
 
-    // Clean up renderer resources
-    this.renderer?.interactionOrchestrator.getControlsManager()?.dispose();
-    this.renderer = null;
+    // Clean up controls via renderer.controlsManager
+    this.renderer?.controlsManager?.dispose?.();
   }
 }
 ```

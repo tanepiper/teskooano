@@ -194,17 +194,17 @@ graph TD
 
 ```
 ModularSpaceRenderer (threejs)
-├── Creates RenderingOrchestrator
+├── Creates services via DI/container
 │   ├── SceneManager (threejs-core)
+│   ├── ControlsManager (threejs-controls)
+│   ├── Layer2DManager (threejs-labels)
+│   ├── AuMarkerManager (threejs-labels)
 │   ├── ObjectManager (threejs-objects)
 │   ├── OrbitsManager (threejs-orbits)
 │   ├── BackgroundManager (threejs-background)
 │   ├── LightingManager (threejs-lighting)
 │   └── GridManager (threejs-core)
-├── Creates InteractionOrchestrator
-│   ├── ControlsManager (threejs-controls)
-│   ├── Layer2DManager (threejs-labels)
-│   └── AuMarkerManager (threejs-labels)
+├── Wires RenderPipeline (orders per-frame updates)
 └── Creates DebugOrchestrator
     └── DepthBufferDebugger (threejs-core)
 ```

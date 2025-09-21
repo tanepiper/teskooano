@@ -148,10 +148,7 @@ export class PluginManager {
 
   // Core API
   public registerPlugin(plugin: TeskooanoPlugin): void;
-  public executeFunction<T>(
-    functionId: string,
-    context: PluginExecutionContext,
-  ): Promise<T>;
+  public execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined;
   public getPlugin(pluginId: string): TeskooanoPlugin | undefined;
 }
 ```
@@ -185,10 +182,10 @@ export class SimulationOrchestrator {
   public readonly onDestructionOccurred$ = new Subject<DestructionEvent>();
 
   // Core API
-  public startSimulation(): void;
-  public pauseSimulation(): void;
+  public startLoop(): Promise<void>;
+  public stopLoop(): void;
   public setTimeScale(scale: number): void;
-  public loadSystem(systemType: SystemType): Promise<void>;
+  public resetSystem(skipStateClear?: boolean): void;
 }
 ```
 
@@ -221,7 +218,7 @@ export class NotificationManager {
   public removeNotification(notificationId: string): void;
   public markAsRead(notificationId: string): void;
   public markAllAsRead(): void;
-  public clearAllNotifications(): void;
+  public clearAll(): void;
 }
 ```
 
@@ -310,14 +307,15 @@ Plugins can interact with the simulation system through the orchestrator:
 
 ```typescript
 // Plugin accessing simulation state
-import { SimulationOrchestrator } from "@teskooano/app-simulation";
+import { simulationOrchestrator } from "@teskooano/app-simulation";
 
 export const plugin = {
   id: "celestial-info",
   functions: {
     "celestial-info:getCurrentSystem": async (context) => {
-      const orchestrator = SimulationOrchestrator.getInstance();
-      const state = orchestrator.simulationState$.value;
+      await simulationOrchestrator.startLoop();
+      // Access state via core-state if needed
+      // const state = StateAccessor.getSimulationState();
       return state.currentSystem;
     },
   },
@@ -330,9 +328,8 @@ All packages can use the centralized notification system:
 
 ```typescript
 // Using notifications from any package
-import { NotificationManager } from "@teskooano/notifications";
+import { notificationManager } from "@teskooano/notifications";
 
-const notificationManager = NotificationManager.getInstance();
 notificationManager.addNotification({
   id: "system-loaded",
   title: "System Loaded",

@@ -404,14 +404,14 @@ export interface SliderValueChangePayload {
 
 #### Event System Integration
 
-The `CustomEvents` object provides constants for DOM events used throughout the system:
+The `CustomEvents` object provides constants for DOM events used throughout the system, which are bridged to RxJS via `SystemEventBridge` and `CelestialEventBridge` in `@teskooano/core-state`:
 
 - **Core State Events**: `CELESTIAL_OBJECT_DESTROYED`, `CELESTIAL_OBJECTS_LOADED`
 - **UI Events**: `UI_PANEL_OPEN`, `UI_BUTTON_CLICK`, `UI_MODAL_SHOW`
 - **System Events**: `SYSTEM_GENERATION_START`, `SYSTEM_GENERATION_COMPLETE`
 - **Custom Events**: `teskooano-clear-orbit-trails`, `teskooano-clear-predictions`
 
-These events are consumed by the renderer's EventBridge and converted to RxJS events for internal communication.
+These events are consumed by `SystemEventBridge`/`CelestialEventBridge` and converted to RxJS events for internal communication across systems.
 
 ## Testing Strategy
 
