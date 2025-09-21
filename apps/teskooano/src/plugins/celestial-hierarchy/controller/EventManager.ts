@@ -39,10 +39,10 @@ export class EventManager {
   public setupEventListeners(): void {
     // Button event listeners
     this._resetButton?.addEventListener("click", () =>
-      this._parentPanel?.engineCameraManager?.resetCameraView(),
+      this._parentPanel?.cameraManager?.resetCameraView(),
     );
     this._clearButton?.addEventListener("click", () =>
-      this._parentPanel?.engineCameraManager?.clearFocus(),
+      this._parentPanel?.cameraManager?.clearFocus(),
     );
 
     // Tree interaction listeners

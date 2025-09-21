@@ -148,7 +148,10 @@ export class PluginManager {
 
   // Core API
   public registerPlugin(plugin: TeskooanoPlugin): void;
-  public execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined;
+  public execute<T = any>(
+    functionId: string,
+    args?: any,
+  ): Promise<T> | T | undefined;
   public getPlugin(pluginId: string): TeskooanoPlugin | undefined;
 }
 ```

@@ -2,25 +2,22 @@ import { StateAccessor } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { CameraManager } from "@teskooano/renderer-threejs-camera";
 import { Subscription } from "rxjs";
-import { EngineCameraManager } from "../../camera-manager";
 import type { CompositeEnginePanel } from "../CompositeEnginePanel";
 
 /**
  * Coordinates the creation, configuration, and state synchronization of camera-related
- * managers (`CameraManager`, `EngineCameraManager`) for a single `CompositeEnginePanel`.
+ * managers for a single `CompositeEnginePanel`.
  *
  * Responsibilities:
- * - Create and initialize the renderer-level CameraManager and wrapper EngineCameraManager.
+ * - Create and initialize the renderer-level CameraManager.
  * - Initialize camera state from the per-panel core-state CameraManager.
  * - Reflect renderer camera state changes back into core-state for this panel.
  */
 export class PanelCameraCoordinator {
-  private _panel: CompositeEnginePanel;
   private _renderer: ModularSpaceRenderer;
   private _panelApiId: string;
 
   private _cameraManagerInstance!: CameraManager;
-  private _engineCameraManager!: EngineCameraManager;
   private _subscription = new Subscription();
 
   /**
@@ -30,11 +27,10 @@ export class PanelCameraCoordinator {
    * @param panelApiId - The ID of the panel instance.
    */
   constructor(
-    panel: CompositeEnginePanel,
+    _panel: CompositeEnginePanel,
     renderer: ModularSpaceRenderer,
     panelApiId: string,
   ) {
-    this._panel = panel;
     this._renderer = renderer;
     this._panelApiId = panelApiId;
   }
@@ -54,21 +50,13 @@ export class PanelCameraCoordinator {
     return this._cameraManagerInstance;
   }
 
-  /**
-   * Provides access to the EngineCameraManager instance.
-   */
-  public get engineCameraManager(): EngineCameraManager {
-    return this._engineCameraManager;
-  }
-
   /** Disposes of all resources and subscriptions held by the coordinator. */
   public dispose(): void {
     this._subscription.unsubscribe();
     this._cameraManagerInstance.dispose();
-    this._engineCameraManager.dispose();
   }
 
-  /** Initializes the main CameraManager and the panel-specific EngineCameraManager. */
+  /** Initializes the main CameraManager. */
   private _initializeSystems(): boolean {
     try {
       // Get core camera state for initialization
@@ -91,17 +79,10 @@ export class PanelCameraCoordinator {
         },
       });
 
-      // Create EngineCameraManager with the CameraManager instance
-      this._engineCameraManager = new EngineCameraManager(
-        this._panel,
-        this._cameraManagerInstance,
-        this._panelApiId,
-      );
-
       return true;
     } catch (error) {
       console.error(
-        `[PanelCameraCoordinator for ${this._panelApiId}] Failed to create camera managers:`,
+        `[PanelCameraCoordinator for ${this._panelApiId}] Failed to create camera manager:`,
         error,
       );
       return false;

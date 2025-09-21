@@ -92,7 +92,7 @@ export class CelestialHierarchy
     if (
       parent &&
       typeof parent.getRenderer === "function" &&
-      parent.engineCameraManager
+      parent.cameraManager
     ) {
       this.controller?.setParentPanel(parent);
 

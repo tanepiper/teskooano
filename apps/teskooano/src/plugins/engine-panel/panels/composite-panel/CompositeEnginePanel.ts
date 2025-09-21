@@ -20,7 +20,7 @@ import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import "../../../../core/interface/engine-toolbar/view/engine-toolbar.component";
 import { EngineToolbar } from "../../../../core/interface/engine-toolbar";
-import { EngineCameraManager } from "../camera-manager";
+import { CameraManager } from "@teskooano/renderer-threejs-camera";
 import { CompositeEngineState, CompositePanelParams } from "../types";
 import { template } from "./CompositeEnginePanel.template";
 import {
@@ -133,8 +133,8 @@ export class CompositeEnginePanel
     );
   }
 
-  public get engineCameraManager(): EngineCameraManager {
-    return this._cameraCoordinator.engineCameraManager;
+  public get cameraManager(): CameraManager {
+    return this._cameraCoordinator.cameraManager;
   }
 
   public get viewState$(): BehaviorSubject<CompositeEngineState> {

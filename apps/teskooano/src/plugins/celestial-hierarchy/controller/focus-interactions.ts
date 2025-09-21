@@ -33,7 +33,7 @@ export class FocusInteractionManager {
       return false;
     }
 
-    this.enginePanel!.engineCameraManager?.pointCameraAt(targetPosition);
+    this.enginePanel!.cameraManager?.pointCameraAt(targetPosition);
 
     console.debug(`[FocusInteractionManager] Focus pointed at ${objectId}`);
     return true;
@@ -62,10 +62,10 @@ export class FocusInteractionManager {
       );
     }
 
-    const engineCameraManager = this.enginePanel!.engineCameraManager;
-    if (!engineCameraManager) {
+    const cameraManager = this.enginePanel!.cameraManager;
+    if (!cameraManager) {
       console.error(
-        "[FocusInteractionManager] EngineCameraManager not available on parent panel, cannot follow.",
+        "[FocusInteractionManager] CameraManager not available on parent panel, cannot follow.",
       );
       return false;
     }
@@ -75,11 +75,11 @@ export class FocusInteractionManager {
 
     // Special handling for asteroid fields and oort clouds
     if (this.isSpecialObjectType(targetObject)) {
-      return this.handleSpecialObjectFollow(targetObject, engineCameraManager);
+      return this.handleSpecialObjectFollow(targetObject, cameraManager);
     }
 
     // Default behavior for other object types
-    engineCameraManager.focusOnObject(objectId);
+    cameraManager.followObject(objectId);
     console.debug(`[FocusInteractionManager] Follow initiated for ${objectId}`);
     return true;
   }
@@ -164,7 +164,7 @@ export class FocusInteractionManager {
 
   private handleSpecialObjectFollow(
     targetObject: any,
-    engineCameraManager: any,
+    cameraManager: any,
   ): boolean {
     let innerRadiusMeters = 0;
     let innerRadiusAU = 0;
@@ -199,7 +199,7 @@ export class FocusInteractionManager {
       .add(cameraOffset.multiplyScalar(offsetDistance));
 
     // Use the new moveToPosition method to smoothly travel there
-    engineCameraManager.moveToPosition(cameraPosition, targetPosition);
+    cameraManager.moveToPosition(cameraPosition, targetPosition);
 
     console.debug(
       `[FocusInteractionManager] Traveling to inner radius of ${targetObject.id} (${innerRadiusAU} AU)`,

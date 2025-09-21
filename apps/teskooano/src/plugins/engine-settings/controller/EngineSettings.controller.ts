@@ -231,8 +231,8 @@ export class EngineSettingsController extends StateSubscriptionMixin {
           }
         }
 
-        if (this._parentPanel?.engineCameraManager) {
-          this._parentPanel.engineCameraManager.setFov(newValue);
+        if (this._parentPanel?.cameraManager) {
+          this._parentPanel.cameraManager.setFov(newValue);
           this.clearError();
         }
       }

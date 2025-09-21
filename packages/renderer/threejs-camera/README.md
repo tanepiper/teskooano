@@ -18,11 +18,11 @@ This package provides high-level camera management that works with:
 
 - Low-level controls from `@teskooano/renderer-threejs-controls`
 - State management from `@teskooano/core-state` for per-panel camera instances
-- Renderer abstraction via `ICameraRenderer` interface from `@teskooano/data-types`
+- Direct integration with `ModularSpaceRenderer` from `@teskooano/renderer-threejs`
 
 ### Key Improvements
 
-- **No Circular Dependencies**: Uses `ICameraRenderer` interface instead of concrete renderer types
+- **No Circular Dependencies**: Uses `ModularSpaceRenderer` directly without interface abstraction
 - **Centralized State**: Delegates state management to `@teskooano/core-state` `CameraStore`
 - **Per-Panel Support**: Each engine panel can have its own camera state instance
 - **Type Safety**: Consistent `CameraState` interface across all packages
@@ -33,14 +33,11 @@ The `CameraManager` is typically instantiated and managed by higher-level applic
 
 ```typescript
 import { CameraManager } from "@teskooano/renderer-threejs-camera";
-import type { ICameraRenderer } from "@teskooano/data-types";
+import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
 // Create a camera manager
-const cameraManager = new CameraManager();
-
-// Set up dependencies with a renderer and panel ID
-cameraManager.setDependencies({
-  renderer: rendererInstance, // Must implement ICameraRenderer
+const cameraManager = new CameraManager({
+  renderer: rendererInstance, // ModularSpaceRenderer instance
   panelId: "panel-123", // Required for per-panel state management
   initialFov: 75,
   onFocusChangeCallback: (objectId) => {

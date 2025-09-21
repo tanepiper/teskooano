@@ -1,64 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import type * as THREE from "three";
-
-/**
- * Generic interface for a renderer that provides camera control capabilities.
- * This interface allows camera managers to work with any renderer implementation
- * without creating circular dependencies.
- */
-export interface ICameraRenderer {
-  /**
-   * Gets the camera instance from the renderer.
-   */
-  camera: THREE.PerspectiveCamera;
-
-  /**
-   * Gets the controls manager from the renderer.
-   */
-  controlsManager: {
-    dispose(): void;
-    controls?: {
-      target: THREE.Vector3;
-      update(): void;
-    };
-    updateMinDistance(minDistance: number): void;
-    stopFollowing(): void;
-    moveToPosition(
-      position: any,
-      target: any,
-      withTransition: boolean,
-      options?: any,
-    ): void;
-    calculateTransitionDuration(startPos: any, endPos: any): number;
-    startFollowing(object: THREE.Object3D | null, offset: THREE.Vector3): void;
-    transitionToWithLookAtFirst(
-      position: any,
-      target: any,
-      options?: any,
-    ): void;
-    transitionTargetTo(
-      target: any,
-      withTransition: boolean,
-      options?: any,
-    ): void;
-  };
-
-  /**
-   * Gets the rendering orchestrator from the renderer.
-   */
-  renderingOrchestrator: {
-    sceneManager: {
-      camera: THREE.PerspectiveCamera;
-      setFov(fov: number): void;
-    };
-    orbitManager: {
-      highlightPrediction(objectId: string | null): void;
-    };
-    objectManager: {
-      getObject(objectId: string): THREE.Object3D | null;
-    };
-  };
-}
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
 /**
  * The current state of the CameraManager.
@@ -92,9 +33,9 @@ export interface CameraManagerState {
  */
 export interface CameraManagerOptions {
   /**
-   * The instance of the renderer that the camera manager will interact with.
+   * The instance of the ModularSpaceRenderer that the camera manager will interact with.
    */
-  renderer: ICameraRenderer;
+  renderer: ModularSpaceRenderer;
   /**
    * The unique identifier for the panel this camera belongs to.
    * Required for per-panel camera state management.

@@ -54,7 +54,9 @@ export class CameraManager {
     const success = this._focusInteractionManager.handleFollowRequest(objectId);
 
     if (success) {
-      this._parentPanel?.orbitManager?.highlightVisualization(objectId);
+      this._parentPanel
+        ?.getRenderer()
+        ?.renderingOrchestrator?.orbitManager?.highlightVisualization(objectId);
       this._currentFollowedId = objectId;
       this._updateFollowUI(objectId);
       this._handlers.onFollowChanged(objectId);
@@ -80,7 +82,9 @@ export class CameraManager {
   }
 
   public clearFollow(): void {
-    this._parentPanel?.orbitManager?.highlightVisualization(null);
+    this._parentPanel
+      ?.getRenderer()
+      ?.renderingOrchestrator?.orbitManager?.highlightVisualization(null);
     this._currentFollowedId = null;
     this._clearFollowUI();
     this._handlers.onFollowChanged(null);
@@ -94,26 +98,30 @@ export class CameraManager {
   }
 
   private _setupCameraStateSubscription(): void {
-    if (this._parentPanel && this._parentPanel.engineCameraManager) {
+    if (this._parentPanel && this._parentPanel.cameraManager) {
       this._cameraStateSubscription?.unsubscribe();
 
-      this._cameraStateSubscription = this._parentPanel.engineCameraManager
+      this._cameraStateSubscription = this._parentPanel.cameraManager
         .getCameraState$()
         .subscribe((state: CameraManagerState) => {
           this._updateFocusInternal(state.focusedObjectId);
 
           if (this._currentFollowedId && !state.focusedObjectId) {
-            this._parentPanel?.orbitManager?.highlightVisualization(null);
+            this._parentPanel
+              ?.getRenderer()
+              ?.renderingOrchestrator?.orbitManager?.highlightVisualization(
+                null,
+              );
           }
         });
 
-      const initialState = this._parentPanel.engineCameraManager
+      const initialState = this._parentPanel.cameraManager
         .getCameraState$()
         .getValue();
       this._updateFocusInternal(initialState.focusedObjectId);
     } else {
       console.warn(
-        "[CameraManager] Parent panel or its EngineCameraManager not available.",
+        "[CameraManager] Parent panel or its CameraManager not available.",
       );
       this._cameraStateSubscription?.unsubscribe();
       this._cameraStateSubscription = null;

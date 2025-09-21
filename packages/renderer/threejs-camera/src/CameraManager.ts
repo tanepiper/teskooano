@@ -6,11 +6,7 @@ import {
   CameraStore,
 } from "@teskooano/core-state";
 import type { CameraState } from "@teskooano/core-state";
-import {
-  CelestialType,
-  ICameraRenderer,
-  CameraManagerOptions,
-} from "@teskooano/data-types";
+import { CelestialType, CameraManagerOptions } from "@teskooano/data-types";
 import { CameraHelper } from "@teskooano/renderer-threejs-helpers";
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
@@ -32,7 +28,7 @@ import {
  * - Resetting the camera view to defaults.
  * - Managing the camera's Field of View (FOV).
  * - Providing an observable state through core-state CameraStore integration.
- * - Interacting with renderer implementations via ICameraRenderer interface.
+ * - Interacting with ModularSpaceRenderer directly.
  */
 export class CameraManager {
   /**
@@ -40,7 +36,7 @@ export class CameraManager {
    */
   static pluginName = "CameraManager";
 
-  private readonly renderer: ICameraRenderer;
+  private readonly renderer: ModularSpaceRenderer;
   private readonly cameraStore: CameraStore;
   private readonly panelId: string;
   private readonly onFocusChangeCallback?: (
