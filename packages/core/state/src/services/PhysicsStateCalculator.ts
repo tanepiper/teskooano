@@ -20,6 +20,18 @@ export class PhysicsStateCalculator {
    * Track which objects we've already warned about missing parents to avoid console spam
    */
   private static missingParentWarnings = new Set<string>();
+
+  /**
+   * Cache for barycenter offset calculations to avoid recalculating for each object
+   */
+  private static barycenterOffsetCache = new Map<string, OSVector3>();
+  /**
+   * Clears the barycenter offset cache. Call this when the system configuration changes.
+   */
+  public static clearBarycenterCache(): void {
+    this.barycenterOffsetCache.clear();
+  }
+
   /**
    * Calculates physics state for a celestial object based on its orbital parameters
    */
@@ -38,51 +50,8 @@ export class PhysicsStateCalculator {
     // Handle root stars - use orbital parameters to determine if it's a multi-star system
     if (data.type === CelestialType.STAR && !data.parentId) {
       // If the star has valid orbital parameters (non-zero period), it's part of a multi-star system
-      // and should orbit around the barycenter
       if (data.orbit && data.orbit.period_s > 0) {
-        // Calculate total mass of all stars in the system for barycenter
-        const totalStarMass = Object.values(allObjects)
-          .filter((obj) => obj.type === CelestialType.STAR)
-          .reduce((sum, star) => sum + star.realMass_kg, 0);
-
-        const barycentricState: PhysicsStateReal = {
-          id: "barycenter",
-          mass_kg: totalStarMass,
-          position_m: new OSVector3().setZero(),
-          velocity_mps: new OSVector3().setZero(),
-        };
-
-        try {
-          const initialPos = calculateOrbitalPosition(
-            barycentricState,
-            data.orbit,
-            0,
-          );
-          const initialVel = calculateOrbitalVelocity(
-            barycentricState,
-            data.orbit,
-            0,
-          );
-
-          return {
-            id: data.id,
-            mass_kg: data.realMass_kg,
-            position_m: initialPos,
-            velocity_mps: initialVel,
-          };
-        } catch (error) {
-          console.error(
-            `[PhysicsStateCalculator] Error calculating primary star orbit for ${data.id}:`,
-            error,
-          );
-          // Fallback to zero if calculation fails
-          return {
-            id: data.id,
-            mass_kg: data.realMass_kg,
-            position_m: new OSVector3().setZero(),
-            velocity_mps: new OSVector3().setZero(),
-          };
-        }
+        return this.calculateMultiStarSystemPhysics(data, allObjects);
       } else {
         // Single star system: no orbital parameters, so zero velocity
         return {
@@ -96,7 +65,7 @@ export class PhysicsStateCalculator {
 
     // Handle rogue planets/satellites
     if (this.isRogueObject(data)) {
-      return this.calculateRogueObjectPhysics(data);
+      return this.calculateRogueObjectPhysics(data, allObjects);
     }
 
     // Handle normal orbital objects
@@ -105,19 +74,77 @@ export class PhysicsStateCalculator {
 
   private static isSpecialObject(type: CelestialType): boolean {
     return [
-      CelestialType.STAR,
       CelestialType.RING_SYSTEM,
       CelestialType.OORT_CLOUD,
       CelestialType.ASTEROID_FIELD,
     ].includes(type);
   }
 
-  private static calculateSpecialObjectPhysics(
+  /**
+   * Calculates physics state for multi-star systems with proper barycenter centering.
+   * This method ensures the barycenter of all stars is positioned at the origin (0,0,0).
+   */
+  private static calculateMultiStarSystemPhysics(
     data: CelestialObject,
     allObjects: Record<string, CelestialObject>,
   ): PhysicsStateReal | null {
-    // Stars are root objects and don't need parents
-    if (data.type === CelestialType.STAR) {
+    const allStars = Object.values(allObjects).filter(
+      (obj) => obj.type === CelestialType.STAR,
+    );
+
+    if (allStars.length === 0) {
+      console.error(
+        "[PhysicsStateCalculator] No stars found for multi-star system calculation",
+      );
+      return null;
+    }
+
+    // Calculate total mass for barycenter
+    const totalStarMass = allStars.reduce(
+      (sum, star) => sum + star.realMass_kg,
+      0,
+    );
+
+    // Create a virtual barycenter at the origin for orbital calculations
+    const barycentricState: PhysicsStateReal = {
+      id: "barycenter",
+      mass_kg: totalStarMass,
+      position_m: new OSVector3().setZero(),
+      velocity_mps: new OSVector3().setZero(),
+    };
+
+    try {
+      // Calculate this star's position relative to barycenter
+      const initialPos = calculateOrbitalPosition(
+        barycentricState,
+        data.orbit!,
+        0,
+      );
+      const initialVel = calculateOrbitalVelocity(
+        barycentricState,
+        data.orbit!,
+        0,
+      );
+
+      // Calculate the actual barycenter position by computing mass-weighted average
+      // of all star positions
+      const barycenterOffset = this.getBarycenterOffset(allObjects);
+
+      // Offset this star's position so the barycenter ends up at origin
+      const centeredPosition = initialPos.clone().sub(barycenterOffset);
+
+      return {
+        id: data.id,
+        mass_kg: data.realMass_kg,
+        position_m: centeredPosition,
+        velocity_mps: initialVel,
+      };
+    } catch (error) {
+      console.error(
+        `[PhysicsStateCalculator] Error calculating multi-star system physics for ${data.id}:`,
+        error,
+      );
+      // Fallback to zero if calculation fails
       return {
         id: data.id,
         mass_kg: data.realMass_kg,
@@ -125,7 +152,90 @@ export class PhysicsStateCalculator {
         velocity_mps: new OSVector3().setZero(),
       };
     }
+  }
 
+  /**
+   * Gets the barycenter offset for the current system, using caching for performance.
+   * This computes the mass-weighted average position of all stars.
+   */
+  private static getBarycenterOffset(
+    allObjects: Record<string, CelestialObject>,
+  ): OSVector3 {
+    // Create a cache key based on the system's star configuration
+    const allStars = Object.values(allObjects).filter(
+      (obj) => obj.type === CelestialType.STAR,
+    );
+    const cacheKey = allStars
+      .map(
+        (star) => `${star.id}:${star.orbit?.period_s || 0}:${star.realMass_kg}`,
+      )
+      .sort()
+      .join("|");
+
+    // Check cache first
+    if (this.barycenterOffsetCache.has(cacheKey)) {
+      return this.barycenterOffsetCache.get(cacheKey)!.clone();
+    }
+
+    // Calculate barycenter offset
+    const offset = this.calculateBarycenterOffset(allStars, allObjects);
+
+    // Cache the result
+    this.barycenterOffsetCache.set(cacheKey, offset.clone());
+
+    return offset;
+  }
+
+  /**
+   * Calculates the barycenter offset needed to center the star system at origin.
+   * This computes the mass-weighted average position of all stars.
+   */
+  private static calculateBarycenterOffset(
+    allStars: CelestialObject[],
+    allObjects: Record<string, CelestialObject>,
+  ): OSVector3 {
+    if (allStars.length === 0) {
+      return new OSVector3().setZero();
+    }
+
+    const totalMass = allStars.reduce((sum, star) => sum + star.realMass_kg, 0);
+    const weightedPosition = new OSVector3().setZero();
+
+    // Calculate mass-weighted average position of all stars
+    allStars.forEach((star) => {
+      if (star.orbit && star.orbit.period_s > 0) {
+        // For stars with orbital parameters, calculate their position
+        const barycentricState: PhysicsStateReal = {
+          id: "barycenter",
+          mass_kg: totalMass,
+          position_m: new OSVector3().setZero(),
+          velocity_mps: new OSVector3().setZero(),
+        };
+
+        try {
+          const starPosition = calculateOrbitalPosition(
+            barycentricState,
+            star.orbit,
+            0,
+          );
+          weightedPosition.addScaledVector(starPosition, star.realMass_kg);
+        } catch (error) {
+          console.warn(
+            `[PhysicsStateCalculator] Could not calculate position for star ${star.id}, using zero`,
+          );
+        }
+      }
+      // For stars without orbital parameters (single star systems), they're already at origin
+    });
+
+    // Return the barycenter offset (mass-weighted average position)
+    return weightedPosition.clone().multiplyScalar(1 / totalMass);
+  }
+
+  private static calculateSpecialObjectPhysics(
+    data: CelestialObject,
+    allObjects: Record<string, CelestialObject>,
+  ): PhysicsStateReal | null {
     const parent = data.parentId ? allObjects[data.parentId] : undefined;
     if (!parent) {
       // Only log error once per object to avoid console spam
@@ -171,6 +281,7 @@ export class PhysicsStateCalculator {
 
   private static calculateRogueObjectPhysics(
     data: CelestialObject,
+    allObjects: Record<string, CelestialObject>,
   ): PhysicsStateReal {
     const random = createSeededRandomSync(
       `rogue-${data.id}-${data.seed ?? "default"}`,
@@ -178,14 +289,20 @@ export class PhysicsStateCalculator {
     const baseDistance = data.orbit?.meanAnomaly || random() * 100 + 50;
     const safeDistanceAU = Math.max(baseDistance, MIN_ROGUE_DISTANCE_AU);
 
+    const position = new OSVector3().setFromArray([
+      safeDistanceAU * AU_METERS,
+      (random() - 0.5) * safeDistanceAU * AU_METERS * 0.1,
+      (random() - 0.5) * safeDistanceAU * AU_METERS * 0.1,
+    ]);
+
+    // Apply barycenter offset to rogue objects as well
+    const barycenterOffset = this.getBarycenterOffset(allObjects);
+    const centeredPosition = position.sub(barycenterOffset);
+
     return {
       id: data.id,
       mass_kg: data.realMass_kg,
-      position_m: new OSVector3().setFromArray([
-        safeDistanceAU * AU_METERS,
-        (random() - 0.5) * safeDistanceAU * AU_METERS * 0.1,
-        (random() - 0.5) * safeDistanceAU * AU_METERS * 0.1,
-      ]),
+      position_m: centeredPosition,
       velocity_mps: new OSVector3().setFromArray([
         (random() - 0.5) * 500,
         (random() - 0.5) * 500,
@@ -215,7 +332,7 @@ export class PhysicsStateCalculator {
           );
           this.missingParentWarnings.add(data.id);
         }
-        return this.calculateRogueObjectPhysics(data);
+        return this.calculateRogueObjectPhysics(data, allObjects);
       }
 
       // For other object types, log error but don't spam the console
@@ -267,10 +384,14 @@ export class PhysicsStateCalculator {
         .clone()
         .add(parentPhysicsState.position_m);
 
+      // Apply barycenter offset to non-star objects to maintain system centering
+      const barycenterOffset = this.getBarycenterOffset(allObjects);
+      const centeredPosition = initialWorldPos.clone().sub(barycenterOffset);
+
       return {
         id: data.id,
         mass_kg: data.realMass_kg,
-        position_m: initialWorldPos,
+        position_m: centeredPosition,
         velocity_mps: initialWorldVel,
       };
     } catch (error) {

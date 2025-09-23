@@ -4,8 +4,8 @@ import { AU_METERS } from "@teskooano/data-values";
 import * as UTIL from "../utils-functions";
 
 /**
- * Sets up proper binary orbital mechanics with the main star at the origin
- * and companion stars orbiting around it
+ * Sets up proper binary orbital mechanics with both stars orbiting around their common barycenter
+ * This is physically accurate for n-body simulations
  */
 export function setupBinaryOrbit(
   primaryStar: CelestialObject,
@@ -21,14 +21,11 @@ export function setupBinaryOrbit(
 
   const separationMeters = separationAU * AU_METERS;
 
-  // Main star stays at origin (0,0,0) - no orbit needed
-  // Companion star orbits around the main star at the specified separation
-  const companionSMA = separationMeters;
-
+  // Calculate orbital period for the binary system
   const orbitalPeriod = UTIL.calculateOrbitalPeriod_s(
-    M1, // Use primary star mass for orbital calculations
+    totalMass, // Use total mass for binary orbital period
     separationMeters,
-    M2, // Companion star mass
+    0, // Not used for binary period calculation
   );
 
   // Improved orbital angles for stability
@@ -36,24 +33,15 @@ export function setupBinaryOrbit(
   const argumentOfPeriapsis = random() * 2 * Math.PI;
   const baseMeanAnomaly = random() * 2 * Math.PI;
 
-  // Main star has no orbit (stays at origin)
-  primaryStar.orbit = {
-    realSemiMajorAxis_m: 0,
-    eccentricity: 0,
-    inclination: 0,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: 0,
-    siderealRotationPeriod_s: 0,
-    realAphelion_m: 0,
-    realPerihelion_m: 0,
-    averageOrbitalSpeed_mps: 0,
-  };
+  // Calculate semi-major axes for each star relative to barycenter
+  // Primary star (more massive) is closer to barycenter
+  const primarySMA = (M2 / totalMass) * separationMeters;
+  const companionSMA = (M1 / totalMass) * separationMeters;
 
-  // Companion orbit around the main star
-  const companionOrbit = createOrbitalElements({
-    semiMajorAxisAU: companionSMA / AU_METERS,
+  // Both stars orbit around the barycenter (which we'll treat as the "parent")
+  // Primary star orbit around barycenter
+  const primaryOrbit = createOrbitalElements({
+    semiMajorAxisAU: primarySMA / AU_METERS,
     eccentricity: eccentricity,
     inclinationDeg: inclination * (180 / Math.PI),
     longitudeOfAscendingNodeDeg: longitudeOfAscendingNode * (180 / Math.PI),
@@ -64,12 +52,27 @@ export function setupBinaryOrbit(
     axialTiltDeg: random() * 30,
   });
 
+  // Companion star orbit around barycenter (180° out of phase)
+  const companionOrbit = createOrbitalElements({
+    semiMajorAxisAU: companionSMA / AU_METERS,
+    eccentricity: eccentricity,
+    inclinationDeg: inclination * (180 / Math.PI),
+    longitudeOfAscendingNodeDeg: longitudeOfAscendingNode * (180 / Math.PI),
+    argumentOfPeriapsisDeg: argumentOfPeriapsis * (180 / Math.PI),
+    meanAnomalyDeg: (baseMeanAnomaly + Math.PI) % (2 * Math.PI), // 180° out of phase
+    period_s: orbitalPeriod,
+    siderealRotationPeriod_s: orbitalPeriod,
+    axialTiltDeg: random() * 30,
+  });
+
+  // Set orbits for both stars
+  primaryStar.orbit = primaryOrbit;
   companionStar.orbit = companionOrbit;
 
-  // Main star has no parent (fixed at origin)
+  // Both stars orbit around the barycenter (no parent for now)
+  // The barycenter will be handled by the physics system
   primaryStar.parentId = undefined;
-  // Companion orbits the main star
-  companionStar.parentId = primaryStar.id;
+  companionStar.parentId = undefined;
 
   return [primaryStar, companionStar];
 }

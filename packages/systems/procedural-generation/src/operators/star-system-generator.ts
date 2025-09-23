@@ -47,20 +47,24 @@ export function generateStellarSystem(
   const mainStar = stars[0];
   mainStar.parentId = undefined;
 
-  // Ensure main star is positioned at origin (0,0,0) with no orbital motion
-  mainStar.orbit = {
-    realSemiMajorAxis_m: 0,
-    eccentricity: 0,
-    inclination: 0,
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-    meanAnomaly: 0,
-    period_s: 0,
-    siderealRotationPeriod_s: 0,
-    realAphelion_m: 0,
-    realPerihelion_m: 0,
-    averageOrbitalSpeed_mps: 0,
-  };
+  // Only set main star to origin for single star systems
+  // For multi-star systems, the binary orbit setup will handle positioning
+  if (starCount === 1) {
+    // Ensure main star is positioned at origin (0,0,0) with no orbital motion
+    mainStar.orbit = {
+      realSemiMajorAxis_m: 0,
+      eccentricity: 0,
+      inclination: 0,
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
+      meanAnomaly: 0,
+      period_s: 0,
+      siderealRotationPeriod_s: 0,
+      realAphelion_m: 0,
+      realPerihelion_m: 0,
+      averageOrbitalSpeed_mps: 0,
+    };
+  }
 
   // Set main star property
   if (mainStar.properties && mainStar.properties.type === "STAR") {
