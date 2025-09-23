@@ -4,19 +4,14 @@ import {
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import type {
-  AlgorithmType,
   DeviceTier,
-  IntegratorType,
   SimulationConfiguration,
   SimulationMode,
 } from "@teskooano/data-types";
 
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
-import {
-  getConfigurationDisplayName,
-  getConfigurationShortName,
-} from "../../../plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.utils";
+import type { NBodySettingsComponent } from "../view/NBodySettingsComponent";
 
 const PERFORMANCE_PROFILE_OPTIONS: {
   value: DeviceTier;
@@ -40,16 +35,8 @@ export interface IEnhancedSettingsPanelElements {
   simulationModeSelectElement: HTMLSelectElement;
   currentModeBadgeElement: HTMLSpanElement;
 
-  // N-Body specific controls
-  nbodyControlsElement: HTMLDivElement;
-  algorithmSelectElement: HTMLSelectElement;
-  integratorSelectElement: HTMLSelectElement;
-
-  // Display elements
-  configDisplayElement: HTMLDivElement;
-  modePerformanceElement: HTMLDivElement;
-  performanceDotElement: HTMLSpanElement;
-  performanceTextElement: HTMLSpanElement;
+  // N-Body component
+  nbodySettingsComponent: NBodySettingsComponent;
 
   // Legacy
   profileSelectElement: HTMLSelectElement;
@@ -91,8 +78,9 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     this.setupEventListeners();
     this.populateControls();
 
-    // Ensure DOM is ready before updating UI
+    // Ensure DOM is ready before updating UI and initializing N-Body component
     requestAnimationFrame(() => {
+      this.initializeNBodyComponent();
       this.updateUI();
     });
 
@@ -119,22 +107,32 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       this.handleModeChange,
     );
 
-    // N-Body specific controls
-    this.elements.algorithmSelectElement.addEventListener(
-      "change",
-      this.handleAlgorithmChange,
-    );
-
-    this.elements.integratorSelectElement.addEventListener(
-      "change",
-      this.handleIntegratorChange,
-    );
-
     // Performance profile
     this.elements.profileSelectElement.addEventListener(
       "change",
       this.handleProfileChange,
     );
+  }
+
+  /**
+   * Initializes the N-Body settings component.
+   * @private
+   */
+  private initializeNBodyComponent(): void {
+    // Ensure the custom element is fully connected before calling methods
+    if (this.elements.nbodySettingsComponent && 
+        typeof this.elements.nbodySettingsComponent.initialize === 'function') {
+      this.elements.nbodySettingsComponent.initialize({
+        showValidationMessage: this.showValidationMessage.bind(this),
+        clearValidationMessages: this.clearValidationMessages.bind(this),
+      });
+    } else {
+      console.warn('[EnhancedSettingsController] N-Body component not ready, retrying...');
+      // Retry after a short delay to allow the custom element to fully initialize
+      setTimeout(() => {
+        this.initializeNBodyComponent();
+      }, 10);
+    }
   }
 
   /**
@@ -153,14 +151,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     this.elements.simulationModeSelectElement.removeEventListener(
       "change",
       this.handleModeChange,
-    );
-    this.elements.algorithmSelectElement.removeEventListener(
-      "change",
-      this.handleAlgorithmChange,
-    );
-    this.elements.integratorSelectElement.removeEventListener(
-      "change",
-      this.handleIntegratorChange,
     );
     this.elements.profileSelectElement.removeEventListener(
       "change",
@@ -192,10 +182,14 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
 
     // Update mode-specific UI
     this.updateModeControls();
-    this.updateNBodyVisibility();
-    this.updateConfigurationDisplay();
-    this.updatePerformanceIndicator();
     this.updateModeBadge();
+
+    // Delegate N-Body updates to the component (if it's ready)
+    if (this.elements.nbodySettingsComponent && 
+        typeof this.elements.nbodySettingsComponent.updateNBodyControls === 'function') {
+      this.elements.nbodySettingsComponent.updateNBodyControls();
+      this.elements.nbodySettingsComponent.updateNBodyVisibility();
+    }
   }
 
   /**
@@ -225,29 +219,8 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private updateModeControls(): void {
     // Update mode selector
     this.elements.simulationModeSelectElement.value = this.currentConfig.mode;
-
-    // Update N-Body specific controls
-    if (this.currentConfig.mode === "nbody") {
-      this.elements.algorithmSelectElement.value =
-        this.currentConfig.algorithm || "barnes-hut";
-      this.elements.integratorSelectElement.value =
-        this.currentConfig.integrator || "pefrl";
-    }
   }
 
-  /**
-   * Shows or hides N-Body specific controls based on current mode.
-   * @private
-   */
-  private updateNBodyVisibility(): void {
-    const isNBodyMode = this.currentConfig.mode === "nbody";
-
-    if (isNBodyMode) {
-      this.elements.nbodyControlsElement.classList.add("visible");
-    } else {
-      this.elements.nbodyControlsElement.classList.remove("visible");
-    }
-  }
 
   /**
    * Updates the mode badge in the section header.
@@ -265,52 +238,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       this.currentConfig.mode === "ideal" ? "Ideal" : "N-Body";
   }
 
-  /**
-   * Updates the configuration display with current settings.
-   * @private
-   */
-  private updateConfigurationDisplay(): void {
-    const displayName = getConfigurationDisplayName(this.currentConfig);
-    const shortName = getConfigurationShortName(this.currentConfig);
-
-    this.elements.configDisplayElement.textContent = `${displayName} | Config: ${shortName}`;
-  }
-
-  /**
-   * Updates the performance indicator based on current configuration.
-   * @private
-   */
-  private updatePerformanceIndicator(): void {
-    const dot = this.elements.performanceDotElement;
-    const text = this.elements.performanceTextElement;
-
-    // Remove existing performance classes
-    dot.classList.remove("warning", "error");
-
-    if (this.currentConfig.mode === "ideal") {
-      text.textContent = "Optimal performance";
-    } else {
-      // N-Body mode - assess performance based on algorithm
-      const algorithm = this.currentConfig.algorithm;
-
-      switch (algorithm) {
-        case "barnes-hut":
-          text.textContent = "Balanced performance (100-10K bodies)";
-          break;
-        case "fmm":
-          text.textContent = "Optimal for large systems (5K+ bodies)";
-          break;
-        case "p3m":
-          text.textContent = "Good for medium systems (2K-50K bodies)";
-          break;
-        case "tree-pm":
-          text.textContent = "Excellent all-around performance";
-          break;
-        default:
-          text.textContent = "Performance varies by system size";
-      }
-    }
-  }
 
   /**
    * Shows a validation message to the user.
@@ -379,12 +306,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     try {
       simulationManager.setSimulationMode(mode);
       this.clearValidationMessages();
-
-      // Add smooth transition effect
-      this.elements.nbodyControlsElement.classList.add("fade-in");
-      setTimeout(() => {
-        this.elements.nbodyControlsElement.classList.remove("fade-in");
-      }, 300);
     } catch (error) {
       console.error("Failed to set simulation mode:", error);
       this.showValidationMessage(
@@ -396,49 +317,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     }
   };
 
-  /**
-   * Handles algorithm changes in N-Body mode.
-   * @private
-   */
-  private handleAlgorithmChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement;
-    const algorithm = target.value as AlgorithmType;
-
-    try {
-      simulationManager.setNBodyAlgorithm(algorithm);
-      this.clearValidationMessages();
-    } catch (error) {
-      console.error("Failed to set algorithm:", error);
-      this.showValidationMessage(
-        `Failed to change algorithm: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      // Revert selection
-      target.value = this.currentConfig.algorithm || "barnes-hut";
-    }
-  };
-
-  /**
-   * Handles integrator changes in N-Body mode.
-   * @private
-   */
-  private handleIntegratorChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement;
-    const integrator = target.value as IntegratorType;
-
-    try {
-      simulationManager.setNBodyIntegrator(integrator);
-      this.clearValidationMessages();
-    } catch (error) {
-      console.error("Failed to set integrator:", error);
-      this.showValidationMessage(
-        `Failed to change integrator: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      // Revert selection
-      target.value = this.currentConfig.integrator || "verlet";
-    }
-  };
 
   /**
    * Handles performance profile changes.

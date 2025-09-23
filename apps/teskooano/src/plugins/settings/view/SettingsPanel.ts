@@ -2,6 +2,7 @@ import { IContentRenderer, IDockviewPanelProps } from "dockview-core";
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { EnhancedSettingsController } from "../controller/EnhancedSettingsController";
 import { template } from "./Settings.template";
+import "./NBodySettingsComponent";
 
 /**
  * The View component for the application settings panel.
@@ -55,26 +56,9 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       currentModeBadgeElement: this.shadowRoot!.querySelector<HTMLSpanElement>(
         "#current-mode-badge",
       )!,
-      nbodyControlsElement: this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#nbody-specific-controls",
-      )!,
-      algorithmSelectElement:
-        this.shadowRoot!.querySelector<HTMLSelectElement>(
-          "#setting-algorithm",
-        )!,
-      integratorSelectElement:
-        this.shadowRoot!.querySelector<HTMLSelectElement>(
-          "#setting-integrator",
-        )!,
-      configDisplayElement:
-        this.shadowRoot!.querySelector<HTMLDivElement>("#config-display")!,
-      modePerformanceElement: this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#mode-performance-display",
-      )!,
-      performanceDotElement:
-        this.shadowRoot!.querySelector<HTMLSpanElement>("#performance-dot")!,
-      performanceTextElement:
-        this.shadowRoot!.querySelector<HTMLSpanElement>("#performance-text")!,
+      nbodySettingsComponent: this.shadowRoot!.querySelector(
+        "teskooano-nbody-settings",
+      )! as any,
       profileSelectElement: this.shadowRoot!.querySelector<HTMLSelectElement>(
         "#setting-performance-profile",
       )!,

@@ -1,4 +1,3 @@
-import { AlgorithmType, IntegratorType } from "@teskooano/data-types";
 import { SimulationMode } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -11,34 +10,6 @@ const SIMULATION_MODE_OPTIONS: {
   { value: SimulationMode.IDEAL, label: "Ideal (Keplerian)" },
 ];
 
-const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [
-  { value: AlgorithmType.BARNES_HUT, label: "Barnes-Hut" },
-  { value: AlgorithmType.FMM, label: "Fast Multipole (FMM)" },
-  { value: AlgorithmType.P3M, label: "Particle-Mesh (P3M)" },
-  { value: AlgorithmType.TREE_PM, label: "Tree-Particle-Mesh" },
-];
-
-const INTEGRATOR_OPTIONS: { value: IntegratorType; label: string }[] = [
-  { value: IntegratorType.EULER, label: "Euler" },
-  { value: IntegratorType.SYMPLECTIC, label: "Symplectic Euler" },
-  { value: IntegratorType.VERLET, label: "Velocity Verlet" },
-  { value: IntegratorType.RK4, label: "Runge-Kutta 4 (RK4)" },
-  { value: IntegratorType.ADAPTIVE, label: "Adaptive RK45" },
-  { value: IntegratorType.YOSHIDA4, label: "Yoshida 4th Order" },
-  { value: IntegratorType.FOREST_RUTH, label: "Forest-Ruth 4th" },
-  { value: IntegratorType.PEFRL, label: "PEFRL 4th Order" },
-  { value: IntegratorType.LEAPFROG, label: "Leapfrog" },
-];
-
-// Full list of algorithms and integrators for the UI
-const allAlgorithms = ALGORITHM_OPTIONS.map(
-  (alg: { value: string; label: string }) =>
-    `<option value="${alg.value}">${alg.label}</option>`,
-).join("");
-const allIntegrators = INTEGRATOR_OPTIONS.map(
-  (int: { value: string; label: string }) =>
-    `<option value="${int.value}">${int.label}</option>`,
-).join("");
 const allModes = SIMULATION_MODE_OPTIONS.map(
   (mode: { value: string; label: string }) =>
     `<option value="${mode.value}">${mode.label}</option>`,
@@ -93,17 +64,6 @@ template.innerHTML = `
     border: 1px solid var(--color-border, #444);
   }
 
-  #nbody-specific-controls {
-    display: none; /* Hidden by default */
-    flex-direction: column;
-    gap: var(--space-md, 16px);
-    padding-top: var(--space-md, 16px);
-    border-top: 1px solid var(--color-border, #444);
-  }
-
-  #nbody-specific-controls.visible {
-    display: flex;
-  }
 
   #current-mode-badge {
     background-color: var(--color-primary, #337ab7);
@@ -112,32 +72,6 @@ template.innerHTML = `
     border-radius: 12px;
     font-size: var(--font-size-xs, 12px);
     text-transform: uppercase;
-  }
-  
-  #config-display {
-    background-color: var(--color-background-inset, #1c1c1c);
-    padding: var(--space-sm, 12px);
-    border-radius: var(--border-radius-sm, 4px);
-    font-family: var(--font-family-mono, monospace);
-    font-size: var(--font-size-xs, 12px);
-    color: var(--color-text-accent, #88ddff);
-    margin-top: var(--space-sm, 12px);
-  }
-  
-  #mode-performance-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--font-size-xs, 12px);
-    color: var(--color-text-secondary, #aaa);
-    margin-top: var(--space-sm, 12px);
-  }
-  
-  #performance-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: var(--color-status-neutral, #888);
   }
   
   #validation-messages {
@@ -174,24 +108,9 @@ template.innerHTML = `
       in Ideal mode, celestial bodies follow perfect orbital mechanics.</span>
     </div>
     
-    <!-- N-Body Specific Controls -->
-    <div id="nbody-specific-controls">
-      <div class="form-group">
-        <label for="setting-algorithm">Force Algorithm</label>
-        <select id="setting-algorithm">${allAlgorithms}</select>
-      </div>
-      <div class="form-group">
-        <label for="setting-integrator">Integrator</label>
-        <select id="setting-integrator">${allIntegrators}</select>
-      </div>
-    </div>
+    <!-- N-Body Specific Controls Component -->
+    <teskooano-nbody-settings></teskooano-nbody-settings>
     
-    <!-- Dynamic Displays -->
-    <div id="config-display">n-body (tree-pm + pefrl)</div>
-    <div id="mode-performance-display">
-      <span id="performance-dot"></span>
-      <span id="performance-text">Optimal</span>
-    </div>
     <div id="validation-messages"></div>
   </div>
 
