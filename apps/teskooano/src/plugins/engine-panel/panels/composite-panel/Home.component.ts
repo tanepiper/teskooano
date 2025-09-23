@@ -1,3 +1,9 @@
+import { TeskooanoButton } from "@core/components/button/Button";
+import LineStyleSketchRegular from "@fluentui/svg-icons/icons/line_style_sketch_20_regular.svg?raw";
+import CircleMultipleConcentricRegular from "@fluentui/svg-icons/icons/circle_multiple_concentric_20_regular.svg?raw";
+import { StateAccessor, simulationManager } from "@teskooano/core-state";
+import { SimulationMode } from "@teskooano/data-types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -12,7 +18,7 @@ template.innerHTML = `
       align-items: center;
       justify-content: center;
       background-color: var(--background-color-rgb, rgba(27, 27, 27, 0.95));
-      color: var(--text-color-rgb, #ddd);
+      color: var(--text-color-rgb, #fff);
       z-index: 200; /* Above engine, below toolbar */
     }
 
@@ -25,7 +31,6 @@ template.innerHTML = `
       background-image: linear-gradient(rgba(50, 100, 150, 0.08) 1px, transparent 1px),
         linear-gradient(90deg, rgba(50, 100, 150, 0.08) 1px, transparent 1px);
       background-size: 35px 35px, 35px 35px;
-      animation: move-grid 20s linear infinite;
       position: relative;
       overflow: hidden;
       width: 100%;
@@ -52,32 +57,7 @@ template.innerHTML = `
         rgba(40, 80, 120, 0.5) 0%,
         transparent 55%
       );
-      animation: pulse-glow 6s ease-in-out infinite;
       z-index: -1;
-    }
-
-    @keyframes move-grid {
-      from {
-        background-position: 0 0, 0 0;
-      }
-      to {
-        background-position: 35px 35px, 35px 35px;
-      }
-    }
-
-    @keyframes pulse-glow {
-      0% {
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0.6;
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0.6;
-      }
     }
 
     .placeholder-icon {
@@ -120,8 +100,57 @@ template.innerHTML = `
     #placeholder-action-area a:hover {
       background-color: var(--button-primary-hover-background-color, #555);
     }
+
+
+    .controls-area-container {
+      margin-bottom: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-sm);
+      justify-content: center;
+      min-width: 900px;
+    }
+
+    .controls-area-container teskooano-button {
+      fill: #fff;
+    }
+
+    .switch-engine-button-helptext {
+      font-size: 0.8em;
+      color: var(--text-color-secondary, #aaa);
+      text-align: center;
+      max-width: 350px;
+      line-height: 1.5;
+      padding: 8px;
+    }
+
+    .switch-engine-button-helptext strong {
+      color: var(--text-color, #fff);
+      font-weight: 600;
+    }
+
+    .switch-engine-button-helptext em {
+      color: var(--text-color-accent, #4a9eff);
+      font-style: italic;
+    }
+
+    .switch-engine-button-helptext br {
+      margin-bottom: 2px;
+    }
   </style>
   <div class="dynamic-grid-background">
+    <div id="controls-area" class="controls-area-container">
+      <teskooano-button id="switch-engine-button" variant="icon" size="m">
+        <span slot="icon">${LineStyleSketchRegular}</span>
+        <span id="switch-engine-text">N-Body Mode</span>
+      </teskooano-button>
+      <div id="switch-engine-button-helptext" class="switch-engine-button-helptext">
+        Bodies are affected by gravity and relative forces - increasing time decreases accuracy
+        <br />click to switch to Ideal mode.
+      </div>
+    </div> 
+
     <img
       src="/assets/panel-icon.png"
       alt="Engine Placeholder Icon"
@@ -139,6 +168,11 @@ template.innerHTML = `
 export class HomeComponent extends HTMLElement {
   private placeholderMessage: HTMLParagraphElement;
   private placeholderActionArea: HTMLDivElement;
+  private switchEngineButton: TeskooanoButton;
+  private switchEngineText: HTMLSpanElement;
+  private switchEngineHelptext: HTMLDivElement;
+
+  private simulationMode: SimulationMode;
 
   constructor() {
     super();
@@ -152,6 +186,73 @@ export class HomeComponent extends HTMLElement {
     this.placeholderActionArea = this.shadowRoot!.querySelector(
       "#placeholder-action-area",
     )!;
+    this.switchEngineButton = this.shadowRoot!.querySelector(
+      "#switch-engine-button",
+    )!;
+    this.switchEngineText = this.shadowRoot!.querySelector(
+      "#switch-engine-text",
+    )!;
+    this.switchEngineHelptext = this.shadowRoot!.querySelector(
+      "#switch-engine-button-helptext",
+    )!;
+
+    this.simulationMode =
+      StateAccessor.getSimulationState().simulationConfig.mode;
+    this.switchEngineButton.addEventListener(
+      "click",
+      this.handleSwitchEngineButtonClick.bind(this),
+    );
+
+    this.updateButtonContent();
+  }
+
+  private handleSwitchEngineButtonClick() {
+    const newSimulationMode =
+      this.simulationMode === SimulationMode.NBODY
+        ? SimulationMode.IDEAL
+        : SimulationMode.NBODY;
+    simulationManager.setSimulationMode(newSimulationMode);
+    this.simulationMode = newSimulationMode;
+    this.updateButtonContent();
+  }
+
+  private updateButtonContent() {
+    const iconSlot = this.switchEngineButton.querySelector(
+      '[slot="icon"]',
+    ) as HTMLSpanElement;
+
+    const modeConfig = this.getModeConfiguration(this.simulationMode);
+
+    this.switchEngineText.textContent = modeConfig.buttonText;
+    this.switchEngineHelptext.innerHTML = modeConfig.helpText;
+    iconSlot.innerHTML = modeConfig.icon;
+  }
+
+  private getModeConfiguration(mode: SimulationMode) {
+    const configurations = {
+      [SimulationMode.NBODY]: {
+        buttonText: "N-Body Mode",
+        icon: LineStyleSketchRegular,
+        helpText: `
+          <strong>N-Body Physics</strong><br>
+          Bodies are affected by gravity and relative forces.<br>
+          <em>Increasing time decreases accuracy</em><br>
+          <span style="color: var(--text-color-secondary, #aaa);">Click to switch to Ideal mode</span>
+        `,
+      },
+      [SimulationMode.IDEAL]: {
+        buttonText: "Ideal Mode",
+        icon: CircleMultipleConcentricRegular,
+        helpText: `
+          <strong>Ideal Orbital Mechanics</strong><br>
+          Bodies follow perfect orbital mechanics with no gravitational interactions.<br>
+          <em>Always accurate regardless of time scale</em><br>
+          <span style="color: var(--text-color-secondary, #aaa);">Click to switch to N-Body mode</span>
+        `,
+      },
+    };
+
+    return configurations[mode];
   }
 
   /**
@@ -194,17 +295,6 @@ export class HomeComponent extends HTMLElement {
 
   static get observedAttributes(): string[] {
     return ["generating", "hidden"];
-  }
-
-  attributeChangedCallback(
-    name: string,
-    _oldValue: string | null,
-    newValue: string | null,
-  ): void {
-    if (name === "generating") {
-      const isGenerating = newValue !== null;
-      this.setGenerating(isGenerating);
-    }
   }
 }
 

@@ -94,11 +94,7 @@ export class SystemFunctionsManager {
           const hydratedObjects = parsedData.objects;
 
           // Clear existing state before loading new data
-          celestialManager.clearState({
-            resetCamera: false,
-            resetTime: true,
-            resetSelection: true,
-          });
+          celestialManager.clearState();
           actions.resetTime();
 
           const star = hydratedObjects.find(
@@ -194,11 +190,7 @@ export class SystemFunctionsManager {
     try {
       simulationOrchestrator.stopLoop();
 
-      celestialManager.clearState({
-        resetCamera: false,
-        resetTime: true,
-        resetSelection: true,
-      });
+      celestialManager.clearState();
       actions.resetTime();
 
       simulationOrchestrator.resetSystem(true);
@@ -321,11 +313,7 @@ export class SystemFunctionsManager {
    */
   public async createBlankSystem() {
     try {
-      celestialManager.clearState({
-        resetCamera: false,
-        resetTime: true,
-        resetSelection: true,
-      });
+      celestialManager.clearState();
       actions.resetTime();
 
       const star = generateStar(createSeededRandomSync(Date.now().toString()));
@@ -346,15 +334,11 @@ export class SystemFunctionsManager {
 
   /**
    * Plugin function to load the Sol solar system with all planets and moons.
-   * @returns {Promise<ProcessResult>} The result of the load operation.
+   * @returns The result of the load operation.
    */
-  public async loadSolarSystem() {
+  public loadSolarSystem() {
     try {
-      celestialManager.clearState({
-        resetCamera: false,
-        resetTime: true,
-        resetSelection: true,
-      });
+      celestialManager.clearState();
       actions.resetTime();
 
       initializeSolarSystem();
@@ -374,9 +358,9 @@ export class SystemFunctionsManager {
    * Plugin function to copy a given seed string to the clipboard.
    * If no seed is provided, it uses the current seed from the state.
    *
-   * @param {PluginExecutionContext} _ - The execution context (unused).
-   * @param {string} [seedToCopy] - The specific seed string to copy.
-   * @returns {Promise<ProcessResult>} The result of the copy operation.
+   * @param  _ - The execution context (unused).
+   * @param  [seedToCopy] - The specific seed string to copy.
+   * @returns  The result of the copy operation.
    */
   public async copySeed(_: PluginExecutionContext, seedToCopy?: string) {
     const seed = seedToCopy ?? StateAccessor.getCurrentSeed() ?? "";
@@ -396,7 +380,7 @@ export class SystemFunctionsManager {
    * Gathers all public methods intended for plugin registration and returns
    * them as an array of `FunctionConfig` objects.
    *
-   * @returns {FunctionConfig[]} An array of function configurations for the plugin manager.
+   * @returns An array of function configurations for the plugin manager.
    */
   public getFunctions(): FunctionConfig[] {
     return [

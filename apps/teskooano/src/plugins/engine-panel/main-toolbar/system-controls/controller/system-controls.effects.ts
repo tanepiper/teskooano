@@ -95,7 +95,9 @@ export class SystemControlsEffects {
         filter(() => !this.isGenerating$$.value),
         tap(() => this.isGenerating$$.next(true)),
         switchMap((element) =>
-          from(this.context.pluginManager.execute(pluginName)).pipe(
+          from(
+            Promise.resolve(this.context.pluginManager.execute(pluginName)),
+          ).pipe(
             map(
               (result: any): SystemActionEffectResult => ({
                 status: result?.success ? "success" : "error",
