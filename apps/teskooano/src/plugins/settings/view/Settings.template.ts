@@ -149,6 +149,12 @@ template.innerHTML = `
     font-size: var(--font-size-xs, 12px);
     display: none; /* Hidden by default */
   }
+
+  .help-text {
+    font-size: var(--font-size-xs, 0.8em);
+    color: var(--color-text-secondary, #aaa);
+    margin-top: var(--space-xxs, 2px);
+  }
 </style>
 
 <form id="settings-form" novalidate>
@@ -164,6 +170,8 @@ template.innerHTML = `
       <select id="setting-simulation-mode">
         ${allModes}
       </select>
+      <span class="help-text">Choose between N-Body (unstable) or Ideal (stable) physics - in N-Body mode, you can adjust the algorithm and integrator,
+      in Ideal mode, celestial bodies follow perfect orbital mechanics.</span>
     </div>
     
     <!-- N-Body Specific Controls -->
@@ -191,8 +199,10 @@ template.innerHTML = `
   <div class="form-section">
     <h3>Visuals & Performance</h3>
     <div class="form-group">
-      <label for="setting-trail-length">Trail Length</label>
-      <teskooano-slider id="setting-trail-length" min="0" max="1000" value="150" step="10"></teskooano-slider>
+      <label for="setting-trail-length">Trail Length Multiplier <span class="value-display"></span></label>
+      <teskooano-slider id="setting-trail-length" min="0" max="300" value="100" step="10">
+        <span slot="help-text">Sets the multiplier for the length of orbital trails behind moving objects (the base length is 10000 points). Set to 0 to disable trails.</span>
+      </teskooano-slider>
     </div>
     <div class="form-group">
       <label for="setting-performance-profile">Performance Profile</label>
@@ -202,6 +212,7 @@ template.innerHTML = `
         <option value="high" selected>High (Performance)</option>
         <option value="cosmic">Cosmic (Max Quality)</option>
       </select>
+      <span class="help-text">Adjusts rendering quality vs performance. Higher settings increase visuals but use more resources, this will be auto-selected based on your device tier.</span>
     </div>
   </div>
 

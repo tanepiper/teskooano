@@ -1,3 +1,4 @@
+import type { GroupPanelPartInitParameters } from "dockview-core";
 import type { DockviewController } from "../../../core/controllers/dockview";
 import type { EngineToolbarManager } from "../../../core/interface/engine-toolbar";
 
@@ -17,6 +18,22 @@ export interface CompositePanelParams {
    * The manager for the engine toolbar
    */
   engineToolbarManager?: EngineToolbarManager;
+}
+
+/**
+ * Clean interface for CompositeEnginePanel initialization parameters
+ */
+export interface CompositeEnginePanelInitParams
+  extends GroupPanelPartInitParameters {
+  /**
+   * The parameters passed to the panel
+   */
+  params: {
+    /**
+     * The engine toolbar manager
+     */
+    engineToolbarManager: EngineToolbarManager;
+  };
 }
 
 /**

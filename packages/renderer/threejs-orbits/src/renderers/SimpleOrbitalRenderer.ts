@@ -39,13 +39,13 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
 
   /** Maximum number of points to render in orbital trails */
-  private readonly baseMaxTrailPoints: number = 1000;
+  private readonly baseMaxTrailPoints: number = 10000;
 
   /** Current trail length multiplier from settings */
   private trailLengthMultiplier: number = 2; // Default 2x multiplier
 
   /** Cached effective max trail points to avoid recalculation */
-  private cachedEffectiveMaxTrailPoints: number = 2000; // 1000 * 2
+  private cachedEffectiveMaxTrailPoints: number = 5000; // 1000 * 2
 
   /** Number of points to skip when sampling for interpolation */
   private readonly samplingInterval: number = 2;

@@ -34,7 +34,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   /**
    * Called by Dockview to initialize the panel.
    */
-  init(params: IDockviewPanelProps<any>): void {}
+  init(_params: IDockviewPanelProps<any>): void {}
 
   /**
    * Custom Element lifecycle callback. Fired when the element is added to the DOM.

@@ -63,8 +63,6 @@ export class EngineViewManager {
       component: "teskooano-engine-view",
       title: compositeViewTitle,
       params: {
-        title: compositeViewTitle,
-        dockviewController,
         engineToolbarManager,
       },
     };
