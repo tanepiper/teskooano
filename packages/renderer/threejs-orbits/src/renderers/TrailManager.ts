@@ -325,7 +325,7 @@ export class TrailManager {
         `trail-line-${objectId}`,
       );
 
-      line.frustumCulled = true;
+      line.frustumCulled = false; // Disable frustum culling to ensure trail lines are always visible
 
       // Apply correct render order for trail lines
       line.renderOrder = RenderOrderManager.getRenderOrderForOrbit("trail");

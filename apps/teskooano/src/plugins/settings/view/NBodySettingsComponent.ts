@@ -1,5 +1,8 @@
 import { AlgorithmType, IntegratorType } from "@teskooano/data-types";
-import { NBodySettingsController, type INBodySettingsElements } from "../controller/NBodySettingsController";
+import {
+  NBodySettingsController,
+  type INBodySettingsElements,
+} from "../controller/NBodySettingsController";
 
 const template = document.createElement("template");
 
@@ -147,39 +150,41 @@ export class NBodySettingsComponent extends HTMLElement {
    * Initializes the component with a parent controller reference.
    */
   public initialize(parentController: {
-    showValidationMessage: (message: string, type?: "error" | "warning") => void;
+    showValidationMessage: (
+      message: string,
+      type?: "error" | "warning",
+    ) => void;
     clearValidationMessages: () => void;
   }): void {
     const elements: INBodySettingsElements = {
       nbodyControlsElement: this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#nbody-specific-controls"
+        "#nbody-specific-controls",
       )!,
-      algorithmSelectElement: this.shadowRoot!.querySelector<HTMLSelectElement>(
-        "#setting-algorithm"
-      )!,
-      integratorSelectElement: this.shadowRoot!.querySelector<HTMLSelectElement>(
-        "#setting-integrator"
-      )!,
-      configDisplayElement: this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#config-display"
-      )!,
+      algorithmSelectElement:
+        this.shadowRoot!.querySelector<HTMLSelectElement>(
+          "#setting-algorithm",
+        )!,
+      integratorSelectElement:
+        this.shadowRoot!.querySelector<HTMLSelectElement>(
+          "#setting-integrator",
+        )!,
+      configDisplayElement:
+        this.shadowRoot!.querySelector<HTMLDivElement>("#config-display")!,
       modePerformanceElement: this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#mode-performance-display"
+        "#mode-performance-display",
       )!,
-      performanceDotElement: this.shadowRoot!.querySelector<HTMLSpanElement>(
-        "#performance-dot"
-      )!,
-      performanceTextElement: this.shadowRoot!.querySelector<HTMLSpanElement>(
-        "#performance-text"
-      )!,
+      performanceDotElement:
+        this.shadowRoot!.querySelector<HTMLSpanElement>("#performance-dot")!,
+      performanceTextElement:
+        this.shadowRoot!.querySelector<HTMLSpanElement>("#performance-text")!,
       validationMessagesElement: this.shadowRoot!.querySelector<HTMLDivElement>(
-        "#validation-messages"
+        "#validation-messages",
       )!,
     };
 
     if (Object.values(elements).some((el) => !el)) {
       console.error(
-        "[NBodySettingsComponent] Failed to find essential elements in template!"
+        "[NBodySettingsComponent] Failed to find essential elements in template!",
       );
       return;
     }
@@ -210,4 +215,7 @@ export class NBodySettingsComponent extends HTMLElement {
   }
 }
 
-customElements.define(NBodySettingsComponent.componentName, NBodySettingsComponent);
+customElements.define(
+  NBodySettingsComponent.componentName,
+  NBodySettingsComponent,
+);

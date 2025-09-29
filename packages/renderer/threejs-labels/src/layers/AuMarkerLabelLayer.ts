@@ -100,9 +100,9 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
         return;
       }
 
-      // Basic visibility based on camera distance (e.g., markers too far disappear)
-      let visible =
-        cameraPosition.distanceTo(group.position) < markerAuValueScene * 5;
+      // AU markers should always be visible regardless of camera distance
+      // Remove distance-based visibility check to ensure markers are always visible
+      let visible = true;
 
       if (visible) {
         // Perform raycast from camera to marker's position

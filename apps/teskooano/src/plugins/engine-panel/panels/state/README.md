@@ -4,9 +4,24 @@ This directory contains modules related to the internal state management of the 
 
 ## `layoutStore.ts`
 
-- **Purpose**: To provide a reactive, global source of truth for the current screen orientation (portrait or landscape).
-- **Architecture**: It uses an RxJS `BehaviorSubject` to store and emit orientation changes. It listens to the `window.matchMedia` API for `(orientation: portrait)` changes and updates the subject accordingly.
-- **Usage**: Components and managers (e.g., `PanelEventManager`) can subscribe to the `layoutOrientation$` observable to react to layout changes and adjust UI elements or trigger necessary rendering updates (like resizing the 3D renderer).
-- **Cleanup**: Includes a `cleanupOrientationListener()` function to properly remove the event listener when no longer needed, preventing memory leaks.
+- **Purpose**: Provides a comprehensive, class-based layout management system for the composite engine panel that tracks multiple layout concerns beyond just orientation.
+- **Architecture**: Uses the `LayoutStore` class that encapsulates an RxJS `BehaviorSubject` to store and emit complete layout state changes. It listens to multiple browser APIs for various layout changes and updates the state accordingly.
+- **Layout State Interface**: The `LayoutState` interface includes:
+  - `orientation`: Current screen orientation (portrait/landscape)
+  - `viewportWidth`/`viewportHeight`: Current viewport dimensions
+  - `isFullscreen`: Whether the panel is in fullscreen mode
+  - `isMaximized`: Whether the panel is maximized within its container
+  - `devicePixelRatio`: Current device pixel ratio
+- **Usage**:
+  - Instantiate `LayoutStore` class and subscribe to `layoutStore.layoutState$` for complete state
+  - Use `layoutStore.orientation$` for orientation-only updates
+  - Access current state via `currentLayoutState` or `currentOrientation` getters
+- **Features**:
+  - Configurable tracking options via `LayoutStoreConfig` (viewport, fullscreen, auto-start)
+  - Comprehensive event listening (orientation, resize, fullscreen changes)
+  - Proper lifecycle management with `startListening()`, `stopListening()`, and `dispose()` methods
+  - Panel state integration via `setMaximized()` method
+  - Automatic cleanup to prevent memory leaks
+- **Integration**: The `SubscriptionCoordinator` subscribes to `layoutState$` to trigger layout updates and renderer resizing when any layout property changes.
 
-This module adheres to a simple, observable-based state pattern, ensuring that orientation changes are handled reactively across the application.
+This module follows the established class-based pattern used throughout the composite engine panel, providing comprehensive layout management with better encapsulation and lifecycle management.

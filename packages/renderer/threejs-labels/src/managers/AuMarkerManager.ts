@@ -62,7 +62,7 @@ export class AuMarkerManager {
       transparent: true,
       opacity: 0.2,
       toneMapped: false, // Set to false for UI elements to not be affected by scene lighting
-      depthTest: true, // Enable depth testing so AU markers are occluded by celestial objects
+      depthTest: false, // Disable depth test to ensure AU marker rings are always visible
       depthWrite: false, // Don't write to depth buffer to avoid interfering with celestial objects
       blending: THREE.NormalBlending, // Use normal blending for proper transparency
     });
@@ -73,6 +73,7 @@ export class AuMarkerManager {
       count,
     );
     this.ringInstances.name = "au-rings-instanced";
+    this.ringInstances.frustumCulled = false; // Disable frustum culling to ensure AU marker rings are always visible
     this.mainGroup.add(this.ringInstances);
 
     const dummy = new THREE.Object3D();

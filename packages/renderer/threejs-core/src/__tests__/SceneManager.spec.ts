@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as THREE from "three";
 import { SceneManager } from "../SceneManager";
+import { CAMERA_DISTANCE_CONFIG } from "../LogarithmicDepthMaterial";
 
 describe("SceneManager", () => {
   let container: HTMLDivElement;
@@ -26,8 +27,8 @@ describe("SceneManager", () => {
     expect(sceneManager.renderer).toBeInstanceOf(THREE.WebGLRenderer);
 
     expect(sceneManager.camera.aspect).toBe(800 / 600);
-    expect(sceneManager.camera.near).toBe(0.00001); // Updated for ultra-aggressive logarithmic depth buffer
-    expect(sceneManager.camera.far).toBe(1000000); // Updated for logarithmic depth buffer
+    expect(sceneManager.camera.near).toBe(CAMERA_DISTANCE_CONFIG.NEAR); // Use single source of truth
+    expect(sceneManager.camera.far).toBe(CAMERA_DISTANCE_CONFIG.FAR); // Use single source of truth
 
     expect(sceneManager.renderer.domElement).toBeInstanceOf(HTMLCanvasElement);
     expect(sceneManager.renderer.shadowMap.enabled).toBe(false);

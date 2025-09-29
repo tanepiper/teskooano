@@ -1,6 +1,17 @@
 import * as THREE from "three";
 
 /**
+ * Camera distance configuration for space-scale rendering.
+ * All camera distance settings should use these values for consistency.
+ */
+export const CAMERA_DISTANCE_CONFIG = {
+  /** Near plane distance - very close objects (0.01mm) */
+  NEAR: 0.00001,
+  /** Far plane distance - 200 AU (covers entire solar system and beyond) */
+  FAR: 30000000000, // 200 AU in scene units (200 * 149,597,870,700 meters / AU_METERS)
+} as const;
+
+/**
  * Helper for enabling logarithmic depth buffer in materials.
  *
  * This provides much better depth precision across huge distance ranges
@@ -93,9 +104,9 @@ export class LogarithmicDepthMaterial {
   public static configureCameraForLogDepth(
     camera: THREE.PerspectiveCamera,
   ): void {
-    // With log depth, we can use much more aggressive near/far ratios
-    camera.near = 0.001; // 1mm
-    camera.far = 1000000; // 1,000 km (covers entire solar system)
+    // Use the single source of truth for camera distances
+    camera.near = CAMERA_DISTANCE_CONFIG.NEAR;
+    camera.far = CAMERA_DISTANCE_CONFIG.FAR;
     camera.updateProjectionMatrix();
   }
 

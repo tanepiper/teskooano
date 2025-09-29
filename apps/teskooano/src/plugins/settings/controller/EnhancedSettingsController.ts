@@ -120,14 +120,18 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    */
   private initializeNBodyComponent(): void {
     // Ensure the custom element is fully connected before calling methods
-    if (this.elements.nbodySettingsComponent && 
-        typeof this.elements.nbodySettingsComponent.initialize === 'function') {
+    if (
+      this.elements.nbodySettingsComponent &&
+      typeof this.elements.nbodySettingsComponent.initialize === "function"
+    ) {
       this.elements.nbodySettingsComponent.initialize({
         showValidationMessage: this.showValidationMessage.bind(this),
         clearValidationMessages: this.clearValidationMessages.bind(this),
       });
     } else {
-      console.warn('[EnhancedSettingsController] N-Body component not ready, retrying...');
+      console.warn(
+        "[EnhancedSettingsController] N-Body component not ready, retrying...",
+      );
       // Retry after a short delay to allow the custom element to fully initialize
       setTimeout(() => {
         this.initializeNBodyComponent();
@@ -185,8 +189,11 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     this.updateModeBadge();
 
     // Delegate N-Body updates to the component (if it's ready)
-    if (this.elements.nbodySettingsComponent && 
-        typeof this.elements.nbodySettingsComponent.updateNBodyControls === 'function') {
+    if (
+      this.elements.nbodySettingsComponent &&
+      typeof this.elements.nbodySettingsComponent.updateNBodyControls ===
+        "function"
+    ) {
       this.elements.nbodySettingsComponent.updateNBodyControls();
       this.elements.nbodySettingsComponent.updateNBodyVisibility();
     }
@@ -221,7 +228,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     this.elements.simulationModeSelectElement.value = this.currentConfig.mode;
   }
 
-
   /**
    * Updates the mode badge in the section header.
    * @private
@@ -237,7 +243,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     badge.textContent =
       this.currentConfig.mode === "ideal" ? "Ideal" : "N-Body";
   }
-
 
   /**
    * Shows a validation message to the user.
@@ -316,7 +321,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       target.value = this.currentConfig.mode;
     }
   };
-
 
   /**
    * Handles performance profile changes.

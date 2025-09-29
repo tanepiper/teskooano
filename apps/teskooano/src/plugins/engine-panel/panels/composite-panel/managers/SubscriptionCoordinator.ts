@@ -4,7 +4,7 @@ import {
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
-import { layoutOrientation$ } from "../../state/layoutStore";
+import { LayoutStore } from "../../state/layoutStore";
 
 /**
  * Simple coordinator for managing RxJS subscriptions in the CompositeEnginePanel.
@@ -14,6 +14,7 @@ import { layoutOrientation$ } from "../../state/layoutStore";
 export class SubscriptionCoordinator {
   private _subscriptionManager = new StateSubscriptionMixin();
   private _clearTimeout: number | null = null;
+  private _layoutStore: LayoutStore;
 
   constructor(
     private readonly callbacks: {
@@ -22,7 +23,9 @@ export class SubscriptionCoordinator {
       onLayoutChange: () => void;
       onRendererDisposal: () => void;
     },
-  ) {}
+  ) {
+    this._layoutStore = new LayoutStore();
+  }
 
   /**
    * Setup all subscriptions
@@ -59,7 +62,7 @@ export class SubscriptionCoordinator {
 
     // Subscribe to layout changes
     this._subscriptionManager.subscribeToStateComposition(
-      layoutOrientation$,
+      this._layoutStore.layoutState$,
       () => {
         this.callbacks.onLayoutChange();
       },
@@ -95,6 +98,7 @@ export class SubscriptionCoordinator {
   public dispose(): void {
     this._subscriptionManager.dispose();
     this._subscriptionManager = new StateSubscriptionMixin();
+    this._layoutStore.dispose();
     this.clearTimeout();
   }
 }

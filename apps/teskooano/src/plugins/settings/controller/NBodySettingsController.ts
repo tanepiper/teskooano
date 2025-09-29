@@ -7,8 +7,10 @@ import type {
   IntegratorType,
   SimulationConfiguration,
 } from "@teskooano/data-types";
-import { getConfigurationDisplayName, getConfigurationShortName } from "../../../plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.utils";
-
+import {
+  getConfigurationDisplayName,
+  getConfigurationShortName,
+} from "../../../plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.utils";
 
 /**
  * Defines the structure for the N-Body specific UI elements.
@@ -34,9 +36,12 @@ export class NBodySettingsController extends StateSubscriptionMixin {
   constructor(
     private elements: INBodySettingsElements,
     private parentController: {
-      showValidationMessage: (message: string, type?: "error" | "warning") => void;
+      showValidationMessage: (
+        message: string,
+        type?: "error" | "warning",
+      ) => void;
       clearValidationMessages: () => void;
-    }
+    },
   ) {
     super();
     this.currentConfig = simulationManager.getSimulationConfiguration();
@@ -58,7 +63,7 @@ export class NBodySettingsController extends StateSubscriptionMixin {
     this.setupEventListeners();
     this.subscribeToState(
       simulationManager.getSimulationState$(),
-      this.handleStateChange
+      this.handleStateChange,
     );
   }
 
@@ -68,11 +73,11 @@ export class NBodySettingsController extends StateSubscriptionMixin {
   private setupEventListeners(): void {
     this.elements.algorithmSelectElement.addEventListener(
       "change",
-      this.handleAlgorithmChange
+      this.handleAlgorithmChange,
     );
     this.elements.integratorSelectElement.addEventListener(
       "change",
-      this.handleIntegratorChange
+      this.handleIntegratorChange,
     );
   }
 
@@ -82,11 +87,11 @@ export class NBodySettingsController extends StateSubscriptionMixin {
   private removeEventListeners(): void {
     this.elements.algorithmSelectElement.removeEventListener(
       "change",
-      this.handleAlgorithmChange
+      this.handleAlgorithmChange,
     );
     this.elements.integratorSelectElement.removeEventListener(
       "change",
-      this.handleIntegratorChange
+      this.handleIntegratorChange,
     );
   }
 
@@ -126,7 +131,6 @@ export class NBodySettingsController extends StateSubscriptionMixin {
    * Updates the configuration display with current settings.
    */
   private updateConfigurationDisplay(): void {
-    
     const displayName = getConfigurationDisplayName(this.currentConfig);
     const shortName = getConfigurationShortName(this.currentConfig);
 
@@ -181,7 +185,7 @@ export class NBodySettingsController extends StateSubscriptionMixin {
     } catch (error) {
       console.error("Failed to set algorithm:", error);
       this.parentController.showValidationMessage(
-        `Failed to change algorithm: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to change algorithm: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // Revert selection
@@ -202,7 +206,7 @@ export class NBodySettingsController extends StateSubscriptionMixin {
     } catch (error) {
       console.error("Failed to set integrator:", error);
       this.parentController.showValidationMessage(
-        `Failed to change integrator: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to change integrator: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // Revert selection

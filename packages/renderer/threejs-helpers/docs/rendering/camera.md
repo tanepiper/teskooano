@@ -40,8 +40,8 @@ Optimized for space scenes with wide field of view and extended depth range.
 ```typescript
 const camera = CameraHelper.createCamera(CameraPreset.Space, {
   fov: 90,
-  near: 0.01,
-  far: 1000000,
+  near: CAMERA_DISTANCE_CONFIG.NEAR, // 0.00001 - very close objects
+  far: CAMERA_DISTANCE_CONFIG.FAR, // 30 billion units (200 AU)
   position: [0, 0, 50],
 });
 ```
@@ -78,6 +78,29 @@ const camera = CameraHelper.createCamera(CameraPreset.Orthographic, {
   position: [0, 0, 10],
 });
 ```
+
+## Camera Distance Configuration
+
+For space-scale rendering, all camera distance settings use a single source of truth:
+
+```typescript
+import { CAMERA_DISTANCE_CONFIG } from "@teskooano/renderer-threejs-core";
+
+// Use these constants for consistent camera distances
+const camera = new THREE.PerspectiveCamera(
+  fov,
+  aspect,
+  CAMERA_DISTANCE_CONFIG.NEAR, // 0.00001 - very close objects
+  CAMERA_DISTANCE_CONFIG.FAR, // 30 billion units (200 AU)
+);
+```
+
+**Distance Values:**
+
+- **NEAR**: `0.00001` units (0.01mm) - allows viewing very close objects
+- **FAR**: `30,000,000,000` units (200 AU) - covers entire solar system and beyond
+
+This configuration is optimized for logarithmic depth buffer rendering, providing uniform precision across the entire astronomical distance range.
 
 ## Camera Configuration
 

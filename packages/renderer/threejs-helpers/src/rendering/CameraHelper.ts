@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CAMERA_DISTANCE_CONFIG } from "@teskooano/renderer-threejs-core";
 
 /**
  * Camera presets for different use cases
@@ -140,8 +141,8 @@ export class CameraHelper {
     const camera = new THREE.PerspectiveCamera(
       config.fov ?? 90, // Wider FOV for space scenes
       config.aspect ?? window.innerWidth / window.innerHeight,
-      config.near ?? 0.01, // Very close near plane for space
-      config.far ?? 1000000, // Very far for space scenes
+      config.near ?? CAMERA_DISTANCE_CONFIG.NEAR, // Use single source of truth for camera distances
+      config.far ?? CAMERA_DISTANCE_CONFIG.FAR, // Use single source of truth for camera distances
     );
 
     camera.position.set(

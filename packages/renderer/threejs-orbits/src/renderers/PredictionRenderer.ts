@@ -70,7 +70,7 @@ export class PredictionRenderer {
         material,
         `prediction-line-${objectId}`,
       );
-      line.frustumCulled = true;
+      line.frustumCulled = false; // Disable frustum culling to ensure prediction lines are always visible
 
       // Add prediction lines to the dedicated orbit lines group
       this.predictionLinesGroup.add(line);

@@ -10,7 +10,10 @@ import {
   SceneHelper,
 } from "@teskooano/renderer-threejs-helpers";
 import { AnimationLoop } from "./AnimationLoop";
-import { LogarithmicDepthMaterial } from "./LogarithmicDepthMaterial";
+import {
+  LogarithmicDepthMaterial,
+  CAMERA_DISTANCE_CONFIG,
+} from "./LogarithmicDepthMaterial";
 import { rendererEvents } from "./events";
 import { getPerformanceOptimization } from "./helpers/performance";
 import { Subscription } from "rxjs";
@@ -204,8 +207,8 @@ export class SceneManager {
     // Use CameraHelper to create optimized space camera with logarithmic depth
     const camera = CameraHelper.createCamera(CameraPreset.Space, {
       fov: this.fov,
-      near: 0.00001, // With log depth, we can use aggressive near plane (0.000001 AU ≈ 150 km)
-      far: 1000000, // With log depth, we can use massive far plane (1000 AU - covers entire system)
+      near: CAMERA_DISTANCE_CONFIG.NEAR, // Use single source of truth for camera distances
+      far: CAMERA_DISTANCE_CONFIG.FAR, // Use single source of truth for camera distances
       position: this.options.cameraPosition ?? [1500, 1500, 1500], // Default camera position
       aspect: this.width / this.height,
     });
