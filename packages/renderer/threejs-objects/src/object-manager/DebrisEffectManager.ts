@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
+import { MeshBasicNodeMaterial } from "three/webgpu";
 import {
   attribute,
   uniform,
@@ -11,10 +12,8 @@ import {
   mul,
   add,
   sub,
-  instanceIndex,
   color,
   float,
-  MeshBasicNodeMaterial,
 } from "three/tsl";
 
 // New structure for active debris effects using InstancedMesh

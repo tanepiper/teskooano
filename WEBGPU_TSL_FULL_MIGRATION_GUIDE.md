@@ -147,7 +147,8 @@ export class MyMaterial extends THREE.ShaderMaterial {
 
 **TSL (NEW)**:
 ```typescript
-import { MeshBasicNodeMaterial, uniform, color } from "three/tsl";
+import { MeshBasicNodeMaterial } from "three/webgpu";
+import { uniform, color } from "three/tsl";
 
 export class MyMaterial extends MeshBasicNodeMaterial {
   constructor() {
@@ -163,8 +164,8 @@ export class MyMaterial extends MeshBasicNodeMaterial {
 
 **TSL Implementation**:
 ```typescript
+import { MeshStandardNodeMaterial } from "three/webgpu";
 import { 
-  MeshStandardNodeMaterial, 
   uniform, float, vec3,
   positionLocal, normalLocal,
   mul, add, sin, cos, mix
@@ -200,7 +201,8 @@ export class ProceduralMaterial extends MeshStandardNodeMaterial {
 
 **TSL uses automatic lighting via MeshStandardNodeMaterial**:
 ```typescript
-import { MeshStandardNodeMaterial, uniform, color, float } from "three/tsl";
+import { MeshStandardNodeMaterial } from "three/webgpu";
+import { uniform, color, float } from "three/tsl";
 
 export class LitMaterial extends MeshStandardNodeMaterial {
   constructor(props) {
@@ -220,10 +222,8 @@ export class LitMaterial extends MeshStandardNodeMaterial {
 ### Pattern 4: Texture Sampling
 
 ```typescript
-import { 
-  MeshStandardNodeMaterial, 
-  texture, uv, mul 
-} from "three/tsl";
+import { MeshStandardNodeMaterial } from "three/webgpu";
+import { texture, uv, mul } from "three/tsl";
 
 export class TexturedMaterial extends MeshStandardNodeMaterial {
   constructor(diffuseMap: THREE.Texture) {
@@ -243,8 +243,8 @@ export class TexturedMaterial extends MeshStandardNodeMaterial {
 ### Pattern 5: Instance Attributes
 
 ```typescript
+import { MeshBasicNodeMaterial } from "three/webgpu";
 import { 
-  MeshBasicNodeMaterial,
   attribute, instanceIndex, uniform,
   positionLocal, add, mul
 } from "three/tsl";
@@ -453,14 +453,18 @@ src/
 
 ## Common Pitfalls
 
-### 1. Import Paths
+### 1. Import Paths (CRITICAL)
 ```typescript
-// ❌ WRONG
-import { MeshStandardNodeMaterial } from "three/tsl";
+// ❌ WRONG - Material classes are NOT in three/tsl
+import { MeshStandardNodeMaterial, MeshBasicNodeMaterial } from "three/tsl";
 
-// ✅ CORRECT
-import { MeshStandardNodeMaterial } from "three/webgpu";
-import { uniform, float, vec3 } from "three/tsl";
+// ✅ CORRECT - Material classes come from three/webgpu
+import { MeshStandardNodeMaterial, MeshBasicNodeMaterial } from "three/webgpu";
+import { uniform, float, vec3, color, add, mul } from "three/tsl";
+
+// RULE: 
+// - Material classes (MeshBasicNodeMaterial, MeshStandardNodeMaterial, etc.) → "three/webgpu"
+// - Node functions (uniform, float, vec3, add, mul, etc.) → "three/tsl"
 ```
 
 ### 2. Uniform Updates
