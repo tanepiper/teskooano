@@ -8,8 +8,8 @@
 | SceneManager | ✅ Complete | WebGPURenderer exclusive |
 | WebGPU Detection | ✅ Complete | Throws error if unavailable |
 | Debris Effects | ✅ Complete | TSL InstancedMesh material |
-| Terrestrial Planets | ✅ Complete | Full TSL procedural + atmosphere |
-| Stars | ⏳ Pending | Enhanced star + corona shaders |
+| Terrestrial Planets | ✅ Complete | Full TSL procedural + imports fixed |
+| Stars | ✅ Complete | Enhanced star + corona TSL materials |
 | Gas Giants | ⏳ Pending | 5 class variations |
 | Rings | ⏳ Pending | Ring + accretion disk |
 | Small Bodies | ⏳ Pending | Asteroids, comets, satellites |
@@ -68,6 +68,36 @@
 - Removed WebGL backend switching
 - Single TSL material type
 - Simplified options (no rendererBackend param)
+
+**Import Chain Cleanup**:
+- Removed all `rendererBackend` parameters
+- Deleted `MaterialFactory.ts` and `atmosphere-factory.ts`
+- Updated exports in package index
+- Fixed all consumer imports
+
+### 4. Star Materials (November 24, 2025)
+
+**Enhanced Star Material**:
+- `EnhancedStarTSLMaterial` extends `MeshStandardNodeMaterial`
+- Full TSL plasma shader implementation:
+  - Custom noise function (snoise) for stellar effects
+  - FBM with 3 octaves for plasma turbulence
+  - Time-animated plasma patterns
+  - Multi-color mixing (hot, surface, cool)
+- Emissive nodes for self-luminous stars
+- Position-based variation for surface detail
+
+**Corona Material**:
+- `CoronaTSLMaterial` extends `MeshBasicNodeMaterial`
+- Edge-based glow effect using view angle
+- Pulsing animation with noise turbulence
+- Additive blending for corona halo
+- Transparent with no depth write
+
+**Factory Pattern**:
+- `StarMaterialTSLFactory` for material creation
+- Simplified API (WebGPU-only)
+- Supports enhanced star and corona effects
 
 ## TSL Implementation Patterns
 
