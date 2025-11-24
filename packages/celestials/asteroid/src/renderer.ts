@@ -1,6 +1,7 @@
 import {
   AsteroidProperties,
   RenderableCelestialObject,
+  type RendererBackend,
 } from "@teskooano/data-types";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import * as THREE from "three";
@@ -13,6 +14,7 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { AsteroidNucleusMaterial } from "./material";
+import { AsteroidMaterialFactory } from "./material-factory";
 import { SCALE } from "@teskooano/data-values";
 
 const MAX_PARTICLES = 12000;
@@ -34,9 +36,14 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
   private clock = new THREE.Clock();
   private noise = new SimplexNoise();
   private random: () => number = () => 0;
+  private rendererBackend: RendererBackend;
 
-  constructor(object: RenderableCelestialObject) {
+  constructor(
+    object: RenderableCelestialObject,
+    rendererBackend: RendererBackend = "webgl",
+  ) {
     super(object);
+    this.rendererBackend = rendererBackend;
     this.random = createSeededRandomSync(object.seed ?? object.id);
 
     this.createNucleus(object);
@@ -176,10 +183,11 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
 
   private createNucleusMaterial(
     object: RenderableCelestialObject,
-  ): AsteroidNucleusMaterial {
+  ): THREE.Material {
     const properties = object.properties as AsteroidProperties;
 
-    return new AsteroidNucleusMaterial({
+    // Use the material factory to create either WebGL or WebGPU material
+    return AsteroidMaterialFactory.createMaterial(this.rendererBackend, {
       colors: properties.colors.map((c) => new THREE.Color(c)),
       heights: properties.heights,
       ...(properties.visuals || {}),
@@ -224,35 +232,41 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
   ): void {
     const nucleusMaterial = this.getMaterial(
       `asteroid-nucleus-${object.id}`,
-    ) as AsteroidNucleusMaterial | undefined;
+    ) as THREE.Material | undefined;
 
     if (nucleusMaterial) {
-      // Update dynamic ambient lighting directly
-      if (nucleusMaterial.uniforms.uAmbientStrength) {
-        nucleusMaterial.uniforms.uAmbientStrength.value =
-          dynamicAmbientIntensity;
+      // Check if this is a GLSL material (has uniforms property)
+      // TSL materials (WebGPU) don't use uniforms in the same way
+      if ("uniforms" in nucleusMaterial && (nucleusMaterial as any).uniforms) {
+        // Update dynamic ambient lighting directly (GLSL materials only)
+        if ((nucleusMaterial as any).uniforms.uAmbientStrength) {
+          (nucleusMaterial as any).uniforms.uAmbientStrength.value =
+            dynamicAmbientIntensity;
+        }
+
+        // Find shadow casters using centralized utility
+        const shadowCasters = this.findShadowCasters();
+
+        // Convert to shader format
+        const shadowCastersForShader =
+          ShadowCasterUtils.toShaderFormat(shadowCasters);
+
+        // Use the material's update method to handle all lighting calculations
+        if (
+          "update" in nucleusMaterial &&
+          typeof (nucleusMaterial as any).update === "function"
+        ) {
+          (nucleusMaterial as any).update(
+            0, // time - asteroids don't typically need animated time effects
+            1, // timeScale
+            attenuatedLightSources,
+            camera,
+            shadowCastersForShader,
+          );
+        }
       }
-
-      // Find shadow casters using centralized utility
-      const shadowCasters = this.findShadowCasters();
-
-      // Convert to shader format
-      const shadowCastersForShader =
-        ShadowCasterUtils.toShaderFormat(shadowCasters);
-
-      // Use the material's update method to handle all lighting calculations
-      if (
-        "update" in nucleusMaterial &&
-        typeof nucleusMaterial.update === "function"
-      ) {
-        nucleusMaterial.update(
-          0, // time - asteroids don't typically need animated time effects
-          1, // timeScale
-          attenuatedLightSources,
-          camera,
-          shadowCastersForShader,
-        );
-      }
+      // TSL materials (WebGPU) handle lighting automatically via MeshStandardNodeMaterial
+      // No manual uniform updates needed
     }
   }
 

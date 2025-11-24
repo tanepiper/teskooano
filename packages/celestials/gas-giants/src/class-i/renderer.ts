@@ -8,6 +8,7 @@ import {
 import { createSeededRandomSync } from "@teskooano/core-math";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIMaterial } from "./material";
+import { GasGiantMaterialFactory } from "../base/material-factory";
 
 /**
  * Renderer for Class I gas giants
@@ -21,7 +22,7 @@ export class ClassIGasGiantRenderer extends BaseGasGiantRenderer<ClassIMaterial>
     this.rotationSpeed = 0.01; // Default, will be seeded
   }
 
-  protected createMaterial(object: RenderableCelestialObject): ClassIMaterial {
+  protected createMaterial(object: RenderableCelestialObject): any {
     const properties = object.properties as GasGiantProperties;
 
     // Initialize seeded random for this gas giant
@@ -41,11 +42,22 @@ export class ClassIGasGiantRenderer extends BaseGasGiantRenderer<ClassIMaterial>
       ? new THREE.Color(properties.cloudColor)
       : new THREE.Color(0xd2b48c);
 
-    return new ClassIMaterial({
-      atmosphereColor: atmosphereColor,
-      cloudColor: cloudColor,
-      seed: seed,
-      stormMap: undefined,
-    });
+    // Use factory for WebGPU, legacy material for WebGL
+    if (this.rendererBackend === "webgpu") {
+      return GasGiantMaterialFactory.createMaterial({
+        rendererBackend: this.rendererBackend,
+        baseColor: atmosphereColor,
+        cloudColor: cloudColor,
+        roughness: 0.8,
+        metalness: 0.0,
+      });
+    } else {
+      return new ClassIMaterial({
+        atmosphereColor: atmosphereColor,
+        cloudColor: cloudColor,
+        seed: seed,
+        stormMap: undefined,
+      });
+    }
   }
 }

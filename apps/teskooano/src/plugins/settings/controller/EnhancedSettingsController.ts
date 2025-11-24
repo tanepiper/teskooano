@@ -12,6 +12,7 @@ import type {
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 import type { NBodySettingsComponent } from "../view/NBodySettingsComponent";
+import { RendererSettingsComponent } from "../view/RendererSettingsComponent";
 
 const PERFORMANCE_PROFILE_OPTIONS: {
   value: DeviceTier;
@@ -41,6 +42,9 @@ export interface IEnhancedSettingsPanelElements {
   // Legacy
   profileSelectElement: HTMLSelectElement;
 
+  // Renderer settings
+  rendererSettingsContainer: HTMLElement;
+
   // Validation
   validationMessagesElement: HTMLDivElement;
 }
@@ -51,6 +55,7 @@ export interface IEnhancedSettingsPanelElements {
  */
 export class EnhancedSettingsController extends StateSubscriptionMixin {
   private currentConfig: SimulationConfiguration;
+  private rendererSettingsComponent?: RendererSettingsComponent;
 
   /**
    * Initializes the enhanced controller and binds it to the view's elements.
@@ -65,6 +70,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * Cleans up all subscriptions and event listeners to prevent memory leaks.
    */
   public dispose(): void {
+    this.rendererSettingsComponent?.dispose();
     this.removeEventListeners();
     super.dispose();
   }
@@ -78,9 +84,10 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     this.setupEventListeners();
     this.populateControls();
 
-    // Ensure DOM is ready before updating UI and initializing N-Body component
+    // Ensure DOM is ready before updating UI and initializing components
     requestAnimationFrame(() => {
       this.initializeNBodyComponent();
+      this.initializeRendererSettingsComponent();
       this.updateUI();
     });
 
@@ -136,6 +143,22 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       setTimeout(() => {
         this.initializeNBodyComponent();
       }, 10);
+    }
+  }
+
+  /**
+   * Initializes the renderer settings component.
+   * @private
+   */
+  private initializeRendererSettingsComponent(): void {
+    if (this.elements.rendererSettingsContainer) {
+      this.rendererSettingsComponent = new RendererSettingsComponent(
+        this.elements.rendererSettingsContainer,
+      );
+    } else {
+      console.warn(
+        "[EnhancedSettingsController] Renderer settings container not found",
+      );
     }
   }
 

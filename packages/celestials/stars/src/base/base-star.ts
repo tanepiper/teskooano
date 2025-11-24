@@ -1,4 +1,4 @@
-import type { StarProperties } from "@teskooano/data-types";
+import type { StarProperties, RendererBackend } from "@teskooano/data-types";
 import { RenderableCelestialObject } from "@teskooano/data-types";
 import {
   BaseCelestialRenderer,
@@ -148,13 +148,17 @@ export abstract class BaseStarRenderer<
 > extends BaseCelestialRenderer<TStarMaterial> {
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
   protected starLightingManager?: LightingManager;
+  protected rendererBackend: RendererBackend;
 
   constructor(
     object: RenderableCelestialObject,
-    options: BaseCelestialRendererOptions = {},
+    options: BaseCelestialRendererOptions & {
+      rendererBackend?: RendererBackend;
+    } = {},
   ) {
     super(object, options);
     this.starLightingManager = options?.lightingManager;
+    this.rendererBackend = options?.rendererBackend ?? "webgl";
   }
 
   /**
@@ -312,62 +316,62 @@ export abstract class BaseStarRenderer<
 
     const material = this.getMaterial(object.id) as TStarMaterial;
     if (material) {
-      // Update material with current time
-      if (material.update) {
-        material.update(
-          time * timeScale,
-          timeScale,
-          lightSources,
-          camera,
-          allObjects,
-          allMeshes,
-        );
-      }
+      // Check if this is a GLSL material (has uniforms property)
+      // TSL materials (WebGPU) don't use uniforms in the same way
+      if ("uniforms" in material && material.uniforms) {
+        // Update material with current time (GLSL materials)
+        if (typeof (material as any).update === "function") {
+          (material as any).update(
+            time * timeScale,
+            timeScale,
+            lightSources,
+            camera,
+            allObjects,
+            allMeshes,
+          );
+        }
 
-      // Update star colors from top-level properties (only if uniforms exist)
-      const starProps = object.properties as StarProperties;
-      if (starProps?.color && material.uniforms.uStarColor) {
-        if (typeof starProps.color === "string") {
-          material.uniforms.uStarColor.value.set(starProps.color);
+        // Update star colors from top-level properties (only if uniforms exist)
+        const starProps = object.properties as StarProperties;
+        if (starProps?.color && material.uniforms.uStarColor) {
+          if (typeof starProps.color === "string") {
+            material.uniforms.uStarColor.value.set(starProps.color);
+          }
+        }
+
+        if (starProps?.hotColor && material.uniforms.uHotColor) {
+          if (typeof starProps.hotColor === "string") {
+            material.uniforms.uHotColor.value.set(starProps.hotColor);
+          }
+        }
+
+        if (starProps?.surfaceColor && material.uniforms.uSurfaceColor) {
+          if (typeof starProps.surfaceColor === "string") {
+            material.uniforms.uSurfaceColor.value.set(starProps.surfaceColor);
+          }
+        }
+
+        if (starProps?.coolColor && material.uniforms.uCoolColor) {
+          if (typeof starProps.coolColor === "string") {
+            material.uniforms.uCoolColor.value.set(starProps.coolColor);
+          }
+        }
+
+        // Update noise parameters if they exist
+        if (starProps?.materialParams) {
+          this._updateStarMaterialUniforms(material, starProps.materialParams);
+        }
+      } else {
+        // TSL material (WebGPU) - call update method if it exists
+        if (typeof (material as any).update === "function") {
+          (material as any).update(
+            time * timeScale,
+            timeScale,
+            allObjects,
+            allMeshes,
+          );
         }
       }
-
-      if (starProps?.hotColor && material.uniforms.uHotColor) {
-        if (typeof starProps.hotColor === "string") {
-          material.uniforms.uHotColor.value.set(starProps.hotColor);
-        }
-      }
-
-      if (starProps?.surfaceColor && material.uniforms.uSurfaceColor) {
-        if (typeof starProps.surfaceColor === "string") {
-          material.uniforms.uSurfaceColor.value.set(starProps.surfaceColor);
-        }
-      }
-
-      if (starProps?.coolColor && material.uniforms.uCoolColor) {
-        if (typeof starProps.coolColor === "string") {
-          material.uniforms.uCoolColor.value.set(starProps.coolColor);
-        }
-      }
-
-      // Update noise parameters if they exist
-      if (starProps?.materialParams) {
-        this._updateStarMaterialUniforms(material, starProps.materialParams);
-      }
-
-      // Update time uniform if it exists (different materials may have different time uniform names)
-      // Removed redundant uTime update here, as BaseStarMaterial's update method handles it.
-      // if (material.uniforms.uTime) {
-      //   // Create a much smaller time scale for visible animation cycles
-      //   // Use a very small scale to create fast, visible animation cycles
-      //   const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
-      //   material.uniforms.uTime.value = animationTime;
-      // } else if (material.uniforms.time) {
-      //   // Create a much smaller time scale for visible animation cycles
-      //   // Use a very small scale to create fast, visible animation cycles
-      //   const animationTime = ((time * timeScale) / 1000) * 1e-8; // Scale down much more for faster animation
-      //   material.uniforms.time.value = animationTime;
-      // }
     }
   }
 

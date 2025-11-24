@@ -20,10 +20,10 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@playwright/test": "1.55.0",
-    "jsdom": "27.0.0",
-    "typescript": "5.9.2",
-    "vitest": "3.2.4"
+    "@playwright/test": "1.56.1",
+    "jsdom": "27.2.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.13"
   },
   "scripts": {
     "test": "vitest run",

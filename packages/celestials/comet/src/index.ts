@@ -1,6 +1,8 @@
 export * from "./material";
+export * from "./material-tsl";
+export * from "./material-factory";
 export * from "./renderer";
 export * from "./createMesh";
 
-// Re-export the old factory function name for backward compatibility
+// Backward compatibility alias
 export { createMesh as createCometMesh } from "./createMesh";

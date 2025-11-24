@@ -15,6 +15,7 @@ import {
 import { RendererStateAdapter } from "../RendererStateAdapter";
 import { RenderPipeline } from "../RenderPipeline";
 import { renderableStore, StateAccessor } from "@teskooano/core-state";
+import type { RendererBackend } from "@teskooano/data-types";
 
 /**
  * Factory functions for creating complex renderer services.
@@ -24,26 +25,55 @@ import { renderableStore, StateAccessor } from "@teskooano/core-state";
 export class ServiceFactories {
   /**
    * Creates a SceneManager with proper Three.js setup.
+   * Note: SceneManager initialization is now asynchronous.
+   * This method returns the SceneManager instance immediately,
+   * but configuration will be applied once initialization completes.
    */
   static createSceneManager(container: HTMLElement): SceneManager {
     const sceneManager = new SceneManager(container);
 
-    // Configure scene
-    sceneManager.scene.background = new THREE.Color(0x000000);
-    sceneManager.scene.fog = new THREE.Fog(0x000000, 1000, 10000);
+    // Configuration needs to wait for async initialization
+    // We'll apply it in a non-blocking way
+    const configureSceneManager = async () => {
+      // Wait for scene, camera, and renderer to be initialized
+      while (
+        !sceneManager.scene ||
+        !sceneManager.camera ||
+        !sceneManager.renderer
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
 
-    // Configure camera
-    sceneManager.camera.position.set(0, 0, 1000);
-    sceneManager.camera.lookAt(0, 0, 0);
+      // Configure scene
+      sceneManager.scene.background = new THREE.Color(0x000000);
+      sceneManager.scene.fog = new THREE.Fog(0x000000, 1000, 10000);
 
-    // Configure renderer
-    sceneManager.renderer.setSize(
-      container.clientWidth,
-      container.clientHeight,
-    );
-    sceneManager.renderer.setPixelRatio(window.devicePixelRatio);
-    sceneManager.renderer.shadowMap.enabled = true;
-    sceneManager.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      // Configure camera
+      sceneManager.camera.position.set(0, 0, 1000);
+      sceneManager.camera.lookAt(0, 0, 0);
+
+      // Configure renderer
+      sceneManager.renderer.setSize(
+        container.clientWidth,
+        container.clientHeight,
+      );
+      sceneManager.renderer.setPixelRatio(window.devicePixelRatio);
+
+      // Only configure shadow map for WebGL renderer
+      if (sceneManager.getRendererBackend() === "webgl") {
+        (sceneManager.renderer as THREE.WebGLRenderer).shadowMap.enabled = true;
+        (sceneManager.renderer as THREE.WebGLRenderer).shadowMap.type =
+          THREE.PCFSoftShadowMap;
+      }
+    };
+
+    // Start configuration asynchronously
+    configureSceneManager().catch((error) => {
+      console.error(
+        "[ServiceFactories] Failed to configure SceneManager:",
+        error,
+      );
+    });
 
     return sceneManager;
   }
@@ -93,8 +123,13 @@ export class ServiceFactories {
   static createBackgroundManager(
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
+    rendererBackend: RendererBackend,
   ): BackgroundManager {
-    const backgroundManager = new BackgroundManager(scene, camera);
+    const backgroundManager = new BackgroundManager(
+      scene,
+      camera,
+      rendererBackend,
+    );
 
     // BackgroundManager is already properly configured in its constructor
     // It creates default star field and nebula automatically
@@ -249,6 +284,7 @@ export class ServiceFactories {
     const backgroundManager = this.createBackgroundManager(
       sceneManager.scene,
       sceneManager.camera,
+      sceneManager.getRendererBackend(),
     );
     const controlsManager = this.createControlsManager(
       sceneManager.camera,

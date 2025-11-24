@@ -1,4 +1,7 @@
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  RendererBackend,
+} from "@teskooano/data-types";
 import {
   CelestialType,
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
@@ -15,6 +18,7 @@ import {
   AsteroidFieldMaterial,
   type AsteroidFieldMaterialOptions,
 } from "./material";
+import { AsteroidFieldMaterialFactory } from "./material-factory";
 import { SCALE } from "@teskooano/data-values";
 
 /**
@@ -40,7 +44,7 @@ export interface AsteroidFieldRendererOptions extends CelestialMeshOptions {
  * This renderer creates multiple LOD levels with varying particle counts
  * to provide optimal performance at different viewing distances.
  */
-export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMaterial> {
+export class AsteroidFieldRenderer extends BaseCelestialRenderer<THREE.Material> {
   private baseGeometry: THREE.BufferGeometry; // Base geometry for a single asteroid
   private instancedMeshes: THREE.InstancedMesh[] = []; // Store instanced meshes
   private asteroidData: {
@@ -58,6 +62,8 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   private renderScale = 1.0;
   private random: () => number = () => 0;
   private objectId: string;
+  private materialFactory: AsteroidFieldMaterialFactory;
+  private rendererBackend: RendererBackend;
 
   // Pre-allocated for performance in update loop
   private _tempMatrix = new THREE.Matrix4();
@@ -68,28 +74,35 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
   constructor(
     object: RenderableCelestialObject,
     options: AsteroidFieldRendererOptions = {},
+    rendererBackend: RendererBackend = "webgpu",
   ) {
     super(object, {
       ...options,
       disableBillboard: options.disableBillboard ?? true,
     });
     this.objectId = object.id;
+    this.rendererBackend = rendererBackend;
+    this.materialFactory = new AsteroidFieldMaterialFactory();
     this.baseGeometry = new THREE.SphereGeometry(1, 8, 8); // Simple sphere for instance
     this.baseGeometry.name = "AsteroidBaseGeometry";
   }
 
-  protected createMaterial(
-    object: RenderableCelestialObject,
-  ): AsteroidFieldMaterial {
+  protected createMaterial(object: RenderableCelestialObject): THREE.Material {
     const properties = this._getAsteroidFieldProperties(object);
 
-    const material = new AsteroidFieldMaterial({
+    const material = this.materialFactory.createMaterial(this.rendererBackend, {
       particleRotationSpeed: this.particleRotationSpeed,
       renderScale: this.renderScale,
     });
 
+    // Type guard: check if material has loadTexturesFromPaths method
     if (properties.texturePaths && properties.texturePaths.length > 0) {
-      material.loadTexturesFromPaths(properties.texturePaths);
+      if (
+        "loadTexturesFromPaths" in material &&
+        typeof material.loadTexturesFromPaths === "function"
+      ) {
+        material.loadTexturesFromPaths(properties.texturePaths);
+      }
     }
 
     return material;
@@ -291,7 +304,15 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
     super.update(object, time, timeScale, lightSources, camera);
     const material = this.getTypedMaterial(object.id);
 
-    if (material && material.isMaterialReady()) {
+    // Check if material is ready (type guard for GLSL materials)
+    const isMaterialReady =
+      material &&
+      ("isMaterialReady" in material &&
+      typeof material.isMaterialReady === "function"
+        ? material.isMaterialReady()
+        : true);
+
+    if (material && isMaterialReady) {
       const deltaTime = (time - this.previousSimTime) * timeScale;
 
       // Update belt rotation for the entire field
@@ -302,11 +323,31 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
       this.cumulativeParticleTime += deltaTime * 0.05;
       this.cumulativeParticleTime %= 2 * Math.PI;
 
-      // Update material uniforms
-      material.updateBeltRotation(this.beltRotationAngle);
-      material.updateTime(this.cumulativeParticleTime);
-      material.updateParticleRotationSpeed(this.particleRotationSpeed);
-      material.updateRenderScale(this.renderScale);
+      // Update material uniforms (with type guards for method existence)
+      if (
+        "updateBeltRotation" in material &&
+        typeof material.updateBeltRotation === "function"
+      ) {
+        material.updateBeltRotation(this.beltRotationAngle);
+      }
+      if (
+        "updateTime" in material &&
+        typeof material.updateTime === "function"
+      ) {
+        material.updateTime(this.cumulativeParticleTime);
+      }
+      if (
+        "updateParticleRotationSpeed" in material &&
+        typeof material.updateParticleRotationSpeed === "function"
+      ) {
+        material.updateParticleRotationSpeed(this.particleRotationSpeed);
+      }
+      if (
+        "updateRenderScale" in material &&
+        typeof material.updateRenderScale === "function"
+      ) {
+        material.updateRenderScale(this.renderScale);
+      }
 
       // Update instance matrices for each asteroid
       this.instancedMeshes.forEach((mesh) => {

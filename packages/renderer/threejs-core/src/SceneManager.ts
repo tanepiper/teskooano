@@ -1,8 +1,13 @@
-import { StateAccessor, simulationState$ } from "@teskooano/core-state";
+import {
+  StateAccessor,
+  simulationState$,
+  simulationStore,
+} from "@teskooano/core-state";
 import {
   DeviceTier,
   PerformanceOptimization,
   SceneManagerOptions,
+  RendererBackend,
 } from "@teskooano/data-types";
 import {
   CameraHelper,
@@ -17,9 +22,10 @@ import {
 import { rendererEvents } from "./events";
 import { getPerformanceOptimization } from "./helpers/performance";
 import { Subscription } from "rxjs";
+import * as THREE from "three";
 import {
   PerspectiveCamera,
-  type Scene,
+  Scene,
   type Camera,
   type WebGLRenderer,
   type WebGLCapabilities,
@@ -28,6 +34,8 @@ import {
   ACESFilmicToneMapping,
   PCFSoftShadowMap,
 } from "three";
+// @ts-ignore - WebGPU renderer import path varies by Three.js version
+import { WebGPURenderer } from "three/webgpu";
 
 /**
  * The main scene manager for Teskooano which handles the main Three.js scene, camera, and renderer.
@@ -47,13 +55,23 @@ export class SceneManager {
    */
   public camera: PerspectiveCamera;
   /**
-   * The `THREE.WebGLRenderer` instance.
+   * The `THREE.WebGLRenderer` or `WebGPURenderer` instance.
    */
-  public renderer: WebGLRenderer;
+  public renderer: WebGLRenderer | WebGPURenderer;
   /**
    * Manages the `requestAnimationFrame` loop.
    */
   public animationLoop: AnimationLoop;
+  /**
+   * The renderer backend being used (webgl or webgpu).
+   * Determined synchronously during construction based on availability.
+   */
+  public rendererBackend: RendererBackend;
+  /**
+   * Flag indicating whether the renderer is fully initialized and ready to render.
+   * For WebGPU, this becomes true after async init() completes.
+   */
+  private rendererReady: boolean = false;
 
   /**
    * The field of view of the camera.
@@ -86,6 +104,9 @@ export class SceneManager {
 
   /**
    * Creates a new SceneManager instance.
+   * Initializes scene, camera, and renderer synchronously with WebGL fallback,
+   * then upgrades to WebGPU asynchronously if available.
+   *
    * @param container The HTML element that will contain the renderer's canvas.
    * @param options Configuration options for the scene manager.
    */
@@ -99,23 +120,50 @@ export class SceneManager {
     this.width = container.clientWidth;
     this.height = container.clientHeight;
 
-    // Use SceneHelper to create optimized scene components
-    const sceneSetup = this._createSceneWithHelper(container);
-    this.scene = sceneSetup.scene;
-    this.camera = sceneSetup.camera;
-    this.renderer = sceneSetup.renderer;
+    // Synchronously determine which backend to use based on availability
+    const preferredBackend = options.rendererBackend ?? "webgpu";
+    const isWebGPUAvailable =
+      typeof navigator !== "undefined" && navigator.gpu !== undefined;
 
-    // Enable logarithmic depth buffer for superior space-scale precision
-    this.enableLogarithmicDepth();
+    // PRIORITY: Try WebGPU first if available, fallback to WebGL
+    this.rendererBackend =
+      preferredBackend === "webgpu" && isWebGPUAvailable ? "webgpu" : "webgl";
 
-    // Initialize capability detection and performance optimization
-    this.webGLCapabilities = this.renderer.capabilities;
-
-    // Get initial performance optimization based on current state
-    this.performanceOptimization = getPerformanceOptimization(
-      this.webGLCapabilities,
-      simState.performanceProfile,
+    console.log(
+      `[SceneManager] Attempting to create ${this.rendererBackend} renderer (WebGPU available: ${isWebGPUAvailable})`,
     );
+
+    // Initialize scene with the determined backend
+    const syncSceneSetup = this._createSceneSynchronously(container);
+    this.scene = syncSceneSetup.scene;
+    this.camera = syncSceneSetup.camera;
+    this.renderer = syncSceneSetup.renderer;
+
+    // Enable logarithmic depth buffer for WebGL only
+    if (this.rendererBackend === "webgl") {
+      this.enableLogarithmicDepth();
+
+      // Initialize capability detection and performance optimization for WebGL
+      this.webGLCapabilities = (this.renderer as WebGLRenderer).capabilities;
+      this.performanceOptimization = getPerformanceOptimization(
+        this.webGLCapabilities,
+        simState.performanceProfile,
+      );
+
+      // WebGL renderer is ready immediately
+      this.rendererReady = true;
+    } else {
+      // For WebGPU, initialize with default capabilities
+      // WebGPU doesn't expose capabilities in the same way
+      this.webGLCapabilities = {} as WebGLCapabilities;
+      this.performanceOptimization = getPerformanceOptimization(
+        this.webGLCapabilities,
+        simState.performanceProfile,
+      );
+
+      // WebGPU requires async initialization - rendererReady set to false until init completes
+      this.rendererReady = false;
+    }
 
     // Subscribe to performance profile changes
     this._subscribeToPerformanceChanges();
@@ -124,6 +172,163 @@ export class SceneManager {
     this.animationLoop = new AnimationLoop();
     this.animationLoop.setRenderer(this.renderer);
     this.animationLoop.setCamera(this.camera);
+
+    console.log(`[SceneManager] Created ${this.rendererBackend} renderer`);
+
+    // For WebGPU, initialize asynchronously (required before first render)
+    if (this.rendererBackend === "webgpu") {
+      this._initializeWebGPURenderer();
+    }
+  }
+
+  /**
+   * Creates scene synchronously with WebGL renderer for immediate availability.
+   * This ensures the scene, camera, and renderer are always defined.
+   *
+   * @param container The HTML element that will contain the renderer's canvas.
+   * @returns Object containing scene, camera, and WebGL renderer
+   * @private
+   */
+  private _createSceneSynchronously(container: HTMLElement): {
+    scene: Scene;
+    camera: PerspectiveCamera;
+    renderer: WebGLRenderer | WebGPURenderer;
+  } {
+    // Determine power preference based on performance profile
+    const simState = StateAccessor.getSimulationState();
+    const profile = simState.performanceProfile;
+    let powerPref: "default" | "high-performance" | "low-power" = "default";
+
+    switch (profile) {
+      case "low":
+        powerPref = "low-power";
+        break;
+      case "high":
+      case "cosmic":
+        powerPref = "high-performance";
+        break;
+    }
+
+    // Create camera (ensure it's a PerspectiveCamera)
+    const cameraResult = CameraHelper.createCamera(CameraPreset.Space, {
+      fov: this.fov,
+      near: CAMERA_DISTANCE_CONFIG.NEAR,
+      far: CAMERA_DISTANCE_CONFIG.FAR,
+      position: this.options.cameraPosition ?? [1500, 1500, 1500],
+      aspect: this.width / this.height,
+    });
+
+    // Ensure we have a PerspectiveCamera
+    if (!(cameraResult instanceof PerspectiveCamera)) {
+      throw new Error(
+        "CameraHelper must return a PerspectiveCamera for space scenes",
+      );
+    }
+
+    const camera = cameraResult as PerspectiveCamera;
+
+    // Configure camera for logarithmic depth buffer
+    LogarithmicDepthMaterial.configureCameraForLogDepth(camera);
+
+    // Create scene
+    const scene = new Scene();
+    scene.scale.set(1, 1, 1);
+    scene.name = "Teskooano Space Engine";
+    scene.background = new THREE.Color(0x000011);
+
+    // Create renderer based on detected backend
+    let renderer: WebGLRenderer | WebGPURenderer;
+
+    if (this.rendererBackend === "webgpu") {
+      // Create WebGPU renderer (requires async init before first render)
+      renderer = new WebGPURenderer({
+        antialias: this.options.antialias ?? true,
+        forceWebGL: false,
+      });
+      console.log(
+        "[SceneManager] WebGPU renderer created (requires async init)",
+      );
+    } else {
+      // Create WebGL renderer (ready immediately)
+      renderer = new THREE.WebGLRenderer({
+        precision: powerPref === "high-performance" ? "highp" : "mediump",
+        logarithmicDepthBuffer: true,
+        antialias: this.options.antialias ?? true,
+        alpha: true,
+        powerPreference: powerPref,
+      });
+      console.log("[SceneManager] WebGL renderer created (ready)");
+    }
+
+    renderer.sortObjects = false;
+    renderer.setSize(this.width, this.height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    // Configure shadows (WebGL only for now)
+    if (this.rendererBackend === "webgl" && (this.options.shadows ?? true)) {
+      const webglRenderer = renderer as WebGLRenderer;
+      webglRenderer.shadowMap.enabled = true;
+      webglRenderer.shadowMap.autoUpdate = true;
+      webglRenderer.shadowMap.type = PCFSoftShadowMap;
+    }
+
+    // Apply HDR configuration if enabled
+    if (this.options.hdr ?? true) {
+      renderer.outputColorSpace = SRGBColorSpace;
+      renderer.toneMapping = ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+    }
+
+    return { scene, camera, renderer };
+  }
+
+  /**
+   * Asynchronously initializes the WebGPU renderer.
+   * This must be called before the first render for WebGPU renderer to work.
+   *
+   * @private
+   */
+  private async _initializeWebGPURenderer(): Promise<void> {
+    try {
+      const webgpuRenderer = this.renderer as WebGPURenderer;
+      await webgpuRenderer.init();
+      console.log("[SceneManager] WebGPU renderer initialized successfully");
+
+      // Ensure scene background is properly set for WebGPU
+      // WebGPU might need explicit clear color configuration
+      if (!this.scene.background) {
+        this.scene.background = new THREE.Color(0x000011);
+      }
+
+      // WebGPU specific configuration
+      webgpuRenderer.setClearColor(0x000011, 1.0);
+
+      // Mark renderer as ready
+      this.rendererReady = true;
+
+      // Update state to reflect that WebGPU is active
+      const currentState = StateAccessor.getSimulationState();
+      simulationStore.updateSimulationState({
+        renderer: {
+          ...currentState.renderer,
+          backend: {
+            preferred: "webgpu",
+            actual: "webgpu",
+            webgpuAvailable: true,
+          },
+        },
+      });
+    } catch (error) {
+      console.error(
+        "[SceneManager] WebGPU renderer initialization failed:",
+        error,
+      );
+      console.warn(
+        "[SceneManager] Cannot fallback to WebGL at this point. Please reload the application.",
+      );
+      throw error;
+    }
   }
 
   /**
@@ -131,6 +336,15 @@ export class SceneManager {
    */
   public getWebGLCapabilities(): WebGLCapabilities {
     return this.webGLCapabilities;
+  }
+
+  /**
+   * Gets the renderer backend being used (webgl or webgpu)
+   *
+   * @returns The current renderer backend
+   */
+  public getRendererBackend(): RendererBackend {
+    return this.rendererBackend;
   }
 
   /**
@@ -181,14 +395,18 @@ export class SceneManager {
 
   /**
    * Creates scene components using SceneHelper with optimized configuration.
+   * Supports both WebGL and WebGPU renderers with automatic detection.
+   *
    * @param container The HTML element that will contain the renderer's canvas.
-   * @returns Object containing scene, camera, renderer, and THREE instance
+   * @returns Promise resolving to object containing scene, camera, renderer, and backend used
+   * @private
    */
-  private _createSceneWithHelper(container: HTMLElement): {
+  private async _createSceneWithHelper(container: HTMLElement): Promise<{
     scene: Scene;
     camera: PerspectiveCamera;
-    renderer: WebGLRenderer;
-  } {
+    renderer: WebGLRenderer | WebGPURenderer;
+    backendUsed: RendererBackend;
+  }> {
     // Determine power preference based on performance profile
     const simState = StateAccessor.getSimulationState();
     const profile = simState.performanceProfile;
@@ -221,7 +439,7 @@ export class SceneManager {
     }
 
     // Use SceneHelper to create optimized space scene with logarithmic depth
-    const sceneSetup = SceneHelper.createScene({
+    const sceneSetup = await SceneHelper.createScene({
       name: "Teskooano Space Engine",
       backgroundColor: 0x000011, // Dark blue space background
       fov: this.fov,
@@ -233,6 +451,7 @@ export class SceneManager {
       alpha: true,
       powerPreference: powerPref,
       shadowMapType: PCFSoftShadowMap, // Use default shadow map type
+      rendererBackend: this.options.rendererBackend ?? "webgpu",
     });
 
     // Replace the camera with our optimized one (ensure it's a PerspectiveCamera)
@@ -360,12 +579,76 @@ export class SceneManager {
       return; // Cannot render if core components are null
     }
 
+    // Skip rendering if the renderer is not ready (WebGPU async init may still be in progress)
+    if (!this.rendererReady) {
+      return;
+    }
+
     this.renderer.setViewport(0, 0, this.width, this.height);
 
     try {
       this.renderer.render(this.scene, this.camera);
     } catch (error) {
       console.error("[SceneManager] Error during scene rendering:", error);
+
+      // If using WebGPU, scan for incompatible ShaderMaterials
+      if (this.rendererBackend === "webgpu") {
+        console.warn(
+          "[SceneManager] WebGPU detected - scanning for incompatible ShaderMaterials...",
+        );
+        this._debugIncompatibleMaterials();
+      }
+    }
+  }
+
+  /**
+   * Debug helper to find ShaderMaterial instances in a WebGPU scene
+   * @private
+   */
+  private _debugIncompatibleMaterials(): void {
+    const incompatibleObjects: Array<{
+      name: string;
+      type: string;
+      material: string;
+    }> = [];
+
+    this.scene.traverse((object) => {
+      if ("material" in object) {
+        const obj = object as THREE.Mesh;
+        const materials = Array.isArray(obj.material)
+          ? obj.material
+          : [obj.material];
+
+        materials.forEach((material, index) => {
+          if (material instanceof THREE.ShaderMaterial) {
+            incompatibleObjects.push({
+              name: object.name || "unnamed",
+              type: object.type,
+              material: `ShaderMaterial${Array.isArray(obj.material) ? `[${index}]` : ""}`,
+            });
+          }
+        });
+      }
+    });
+
+    if (incompatibleObjects.length > 0) {
+      console.error(
+        "[SceneManager] Found",
+        incompatibleObjects.length,
+        "incompatible ShaderMaterial(s) in WebGPU scene:",
+      );
+      incompatibleObjects.forEach((obj, i) => {
+        console.error(
+          `  ${i + 1}. Object: "${obj.name}" (${obj.type}) - Material: ${obj.material}`,
+        );
+      });
+      console.error(
+        "[SceneManager] These materials need to be migrated to MeshStandardNodeMaterial (TSL) for WebGPU compatibility.",
+      );
+    } else {
+      console.warn(
+        "[SceneManager] No ShaderMaterial instances found in scene. Error may be coming from another source.",
+      );
     }
   }
 

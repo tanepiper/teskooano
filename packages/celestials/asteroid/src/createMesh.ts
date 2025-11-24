@@ -1,4 +1,7 @@
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  RendererBackend,
+} from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
 import {
@@ -23,6 +26,8 @@ export interface CreateMeshOptions {
   lightingManager?: LightingManager;
   /** Enable debug mode for additional logging and fallback usage */
   debug?: boolean;
+  /** Renderer backend (WebGL or WebGPU) */
+  rendererBackend: RendererBackend;
 }
 
 /**
@@ -32,7 +37,12 @@ export function createMesh(
   object: RenderableCelestialObject,
   options: CreateMeshOptions,
 ): THREE.Object3D {
-  const { celestialRenderers, createLodObject, debug = false } = options;
+  const {
+    celestialRenderers,
+    createLodObject,
+    debug = false,
+    rendererBackend,
+  } = options;
 
   if (debug) {
     console.debug(`[Asteroid:createMesh] Creating mesh for ${object.id}`);
@@ -52,7 +62,7 @@ export function createMesh(
 
   if (!renderer) {
     try {
-      renderer = new AsteroidRenderer(object);
+      renderer = new AsteroidRenderer(object, rendererBackend);
       celestialRenderers.set(object.id, renderer);
 
       if (debug) {

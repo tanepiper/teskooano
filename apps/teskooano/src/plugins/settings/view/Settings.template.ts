@@ -135,6 +135,9 @@ template.innerHTML = `
     </div>
   </div>
 
+  <!-- Renderer Backend Section -->
+  <div id="renderer-settings-container"></div>
+
 </form>
 `;
 

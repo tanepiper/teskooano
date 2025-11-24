@@ -6,6 +6,7 @@ import {
   BlackHoleSubtype,
   WhiteDwarfSubtype,
   ProtostarSubtype,
+  type RendererBackend,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarRenderer } from "./base/base-star";
@@ -55,6 +56,8 @@ export interface CreateMeshOptions {
   lightingManager?: LightingManager;
   /** Enable debug mode for additional logging and fallback usage */
   debug?: boolean;
+  /** Renderer backend (WebGL or WebGPU) */
+  rendererBackend: RendererBackend;
 }
 
 /**
@@ -69,9 +72,10 @@ function createStarRenderer(
   whiteDwarfSubtype?: WhiteDwarfSubtype,
   protostarSubtype?: ProtostarSubtype,
   lightingManager?: LightingManager,
+  rendererBackend?: RendererBackend,
 ): BaseStarRenderer {
   if (stellarType) {
-    const rendererOptions = { lightingManager };
+    const rendererOptions = { lightingManager, rendererBackend };
     switch (stellarType) {
       // Stellar Remnants
       case StellarType.NEUTRON_STAR:
@@ -124,7 +128,7 @@ function createStarRenderer(
     }
   }
 
-  const rendererOptions = { lightingManager };
+  const rendererOptions = { lightingManager, rendererBackend };
   switch (spectralClass?.toUpperCase()) {
     case "O":
       return new ClassOStarRenderer(object, rendererOptions);
@@ -157,6 +161,7 @@ export function createMesh(
     createLodObject,
     lightingManager,
     debug = false,
+    rendererBackend,
   } = options;
 
   if (debug) {
@@ -187,6 +192,7 @@ export function createMesh(
           starProps.whiteDwarfSubtype,
           starProps.protostarSubtype,
           lightingManager,
+          rendererBackend,
         );
         if (newRenderer) {
           renderer = newRenderer;

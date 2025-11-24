@@ -8,6 +8,8 @@ import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { BaseTerrestrialRenderer } from "./renderer";
 import * as THREE from "three";
 
+import type { RendererBackend } from "@teskooano/data-types";
+
 /**
  * Unified interface for celestial mesh creation dependencies
  */
@@ -21,6 +23,8 @@ export interface CreateMeshOptions {
   ) => THREE.LOD;
   /** Lighting manager for advanced rendering */
   lightingManager?: LightingManager;
+  /** Active renderer backend (webgpu or webgl) */
+  rendererBackend?: RendererBackend;
   /** Enable debug mode for additional logging and fallback usage */
   debug?: boolean;
 }
@@ -54,14 +58,16 @@ export function createMesh(
 
   if (!renderer) {
     try {
+      const backend = options.rendererBackend ?? "webgpu"; // Default to webgpu, fallback to webgl
       renderer = new BaseTerrestrialRenderer(object, {
         renderers: celestialRenderers,
+        rendererBackend: backend,
       });
       celestialRenderers.set(object.id, renderer);
 
       if (debug) {
         console.debug(
-          `[Terrestrial:createMesh] Created new renderer for ${object.type} ${object.id}`,
+          `[Terrestrial:createMesh] Created new renderer for ${object.type} ${object.id} with ${backend} backend`,
         );
       }
     } catch (error) {

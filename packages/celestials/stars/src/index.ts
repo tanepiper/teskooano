@@ -6,6 +6,11 @@
 // Base star classes
 export * from "./base/base-star";
 
+// Materials
+export * from "./materials/enhanced-star.material";
+export * from "./materials/enhanced-star-tsl.material";
+export * from "./materials/star-material-factory";
+
 // Main sequence stars (hydrogen burning)
 export * from "./main-sequence/main-sequence-star";
 
@@ -20,6 +25,8 @@ export * from "./remnants/white-dwarf";
 export * from "./black-holes/schwarzschild-black-hole";
 export * from "./black-holes/kerr-black-hole";
 export * from "./black-holes/gravitational-lensing";
+export * from "./black-holes/black-hole-tsl.materials";
+export * from "./black-holes/black-hole-material-factory";
 
 // Mesh creation utilities
 export * from "./createMesh";

@@ -9,6 +9,7 @@ import {
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIIMaterial } from "./material";
 import { BaseGasGiantMaterial } from "../base/material";
+import { GasGiantMaterialFactory } from "../base/material-factory";
 
 /**
  * Renderer for Class II gas giants
@@ -18,7 +19,7 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIMateria
     super(object, deps);
   }
 
-  protected createMaterial(object: RenderableCelestialObject): ClassIIMaterial {
+  protected createMaterial(object: RenderableCelestialObject): any {
     const properties = object.properties as GasGiantProperties;
 
     // Initialize seeded random for this gas giant
@@ -38,10 +39,21 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIMateria
       ? new THREE.Color(properties.cloudColor)
       : new THREE.Color(0xb0c4de); // Light steel blue
 
-    return new ClassIIMaterial({
-      atmosphereColor: atmosphereColor,
-      cloudColor: cloudColor,
-      seed: seed,
-    });
+    // Use factory for WebGPU, legacy material for WebGL
+    if (this.rendererBackend === "webgpu") {
+      return GasGiantMaterialFactory.createMaterial({
+        rendererBackend: this.rendererBackend,
+        baseColor: atmosphereColor,
+        cloudColor: cloudColor,
+        roughness: 0.7,
+        metalness: 0.0,
+      });
+    } else {
+      return new ClassIIMaterial({
+        atmosphereColor: atmosphereColor,
+        cloudColor: cloudColor,
+        seed: seed,
+      });
+    }
   }
 }

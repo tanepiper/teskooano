@@ -2,6 +2,7 @@ import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import type {
   GasGiantProperties,
   RenderableCelestialObject,
+  RendererBackend,
   RingSystemProperties,
 } from "@teskooano/data-types";
 import {
@@ -21,6 +22,7 @@ import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 export interface GasGiantRendererDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
   lightingManager?: LightingManager;
+  rendererBackend: RendererBackend;
 }
 
 /**
@@ -33,9 +35,11 @@ export abstract class BaseGasGiantRenderer<
 > extends BaseCelestialRenderer<TGasGiantMaterial> {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   protected ringSystemRenderer: RingSystemRenderer | null = null;
+  protected rendererBackend: RendererBackend;
 
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, { lightingManager: deps.lightingManager });
+    this.rendererBackend = deps.rendererBackend;
     deps.celestialRenderers.set(object.id, this);
   }
 
@@ -230,19 +234,28 @@ export abstract class BaseGasGiantRenderer<
     const material = this.getMaterial(object.id) as TGasGiantMaterial;
 
     if (material) {
-      // Update dynamic ambient lighting if the uniform exists
-      if (material.uniforms.uDynamicAmbientIntensity) {
-        material.uniforms.uDynamicAmbientIntensity.value =
-          dynamicAmbientIntensity;
-      }
+      // Check if this is a GLSL material (has uniforms property)
+      // TSL materials (WebGPU) don't use uniforms in the same way
+      if ("uniforms" in material && material.uniforms) {
+        // Update dynamic ambient lighting if the uniform exists
+        if (material.uniforms.uDynamicAmbientIntensity) {
+          material.uniforms.uDynamicAmbientIntensity.value =
+            dynamicAmbientIntensity;
+        }
 
-      material.update(
-        this.getElapsedTime(),
-        timeScale,
-        lightsForShader,
-        camera,
-        shadowCastersForShader,
-      );
+        // Only call update on GLSL materials
+        if (typeof (material as any).update === "function") {
+          (material as any).update(
+            this.getElapsedTime(),
+            timeScale,
+            lightsForShader,
+            camera,
+            shadowCastersForShader,
+          );
+        }
+      }
+      // TSL materials (WebGPU) handle lighting automatically via MeshStandardNodeMaterial
+      // No manual uniform updates needed
     }
 
     // --- Update Medium-Detail Material ---
@@ -251,19 +264,26 @@ export abstract class BaseGasGiantRenderer<
     ) as TGasGiantMaterial;
 
     if (mediumMaterial) {
-      // Update dynamic ambient lighting if the uniform exists
-      if (mediumMaterial.uniforms.uDynamicAmbientIntensity) {
-        mediumMaterial.uniforms.uDynamicAmbientIntensity.value =
-          dynamicAmbientIntensity;
-      }
+      // Check if this is a GLSL material (has uniforms property)
+      if ("uniforms" in mediumMaterial && mediumMaterial.uniforms) {
+        // Update dynamic ambient lighting if the uniform exists
+        if (mediumMaterial.uniforms.uDynamicAmbientIntensity) {
+          mediumMaterial.uniforms.uDynamicAmbientIntensity.value =
+            dynamicAmbientIntensity;
+        }
 
-      mediumMaterial.update(
-        this.getElapsedTime(),
-        timeScale,
-        lightsForShader,
-        camera,
-        shadowCastersForShader,
-      );
+        // Only call update on GLSL materials
+        if (typeof (mediumMaterial as any).update === "function") {
+          (mediumMaterial as any).update(
+            this.getElapsedTime(),
+            timeScale,
+            lightsForShader,
+            camera,
+            shadowCastersForShader,
+          );
+        }
+      }
+      // TSL materials (WebGPU) handle lighting automatically
     }
 
     if (this.ringSystemRenderer) {

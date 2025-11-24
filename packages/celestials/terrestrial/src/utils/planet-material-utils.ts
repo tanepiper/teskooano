@@ -3,18 +3,33 @@ import {
   PlanetType,
   type ProceduralSurfaceProperties,
   type RenderableCelestialObject,
+  type RendererBackend,
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { ProceduralPlanetMaterial } from "../materials/procedural-planet.material";
+import { ProceduralPlanetMaterialFactory } from "../materials/procedural-planet-factory";
 
 /**
  * Service responsible for creating planet materials and determining base colors.
  */
 export class PlanetMaterialService {
+  private materialFactory: ProceduralPlanetMaterialFactory;
+
+  constructor() {
+    this.materialFactory = new ProceduralPlanetMaterialFactory();
+  }
+
   /**
    * Creates a procedural planet material based on object properties.
+   *
+   * @param object The celestial object to create a material for
+   * @param rendererBackend The active renderer backend ('webgpu' or 'webgl')
+   * @returns A material compatible with the active renderer
    */
-  createMaterial(object: RenderableCelestialObject): ProceduralPlanetMaterial {
+  createMaterial(
+    object: RenderableCelestialObject,
+    rendererBackend: RendererBackend = "webgpu", // Default to webgpu, fallback to webgl
+  ): THREE.Material {
     if (!object.id) {
       throw new Error(
         "[PlanetMaterialService.createMaterial] CelestialObject must have an id.",
@@ -136,8 +151,13 @@ export class PlanetMaterialService {
       terrainType: specificSurfaceProps?.terrainType ?? 2,
     };
 
-    const material = new ProceduralPlanetMaterial(finalProps);
-    material.needsUpdate = true; // Ensure uniforms are updated initially
+    // Use factory to create appropriate material for renderer backend
+    const material = this.materialFactory.createMaterial({
+      rendererBackend,
+      surfaceProps: finalProps,
+    });
+
+    material.needsUpdate = true; // Ensure material is updated initially
 
     return material;
   }

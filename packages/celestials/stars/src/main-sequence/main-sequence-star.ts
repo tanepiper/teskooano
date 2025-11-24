@@ -10,6 +10,7 @@ import {
   LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
 import { EnhancedStarMaterial } from "../materials/enhanced-star.material";
+import { StarMaterialFactory } from "../materials/star-material-factory";
 
 /**
  * Material for main sequence stars with shader effects
@@ -50,10 +51,14 @@ export class MainSequenceStarRenderer<
       return this.materialCache.get(object.id)!;
     }
     const color = this.getStarColor(object);
-    const material = new MainSequenceStarMaterial(
+
+    // Use the material factory to create either WebGL or WebGPU material
+    const material = StarMaterialFactory.createMaterial({
+      rendererBackend: this.rendererBackend,
       object,
       color,
-    ) as TMainSequenceMaterial;
+    }) as TMainSequenceMaterial;
+
     this.materialCache.set(object.id, material);
     return material;
   }

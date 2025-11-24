@@ -32,7 +32,12 @@ export function createMesh(
   object: RenderableCelestialObject,
   options: CreateMeshOptions,
 ): THREE.Object3D {
-  const { celestialRenderers, createLodObject, debug = false } = options;
+  const {
+    celestialRenderers,
+    createLodObject,
+    debug = false,
+    rendererBackend = "webgpu",
+  } = options;
 
   if (debug) {
     console.debug(`[Comet:createMesh] Creating mesh for ${object.id}`);
@@ -50,7 +55,7 @@ export function createMesh(
 
   if (!renderer) {
     try {
-      renderer = new CometRenderer(object);
+      renderer = new CometRenderer(object, rendererBackend);
       celestialRenderers.set(object.id, renderer);
 
       if (debug) {

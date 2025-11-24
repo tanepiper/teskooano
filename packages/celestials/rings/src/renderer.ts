@@ -1,4 +1,7 @@
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  RendererBackend,
+} from "@teskooano/data-types";
 import { RingSystemConfiguration } from "@teskooano/data-types";
 import * as THREE from "three";
 
@@ -10,6 +13,7 @@ import {
   LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
 import { AccretionDiskMaterial, RingMaterial } from "./material";
+import { RingMaterialFactory } from "./material-factory";
 import { calculateKeplerianRotationRate } from "./utils";
 
 /**
@@ -22,8 +26,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   /**
    * Map of ring materials by object ID and ring index
    */
-  private ringMaterials: Map<string, RingMaterial | AccretionDiskMaterial> =
-    new Map();
+  private ringMaterials: Map<string, THREE.Material> = new Map();
 
   /**
    * Parent renderer that owns this ring system
@@ -47,6 +50,16 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   private ringSystemConfig?: RingSystemConfiguration;
 
   /**
+   * Material factory for creating renderer-aware materials
+   */
+  private materialFactory: RingMaterialFactory;
+
+  /**
+   * Renderer backend (webgl or webgpu)
+   */
+  private rendererBackend: RendererBackend;
+
+  /**
    * Create a new ring system renderer
    *
    * @param object The celestial object for this ring system
@@ -55,9 +68,12 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   constructor(
     object: RenderableCelestialObject,
     parentRenderer?: BaseCelestialRenderer,
+    rendererBackend: RendererBackend = "webgpu",
   ) {
     super(object);
     this.parentRenderer = parentRenderer;
+    this.rendererBackend = rendererBackend;
+    this.materialFactory = new RingMaterialFactory();
   }
 
   /**
@@ -305,26 +321,30 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       );
 
       // Determine if this is an accretion disk and create appropriate material
-      let ringMaterial: RingMaterial | AccretionDiskMaterial;
+      let ringMaterial: THREE.Material;
 
       if (ringProps.isAccretionDisk) {
         // Create accretion disk material with physics-based properties
-        ringMaterial = new AccretionDiskMaterial(ringColor, {
-          opacity: ringOpacity,
-          rotationRate: rotationRate,
-          temperature: ringProps.temperature ?? 10000.0,
-          accretionRate: ringProps.accretionRate ?? 1e-8,
-          emissionType: ringProps.emissionType ?? "thermal",
-          isRelativistic: ringProps.isRelativistic ?? false,
-          innerEdgeRadius: ringProps.innerEdgeRadius ?? 3.0,
-          axialInclination:
-            ringProps.axialInclination ??
-            ringData.systemAxialInclination ??
-            0.0,
-          ringTilt: ringProps.ringTilt ?? 0.0,
-          inheritParentTilt:
-            ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
-        });
+        ringMaterial = this.materialFactory.createAccretionDiskMaterial(
+          this.rendererBackend,
+          ringColor,
+          {
+            opacity: ringOpacity,
+            rotationRate: rotationRate,
+            temperature: ringProps.temperature ?? 10000.0,
+            accretionRate: ringProps.accretionRate ?? 1e-8,
+            emissionType: ringProps.emissionType ?? "thermal",
+            isRelativistic: ringProps.isRelativistic ?? false,
+            innerEdgeRadius: ringProps.innerEdgeRadius ?? 3.0,
+            axialInclination:
+              ringProps.axialInclination ??
+              ringData.systemAxialInclination ??
+              0.0,
+            ringTilt: ringProps.ringTilt ?? 0.0,
+            inheritParentTilt:
+              ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
+          },
+        );
 
         // Only log once per accretion disk creation
         const logKey = `${object.id}-accretion-disk`;
@@ -338,22 +358,26 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
         }
       } else {
         // Create normal ring material with enhanced axial inclination controls and segmentation
-        ringMaterial = new RingMaterial(ringColor, {
-          opacity: ringOpacity,
-          rotationRate: rotationRate,
-          axialInclination:
-            ringProps.axialInclination ??
-            ringData.systemAxialInclination ??
-            0.0,
-          ringTilt: ringProps.ringTilt ?? 0.0,
-          inheritParentTilt:
-            ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
-          // Enhanced segmentation parameters
-          segmentDensity: ringProps.segmentDensity ?? 50.0,
-          segmentWidth: ringProps.segmentWidth ?? 0.8,
-          particleDetail: ringProps.particleDetail ?? 0.3,
-          densityVariation: ringProps.densityVariation ?? 0.4,
-        });
+        ringMaterial = this.materialFactory.createRingMaterial(
+          this.rendererBackend,
+          ringColor,
+          {
+            opacity: ringOpacity,
+            rotationRate: rotationRate,
+            axialInclination:
+              ringProps.axialInclination ??
+              ringData.systemAxialInclination ??
+              0.0,
+            ringTilt: ringProps.ringTilt ?? 0.0,
+            inheritParentTilt:
+              ringProps.inheritParentTilt ?? ringData.inheritParentTilt ?? true,
+            // Enhanced segmentation parameters
+            segmentDensity: ringProps.segmentDensity ?? 50.0,
+            segmentWidth: ringProps.segmentWidth ?? 0.8,
+            particleDetail: ringProps.particleDetail ?? 0.3,
+            densityVariation: ringProps.densityVariation ?? 0.4,
+          },
+        );
       }
 
       const materialKey = `${object.id}-ring-${index}`;
@@ -490,23 +514,31 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
 
       // Update all ring materials
       this.ringMaterials.forEach((material) => {
-        // Update dynamic ambient lighting
-        if (material.uniforms.uDynamicAmbientIntensity) {
-          material.uniforms.uDynamicAmbientIntensity.value =
-            dynamicAmbientIntensity;
-        }
+        // Update dynamic ambient lighting for GLSL materials
+        if ("uniforms" in material && material.uniforms) {
+          const uniforms = material.uniforms as any;
+          if (uniforms.uDynamicAmbientIntensity) {
+            uniforms.uDynamicAmbientIntensity.value = dynamicAmbientIntensity;
+          }
 
-        // Handle both RingMaterial and AccretionDiskMaterial
-        if ("update" in material) {
-          material.update(
-            time,
-            object.position,
-            object.radius ?? 1.0,
-            lightSources,
-            shadowCasters,
-            parentAxialTilt,
-            this.ringSystemConfig?.precessionRate,
-          );
+          // GLSL material - call update with full parameters
+          if ("update" in material && typeof material.update === "function") {
+            (material as any).update(
+              time,
+              object.position,
+              object.radius ?? 1.0,
+              lightSources,
+              shadowCasters,
+              parentAxialTilt,
+              this.ringSystemConfig?.precessionRate,
+            );
+          }
+        } else if (
+          "update" in material &&
+          typeof material.update === "function"
+        ) {
+          // TSL material - call simplified update
+          (material as any).update(time, object.position, object.radius ?? 1.0);
         }
       });
     }

@@ -1,24 +1,32 @@
-import { PlanetProperties, PlanetType } from "@teskooano/data-types";
+import {
+  PlanetProperties,
+  PlanetType,
+  RendererBackend,
+} from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 import { AtmosphereMaterial } from "../materials/atmosphere.material";
+import { AtmosphereMaterialFactory } from "../materials/atmosphere-factory";
 import { GeometryUtilities } from "@teskooano/renderer-threejs-celestial";
 
 export interface AtmosphereMeshResult {
   mesh: THREE.Mesh;
-  material: AtmosphereMaterial;
+  material: THREE.Material;
 }
 
 /**
  * Service for creating cloud and atmosphere meshes and materials.
  */
 export class AtmosphereService {
+  private materialFactory = new AtmosphereMaterialFactory();
+
   /**
    * Creates an atmosphere mesh and its material for a celestial object.
    *
    * @param object - The celestial object to add an atmosphere to.
    * @param segments - The number of segments for the sphere geometry.
    * @param baseRadiusInput - The base radius of the planet body.
+   * @param rendererBackend - The renderer backend to use (webgl or webgpu).
    * @returns An AtmosphereMeshResult containing the mesh and material, or null if no atmosphere is defined.
    */
   createAtmosphereMesh(
@@ -28,6 +36,7 @@ export class AtmosphereService {
       64,
     ),
     baseRadiusInput?: number,
+    rendererBackend: RendererBackend = "webgpu",
   ): AtmosphereMeshResult | null {
     const props = object.properties as PlanetProperties | undefined;
     const atmosphereProps = props?.atmosphere;
@@ -54,7 +63,9 @@ export class AtmosphereService {
       }
     }
 
-    const atmosphereMaterial = new AtmosphereMaterial(atmosphereProps, {
+    const atmosphereMaterial = this.materialFactory.createMaterial({
+      rendererBackend,
+      atmosphereProps,
       planetRadius: baseRadius,
       parentId: object.id,
     });

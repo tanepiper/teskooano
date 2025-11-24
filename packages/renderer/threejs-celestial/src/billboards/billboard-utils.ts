@@ -55,23 +55,29 @@ export function createBillboardSprite(
 
 /**
  * Creates a point light associated with the star billboard.
- * The light's intensity is derived from the star material's glowIntensity uniform.
+ * The light's intensity is derived from the star material's glowIntensity uniform (if available).
+ * Compatible with both WebGL (ShaderMaterial) and WebGPU (NodeMaterial) materials.
  * @param object - The renderable celestial object (star).
  * @param starColor - The color of the star.
- * @param starMaterial - The star's primary shader material (used to get glowIntensity).
+ * @param starMaterial - The star's primary material (GLSL ShaderMaterial or TSL NodeMaterial).
  * @returns A THREE.PointLight to enhance the billboard's appearance from a distance.
  */
 export function createBillboardPointLight(
   object: RenderableCelestialObject,
   starColor: THREE.Color,
-  starMaterial: THREE.ShaderMaterial, // Assuming getMaterial() is accessible or passed
+  starMaterial: THREE.Material,
 ): THREE.PointLight {
   let lightIntensity = 5.0; // Default intensity
-  const materialUniforms = (starMaterial as any).uniforms;
-  if (materialUniforms && materialUniforms.glowIntensity) {
-    const materialGlowIntensity = materialUniforms.glowIntensity.value;
-    lightIntensity = materialGlowIntensity * 10.0;
-    lightIntensity = Math.max(0.5, Math.min(lightIntensity, 20.0)); // Clamp intensity
+
+  // Only access uniforms for GLSL ShaderMaterial (WebGL)
+  // TSL NodeMaterial (WebGPU) handles lighting differently
+  if ("uniforms" in starMaterial && starMaterial.uniforms) {
+    const materialUniforms = (starMaterial as any).uniforms;
+    if (materialUniforms.glowIntensity) {
+      const materialGlowIntensity = materialUniforms.glowIntensity.value;
+      lightIntensity = materialGlowIntensity * 10.0;
+      lightIntensity = Math.max(0.5, Math.min(lightIntensity, 20.0)); // Clamp intensity
+    }
   }
 
   const pointLight = LightingHelper.createPointLight({

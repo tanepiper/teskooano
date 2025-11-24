@@ -4,6 +4,7 @@ import {
   DeviceTier,
   SimulationMode,
   SimulationConfiguration,
+  RendererBackendConfig,
 } from "@teskooano/data-types";
 
 // CameraState has been moved to stores/CameraStore.ts to support enhanced camera state management
@@ -56,6 +57,8 @@ export interface SimulationState {
     triangles?: number;
     /** Renderer memory usage information. */
     memory?: { usedJSHeapSize?: number };
+    /** Current renderer backend configuration */
+    backend?: RendererBackendConfig;
   };
   /** The currently active performance profile. */
   performanceProfile: DeviceTier;

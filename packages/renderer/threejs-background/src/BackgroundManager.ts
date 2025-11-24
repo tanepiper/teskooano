@@ -10,6 +10,7 @@ import { GalaxyField } from "./fields/galaxy-field/GalaxyField";
 import { GalaxyFieldOptions } from "./fields/galaxy-field/types";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
+import type { RendererBackend } from "@teskooano/data-types";
 
 /**
  * Defines the base distance for star field layers, used as a reference
@@ -29,12 +30,18 @@ export class BackgroundManager {
   private isDebugMode: boolean = false;
   private fields: Field[] = [];
   private random: () => number;
+  private rendererBackend: RendererBackend;
 
   /**
    * Creates a new BackgroundManager.
    */
-  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+  constructor(
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    rendererBackend: RendererBackend = "webgl",
+  ) {
     this.scene = scene;
+    this.rendererBackend = rendererBackend;
     this.group = new THREE.Group();
     this.group.name = "background-manager-group";
     this.debugGroup = new THREE.Group();
@@ -76,6 +83,7 @@ export class BackgroundManager {
       baseDistance: BASE_DISTANCE, // 720 AU - safely within 1000 AU far plane
       size: BASE_DISTANCE, // 450 AU size - reasonable nebula scale
       colors: selectedPalette.map((color) => new THREE.Color(color)),
+      rendererBackend: this.rendererBackend,
       ...defaultOptions,
     };
 

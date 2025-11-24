@@ -62,6 +62,9 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       profileSelectElement: this.shadowRoot!.querySelector<HTMLSelectElement>(
         "#setting-performance-profile",
       )!,
+      rendererSettingsContainer: this.shadowRoot!.querySelector<HTMLElement>(
+        "#renderer-settings-container",
+      )!,
       validationMessagesElement: this.shadowRoot!.querySelector<HTMLDivElement>(
         "#validation-messages",
       )!,

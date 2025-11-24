@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { FieldOptions } from "../core/Field";
+import type { RendererBackend } from "@teskooano/data-types";
 
 /**
  * Defines the noise configuration for the nebula shader. These parameters
@@ -38,4 +39,9 @@ export interface NebulaFieldOptions extends FieldOptions {
    * @default 0.000000005
    */
   rotationSpeed?: number;
+  /**
+   * The renderer backend to use (webgl or webgpu).
+   * @default 'webgl'
+   */
+  rendererBackend?: RendererBackend;
 }

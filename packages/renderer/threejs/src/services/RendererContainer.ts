@@ -291,6 +291,7 @@ export class RendererContainer {
         ServiceFactories.createBackgroundManager(
           sceneManager.scene,
           sceneManager.camera,
+          sceneManager.getRendererBackend(),
         ),
       ServiceScope.SCOPED,
       ["SceneManager"],

@@ -23,6 +23,8 @@ export interface SceneManagerOptions {
   cameraPosition?: [number, number, number];
   /** Initial camera target [x, y, z]. Defaults to [0, 0, 0]. */
   cameraTarget?: [number, number, number];
+  /** Preferred renderer backend (WebGPU or WebGL). Defaults to 'webgpu' with fallback to 'webgl'. */
+  rendererBackend?: RendererBackend;
 }
 
 /**
@@ -30,6 +32,27 @@ export interface SceneManagerOptions {
  * Used for automatic performance optimization and user-configurable quality settings.
  */
 export type DeviceTier = "low" | "medium" | "high" | "cosmic";
+
+/**
+ * Renderer backend type - WebGPU preferred with WebGL fallback.
+ * WebGPU provides better performance and compatibility with modern GPUs,
+ * while WebGL ensures compatibility with older browsers.
+ */
+export type RendererBackend = "webgpu" | "webgl";
+
+/**
+ * Renderer backend capabilities and selection.
+ * Tracks both the preferred backend and the actually selected backend
+ * after capability detection.
+ */
+export interface RendererBackendConfig {
+  /** Preferred renderer backend */
+  preferred: RendererBackend;
+  /** Actually selected backend (after capability detection) */
+  actual: RendererBackend;
+  /** Whether WebGPU is supported by the browser */
+  webgpuAvailable: boolean;
+}
 
 /**
  * Configuration for performance-based geometry optimization.

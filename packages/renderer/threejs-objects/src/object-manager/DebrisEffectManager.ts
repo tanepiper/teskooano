@@ -2,14 +2,15 @@ import * as THREE from "three";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
+import type { RendererBackend } from "@teskooano/data-types";
 
 // New structure for active debris effects using InstancedMesh
 interface ActiveInstancedDebris {
   mesh: THREE.InstancedMesh;
   startTime: number;
   lifetime: number;
-  // Material might need updating (uniforms)
-  material: THREE.ShaderMaterial; // Or RawShaderMaterial
+  // Material might need updating (uniforms for GLSL, properties for basic materials)
+  material: THREE.Material;
 }
 
 /**
@@ -18,6 +19,7 @@ interface ActiveInstancedDebris {
  */
 export interface DebrisEffectManagerConfig {
   scene: THREE.Scene;
+  rendererBackend?: RendererBackend;
 }
 
 // Placeholder basic shaders - These will need significant work
@@ -67,12 +69,56 @@ export class DebrisEffectManager {
   private activeDebrisEffects: ActiveInstancedDebris[] = [];
   private _enableDebrisEffects: boolean = true;
   private random: () => number;
+  private rendererBackend: RendererBackend;
 
   constructor(config: DebrisEffectManagerConfig, seed?: string) {
     this.scene = config.scene;
+    this.rendererBackend = config.rendererBackend ?? "webgl";
+
+    console.log(
+      `[DebrisEffectManager] Initialized with ${this.rendererBackend} renderer backend`,
+    );
+
     // Get seed from state if not provided
     const effectiveSeed = seed ?? `debris-${StateAccessor.getCurrentSeed()}`;
     this.random = createSeededRandomSync(effectiveSeed);
+  }
+
+  /**
+   * Creates a renderer-aware material for debris particles.
+   * For WebGL: uses custom ShaderMaterial with instanced attributes
+   * For WebGPU: uses simple MeshBasicMaterial with vertex colors
+   */
+  private createDebrisMaterial(): THREE.Material {
+    if (this.rendererBackend === "webgpu") {
+      // For WebGPU, use a simple MeshBasicMaterial with vertex colors
+      console.log(
+        "[DebrisEffectManager] Creating WebGPU-compatible material (MeshBasicMaterial)",
+      );
+      return new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: true,
+        blending: THREE.AdditiveBlending,
+      });
+    } else {
+      // For WebGL, use the custom ShaderMaterial
+      console.log(
+        "[DebrisEffectManager] Creating WebGL material (ShaderMaterial)",
+      );
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: this.debrisClock.getElapsedTime() },
+          uOpacity: { value: 1.0 },
+        },
+        vertexShader: debrisVertexShader,
+        fragmentShader: debrisFragmentShader,
+        transparent: true,
+        depthWrite: true,
+        blending: THREE.AdditiveBlending,
+      });
+    }
   }
 
   /**
@@ -117,18 +163,9 @@ export class DebrisEffectManager {
 
     // Base geometry and material for instancing
     const geometry = new THREE.IcosahedronGeometry(1, 0);
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: this.debrisClock.getElapsedTime() },
-        uOpacity: { value: 1.0 },
-      },
-      vertexShader: debrisVertexShader,
-      fragmentShader: debrisFragmentShader,
-      transparent: true,
-      depthWrite: true,
-      blending: THREE.AdditiveBlending,
-      // vertexColors: true, // Handled by instanceColor attribute now
-    });
+
+    // Create renderer-aware material
+    const material = this.createDebrisMaterial();
 
     const instancedMesh = new THREE.InstancedMesh(
       geometry,
@@ -292,11 +329,30 @@ export class DebrisEffectManager {
         // Dispose material uniforms/textures if necessary
         effect.material.dispose();
       } else {
-        // Effect still active, update shader uniforms
-        effect.material.uniforms.uTime.value = currentTime;
-        // Calculate overall opacity based on progress (can be refined in shader)
+        // Effect still active, update material
         const progress = elapsedTime / effect.lifetime;
-        effect.material.uniforms.uOpacity.value = Math.max(0.0, 1.0 - progress);
+
+        // Update uniforms for GLSL ShaderMaterial
+        if (
+          effect.material instanceof THREE.ShaderMaterial &&
+          effect.material.uniforms
+        ) {
+          const uniforms = effect.material.uniforms as {
+            uTime?: { value: number };
+            uOpacity?: { value: number };
+          };
+          if (uniforms.uTime) {
+            uniforms.uTime.value = currentTime;
+          }
+          if (uniforms.uOpacity) {
+            uniforms.uOpacity.value = Math.max(0.0, 1.0 - progress);
+          }
+        }
+
+        // Update opacity for basic materials (WebGPU)
+        if (effect.material instanceof THREE.MeshBasicMaterial) {
+          effect.material.opacity = Math.max(0.0, 1.0 - progress);
+        }
 
         remainingDebris.push(effect); // Keep active effect
       }

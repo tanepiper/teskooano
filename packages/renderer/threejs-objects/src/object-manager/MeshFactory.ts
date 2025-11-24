@@ -1,4 +1,7 @@
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  RendererBackend,
+} from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { createOortCloudMesh } from "@teskooano/celestials-oort-cloud";
@@ -43,6 +46,7 @@ export interface MeshFactoryConfig {
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
+  rendererBackend?: RendererBackend; // Active renderer backend
 }
 
 /**
@@ -62,6 +66,7 @@ export class MeshFactory {
   ) => THREE.LOD;
   private camera: THREE.PerspectiveCamera;
   private debugMode: boolean = false;
+  private rendererBackend: RendererBackend;
 
   // Store deps needed by creator functions
   private creatorDeps: {
@@ -71,6 +76,7 @@ export class MeshFactory {
       object: RenderableCelestialObject,
       levels: LODLevel[],
     ) => THREE.LOD;
+    rendererBackend?: RendererBackend;
   };
 
   constructor(config: MeshFactoryConfig) {
@@ -80,12 +86,14 @@ export class MeshFactory {
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
     this.lightingManager = config.lightingManager;
+    this.rendererBackend = config.rendererBackend ?? "webgpu"; // Default to webgpu, fallback to webgl
 
     // Prepare deps object for creator functions
     this.creatorDeps = {
       celestialRenderers: this.celestialRenderers,
       createLodObject: this.createLodCallback,
       lightingManager: this.lightingManager,
+      rendererBackend: this.rendererBackend,
     };
   }
 

@@ -11,8 +11,8 @@ import fragmentShader from "./shaders/fragment.glsl";
  * providing a dynamic and colorful backdrop.
  */
 export class NebulaField extends Field {
-  /** The custom shader material used to render the nebula. */
-  private material: THREE.ShaderMaterial;
+  /** The material used to render the nebula (ShaderMaterial for WebGL, basic for WebGPU). */
+  private material: THREE.Material;
 
   /** The speed at which the nebula rotates on its Y-axis. */
   private rotationSpeed: number;
@@ -23,12 +23,16 @@ export class NebulaField extends Field {
   /** Seeded random function for deterministic generation. */
   private random: () => number;
 
+  /** The renderer backend being used. */
+  private rendererBackend: string;
+
   /**
    * Constructs a new NebulaField instance.
    * @param options The configuration for the nebula.
    */
   constructor(options: NebulaFieldOptions) {
     super(options);
+    this.rendererBackend = options.rendererBackend ?? "webgl";
     this.random = createSeededRandomSync(
       `nebula-${options.noiseConfig.seed ?? Date.now()}`,
     );
@@ -61,11 +65,30 @@ export class NebulaField extends Field {
   }
 
   /**
-   * Creates the custom shader material for the nebula effect.
+   * Creates the material for the nebula effect.
+   * Uses GLSL ShaderMaterial for WebGL, or a simple colored material for WebGPU.
    * @param options The nebula configuration options.
-   * @returns A `THREE.ShaderMaterial` configured with the nebula shaders and uniforms.
+   * @returns A Three.js material compatible with the current renderer backend.
    */
-  private createMaterial(options: NebulaFieldOptions): THREE.ShaderMaterial {
+  private createMaterial(options: NebulaFieldOptions): THREE.Material {
+    if (this.rendererBackend === "webgpu") {
+      // For WebGPU, use a simple colored material (nebula shader migration to TSL is complex)
+      // Average the colors to create a solid color
+      const avgColor = new THREE.Color();
+      options.colors.forEach((c) => avgColor.add(c));
+      avgColor.multiplyScalar(1 / options.colors.length);
+
+      return new THREE.MeshBasicMaterial({
+        color: avgColor,
+        transparent: true,
+        opacity: options.alpha * 0.3, // Lower opacity for basic material
+        depthWrite: false,
+        depthTest: true,
+        side: THREE.BackSide,
+      });
+    }
+
+    // For WebGL, use the full GLSL shader
     return new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -80,7 +103,7 @@ export class NebulaField extends Field {
         uNoiseSeed: { value: options.noiseConfig.seed * 100 },
       },
       transparent: true,
-      depthWrite: false, // Transparent nebula should not write to depth buffer
+      depthWrite: false,
       depthTest: true,
       side: THREE.BackSide,
     });
@@ -93,7 +116,12 @@ export class NebulaField extends Field {
    */
   public update(deltaTime: number): void {
     this.time += deltaTime;
-    this.material.uniforms.uTime.value = this.time;
+
+    // Only update uniforms for GLSL ShaderMaterial (WebGL)
+    if ("uniforms" in this.material && this.material.uniforms) {
+      (this.material as THREE.ShaderMaterial).uniforms.uTime.value = this.time;
+    }
+
     this.object.rotation.y += this.rotationSpeed * deltaTime;
   }
 

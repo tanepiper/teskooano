@@ -9,6 +9,7 @@ import {
 import { ClassIVMaterial } from "./material";
 import { BaseGasGiantMaterial } from "../base/material";
 import * as THREE from "three";
+import { GasGiantMaterialFactory } from "../base/material-factory";
 
 /**
  * Renderer for Class IV gas giants
@@ -18,7 +19,7 @@ export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer<ClassIVMateria
     super(object, deps);
   }
 
-  protected createMaterial(object: RenderableCelestialObject): ClassIVMaterial {
+  protected createMaterial(object: RenderableCelestialObject): any {
     const properties = object.properties as GasGiantProperties;
 
     // Use provided colors or defaults for Class IV
@@ -26,8 +27,18 @@ export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer<ClassIVMateria
       ? new THREE.Color(properties.atmosphereColor)
       : new THREE.Color(0xb22222); // Firebrick
 
-    return new ClassIVMaterial({
-      baseColor: baseColor,
-    });
+    // Use factory for WebGPU, legacy material for WebGL
+    if (this.rendererBackend === "webgpu") {
+      return GasGiantMaterialFactory.createMaterial({
+        rendererBackend: this.rendererBackend,
+        baseColor: baseColor,
+        roughness: 0.9,
+        metalness: 0.1,
+      });
+    } else {
+      return new ClassIVMaterial({
+        baseColor: baseColor,
+      });
+    }
   }
 }

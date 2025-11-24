@@ -1,6 +1,7 @@
 import {
   CometProperties,
   RenderableCelestialObject,
+  type RendererBackend,
 } from "@teskooano/data-types";
 import * as THREE from "three";
 
@@ -20,6 +21,7 @@ import {
   CometNucleusMaterial,
   CometParticleMaterial,
 } from "./material";
+import { CometMaterialFactory } from "./material-factory";
 import { SCALE } from "@teskooano/data-values";
 import { scaleSize } from "@teskooano/core-physics";
 
@@ -65,7 +67,7 @@ export class CometRenderer extends BaseCelestialRenderer {
     emissionNormal?: THREE.Vector3;
     repositionTimer: number;
   }[] = [];
-  private comaMaterial?: CometComaMaterial;
+  private comaMaterial?: THREE.Material;
   private nucleusAndComaGroup?: THREE.Group; // New property for nucleus and coma
   private nucleusAndComaGroup_lod1?: THREE.Group; // New property for LOD 1 nucleus and coma
   private lastParticleIndex = 0;
@@ -73,9 +75,16 @@ export class CometRenderer extends BaseCelestialRenderer {
   private noise = new SimplexNoise();
   private random: () => number = () => 0;
   private camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
+  private materialFactory: CometMaterialFactory;
+  private rendererBackend: RendererBackend;
 
-  constructor(object: RenderableCelestialObject) {
+  constructor(
+    object: RenderableCelestialObject,
+    rendererBackend: RendererBackend = "webgpu",
+  ) {
     super(object);
+    this.rendererBackend = rendererBackend;
+    this.materialFactory = new CometMaterialFactory();
     this.random = createSeededRandomSync(object.seed ?? object.id);
 
     this.createNucleus(object);
@@ -251,7 +260,7 @@ export class CometRenderer extends BaseCelestialRenderer {
 
   private createNucleusMaterial(
     object: RenderableCelestialObject,
-  ): CometNucleusMaterial {
+  ): THREE.Material {
     const properties = object.properties as CometProperties;
 
     // Fallback for procedurally generated comets without explicit visual data.
@@ -264,7 +273,7 @@ export class CometRenderer extends BaseCelestialRenderer {
     const heights = properties.heights ?? [0.0, 0.4, 0.6, 0.85];
     const visuals = properties.visuals ?? {};
 
-    return new CometNucleusMaterial({
+    return this.materialFactory.createNucleusMaterial(this.rendererBackend, {
       colors: colors.map((c) => new THREE.Color(c)),
       heights: heights,
       ...visuals,
@@ -274,10 +283,13 @@ export class CometRenderer extends BaseCelestialRenderer {
   private createComa(object: RenderableCelestialObject): void {
     const properties = object.properties as CometProperties;
     if (properties.visualComaRadius && properties.visualComaColor) {
-      this.comaMaterial = new CometComaMaterial({
-        color: new THREE.Color(properties.visualComaColor),
-        opacity: properties.visualComaOpacity || 0.5,
-      });
+      this.comaMaterial = this.materialFactory.createComaMaterial(
+        this.rendererBackend,
+        {
+          color: new THREE.Color(properties.visualComaColor),
+          opacity: properties.visualComaOpacity || 0.5,
+        },
+      );
       this.comaMaterial.transparent = true;
       this.registerMaterial(`comet-coma-${object.id}`, this.comaMaterial);
 
@@ -334,9 +346,12 @@ export class CometRenderer extends BaseCelestialRenderer {
         new THREE.BufferAttribute(this.particleAttributes.alpha, 1),
       );
 
-      const particleMaterial = new CometParticleMaterial({
-        color: new THREE.Color(properties.visualTailColor || "#DCE6FF"),
-      });
+      const particleMaterial = this.materialFactory.createParticleMaterial(
+        this.rendererBackend,
+        {
+          color: new THREE.Color(properties.visualTailColor || "#DCE6FF"),
+        },
+      );
 
       this.particleTail = new THREE.Points(
         this.particleGeometry,
@@ -351,44 +366,52 @@ export class CometRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     dynamicAmbientIntensity: number,
   ): void {
-    const nucleusMaterial = this.getMaterial(`comet-nucleus-${object.id}`) as
-      | CometNucleusMaterial
-      | undefined;
+    const nucleusMaterial = this.getMaterial(`comet-nucleus-${object.id}`);
 
-    if (nucleusMaterial) {
+    // Only update uniforms for GLSL materials (TSL materials handle lighting automatically)
+    if (
+      nucleusMaterial &&
+      "uniforms" in nucleusMaterial &&
+      nucleusMaterial.uniforms
+    ) {
+      const uniforms = nucleusMaterial.uniforms as any;
+
       // Update dynamic ambient lighting
-      if (nucleusMaterial.uniforms.uAmbientStrength) {
-        nucleusMaterial.uniforms.uAmbientStrength.value =
-          dynamicAmbientIntensity;
+      if (uniforms.uAmbientStrength) {
+        uniforms.uAmbientStrength.value = dynamicAmbientIntensity;
       }
 
       // Update lighting
-      nucleusMaterial.uniforms.uNumLights.value =
-        this.lightingManager.getLightSources().size;
-      let i = 0;
-      for (const lightData of this.lightingManager.getLightSources().values()) {
-        nucleusMaterial.uniforms.uLights.value[i].position.copy(
-          lightData.position,
-        );
-        nucleusMaterial.uniforms.uLights.value[i].color.copy(lightData.color);
-        nucleusMaterial.uniforms.uLights.value[i].intensity =
-          lightData.intensity ?? 1.0;
-        i++;
+      if (uniforms.uNumLights && uniforms.uLights) {
+        uniforms.uNumLights.value = this.lightingManager.getLightSources().size;
+        let i = 0;
+        for (const lightData of this.lightingManager
+          .getLightSources()
+          .values()) {
+          uniforms.uLights.value[i].position.copy(lightData.position);
+          uniforms.uLights.value[i].color.copy(lightData.color);
+          uniforms.uLights.value[i].intensity = lightData.intensity ?? 1.0;
+          i++;
+        }
       }
-      if (nucleusMaterial.uniforms.uCameraPosition) {
-        nucleusMaterial.uniforms.uCameraPosition.value.copy(
-          this.camera.position,
-        );
+
+      if (uniforms.uCameraPosition) {
+        uniforms.uCameraPosition.value.copy(this.camera.position);
       }
     }
   }
 
   private updateParticleTail(object: RenderableCelestialObject): void {
     if (this.particleTail) {
-      const material = this.particleTail.material as CometParticleMaterial;
+      const material = this.particleTail.material;
       const primaryLightSource = this.findClosestLightSource();
-      if (primaryLightSource) {
-        material.uniforms.uLightIntensity.value = primaryLightSource.intensity;
+
+      // Only update uniforms for GLSL materials
+      if (primaryLightSource && "uniforms" in material && material.uniforms) {
+        const uniforms = material.uniforms as any;
+        if (uniforms.uLightIntensity) {
+          uniforms.uLightIntensity.value = primaryLightSource.intensity;
+        }
       }
     }
   }
@@ -397,15 +420,24 @@ export class CometRenderer extends BaseCelestialRenderer {
     const primaryLightSourceForJets = this.findClosestLightSource();
     if (primaryLightSourceForJets) {
       this.jets.forEach((jet) => {
-        const material = jet.points.material as CometJetMaterial;
-        material.uniforms.uLightPosition.value.copy(
-          primaryLightSourceForJets.position,
-        );
-        material.uniforms.uLightColor.value.set(
-          primaryLightSourceForJets.color,
-        );
-        material.uniforms.uLightIntensity.value =
-          primaryLightSourceForJets.intensity;
+        const material = jet.points.material;
+
+        // Only update uniforms for GLSL materials
+        if ("uniforms" in material && material.uniforms) {
+          const uniforms = material.uniforms as any;
+          if (uniforms.uLightPosition) {
+            uniforms.uLightPosition.value.copy(
+              primaryLightSourceForJets.position,
+            );
+          }
+          if (uniforms.uLightColor) {
+            uniforms.uLightColor.value.set(primaryLightSourceForJets.color);
+          }
+          if (uniforms.uLightIntensity) {
+            uniforms.uLightIntensity.value =
+              primaryLightSourceForJets.intensity;
+          }
+        }
       });
     }
   }
@@ -466,22 +498,39 @@ export class CometRenderer extends BaseCelestialRenderer {
       if (activityFactor <= 0) {
         return;
       }
-      this.comaMaterial.uniforms.uOpacity.value = activityFactor;
-      this.comaMaterial.uniforms.uTime.value = time;
-      if (attenuatedLightSources) {
-        this.comaMaterial.uniforms.uNumLights.value =
-          attenuatedLightSources.size;
-        let i = 0;
-        for (const lightData of attenuatedLightSources.values()) {
-          this.comaMaterial.uniforms.uLights.value[i].position.copy(
-            lightData.position,
-          );
-          this.comaMaterial.uniforms.uLights.value[i].color.copy(
-            lightData.color,
-          );
-          this.comaMaterial.uniforms.uLights.value[i].intensity =
-            lightData.intensity ?? 1.0;
-          i++;
+
+      // Only update uniforms for GLSL materials (TSL materials handle this differently)
+      if ("uniforms" in this.comaMaterial && this.comaMaterial.uniforms) {
+        const uniforms = this.comaMaterial.uniforms as any;
+
+        if (uniforms.uOpacity) {
+          uniforms.uOpacity.value = activityFactor;
+        }
+        if (uniforms.uTime) {
+          uniforms.uTime.value = time;
+        }
+
+        if (attenuatedLightSources && uniforms.uNumLights && uniforms.uLights) {
+          uniforms.uNumLights.value = attenuatedLightSources.size;
+          let i = 0;
+          for (const lightData of attenuatedLightSources.values()) {
+            uniforms.uLights.value[i].position.copy(lightData.position);
+            uniforms.uLights.value[i].color.copy(lightData.color);
+            uniforms.uLights.value[i].intensity = lightData.intensity ?? 1.0;
+            i++;
+          }
+        }
+      } else if (
+        "updateTime" in this.comaMaterial &&
+        typeof this.comaMaterial.updateTime === "function"
+      ) {
+        // TSL material - call update methods
+        (this.comaMaterial as any).updateTime(time);
+        if (
+          "updateOpacity" in this.comaMaterial &&
+          typeof this.comaMaterial.updateOpacity === "function"
+        ) {
+          (this.comaMaterial as any).updateOpacity(activityFactor);
         }
       }
     }
@@ -745,11 +794,14 @@ export class CometRenderer extends BaseCelestialRenderer {
       );
 
       // Reuse the same material as the main tail
-      const particleMaterial = new CometJetMaterial({
-        color: new THREE.Color(
-          (object.properties as CometProperties).visualTailColor || "#ffffff",
-        ),
-      });
+      const particleMaterial = this.materialFactory.createJetMaterial(
+        this.rendererBackend,
+        {
+          color: new THREE.Color(
+            (object.properties as CometProperties).visualTailColor || "#ffffff",
+          ),
+        },
+      );
       this.registerMaterial(`comet-jet-${i}-${object.id}`, particleMaterial);
 
       const points = new THREE.Points(geometry, particleMaterial);

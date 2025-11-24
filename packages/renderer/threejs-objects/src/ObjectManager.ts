@@ -140,7 +140,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
-    renderer: THREE.WebGLRenderer,
+    renderer: THREE.WebGLRenderer | any, // Support both WebGL and WebGPU renderers
     css2DManager: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<Record<string, OSVector3>>,
     lightingManager: LightingManager,
@@ -161,7 +161,21 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.lensingHandler = new GravitationalLensingHandler({
       celestialRenderers: this.celestialRenderers,
     });
-    this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
+
+    // Determine renderer backend first (before creating managers that need it)
+    const rendererBackend: "webgl" | "webgpu" = (renderer as any)
+      .isWebGPURenderer
+      ? "webgpu"
+      : "webgl";
+
+    console.log(
+      `[ObjectManager] Initializing with ${rendererBackend} renderer backend`,
+    );
+
+    this.debrisEffectManager = new DebrisEffectManager({
+      scene: this.scene,
+      rendererBackend: rendererBackend,
+    });
     this.accelerationVisualizer = new AccelerationVisualizer({
       objects: this.objects,
     });
@@ -172,6 +186,7 @@ export class ObjectManager extends StateSubscriptionMixin {
       lodManager: this.lodManager,
       lightingManager: this.lightingManager,
       camera: this.camera,
+      rendererBackend: rendererBackend,
       createLodCallback: (object: RenderableCelestialObject, levels: any[]) => {
         const lod = new THREE.LOD();
         levels.forEach((level: any) => {

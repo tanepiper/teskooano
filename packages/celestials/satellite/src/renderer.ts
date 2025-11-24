@@ -5,6 +5,7 @@ import {
   RenderableCelestialObject,
   SatelliteProperties,
   CelestialType,
+  RendererBackend,
 } from "@teskooano/data-types";
 
 import {
@@ -15,6 +16,7 @@ import {
   LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
 import { SatelliteMaterial } from "./material";
+import { SatelliteMaterialFactory } from "./material-factory";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 
 /**
@@ -38,7 +40,9 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
   private billboard?: THREE.Sprite;
   private loader: GLTFLoader;
   private dracoLoader: DRACOLoader;
-  private material?: SatelliteMaterial;
+  private material?: THREE.Material;
+  private materialFactory: SatelliteMaterialFactory;
+  private rendererBackend: RendererBackend;
   private isLoading = false;
   private loadingFailed = false;
   private fallbackMesh?: THREE.Mesh;
@@ -47,9 +51,14 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
   private _cachedLODLevels?: LODLevel[]; // Store current object reference
   private objectId: string;
 
-  constructor(object: RenderableCelestialObject) {
+  constructor(
+    object: RenderableCelestialObject,
+    rendererBackend: RendererBackend = "webgpu",
+  ) {
     super(object);
     this.objectId = object.id;
+    this.rendererBackend = rendererBackend;
+    this.materialFactory = new SatelliteMaterialFactory();
     this.dracoLoader = new DRACOLoader();
     // Set the path to the Draco decoder files (relative to your public directory)
     // this.dracoLoader.setDecoderPath('/draco/'); // You must copy the decoder files to public/draco/
@@ -221,14 +230,17 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
                 // Use custom material properties if available, otherwise use defaults
                 const materialProperties = properties?.materialProperties || {};
-                const satelliteMaterial = new SatelliteMaterial({
-                  color: originalMaterial.color || new THREE.Color(0xdddddd),
-                  metalness: materialProperties.metalness ?? 0.7,
-                  roughness: materialProperties.roughness ?? 0.3,
-                  maxEmissiveIntensity: 0.8,
-                  envMapIntensity: materialProperties.envMapIntensity ?? 1.0,
-                  originalMaterial: originalMaterial, // Pass original material to preserve textures
-                });
+                const satelliteMaterial = this.materialFactory.createMaterial(
+                  this.rendererBackend,
+                  {
+                    color: originalMaterial.color || new THREE.Color(0xdddddd),
+                    metalness: materialProperties.metalness ?? 0.7,
+                    roughness: materialProperties.roughness ?? 0.3,
+                    maxEmissiveIntensity: 0.8,
+                    envMapIntensity: materialProperties.envMapIntensity ?? 1.0,
+                    originalMaterial: originalMaterial, // Pass original material to preserve textures
+                  },
+                );
                 child.material = satelliteMaterial;
               }
 
@@ -391,15 +403,18 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
   private createSatelliteMaterial(
     originalMaterial?: THREE.Material,
-  ): SatelliteMaterial {
+  ): THREE.Material {
     if (!this.material) {
-      this.material = new SatelliteMaterial({
-        color: new THREE.Color(0xdddddd), // Clean satellite color
-        metalness: 0.7, // Metallic satellite materials
-        roughness: 0.3, // Smooth but not mirror-like
-        maxEmissiveIntensity: 0.8, // Maximum brightness when fully illuminated
-        originalMaterial: originalMaterial, // Preserve textures if provided
-      });
+      this.material = this.materialFactory.createMaterial(
+        this.rendererBackend,
+        {
+          color: new THREE.Color(0xdddddd), // Clean satellite color
+          metalness: 0.7, // Metallic satellite materials
+          roughness: 0.3, // Smooth but not mirror-like
+          maxEmissiveIntensity: 0.8, // Maximum brightness when fully illuminated
+          originalMaterial: originalMaterial, // Preserve textures if provided
+        },
+      );
     }
     return this.material;
   }
@@ -449,17 +464,30 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
     // Update the satellite material with lighting information
     if (this.material && attenuatedLightSources.size > 0) {
-      // Update dynamic ambient lighting
-      if (this.material.uniforms.uDynamicAmbientIntensity) {
-        this.material.uniforms.uDynamicAmbientIntensity.value =
-          dynamicAmbientIntensity;
-      }
+      // Only update if it's a GLSL material with uniforms
+      if ("uniforms" in this.material && this.material.uniforms) {
+        // Update dynamic ambient lighting
+        if (this.material.uniforms.uDynamicAmbientIntensity) {
+          this.material.uniforms.uDynamicAmbientIntensity.value =
+            dynamicAmbientIntensity;
+        }
 
-      this.material.update(
-        object.position,
-        attenuatedLightSources,
-        shadowCasters,
-      );
+        (this.material as SatelliteMaterial).update(
+          object.position,
+          attenuatedLightSources,
+          shadowCasters,
+        );
+      } else if (
+        "update" in this.material &&
+        typeof this.material.update === "function"
+      ) {
+        // TSL material - call update method
+        (this.material as any).update(
+          object.position,
+          attenuatedLightSources,
+          shadowCasters,
+        );
+      }
     }
 
     // Update lighting for all materials in the model
@@ -467,14 +495,26 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       this.model.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material) {
           // Update our custom satellite materials with lighting information
-          if (child.material instanceof SatelliteMaterial) {
-            // Update dynamic ambient lighting
+          if ("uniforms" in child.material && child.material.uniforms) {
+            // GLSL material
             if (child.material.uniforms.uDynamicAmbientIntensity) {
               child.material.uniforms.uDynamicAmbientIntensity.value =
                 dynamicAmbientIntensity;
             }
 
-            child.material.update(
+            if (child.material instanceof SatelliteMaterial) {
+              child.material.update(
+                object.position,
+                attenuatedLightSources,
+                shadowCasters,
+              );
+            }
+          } else if (
+            "update" in child.material &&
+            typeof child.material.update === "function"
+          ) {
+            // TSL material
+            (child.material as any).update(
               object.position,
               attenuatedLightSources,
               shadowCasters,

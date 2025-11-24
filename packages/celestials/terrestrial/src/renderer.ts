@@ -25,8 +25,11 @@ import {
 } from "./utils/atmosphere-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 
+import type { RendererBackend } from "@teskooano/data-types";
+
 export interface TerrestrialRendererDeps {
   renderers: Map<string, CelestialRenderer>;
+  rendererBackend?: RendererBackend;
 }
 
 const MAX_LIGHTS = 4;
@@ -40,7 +43,7 @@ export class BaseTerrestrialRenderer<
   TTerrestrialMaterial extends
     ProceduralPlanetMaterial = ProceduralPlanetMaterial,
 > extends BaseCelestialRenderer<TTerrestrialMaterial> {
-  protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
+  protected atmosphereMaterials: Map<string, THREE.Material> = new Map();
   protected textureLoader: THREE.TextureLoader;
   protected ringSystemRenderer?: RingSystemRenderer;
 
@@ -52,6 +55,7 @@ export class BaseTerrestrialRenderer<
   protected material: ProceduralPlanetMaterial | null = null;
   protected materialService: PlanetMaterialService;
   protected atmosphereService: AtmosphereService;
+  protected rendererBackend: RendererBackend;
 
   constructor(
     object: RenderableCelestialObject,
@@ -61,17 +65,21 @@ export class BaseTerrestrialRenderer<
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
+    this.rendererBackend = deps.rendererBackend ?? "webgpu"; // Default to webgpu, fallback to webgl
     deps.renderers.set(object.id, this);
   }
 
   /**
    * Creates the appropriate material for this terrestrial object.
-   * This implementation creates a ProceduralPlanetMaterial.
+   * This implementation creates a renderer-aware material (WebGPU TSL or WebGL GLSL).
    */
   protected createMaterial(
     object: RenderableCelestialObject,
   ): TTerrestrialMaterial {
-    const bodyMaterial = this.materialService.createMaterial(object);
+    const bodyMaterial = this.materialService.createMaterial(
+      object,
+      this.rendererBackend,
+    );
     return bodyMaterial as TTerrestrialMaterial;
   }
 
@@ -228,7 +236,12 @@ export class BaseTerrestrialRenderer<
     const planetProps = object.properties as PlanetProperties;
 
     const atmosphereResult: AtmosphereMeshResult | null =
-      this.atmosphereService.createAtmosphereMesh(object, segments, baseRadius);
+      this.atmosphereService.createAtmosphereMesh(
+        object,
+        segments,
+        baseRadius,
+        this.rendererBackend,
+      );
     if (atmosphereResult) {
       group.add(atmosphereResult.mesh);
       this.atmosphereMaterials.set(object.id, atmosphereResult.material);
@@ -329,12 +342,16 @@ export class BaseTerrestrialRenderer<
 
     const atmosphereMaterial = this.atmosphereMaterials.get(object.id);
     if (atmosphereMaterial) {
-      atmosphereMaterial.update(
-        time,
-        timeScale,
-        camera,
-        attenuatedLightSources,
-      );
+      // Only update if it's a GLSL material with uniforms
+      if ("uniforms" in atmosphereMaterial && atmosphereMaterial.uniforms) {
+        (atmosphereMaterial as AtmosphereMaterial).update(
+          time,
+          timeScale,
+          camera,
+          attenuatedLightSources,
+        );
+      }
+      // TSL materials (AtmosphereNodeMaterial) handle updates automatically
     }
 
     if (this.ringSystemRenderer) {

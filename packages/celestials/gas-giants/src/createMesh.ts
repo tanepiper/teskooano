@@ -1,6 +1,7 @@
 import type {
   GasGiantProperties,
   RenderableCelestialObject,
+  RendererBackend,
 } from "@teskooano/data-types";
 import { CelestialType, GasGiantClass } from "@teskooano/data-types";
 import {
@@ -30,6 +31,8 @@ export interface CreateMeshOptions {
   ) => THREE.LOD;
   /** Lighting manager for advanced rendering */
   lightingManager?: LightingManager;
+  /** Active renderer backend ('webgpu' or 'webgl') */
+  rendererBackend: RendererBackend;
   /** Enable debug mode for additional logging and fallback usage */
   debug?: boolean;
 }
@@ -70,6 +73,7 @@ export function createMesh(
     const rendererDeps = {
       celestialRenderers,
       lightingManager,
+      rendererBackend: options.rendererBackend,
     };
 
     let newRenderer: BaseGasGiantRenderer;

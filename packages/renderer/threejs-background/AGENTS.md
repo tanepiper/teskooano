@@ -168,7 +168,7 @@ export class NebulaField extends Field {
 
   // Private methods
   private createGeometry(size: number): THREE.IcosahedronGeometry;
-  private createMaterial(options: NebulaFieldOptions): THREE.ShaderMaterial;
+  private createMaterial(options: NebulaFieldOptions): THREE.Material;
 }
 ```
 
@@ -326,11 +326,36 @@ export class BackgroundManager {
 }
 ```
 
-### Shader Pattern
+### Shader Pattern (Renderer-Aware)
 
 ```typescript
 export class NebulaField extends Field {
-  private createMaterial(options: NebulaFieldOptions): THREE.ShaderMaterial {
+  private rendererBackend: string;
+
+  constructor(options: NebulaFieldOptions) {
+    super(options);
+    this.rendererBackend = options.rendererBackend ?? "webgl";
+    // ... rest of initialization
+  }
+
+  private createMaterial(options: NebulaFieldOptions): THREE.Material {
+    if (this.rendererBackend === "webgpu") {
+      // For WebGPU, use a simple colored material
+      const avgColor = new THREE.Color();
+      options.colors.forEach((c) => avgColor.add(c));
+      avgColor.multiplyScalar(1 / options.colors.length);
+
+      return new THREE.MeshBasicMaterial({
+        color: avgColor,
+        transparent: true,
+        opacity: options.alpha * 0.3,
+        depthWrite: false,
+        depthTest: true,
+        side: THREE.BackSide,
+      });
+    }
+
+    // For WebGL, use the full GLSL shader
     return new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -349,6 +374,17 @@ export class NebulaField extends Field {
       depthTest: true,
       side: THREE.BackSide,
     });
+  }
+
+  public update(deltaTime: number): void {
+    this.time += deltaTime;
+
+    // Only update uniforms for GLSL ShaderMaterial (WebGL)
+    if ("uniforms" in this.material && this.material.uniforms) {
+      (this.material as THREE.ShaderMaterial).uniforms.uTime.value = this.time;
+    }
+
+    this.object.rotation.y += this.rotationSpeed * deltaTime;
   }
 }
 ```

@@ -1,4 +1,8 @@
 import * as THREE from "three";
+// @ts-ignore - WebGPU renderer import path varies by Three.js version
+import { WebGPURenderer } from "three/webgpu";
+import type { RendererBackend } from "@teskooano/data-types";
+import { WebGPUDetection } from "./WebGPUDetection";
 
 /**
  * Helper class for creating and managing Three.js scenes with consistent configuration.
@@ -8,6 +12,7 @@ import * as THREE from "three";
 export class SceneHelper {
   /**
    * Creates a complete Three.js scene setup with sensible defaults.
+   * Supports both WebGPU and WebGL renderers with automatic fallback.
    *
    * @param options - Configuration options for the scene
    * @param options.backgroundColor - Scene background color (default: 0x000000)
@@ -21,9 +26,10 @@ export class SceneHelper {
    * @param options.antialias - Whether to enable antialiasing (default: true)
    * @param options.alpha - Whether to enable alpha channel (default: false)
    * @param options.powerPreference - WebGL power preference (default: 'high-performance')
-   * @returns Object containing scene, camera, renderer, and THREE instance
+   * @param options.rendererBackend - Preferred renderer backend (default: 'webgpu')
+   * @returns Promise resolving to object containing scene, camera, renderer, THREE instance, and backend used
    */
-  static createScene(
+  static async createScene(
     options: {
       name?: string;
       backgroundColor?: number;
@@ -37,13 +43,15 @@ export class SceneHelper {
       alpha?: boolean;
       powerPreference?: "default" | "high-performance" | "low-power";
       shadowMapType?: THREE.ShadowMapType;
+      rendererBackend?: RendererBackend;
     } = {},
-  ): {
+  ): Promise<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
-    renderer: THREE.WebGLRenderer;
+    renderer: THREE.WebGLRenderer | WebGPURenderer;
     three: typeof THREE;
-  } {
+    backendUsed: RendererBackend;
+  }> {
     const {
       name = "Scene",
       backgroundColor = 0x000000,
@@ -71,40 +79,84 @@ export class SceneHelper {
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio, near, far);
     camera.position.set(...cameraPosition);
 
-    // Create renderer
-    const renderer = new THREE.WebGLRenderer({
-      precision:
-        options.powerPreference === "high-performance" ? "highp" : "mediump",
-      logarithmicDepthBuffer: true,
-      antialias,
-      alpha,
-      powerPreference,
-    });
+    // Determine renderer backend
+    const preferredBackend = options.rendererBackend ?? "webgpu";
+    const backendConfig = await WebGPUDetection.detectBackend(preferredBackend);
+    let backendUsed = backendConfig.actual;
+
+    // Create renderer based on detected backend
+    let renderer: THREE.WebGLRenderer | WebGPURenderer;
+
+    if (backendUsed === "webgpu") {
+      // Create WebGPU renderer
+      renderer = new WebGPURenderer({
+        antialias,
+        alpha,
+        // Note: WebGPU doesn't use logarithmicDepthBuffer or powerPreference
+      });
+
+      // Initialize WebGPU renderer asynchronously (required!)
+      try {
+        await renderer.init();
+        console.log("[SceneHelper] Using WebGPU renderer (initialized)");
+      } catch (error) {
+        console.warn(
+          "[SceneHelper] WebGPU initialization failed, falling back to WebGL:",
+          error,
+        );
+        // Fall back to WebGL if WebGPU init fails
+        renderer = new THREE.WebGLRenderer({
+          precision:
+            options.powerPreference === "high-performance"
+              ? "highp"
+              : "mediump",
+          logarithmicDepthBuffer: true,
+          antialias,
+          alpha,
+          powerPreference,
+        });
+        backendUsed = "webgl";
+        console.log("[SceneHelper] Using WebGL renderer (fallback)");
+      }
+    } else {
+      // Create WebGL renderer (existing code)
+      renderer = new THREE.WebGLRenderer({
+        precision:
+          options.powerPreference === "high-performance" ? "highp" : "mediump",
+        logarithmicDepthBuffer: true,
+        antialias,
+        alpha,
+        powerPreference,
+      });
+      console.log("[SceneHelper] Using WebGL renderer");
+    }
+
     renderer.sortObjects = false; // Disable automatic sorting to prevent interference with our custom render order
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Configure shadows
-    if (enableShadows) {
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.autoUpdate = true;
-      renderer.shadowMap.type = shadowMapType;
+    // Configure shadows (only for WebGL, WebGPU handles differently)
+    if (enableShadows && backendUsed === "webgl") {
+      (renderer as THREE.WebGLRenderer).shadowMap.enabled = true;
+      (renderer as THREE.WebGLRenderer).shadowMap.autoUpdate = true;
+      (renderer as THREE.WebGLRenderer).shadowMap.type = shadowMapType;
     }
 
-    return { scene, camera, renderer, three: THREE };
+    return { scene, camera, renderer, three: THREE, backendUsed };
   }
 
   /**
    * Creates a basic scene with minimal configuration for quick prototyping.
    *
-   * @returns Basic scene setup with default configuration
+   * @returns Promise resolving to basic scene setup with default configuration
    */
-  static createBasicScene(): {
+  static async createBasicScene(): Promise<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
-    renderer: THREE.WebGLRenderer;
+    renderer: THREE.WebGLRenderer | WebGPURenderer;
     three: typeof THREE;
-  } {
+    backendUsed: RendererBackend;
+  }> {
     return this.createScene({
       backgroundColor: 0x000000,
       fov: 60,
@@ -119,14 +171,15 @@ export class SceneHelper {
   /**
    * Creates a scene optimized for space/astronomical visualization.
    *
-   * @returns Scene setup optimized for space rendering
+   * @returns Promise resolving to scene setup optimized for space rendering
    */
-  static createSpaceScene(): {
+  static async createSpaceScene(): Promise<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
-    renderer: THREE.WebGLRenderer;
+    renderer: THREE.WebGLRenderer | WebGPURenderer;
     three: typeof THREE;
-  } {
+    backendUsed: RendererBackend;
+  }> {
     return this.createScene({
       backgroundColor: 0x000011, // Dark blue space background
       fov: 75, // Wider field of view for space scenes
@@ -141,14 +194,15 @@ export class SceneHelper {
   /**
    * Creates a scene optimized for debugging and development.
    *
-   * @returns Scene setup with debugging-friendly configuration
+   * @returns Promise resolving to scene setup with debugging-friendly configuration
    */
-  static createDebugScene(): {
+  static async createDebugScene(): Promise<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
-    renderer: THREE.WebGLRenderer;
+    renderer: THREE.WebGLRenderer | WebGPURenderer;
     three: typeof THREE;
-  } {
+    backendUsed: RendererBackend;
+  }> {
     return this.createScene({
       backgroundColor: 0x222222, // Dark gray for better contrast
       fov: 60,
@@ -164,13 +218,13 @@ export class SceneHelper {
   /**
    * Sets up automatic window resize handling for the renderer and camera.
    *
-   * @param renderer - The WebGL renderer
+   * @param renderer - The WebGL or WebGPU renderer
    * @param camera - The perspective camera
    * @param container - Optional container element (defaults to document.body)
    * @returns Function to remove the resize listener
    */
   static setupResizeHandler(
-    renderer: THREE.WebGLRenderer,
+    renderer: THREE.WebGLRenderer | WebGPURenderer,
     camera: THREE.PerspectiveCamera,
     container: HTMLElement = document.body,
   ): () => void {
@@ -201,14 +255,14 @@ export class SceneHelper {
    *
    * @param scene - The scene to render
    * @param camera - The camera to use
-   * @param renderer - The renderer to use
+   * @param renderer - The WebGL or WebGPU renderer to use
    * @param onUpdate - Optional callback function called each frame
    * @returns Function to stop the animation loop
    */
   static createAnimationLoop(
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    renderer: THREE.WebGLRenderer,
+    renderer: THREE.WebGLRenderer | WebGPURenderer,
     onUpdate?: (deltaTime: number) => void,
   ): () => void {
     let animationId: number;

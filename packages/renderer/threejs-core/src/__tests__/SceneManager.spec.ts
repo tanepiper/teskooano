@@ -3,17 +3,41 @@ import * as THREE from "three";
 import { SceneManager } from "../SceneManager";
 import { CAMERA_DISTANCE_CONFIG } from "../LogarithmicDepthMaterial";
 
+/**
+ * Helper function to wait for SceneManager async initialization to complete.
+ * The SceneManager constructor triggers async initialization, so we need to wait
+ * for the scene, camera, and renderer to be ready before running tests.
+ */
+async function waitForInitialization(
+  sceneManager: SceneManager,
+): Promise<void> {
+  // Poll until scene, camera, and renderer are initialized
+  const maxAttempts = 50; // 5 seconds max
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    if (sceneManager.scene && sceneManager.camera && sceneManager.renderer) {
+      return; // Initialization complete
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    attempts++;
+  }
+
+  throw new Error("SceneManager initialization timed out");
+}
+
 describe("SceneManager", () => {
   let container: HTMLDivElement;
   let sceneManager: SceneManager;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     container = document.createElement("div");
     container.style.width = "800px";
     container.style.height = "600px";
     document.body.appendChild(container);
 
     sceneManager = new SceneManager(container);
+    await waitForInitialization(sceneManager);
   });
 
   afterEach(() => {
@@ -34,12 +58,14 @@ describe("SceneManager", () => {
     expect(sceneManager.renderer.shadowMap.enabled).toBe(false);
   });
 
-  it("should initialize with custom options", () => {
+  it("should initialize with custom options", async () => {
     const customManager = new SceneManager(container, {
       antialias: false,
       shadows: true,
       hdr: true,
     });
+
+    await waitForInitialization(customManager);
 
     expect(customManager.renderer.shadowMap.enabled).toBe(true);
     expect(customManager.renderer.shadowMap.type).toBe(THREE.PCFSoftShadowMap);
