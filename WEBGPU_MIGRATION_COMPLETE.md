@@ -160,10 +160,12 @@ To verify the migration:
 ## Migration Statistics
 
 - **Duration**: Single session (November 24, 2025)
-- **Files Created**: 20+ new TSL material files
-- **Files Deleted**: 55 GLSL shader files + TypeScript shims
+- **TSL Material Files**: 12 files with 18 material classes
+- **Files Deleted**: 55 GLSL shader files + TypeScript shims + duplicates
+- **GLSL Imports Removed**: 43 import statements commented/removed
 - **Lines Changed**: Thousands across renderer packages
 - **Packages Affected**: 15+ celestial and renderer packages
+- **Linter Errors**: 0 (all import errors resolved)
 
 ## Conclusion
 
