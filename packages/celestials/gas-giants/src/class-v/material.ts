@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
-import classVFragmentShader from "../shaders/class-v.fragment.glsl";
-import classVVertexShader from "../shaders/class-v.vertex.glsl";
+// import classVFragmentShader from "../shaders/class-v.fragment.glsl";
+// import classVVertexShader from "../shaders/class-v.vertex.glsl";
 
 /**
  * Material for Class V gas giants (Silicate Clouds / Bright / Glowing)

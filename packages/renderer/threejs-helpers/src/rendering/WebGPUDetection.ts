@@ -1,11 +1,8 @@
-import type {
-  RendererBackend,
-  RendererBackendConfig,
-} from "@teskooano/data-types";
+import type { RendererBackendConfig } from "@teskooano/data-types";
 
 /**
- * Detects WebGPU availability and determines the renderer backend to use.
- * Provides automatic fallback from WebGPU to WebGL for browser compatibility.
+ * Detects WebGPU availability.
+ * WebGPU is the only supported renderer backend in this codebase.
  *
  * This class uses caching to avoid repeated GPU adapter requests, which can be
  * expensive operations. The cache can be cleared for testing purposes.
@@ -15,23 +12,22 @@ export class WebGPUDetection {
 
   /**
    * Detects WebGPU support and returns renderer backend configuration.
-   * Will fallback to WebGL if WebGPU is not available.
+   * Throws an error if WebGPU is not available.
    *
-   * @param preferredBackend - The preferred renderer backend (defaults to 'webgpu')
    * @returns Promise resolving to the renderer backend configuration
+   * @throws Error if WebGPU is not available
    *
    * @example
    * ```typescript
-   * const config = await WebGPUDetection.detectBackend('webgpu');
-   * console.log(`Using ${config.actual} renderer`);
-   * if (!config.webgpuAvailable && config.preferred === 'webgpu') {
-   *   console.warn('WebGPU not available, using WebGL fallback');
+   * try {
+   *   const config = await WebGPUDetection.detectBackend();
+   *   console.log('WebGPU is available and initialized');
+   * } catch (error) {
+   *   console.error('WebGPU not supported:', error);
    * }
    * ```
    */
-  static async detectBackend(
-    preferredBackend: RendererBackend = "webgpu",
-  ): Promise<RendererBackendConfig> {
+  static async detectBackend(): Promise<RendererBackendConfig> {
     // Return cached result if available
     if (this.cachedResult) {
       return this.cachedResult;
@@ -39,22 +35,21 @@ export class WebGPUDetection {
 
     const webgpuAvailable = await this.isWebGPUAvailable();
 
-    const config: RendererBackendConfig = {
-      preferred: preferredBackend,
-      actual:
-        preferredBackend === "webgpu" && webgpuAvailable ? "webgpu" : "webgl",
-      webgpuAvailable,
-    };
-
-    this.cachedResult = config;
-
-    if (config.preferred === "webgpu" && !webgpuAvailable) {
-      console.warn(
-        "[WebGPU] WebGPU not available, falling back to WebGL. " +
-          "WebGPU requires a modern browser with GPU support.",
+    if (!webgpuAvailable) {
+      throw new Error(
+        "[WebGPU] WebGPU is not available. " +
+          "This application requires a modern browser with WebGPU support. " +
+          "Please update your browser or use Chrome/Edge 113+, Firefox 127+, or Safari 18+.",
       );
     }
 
+    const config: RendererBackendConfig = {
+      backend: "webgpu",
+      webgpuAvailable: true,
+      initialized: false,
+    };
+
+    this.cachedResult = config;
     return config;
   }
 

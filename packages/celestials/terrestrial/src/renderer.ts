@@ -25,11 +25,11 @@ import {
 } from "./utils/atmosphere-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 
-import type { RendererBackend } from "@teskooano/data-types";
+// RendererBackend removed - WebGPU only
 
 export interface TerrestrialRendererDeps {
   renderers: Map<string, CelestialRenderer>;
-  rendererBackend?: RendererBackend;
+  // rendererBackend removed - WebGPU only
 }
 
 const MAX_LIGHTS = 4;
@@ -55,7 +55,7 @@ export class BaseTerrestrialRenderer<
   protected material: ProceduralPlanetMaterial | null = null;
   protected materialService: PlanetMaterialService;
   protected atmosphereService: AtmosphereService;
-  protected rendererBackend: RendererBackend;
+  // rendererBackend removed - WebGPU only
 
   constructor(
     object: RenderableCelestialObject,
@@ -65,7 +65,7 @@ export class BaseTerrestrialRenderer<
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
-    this.rendererBackend = deps.rendererBackend ?? "webgpu"; // Default to webgpu, fallback to webgl
+    // rendererBackend removed - WebGPU only
     deps.renderers.set(object.id, this);
   }
 
@@ -76,10 +76,7 @@ export class BaseTerrestrialRenderer<
   protected createMaterial(
     object: RenderableCelestialObject,
   ): TTerrestrialMaterial {
-    const bodyMaterial = this.materialService.createMaterial(
-      object,
-      this.rendererBackend,
-    );
+    const bodyMaterial = this.materialService.createMaterial(object);
     return bodyMaterial as TTerrestrialMaterial;
   }
 
@@ -236,12 +233,7 @@ export class BaseTerrestrialRenderer<
     const planetProps = object.properties as PlanetProperties;
 
     const atmosphereResult: AtmosphereMeshResult | null =
-      this.atmosphereService.createAtmosphereMesh(
-        object,
-        segments,
-        baseRadius,
-        this.rendererBackend,
-      );
+      this.atmosphereService.createAtmosphereMesh(object, segments, baseRadius);
     if (atmosphereResult) {
       group.add(atmosphereResult.mesh);
       this.atmosphereMaterials.set(object.id, atmosphereResult.material);

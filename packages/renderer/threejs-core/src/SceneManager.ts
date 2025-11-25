@@ -7,12 +7,10 @@ import {
   DeviceTier,
   PerformanceOptimization,
   SceneManagerOptions,
-  RendererBackend,
 } from "@teskooano/data-types";
 import {
   CameraHelper,
   CameraPreset,
-  SceneHelper,
 } from "@teskooano/renderer-threejs-helpers";
 import { AnimationLoop } from "./AnimationLoop";
 import {
@@ -26,24 +24,22 @@ import * as THREE from "three";
 import {
   PerspectiveCamera,
   Scene,
-  type Camera,
-  type WebGLRenderer,
   type WebGLCapabilities,
   Object3D,
   SRGBColorSpace,
   ACESFilmicToneMapping,
-  PCFSoftShadowMap,
 } from "three";
-// @ts-ignore - WebGPU renderer import path varies by Three.js version
 import { WebGPURenderer } from "three/webgpu";
 
 /**
- * The main scene manager for Teskooano which handles the main Three.js scene, camera, and renderer.
+ * The main scene manager for Teskooano which handles the main Three.js scene, camera, and WebGPU renderer.
  *
  * This class is responsible for the initial setup of the 3D environment,
  * handling resizing, and providing the main `render` method.
  *
  * It also handles listening for performance profile changes and updating the renderer accordingly.
+ *
+ * **Important**: This application exclusively uses WebGPU with Three.js TSL (Three.js Shading Language).
  */
 export class SceneManager {
   /**
@@ -55,21 +51,16 @@ export class SceneManager {
    */
   public camera: PerspectiveCamera;
   /**
-   * The `THREE.WebGLRenderer` or `WebGPURenderer` instance.
+   * The WebGPURenderer instance.
    */
-  public renderer: WebGLRenderer | WebGPURenderer;
+  public renderer: WebGPURenderer;
   /**
    * Manages the `requestAnimationFrame` loop.
    */
   public animationLoop: AnimationLoop;
   /**
-   * The renderer backend being used (webgl or webgpu).
-   * Determined synchronously during construction based on availability.
-   */
-  public rendererBackend: RendererBackend;
-  /**
    * Flag indicating whether the renderer is fully initialized and ready to render.
-   * For WebGPU, this becomes true after async init() completes.
+   * Becomes true after async init() completes.
    */
   private rendererReady: boolean = false;
 
@@ -90,7 +81,7 @@ export class SceneManager {
    */
   private height: number;
   /**
-   * The WebGL capabilities of the renderer.
+   * Legacy WebGL capabilities structure (kept for compatibility but unused in WebGPU).
    */
   private webGLCapabilities: WebGLCapabilities;
   /**
@@ -104,66 +95,47 @@ export class SceneManager {
 
   /**
    * Creates a new SceneManager instance.
-   * Initializes scene, camera, and renderer synchronously with WebGL fallback,
-   * then upgrades to WebGPU asynchronously if available.
+   * Initializes scene, camera, and WebGPU renderer.
    *
    * @param container The HTML element that will contain the renderer's canvas.
    * @param options Configuration options for the scene manager.
+   * @throws Error if WebGPU is not available
    */
   constructor(container: HTMLElement, options: SceneManagerOptions = {}) {
     this.options = options;
 
+    // Check WebGPU availability
+    const isWebGPUAvailable =
+      typeof navigator !== "undefined" && navigator.gpu !== undefined;
+
+    if (!isWebGPUAvailable) {
+      throw new Error(
+        "[SceneManager] WebGPU is not available. " +
+          "This application requires a modern browser with WebGPU support. " +
+          "Please update your browser or use Chrome/Edge 113+, Firefox 127+, or Safari 18+.",
+      );
+    }
+
+    console.log("[SceneManager] WebGPU available, creating renderer");
+
     // Get initial state for defaults
     const simState = StateAccessor.getSimulationState();
-    // Camera state is now per-panel, so we use the provided FOV or default
     this.fov = options.fov ?? 75;
     this.width = container.clientWidth;
     this.height = container.clientHeight;
 
-    // Synchronously determine which backend to use based on availability
-    const preferredBackend = options.rendererBackend ?? "webgpu";
-    const isWebGPUAvailable =
-      typeof navigator !== "undefined" && navigator.gpu !== undefined;
+    // Initialize scene with WebGPU
+    const sceneSetup = this._createScene(container);
+    this.scene = sceneSetup.scene;
+    this.camera = sceneSetup.camera;
+    this.renderer = sceneSetup.renderer;
 
-    // PRIORITY: Try WebGPU first if available, fallback to WebGL
-    this.rendererBackend =
-      preferredBackend === "webgpu" && isWebGPUAvailable ? "webgpu" : "webgl";
-
-    console.log(
-      `[SceneManager] Attempting to create ${this.rendererBackend} renderer (WebGPU available: ${isWebGPUAvailable})`,
+    // Initialize with default capabilities (WebGPU doesn't expose capabilities like WebGL)
+    this.webGLCapabilities = {} as WebGLCapabilities;
+    this.performanceOptimization = getPerformanceOptimization(
+      this.webGLCapabilities,
+      simState.performanceProfile,
     );
-
-    // Initialize scene with the determined backend
-    const syncSceneSetup = this._createSceneSynchronously(container);
-    this.scene = syncSceneSetup.scene;
-    this.camera = syncSceneSetup.camera;
-    this.renderer = syncSceneSetup.renderer;
-
-    // Enable logarithmic depth buffer for WebGL only
-    if (this.rendererBackend === "webgl") {
-      this.enableLogarithmicDepth();
-
-      // Initialize capability detection and performance optimization for WebGL
-      this.webGLCapabilities = (this.renderer as WebGLRenderer).capabilities;
-      this.performanceOptimization = getPerformanceOptimization(
-        this.webGLCapabilities,
-        simState.performanceProfile,
-      );
-
-      // WebGL renderer is ready immediately
-      this.rendererReady = true;
-    } else {
-      // For WebGPU, initialize with default capabilities
-      // WebGPU doesn't expose capabilities in the same way
-      this.webGLCapabilities = {} as WebGLCapabilities;
-      this.performanceOptimization = getPerformanceOptimization(
-        this.webGLCapabilities,
-        simState.performanceProfile,
-      );
-
-      // WebGPU requires async initialization - rendererReady set to false until init completes
-      this.rendererReady = false;
-    }
 
     // Subscribe to performance profile changes
     this._subscribeToPerformanceChanges();
@@ -173,42 +145,26 @@ export class SceneManager {
     this.animationLoop.setRenderer(this.renderer);
     this.animationLoop.setCamera(this.camera);
 
-    console.log(`[SceneManager] Created ${this.rendererBackend} renderer`);
+    console.log(
+      "[SceneManager] WebGPU renderer created, initializing asynchronously",
+    );
 
-    // For WebGPU, initialize asynchronously (required before first render)
-    if (this.rendererBackend === "webgpu") {
-      this._initializeWebGPURenderer();
-    }
+    // Initialize WebGPU renderer asynchronously (required before first render)
+    this._initializeWebGPURenderer();
   }
 
   /**
-   * Creates scene synchronously with WebGL renderer for immediate availability.
-   * This ensures the scene, camera, and renderer are always defined.
+   * Creates scene with WebGPU renderer.
    *
    * @param container The HTML element that will contain the renderer's canvas.
-   * @returns Object containing scene, camera, and WebGL renderer
+   * @returns Object containing scene, camera, and WebGPU renderer
    * @private
    */
-  private _createSceneSynchronously(container: HTMLElement): {
+  private _createScene(container: HTMLElement): {
     scene: Scene;
     camera: PerspectiveCamera;
-    renderer: WebGLRenderer | WebGPURenderer;
+    renderer: WebGPURenderer;
   } {
-    // Determine power preference based on performance profile
-    const simState = StateAccessor.getSimulationState();
-    const profile = simState.performanceProfile;
-    let powerPref: "default" | "high-performance" | "low-power" = "default";
-
-    switch (profile) {
-      case "low":
-        powerPref = "low-power";
-        break;
-      case "high":
-      case "cosmic":
-        powerPref = "high-performance";
-        break;
-    }
-
     // Create camera (ensure it's a PerspectiveCamera)
     const cameraResult = CameraHelper.createCamera(CameraPreset.Space, {
       fov: this.fov,
@@ -236,42 +192,16 @@ export class SceneManager {
     scene.name = "Teskooano Space Engine";
     scene.background = new THREE.Color(0x000011);
 
-    // Create renderer based on detected backend
-    let renderer: WebGLRenderer | WebGPURenderer;
-
-    if (this.rendererBackend === "webgpu") {
-      // Create WebGPU renderer (requires async init before first render)
-      renderer = new WebGPURenderer({
-        antialias: this.options.antialias ?? true,
-        forceWebGL: false,
-      });
-      console.log(
-        "[SceneManager] WebGPU renderer created (requires async init)",
-      );
-    } else {
-      // Create WebGL renderer (ready immediately)
-      renderer = new THREE.WebGLRenderer({
-        precision: powerPref === "high-performance" ? "highp" : "mediump",
-        logarithmicDepthBuffer: true,
-        antialias: this.options.antialias ?? true,
-        alpha: true,
-        powerPreference: powerPref,
-      });
-      console.log("[SceneManager] WebGL renderer created (ready)");
-    }
+    // Create WebGPU renderer
+    const renderer = new WebGPURenderer({
+      antialias: this.options.antialias ?? true,
+      forceWebGL: false,
+    });
 
     renderer.sortObjects = false;
     renderer.setSize(this.width, this.height);
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
-
-    // Configure shadows (WebGL only for now)
-    if (this.rendererBackend === "webgl" && (this.options.shadows ?? true)) {
-      const webglRenderer = renderer as WebGLRenderer;
-      webglRenderer.shadowMap.enabled = true;
-      webglRenderer.shadowMap.autoUpdate = true;
-      webglRenderer.shadowMap.type = PCFSoftShadowMap;
-    }
 
     // Apply HDR configuration if enabled
     if (this.options.hdr ?? true) {
@@ -279,6 +209,10 @@ export class SceneManager {
       renderer.toneMapping = ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
     }
+
+    console.log(
+      "[SceneManager] WebGPU renderer created (requires async initialization)",
+    );
 
     return { scene, camera, renderer };
   }
@@ -291,18 +225,16 @@ export class SceneManager {
    */
   private async _initializeWebGPURenderer(): Promise<void> {
     try {
-      const webgpuRenderer = this.renderer as WebGPURenderer;
-      await webgpuRenderer.init();
+      await this.renderer.init();
       console.log("[SceneManager] WebGPU renderer initialized successfully");
 
-      // Ensure scene background is properly set for WebGPU
-      // WebGPU might need explicit clear color configuration
+      // Ensure scene background is properly set
       if (!this.scene.background) {
         this.scene.background = new THREE.Color(0x000011);
       }
 
       // WebGPU specific configuration
-      webgpuRenderer.setClearColor(0x000011, 1.0);
+      this.renderer.setClearColor(0x000011, 1.0);
 
       // Mark renderer as ready
       this.rendererReady = true;
@@ -313,9 +245,9 @@ export class SceneManager {
         renderer: {
           ...currentState.renderer,
           backend: {
-            preferred: "webgpu",
-            actual: "webgpu",
+            backend: "webgpu",
             webgpuAvailable: true,
+            initialized: true,
           },
         },
       });
@@ -323,9 +255,6 @@ export class SceneManager {
       console.error(
         "[SceneManager] WebGPU renderer initialization failed:",
         error,
-      );
-      console.warn(
-        "[SceneManager] Cannot fallback to WebGL at this point. Please reload the application.",
       );
       throw error;
     }
@@ -339,12 +268,12 @@ export class SceneManager {
   }
 
   /**
-   * Gets the renderer backend being used (webgl or webgpu)
+   * Gets the renderer backend being used (always 'webgpu')
    *
    * @returns The current renderer backend
    */
-  public getRendererBackend(): RendererBackend {
-    return this.rendererBackend;
+  public getRendererBackend(): "webgpu" {
+    return "webgpu";
   }
 
   /**
@@ -589,65 +518,12 @@ export class SceneManager {
     try {
       this.renderer.render(this.scene, this.camera);
     } catch (error) {
-      console.error("[SceneManager] Error during scene rendering:", error);
-
-      // If using WebGPU, scan for incompatible ShaderMaterials
-      if (this.rendererBackend === "webgpu") {
-        console.warn(
-          "[SceneManager] WebGPU detected - scanning for incompatible ShaderMaterials...",
-        );
-        this._debugIncompatibleMaterials();
-      }
-    }
-  }
-
-  /**
-   * Debug helper to find ShaderMaterial instances in a WebGPU scene
-   * @private
-   */
-  private _debugIncompatibleMaterials(): void {
-    const incompatibleObjects: Array<{
-      name: string;
-      type: string;
-      material: string;
-    }> = [];
-
-    this.scene.traverse((object) => {
-      if ("material" in object) {
-        const obj = object as THREE.Mesh;
-        const materials = Array.isArray(obj.material)
-          ? obj.material
-          : [obj.material];
-
-        materials.forEach((material, index) => {
-          if (material instanceof THREE.ShaderMaterial) {
-            incompatibleObjects.push({
-              name: object.name || "unnamed",
-              type: object.type,
-              material: `ShaderMaterial${Array.isArray(obj.material) ? `[${index}]` : ""}`,
-            });
-          }
-        });
-      }
-    });
-
-    if (incompatibleObjects.length > 0) {
       console.error(
-        "[SceneManager] Found",
-        incompatibleObjects.length,
-        "incompatible ShaderMaterial(s) in WebGPU scene:",
+        "[SceneManager] Error during WebGPU scene rendering:",
+        error,
       );
-      incompatibleObjects.forEach((obj, i) => {
-        console.error(
-          `  ${i + 1}. Object: "${obj.name}" (${obj.type}) - Material: ${obj.material}`,
-        );
-      });
       console.error(
-        "[SceneManager] These materials need to be migrated to MeshStandardNodeMaterial (TSL) for WebGPU compatibility.",
-      );
-    } else {
-      console.warn(
-        "[SceneManager] No ShaderMaterial instances found in scene. Error may be coming from another source.",
+        "[SceneManager] All materials must use NodeMaterial with TSL for WebGPU compatibility",
       );
     }
   }

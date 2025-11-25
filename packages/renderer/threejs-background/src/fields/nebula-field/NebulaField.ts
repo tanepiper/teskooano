@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { Field } from "../core/Field";
 import { NebulaFieldOptions } from "./types";
-import vertexShader from "./shaders/vertex.glsl";
-import fragmentShader from "./shaders/fragment.glsl";
+// import vertexShader from "./shaders/vertex.glsl";
+// import fragmentShader from "./shaders/fragment.glsl";
 
 /**
  * A `Field` that renders a procedural nebula using a custom GLSL shader.

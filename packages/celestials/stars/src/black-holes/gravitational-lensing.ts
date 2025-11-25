@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { GeometryUtilities } from "@teskooano/renderer-threejs-celestial";
 // Import shader code (assume raw-loader or similar is set up)
-import blurHorizontalShader from "./blur-horizontal.glsl?raw";
-import blurVerticalShader from "./blur-vertical.glsl?raw";
+// import blurHorizontalShader from "./blur-horizontal.glsl?raw";
+// import blurVerticalShader from "./blur-vertical.glsl?raw";
 /**
  * Material for gravitational lensing effect around massive objects
  * - Simulates the bending of light around massive objects like black holes

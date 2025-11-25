@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import type { PlanetAtmosphereProperties } from "@teskooano/data-types";
 
-import atmosphereVertexShaderSource from "../shaders/atmosphere.vertex.glsl";
-import atmosphereFragmentShaderSource from "../shaders/atmosphere.fragment.glsl";
+// import atmosphereVertexShaderSource from "../shaders/atmosphere.vertex.glsl";
+// import atmosphereFragmentShaderSource from "../shaders/atmosphere.fragment.glsl";
 import {
   LightArrayUtils,
   LightSourceData,
