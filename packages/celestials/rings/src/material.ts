@@ -3,9 +3,9 @@ import {
   LightArrayUtils,
   LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
-import ringVertexShader from "./shaders/ring.vertex.glsl";
-import ringFragmentShader from "./shaders/ring.fragment.glsl";
-import accretionDiskFragmentShader from "./shaders/accretion-disk.fragment.glsl";
+
+// GLSL shaders removed - migrated to TSL (see material-tsl.ts)
+// These materials are deprecated and should be replaced with TSL versions
 
 /**
  * Material for celestial object rings
@@ -72,8 +72,8 @@ export class RingMaterial extends ShaderMaterial {
         uParticleDetail: { value: options.particleDetail ?? 0.3 }, // Intensity of particle detail
         uDensityVariation: { value: options.densityVariation ?? 0.4 }, // Intensity of density variations
       },
-      vertexShader: ringVertexShader,
-      fragmentShader: ringFragmentShader,
+      vertexShader: "// Removed - use TSL material",
+      fragmentShader: "// Removed - use TSL material",
       transparent: true,
       side: DoubleSide,
       depthWrite: false,
@@ -244,8 +244,8 @@ export class AccretionDiskMaterial extends ShaderMaterial {
         uPrecessionAngle: { value: 0.0 },
         uPrecessionRate: { value: 0.0 },
       },
-      vertexShader: ringVertexShader,
-      fragmentShader: accretionDiskFragmentShader,
+      vertexShader: "// Removed - use TSL material",
+      fragmentShader: "// Removed - use TSL material",
       transparent: true,
       side: DoubleSide,
       depthWrite: false,

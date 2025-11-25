@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
-import classIIIFragmentShader from "../shaders/class-iii.fragment.glsl";
-import classIIIVertexShader from "../shaders/class-iii.vertex.glsl";
+// import classIIIFragmentShader from "../shaders/class-iii.fragment.glsl";
+// import classIIIVertexShader from "../shaders/class-iii.vertex.glsl";
 
 /**
  * Material for Class III gas giants (Cloudless / Azure)

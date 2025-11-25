@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
-import classIIFragmentShader from "../shaders/class-ii.fragment.glsl";
-import classIIVertexShader from "../shaders/class-ii.vertex.glsl";
+// import classIIFragmentShader from "../shaders/class-ii.fragment.glsl";
+// import classIIVertexShader from "../shaders/class-ii.vertex.glsl";
 
 const lodToOctaveMap = [2, 3, 5, 8];
 

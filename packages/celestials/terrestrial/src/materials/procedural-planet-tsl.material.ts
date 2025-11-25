@@ -1,15 +1,4 @@
-/**
- * TSL-based procedural planet material for WebGPU rendering.
- *
- * This material uses Three.js Shading Language (TSL) to create procedurally
- * generated terrain that works with both WebGL and WebGPU renderers.
- *
- * Based on: https://blog.maximeheckel.com/posts/field-guide-to-tsl-and-webgpu/
- *
- * @packageDocumentation
- */
-
-import * as THREE from "three";
+import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
 import { MeshStandardNodeMaterial } from "three/webgpu";
 import {
   uniform,
@@ -19,236 +8,318 @@ import {
   color,
   positionLocal,
   normalLocal,
+  normalWorld,
+  positionWorld,
+  cameraPosition,
   uv,
-  mix,
-  add,
+  Fn,
   mul,
+  add,
   sub,
   div,
   mod,
+  pow,
   sin,
   cos,
+  floor,
+  fract,
   dot,
-  normalize,
+  mix,
   smoothstep,
   clamp,
+  length,
+  normalize,
+  abs,
+  max,
+  min,
 } from "three/tsl";
-import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
+import * as THREE from "three";
+import type { LightSourceData } from "@teskooano/renderer-threejs-celestial";
 
 /**
- * WebGPU-compatible procedural planet material using TSL.
- *
- * Features:
- * - Multi-color terrain based on height thresholds
- * - Basic noise-based terrain generation
- * - Physically-based rendering (PBR) via MeshStandardNodeMaterial
- * - Automatic lighting integration
- *
- * Note: MeshStandardNodeMaterial is specifically designed for WebGPU
- * and uses TSL nodes for shader customization.
- *
- * @example
- * ```typescript
- * const material = new ProceduralPlanetNodeMaterial({
- *   color1: '#003366', // Deep ocean
- *   color2: '#4C9341', // Forest
- *   color3: '#836F27', // Mountain
- *   color4: '#A0A0A0', // Rock
- *   color5: '#FFFFFF', // Snow
- *   terrainAmplitude: 1.0,
- *   roughness: 0.7
- * });
- * ```
+ * TSL-based procedural planet material for WebGPU rendering.
+ * Implements multi-color terrain, procedural noise, and PBR lighting.
  */
-export class ProceduralPlanetNodeMaterial extends MeshStandardNodeMaterial {
-  /**
-   * Creates a new TSL-based procedural planet material.
-   *
-   * @param surfaceProps Surface properties defining colors, terrain, and material characteristics
-   */
+export class ProceduralPlanetTSLMaterial extends MeshStandardNodeMaterial {
+  // Store uniform references for updates
+  private timeUniform: ReturnType<typeof uniform>;
+  private cameraPositionUniform: ReturnType<typeof uniform>;
+
+  // Material parameters
+  private roughnessUniform: ReturnType<typeof uniform>;
+  private metalnessUniform: ReturnType<typeof uniform>;
+
   constructor(surfaceProps: ProceduralSurfaceProperties) {
     super();
 
-    console.log("[ProceduralPlanetNodeMaterial] Creating WebGPU TSL material");
-
-    // Parse colors with fallbacks
-    const parseColor = (
-      hex: string | undefined,
-      defaultColor: string,
-    ): THREE.Color => {
+    const parseColor = (hex: string | undefined, defaultColor: string): THREE.Color => {
       try {
         return new THREE.Color(hex ?? defaultColor);
       } catch (e) {
-        console.warn(
-          `Error parsing color ${hex}, using default ${defaultColor}`,
-          e,
-        );
+        console.warn(`Error parsing color ${hex}, using default ${defaultColor}`, e);
         return new THREE.Color(defaultColor);
       }
     };
 
-    // Create TSL uniform nodes for colors
-    // Note: uniform() takes raw JavaScript values, not wrapped in color()
-    const color1Node = uniform(parseColor(surfaceProps.color1, "#5179B5"));
-    const color2Node = uniform(parseColor(surfaceProps.color2, "#4C9341"));
-    const color3Node = uniform(parseColor(surfaceProps.color3, "#836F27"));
-    const color4Node = uniform(parseColor(surfaceProps.color4, "#A0A0A0"));
-    const color5Node = uniform(parseColor(surfaceProps.color5, "#FFFFFF"));
+    // Create uniform nodes
+    const persistence = uniform(float(surfaceProps.persistence ?? 0.5));
+    const lacunarity = uniform(float(surfaceProps.lacunarity ?? 2.0));
+    const octaves = uniform(float(surfaceProps.octaves ?? 6));
+    const undulation = uniform(float(surfaceProps.undulation ?? 0.1));
 
-    // Create TSL uniform nodes for height thresholds
-    // Note: uniform() takes raw numbers, not wrapped in float()
-    const height1Node = uniform(surfaceProps.height1 ?? 0.0);
-    const height2Node = uniform(surfaceProps.height2 ?? 0.2);
-    const height3Node = uniform(surfaceProps.height3 ?? 0.4);
-    const height4Node = uniform(surfaceProps.height4 ?? 0.6);
-    const height5Node = uniform(surfaceProps.height5 ?? 0.8);
+    // Color uniforms
+    const color1 = uniform(color(parseColor(surfaceProps.color1, "#5179B5")));
+    const color2 = uniform(color(parseColor(surfaceProps.color2, "#4C9341")));
+    const color3 = uniform(color(parseColor(surfaceProps.color3, "#836F27")));
+    const color4 = uniform(color(parseColor(surfaceProps.color4, "#A0A0A0")));
+    const color5 = uniform(color(parseColor(surfaceProps.color5, "#FFFFFF")));
 
-    // Create TSL uniform nodes for terrain parameters
-    const terrainAmplitude = uniform(surfaceProps.terrainAmplitude ?? 1.0);
-    const terrainSharpness = uniform(surfaceProps.terrainSharpness ?? 1.0);
-    const terrainOffset = uniform(surfaceProps.terrainOffset ?? 0.0);
-    const octaves = uniform(surfaceProps.octaves ?? 6);
-    const persistence = uniform(surfaceProps.persistence ?? 0.5);
-    const lacunarity = uniform(surfaceProps.lacunarity ?? 2.0);
+    // Height thresholds
+    const height1 = uniform(float(surfaceProps.height1 ?? 0.0));
+    const height2 = uniform(float(surfaceProps.height2 ?? 0.2));
+    const height3 = uniform(float(surfaceProps.height3 ?? 0.4));
+    const height4 = uniform(float(surfaceProps.height4 ?? 0.6));
+    const height5 = uniform(float(surfaceProps.height5 ?? 0.8));
 
-    // Create a simple noise-based terrain height function
-    // This is a basic implementation - we'll enhance it with proper noise functions later
-    const terrainHeightNode = this.createTerrainNode(
+    // Terrain parameters
+    const terrainType = uniform(float(surfaceProps.terrainType ?? 2));
+    const terrainAmplitude = uniform(float(surfaceProps.terrainAmplitude ?? 1.0));
+    const terrainSharpness = uniform(float(surfaceProps.terrainSharpness ?? 1.0));
+    const terrainOffset = uniform(float(surfaceProps.terrainOffset ?? 0.0));
+
+    // Time and camera
+    this.timeUniform = uniform(float(0.0));
+    this.cameraPositionUniform = uniform(vec3(0, 0, 0));
+
+    // Material properties
+    const bumpScale = uniform(float(surfaceProps.bumpScale ?? 1.0));
+    this.roughnessUniform = uniform(float(surfaceProps.roughness ?? 0.5));
+    this.metalnessUniform = uniform(float(0.0)); // Planets are not metallic
+
+    // ======================
+    // NOISE FUNCTIONS (TSL)
+    // ======================
+
+    /**
+     * Simple hash function for noise generation
+     */
+    const hash = Fn(([p]: [any]) => {
+      const h = dot(p, vec3(127.1, 311.7, 74.7));
+      return fract(mul(sin(h), float(43758.5453123)));
+    }).setLayout({
+      name: "hash",
+      type: "float",
+      inputs: [{ name: "p", type: "vec3" }],
+    });
+
+    /**
+     * 3D noise function
+     */
+    const noise3D = Fn(([p]: [any]) => {
+      const i = floor(p);
+      const f = fract(p);
+
+      // Cubic interpolation for smooth noise
+      const u = mul(mul(f, f), sub(float(3.0), mul(float(2.0), f)));
+
+      // Sample corners and interpolate
+      return mix(
+        mix(
+          mix(hash(add(i, vec3(0, 0, 0))), hash(add(i, vec3(1, 0, 0))), u.x),
+          mix(hash(add(i, vec3(0, 1, 0))), hash(add(i, vec3(1, 1, 0))), u.x),
+          u.y,
+        ),
+        mix(
+          mix(hash(add(i, vec3(0, 0, 1))), hash(add(i, vec3(1, 0, 1))), u.x),
+          mix(hash(add(i, vec3(0, 1, 1))), hash(add(i, vec3(1, 1, 1))), u.x),
+          u.y,
+        ),
+        u.z,
+      );
+    }).setLayout({
+      name: "noise3D",
+      type: "float",
+      inputs: [{ name: "p", type: "vec3" }],
+    });
+
+    /**
+     * Fractional Brownian Motion (FBM) for terrain
+     */
+    const fbm = Fn(([p, octavesParam, persistenceParam, lacunarityParam]: [any, any, any, any]) => {
+      let value = float(0.0);
+      let amplitude = float(1.0);
+      let frequency = float(1.0);
+      const octaveCount = 6; // Fixed for TSL loop unrolling
+
+      // Manually unroll octaves for WebGPU compatibility
+      for (let i = 0; i < octaveCount; i++) {
+        value = add(value, mul(amplitude, noise3D(mul(p, frequency))));
+        amplitude = mul(amplitude, persistenceParam);
+        frequency = mul(frequency, lacunarityParam);
+      }
+
+      return value;
+    }).setLayout({
+      name: "fbm",
+      type: "float",
+      inputs: [
+        { name: "p", type: "vec3" },
+        { name: "octaves", type: "float" },
+        { name: "persistence", type: "float" },
+        { name: "lacunarity", type: "float" },
+      ],
+    });
+
+    /**
+     * Terrain generation with different types
+     */
+    const generateTerrain = Fn(
+      ([position, typeParam, amplitudeParam, sharpnessParam, offsetParam]: [any, any, any, any, any]) => {
+        const noiseValue = fbm(position, octaves, persistence, lacunarity);
+
+        // Apply terrain type modifications
+        // Type 1: Simple noise
+        // Type 2: Sharp peaks (ridged)
+        // Type 3: Sharp valleys
+
+        let height = noiseValue;
+
+        // Sharp peaks (ridged)
+        const ridged = sub(float(1.0), abs(mul(noiseValue, float(2.0)).sub(float(1.0))));
+        const sharpPeaks = pow(ridged, sharpnessParam);
+
+        // Sharp valleys
+        const valleys = pow(noiseValue, sharpnessParam);
+
+        // Mix based on terrain type (simplified for TSL)
+        // We use smoothstep to blend between types
+        const isSharpPeaks = smoothstep(float(1.5), float(2.5), typeParam);
+        const isValleys = smoothstep(float(2.5), float(3.5), typeParam);
+
+        height = mix(height, sharpPeaks, isSharpPeaks);
+        height = mix(height, valleys, isValleys);
+
+        // Apply amplitude and offset
+        return add(mul(height, amplitudeParam), offsetParam);
+      },
+    ).setLayout({
+      name: "generateTerrain",
+      type: "float",
+      inputs: [
+        { name: "position", type: "vec3" },
+        { name: "type", type: "float" },
+        { name: "amplitude", type: "float" },
+        { name: "sharpness", type: "float" },
+        { name: "offset", type: "float" },
+      ],
+    });
+
+    /**
+     * Multi-color blending based on height
+     */
+    const getTerrainColor = Fn(([heightValue]: [any]) => {
+      // Smooth transitions between colors
+      const t1 = smoothstep(height1, height2, heightValue);
+      const t2 = smoothstep(height2, height3, heightValue);
+      const t3 = smoothstep(height3, height4, heightValue);
+      const t4 = smoothstep(height4, height5, heightValue);
+
+      // Blend colors
+      let finalColor = color1;
+      finalColor = mix(finalColor, color2, t1);
+      finalColor = mix(finalColor, color3, t2);
+      finalColor = mix(finalColor, color4, t3);
+      finalColor = mix(finalColor, color5, t4);
+
+      return finalColor;
+    }).setLayout({
+      name: "getTerrainColor",
+      type: "vec3",
+      inputs: [{ name: "height", type: "float" }],
+    });
+
+    // ======================
+    // MAIN SHADER LOGIC
+    // ======================
+
+    // Use normalized object-space position for seamless noise
+    const objectPos = normalize(positionLocal);
+
+    // Generate terrain height
+    const terrainHeight = generateTerrain(objectPos, terrainType, terrainAmplitude, terrainSharpness, terrainOffset);
+
+    // Get terrain color based on height
+    const terrainColor = getTerrainColor(terrainHeight);
+
+    // Apply undulation for subtle variation
+    const undulationFactor = add(float(1.0), mul(sin(mul(terrainHeight, float(10.0))), undulation));
+    const finalColor = mul(terrainColor, undulationFactor);
+
+    // Assign nodes to material
+    this.colorNode = finalColor;
+    this.roughnessNode = this.roughnessUniform;
+    this.metalnessNode = this.metalnessUniform;
+
+    // Normal perturbation for bump mapping
+    // Calculate gradient for normal mapping
+    const epsilon = float(0.001);
+    const heightX = generateTerrain(
+      add(objectPos, vec3(epsilon, 0, 0)),
+      terrainType,
       terrainAmplitude,
       terrainSharpness,
       terrainOffset,
-      octaves,
-      persistence,
-      lacunarity,
+    );
+    const heightY = generateTerrain(
+      add(objectPos, vec3(0, epsilon, 0)),
+      terrainType,
+      terrainAmplitude,
+      terrainSharpness,
+      terrainOffset,
+    );
+    const heightZ = generateTerrain(
+      add(objectPos, vec3(0, 0, epsilon)),
+      terrainType,
+      terrainAmplitude,
+      terrainSharpness,
+      terrainOffset,
     );
 
-    // Create color mixing based on terrain height
-    // Uses smoothstep for smooth transitions between color bands
-    const finalColorNode = this.createColorMixingNode(
-      terrainHeightNode,
-      color1Node,
-      color2Node,
-      color3Node,
-      color4Node,
-      color5Node,
-      height1Node,
-      height2Node,
-      height3Node,
-      height4Node,
-      height5Node,
+    const gradient = vec3(
+      sub(heightX, terrainHeight),
+      sub(heightY, terrainHeight),
+      sub(heightZ, terrainHeight),
     );
 
-    // Assign nodes to material properties
-    // MeshStandardNodeMaterial handles lighting automatically
-    this.colorNode = finalColorNode;
-    this.roughnessNode = uniform(surfaceProps.roughness ?? 0.7);
-    this.metalnessNode = uniform(0.0); // Terrestrial planets are not metallic
+    // Perturb normal based on gradient and bump scale
+    const perturbedNormal = normalize(sub(normalLocal, mul(gradient, bumpScale)));
+    this.normalNode = perturbedNormal;
 
-    // Optional: Add bump mapping based on terrain height
-    // this.normalNode = this.createBumpNode(terrainHeightNode, surfaceProps.bumpScale ?? 1.0);
+    // Configure material properties
+    this.depthTest = true;
+    this.depthWrite = true;
+    this.transparent = false;
+
+    console.log("[ProceduralPlanetTSLMaterial] Created WebGPU TSL material");
   }
 
   /**
-   * Creates a TSL node for terrain height generation.
-   *
-   * Uses a simplified noise-like function based on position.
-   * TODO: Replace with proper simplex/perlin noise implementation.
-   *
-   * @param amplitude Terrain height amplitude
-   * @param sharpness Terrain feature sharpness
-   * @param offset Terrain height offset
-   * @param octaves Number of noise octaves
-   * @param persistence Octave amplitude falloff
-   * @param lacunarity Octave frequency multiplier
-   * @returns TSL node representing terrain height (0.0 to 1.0)
+   * Update material uniforms (called each frame by renderer)
    */
-  private createTerrainNode(
-    amplitude: any,
-    sharpness: any,
-    offset: any,
-    octaves: any,
-    persistence: any,
-    lacunarity: any,
-  ) {
-    // Get the local position of the vertex (on the sphere surface)
-    const pos = positionLocal;
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: Map<string, LightSourceData>,
+    camera?: THREE.PerspectiveCamera,
+    shadowCasters?: { position: THREE.Vector3; radius: number }[],
+  ): void {
+    this.timeUniform.value = time;
 
-    // Create simple pseudo-noise using trigonometric functions
-    // This is a placeholder - proper noise functions will be added later
-    const scaledPos = mul(pos, float(5.0));
+    if (camera) {
+      this.cameraPositionUniform.value = camera.position;
+    }
 
-    // Use sin/cos to create pseudo-random patterns
-    const a = sin(mul(scaledPos.x, float(10.0)));
-    const b = cos(mul(scaledPos.y, float(12.0)));
-    const c = sin(mul(scaledPos.z, float(8.0)));
-
-    // Combine for pseudo-noise effect
-    const noise = mul(add(add(a, b), c), float(0.333));
-
-    // Normalize to 0-1 range
-    const baseNoise = add(mul(noise, float(0.5)), float(0.5));
-
-    // Apply amplitude and offset
-    const heightValue = add(mul(baseNoise, amplitude), offset);
-
-    // Clamp to 0-1 range
-    return clamp(heightValue, float(0.0), float(1.0));
-  }
-
-  /**
-   * Creates a TSL node for mixing colors based on terrain height.
-   *
-   * Uses smoothstep for smooth transitions between color bands,
-   * creating realistic terrain coloration.
-   *
-   * @param height Terrain height node (0.0 to 1.0)
-   * @param color1-5 Color nodes for different height bands
-   * @param height1-5 Height threshold nodes
-   * @returns TSL node representing final surface color
-   */
-  private createColorMixingNode(
-    height: any,
-    color1: any,
-    color2: any,
-    color3: any,
-    color4: any,
-    color5: any,
-    height1: any,
-    height2: any,
-    height3: any,
-    height4: any,
-    height5: any,
-  ) {
-    // Create smooth transitions between color bands
-    // This creates more realistic terrain than hard cutoffs
-
-    // Calculate mix factors for each color band
-    const mix1to2 = smoothstep(height1, height2, height);
-    const mix2to3 = smoothstep(height2, height3, height);
-    const mix3to4 = smoothstep(height3, height4, height);
-    const mix4to5 = smoothstep(height4, height5, height);
-
-    // Mix colors progressively
-    const color1to2 = mix(color1, color2, mix1to2);
-    const color2to3 = mix(color1to2, color3, mix2to3);
-    const color3to4 = mix(color2to3, color4, mix3to4);
-    const finalColor = mix(color3to4, color5, mix4to5);
-
-    return finalColor;
-  }
-
-  /**
-   * Creates a TSL node for bump mapping based on terrain height.
-   *
-   * TODO: Implement proper normal perturbation for bump mapping.
-   *
-   * @param height Terrain height node
-   * @param bumpScale Scale factor for bump effect
-   * @returns TSL node representing perturbed normal
-   */
-  private createBumpNode(height: any, bumpScale: number) {
-    // TODO: Implement bump mapping
-    // This requires calculating height derivatives and perturbing the normal
-    return normalLocal;
+    // Note: MeshStandardNodeMaterial handles lighting automatically
+    // No need for manual light source updates like in GLSL
   }
 }

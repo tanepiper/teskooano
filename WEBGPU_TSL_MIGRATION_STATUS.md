@@ -1,19 +1,30 @@
-# WebGPU & TSL Migration Status
+# WebGPU-Only TSL Migration Status
 
 ## Overview
 
-This document tracks the migration of Teskooano's rendering system to support WebGPU with TSL (Three.js Shading Language), while maintaining WebGL fallback support.
+This document tracks the **complete migration** of Teskooano's rendering system from WebGL/GLSL to **WebGPU-only** with TSL (Three.js Shading Language).
 
-**Goal**: **WebGPU as DEFAULT**, WebGL as fallback
+**Goal**: **Full WebGPU Migration** - Remove WebGL entirely
 
 **Philosophy**:
 
-- WebGPU is the modern, performant default
-- WebGL is the fallback for older browsers/devices
-- All defaults throughout the codebase prioritize WebGPU
-- Fallback to WebGL only when WebGPU is unavailable
+- WebGPU is the ONLY supported renderer
+- TSL (Three.js Shading Language) for all shaders
+- No WebGL fallback - requires modern browsers
+- Maximum performance and modern GPU features
 
-**Status**: ✅ Infrastructure complete, ✅ Terrestrial materials migrated, ✅ Gas giant materials migrated, ✅ Star materials migrated, ✅ Asteroid materials migrated, ✅ Atmosphere materials migrated, ✅ Satellite materials migrated, ✅ Ring materials migrated, ✅ WebGPU rendering active
+**Status**: 🔄 **Core infrastructure migrated**, systematic shader migration in progress
+
+## Browser Requirements
+
+| Browser | Minimum Version | Status |
+|---------|----------------|--------|
+| Chrome | 113+ | ✅ Supported |
+| Edge | 113+ | ✅ Supported |
+| Safari | 18+ (iOS/macOS) | ✅ Supported |
+| Firefox | 127+ | ✅ Supported |
+
+**Note**: WebGPU is **required**. The application will not run on older browsers.
 
 ## Completed ✅
 

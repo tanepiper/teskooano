@@ -5,8 +5,8 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 
 // Import shaders from external files
-import nucleusVertexShader from "./shaders/nucleus.vertex.glsl?raw";
-import nucleusFragmentShader from "./shaders/nucleus.fragment.glsl?raw";
+// import nucleusVertexShader from "./shaders/nucleus.vertex.glsl?raw";
+// import nucleusFragmentShader from "./shaders/nucleus.fragment.glsl?raw";
 
 const MAX_LIGHTS = 4;
 const MAX_COLORS = 4;

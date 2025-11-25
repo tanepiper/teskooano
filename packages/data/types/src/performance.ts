@@ -34,24 +34,22 @@ export interface SceneManagerOptions {
 export type DeviceTier = "low" | "medium" | "high" | "cosmic";
 
 /**
- * Renderer backend type - WebGPU preferred with WebGL fallback.
- * WebGPU provides better performance and compatibility with modern GPUs,
- * while WebGL ensures compatibility with older browsers.
+ * Renderer backend type - WebGPU only.
+ * The codebase has fully migrated to WebGPU using Three.js TSL (Three.js Shading Language).
  */
-export type RendererBackend = "webgpu" | "webgl";
+export type RendererBackend = "webgpu";
 
 /**
  * Renderer backend capabilities and selection.
- * Tracks both the preferred backend and the actually selected backend
- * after capability detection.
+ * Tracks WebGPU availability and initialization status.
  */
 export interface RendererBackendConfig {
-  /** Preferred renderer backend */
-  preferred: RendererBackend;
-  /** Actually selected backend (after capability detection) */
-  actual: RendererBackend;
+  /** Renderer backend (always 'webgpu') */
+  backend: RendererBackend;
   /** Whether WebGPU is supported by the browser */
   webgpuAvailable: boolean;
+  /** Whether WebGPU renderer is initialized and ready */
+  initialized: boolean;
 }
 
 /**

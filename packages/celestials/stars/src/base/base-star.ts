@@ -10,10 +10,10 @@ import {
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODLevel } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
-import enhancedStarVertexShader from "../shaders/enhanced-star.vertex.glsl?raw";
-import enhancedStarFragmentShader from "../shaders/enhanced-star.fragment.glsl?raw";
-import coronaVertexShader from "../shaders/corona.vertex.glsl?raw";
-import coronaFragmentShader from "../shaders/corona.fragment.glsl?raw";
+// import enhancedStarVertexShader from "../shaders/enhanced-star.vertex.glsl?raw";
+// import enhancedStarFragmentShader from "../shaders/enhanced-star.fragment.glsl?raw";
+// import coronaVertexShader from "../shaders/corona.vertex.glsl?raw";
+// import coronaFragmentShader from "../shaders/corona.fragment.glsl?raw";
 import { utils } from "@teskooano/core-math";
 
 /**

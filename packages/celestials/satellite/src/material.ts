@@ -5,8 +5,8 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 
 // Import shader source code
-import satelliteVertexShader from "./shaders/satellite.vertex.glsl";
-import satelliteFragmentShader from "./shaders/satellite.fragment.glsl";
+// import satelliteVertexShader from "./shaders/satellite.vertex.glsl";
+// import satelliteFragmentShader from "./shaders/satellite.fragment.glsl";
 
 export interface SatelliteMaterialOptions {
   /** Base color multiplier for the satellite */

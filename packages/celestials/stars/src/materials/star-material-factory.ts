@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { RendererBackend } from "@teskooano/data-types";
 import { EnhancedStarMaterial } from "./enhanced-star.material";
-import { EnhancedStarNodeMaterial } from "./enhanced-star-tsl.material";
+import { EnhancedStarTSLMaterial } from "./enhanced-star-tsl.material";
 
 /**
  * Material Factory Options for Star Materials
@@ -31,7 +31,7 @@ export class StarMaterialFactory {
 
     if (rendererBackend === "webgpu") {
       console.log("[StarMaterialFactory] Creating WebGPU material (TSL)");
-      return new EnhancedStarNodeMaterial(object, color, options);
+      return new EnhancedStarTSLMaterial(object, color, options);
     } else {
       console.log("[StarMaterialFactory] Creating WebGL material (GLSL)");
       return new EnhancedStarMaterial(object, color, options);
@@ -42,7 +42,7 @@ export class StarMaterialFactory {
    * Check if a material is a WebGPU TSL material
    */
   static isWebGPUMaterial(material: THREE.Material): boolean {
-    return material instanceof EnhancedStarNodeMaterial;
+    return material instanceof EnhancedStarTSLMaterial;
   }
 
   /**
