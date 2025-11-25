@@ -2,16 +2,16 @@ import * as THREE from "three";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
 // Import shaders from external files
-import nucleusVertexShader from "./shaders/nucleus.vertex.glsl?raw";
-import nucleusFragmentShader from "./shaders/nucleus.fragment.glsl?raw";
-import comaVertexShader from "./shaders/coma.vertex.glsl?raw";
-import comaFragmentShader from "./shaders/coma.fragment.glsl?raw";
-import particleVertexShader from "./shaders/particle.vertex.glsl?raw";
-import particleFragmentShader from "./shaders/particle.fragment.glsl?raw";
-import jetVertexShader from "./shaders/jet.vertex.glsl?raw";
-import jetFragmentShader from "./shaders/jet.fragment.glsl?raw";
-import simplifiedTailVertexShader from "./shaders/simplified-tail.vertex.glsl?raw";
-import simplifiedTailFragmentShader from "./shaders/simplified-tail.fragment.glsl?raw";
+// import nucleusVertexShader from "./shaders/nucleus.vertex.glsl?raw";
+// import nucleusFragmentShader from "./shaders/nucleus.fragment.glsl?raw";
+// import comaVertexShader from "./shaders/coma.vertex.glsl?raw";
+// import comaFragmentShader from "./shaders/coma.fragment.glsl?raw";
+// import particleVertexShader from "./shaders/particle.vertex.glsl?raw";
+// import particleFragmentShader from "./shaders/particle.fragment.glsl?raw";
+// import jetVertexShader from "./shaders/jet.vertex.glsl?raw";
+// import jetFragmentShader from "./shaders/jet.fragment.glsl?raw";
+// import simplifiedTailVertexShader from "./shaders/simplified-tail.vertex.glsl?raw";
+// import simplifiedTailFragmentShader from "./shaders/simplified-tail.fragment.glsl?raw";
 
 const MAX_LIGHTS = 4;
 const MAX_COLORS = 4;

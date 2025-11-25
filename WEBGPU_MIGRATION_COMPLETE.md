@@ -32,9 +32,11 @@ All rendering materials have been converted from GLSL `ShaderMaterial` to WebGPU
 ### Code Cleanup ✅
 
 - **55 GLSL files deleted** from the codebase
+- **43 GLSL import statements** commented out or removed
 - **All `shims-glsl.d.ts` removed**
 - **Import chains simplified** (removed `rendererBackend` parameters)
 - **Old factories deleted** (MaterialFactory, atmosphere-factory)
+- **Zero linter errors** from missing GLSL files
 - **Terrestrial package fully cleaned** of WebGL references
 
 ## New TSL Materials API

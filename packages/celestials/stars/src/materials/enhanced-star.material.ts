@@ -4,8 +4,8 @@ import type {
   StarProperties,
 } from "@teskooano/data-types";
 import type { LightSourcesMap } from "@teskooano/renderer-threejs-celestial";
-import enhancedStarVertexShader from "../shaders/enhanced-star.vertex.glsl?raw";
-import enhancedStarFragmentShader from "../shaders/enhanced-star.fragment.glsl?raw";
+// import enhancedStarVertexShader from "../shaders/enhanced-star.vertex.glsl?raw";
+// import enhancedStarFragmentShader from "../shaders/enhanced-star.fragment.glsl?raw";
 
 /**
  * Enhanced Star Material with simple 3-color plasma effects
