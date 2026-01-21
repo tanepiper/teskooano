@@ -20,15 +20,15 @@ export class RealisticStarMaterial extends THREE.ShaderMaterial {
   ) {
     const starProps = object.properties as StarProperties;
 
-    // Map existing star properties to the new shader's colors
-    // Default to the example's colors if not specified
+    // Use hotColor/coolColor if available, otherwise derive from the provided color
+    // Core (hot) is brighter, outer (cool) is darker/redder
     const coreColor = starProps?.hotColor
       ? new THREE.Color(starProps.hotColor)
-      : new THREE.Color(0xdebe7c); // Example default: #debe7c
+      : color.clone().multiplyScalar(1.2); // Brighter core
 
     const outerColor = starProps?.coolColor
       ? new THREE.Color(starProps.coolColor)
-      : new THREE.Color(0x570000); // Example default: #570000
+      : color.clone().multiplyScalar(0.3).lerp(new THREE.Color(0xff0000), 0.2); // Darker, slightly redder outer
 
     super({
       vertexShader: realisticStarVertexShader,

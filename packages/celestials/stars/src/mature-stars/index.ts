@@ -5,7 +5,7 @@
 export { SubgiantMaterial, SubgiantRenderer } from "./subgiant/subgiant";
 
 // Red Giant Phase
-export { RedGiantMaterial, RedGiantRenderer } from "./red-giant/red-giant";
+export { RedGiantRenderer } from "./red-giant/red-giant";
 
 // Horizontal Branch Phase
 export {
@@ -20,14 +20,8 @@ export { AGBMaterial, AGBRenderer } from "./asymptotic-giant-branch/agb";
 export { PostAGBMaterial, PostAGBRenderer } from "./post-agb/post-agb";
 
 // Supergiant Phase
-export {
-  SupergiantMaterial,
-  SupergiantRenderer,
-} from "./supergiant/supergiant";
+export { SupergiantRenderer } from "./supergiant/supergiant";
 
 // Legacy imports (moved from post-main-sequence)
-export {
-  HypergiantMaterial,
-  HypergiantRenderer,
-} from "./supergiant/hypergiant";
+export { HypergiantRenderer } from "./supergiant/hypergiant";
 export { WolfRayetMaterial, WolfRayetRenderer } from "./supergiant/wolf-rayet";

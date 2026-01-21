@@ -208,7 +208,7 @@ export abstract class BaseStarRenderer<
 
     const billboardLOD = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,
-      size: 0.05,
+      size: 0.15, // Increased from 0.05 for better visibility
       color: starColor,
       albedo: 1.0, // Stars are emissive
     });

@@ -39,22 +39,26 @@ export const sun: CelestialObject<StarProperties> = {
     spectralClass: "G2V",
     luminosity: 1.0,
     color: "#FFF5E1", // Slightly warmer solar white
-    hotColor: "#FFFF99", // Bright yellow-white for hot plasma zones
+    hotColor: "#FFEEAA", // Bright warm yellow for volumetric core
     surfaceColor: "#FFF5E1", // Normal solar surface color
-    coolColor: "#8d5609", // Orange-brown for sunspots and cool areas
+    coolColor: "#FF6600", // Orange-red for outer volumetric atmosphere
     stellarType: StellarType.MAIN_SEQUENCE,
     // Add required stellar properties for physics-based calculations
     age_years: 4.6e9, // 4.6 billion years (current solar age)
     metallicity: 0.0, // Solar metallicity by definition ([Fe/H] = 0.0)
 
-    // Enhanced material parameters for realistic solar appearance
+    // Volumetric shader parameters for realistic solar appearance
     materialParams: {
-      // Plasma noise parameters for simple effects
-      noiseScale: 0.033,
+      // Volumetric rendering parameters
+      density: 2.6, // Overall density of the volumetric fog
+      swirlSpeed: 0.85, // Speed of the turbulence animation
+      noiseScale: 1.6, // Scale of the noise pattern
+      brightness: 1.75, // Overall brightness multiplier
+      // Note: edgeSoftness and edgeNoise are calculated in material based on radius
+
+      // Legacy params for compatibility
       noiseIntensity: 0.1,
       plasmaTurbulence: 1.0,
-
-      // Uniform lighting
       lightingIntensity: 1.0,
     },
 
