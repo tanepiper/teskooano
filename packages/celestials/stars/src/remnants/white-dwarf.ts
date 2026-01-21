@@ -95,114 +95,23 @@ export class WhiteDwarfRenderer extends BaseStarRenderer<RealisticStarMaterial> 
   ): void {
     const color = this.getSubtypeColor(this.subtype);
 
-    // EXTREME intensity - white dwarfs are incredibly bright despite small size
-    // Using massive values for that Michael Bay over-the-top effect
-    const mainIntensity = 50000000; // 50 million
-    const ringIntensity = 30000000; // 30 million
-    const verticalIntensity = 25000000; // 25 million
+    // High intensity single light - white dwarfs are very bright despite small size
+    // Distance limit prevents overpowering other stars in multi-star systems
+    const maxLightDistance = object.radius * 1000; // Limit light reach
+    const mainIntensity = 8000000; // 8 million - single concentrated light
 
-    // Main intense point light at the center - NO DECAY for maximum brightness
-    const mainLight = new THREE.PointLight(color, mainIntensity, 0, 0);
+    // Single intense point light at the center with shadow casting
+    // decay=2.0 for physically accurate inverse-square falloff
+    const mainLight = new THREE.PointLight(
+      color,
+      mainIntensity,
+      maxLightDistance,
+      2.0,
+    );
     mainLight.name = `${object.id}-main-light`;
-    mainLight.castShadow = false;
+    mainLight.castShadow = true;
     group.add(mainLight);
     this.intenseLights.push(mainLight);
-
-    // Additional lights for dramatic Michael Bay-style omnidirectional glow
-    const additionalLightCount = 8; // More lights for more intensity
-    const lightDistance = object.radius * 3;
-
-    for (let i = 0; i < additionalLightCount; i++) {
-      const angle = (i / additionalLightCount) * Math.PI * 2;
-      const x = Math.cos(angle) * lightDistance;
-      const z = Math.sin(angle) * lightDistance;
-
-      // Minimal decay for maximum reach
-      const light = new THREE.PointLight(color, ringIntensity, 0, 0.5);
-      light.position.set(x, 0, z);
-      light.name = `${object.id}-intense-light-${i}`;
-      light.castShadow = false;
-      group.add(light);
-      this.intenseLights.push(light);
-    }
-
-    // Top and bottom lights for complete coverage - MAXIMUM INTENSITY
-    const verticalLight1 = new THREE.PointLight(
-      color,
-      verticalIntensity,
-      0,
-      0.5,
-    );
-    verticalLight1.position.set(0, lightDistance * 2, 0);
-    verticalLight1.name = `${object.id}-top-light`;
-    verticalLight1.castShadow = false;
-    group.add(verticalLight1);
-    this.intenseLights.push(verticalLight1);
-
-    const verticalLight2 = new THREE.PointLight(
-      color,
-      verticalIntensity,
-      0,
-      0.5,
-    );
-    verticalLight2.position.set(0, -lightDistance * 2, 0);
-    verticalLight2.name = `${object.id}-bottom-light`;
-    verticalLight2.castShadow = false;
-    group.add(verticalLight2);
-    this.intenseLights.push(verticalLight2);
-
-    // Add diagonal lights for even MORE intensity coverage
-    const diagonalIntensity = 20000000; // 20 million
-    const diagonalDistance = lightDistance * 1.5;
-
-    // Four diagonal lights forming a 3D cross pattern
-    const diagonalLight1 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.5,
-    );
-    diagonalLight1.position.set(diagonalDistance, diagonalDistance, 0);
-    diagonalLight1.name = `${object.id}-diagonal-light-1`;
-    diagonalLight1.castShadow = false;
-    group.add(diagonalLight1);
-    this.intenseLights.push(diagonalLight1);
-
-    const diagonalLight2 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.5,
-    );
-    diagonalLight2.position.set(-diagonalDistance, diagonalDistance, 0);
-    diagonalLight2.name = `${object.id}-diagonal-light-2`;
-    diagonalLight2.castShadow = false;
-    group.add(diagonalLight2);
-    this.intenseLights.push(diagonalLight2);
-
-    const diagonalLight3 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.5,
-    );
-    diagonalLight3.position.set(diagonalDistance, -diagonalDistance, 0);
-    diagonalLight3.name = `${object.id}-diagonal-light-3`;
-    diagonalLight3.castShadow = false;
-    group.add(diagonalLight3);
-    this.intenseLights.push(diagonalLight3);
-
-    const diagonalLight4 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.5,
-    );
-    diagonalLight4.position.set(-diagonalDistance, -diagonalDistance, 0);
-    diagonalLight4.name = `${object.id}-diagonal-light-4`;
-    diagonalLight4.castShadow = false;
-    group.add(diagonalLight4);
-    this.intenseLights.push(diagonalLight4);
   }
 
   protected getCustomLODs(

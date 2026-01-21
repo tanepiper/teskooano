@@ -95,118 +95,27 @@ export class NeutronStarRenderer extends BaseStarRenderer<RealisticStarMaterial>
   ): void {
     const color = this.getSubtypeColor(this.subtype);
 
-    // NUCLEAR intensity - neutron stars are incredibly bright and energetic
-    const mainIntensity = 100000000; // 100 million (double white dwarf)
-    const ringIntensity = 60000000; // 60 million
-    const verticalIntensity = 50000000; // 50 million
-    const diagonalIntensity = 40000000; // 40 million
+    // High intensity single light - neutron stars are very bright and energetic
+    // Distance limit prevents overpowering other stars in multi-star systems
+    const maxLightDistance = object.radius * 800; // Limit light reach
+    const mainIntensity = 12000000; // 12 million - single concentrated light
 
-    // Main ultra-intense point light at the center - NO DECAY
-    const mainLight = new THREE.PointLight(color, mainIntensity, 0, 0);
+    // Single intense point light at the center with shadow casting
+    // decay=2.0 for physically accurate inverse-square falloff
+    const mainLight = new THREE.PointLight(
+      color,
+      mainIntensity,
+      maxLightDistance,
+      2.0,
+    );
     mainLight.name = `${object.id}-main-light`;
-    mainLight.castShadow = false;
+    mainLight.castShadow = true;
     group.add(mainLight);
     this.intenseLights.push(mainLight);
 
-    // Ring of lights for omnidirectional coverage
-    const additionalLightCount = 12; // Even more lights
-    const lightDistance = object.radius * 4;
-
-    for (let i = 0; i < additionalLightCount; i++) {
-      const angle = (i / additionalLightCount) * Math.PI * 2;
-      const x = Math.cos(angle) * lightDistance;
-      const z = Math.sin(angle) * lightDistance;
-
-      const light = new THREE.PointLight(color, ringIntensity, 0, 0.3);
-      light.position.set(x, 0, z);
-      light.name = `${object.id}-intense-light-${i}`;
-      light.castShadow = false;
-      group.add(light);
-      this.intenseLights.push(light);
-    }
-
-    // Vertical lights for top/bottom coverage
-    const verticalLight1 = new THREE.PointLight(
-      color,
-      verticalIntensity,
-      0,
-      0.3,
-    );
-    verticalLight1.position.set(0, lightDistance * 2, 0);
-    verticalLight1.name = `${object.id}-top-light`;
-    verticalLight1.castShadow = false;
-    group.add(verticalLight1);
-    this.intenseLights.push(verticalLight1);
-
-    const verticalLight2 = new THREE.PointLight(
-      color,
-      verticalIntensity,
-      0,
-      0.3,
-    );
-    verticalLight2.position.set(0, -lightDistance * 2, 0);
-    verticalLight2.name = `${object.id}-bottom-light`;
-    verticalLight2.castShadow = false;
-    group.add(verticalLight2);
-    this.intenseLights.push(verticalLight2);
-
-    // Diagonal lights for complete spherical coverage
-    const diagonalDistance = lightDistance * 1.5;
-
-    const diagonalLight1 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.3,
-    );
-    diagonalLight1.position.set(diagonalDistance, diagonalDistance, 0);
-    diagonalLight1.name = `${object.id}-diagonal-light-1`;
-    diagonalLight1.castShadow = false;
-    group.add(diagonalLight1);
-    this.intenseLights.push(diagonalLight1);
-
-    const diagonalLight2 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.3,
-    );
-    diagonalLight2.position.set(-diagonalDistance, diagonalDistance, 0);
-    diagonalLight2.name = `${object.id}-diagonal-light-2`;
-    diagonalLight2.castShadow = false;
-    group.add(diagonalLight2);
-    this.intenseLights.push(diagonalLight2);
-
-    const diagonalLight3 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.3,
-    );
-    diagonalLight3.position.set(diagonalDistance, -diagonalDistance, 0);
-    diagonalLight3.name = `${object.id}-diagonal-light-3`;
-    diagonalLight3.castShadow = false;
-    group.add(diagonalLight3);
-    this.intenseLights.push(diagonalLight3);
-
-    const diagonalLight4 = new THREE.PointLight(
-      color,
-      diagonalIntensity,
-      0,
-      0.3,
-    );
-    diagonalLight4.position.set(-diagonalDistance, -diagonalDistance, 0);
-    diagonalLight4.name = `${object.id}-diagonal-light-4`;
-    diagonalLight4.castShadow = false;
-    group.add(diagonalLight4);
-    this.intenseLights.push(diagonalLight4);
-
-    // For pulsars, add pulsing behavior to lights
+    // For pulsars, store original intensity for pulsing animation
     if (this.subtype === NeutronStarSubtype.PULSAR) {
-      // Store original intensities for pulsing animation
-      this.intenseLights.forEach((light) => {
-        (light as any).originalIntensity = light.intensity;
-      });
+      (mainLight as any).originalIntensity = mainLight.intensity;
     }
   }
 
