@@ -206,6 +206,12 @@ export class GravitationalLensingHelper {
   private blurSceneV: THREE.Scene;
   private orthoCamera: THREE.OrthographicCamera;
 
+  /** Reusable filtered scene to avoid allocating new scenes every frame */
+  private filteredScene: THREE.Scene;
+  private tempScene: THREE.Scene;
+  /** Track cloned objects for disposal */
+  private clonedObjects: THREE.Object3D[] = [];
+
   /**
    * Create a new gravitational lensing effect
    */
@@ -288,9 +294,56 @@ export class GravitationalLensingHelper {
     this.mesh.name = "gravitational-lensing";
     this.mesh.renderOrder = 1000;
 
+    // Initialize reusable scenes
+    this.filteredScene = new THREE.Scene();
+    this.tempScene = new THREE.Scene();
+
     object.add(this.mesh);
 
     window.addEventListener("resize", () => this.onWindowResize(renderer));
+  }
+
+  /**
+   * Clears a scene and disposes all cloned geometry/materials
+   */
+  private clearSceneAndDisposeClones(scene: THREE.Scene): void {
+    // Remove all children
+    while (scene.children.length > 0) {
+      scene.remove(scene.children[0]);
+    }
+
+    // Dispose cloned objects
+    for (const obj of this.clonedObjects) {
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((m) => m.dispose());
+          } else {
+            child.material?.dispose();
+          }
+        }
+      });
+    }
+    this.clonedObjects = [];
+    while (scene.children.length > 0) {
+      scene.remove(scene.children[0]);
+    }
+
+    // Dispose cloned objects
+    for (const obj of this.clonedObjects) {
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((m) => m.dispose());
+          } else {
+            child.material?.dispose();
+          }
+        }
+      });
+    }
+    this.clonedObjects = [];
   }
 
   /**
@@ -342,18 +395,21 @@ export class GravitationalLensingHelper {
     // 1. Hide the lensing mesh so it is not included in the full-scene render
     this.mesh.visible = false;
 
-    // 2. Build a filtered scene with only celestial objects and background
-    const filteredScene = new THREE.Scene();
-    if (scene.background) filteredScene.background = scene.background;
+    // 2. Clear and rebuild filtered scene (reuse existing scene)
+    this.clearSceneAndDisposeClones(this.filteredScene);
+    if (scene.background) this.filteredScene.background = scene.background;
     for (const child of scene.children) {
       const allowed = GravitationalLensingHelper.cloneAllowedObject(child);
-      if (allowed) filteredScene.add(allowed);
+      if (allowed) {
+        this.filteredScene.add(allowed);
+        this.clonedObjects.push(allowed);
+      }
     }
 
     // 3. Render the filtered scene to backgroundTarget
     renderer.setRenderTarget(this.backgroundTarget);
     renderer.clear();
-    renderer.render(filteredScene, camera);
+    renderer.render(this.filteredScene, camera);
     renderer.setRenderTarget(null);
 
     // 4. Horizontal blur pass (use dedicated mesh/scene)
@@ -377,19 +433,22 @@ export class GravitationalLensingHelper {
     // 6. Show the lensing mesh for the final render
     this.mesh.visible = true;
 
-    // 7. Prepare the main temp scene (celestial objects only, as before)
-    const tempScene = new THREE.Scene();
-    if (scene.background) tempScene.background = scene.background;
+    // 7. Clear and prepare the main temp scene (celestial objects only, as before)
+    this.clearSceneAndDisposeClones(this.tempScene);
+    if (scene.background) this.tempScene.background = scene.background;
     for (const child of scene.children) {
       const allowed = GravitationalLensingHelper.cloneAllowedObject(child);
-      if (allowed) tempScene.add(allowed);
+      if (allowed) {
+        this.tempScene.add(allowed);
+        this.clonedObjects.push(allowed);
+      }
     }
 
     // 8. Render the main scene (celestial objects) to the lensing render target
     const originalRenderTarget = renderer.getRenderTarget();
     renderer.setRenderTarget(this.renderTarget);
     renderer.clear();
-    renderer.render(tempScene, camera);
+    renderer.render(this.tempScene, camera);
     renderer.setRenderTarget(originalRenderTarget);
 
     // 9. Update the lensing material with the blurred full-scene texture
@@ -412,6 +471,10 @@ export class GravitationalLensingHelper {
    * Dispose of resources
    */
   dispose(): void {
+    // Clean up cloned objects
+    this.clearSceneAndDisposeClones(this.filteredScene);
+    this.clearSceneAndDisposeClones(this.tempScene);
+
     if (this.material) {
       this.material.dispose();
     }
@@ -420,9 +483,29 @@ export class GravitationalLensingHelper {
       this.renderTarget.dispose();
     }
 
+    if (this.backgroundTarget) {
+      this.backgroundTarget.dispose();
+    }
+
+    if (this.blurTargetH) {
+      this.blurTargetH.dispose();
+    }
+
+    if (this.blurTargetV) {
+      this.blurTargetV.dispose();
+    }
+
+    // Dispose blur materials and meshes
+    this.blurMaterialH?.dispose();
+    this.blurMaterialV?.dispose();
+    this.blurQuadH?.geometry?.dispose();
+    this.blurQuadV?.geometry?.dispose();
+
     if (this.mesh.parent) {
       this.mesh.parent.remove(this.mesh);
     }
+
+    this.mesh.geometry?.dispose();
 
     window.removeEventListener("resize", () => this.onWindowResize);
   }

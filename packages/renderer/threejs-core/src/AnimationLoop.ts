@@ -50,7 +50,7 @@ export class AnimationLoop {
   // --- Stats-related properties ---
   private fpsFrameCount = 0;
   private lastFPSUpdateTime = 0;
-  private currentFPS = 0;
+  private currentFPS = 60; // Initialize to expected FPS instead of 0
   private lastStatsUpdateTime = 0;
   private readonly statsUpdateInterval = 0.5; // Update stats every 500ms
 
@@ -264,15 +264,20 @@ export class AnimationLoop {
 
     const timeSinceLastFPSUpdate = now - this.lastFPSUpdateTime;
     if (timeSinceLastFPSUpdate >= this.statsUpdateInterval * 1000) {
-      this.currentFPS = Math.round(
-        (this.fpsFrameCount * 1000) / timeSinceLastFPSUpdate,
-      );
+      // Only calculate FPS if we have meaningful data (avoid division by very small numbers)
+      if (this.fpsFrameCount > 0 && timeSinceLastFPSUpdate > 0) {
+        const calculatedFPS = Math.round(
+          (this.fpsFrameCount * 1000) / timeSinceLastFPSUpdate,
+        );
+        // Ensure FPS is never 0 (use last known value if calculation fails)
+        if (calculatedFPS > 0) {
+          this.currentFPS = calculatedFPS;
+        }
+      }
       this.fpsFrameCount = 0;
       this.lastFPSUpdateTime = now;
-    }
 
-    if (now >= this.lastStatsUpdateTime + this.statsUpdateInterval * 1000) {
-      this.lastStatsUpdateTime = now;
+      // Update stats immediately after FPS calculation for responsive UI
       this.updateSimulationStateStats();
     }
   }

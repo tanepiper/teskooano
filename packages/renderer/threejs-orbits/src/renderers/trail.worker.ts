@@ -21,10 +21,10 @@ type TrailCommand =
   | { type: "clear-all" }
   | { type: "set-max-points"; maxPoints: number };
 
-// Pre-allocate a large pool for trail data.
-// 200 objects, 50k points each = 10 million points total.
-// Each point is 3 floats (12 bytes). Total buffer size: ~120 MB.
-const trailDataPool = new TrailDataPool(200, 50000);
+// Pre-allocate trail data pool with reasonable limits.
+// 100 objects, 10k points each = 1 million points total.
+// Each point is 3 floats (12 bytes). Total buffer size: ~24 MB.
+const trailDataPool = new TrailDataPool(100, 10000);
 
 const qualityToBudget: Record<string, number> = {
   Low: 1000,

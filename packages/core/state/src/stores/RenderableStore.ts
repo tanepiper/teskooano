@@ -7,7 +7,17 @@ import {
   filterVisibleRenderableObjects$,
   filterActiveRenderableObjects$,
   filterPhysicsActiveRenderableObjects$,
+  type FilterPredicate,
 } from "../utils";
+import type {
+  KeyedStore,
+  InspectableStore,
+  StoreMetadata,
+} from "../utils/StoreInterfaces";
+import {
+  ObservableRegistry,
+  ObservableCategory,
+} from "../utils/ObservableRegistry";
 
 /**
  * Manages the state of renderable celestial objects.
@@ -84,8 +94,19 @@ import {
  * });
  * ```
  */
-class RenderableStore {
+class RenderableStore
+  implements KeyedStore<RenderableCelestialObject>, InspectableStore
+{
   private static instance: RenderableStore;
+  private readonly registry = ObservableRegistry.getInstance();
+  private readonly metadata: StoreMetadata = {
+    id: "renderable-store",
+    name: "Renderable Store",
+    category: "state",
+    description: "State management for renderable celestial objects",
+    observables: [],
+    createdAt: new Date(),
+  };
 
   /** BehaviorSubject holding the current map of renderable objects by ID */
   private readonly _renderableObjectsStore = new BehaviorSubject<
@@ -93,6 +114,9 @@ class RenderableStore {
   >({});
 
   /** Observable stream of renderable objects that emits on every change */
+  public readonly state$: Observable<Record<string, RenderableCelestialObject>>;
+
+  // Alias for backward compatibility
   public readonly renderableObjects$: Observable<
     Record<string, RenderableCelestialObject>
   >;
@@ -130,17 +154,57 @@ class RenderableStore {
    * Initializes empty renderable objects map and sets up filtered observables.
    */
   private constructor() {
-    this.renderableObjects$ = this._renderableObjectsStore.asObservable();
+    this.state$ = this._renderableObjectsStore.asObservable();
+    this.renderableObjects$ = this.state$; // Alias for backward compatibility
 
     // Set up filtered observables using shared operators
-    this.visibleRenderableObjects$ = filterVisibleRenderableObjects$(
-      this.renderableObjects$,
+    this.visibleRenderableObjects$ = this.registry.register(
+      "renderable-visible-objects",
+      filterVisibleRenderableObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Visible renderable objects",
+        dependencies: ["renderable-objects"],
+        tags: ["renderable", "filtered", "visible"],
+      },
     );
-    this.activeRenderableObjects$ = filterActiveRenderableObjects$(
-      this.renderableObjects$,
+
+    this.activeRenderableObjects$ = this.registry.register(
+      "renderable-active-objects",
+      filterActiveRenderableObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Active renderable objects (not destroyed)",
+        dependencies: ["renderable-objects"],
+        tags: ["renderable", "filtered", "active"],
+      },
     );
-    this.physicsActiveRenderableObjects$ =
-      filterPhysicsActiveRenderableObjects$(this.renderableObjects$);
+
+    this.physicsActiveRenderableObjects$ = this.registry.register(
+      "renderable-physics-active-objects",
+      filterPhysicsActiveRenderableObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Physics-active renderable objects",
+        dependencies: ["renderable-objects"],
+        tags: ["renderable", "filtered", "physics"],
+      },
+    );
+
+    // Register the root observable
+    this.registry.register("renderable-objects", this.state$, {
+      category: ObservableCategory.STORE,
+      description: "All renderable celestial objects",
+      tags: ["renderable", "root"],
+    });
+
+    // Update metadata
+    this.metadata.observables = [
+      "renderable-objects",
+      "renderable-visible-objects",
+      "renderable-active-objects",
+      "renderable-physics-active-objects",
+    ];
   }
 
   /**
@@ -388,6 +452,121 @@ class RenderableStore {
     objects: Record<string, RenderableCelestialObject>,
   ): void {
     this._renderableObjectsStore.next(objects);
+  }
+
+  // =============================================================================
+  // INTERFACE IMPLEMENTATIONS (BaseStore, KeyedStore, InspectableStore)
+  // =============================================================================
+
+  /**
+   * Gets the current state of the store (BaseStore interface).
+   */
+  public getState(): Record<string, RenderableCelestialObject> {
+    return this._renderableObjectsStore.getValue();
+  }
+
+  /**
+   * Gets a specific item by ID (KeyedStore interface).
+   */
+  public getItem(id: string): RenderableCelestialObject | undefined {
+    return this.getRenderableObject(id);
+  }
+
+  /**
+   * Sets an item in the store (KeyedStore interface).
+   */
+  public setItem(id: string, item: RenderableCelestialObject): void {
+    this.addRenderableObject(item);
+  }
+
+  /**
+   * Removes an item from the store (KeyedStore interface).
+   */
+  public removeItem(id: string): void {
+    this.removeRenderableObject(id);
+  }
+
+  /**
+   * Checks if an item exists in the store (KeyedStore interface).
+   */
+  public hasItem(id: string): boolean {
+    return this._renderableObjectsStore.getValue()[id] !== undefined;
+  }
+
+  /**
+   * Gets all item IDs (KeyedStore interface).
+   */
+  public getItemIds(): string[] {
+    return Object.keys(this._renderableObjectsStore.getValue());
+  }
+
+  /**
+   * Gets the total number of items (KeyedStore interface).
+   */
+  public getItemCount(): number {
+    return Object.keys(this._renderableObjectsStore.getValue()).length;
+  }
+
+  /**
+   * Gets filtered items using predicates (KeyedStore interface).
+   */
+  public getFiltered(
+    ...predicates: FilterPredicate<RenderableCelestialObject>[]
+  ): RenderableCelestialObject[] {
+    const objects = Object.values(this._renderableObjectsStore.getValue());
+    return objects.filter((obj) => predicates.every((pred) => pred(obj)));
+  }
+
+  /**
+   * Gets filtered observable using predicates (KeyedStore interface).
+   */
+  public getFiltered$(
+    ...predicates: FilterPredicate<RenderableCelestialObject>[]
+  ): Observable<RenderableCelestialObject[]> {
+    return new Observable((observer) => {
+      const subscription = this.state$.subscribe((objects) => {
+        const filtered = Object.values(objects).filter((obj) =>
+          predicates.every((pred) => pred(obj)),
+        );
+        observer.next(filtered);
+      });
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  /**
+   * Gets store metadata (InspectableStore interface).
+   */
+  public getMetadata(): StoreMetadata {
+    return { ...this.metadata };
+  }
+
+  /**
+   * Gets store statistics (InspectableStore interface).
+   */
+  public getStats(): {
+    itemCount: number;
+    observableCount: number;
+    registeredAt: Date;
+  } {
+    return {
+      itemCount: this.getItemCount(),
+      observableCount: this.metadata.observables.length,
+      registeredAt: this.metadata.createdAt,
+    };
+  }
+
+  /**
+   * Destroys the store and cleans up resources (BaseStore interface).
+   */
+  public destroy(): void {
+    // Unregister all observables
+    this.metadata.observables.forEach((obsId) => {
+      this.registry.unregister(obsId);
+    });
+
+    // Complete the subject
+    this._renderableObjectsStore.complete();
   }
 }
 

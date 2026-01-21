@@ -92,6 +92,8 @@ export class TrailManager {
   private messageCount: number = 0;
   private lastPerformanceCheck: number = 0;
   private readonly PERFORMANCE_CHECK_INTERVAL = 5000; // Check every 5 seconds
+  private lastCleanupTime: number = 0;
+  private readonly CLEANUP_INTERVAL = 30000; // Clean up stale data every 30 seconds
 
   private orbitLinesGroup: THREE.Group;
   /** Dedicated group for trail lines within the orbit lines group */
@@ -281,13 +283,29 @@ export class TrailManager {
       this.lastSampledTimes.set(objectId, currentTime);
 
       // Add to pending batch instead of sending immediately
-      this.pendingUpdates.push({
-        objectId,
-        position: object.position.toArray(),
-        maxHistoryLength,
-        quality: this.trailQuality,
-        curveConfig: this.curveConfig,
-      });
+      // But prevent unbounded growth
+      if (this.pendingUpdates.length < this.MAX_BATCH_SIZE * 5) {
+        this.pendingUpdates.push({
+          objectId,
+          position: object.position.toArray(),
+          maxHistoryLength,
+          quality: this.trailQuality,
+          curveConfig: this.curveConfig,
+        });
+      } else {
+        // Force send if queue is too large
+        console.warn(
+          "[TrailManager] Pending updates queue too large, forcing batch send",
+        );
+        this.sendBatch();
+        this.pendingUpdates.push({
+          objectId,
+          position: object.position.toArray(),
+          maxHistoryLength,
+          quality: this.trailQuality,
+          curveConfig: this.curveConfig,
+        });
+      }
 
       // Send batch if we have enough updates or enough time has passed
       if (
@@ -295,6 +313,12 @@ export class TrailManager {
         currentTime - this.lastBatchTime >= this.BATCH_INTERVAL
       ) {
         this.sendBatch();
+      }
+
+      // Periodic cleanup of stale sampling data
+      if (currentTime - this.lastCleanupTime >= this.CLEANUP_INTERVAL) {
+        this.cleanupStaleData();
+        this.lastCleanupTime = currentTime;
       }
     }
 
@@ -419,6 +443,14 @@ export class TrailManager {
     this.lastSampledPositions.delete(objectId);
     this.lastSampledTimes.delete(objectId);
 
+    // Remove from pending updates to prevent memory leak
+    this.pendingUpdates = this.pendingUpdates.filter(
+      (update) => update.objectId !== objectId,
+    );
+
+    // Tell worker to free the slot
+    this.trailWorker?.postMessage({ type: "remove", objectId });
+
     this.trailLines.forEach((_, id) => {
       this.applyHighlight(id, line!);
     });
@@ -542,6 +574,19 @@ export class TrailManager {
       pendingUpdatesCount: this.pendingUpdates.length,
       messageCount: this.messageCount,
     };
+  }
+
+  /**
+   * Cleans up stale sampling data for objects that no longer have trails.
+   */
+  private cleanupStaleData(): void {
+    // Remove sampling data for objects that don't have active trail lines
+    for (const objectId of this.lastSampledPositions.keys()) {
+      if (!this.trailLines.has(objectId)) {
+        this.lastSampledPositions.delete(objectId);
+        this.lastSampledTimes.delete(objectId);
+      }
+    }
   }
 
   private sendBatch(): void {

@@ -61,12 +61,12 @@ export const ATMOSPHERE_COLORS: Record<AtmosphereType, string[]> = {
 };
 
 export const RING_COLORS: Record<RockyType, string[]> = {
-  [RockyType.ICE]: ["#e0f0ff", "#f0f8ff"],
-  [RockyType.LIGHT_ROCK]: ["#b8b8b8", "#a8a8a8"],
-  [RockyType.DARK_ROCK]: ["#787878", "#686868"],
-  [RockyType.METALLIC]: ["#c0c0c0", "#d8d8d8"],
-  [RockyType.ICE_DUST]: ["#d0e0f0", "#c8d8e8"],
-  [RockyType.DUST]: ["#b0a090", "#a89888"],
+  [RockyType.ICE]: ["#f0f8ff", "#ffffff", "#e8f4ff"],
+  [RockyType.LIGHT_ROCK]: ["#d8d0c8", "#c8c0b8", "#e0d8d0"],
+  [RockyType.DARK_ROCK]: ["#a09890", "#908880", "#b0a8a0"],
+  [RockyType.METALLIC]: ["#e8e8e8", "#f0f0f0", "#d8d8d8"],
+  [RockyType.ICE_DUST]: ["#e8f0f8", "#f0f8ff", "#d8e8f0"],
+  [RockyType.DUST]: ["#d8c8b8", "#c8b8a8", "#e0d0c0"],
 };
 
 export const CLOUD_COLORS: Record<string, string[]> = {

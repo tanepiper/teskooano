@@ -10,9 +10,19 @@ import {
   filterDestroyedCelestialObjects$,
   filterPhysicsActiveCelestialObjects$,
   filterVisibleCelestialObjects$,
+  type FilterPredicate,
 } from "../utils";
 import { CelestialType } from "@teskooano/data-types";
 import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
+import type {
+  KeyedStore,
+  InspectableStore,
+  StoreMetadata,
+} from "../utils/StoreInterfaces";
+import {
+  ObservableRegistry,
+  ObservableCategory,
+} from "../utils/ObservableRegistry";
 
 /**
  * Manages celestial object data storage and hierarchy relationships.
@@ -89,13 +99,28 @@ import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
  * });
  * ```
  */
-export class CelestialStore {
+export class CelestialStore
+  implements KeyedStore<CelestialObject>, InspectableStore
+{
   private static instance: CelestialStore;
+  private readonly registry = ObservableRegistry.getInstance();
+  private readonly metadata: StoreMetadata = {
+    id: "celestial-store",
+    name: "Celestial Store",
+    category: "state",
+    description:
+      "Central repository for all celestial objects in the simulation",
+    observables: [],
+    createdAt: new Date(),
+  };
 
   /** BehaviorSubject holding the current map of celestial objects by ID */
   private readonly _objects: BehaviorSubject<Record<string, CelestialObject>>;
 
   /** Observable stream of celestial objects that emits on every change */
+  public readonly state$: Observable<Record<string, CelestialObject>>;
+
+  // Alias for backward compatibility
   public readonly objects$: Observable<Record<string, CelestialObject>>;
 
   // =============================================================================
@@ -136,15 +161,70 @@ export class CelestialStore {
    */
   private constructor() {
     this._objects = new BehaviorSubject<Record<string, CelestialObject>>({});
-    this.objects$ = this._objects.asObservable();
+    this.state$ = this._objects.asObservable();
+    this.objects$ = this.state$; // Alias for backward compatibility
 
     // Set up filtered observables using shared operators
-    this.activeObjects$ = filterActiveCelestialObjects$(this.objects$);
-    this.destroyedObjects$ = filterDestroyedCelestialObjects$(this.objects$);
-    this.physicsActiveObjects$ = filterPhysicsActiveCelestialObjects$(
-      this.objects$,
+    this.activeObjects$ = this.registry.register(
+      "celestial-active-objects",
+      filterActiveCelestialObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Active celestial objects (not destroyed)",
+        dependencies: ["celestial-objects"],
+        tags: ["celestial", "filtered", "active"],
+      },
     );
-    this.visibleObjects$ = filterVisibleCelestialObjects$(this.objects$);
+
+    this.destroyedObjects$ = this.registry.register(
+      "celestial-destroyed-objects",
+      filterDestroyedCelestialObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Destroyed celestial objects",
+        dependencies: ["celestial-objects"],
+        tags: ["celestial", "filtered", "destroyed"],
+      },
+    );
+
+    this.physicsActiveObjects$ = this.registry.register(
+      "celestial-physics-active-objects",
+      filterPhysicsActiveCelestialObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description:
+          "Physics-active celestial objects (active and not ignoring physics)",
+        dependencies: ["celestial-objects"],
+        tags: ["celestial", "filtered", "physics"],
+      },
+    );
+
+    this.visibleObjects$ = this.registry.register(
+      "celestial-visible-objects",
+      filterVisibleCelestialObjects$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Visible celestial objects",
+        dependencies: ["celestial-objects"],
+        tags: ["celestial", "filtered", "visible"],
+      },
+    );
+
+    // Register the root observable
+    this.registry.register("celestial-objects", this.state$, {
+      category: ObservableCategory.STORE,
+      description: "All celestial objects in the simulation",
+      tags: ["celestial", "root"],
+    });
+
+    // Update metadata with observable info
+    this.metadata.observables = [
+      "celestial-objects",
+      "celestial-active-objects",
+      "celestial-destroyed-objects",
+      "celestial-physics-active-objects",
+      "celestial-visible-objects",
+    ];
   }
 
   /**
@@ -490,6 +570,121 @@ export class CelestialStore {
   public markObjectsDestroyed(destroyedIds: string[]): void {
     const updatedObjects = this.processDestructionEvents(destroyedIds);
     this.setAllObjects(updatedObjects);
+  }
+
+  // =============================================================================
+  // INTERFACE IMPLEMENTATIONS (BaseStore, KeyedStore, InspectableStore)
+  // =============================================================================
+
+  /**
+   * Gets the current state of the store (BaseStore interface).
+   */
+  public getState(): Record<string, CelestialObject> {
+    return this._objects.getValue();
+  }
+
+  /**
+   * Gets a specific item by ID (KeyedStore interface).
+   */
+  public getItem(id: string): CelestialObject | undefined {
+    return this.getObject(id);
+  }
+
+  /**
+   * Sets an item in the store (KeyedStore interface).
+   */
+  public setItem(id: string, item: CelestialObject): void {
+    this.setObject(id, item);
+  }
+
+  /**
+   * Removes an item from the store (KeyedStore interface).
+   */
+  public removeItem(id: string): void {
+    this.removeObject(id);
+  }
+
+  /**
+   * Checks if an item exists in the store (KeyedStore interface).
+   */
+  public hasItem(id: string): boolean {
+    return this._objects.getValue()[id] !== undefined;
+  }
+
+  /**
+   * Gets all item IDs (KeyedStore interface).
+   */
+  public getItemIds(): string[] {
+    return Object.keys(this._objects.getValue());
+  }
+
+  /**
+   * Gets the total number of items (KeyedStore interface).
+   */
+  public getItemCount(): number {
+    return Object.keys(this._objects.getValue()).length;
+  }
+
+  /**
+   * Gets filtered items using predicates (KeyedStore interface).
+   */
+  public getFiltered(
+    ...predicates: FilterPredicate<CelestialObject>[]
+  ): CelestialObject[] {
+    const objects = Object.values(this._objects.getValue());
+    return objects.filter((obj) => predicates.every((pred) => pred(obj)));
+  }
+
+  /**
+   * Gets filtered observable using predicates (KeyedStore interface).
+   */
+  public getFiltered$(
+    ...predicates: FilterPredicate<CelestialObject>[]
+  ): Observable<CelestialObject[]> {
+    return new Observable((observer) => {
+      const subscription = this.state$.subscribe((objects) => {
+        const filtered = Object.values(objects).filter((obj) =>
+          predicates.every((pred) => pred(obj)),
+        );
+        observer.next(filtered);
+      });
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  /**
+   * Gets store metadata (InspectableStore interface).
+   */
+  public getMetadata(): StoreMetadata {
+    return { ...this.metadata };
+  }
+
+  /**
+   * Gets store statistics (InspectableStore interface).
+   */
+  public getStats(): {
+    itemCount: number;
+    observableCount: number;
+    registeredAt: Date;
+  } {
+    return {
+      itemCount: this.getItemCount(),
+      observableCount: this.metadata.observables.length,
+      registeredAt: this.metadata.createdAt,
+    };
+  }
+
+  /**
+   * Destroys the store and cleans up resources (BaseStore interface).
+   */
+  public destroy(): void {
+    // Unregister all observables
+    this.metadata.observables.forEach((obsId) => {
+      this.registry.unregister(obsId);
+    });
+
+    // Complete the subject
+    this._objects.complete();
   }
 }
 

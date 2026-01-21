@@ -15,26 +15,37 @@ import type { OSVector3 } from "@teskooano/core-math";
  */
 
 // =============================================================================
-// CELESTIAL OBJECT FILTERS
+// GENERIC FILTER FACTORY
 // =============================================================================
 
 /**
- * Generic filter for celestial objects based on status.
- *
- * @param objects The complete map of celestial objects
- * @param includeDestroyed Whether to include destroyed/annihilated objects (true) or exclude them (false)
- * @returns A filtered map containing objects based on the status filter
+ * Type for filter predicate functions.
  */
-function filterCelestialObjectsByStatus(
-  objects: Record<string, CelestialObject>,
-  includeDestroyed: boolean,
-): Record<string, CelestialObject> {
-  const filtered: Record<string, CelestialObject> = {};
+export type FilterPredicate<T> = (item: T) => boolean;
+
+/**
+ * Generic filter factory for creating filtered object maps.
+ * This reduces code duplication by providing a single function that can be
+ * composed with different predicates.
+ *
+ * @param objects The complete map of objects to filter
+ * @param predicates Array of predicate functions that all must return true
+ * @returns A filtered map containing only objects that pass all predicates
+ *
+ * @example
+ * // Filter active, visible objects
+ * const filtered = createFilteredMap(objects, [
+ *   obj => obj.status !== CelestialStatus.DESTROYED,
+ *   obj => obj.isVisible !== false
+ * ]);
+ */
+export function createFilteredMap<T extends { id: string }>(
+  objects: Record<string, T>,
+  predicates: FilterPredicate<T>[],
+): Record<string, T> {
+  const filtered: Record<string, T> = {};
   Object.values(objects).forEach((obj) => {
-    const isDestroyed =
-      obj.status === CelestialStatus.DESTROYED ||
-      obj.status === CelestialStatus.ANNIHILATED;
-    if (isDestroyed === includeDestroyed) {
+    if (predicates.every((predicate) => predicate(obj))) {
       filtered[obj.id] = obj;
     }
   });
@@ -42,7 +53,88 @@ function filterCelestialObjectsByStatus(
 }
 
 /**
+ * Creates a filtered observable stream using composable predicates.
+ * This is the RxJS operator version of createFilteredMap.
+ *
+ * @param source$ The source observable of objects
+ * @param predicates Array of predicate functions
+ * @returns An observable that emits filtered objects
+ *
+ * @example
+ * // Create an observable of active physics objects
+ * const activePhysics$ = createFilteredStream$(
+ *   celestialStore.objects$,
+ *   [isActive, isNotIgnoringPhysics]
+ * );
+ */
+export function createFilteredStream$<T extends { id: string }>(
+  source$: Observable<Record<string, T>>,
+  predicates: FilterPredicate<T>[],
+): Observable<Record<string, T>> {
+  return source$.pipe(
+    map((objects) => createFilteredMap(objects, predicates)),
+    shareReplay(1),
+  );
+}
+
+// =============================================================================
+// COMMON PREDICATES
+// =============================================================================
+
+/**
+ * Predicate: Object is not destroyed or annihilated.
+ */
+export function isActive<T extends { status?: CelestialStatus | undefined }>(
+  obj: T,
+): boolean {
+  return (
+    obj.status !== CelestialStatus.DESTROYED &&
+    obj.status !== CelestialStatus.ANNIHILATED
+  );
+}
+
+/**
+ * Predicate: Object is destroyed or annihilated.
+ */
+export function isDestroyed<T extends { status?: CelestialStatus | undefined }>(
+  obj: T,
+): boolean {
+  return (
+    obj.status === CelestialStatus.DESTROYED ||
+    obj.status === CelestialStatus.ANNIHILATED
+  );
+}
+
+/**
+ * Predicate: Object is not ignoring physics.
+ */
+export function isNotIgnoringPhysics<T extends { ignorePhysics?: boolean }>(
+  obj: T,
+): boolean {
+  return !obj.ignorePhysics;
+}
+
+/**
+ * Predicate: Object is visible (isVisible is not explicitly false).
+ */
+export function isVisible<T extends { isVisible?: boolean }>(obj: T): boolean {
+  return obj.isVisible !== false;
+}
+
+/**
+ * Predicate: Vector has non-zero magnitude.
+ */
+export function isNonZeroVector(vector: OSVector3): boolean {
+  return vector.x !== 0 || vector.y !== 0 || vector.z !== 0;
+}
+
+// =============================================================================
+// CELESTIAL OBJECT FILTERS
+// =============================================================================
+
+/**
  * Filters celestial objects to only include active ones (not destroyed or annihilated).
+ * Uses the generic filter factory with the isActive predicate.
  *
  * @param objects The complete map of celestial objects
  * @returns A filtered map containing only active objects
@@ -50,11 +142,12 @@ function filterCelestialObjectsByStatus(
 export function filterActiveCelestialObjects(
   objects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  return filterCelestialObjectsByStatus(objects, false);
+  return createFilteredMap(objects, [isActive]);
 }
 
 /**
  * Filters celestial objects to only include destroyed or annihilated ones.
+ * Uses the generic filter factory with the isDestroyed predicate.
  *
  * @param objects The complete map of celestial objects
  * @returns A filtered map containing only destroyed objects
@@ -62,11 +155,12 @@ export function filterActiveCelestialObjects(
 export function filterDestroyedCelestialObjects(
   objects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  return filterCelestialObjectsByStatus(objects, true);
+  return createFilteredMap(objects, [isDestroyed]);
 }
 
 /**
  * Filters celestial objects to only include those that are active AND not ignoring physics.
+ * Uses the generic filter factory with composed predicates.
  *
  * @param objects The complete map of celestial objects
  * @returns A filtered map containing only physics-active objects
@@ -74,18 +168,12 @@ export function filterDestroyedCelestialObjects(
 export function filterPhysicsActiveCelestialObjects(
   objects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  const activeObjects = filterActiveCelestialObjects(objects);
-  const filtered: Record<string, CelestialObject> = {};
-  Object.values(activeObjects).forEach((obj) => {
-    if (!obj.ignorePhysics) {
-      filtered[obj.id] = obj;
-    }
-  });
-  return filtered;
+  return createFilteredMap(objects, [isActive, isNotIgnoringPhysics]);
 }
 
 /**
  * Filters celestial objects to only include those that are active AND visible.
+ * Uses the generic filter factory with composed predicates.
  *
  * @param objects The complete map of celestial objects
  * @returns A filtered map containing only visible objects
@@ -93,15 +181,7 @@ export function filterPhysicsActiveCelestialObjects(
 export function filterVisibleCelestialObjects(
   objects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  const activeObjects = filterActiveCelestialObjects(objects);
-  const filtered: Record<string, CelestialObject> = {};
-  Object.values(activeObjects).forEach((obj) => {
-    if (obj.isVisible !== false) {
-      // Default to true if not specified
-      filtered[obj.id] = obj;
-    }
-  });
-  return filtered;
+  return createFilteredMap(objects, [isActive, isVisible]);
 }
 
 // =============================================================================
@@ -109,30 +189,8 @@ export function filterVisibleCelestialObjects(
 // =============================================================================
 
 /**
- * Generic filter for renderable objects based on status.
- *
- * @param objects The complete map of renderable objects
- * @param includeDestroyed Whether to include destroyed/annihilated objects (true) or exclude them (false)
- * @returns A filtered map containing objects based on the status filter
- */
-function filterRenderableObjectsByStatus(
-  objects: Record<string, RenderableCelestialObject>,
-  includeDestroyed: boolean,
-): Record<string, RenderableCelestialObject> {
-  const filtered: Record<string, RenderableCelestialObject> = {};
-  Object.values(objects).forEach((obj) => {
-    const isDestroyed =
-      obj.status === CelestialStatus.DESTROYED ||
-      obj.status === CelestialStatus.ANNIHILATED;
-    if (isDestroyed === includeDestroyed) {
-      filtered[obj.id] = obj;
-    }
-  });
-  return filtered;
-}
-
-/**
  * Filters renderable objects to only include those that are visible.
+ * Uses the generic filter factory with the isVisible predicate.
  *
  * @param objects The complete map of renderable objects
  * @returns A filtered map containing only visible objects
@@ -140,17 +198,12 @@ function filterRenderableObjectsByStatus(
 export function filterVisibleRenderableObjects(
   objects: Record<string, RenderableCelestialObject>,
 ): Record<string, RenderableCelestialObject> {
-  const filtered: Record<string, RenderableCelestialObject> = {};
-  Object.values(objects).forEach((obj) => {
-    if (obj.isVisible !== false) {
-      filtered[obj.id] = obj;
-    }
-  });
-  return filtered;
+  return createFilteredMap(objects, [isVisible]);
 }
 
 /**
  * Filters renderable objects to only include active ones (not destroyed).
+ * Uses the generic filter factory with the isActive predicate.
  *
  * @param objects The complete map of renderable objects
  * @returns A filtered map containing only active objects
@@ -158,11 +211,12 @@ export function filterVisibleRenderableObjects(
 export function filterActiveRenderableObjects(
   objects: Record<string, RenderableCelestialObject>,
 ): Record<string, RenderableCelestialObject> {
-  return filterRenderableObjectsByStatus(objects, false);
+  return createFilteredMap(objects, [isActive]);
 }
 
 /**
  * Filters renderable objects to only include those that are active AND not ignoring physics.
+ * Uses the generic filter factory with composed predicates.
  *
  * @param objects The complete map of renderable objects
  * @returns A filtered map containing only physics-active objects
@@ -170,14 +224,7 @@ export function filterActiveRenderableObjects(
 export function filterPhysicsActiveRenderableObjects(
   objects: Record<string, RenderableCelestialObject>,
 ): Record<string, RenderableCelestialObject> {
-  const activeObjects = filterActiveRenderableObjects(objects);
-  const filtered: Record<string, RenderableCelestialObject> = {};
-  Object.values(activeObjects).forEach((obj) => {
-    if (!obj.ignorePhysics) {
-      filtered[obj.id] = obj;
-    }
-  });
-  return filtered;
+  return createFilteredMap(objects, [isActive, isNotIgnoringPhysics]);
 }
 
 // =============================================================================
@@ -186,6 +233,7 @@ export function filterPhysicsActiveRenderableObjects(
 
 /**
  * Filters acceleration vectors to only include those with non-zero magnitude.
+ * Uses the generic filter factory with the isNonZeroVector predicate.
  *
  * @param vectors The complete map of acceleration vectors
  * @returns A filtered map containing only non-zero vectors
@@ -193,9 +241,10 @@ export function filterPhysicsActiveRenderableObjects(
 export function filterNonZeroAccelerationVectors(
   vectors: Record<string, OSVector3>,
 ): Record<string, OSVector3> {
+  // Note: Vectors don't have an 'id' property, so we need a custom implementation
   const filtered: Record<string, OSVector3> = {};
   Object.entries(vectors).forEach(([id, vector]) => {
-    if (vector.x !== 0 || vector.y !== 0 || vector.z !== 0) {
+    if (isNonZeroVector(vector)) {
       filtered[id] = vector;
     }
   });
@@ -208,6 +257,7 @@ export function filterNonZeroAccelerationVectors(
 
 /**
  * Creates a filtered observable for active celestial objects.
+ * Uses the generic createFilteredStream$ with the isActive predicate.
  *
  * @param source$ The source observable of celestial objects
  * @returns An observable that emits only active celestial objects
@@ -215,14 +265,12 @@ export function filterNonZeroAccelerationVectors(
 export function filterActiveCelestialObjects$<
   T extends Record<string, CelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterActiveCelestialObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [isActive]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for destroyed celestial objects.
+ * Uses the generic createFilteredStream$ with the isDestroyed predicate.
  *
  * @param source$ The source observable of celestial objects
  * @returns An observable that emits only destroyed celestial objects
@@ -230,14 +278,12 @@ export function filterActiveCelestialObjects$<
 export function filterDestroyedCelestialObjects$<
   T extends Record<string, CelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterDestroyedCelestialObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [isDestroyed]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for physics-active celestial objects.
+ * Uses the generic createFilteredStream$ with composed predicates.
  *
  * @param source$ The source observable of celestial objects
  * @returns An observable that emits only physics-active celestial objects
@@ -245,14 +291,15 @@ export function filterDestroyedCelestialObjects$<
 export function filterPhysicsActiveCelestialObjects$<
   T extends Record<string, CelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterPhysicsActiveCelestialObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [
+    isActive,
+    isNotIgnoringPhysics,
+  ]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for visible celestial objects.
+ * Uses the generic createFilteredStream$ with composed predicates.
  *
  * @param source$ The source observable of celestial objects
  * @returns An observable that emits only visible celestial objects
@@ -260,14 +307,12 @@ export function filterPhysicsActiveCelestialObjects$<
 export function filterVisibleCelestialObjects$<
   T extends Record<string, CelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterVisibleCelestialObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [isActive, isVisible]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for visible renderable objects.
+ * Uses the generic createFilteredStream$ with the isVisible predicate.
  *
  * @param source$ The source observable of renderable objects
  * @returns An observable that emits only visible renderable objects
@@ -275,14 +320,12 @@ export function filterVisibleCelestialObjects$<
 export function filterVisibleRenderableObjects$<
   T extends Record<string, RenderableCelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterVisibleRenderableObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [isVisible]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for active renderable objects.
+ * Uses the generic createFilteredStream$ with the isActive predicate.
  *
  * @param source$ The source observable of renderable objects
  * @returns An observable that emits only active renderable objects
@@ -290,14 +333,12 @@ export function filterVisibleRenderableObjects$<
 export function filterActiveRenderableObjects$<
   T extends Record<string, RenderableCelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterActiveRenderableObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [isActive]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for physics-active renderable objects.
+ * Uses the generic createFilteredStream$ with composed predicates.
  *
  * @param source$ The source observable of renderable objects
  * @returns An observable that emits only physics-active renderable objects
@@ -305,14 +346,15 @@ export function filterActiveRenderableObjects$<
 export function filterPhysicsActiveRenderableObjects$<
   T extends Record<string, RenderableCelestialObject>,
 >(source$: Observable<T>): Observable<T> {
-  return source$.pipe(
-    map((objects) => filterPhysicsActiveRenderableObjects(objects) as T),
-    shareReplay(1),
-  );
+  return createFilteredStream$(source$, [
+    isActive,
+    isNotIgnoringPhysics,
+  ]) as Observable<T>;
 }
 
 /**
  * Creates a filtered observable for non-zero acceleration vectors.
+ * Custom implementation since vectors don't have an 'id' property.
  *
  * @param source$ The source observable of acceleration vectors
  * @returns An observable that emits only non-zero acceleration vectors

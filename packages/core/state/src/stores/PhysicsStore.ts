@@ -3,7 +3,17 @@ import type { OSVector3 } from "@teskooano/core-math";
 import {
   filterNonZeroAccelerationVectors,
   filterNonZeroAccelerationVectors$,
+  type FilterPredicate,
 } from "../utils";
+import type {
+  KeyedStore,
+  InspectableStore,
+  StoreMetadata,
+} from "../utils/StoreInterfaces";
+import {
+  ObservableRegistry,
+  ObservableCategory,
+} from "../utils/ObservableRegistry";
 
 /**
  * Manages physics-related state like acceleration vectors.
@@ -72,8 +82,17 @@ import {
  * });
  * ```
  */
-export class PhysicsStore {
+export class PhysicsStore implements KeyedStore<OSVector3>, InspectableStore {
   private static instance: PhysicsStore;
+  private readonly registry = ObservableRegistry.getInstance();
+  private readonly metadata: StoreMetadata = {
+    id: "physics-store",
+    name: "Physics Store",
+    category: "state",
+    description: "Physics state including acceleration vectors",
+    observables: [],
+    createdAt: new Date(),
+  };
 
   /** BehaviorSubject holding the current map of acceleration vectors by object ID */
   private readonly _accelerationVectors: BehaviorSubject<
@@ -81,6 +100,9 @@ export class PhysicsStore {
   >;
 
   /** Observable stream of acceleration vectors that emits on every change */
+  public readonly state$: Observable<Record<string, OSVector3>>;
+
+  // Alias for backward compatibility
   public readonly accelerationVectors$: Observable<Record<string, OSVector3>>;
 
   // =============================================================================
@@ -103,12 +125,33 @@ export class PhysicsStore {
     this._accelerationVectors = new BehaviorSubject<Record<string, OSVector3>>(
       {},
     );
-    this.accelerationVectors$ = this._accelerationVectors.asObservable();
+    this.state$ = this._accelerationVectors.asObservable();
+    this.accelerationVectors$ = this.state$; // Alias for backward compatibility
 
     // Set up filtered observables using shared operators
-    this.nonZeroAccelerationVectors$ = filterNonZeroAccelerationVectors$(
-      this.accelerationVectors$,
+    this.nonZeroAccelerationVectors$ = this.registry.register(
+      "physics-non-zero-vectors",
+      filterNonZeroAccelerationVectors$(this.state$),
+      {
+        category: ObservableCategory.STORE,
+        description: "Non-zero acceleration vectors",
+        dependencies: ["physics-acceleration-vectors"],
+        tags: ["physics", "filtered", "non-zero"],
+      },
     );
+
+    // Register the root observable
+    this.registry.register("physics-acceleration-vectors", this.state$, {
+      category: ObservableCategory.STORE,
+      description: "All acceleration vectors in the simulation",
+      tags: ["physics", "root"],
+    });
+
+    // Update metadata
+    this.metadata.observables = [
+      "physics-acceleration-vectors",
+      "physics-non-zero-vectors",
+    ];
   }
 
   /**
@@ -275,6 +318,119 @@ export class PhysicsStore {
    */
   public clearAccelerationVectors(): void {
     this._accelerationVectors.next({});
+  }
+
+  // =============================================================================
+  // INTERFACE IMPLEMENTATIONS (BaseStore, KeyedStore, InspectableStore)
+  // =============================================================================
+
+  /**
+   * Gets the current state of the store (BaseStore interface).
+   */
+  public getState(): Record<string, OSVector3> {
+    return this._accelerationVectors.getValue();
+  }
+
+  /**
+   * Gets a specific item by ID (KeyedStore interface).
+   */
+  public getItem(id: string): OSVector3 | undefined {
+    return this.getAccelerationVector(id);
+  }
+
+  /**
+   * Sets an item in the store (KeyedStore interface).
+   */
+  public setItem(id: string, item: OSVector3): void {
+    this.setAccelerationVector(id, item);
+  }
+
+  /**
+   * Removes an item from the store (KeyedStore interface).
+   */
+  public removeItem(id: string): void {
+    this.removeAccelerationVector(id);
+  }
+
+  /**
+   * Checks if an item exists in the store (KeyedStore interface).
+   */
+  public hasItem(id: string): boolean {
+    return this._accelerationVectors.getValue()[id] !== undefined;
+  }
+
+  /**
+   * Gets all item IDs (KeyedStore interface).
+   */
+  public getItemIds(): string[] {
+    return Object.keys(this._accelerationVectors.getValue());
+  }
+
+  /**
+   * Gets the total number of items (KeyedStore interface).
+   */
+  public getItemCount(): number {
+    return Object.keys(this._accelerationVectors.getValue()).length;
+  }
+
+  /**
+   * Gets filtered items using predicates (KeyedStore interface).
+   */
+  public getFiltered(...predicates: FilterPredicate<OSVector3>[]): OSVector3[] {
+    const vectors = Object.values(this._accelerationVectors.getValue());
+    return vectors.filter((vec) => predicates.every((pred) => pred(vec)));
+  }
+
+  /**
+   * Gets filtered observable using predicates (KeyedStore interface).
+   */
+  public getFiltered$(
+    ...predicates: FilterPredicate<OSVector3>[]
+  ): Observable<OSVector3[]> {
+    return new Observable((observer) => {
+      const subscription = this.state$.subscribe((vectors) => {
+        const filtered = Object.values(vectors).filter((vec) =>
+          predicates.every((pred) => pred(vec)),
+        );
+        observer.next(filtered);
+      });
+      return () => subscription.unsubscribe();
+    });
+  }
+
+  /**
+   * Gets store metadata (InspectableStore interface).
+   */
+  public getMetadata(): StoreMetadata {
+    return { ...this.metadata };
+  }
+
+  /**
+   * Gets store statistics (InspectableStore interface).
+   */
+  public getStats(): {
+    itemCount: number;
+    observableCount: number;
+    registeredAt: Date;
+  } {
+    return {
+      itemCount: this.getItemCount(),
+      observableCount: this.metadata.observables.length,
+      registeredAt: this.metadata.createdAt,
+    };
+  }
+
+  /**
+   * Destroys the store and cleans up resources (BaseStore interface).
+   */
+  public destroy(): void {
+    // Unregister all observables
+    this.metadata.observables.forEach((obsId) => {
+      this.registry.unregister(obsId);
+    });
+
+    // Complete the subject
+    this._accelerationVectors.complete();
   }
 }
 

@@ -292,8 +292,11 @@ export class RendererInfoDisplayController {
     // Enhance stats with our tracked data and renderer stats
     const enhancedStats = {
       ...stats,
-      // Add renderer stats
-      currentFPS: rendererStats?.fps ?? stats.currentFPS,
+      // Add renderer stats - use renderer FPS if available and non-zero, otherwise fallback to monitor FPS
+      currentFPS:
+        rendererStats?.fps && rendererStats.fps > 0
+          ? rendererStats.fps
+          : stats.currentFPS,
       drawCalls: rendererStats?.drawCalls,
       triangles: rendererStats?.triangles,
       memory: rendererStats?.memory,

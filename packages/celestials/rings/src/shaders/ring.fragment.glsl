@@ -193,7 +193,7 @@ float createParticleDetail(vec2 uv, float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientIntensity = uDynamicAmbientIntensity * 0.1; // Much darker ambient
+    float ambientIntensity = uDynamicAmbientIntensity * 0.3; // Increased from 0.1 for brighter ambient
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
@@ -204,6 +204,7 @@ void main() {
         // *** 1. Calculate Lighting ***
         vec3 lightDir = normalize(light.position - vPosition);
         vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
+        vec3 viewDir = normalize(cameraPosition - vPosition);
 
         // Calculate dot product for lighting direction
         float dotProduct = dot(faceNormal, lightDir);
@@ -229,9 +230,14 @@ void main() {
 
             float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
-            float diffuse = (diffuseUp + diffuseDown) * 1.2; // Reduced for sharper terminators
+            float diffuse = (diffuseUp + diffuseDown) * 1.5; // Increased from 1.2 for brighter rings
 
             totalLight += light.color * diffuse * light.intensity * shadow;
+            
+            // *** Add Specular Highlight for Icy/Reflective Particles ***
+            vec3 halfwayDir = normalize(lightDir + viewDir);
+            float spec = pow(max(dot(faceNormal, halfwayDir), 0.0), 32.0);
+            totalLight += light.color * spec * light.intensity * shadow * 0.3;
         } else {
             // Night side - reduced lighting but not completely dark
             // Use a small amount of back-lighting to simulate light scattering
@@ -241,7 +247,7 @@ void main() {
 
             float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
-            float diffuse = (diffuseUp + diffuseDown) * 0.8; // Reduced for sharper terminators
+            float diffuse = (diffuseUp + diffuseDown) * 1.0; // Increased from 0.8
 
             totalLight += light.color * diffuse * light.intensity * shadow;
         }
@@ -249,7 +255,7 @@ void main() {
         // *** 4. Add Light Transmission Through Rings (regardless of direction) ***
         // Rings scatter light even when not directly illuminated
         // This simulates light passing through the ring particles
-        float lightTransmission = 0.25; // 25% of light passes through ring material
+        float lightTransmission = 0.4; // Increased from 0.25 for better scattering
         totalLight += light.color * lightTransmission * light.intensity * shadow;
     }
 

@@ -363,7 +363,8 @@ export class PerformanceMonitor {
     this.monitoringStarted = false;
     this.frameCount = 0;
     this.lastUpdateTime = 0;
-    this.currentFPS = 0;
+    // Don't reset currentFPS to 0 - keep last known value for display
+    // this.currentFPS = 0;
   }
 
   /**

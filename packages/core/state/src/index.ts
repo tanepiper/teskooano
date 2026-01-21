@@ -15,6 +15,26 @@ export { type CameraState } from "./stores/CameraStore";
 export * from "./utils";
 export * from "./services";
 
+// Export store interfaces and registry
+export {
+  ObservableRegistry,
+  ObservableCategory,
+  observableRegistry,
+} from "./utils/ObservableRegistry";
+export type {
+  ObservableMetadata,
+  ObservableStats,
+  DependencyNode,
+  DependencyGraph,
+} from "./utils/ObservableRegistry";
+export type {
+  BaseStore,
+  FilterableStore,
+  KeyedStore,
+  InspectableStore,
+  StoreMetadata,
+} from "./utils/StoreInterfaces";
+
 // Export the service instances directly
 export {
   celestial,

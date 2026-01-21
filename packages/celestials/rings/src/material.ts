@@ -56,7 +56,7 @@ export class RingMaterial extends ShaderMaterial {
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.01 }, // System-wide minimum ambient for "just enough glow"
+        uDynamicAmbientIntensity: { value: 0.05 }, // Increased from 0.01 for better visibility
 
         // Enhanced Axial Inclination Controls
         uAxialInclination: { value: options.axialInclination ?? 0.0 },
