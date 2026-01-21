@@ -168,10 +168,16 @@ function createBlurMaterial(fragmentShader: string): THREE.ShaderMaterial {
       blurSize: { value: 1.0 / 2048.0 }, // less blur
     },
     vertexShader: `
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      
       varying vec2 vUv;
+      
       void main() {
         vUv = uv;
         gl_Position = vec4(position, 1.0);
+        
+        #include <logdepthbuf_vertex>
       }
     `,
     fragmentShader,

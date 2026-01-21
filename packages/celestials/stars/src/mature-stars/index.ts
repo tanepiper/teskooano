@@ -24,4 +24,4 @@ export { SupergiantRenderer } from "./supergiant/supergiant";
 
 // Legacy imports (moved from post-main-sequence)
 export { HypergiantRenderer } from "./supergiant/hypergiant";
-export { WolfRayetMaterial, WolfRayetRenderer } from "./supergiant/wolf-rayet";
+export { WolfRayetRenderer } from "./supergiant/wolf-rayet";
