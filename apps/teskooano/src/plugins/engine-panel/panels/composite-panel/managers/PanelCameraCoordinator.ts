@@ -1,7 +1,6 @@
-import { StateAccessor } from "@teskooano/core-state";
+import { StateAccessor, StateSubscriptionMixin } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { CameraManager } from "@teskooano/renderer-threejs-camera";
-import { Subscription } from "rxjs";
 import type { CompositeEnginePanel } from "../CompositeEnginePanel";
 
 /**
@@ -13,12 +12,11 @@ import type { CompositeEnginePanel } from "../CompositeEnginePanel";
  * - Initialize camera state from the per-panel core-state CameraManager.
  * - Reflect renderer camera state changes back into core-state for this panel.
  */
-export class PanelCameraCoordinator {
+export class PanelCameraCoordinator extends StateSubscriptionMixin {
   private _renderer: ModularSpaceRenderer;
   private _panelApiId: string;
 
   private _cameraManagerInstance!: CameraManager;
-  private _subscription = new Subscription();
 
   /**
    * Creates a new PanelCameraCoordinator.
@@ -31,6 +29,7 @@ export class PanelCameraCoordinator {
     renderer: ModularSpaceRenderer,
     panelApiId: string,
   ) {
+    super();
     this._renderer = renderer;
     this._panelApiId = panelApiId;
   }
@@ -52,7 +51,8 @@ export class PanelCameraCoordinator {
 
   /** Disposes of all resources and subscriptions held by the coordinator. */
   public dispose(): void {
-    this._subscription.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
     this._cameraManagerInstance.dispose();
   }
 

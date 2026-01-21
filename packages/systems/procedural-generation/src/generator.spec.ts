@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CelestialType } from "@teskooano/data-types";
 import { generateSystem } from "./generator";
 import { OrbitalConfiguration } from "./zones";
+import { isOrbitWithinSystemBoundary } from "./utils-functions";
 
 describe("Enhanced Procedural Generation System", () => {
   it("generates a deterministic system with the same seed", async () => {
@@ -325,7 +326,6 @@ describe("Enhanced Procedural Generation System", () => {
 
   it("validates orbital boundary checking utility function", async () => {
     // Test the isOrbitWithinSystemBoundary utility function
-    const { isOrbitWithinSystemBoundary } = await import("./utils-functions");
 
     // Test circular orbit at boundary
     expect(isOrbitWithinSystemBoundary(10000, 0, 10000)).toBe(true);

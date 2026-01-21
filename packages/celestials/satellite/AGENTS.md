@@ -413,7 +413,7 @@ Automatic scaling based on satellite size and mission type:
 ```typescript
 /**
  * Calculates the appropriate scale for a satellite based on its real-world size
- * and the scene's scale (1 unit = 1 AU)
+ * and the scene's scale (1000 units = 1 AU, RENDER_SCALE_AU = 1000)
  */
 private calculateSatelliteScale(
   object: RenderableCelestialObject,

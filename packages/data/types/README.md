@@ -60,8 +60,8 @@ The types package provides:
 Defines the constants and functions for converting between real-world units (used by the physics engine) and visual/rendering units.
 
 - `SCALE`: An object containing various scaling factors:
-  - `RENDER_SCALE_AU`: The primary factor defining how many Three.js scene units correspond to 1 Astronomical Unit (AU). Used by renderers for positioning.
-  - `SIZE`, `DISTANCE`: Additional scaling factors (currently `0.05`) applied _after_ the base `RENDER_SCALE_AU`. Primarily used for _visual adjustments_ to object radii (`scaleSize`) or orbital line distances (`scaleDistance`), not for core positioning.
+  - `RENDER_SCALE_AU`: The primary factor defining how many Three.js scene units correspond to 1 Astronomical Unit (AU). Currently 1000, meaning **1000 scene units = 1 AU**. Used by renderers for positioning.
+  - `SIZE`, `DISTANCE`: Additional scaling factors (currently `1.0`) applied after the base `RENDER_SCALE_AU`. These maintain 1:1 scaling for consistent visual representation across all bodies.
   - `MOON_DISTANCE`: A multiplier applied to moon orbital distances for better visual separation.
   - `MASS`, `TIME`: Factors for scaling mass and time (currently `1.0e-20` and `1.0`). Mass scaling is used to prevent numerical issues in physics calculations involving large astronomical masses if scaled units were used (currently physics uses real units).
 - `scaleSize(realSize_m, type)`: Converts a real radius (meters) to a visual size, applying `SCALE.SIZE` and type-specific factors. Used by renderers when creating geometry.
@@ -82,7 +82,7 @@ Defines the constants and functions for converting between real-world units (use
 
 ## Weaknesses
 
-- The purpose/necessity of the small `SCALE.SIZE` and `SCALE.DISTANCE` factors (0.05) could be clearer or potentially simplified.
+- The `SCALE.SIZE` and `SCALE.DISTANCE` factors are currently 1.0 for consistent scaling. Type-specific multipliers (GAS_GIANT_SIZE, STAR_SIZE, MOON_DISTANCE) are applied where needed.
 - Some interfaces are quite large and could benefit from further modularization (though planet surface properties are now improved).
 - Limited validation logic for values (relies on TypeScript's structural typing).
 

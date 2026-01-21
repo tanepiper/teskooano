@@ -14,85 +14,93 @@
     "composite": true,
     "declarationMap": true,
     "isolatedModules": true,
-    "baseUrl": ".",
     "paths": {
-      "@teskooano/renderer-threejs": ["packages/renderer/threejs/src/index.ts"],
+      "*": ["./*"],
+      "@teskooano/renderer-threejs": [
+        "./packages/renderer/threejs/src/index.ts"
+      ],
       "@teskooano/renderer-threejs-core": [
-        "packages/renderer/threejs-core/src/index.ts"
+        "./packages/renderer/threejs-core/src/index.ts"
       ],
       "@teskooano/renderer-threejs-objects": [
-        "packages/renderer/threejs-objects/src/index.ts"
+        "./packages/renderer/threejs-objects/src/index.ts"
       ],
       "@teskooano/renderer-threejs-orbits": [
-        "packages/renderer/threejs-orbits/src/index.ts"
+        "./packages/renderer/threejs-orbits/src/index.ts"
       ],
       "@teskooano/renderer-threejs-background": [
-        "packages/renderer/threejs-background/src/index.ts"
+        "./packages/renderer/threejs-background/src/index.ts"
       ],
       "@teskooano/renderer-threejs-controls": [
-        "packages/renderer/threejs-controls/src"
+        "./packages/renderer/threejs-controls/src"
       ],
       "@teskooano/renderer-threejs-labels": [
-        "packages/renderer/threejs-labels/src"
+        "./packages/renderer/threejs-labels/src"
       ],
       "@teskooano/renderer-threejs-lighting": [
-        "packages/renderer/threejs-lighting/src"
+        "./packages/renderer/threejs-lighting/src"
       ],
       "@teskooano/renderer-threejs-camera": [
-        "packages/renderer/threejs-camera/src"
+        "./packages/renderer/threejs-camera/src"
       ],
       "@teskooano/renderer-threejs-helpers": [
-        "packages/renderer/threejs-helpers/src"
+        "./packages/renderer/threejs-helpers/src"
       ],
-      "@teskooano/notifications": ["packages/app/notifications/src"],
+      "@teskooano/notifications": ["./packages/app/notifications/src"],
       "@teskooano/renderer-threejs-celestial": [
-        "packages/renderer/threejs-celestial/src"
+        "./packages/renderer/threejs-celestial/src"
       ],
-      "@teskooano/core-state": ["packages/core/state/src/index.ts"],
-      "@teskooano/core-math": ["packages/core/math/src/index.ts"],
-      "@teskooano/data-types": ["packages/data/types/src/index.ts"],
-      "@teskooano/data-values": ["packages/data/values/src/index.ts"],
+      "@teskooano/core-state": ["./packages/core/state/src/index.ts"],
+      "@teskooano/core-math": ["./packages/core/math/src/index.ts"],
+      "@teskooano/data-types": ["./packages/data/types/src/index.ts"],
+      "@teskooano/data-values": ["./packages/data/values/src/index.ts"],
       "@teskooano/app-simulation": [
-        "packages/app/simulation/src/Simulation.ts"
+        "./packages/app/simulation/src/Simulation.ts"
       ],
-      "@teskooano/core-physics": ["packages/core/physics/src/index.ts"],
+      "@teskooano/core-physics": ["./packages/core/physics/src/index.ts"],
       "@teskooano/systems-procedural-generation": [
-        "packages/systems/procedural-generation/src/index.ts"
+        "./packages/systems/procedural-generation/src/index.ts"
       ],
       "@teskooano/systems-solar-system": [
-        "packages/systems/solar-system/src/index.ts"
+        "./packages/systems/solar-system/src/index.ts"
       ],
-      "@teskooano/core-debug": ["packages/core/debug/src/index.ts"],
-      "@teskooano/celestials-comet": ["packages/celestials/comet/src/index.ts"],
+      "@teskooano/core-debug": ["./packages/core/debug/src/index.ts"],
+      "@teskooano/celestials-comet": [
+        "./packages/celestials/comet/src/index.ts"
+      ],
       "@teskooano/celestials-terrestrial": [
-        "packages/celestials/terrestrial/src/index.ts"
+        "./packages/celestials/terrestrial/src/index.ts"
       ],
-      "@teskooano/celestials-rings": ["packages/celestials/rings/src/index.ts"],
+      "@teskooano/celestials-rings": [
+        "./packages/celestials/rings/src/index.ts"
+      ],
       "@teskooano/celestials-gas-giants": [
-        "packages/celestials/gas-giants/src/index.ts"
+        "./packages/celestials/gas-giants/src/index.ts"
       ],
-      "@teskooano/celestials-stars": ["packages/celestials/stars/src/index.ts"],
+      "@teskooano/celestials-stars": [
+        "./packages/celestials/stars/src/index.ts"
+      ],
       "@teskooano/celestials-asteroid-field": [
-        "packages/celestials/asteroid-field/src/index.ts"
+        "./packages/celestials/asteroid-field/src/index.ts"
       ],
       "@teskooano/celestials-oort-cloud": [
-        "packages/celestials/oort-cloud/src/index.ts"
+        "./packages/celestials/oort-cloud/src/index.ts"
       ],
       "@teskooano/celestials-asteroid": [
-        "packages/celestials/asteroid/src/index.ts"
+        "./packages/celestials/asteroid/src/index.ts"
       ],
       "@teskooano/celestials-satellite": [
-        "packages/celestials/satellite/src/index.ts"
+        "./packages/celestials/satellite/src/index.ts"
       ],
-      "@teskooano/celestials": ["packages/celestials/src/index.ts"],
-      "@teskooano/*": ["packages/*/src"],
-      "@teskooano/ui-plugin": ["packages/app/ui-plugin/dist/index.js"],
-      "@teskooano/ui-plugin/ts": ["packages/app/ui-plugin/src/index.ts"],
+      "@teskooano/celestials": ["./packages/celestials/src/index.ts"],
+      "@teskooano/*": ["./packages/*/src"],
+      "@teskooano/ui-plugin": ["./packages/app/ui-plugin/dist/index.js"],
+      "@teskooano/ui-plugin/ts": ["./packages/app/ui-plugin/src/index.ts"],
       "@teskooano/ui-plugin/vite.js": [
-        "packages/app/ui-plugin/src/vite-plugin.ts"
+        "./packages/app/ui-plugin/src/vite-plugin.ts"
       ],
-      "@teskooano/web-apis": ["packages/app/web-apis/src/index.ts"],
-      "@teskooano/design-system": ["packages/app/design-system/src/index.ts"]
+      "@teskooano/web-apis": ["./packages/app/web-apis/src/index.ts"],
+      "@teskooano/design-system": ["./packages/app/design-system/src/index.ts"]
     },
     "types": ["node", "vitest/globals"]
   },

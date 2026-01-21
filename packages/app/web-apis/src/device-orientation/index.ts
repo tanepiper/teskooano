@@ -1,4 +1,4 @@
-import { Observable, fromEvent, merge } from "rxjs";
+import { Observable, fromEvent, merge, Subscriber } from "rxjs";
 import {
   map,
   startWith,
@@ -124,23 +124,19 @@ export async function requestDeviceOrientationPermission(): Promise<boolean> {
     ).requestPermission();
     permissionState = state;
     if (state === "granted") {
-      (deviceOrientation$ as any)._subscribe(
-        new (require("rxjs").Subscriber)(),
-      );
+      (deviceOrientation$ as any)._subscribe(new Subscriber());
       return true;
     } else {
       console.warn("Device orientation permission denied.");
 
-      (deviceOrientation$ as any)._subscribe(
-        new (require("rxjs").Subscriber)(),
-      );
+      (deviceOrientation$ as any)._subscribe(new Subscriber());
       return false;
     }
   } catch (error) {
     console.error("Error requesting device orientation permission:", error);
     permissionState = "denied";
 
-    (deviceOrientation$ as any)._subscribe(new (require("rxjs").Subscriber)());
+    (deviceOrientation$ as any)._subscribe(new Subscriber());
     return false;
   }
 }

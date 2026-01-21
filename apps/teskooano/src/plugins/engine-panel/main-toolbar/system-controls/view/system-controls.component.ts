@@ -1,7 +1,7 @@
 import { StateAccessor, currentSeed$, seed } from "@teskooano/core-state";
 import type { CelestialObject } from "@teskooano/data-types";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
-import { BehaviorSubject, combineLatest, fromEvent, Subscription } from "rxjs";
+import { BehaviorSubject, combineLatest, fromEvent } from "rxjs";
 import { debounceTime, map, startWith, tap } from "rxjs/operators";
 import { SystemControlsTemplate } from "./system-controls.template";
 import { SystemControlsController } from "../controller/system-controls.controller";
@@ -49,8 +49,6 @@ export class SystemControls extends HTMLElement {
   public isGenerating$$ = new BehaviorSubject<boolean>(false);
   /** @internal A subject that emits true when the mobile attribute is present. */
   private mobile$$ = new BehaviorSubject<boolean>(false);
-  /** @internal A collection of all RxJS subscriptions to be torn down on disconnect. */
-  private subscriptions = new Subscription();
   /** @internal The controller instance that manages all component logic. */
   private controller: SystemControlsController | undefined;
 
@@ -152,7 +150,6 @@ export class SystemControls extends HTMLElement {
     }
     this.controller = new SystemControlsController(this, context);
     this.controller.init();
-    this.setupUIStreams();
   }
 
   /**
@@ -161,7 +158,6 @@ export class SystemControls extends HTMLElement {
    * @internal
    */
   disconnectedCallback() {
-    this.subscriptions.unsubscribe();
     this.controller?.dispose();
   }
 
@@ -230,20 +226,18 @@ export class SystemControls extends HTMLElement {
   }
 
   /**
-   * Sets up RxJS streams for reactive UI updates. This method subscribes to
-   * global state stores and the component's internal state subjects to
-   * automatically update the DOM when data changes.
-   *
-   * @private
+   * Creates RxJS streams for reactive UI updates.
+   * Returns the observables so the controller can manage subscriptions.
+   * @internal Used by controller to set up reactive UI streams
    */
-  private setupUIStreams(): void {
+  public getUIStreams() {
     if (
       !this.shadowRoot ||
       !this.seedForm ||
       !this.seedInput ||
       !this.controller
     ) {
-      return;
+      return null;
     }
 
     const displayState$ = combineLatest([
@@ -251,10 +245,9 @@ export class SystemControls extends HTMLElement {
       StateAccessor.getCurrentSeedStream(),
       this.controller.isGenerating$$,
       this.mobile$$,
-    ]).pipe(debounceTime(0));
-
-    this.subscriptions.add(
-      displayState$.subscribe(([objects, seed, isGenerating, _isMobile]) => {
+    ]).pipe(
+      debounceTime(0),
+      tap(([objects, seed, isGenerating, _isMobile]) => {
         this._updateDisplay(
           objects as CoreCelestialObjectMap,
           seed,
@@ -283,13 +276,14 @@ export class SystemControls extends HTMLElement {
       }),
       tap((newSeed) => seed.updateSeed(newSeed)),
     );
-    this.subscriptions.add(seedInputEvent$.subscribe());
 
-    this.subscriptions.add(
-      this.mobile$$.subscribe((isMobile) => {
+    const mobileState$ = this.mobile$$.pipe(
+      tap((isMobile) => {
         this._updateButtonStylesForMobileState(isMobile);
       }),
     );
+
+    return { displayState$, seedInputEvent$, mobileState$ };
   }
 
   /**

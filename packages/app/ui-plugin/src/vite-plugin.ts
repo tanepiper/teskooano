@@ -73,6 +73,9 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
           }[] = [];
 
           for (const configPath of pluginConfigPaths) {
+            // NOTE: Dynamic import required here for Vite build-time configuration loading
+            // This is executed during the build process, not at runtime, and allows Vite
+            // to read plugin registry configs. This is a Vite architectural requirement.
             const pluginConfigModule = await import(
               configPath + `?import&t=${Date.now()}` // Append timestamp to bust cache
             );
@@ -112,6 +115,8 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
 
             pluginFileToIdMap.set(resolvedPluginPath, pluginId); // Populate map for HMR
 
+            // NOTE: Dynamic import generated here for code-splitting at runtime
+            // This creates the virtual module that lazy-loads plugins on demand
             content += `  ${JSON.stringify(
               pluginId,
             )}: () => import('${resolvedPluginPath}'),\n`;

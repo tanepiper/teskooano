@@ -116,12 +116,163 @@ plugin-name/
 - **No Manual Registration**: Don't call `customElements.define()` manually
 - **Plugin Manager**: Handles registration automatically during plugin loading
 
+### Component Organization
+
+Plugins should follow a consistent directory structure based on component complexity:
+
+**Flat Structure (Most Common)**
+
+```
+plugin-name/
+├── controller/
+│   └── PluginName.controller.ts
+├── view/
+│   ├── PluginName.view.ts
+│   └── PluginName.template.ts
+├── services/                      # Optional
+├── index.ts
+└── README.md
+```
+
+**Nested Structure (Complex Plugins)**
+
+```
+plugin-name/
+├── controller/
+├── view/
+├── components/                    # For reusable sub-components
+│   ├── component-name/
+│   │   ├── ComponentName.ts
+│   │   └── ComponentName.template.ts
+│   └── another-component/
+├── services/
+├── index.ts
+└── README.md
+```
+
+**When to Use `components/` Subdirectory:**
+
+- Component is **reusable** across multiple plugins or views
+- Component has **complex internal structure** (own controller/view/template pattern)
+- Component is **not a standalone plugin** (doesn't register with plugin manager)
+- Example: `celestial-row` component in `celestial-hierarchy` plugin, `plugin-detail-card` in `plugin-manager`
+
+**When to Use Flat Structure:**
+
+- Single-purpose plugin with straightforward controller/view
+- No reusable sub-components needed
+- Simpler to navigate and maintain
+- Example: `notifications`, `celestial-info`, `engine-settings`
+
 ### Key Patterns
 
 - **View**: "Dumb" custom elements that only manage DOM and delegate to controllers
 - **Controller**: Contains all business logic, subscribes to state, handles events
 - **Services**: Reusable, injectable classes for complex business logic
 - **Dependency Injection**: Pass dependencies through constructors, not global state
+
+### Subscription Management
+
+**All controllers and managers MUST use `StateSubscriptionMixin`** from `@teskooano/core-state` for subscription management:
+
+```typescript
+import { StateSubscriptionMixin } from "@teskooano/core-state";
+
+export class MyController extends StateSubscriptionMixin {
+  constructor() {
+    super(); // Required for mixin initialization
+  }
+
+  public init(): void {
+    // ✅ Use subscribeToState for all RxJS subscriptions
+    this.subscribeToState(someObservable$, (value) => {
+      // Handle value
+    });
+  }
+
+  public dispose(): void {
+    // ✅ Automatic cleanup via StateSubscriptionMixin
+    super.dispose();
+  }
+}
+```
+
+**Anti-patterns to avoid:**
+
+- ❌ Never use `private subscriptions = new Subscription()`
+- ❌ Never manually call `.subscribe()` and track subscriptions
+- ❌ Views should NOT manage subscriptions - delegate to controllers
+
+### Event Handling Guidelines
+
+Choose the appropriate event pattern based on the communication scope:
+
+**1. RxJS Streams (Internal Component Logic)**
+
+- **Use for**: Complex reactive logic within a controller or service
+- **Pattern**: Operators like `combineLatest`, `merge`, `switchMap`, `debounceTime`
+- **Example**: Combining multiple state streams, form validation, complex user interactions
+
+```typescript
+const displayState$ = combineLatest([
+  celestialObjects$,
+  currentSeed$,
+  isGenerating$$,
+]).pipe(
+  debounceTime(0),
+  tap(([objects, seed, isGenerating]) => {
+    this.updateDisplay(objects, seed, isGenerating);
+  }),
+);
+
+this.subscribeToState(displayState$, () => {});
+```
+
+**2. Custom DOM Events (Cross-System Communication)**
+
+- **Use for**: Communication between different systems/packages, plugin→core, or UI→renderer
+- **Pattern**: `document.dispatchEvent(new CustomEvent(...))`
+- **Example**: Renderer events, state change notifications, system-level actions
+
+```typescript
+// Dispatch
+document.dispatchEvent(
+  new CustomEvent("renderer-focus-changed", {
+    detail: { objectId: "sun-001" },
+  }),
+);
+
+// Listen
+document.addEventListener("renderer-focus-changed", (event) => {
+  const { objectId } = event.detail;
+  this.handleFocusChange(objectId);
+});
+```
+
+**3. Direct Event Listeners (DOM-Native Events)**
+
+- **Use for**: ONLY native DOM events like clicks, inputs, resize, keyboard
+- **Pattern**: `fromEvent(element, 'click')` or `element.addEventListener()`
+- **Example**: Button clicks, input changes, window resize
+
+```typescript
+// RxJS approach (preferred for reactive pipelines)
+const click$ = fromEvent(button, "click").pipe(
+  debounceTime(300),
+  map(() => this.getValue()),
+);
+
+// Direct listener (for simple cases)
+button.addEventListener("click", () => this.handleClick());
+```
+
+**Decision Matrix:**
+
+| Scope            | Pattern           | When to Use                              |
+| ---------------- | ----------------- | ---------------------------------------- |
+| Within component | RxJS Streams      | Complex reactive logic, multiple sources |
+| Across systems   | Custom DOM Events | Plugin communication, renderer events    |
+| DOM interaction  | Direct Listeners  | Simple button clicks, native events      |
 
 ## Testing Strategy
 
@@ -151,9 +302,10 @@ plugin-name/
 ### Coordinate Systems
 
 - **Right-Handed**: Use right-handed coordinate system for 3D axes
-- **Scene Units**: 1 scene unit = 1 AU of distance
-- **Scaling**: Use `AU_METERS` constant across entire codebase
+- **Scene Units**: 1000 scene units = 1 AU of distance (RENDER_SCALE_AU = 1000)
+- **Scaling**: Use `AU_METERS` constant and `METERS_TO_SCENE_UNITS` for conversions
 - **Vector Math**: Use `OSVector3` for physics, convert to `THREE.Vector3` for rendering
+- **Logarithmic Depth**: Far plane at 200 AU (30 billion scene units) with NEAR=0.00001
 
 ### Rendering Architecture
 
@@ -294,6 +446,269 @@ document.dispatchEvent(new CustomEvent("teskooano-clear-orbit-trails"));
 - **Throttle expensive operations**: Use RxJS operators for performance
 - **Handle errors**: Implement proper error handling in subscriptions
 - **Event documentation**: See `packages/core/state/src/services/EVENT_SYSTEM.md` for comprehensive documentation
+
+## Unified Architecture Patterns
+
+This section documents the 10 core patterns that ensure consistency across the codebase. All new code MUST follow these patterns.
+
+### 1. StateSubscriptionMixin Pattern
+
+**Rule**: All controllers and managers MUST extend `StateSubscriptionMixin` from `@teskooano/core-state`.
+
+```typescript
+import { StateSubscriptionMixin } from "@teskooano/core-state";
+
+export class MyController extends StateSubscriptionMixin {
+  constructor() {
+    super(); // Required for mixin initialization
+  }
+
+  public init(): void {
+    // ✅ Use subscribeToState for all RxJS subscriptions
+    this.subscribeToState(someObservable$, (value) => {
+      // Handle value
+    });
+  }
+
+  public dispose(): void {
+    // ✅ Automatic cleanup via StateSubscriptionMixin
+    super.dispose();
+    // Manual cleanup (event listeners, etc.)
+  }
+}
+```
+
+**Anti-patterns to avoid**:
+
+- ❌ `private subscriptions = new Subscription()`
+- ❌ Manually calling `.subscribe()` and tracking subscriptions
+- ❌ Views managing subscriptions (delegate to controllers)
+
+### 2. Filter Factory Pattern
+
+**Rule**: Use `createFilteredStream$` and `createFilteredMap` from `StoreFilters.ts` for state filtering.
+
+```typescript
+import {
+  createFilteredStream$,
+  createFilteredMap,
+} from "@teskooano/core-state";
+import { isActive, isDestroyed, isVisible } from "@teskooano/core-state";
+
+// Filter to active, visible objects
+const activeVisible$ = createFilteredStream$(
+  celestialStore.objects$,
+  (obj) => isActive(obj) && isVisible(obj),
+);
+
+// Map with composed predicates
+const activeRenderables = createFilteredMap(
+  renderableStore.renderableObjects$,
+  isActive,
+);
+```
+
+**Benefits**: 60% reduction in code duplication, composable predicates, consistent filtering logic.
+
+### 3. Stream Composition Pattern
+
+**Rule**: Use helpers from `StreamCompositionHelpers.ts` for state composition and performance optimization.
+
+```typescript
+import {
+  withCelestialState,
+  withRenderableState,
+  atFrameRate,
+} from "@teskooano/core-state";
+
+// Combine with full state
+const userAction$ = fromEvent(button, "click").pipe(
+  withCelestialState(),
+  map(({ value, celestials, renderables }) => {
+    return processAction(value, celestials, renderables);
+  }),
+);
+
+// Throttle to ~60fps
+const mouseMove$ = fromEvent(document, "mousemove").pipe(
+  atFrameRate(),
+  map((event) => updateUIExpensively(event)),
+);
+```
+
+**Available Helpers**:
+
+- `withCelestialState()` - Combines with celestial + renderable state
+- `withRenderableState()` - Lighter-weight, renderable-only
+- `atFrameRate()` - Throttles to ~60fps
+- `atCustomFrameRate(fps)` - Custom throttling
+
+### 4. Render Pipeline Events Pattern
+
+**Rule**: Subscribe to `renderPipelineEvents` for stage-specific rendering logic.
+
+```typescript
+import { renderPipelineEvents } from "@teskooano/renderer-threejs";
+
+// React to specific pipeline stages
+renderPipelineEvents.afterObjectsUpdate$.subscribe((payload) => {
+  const { deltaTime, elapsedTime, frameCount } = payload;
+  this.updateObjectUI();
+});
+
+// Available events (all emit RenderPipelineStagePayload):
+// - beforeUpdate$, afterControlsUpdate$, afterOrbitsUpdate$
+// - afterObjectsUpdate$, afterBackgroundUpdate$, afterGridUpdate$
+// - beforeRender$, afterRender$, afterOverlaysRender$, afterUpdate$
+```
+
+### 5. Plugin Factory Pattern
+
+**Rule**: Use factory functions from `plugin-factory.ts` to define plugins.
+
+```typescript
+import { createPanelPlugin } from "@teskooano/app-ui-plugin";
+
+export const plugin = createPanelPlugin({
+  id: "my-plugin",
+  name: "My Plugin",
+  description: "Description",
+  componentName: "my-plugin-panel",
+  panelClass: MyPluginPanel,
+  defaultTitle: "My Plugin",
+  iconSvg: "<svg>...</svg>",
+  order: 100,
+  target: "panel-toolbar",
+});
+```
+
+**Available Factories**:
+
+- `createPanelPlugin` - Panel-based plugins (most common)
+- `createComponentPlugin` - Component-only plugins
+- `createControllerPlugin` - Service plugins
+- `createInterfacePlugin` - Function plugins with toolbar
+- `createFunctionPlugin` - Lightweight function-only
+- `createWidgetPlugin` - Toolbar widget plugins
+
+### 6. Event Bridge Pattern
+
+**Rule**: Use EventBridge classes for DOM→RxJS event bridging.
+
+```typescript
+// System-level events
+import { SystemEventBridge } from "@teskooano/core-state";
+SystemEventBridge.getInstance().init();
+
+// Celestial-specific events
+import { CelestialEventBridge } from "@teskooano/core-state";
+CelestialEventBridge.getInstance().init();
+
+// Event flow: Core State (DOM) → EventBridge → Renderer (RxJS) → Components
+```
+
+### 7. Custom Events Constants Pattern
+
+**Rule**: Always use `CustomEvents` constants for custom DOM events.
+
+```typescript
+import { CustomEvents } from "@teskooano/data-types";
+
+// ✅ Correct
+document.dispatchEvent(
+  new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {
+    detail: { objectId },
+  }),
+);
+
+// ❌ Incorrect - string literals create typo risk
+document.dispatchEvent(
+  new CustomEvent("celestial-object-destroyed", { detail: { objectId } }),
+);
+```
+
+### 8. MVC Directory Structure Pattern
+
+**Rule**: Follow flat structure by default, nested only for reusable sub-components.
+
+**Flat Structure (Most Common)**:
+
+```
+plugin-name/
+├── controller/
+│   └── PluginName.controller.ts
+├── view/
+│   ├── PluginName.view.ts
+│   └── PluginName.template.ts
+├── services/                      # Optional
+├── index.ts
+└── README.md
+```
+
+**Nested Structure (Complex Plugins)**:
+
+```
+plugin-name/
+├── controller/
+├── view/
+├── components/                    # For reusable sub-components
+│   ├── component-name/
+│   │   ├── ComponentName.ts
+│   │   └── ComponentName.template.ts
+├── services/
+├── index.ts
+└── README.md
+```
+
+### 9. Event Handling Decision Matrix
+
+**Rule**: Choose the appropriate event pattern based on communication scope.
+
+| Scope            | Pattern           | When to Use                              |
+| ---------------- | ----------------- | ---------------------------------------- |
+| Within component | RxJS Streams      | Complex reactive logic, multiple sources |
+| Across systems   | Custom DOM Events | Plugin communication, renderer events    |
+| DOM interaction  | Direct Listeners  | Simple button clicks, native events      |
+
+**Examples**:
+
+```typescript
+// Internal component logic - RxJS
+const displayState$ = combineLatest([celestials$, renderables$]).pipe(
+  debounceTime(0),
+  tap(([celestials, renderables]) => this.updateDisplay()),
+);
+
+// Cross-system communication - Custom DOM Events
+document.dispatchEvent(
+  new CustomEvent("renderer-focus-changed", {
+    detail: { objectId: "sun-001" },
+  }),
+);
+
+// Native DOM events - Direct listeners
+button.addEventListener("click", () => this.handleClick());
+```
+
+### 10. Trail Optimization Pattern
+
+**Rule**: Use pre-allocated buffers and batch processing for performance-critical operations.
+
+```typescript
+// Pre-allocate buffer pools
+const trailDataPool = new TrailDataPool(100, 10000); // 100 objects × 10k points
+
+// Batch processing with intervals
+const BATCH_INTERVAL = 100; // Process every 100ms
+
+// Distance filtering to skip redundant points
+const MIN_DISTANCE_SQ_TO_ADD = 1e-10;
+if (dx * dx + dy * dy + dz * dz < MIN_DISTANCE_SQ_TO_ADD) {
+  continue; // Skip duplicate point
+}
+```
+
+**Benefits**: Reduces GC pressure, improves frame rate stability, efficient memory usage.
 
 ## Documentation Standards
 

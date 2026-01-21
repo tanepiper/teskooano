@@ -8,7 +8,6 @@
     "sourceMap": true,
     "noEmit": false,
     "composite": true,
-    "baseUrl": ".",
     "paths": {
       "@teskooano/core-state": ["../../core/state/src/index.ts"],
       "@teskooano/data-types": ["../../data/types/src/index.ts"],

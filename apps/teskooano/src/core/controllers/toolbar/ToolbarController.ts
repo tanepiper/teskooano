@@ -1,4 +1,4 @@
-import { fromEvent, Subscription } from "rxjs";
+import { fromEvent } from "rxjs";
 import { map, startWith } from "rxjs/operators";
 import {
   type FunctionToolbarItemConfig,
@@ -12,6 +12,7 @@ import {
   createComponentState,
   type ReactiveState,
 } from "@teskooano/ui-plugin/patterns";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { template as toolbarTemplate } from "./ToolbarController.template.js";
 import { createToolbarButton } from "./ToolbarController.utils.js";
 
@@ -27,13 +28,12 @@ interface ToolbarState {
  * It dynamically populates the toolbar with buttons and widgets based on
  * plugin registrations, and handles responsive layout changes.
  */
-export class ToolbarController {
+export class ToolbarController extends StateSubscriptionMixin {
   private _element: HTMLElement;
   private _buttonContainer: HTMLElement;
   private _widgetContainer: HTMLElement;
   private _context: PluginExecutionContext;
   private _state: ReactiveState;
-  private _subscriptions: Subscription = new Subscription();
 
   /**
    * URL for the main Teskooano website.
@@ -48,6 +48,7 @@ export class ToolbarController {
    * @param context The PluginExecutionContext for accessing plugin manager and Dockview controller.
    */
   constructor(element: HTMLElement, context: PluginExecutionContext) {
+    super();
     this._element = element;
     this._context = context;
 
@@ -80,7 +81,8 @@ export class ToolbarController {
    * Cleans up subscriptions when the controller is no longer needed.
    */
   public destroy(): void {
-    this._subscriptions.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
     this._state.dispose();
   }
 
@@ -97,19 +99,19 @@ export class ToolbarController {
    * @private
    */
   private setupStateSubscriptions(): void {
-    const resizeSub = fromEvent(window, "resize")
-      .pipe(
-        startWith(null),
-        map(() => this.detectMobileDevice()),
-      )
-      .subscribe((isMobile) => this._state.set("isMobile", isMobile));
+    const resizeStream$ = fromEvent(window, "resize").pipe(
+      startWith(null),
+      map(() => this.detectMobileDevice()),
+    );
 
-    const pluginChangesSub = pluginManager.pluginsChanged$.subscribe(() => {
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(resizeStream$, (isMobile) =>
+      this._state.set("isMobile", isMobile),
+    );
+
+    this.subscribeToState(pluginManager.pluginsChanged$, () => {
       this.loadToolbarData();
     });
-
-    this._subscriptions.add(resizeSub);
-    this._subscriptions.add(pluginChangesSub);
   }
 
   /**
@@ -177,21 +179,19 @@ export class ToolbarController {
         if (item.type === "function") {
           const buttonConfig = item as FunctionToolbarItemConfig;
           buttonElement = createToolbarButton(buttonConfig.id, buttonOptions);
-          this._subscriptions.add(
-            fromEvent(buttonElement, "click").subscribe(() => {
-              this._context.pluginManager.execute(buttonConfig.functionId);
-            }),
-          );
+          const click$ = fromEvent(buttonElement, "click");
+          this.subscribeToState(click$, () => {
+            this._context.pluginManager.execute(buttonConfig.functionId);
+          });
         } else if (item.type === "panel") {
           const panelConfig = item as PanelToolbarItemConfig;
           buttonElement = createToolbarButton(panelConfig.id, buttonOptions);
-          this._subscriptions.add(
-            fromEvent(buttonElement, "click").subscribe(() => {
-              this._context.dockviewController.handlePanelToggleAction(
-                panelConfig,
-              );
-            }),
-          );
+          const click$ = fromEvent(buttonElement, "click");
+          this.subscribeToState(click$, () => {
+            this._context.dockviewController.handlePanelToggleAction(
+              panelConfig,
+            );
+          });
         } else {
           return;
         }

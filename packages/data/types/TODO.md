@@ -1,7 +1,7 @@
 # TODO
 
 - **Schema Validation**: Implement JSON Schema generation or validation logic based on these TypeScript types to validate system configuration files.
-- **Refine Scaling**: Review the `SCALE.SIZE` and `SCALE.DISTANCE` factors (0.05) in `scaling.ts`. Clarify their purpose or explore simplifying the visual scaling approach.
+- **Refine Scaling**: The `SCALE.SIZE` and `SCALE.DISTANCE` factors are now 1.0 for consistent scaling across all bodies. Type-specific multipliers are applied via scaleSize() for GAS_GIANT_SIZE (1.0), STAR_SIZE (1.0), and MOON_DISTANCE (50.0) as needed. This approach supports the logarithmic depth buffer system.
 - **UI Type Usage**: Determine how the generic UI types in `ui.ts` will be concretely implemented or adapted by specific UI libraries (e.g., a potential Web Component library).
 - **Ship Types**: Define types for player ships, including properties for navigation, warp drives, docking, internal systems, etc.
 - **Serialization/Deserialization**: Add specific types or helper functions related to saving and loading simulation state and system configurations.

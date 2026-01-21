@@ -174,6 +174,14 @@ export class SystemControlsController extends StateSubscriptionMixin {
     this.subscribeToState(copySeed$, () => {});
     this.subscribeToState(createBlankSystem$, () => {});
     this.subscribeToState(loadSolarSystem$, () => {});
+
+    // Subscribe to UI streams from the view
+    const uiStreams = this.view.getUIStreams();
+    if (uiStreams) {
+      this.subscribeToState(uiStreams.displayState$, () => {});
+      this.subscribeToState(uiStreams.seedInputEvent$, () => {});
+      this.subscribeToState(uiStreams.mobileState$, () => {});
+    }
   }
 
   /**

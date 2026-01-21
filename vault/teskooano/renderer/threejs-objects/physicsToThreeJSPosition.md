@@ -100,7 +100,7 @@ export function physicsToThreeJSPosition(
 ### Scaling Factor
 
 - **METERS_TO_SCENE_UNITS**: Constant that converts meters to scene units
-- **Scene Units**: Typically 1 unit = 1 AU for astronomical scale
+- **Scene Units**: 1000 scene units = 1 AU (RENDER_SCALE_AU = 1000) for astronomical scale
 - **Precision**: Maintains precision for both small and large distances
 
 ## 🎯 Performance Considerations
@@ -206,7 +206,7 @@ particleSystem.position.copy(effectPos);
 
 ### Scene Coordinate System
 
-- **Units**: Scene units (typically 1 unit = 1 AU)
+- **Units**: Scene units (1000 units = 1 AU, RENDER_SCALE_AU = 1000)
 - **Orientation**: Y-up coordinate system (maintained)
 - **Precision**: Optimized for rendering performance
 - **Range**: Handles distances from scene units to astronomical units

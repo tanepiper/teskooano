@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { SystemControls } from "./view/system-controls.component";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
+import { celestialObjects$, currentSeed$ } from "@teskooano/core-state";
 
 // Mock the core state so we can control it for our tests
 vi.mock("@teskooano/core-state", async () => {
+  // NOTE: Dynamic import required here - vi.mock() callback needs async factory function
+  // for module replacement. This is a Vitest architectural requirement, not a violation
+  // of the static imports policy. See: https://vitest.dev/api/vi.html#vi-mock
   const { BehaviorSubject } = await import("rxjs");
   return {
     celestialObjects$: new BehaviorSubject({}),
@@ -77,9 +81,6 @@ describe("SystemControls Component", () => {
 
   describe("when a system is loaded", () => {
     beforeEach(async () => {
-      const { celestialObjects$, currentSeed$ } = await import(
-        "@teskooano/core-state"
-      );
       // Simulate loading a system by updating the mock state
       (celestialObjects$ as any).next({
         star1: { id: "star1", name: "Sol" },
