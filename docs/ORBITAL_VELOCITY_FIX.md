@@ -46,12 +46,14 @@ v² = μ(2/r - 1/a)
 ```
 
 Where:
+
 - `v` = orbital velocity magnitude
 - `μ` = gravitational parameter (G × M)
 - `r` = distance from central body
 - `a` = semi-major axis
 
 When position and velocity aren't calculated atomically:
+
 - Position `r` is calculated at mean anomaly `M₀`
 - Velocity `v` might be calculated at a slightly different phase
 - This breaks the vis-viva equation
@@ -64,15 +66,18 @@ When position and velocity aren't calculated atomically:
 
 ```typescript
 // AFTER (FIXED CODE):
-const { position: relativePos, velocity: relativeVel } = calculateKeplerianStateAtTime(
-  data.orbit,
-  0, // time=0 uses the initial meanAnomaly from orbital parameters
-  parentPhysicsState.mass_kg,
-);
+const { position: relativePos, velocity: relativeVel } =
+  calculateKeplerianStateAtTime(
+    data.orbit,
+    0, // time=0 uses the initial meanAnomaly from orbital parameters
+    parentPhysicsState.mass_kg,
+  );
 
 // Convert to world coordinates
 const initialWorldPos = relativePos.clone().add(parentPhysicsState.position_m);
-const initialWorldVel = relativeVel.clone().add(parentPhysicsState.velocity_mps);
+const initialWorldVel = relativeVel
+  .clone()
+  .add(parentPhysicsState.velocity_mps);
 ```
 
 ### Why This Works
@@ -90,6 +95,7 @@ const initialWorldVel = relativeVel.clone().add(parentPhysicsState.velocity_mps)
 ## Files Modified
 
 ### Primary Fix
+
 - `packages/core/state/src/services/PhysicsStateCalculator.ts`
   - `calculateOrbitalPhysics()` method (line ~369)
   - `calculateMultiStarSystemPhysics()` method (line ~118)
@@ -132,11 +138,13 @@ To verify the fix works correctly, test:
 For each planet, verify:
 
 1. **Orbital Energy is Negative**:
+
    ```typescript
    const E = (v² / 2) - (μ / r) < 0
    ```
 
 2. **Vis-Viva Equation Holds**:
+
    ```typescript
    const v²_expected = μ * (2/r - 1/a)
    const error = Math.abs(v² - v²_expected) / v²_expected
@@ -152,6 +160,7 @@ For each planet, verify:
 ## Related Issues
 
 This fix resolves:
+
 - Planets escaping orbits
 - Straight-line trajectories
 - Unbound hyperbolic orbits for elliptical planets

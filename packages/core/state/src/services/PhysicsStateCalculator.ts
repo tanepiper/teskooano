@@ -117,11 +117,12 @@ export class PhysicsStateCalculator {
     try {
       // CRITICAL FIX: Calculate position and velocity together using the core Keplerian calculator
       // This ensures they're atomically calculated at the same orbital phase
-      const { position: initialPos, velocity: initialVel } = calculateKeplerianStateAtTime(
-        data.orbit!,
-        0, // time=0 uses the initial meanAnomaly from orbital parameters
-        totalStarMass, // Use total system mass as the barycenter mass
-      );
+      const { position: initialPos, velocity: initialVel } =
+        calculateKeplerianStateAtTime(
+          data.orbit!,
+          0, // time=0 uses the initial meanAnomaly from orbital parameters
+          totalStarMass, // Use total system mass as the barycenter mass
+        );
 
       // Calculate the actual barycenter position by computing mass-weighted average
       // of all star positions
@@ -370,19 +371,24 @@ export class PhysicsStateCalculator {
       // CRITICAL FIX: Calculate position and velocity together to ensure they're at the same orbital phase
       // Using calculateOrbitalPosition and calculateOrbitalVelocity separately can cause desynchronization
       // Instead, we use the core Keplerian calculator that returns both atomically
-      
+
       // Calculate the orbital state at the initial mean anomaly (time=0 uses the mean anomaly from orbital parameters)
-      const { position: relativePos, velocity: relativeVel } = calculateKeplerianStateAtTime(
-        data.orbit,
-        0, // time=0 means use the initial meanAnomaly from orbital parameters
-        parentPhysicsState.mass_kg, // Pass parent mass for proper velocity calculation
-      );
+      const { position: relativePos, velocity: relativeVel } =
+        calculateKeplerianStateAtTime(
+          data.orbit,
+          0, // time=0 means use the initial meanAnomaly from orbital parameters
+          parentPhysicsState.mass_kg, // Pass parent mass for proper velocity calculation
+        );
 
       // Convert relative position to world coordinates
-      const initialWorldPos = relativePos.clone().add(parentPhysicsState.position_m);
-      
+      const initialWorldPos = relativePos
+        .clone()
+        .add(parentPhysicsState.position_m);
+
       // Convert relative velocity to world coordinates by adding parent's velocity
-      const initialWorldVel = relativeVel.clone().add(parentPhysicsState.velocity_mps);
+      const initialWorldVel = relativeVel
+        .clone()
+        .add(parentPhysicsState.velocity_mps);
 
       // Apply barycenter offset to non-star objects to maintain system centering
       const barycenterOffset = this.getBarycenterOffset(allObjects);

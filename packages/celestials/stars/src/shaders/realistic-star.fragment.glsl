@@ -72,7 +72,7 @@ void main() {
     float totalDensity = 0.0;
     float lightEnergy = 0.0;
     
-    const int steps = 30;
+    const int steps = 40;
     float stepSize = (tFar - tNear) / float(steps);
     // Normalize stepSize for density accumulation (make it scale-invariant)
     float normalizedStepSize = stepSize / sphereRadius;
@@ -92,20 +92,23 @@ void main() {
         vec3 pNorm = p / sphereRadius;
         float normalizedDist = distFromCenter / sphereRadius;
         
-        // Base density: high at center, low at edge (scale-invariant)
-        float baseDensity = max(0.0, 1.0 - normalizedDist);
+        // Base density: keep the middle less hollow (scale-invariant)
+        float baseDensity = max(0.0, 1.0 - normalizedDist * normalizedDist);
         
-        // Add turbulence using normalized coordinates
-        float turbulence = fbmSwirl(pNorm * uNoiseScale * 3.0 + vec3(0.0, -uTime * 0.05, 0.0));
-        turbulence = smoothstep(0.2, 0.8, turbulence);
+        // Add turbulence using normalized coordinates (higher frequency + more contrast)
+        float turbulence = fbmSwirl(
+            pNorm * uNoiseScale * 4.0 + vec3(0.0, -uTime * 0.08, 0.0)
+        );
+        turbulence = smoothstep(0.15, 0.85, turbulence);
+        turbulence *= turbulence;
         
         // Edge warping using normalized coordinates
-        float edgeWarp = (fbmSwirl(pNorm * uNoiseScale * 2.0 + vec3(uTime * 0.03)) - 0.5) * 2.0;
+        float edgeWarp = (fbmSwirl(pNorm * uNoiseScale * 3.0 + vec3(uTime * 0.05)) - 0.5) * 2.0;
         float edgeOffset = edgeWarp * (uEdgeNoise / sphereRadius);
         float softEdge = smoothstep(1.0 + (uEdgeSoftness / sphereRadius), 0.8, normalizedDist + edgeOffset);
         
         // Combine densities
-        float density = baseDensity * (0.4 + turbulence * 0.6) * softEdge * uDensityMult;
+        float density = baseDensity * (0.25 + turbulence * 1.25) * softEdge * uDensityMult;
         
         float shadow = exp(-totalDensity * 0.3);
         totalDensity += density * normalizedStepSize;
@@ -114,7 +117,7 @@ void main() {
         t += stepSize;
     }
     
-    float fogAlpha = 1.0 - exp(-totalDensity * 2.0);
+    float fogAlpha = 1.0 - exp(-totalDensity * 3.0);
     fogAlpha = clamp(fogAlpha, 0.0, 1.0);
     
     if (fogAlpha < 0.01) {
