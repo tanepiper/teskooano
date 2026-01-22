@@ -22,6 +22,7 @@ export interface IOrbitVisualizationStrategy {
       timeScale: number;
       predictionSteps: number;
       predictionDuration: number;
+      keplerOrbitMode?: "full" | "trail";
     },
     deltaTime: number,
   ): void;

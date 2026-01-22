@@ -1,20 +1,33 @@
 import { type OrbitalParameters, CelestialType } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { StateSubscriptionMixin } from "@teskooano/core-state";
+import {
+  simulationManager,
+  StateSubscriptionMixin,
+} from "@teskooano/core-state";
 import type { Observable } from "rxjs";
 import * as THREE from "three";
 import { OrbitCalculator } from "./OrbitCalculator";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineHelper } from "@teskooano/renderer-threejs-helpers";
 import { RenderOrderManager } from "@teskooano/renderer-threejs-core";
-import { ThreeVector3Converter } from "@teskooano/data-values"; // Corrected import
+import {
+  AU_METERS,
+  SCALE,
+  ThreeVector3Converter,
+  GRAVITATIONAL_CONSTANT,
+} from "@teskooano/data-values"; // Corrected import
 import { type OSVector3 } from "@teskooano/core-math";
 import { TrailCurveInterpolator } from "../renderers/TrailCurveInterpolator";
 import {
   TrailCurveType,
   type TrailCurveConfig,
 } from "../renderers/TrailManager";
+import {
+  calculateKeplerianPositionAtMeanAnomaly,
+  calculateKeplerianPositionAtTrueAnomaly,
+  calculateMeanAnomalyFromTrueAnomaly,
+} from "@teskooano/core-physics";
 
 /**
  * Manages the creation, update, visibility, and highlighting of static Keplerian orbit lines.
@@ -37,7 +50,7 @@ export class KeplerianManager extends StateSubscriptionMixin {
    */
   private orbitPointCache: Map<
     string,
-    { version: number; points: OSVector3[] }
+    { version: number; points: OSVector3[]; samplingMode: string }
   > = new Map();
 
   /** Object manager for adding/removing objects from the scene */
@@ -141,6 +154,7 @@ export class KeplerianManager extends StateSubscriptionMixin {
     isVisible: boolean,
     highlightedObjectId: string | null,
     highlightColor: THREE.Color,
+    keplerOrbitMode: "full" | "trail",
   ): void {
     const existingLine = this.lines.get(objectId);
     const parentObject3D = this.objectManager.getObject(parentId);
@@ -161,8 +175,14 @@ export class KeplerianManager extends StateSubscriptionMixin {
     let orbitPointsOS: OSVector3[];
     const cachedData = this.orbitPointCache.get(objectId);
     const currentVersion = orbitalParameters.realSemiMajorAxis_m;
+    const samplingMode =
+      keplerOrbitMode === "trail" ? "meanAnomaly" : "trueAnomaly";
 
-    if (cachedData && cachedData.version === currentVersion) {
+    if (
+      cachedData &&
+      cachedData.version === currentVersion &&
+      cachedData.samplingMode === samplingMode
+    ) {
       orbitPointsOS = cachedData.points;
     }
     // If the orbit has fundamentally changed or not cached, recalculate.
@@ -170,17 +190,19 @@ export class KeplerianManager extends StateSubscriptionMixin {
       orbitPointsOS = OrbitCalculator.calculateOrbitPoints(
         orbitalParameters,
         objectState,
+        samplingMode,
       );
       this.orbitPointCache.set(objectId, {
         version: currentVersion,
         points: orbitPointsOS,
+        samplingMode,
       });
     }
     // --- End Caching ---
 
     // Efficiently update or create the THREE.Vector3 array
     const cachedPositions = this.positionCache.get(objectId) ?? [];
-    const orbitPointsTHREE = this.threeVector3Converter.update(
+    let orbitPointsTHREE = this.threeVector3Converter.update(
       orbitPointsOS,
       cachedPositions,
     );
@@ -191,23 +213,207 @@ export class KeplerianManager extends StateSubscriptionMixin {
       return;
     }
 
+    // --- Trail Logic ---
+    let alphas: Float32Array | null = null;
+    if (keplerOrbitMode === "trail") {
+      const state = simulationManager.getSimulationState();
+      const currentTime = state.time;
+      const eccentricity = orbitalParameters.eccentricity;
+
+      let meanMotion: number;
+      let targetLagRad: number;
+      let maxPossibleLagRad: number;
+
+      if (eccentricity <= 1 && orbitalParameters.period_s > 0) {
+        // Elliptical/Parabolic
+        meanMotion = (2 * Math.PI) / orbitalParameters.period_s;
+        // Target 90% of a period for the trail
+        targetLagRad = 0.9 * 2 * Math.PI;
+        maxPossibleLagRad = Math.min(targetLagRad, meanMotion * currentTime);
+      } else {
+        // Hyperbolic (or invalid period)
+        const absA = Math.abs(orbitalParameters.realSemiMajorAxis_m);
+        // Calculate mu from parent mass if available, otherwise fallback to Solar mu
+        const mu = GRAVITATIONAL_CONSTANT * (parentState.mass || 1.989e30);
+        meanMotion = Math.sqrt(mu / (absA * absA * absA));
+
+        // For hyperbolic, we don't have a period. Use a fixed visual trail duration.
+        // Let's use 10 days as a standard trail length for hyperbolic objects (e.g. comets)
+        const targetTrailTime_s = 10 * 24 * 3600;
+        targetLagRad = meanMotion * targetTrailTime_s;
+        maxPossibleLagRad = Math.min(targetLagRad, meanMotion * currentTime);
+      }
+
+      // Calculate current absolute Mean Anomaly (NOT periodic moduloed)
+      const initialMeanAnomaly = orbitalParameters.meanAnomaly;
+      const M_now = initialMeanAnomaly + meanMotion * currentTime;
+
+      // Dynamically sample history instead of filtering a static ring.
+      // This ensures smooth growth and perfect alignment without wrap-around bugs.
+      const numTrailPoints = 128; // Decent density for a smoothed trail
+      const trailPoints: THREE.Vector3[] = [];
+      const trailAlphasList: number[] = [];
+
+      // For high-eccentricity (e > 0.9), we use a more stable True Anomaly sampling approach.
+      // Iterative Kepler solvers can be unstable near e=1, causing AU-long "jumps".
+      if (eccentricity > 0.9) {
+        // 1. Find Current True Anomaly f_now from M_now
+        const f_now = OrbitCalculator.calculateTrueAnomaly(M_now, eccentricity);
+
+        // 2. Sample backwards in True Anomaly f
+        // We'll sample a generous range (up to 180 degrees) and filter by lag
+        for (let i = 0; i < numTrailPoints; i++) {
+          const t = i / (numTrailPoints - 1); // 0 (tail) to 1 (head)
+
+          // We sample f values leading up to f_now.
+          // For high-e, f changes very fast at periapsis, so we sample denser there.
+          // A simple linear f-sampling is actually very robust for visualization.
+          const f_point = f_now - (1 - t) * Math.PI; // Sample up to 180 deg behind
+
+          // Compute exact M_point for this f
+          const M_point = calculateMeanAnomalyFromTrueAnomaly(
+            f_point,
+            eccentricity,
+          );
+          const lagRad = M_now - M_point;
+
+          if (lagRad >= 0 && lagRad <= maxPossibleLagRad) {
+            const posReal = calculateKeplerianPositionAtTrueAnomaly(
+              orbitalParameters,
+              f_point,
+            );
+            const posScaled = posReal.multiplyScalar(
+              SCALE.RENDER_SCALE_AU / AU_METERS,
+            );
+            trailPoints.push(
+              new THREE.Vector3(posScaled.x, posScaled.y, posScaled.z),
+            );
+
+            const lagRatio = targetLagRad > 0 ? lagRad / targetLagRad : 0;
+            let alpha = 1.0;
+            if (lagRatio > 0.5) {
+              alpha = Math.max(0, 1.0 - (lagRatio - 0.5) / 0.4);
+            }
+            trailAlphasList.push(alpha);
+          }
+        }
+      } else {
+        // Standard Mean Anomaly sampling for elliptical/low-e orbits
+        for (let i = 0; i < numTrailPoints; i++) {
+          const t = i / (numTrailPoints - 1); // 0 (tail) to 1 (head)
+          const lagRad = (1 - t) * maxPossibleLagRad;
+          const M_point = M_now - lagRad;
+
+          // Compute exact historical position
+          const posReal = calculateKeplerianPositionAtMeanAnomaly(
+            orbitalParameters,
+            M_point,
+          );
+          const posScaled = posReal.multiplyScalar(
+            SCALE.RENDER_SCALE_AU / AU_METERS,
+          );
+
+          trailPoints.push(
+            new THREE.Vector3(posScaled.x, posScaled.y, posScaled.z),
+          );
+
+          // Fading logic: 1.0 for lag < 50% target, fade to 0.0 at 100% target
+          const lagRatio = targetLagRad > 0 ? lagRad / targetLagRad : 0;
+          let alpha = 1.0;
+          if (lagRatio > 0.5) {
+            alpha = Math.max(0, 1.0 - (lagRatio - 0.5) / 0.4);
+          }
+          trailAlphasList.push(alpha);
+        }
+      }
+
+      orbitPointsTHREE = trailPoints;
+      alphas = new Float32Array(trailAlphasList);
+
+      // If we have no lag, don't bother rendering (e.g. at T=0)
+      if (maxPossibleLagRad < 0.0001 || orbitPointsTHREE.length < 2) {
+        if (existingLine) this.remove(objectId);
+        return;
+      }
+    }
+    // --- End Trail Logic ---
+
+    // For Comets/Asteroids, disable interpolation as it can cause AU-long overshoots with Catmull-Rom
+    // if points are even slightly noisy or have high curvature.
+    const isErratic =
+      objectState.type === CelestialType.COMET ||
+      objectState.type === CelestialType.ASTEROID;
+    const config = isErratic
+      ? { ...this.curveConfig, type: TrailCurveType.Linear }
+      : this.curveConfig;
+
     // Apply curve interpolation to Keplerian orbit points
     const interpolatedPoints = TrailCurveInterpolator.interpolate(
       orbitPointsTHREE,
-      this.curveConfig,
+      config,
     );
+
+    // If we have alphas, we need to interpolate them too to match the higher point count
+    if (alphas) {
+      const originalCount = orbitPointsTHREE.length;
+      const newCount = interpolatedPoints.length;
+      const subSegments = this.curveConfig.segments || 1;
+      const interpolatedAlphas = new Float32Array(newCount);
+
+      for (let i = 0; i < newCount; i++) {
+        const t = i / (newCount - 1);
+        const originalIdx = t * (originalCount - 1);
+        const low = Math.floor(originalIdx);
+        const high = Math.ceil(originalIdx);
+        const weight = originalIdx - low;
+        interpolatedAlphas[i] =
+          alphas[low] * (1 - weight) + alphas[high] * weight;
+      }
+      alphas = interpolatedAlphas;
+    }
 
     // Choose the appropriate material based on type
     const isMoon = parentState.type !== CelestialType.STAR;
-    const materialType = isMoon ? "KEPLERIAN_MOON" : "KEPLERIAN";
+    let materialType: any = isMoon ? "KEPLERIAN_MOON" : "KEPLERIAN";
+    if (keplerOrbitMode === "trail") materialType = "KEPLERIAN_TRAIL";
 
     if (existingLine) {
+      // Check if material needs to change (e.g. from Solid to Shader)
+      const currentMaterialType = existingLine.userData.materialType;
+      if (currentMaterialType !== materialType) {
+        this.remove(objectId);
+        return this.createOrUpdate(
+          objectId,
+          orbitalParameters,
+          parentId,
+          isVisible,
+          highlightedObjectId,
+          highlightColor,
+          keplerOrbitMode,
+        );
+      }
+
       // Update existing line
       this.lineBuilder.updateLine(
         existingLine,
         interpolatedPoints,
         interpolatedPoints.length,
       );
+
+      // Update alpha attribute if it exists
+      if (alphas) {
+        const geometry = existingLine.geometry;
+        let alphaAttr = geometry.getAttribute("alpha") as THREE.BufferAttribute;
+        if (!alphaAttr || alphaAttr.count < alphas.length) {
+          if (alphaAttr) geometry.deleteAttribute("alpha");
+          alphaAttr = new THREE.BufferAttribute(alphas, 1);
+          geometry.setAttribute("alpha", alphaAttr);
+        } else {
+          alphaAttr.copyArray(alphas);
+          alphaAttr.needsUpdate = true;
+        }
+      }
+
       existingLine.position.copy(parentWorldPosition);
       existingLine.visible = isVisible;
 
@@ -226,6 +432,7 @@ export class KeplerianManager extends StateSubscriptionMixin {
         material,
         `orbit-line-${objectId}`,
       );
+      newLine.userData.materialType = materialType;
 
       // Update the line with the interpolated points
       this.lineBuilder.updateLine(
@@ -233,6 +440,14 @@ export class KeplerianManager extends StateSubscriptionMixin {
         interpolatedPoints,
         interpolatedPoints.length,
       );
+
+      // Add alpha attribute if needed
+      if (alphas) {
+        newLine.geometry.setAttribute(
+          "alpha",
+          new THREE.BufferAttribute(alphas, 1),
+        );
+      }
 
       newLine.position.copy(parentWorldPosition);
       newLine.visible = isVisible;
@@ -357,15 +572,27 @@ export class KeplerianManager extends StateSubscriptionMixin {
     highlightedObjectId: string | null,
     highlightColor: THREE.Color,
   ): void {
-    if (!(line.material instanceof THREE.LineBasicMaterial)) return;
+    const material = line.material;
+    const isHighlighted = highlightedObjectId === lineObjectId;
 
-    if (highlightedObjectId === lineObjectId) {
-      if (!line.userData.defaultColor) {
-        line.userData.defaultColor = line.material.color.clone();
+    if (material instanceof THREE.LineBasicMaterial) {
+      if (isHighlighted) {
+        if (!line.userData.defaultColor) {
+          line.userData.defaultColor = material.color.clone();
+        }
+        material.color.copy(highlightColor);
+      } else if (line.userData.defaultColor) {
+        material.color.copy(line.userData.defaultColor);
       }
-      line.material.color.copy(highlightColor);
-    } else if (line.userData.defaultColor) {
-      line.material.color.copy(line.userData.defaultColor);
+    } else if (material instanceof THREE.ShaderMaterial) {
+      if (isHighlighted) {
+        if (!line.userData.defaultColor) {
+          line.userData.defaultColor = material.uniforms.color.value.clone();
+        }
+        material.uniforms.color.value.copy(highlightColor);
+      } else if (line.userData.defaultColor) {
+        material.uniforms.color.value.copy(line.userData.defaultColor);
+      }
     }
   }
 

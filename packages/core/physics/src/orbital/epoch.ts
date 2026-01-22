@@ -1,7 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { OrbitalParameters } from "@teskooano/data-types";
 import { GRAVITATIONAL_CONSTANT, SOLAR_MASS } from "@teskooano/data-values";
-import { calculateKeplerianStateAtTime } from "./ideal";
+import { calculateKeplerianStateAtTime } from "./shared";
 
 /**
  * J2000 epoch as the standard astronomical reference.

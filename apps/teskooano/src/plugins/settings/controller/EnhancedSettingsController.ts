@@ -12,6 +12,7 @@ import type {
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 import type { NBodySettingsComponent } from "../view/NBodySettingsComponent";
+import type { KeplerianSettingsComponent } from "../view/KeplerianSettingsComponent";
 
 const PERFORMANCE_PROFILE_OPTIONS: {
   value: DeviceTier;
@@ -37,6 +38,8 @@ export interface IEnhancedSettingsPanelElements {
 
   // N-Body component
   nbodySettingsComponent: NBodySettingsComponent;
+  // Keplerian component
+  keplerianSettingsComponent: KeplerianSettingsComponent;
 
   // Legacy
   profileSelectElement: HTMLSelectElement;
@@ -81,6 +84,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     // Ensure DOM is ready before updating UI and initializing N-Body component
     requestAnimationFrame(() => {
       this.initializeNBodyComponent();
+      this.initializeKeplerianComponent();
       this.updateUI();
     });
 
@@ -135,6 +139,31 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       // Retry after a short delay to allow the custom element to fully initialize
       setTimeout(() => {
         this.initializeNBodyComponent();
+      }, 10);
+    }
+  }
+
+  /**
+   * Initializes the Keplerian settings component.
+   * @private
+   */
+  private initializeKeplerianComponent(): void {
+    // Ensure the custom element is fully connected before calling methods
+    if (
+      this.elements.keplerianSettingsComponent &&
+      typeof this.elements.keplerianSettingsComponent.initialize === "function"
+    ) {
+      this.elements.keplerianSettingsComponent.initialize({
+        showValidationMessage: this.showValidationMessage.bind(this),
+        clearValidationMessages: this.clearValidationMessages.bind(this),
+      });
+    } else {
+      console.warn(
+        "[EnhancedSettingsController] Keplerian component not ready, retrying...",
+      );
+      // Retry after a short delay to allow the custom element to fully initialize
+      setTimeout(() => {
+        this.initializeKeplerianComponent();
       }, 10);
     }
   }
@@ -196,6 +225,16 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     ) {
       this.elements.nbodySettingsComponent.updateNBodyControls();
       this.elements.nbodySettingsComponent.updateNBodyVisibility();
+    }
+
+    // Delegate Keplerian updates to the component (if it's ready)
+    if (
+      this.elements.keplerianSettingsComponent &&
+      typeof this.elements.keplerianSettingsComponent
+        .updateKeplerianControls === "function"
+    ) {
+      this.elements.keplerianSettingsComponent.updateKeplerianControls();
+      this.elements.keplerianSettingsComponent.updateKeplerianVisibility();
     }
   }
 

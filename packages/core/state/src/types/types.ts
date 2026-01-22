@@ -26,6 +26,8 @@ export interface VisualSettingsState {
   predictionSteps: number;
   /** The duration (in simulation years) to predict trajectories for. */
   predictionDuration: number;
+  /** The visualization mode for Keplerian orbits. */
+  keplerOrbitMode: "full" | "trail";
 }
 
 /**

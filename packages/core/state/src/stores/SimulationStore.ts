@@ -24,6 +24,7 @@ export class SimulationStore {
       showAuMarkers: true,
       predictionSteps: 500,
       predictionDuration: 2,
+      keplerOrbitMode: "trail",
     },
     performanceProfile: "medium",
   };

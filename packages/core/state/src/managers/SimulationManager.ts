@@ -269,6 +269,20 @@ export class SimulationManager {
   }
 
   /**
+   * Sets the visualization mode for Keplerian orbits (Full or Trail).
+   * @param mode The desired Kepler orbit mode.
+   */
+  public setKeplerOrbitMode(mode: "full" | "trail"): void {
+    const currentState = simulationStore.getSimulationState();
+    simulationStore.updateSimulationState({
+      visualSettings: {
+        ...currentState.visualSettings,
+        keplerOrbitMode: mode,
+      },
+    });
+  }
+
+  /**
    * Resets the simulation state to the initial default values.
    */
   public resetToInitialState(): void {

@@ -1,11 +1,22 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { calculateKeplerianPositionAtTrueAnomaly } from "@teskooano/core-physics";
+import {
+  calculateKeplerianPositionAtTrueAnomaly,
+  calculateKeplerianPositionAtMeanAnomaly,
+  solveKeplerEquation,
+} from "@teskooano/core-physics";
 import type { OrbitalParameters } from "@teskooano/data-types";
 import {
   type RenderableCelestialObject,
   CelestialType,
 } from "@teskooano/data-types";
 import { AU_METERS, SCALE } from "@teskooano/data-values";
+
+/**
+ * Sampling modes for orbit lines.
+ * - `trueAnomaly`: Points spaced by equal angles (standard for full orbits).
+ * - `meanAnomaly`: Points spaced by equal time intervals (required for accurate trails).
+ */
+export type OrbitSamplingMode = "trueAnomaly" | "meanAnomaly";
 
 /**
  * Utility class for calculating orbital paths using Keplerian orbital mechanics.
@@ -74,11 +85,13 @@ export class OrbitCalculator {
    *
    * @param orbitalParameters - The Keplerian orbital elements of the object.
    * @param object - The full renderable celestial object, used to determine step count.
+   * @param samplingMode - The mode used for point sampling (default: 'trueAnomaly').
    * @returns An array of `OSVector3` points representing the orbit in scaled visual units, relative to the focus at (0,0,0). Returns an empty array if essential parameters (period, semi-major axis) are invalid.
    */
   public static calculateOrbitPoints(
     orbitalParameters: OrbitalParameters,
     object: RenderableCelestialObject,
+    samplingMode: OrbitSamplingMode = "trueAnomaly",
   ): OSVector3[] {
     if (
       !orbitalParameters ||
@@ -144,17 +157,26 @@ export class OrbitCalculator {
       }
     } else {
       // Elliptical/parabolic orbit: full 2π range
-      const trueAnomalyRange = 2 * Math.PI;
+      const range = 2 * Math.PI;
 
       for (let i = 0; i <= segments; i++) {
-        // Iterate through the true anomaly (angle) instead of time
-        const trueAnomaly_rad = (i / segments) * trueAnomalyRange;
+        const angle_rad = (i / segments) * range;
 
-        // Use the new calculator to get the real-world position in meters
-        const realRelativePosition = calculateKeplerianPositionAtTrueAnomaly(
-          orbitalParameters,
-          trueAnomaly_rad,
-        );
+        let realRelativePosition: OSVector3;
+
+        if (samplingMode === "meanAnomaly") {
+          // Sample by Mean Anomaly (constant time intervals)
+          realRelativePosition = calculateKeplerianPositionAtMeanAnomaly(
+            orbitalParameters,
+            angle_rad,
+          );
+        } else {
+          // Sample by True Anomaly (constant angular intervals)
+          realRelativePosition = calculateKeplerianPositionAtTrueAnomaly(
+            orbitalParameters,
+            angle_rad,
+          );
+        }
 
         // Scale the real position to the scene's rendering scale
         const scaledRelativePosition = realRelativePosition.multiplyScalar(
@@ -167,5 +189,44 @@ export class OrbitCalculator {
 
     // The loop from 0 to 2*PI naturally closes the loop, so no need to clone the first point.
     return points;
+  }
+
+  /**
+   * Calculates the true anomaly f from the mean anomaly M and eccentricity e.
+   * This is essential for stable sampling of orbits near periapsis.
+   *
+   * @param meanAnomaly_rad - Mean anomaly in radians.
+   * @param eccentricity - Eccentricity of the orbit.
+   * @returns True anomaly in radians.
+   */
+  public static calculateTrueAnomaly(
+    meanAnomaly_rad: number,
+    eccentricity: number,
+  ): number {
+    // 1. Solve Kepler's equation for the eccentric anomaly E (or H/parabolic E)
+    const anomaly = solveKeplerEquation(meanAnomaly_rad, eccentricity);
+
+    if (eccentricity < 1) {
+      // Elliptical: tan(f/2) = sqrt((1+e)/(1-e)) * tan(E/2)
+      return (
+        2 *
+        Math.atan2(
+          Math.sqrt(1 + eccentricity) * Math.sin(anomaly / 2),
+          Math.sqrt(1 - eccentricity) * Math.cos(anomaly / 2),
+        )
+      );
+    } else if (eccentricity > 1) {
+      // Hyperbolic: tan(f/2) = sqrt((e+1)/(e-1)) * tanh(H/2)
+      return (
+        2 *
+        Math.atan(
+          Math.sqrt((eccentricity + 1) / (eccentricity - 1)) *
+            Math.tanh(anomaly / 2),
+        )
+      );
+    } else {
+      // Parabolic: Barker's equation f = 2 * atan(D) where D is anomaly
+      return 2 * Math.atan(anomaly);
+    }
   }
 }

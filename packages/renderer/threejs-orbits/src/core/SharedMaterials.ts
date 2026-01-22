@@ -69,14 +69,48 @@ export const SharedMaterials = {
   }),
 
   /**
+   * Shader material for rendering Keplerian orbit trails with per-vertex alpha.
+   */
+  KEPLERIAN_TRAIL: new THREE.ShaderMaterial({
+    uniforms: {
+      color: { value: new THREE.Color(0xffffff) },
+    },
+    vertexShader: `
+      attribute float alpha;
+      varying float vAlpha;
+      void main() {
+        vAlpha = alpha;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 color;
+      varying float vAlpha;
+      void main() {
+        if (vAlpha <= 0.0) discard;
+        gl_FragColor = vec4(color, vAlpha);
+      }
+    `,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+  }),
+
+  /**
    * Creates a clone of the specified material type.
    *
    * @param type - The material type to clone
    * @returns A new instance of the material
    */
   clone(
-    type: "TRAIL" | "PREDICTION" | "KEPLERIAN" | "KEPLERIAN_MOON",
-  ): THREE.LineBasicMaterial | THREE.LineDashedMaterial {
+    type:
+      | "TRAIL"
+      | "PREDICTION"
+      | "KEPLERIAN"
+      | "KEPLERIAN_MOON"
+      | "KEPLERIAN_TRAIL",
+  ): THREE.LineBasicMaterial | THREE.LineDashedMaterial | THREE.ShaderMaterial {
     // Built-in Three.js materials automatically inherit logarithmic depth
     // from the renderer's logarithmicDepthBuffer setting
     return this[type].clone();

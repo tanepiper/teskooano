@@ -48,6 +48,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
       timeScale: initialSimState.timeScale,
       predictionSteps: initialSimState.visualSettings.predictionSteps,
       predictionDuration: initialSimState.visualSettings.predictionDuration,
+      keplerOrbitMode: initialSimState.visualSettings.keplerOrbitMode,
     });
 
     this.subscribeToCoreState();
@@ -171,6 +172,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
       timeScale: simState.timeScale,
       predictionSteps: simState.visualSettings.predictionSteps,
       predictionDuration: simState.visualSettings.predictionDuration,
+      keplerOrbitMode: simState.visualSettings.keplerOrbitMode,
     };
   }
 
@@ -191,7 +193,8 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
       a.simulationConfig.integrator === b.simulationConfig.integrator &&
       a.timeScale === b.timeScale &&
       a.predictionSteps === b.predictionSteps &&
-      a.predictionDuration === b.predictionDuration
+      a.predictionDuration === b.predictionDuration &&
+      a.keplerOrbitMode === b.keplerOrbitMode
     );
   }
 

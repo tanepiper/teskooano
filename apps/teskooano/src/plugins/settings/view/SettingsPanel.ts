@@ -3,6 +3,7 @@ import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { EnhancedSettingsController } from "../controller/EnhancedSettingsController";
 import { template } from "./Settings.template";
 import "./NBodySettingsComponent";
+import "./KeplerianSettingsComponent";
 
 /**
  * The View component for the application settings panel.
@@ -58,6 +59,9 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       )!,
       nbodySettingsComponent: this.shadowRoot!.querySelector(
         "teskooano-nbody-settings",
+      )! as any,
+      keplerianSettingsComponent: this.shadowRoot!.querySelector(
+        "teskooano-keplerian-settings",
       )! as any,
       profileSelectElement: this.shadowRoot!.querySelector<HTMLSelectElement>(
         "#setting-performance-profile",

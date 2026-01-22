@@ -111,6 +111,9 @@ template.innerHTML = `
     <!-- N-Body Specific Controls Component -->
     <teskooano-nbody-settings></teskooano-nbody-settings>
     
+    <!-- Keplerian Specific Controls Component -->
+    <teskooano-keplerian-settings></teskooano-keplerian-settings>
+    
     <div id="validation-messages"></div>
   </div>
 

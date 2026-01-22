@@ -168,6 +168,46 @@ export const solveKeplerEquation = (
 };
 
 /**
+ * Calculates the mean anomaly M from the true anomaly f and eccentricity e.
+ * This is numerically stable and does not require iteration.
+ *
+ * @param trueAnomaly - True anomaly in radians.
+ * @param eccentricity - Eccentricity of the orbit.
+ * @returns Mean anomaly in radians.
+ */
+export function calculateMeanAnomalyFromTrueAnomaly(
+  trueAnomaly: number,
+  eccentricity: number,
+): number {
+  if (eccentricity < 1) {
+    // Elliptical: tan(E/2) = sqrt((1-e)/(1+e)) * tan(f/2)
+    const sin_f2 = Math.sin(trueAnomaly / 2);
+    const cos_f2 = Math.cos(trueAnomaly / 2);
+    const eccentricAnomaly =
+      2 *
+      Math.atan2(
+        Math.sqrt(1 - eccentricity) * sin_f2,
+        Math.sqrt(1 + eccentricity) * cos_f2,
+      );
+    return eccentricAnomaly - eccentricity * Math.sin(eccentricAnomaly);
+  } else if (eccentricity > 1) {
+    // Hyperbolic: tanh(H/2) = sqrt((e-1)/(e+1)) * tan(f/2)
+    // Using log form for stability: H = 2 * atanh(sqrt((e-1)/(e+1)) * tan(f/2))
+    const tan_f2 = Math.tan(trueAnomaly / 2);
+    const sqrt_val = Math.sqrt((eccentricity - 1) / (eccentricity + 1));
+    const arg = sqrt_val * tan_f2;
+
+    // atanh(x) = 0.5 * ln((1+x)/(1-x))
+    const hyperbolicAnomaly = Math.log((1 + arg) / (1 - arg));
+    return eccentricity * Math.sinh(hyperbolicAnomaly) - hyperbolicAnomaly;
+  } else {
+    // Parabolic: Barker's equation M = tan(f/2) + (1/3) * tan³(f/2)
+    const tan_f2 = Math.tan(trueAnomaly / 2);
+    return tan_f2 + (1 / 3) * Math.pow(tan_f2, 3);
+  }
+}
+
+/**
  * Applies orbital rotations to position and velocity vectors
  * @param position Position vector in orbital plane
  * @param velocity Velocity vector in orbital plane

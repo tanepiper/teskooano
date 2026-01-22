@@ -67,6 +67,7 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
       timeScale: number;
       predictionSteps: number;
       predictionDuration: number;
+      keplerOrbitMode: "full" | "trail";
     },
     deltaTime: number,
   ): void {
@@ -80,6 +81,7 @@ export class IdealStrategy implements IOrbitVisualizationStrategy {
           this.isVisible,
           this.highlightedObjectId,
           this.highlightColor,
+          visualSettings.keplerOrbitMode,
         );
       } else if (this.keplerianManager.hasLine(obj.id)) {
         this.keplerianManager.remove(obj.id);

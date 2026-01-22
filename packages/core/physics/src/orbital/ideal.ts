@@ -1,26 +1,58 @@
-import type { OrbitalParameters } from "@teskooano/data-types";
 import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
-import { calculateKeplerianStateAtTime as sharedCalculateKeplerianStateAtTime } from "./shared";
+import { solveKeplerEquation, calculateOrbitalPlaneState } from "./shared";
+import { OrbitalParameters } from "@teskooano/data-types";
 
 /**
- * Calculates the exact relative position and velocity of a body at a given time
- * based on its Keplerian orbital parameters.
+ * Calculates the 3D position of an orbiting body at a specific mean anomaly.
+ * This is useful for sampling orbits at equal time intervals, which is essential
+ * for smooth trail rendering.
  *
- * @param orbitalParameters The Keplerian elements of the orbit.
- * @param time_s The time in seconds for which to calculate the state.
- * @param parentMass_kg Optional parent body mass for hyperbolic orbit calculations.
- * @returns The calculated relative state of the body (position in meters, velocity in m/s).
+ * @param orbitalParameters The Keplerian orbital elements of the object.
+ * @param meanAnomaly_rad The mean anomaly in radians.
+ * @returns The calculated 3D position vector in meters, relative to the central body.
  */
-export const calculateKeplerianStateAtTime = (
+export const calculateKeplerianPositionAtMeanAnomaly = (
   orbitalParameters: OrbitalParameters,
-  time_s: number,
-  parentMass_kg?: number,
-): { position: OSVector3; velocity: OSVector3 } => {
-  return sharedCalculateKeplerianStateAtTime(
+  meanAnomaly_rad: number,
+): OSVector3 => {
+  const { eccentricity } = orbitalParameters;
+
+  // 1. Solve Kepler's equation for the eccentric anomaly E
+  const eccentricAnomaly = solveKeplerEquation(meanAnomaly_rad, eccentricity);
+
+  // 2. Calculate position and velocity in the orbital plane
+  // (We only need position, but the shared function returns both)
+  const { position } = calculateOrbitalPlaneState(
     orbitalParameters,
-    time_s,
-    parentMass_kg,
+    eccentricAnomaly,
   );
+
+  // 3. Rotate position to the inertial frame
+  // We use a simplified version of applyOrbitalRotations that only handles position
+  const { argumentOfPeriapsis, inclination, longitudeOfAscendingNode } =
+    orbitalParameters;
+
+  const q_argPeriapsis = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    argumentOfPeriapsis,
+  );
+  const q_inclination = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(1, 0, 0),
+    inclination,
+  );
+  const q_ascNodeLongitude = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    longitudeOfAscendingNode,
+  );
+
+  const finalRotation = new OSQuaternion()
+    .multiply(q_ascNodeLongitude)
+    .multiply(q_inclination)
+    .multiply(q_argPeriapsis);
+
+  position.applyQuaternion(finalRotation);
+
+  return position;
 };
 
 /**

@@ -8,12 +8,13 @@ import type {
 } from "@teskooano/renderer-threejs-core";
 import * as THREE from "three";
 import { WebGLRendererParameters } from "three";
-import { SimulationConfiguration } from "@teskooano/core-state";
+
 import {
   LabelVisibilityConfig,
   Layer2DManager,
 } from "@teskooano/renderer-threejs-labels";
 import { ControlsManager } from "@teskooano/renderer-threejs-controls";
+import { SimulationConfiguration } from "@teskooano/data-types";
 
 /**
  * Defines a collection of values intended to be passed as uniforms to shaders.
@@ -39,6 +40,8 @@ export interface RendererVisualSettings {
   predictionSteps: number;
   /** The duration of the prediction in seconds. */
   predictionDuration: number;
+  /** The visualization mode for Keplerian orbits (only relevant in Ideal mode). */
+  keplerOrbitMode: "full" | "trail";
 }
 
 /**
