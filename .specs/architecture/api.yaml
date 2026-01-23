@@ -1,0 +1,7 @@
+# teskooano API Specification
+# meta: project=teskooano language=typescript framework= updated=2026-01-23
+openapi: 3.0.3
+info:
+  title: teskooano API
+  description: A typescript project
+  version: 1.1.1

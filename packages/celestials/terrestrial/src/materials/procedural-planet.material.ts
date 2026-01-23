@@ -17,7 +17,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
   protected currentNumLights: number = 0;
   protected currentNumShadowCasters: number = 0;
 
-  constructor(surfaceProps: ProceduralSurfaceProperties) {
+  constructor(surfaceProps: ProceduralSurfaceProperties = {} as ProceduralSurfaceProperties) {
     const parseColor = (
       hex: string | undefined,
       defaultColor: string,

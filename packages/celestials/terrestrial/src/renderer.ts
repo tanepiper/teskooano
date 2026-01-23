@@ -24,6 +24,7 @@ import {
   AtmosphereService,
 } from "./utils/atmosphere-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
+import { createCubeSphereGeometry } from "./geometry/cube-sphere";
 
 export interface TerrestrialRendererDeps {
   renderers: Map<string, CelestialRenderer>;
@@ -197,11 +198,7 @@ export class BaseTerrestrialRenderer<
       if (!bodyMaterial) {
         throw new Error(`Failed to create material for ${object.id}`);
       }
-      const bodyGeometry = new THREE.SphereGeometry(
-        baseRadius,
-        segments,
-        segments,
-      );
+      const bodyGeometry = createCubeSphereGeometry(baseRadius, segments);
 
       bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
     } catch (error) {
@@ -215,11 +212,7 @@ export class BaseTerrestrialRenderer<
         metalness: 0.1,
       });
       this.registerMaterial(object.id, fallbackMaterial);
-      const bodyGeometry = new THREE.SphereGeometry(
-        baseRadius,
-        segments,
-        segments,
-      );
+      const bodyGeometry = createCubeSphereGeometry(baseRadius, segments);
       bodyMesh = new THREE.Mesh(bodyGeometry, fallbackMaterial);
     }
     bodyMesh.name = `${object.id}-body`;
@@ -248,11 +241,7 @@ export class BaseTerrestrialRenderer<
       "medium",
       32,
     );
-    const mediumGeometry = new THREE.SphereGeometry(
-      baseRadius,
-      mediumSegments,
-      mediumSegments,
-    );
+    const mediumGeometry = createCubeSphereGeometry(baseRadius, mediumSegments);
     const mediumMaterial = new THREE.MeshStandardMaterial({
       color: this.materialService.getBaseColor(object),
       roughness: 0.8,

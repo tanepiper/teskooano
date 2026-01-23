@@ -1,0 +1,43 @@
+# teskooano - SDD Project Configuration
+name: teskooano
+version: "1.0.0"
+language: typescript
+
+description: A typescript project
+
+# Project Rules and AI Context
+rules:
+  - "Follow typescript best practices and coding standards"
+  - "Write comprehensive tests for all functionality"
+  - "Document all public APIs and interfaces"
+  - "MANDATE: Update .specs/ folder files with every development milestone and code change"
+  - "MANDATE: Maintain .specs/ as single source of truth for all project specifications"
+  - "MANDATE: Review and update relevant .specs/ files before each commit"
+  - "MANDATE: Document decisions, lessons learned, and context in .specs/context.md"
+  - "MANDATE: Update .specs/prompts.md with ALL AI interactions and development prompts by default"
+  - "MANDATE: Maintain chronological prompt history for complete development traceability"
+  - "MANDATE: Keep file metadata and footer sections current (dates, counts, status summaries)"
+  - "Use semantic versioning for releases"
+  - "Keep dependencies up to date"
+
+# Development Context for AI
+ai_context:
+  - "This is a specification-driven development project"
+  - "All changes should be documented in appropriate .specs/ files"
+  - "Follow the established architecture patterns"
+  - "Maintain backwards compatibility when possible"
+
+# Team Guidelines
+team:
+  code_review_required: true
+  testing_required: true
+  documentation_required: true
+
+# Build and Deployment
+build:
+  command: "npm run build"
+
+# Dependencies (framework-specific)
+dependencies:
+  runtime: []
+  development: []

@@ -19,7 +19,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
     atmosphereProps: PlanetAtmosphereProperties & {
       aberrationIntensity?: number;
       opacity?: number; // New opacity parameter
-    },
+    } = {} as PlanetAtmosphereProperties,
     options: {
       planetRadius?: number;
       parentId?: string;
@@ -32,7 +32,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       thickness = 0.1,
       aberrationIntensity = 1,
       opacity = 1.0, // Default to fully opaque
-    } = atmosphereProps;
+    } = atmosphereProps ?? {};
 
     const { planetRadius = 1.0, parentId = "unknown" } = options;
     const MAX_LIGHTS = 4;
