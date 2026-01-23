@@ -5,6 +5,10 @@
     #include "simplex/3d"
 #endif
 
+#ifndef NOISE_GLSL
+    #include "../shared/noise.glsl"
+#endif
+
 float fractal3(
     vec3 v,
     float sharpness,
@@ -56,6 +60,24 @@ float terrainHeight(
     } else if(type == 3) {
         h = fractal3(v, sharpness, period, persistence, lacunarity, octaves);
         h = amplitude * pow(max(0.0, 1.0 - abs(h)), sharpness);
+    } else if(type == 4) {
+        // Multi-scale layered terrain (reference implementation style)
+        // Uses 4 frequency levels with multiplicative blending
+        float continentScale = 0.75 * amplitude;  // Large features
+        float mountainScale = 0.25 * amplitude;   // Mountain ranges
+        float detailScale = 0.075 * amplitude;    // Local detail
+        float fineScale = 0.04 * amplitude;       // Fine detail
+        
+        h = layeredNoise(
+            v / period, 
+            persistence, 
+            lacunarity, 
+            octaves,
+            continentScale,
+            mountainScale,
+            detailScale,
+            fineScale
+        );
     }
 
     return max(0.0, h + offset + undulationFactor);
