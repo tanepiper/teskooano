@@ -130,6 +130,17 @@ void main() {
 
     // --- Lighting Calculation --- 
     vec3 baseNormal = normalize(vWorldNormal);
+    
+    // Apply procedural normal perturbation for terrain detail
+    // Modulate bump intensity by terrain height:
+    // - Ocean areas (low noiseValue) should be smooth
+    // - Land areas should have texture, increasing with elevation
+    float oceanThreshold = uHeight2; // Water level (typically 0.2)
+    float terrainBumpFactor = smoothstep(oceanThreshold - 0.05, oceanThreshold + 0.1, noiseValue);
+    float modulatedBumpScale = uBumpScale * terrainBumpFactor;
+    
+    vec3 perturbedNormal = perturbNormal(baseNormal, vWorldPosition, modulatedBumpScale);
+    
     vec3 viewDir = normalize(uCameraPosition - vWorldPosition);
 
     // Initialize base color with the lowest level
@@ -163,7 +174,7 @@ void main() {
     float shadowFactor = 1.0;
     if (uNumLights > 0) {
         vec3 primaryLightDir = normalize(uLights[0].position - vWorldPosition);
-        float dotProduct = dot(baseNormal, primaryLightDir);
+        float dotProduct = dot(perturbedNormal, primaryLightDir);
         
         if (dotProduct > 0.0) {
             // Day side - calculate shadows
@@ -174,8 +185,8 @@ void main() {
         }
     }
 
-    // Use base normal for lighting
-    vec3 finalColor = calculateLighting(baseColor, baseNormal, viewDir, shadowFactor);
+    // Use perturbed normal for lighting (adds terrain detail)
+    vec3 finalColor = calculateLighting(baseColor, perturbedNormal, viewDir, shadowFactor);
 
     // Clamp before gamma correction to prevent artifacts.
     finalColor = clamp(finalColor, 0.0, 1.0);

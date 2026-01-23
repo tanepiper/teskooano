@@ -79,26 +79,23 @@ float layeredNoise(
 }
 
 /**
- * Constructs a rotation matrix for rotating around an arbitrary axis.
- * From reference implementation - used for accurate tangent space transformation.
+ * Constructs a tangent space basis from a normal vector.
+ * Uses Gram-Schmidt orthonormalization to avoid singularities.
+ * Returns tangent and bitangent vectors.
  */
-mat3 rotationMatrix3(vec3 axis, float angle) {
-    axis = normalize(axis);
-    float s = sin(angle);
-    float c = cos(angle);
-    float oc = 1.0 - c;
+void getTangentBasis(vec3 normal, out vec3 tangent, out vec3 bitangent) {
+    // Choose a vector that's not parallel to normal
+    vec3 helper = abs(normal.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
     
-    return mat3(
-        oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
-        oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
-        oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c
-    );
+    // Gram-Schmidt orthonormalization
+    tangent = normalize(helper - normal * dot(helper, normal));
+    bitangent = cross(normal, tangent);
 }
 
 /**
  * Perturbs the surface normal using procedural noise gradient.
- * Uses rotation matrix approach from reference implementation for 
- * more accurate results on steep surfaces.
+ * Uses tangent-space construction to avoid singularities and circular artifacts.
+ * Tuned for smooth rolling hills rather than harsh mountainous terrain.
  * 
  * @param baseNormal The original surface normal (world space)
  * @param worldPos The world position of the fragment
@@ -106,16 +103,26 @@ mat3 rotationMatrix3(vec3 axis, float angle) {
  * @return The perturbed normal vector
  */
 vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
-    float epsilon = 0.01; // Small offset for sampling gradient
+    // Early out if no bump
+    if (bumpScale < 0.001) {
+        return baseNormal;
+    }
+    
+    // Larger epsilon = smoother gradients = gentler rolling hills
+    float epsilon = 0.05;
 
-    // Calculate noise coordinate with offset to decouple from terrain height
-    vec3 noiseCoord = (vObjectPosition + vec3(123.456, 789.012, 345.678)) * uSimplePeriod * 4.0;
+    // Use LOWER frequency for bump mapping (1.0x instead of 4.0x)
+    // This creates broader, gentler terrain features
+    vec3 noiseCoord = (vObjectPosition + vec3(123.456, 789.012, 345.678)) * uSimplePeriod * 1.0;
 
+    // Use FEWER octaves (3) for smoother results - less high-frequency detail
+    int bumpOctaves = min(3, uOctaves);
+    
     // Sample noise at slightly offset positions to compute gradient
-    float noiseX = fbm(noiseCoord + vec3(epsilon, 0.0, 0.0), uOctaves, persistence, lacunarity);
-    float noiseY = fbm(noiseCoord + vec3(0.0, epsilon, 0.0), uOctaves, persistence, lacunarity);
-    float noiseZ = fbm(noiseCoord + vec3(0.0, 0.0, epsilon), uOctaves, persistence, lacunarity);
-    float noiseHere = fbm(noiseCoord, uOctaves, persistence, lacunarity);
+    float noiseX = fbm(noiseCoord + vec3(epsilon, 0.0, 0.0), bumpOctaves, persistence, lacunarity);
+    float noiseY = fbm(noiseCoord + vec3(0.0, epsilon, 0.0), bumpOctaves, persistence, lacunarity);
+    float noiseZ = fbm(noiseCoord + vec3(0.0, 0.0, epsilon), bumpOctaves, persistence, lacunarity);
+    float noiseHere = fbm(noiseCoord, bumpOctaves, persistence, lacunarity);
 
     // Compute noise gradient (direction of steepest change)
     vec3 gradient = vec3(
@@ -124,30 +131,18 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
         (noiseZ - noiseHere) / epsilon
     );
     
-    // Create a bump normal from the gradient
-    // This represents the local surface orientation deviation
-    vec3 bumpNormal = normalize(vec3(-gradient.x * bumpScale, -gradient.y * bumpScale, 1.0));
+    // Build tangent space basis
+    vec3 tangent, bitangent;
+    getTangentBasis(baseNormal, tangent, bitangent);
     
-    // Use rotation matrix to transform bump normal to world space
-    // This is more accurate than simple projection for steep surfaces
-    vec3 up = vec3(0.0, 0.0, 1.0);
-    float dotProduct = dot(baseNormal, up);
+    // Project gradient onto tangent plane and scale
+    // Additional smoothing factor to reduce harshness
+    float smoothing = 0.5;
+    float gradT = dot(gradient, tangent) * bumpScale * smoothing;
+    float gradB = dot(gradient, bitangent) * bumpScale * smoothing;
     
-    // Handle case where baseNormal is already aligned with up
-    if (abs(dotProduct) > 0.999) {
-        // Nearly parallel - use simple method
-        vec3 perturbation = gradient * bumpScale;
-        perturbation -= dot(perturbation, baseNormal) * baseNormal;
-        return normalize(baseNormal + perturbation);
-    }
-    
-    // Compute rotation from up vector to base normal
-    float rotAngle = acos(clamp(dotProduct, -1.0, 1.0));
-    vec3 rotAxis = normalize(cross(up, baseNormal));
-    
-    // Apply rotation to transform bump normal to surface orientation
-    mat3 rotMat = rotationMatrix3(rotAxis, rotAngle);
-    vec3 perturbedNormal = normalize(rotMat * bumpNormal);
+    // Perturb normal in tangent space, then transform back
+    vec3 perturbedNormal = normalize(baseNormal - tangent * gradT - bitangent * gradB);
     
     return perturbedNormal;
 }
