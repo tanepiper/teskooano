@@ -208,6 +208,45 @@ export function calculateMeanAnomalyFromTrueAnomaly(
 }
 
 /**
+ * Calculates the true anomaly f from the mean anomaly M and eccentricity e.
+ * This is the inverse of calculateMeanAnomalyFromTrueAnomaly.
+ *
+ * @param meanAnomaly - Mean anomaly in radians.
+ * @param eccentricity - Eccentricity of the orbit.
+ * @returns True anomaly in radians.
+ */
+export function calculateTrueAnomalyFromMeanAnomaly(
+  meanAnomaly: number,
+  eccentricity: number,
+): number {
+  // 1. Solve Kepler's equation for the eccentric anomaly E (or H for hyperbolic)
+  const anomaly = solveKeplerEquation(meanAnomaly, eccentricity);
+
+  if (eccentricity < 1) {
+    // Elliptical: tan(f/2) = sqrt((1+e)/(1-e)) * tan(E/2)
+    return (
+      2 *
+      Math.atan2(
+        Math.sqrt(1 + eccentricity) * Math.sin(anomaly / 2),
+        Math.sqrt(1 - eccentricity) * Math.cos(anomaly / 2),
+      )
+    );
+  } else if (eccentricity > 1) {
+    // Hyperbolic: tan(f/2) = sqrt((e+1)/(e-1)) * tanh(H/2)
+    return (
+      2 *
+      Math.atan(
+        Math.sqrt((eccentricity + 1) / (eccentricity - 1)) *
+          Math.tanh(anomaly / 2),
+      )
+    );
+  } else {
+    // Parabolic: f = 2 * atan(D) where D is the parabolic anomaly
+    return 2 * Math.atan(anomaly);
+  }
+}
+
+/**
  * Applies orbital rotations to position and velocity vectors
  * @param position Position vector in orbital plane
  * @param velocity Velocity vector in orbital plane
@@ -245,6 +284,44 @@ export function applyOrbitalRotations(
   velocity.applyQuaternion(finalRotation);
 
   return { position, velocity };
+}
+
+/**
+ * Applies orbital rotations to a position vector only (no velocity).
+ * This is a lightweight version of applyOrbitalRotations for cases
+ * where only position is needed (e.g., orbit line rendering).
+ *
+ * @param position Position vector in orbital plane (mutated in place)
+ * @param orbitalParameters Orbital parameters containing rotation angles
+ * @returns The rotated position vector
+ */
+export function applyOrbitalRotationToPosition(
+  position: OSVector3,
+  orbitalParameters: OrbitalParameters,
+): OSVector3 {
+  const { argumentOfPeriapsis, inclination, longitudeOfAscendingNode } =
+    orbitalParameters;
+
+  const q_argPeriapsis = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    argumentOfPeriapsis,
+  );
+  const q_inclination = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(1, 0, 0),
+    inclination,
+  );
+  const q_ascNodeLongitude = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    longitudeOfAscendingNode,
+  );
+
+  const finalRotation = new OSQuaternion()
+    .multiply(q_ascNodeLongitude)
+    .multiply(q_inclination)
+    .multiply(q_argPeriapsis);
+
+  position.applyQuaternion(finalRotation);
+  return position;
 }
 
 /**

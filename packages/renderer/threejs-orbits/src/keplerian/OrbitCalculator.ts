@@ -2,7 +2,7 @@ import { OSVector3 } from "@teskooano/core-math";
 import {
   calculateKeplerianPositionAtTrueAnomaly,
   calculateKeplerianPositionAtMeanAnomaly,
-  solveKeplerEquation,
+  calculateTrueAnomalyFromMeanAnomaly,
 } from "@teskooano/core-physics";
 import type { OrbitalParameters } from "@teskooano/data-types";
 import {
@@ -193,7 +193,7 @@ export class OrbitCalculator {
 
   /**
    * Calculates the true anomaly f from the mean anomaly M and eccentricity e.
-   * This is essential for stable sampling of orbits near periapsis.
+   * Delegates to the physics core for the actual calculation.
    *
    * @param meanAnomaly_rad - Mean anomaly in radians.
    * @param eccentricity - Eccentricity of the orbit.
@@ -203,30 +203,6 @@ export class OrbitCalculator {
     meanAnomaly_rad: number,
     eccentricity: number,
   ): number {
-    // 1. Solve Kepler's equation for the eccentric anomaly E (or H/parabolic E)
-    const anomaly = solveKeplerEquation(meanAnomaly_rad, eccentricity);
-
-    if (eccentricity < 1) {
-      // Elliptical: tan(f/2) = sqrt((1+e)/(1-e)) * tan(E/2)
-      return (
-        2 *
-        Math.atan2(
-          Math.sqrt(1 + eccentricity) * Math.sin(anomaly / 2),
-          Math.sqrt(1 - eccentricity) * Math.cos(anomaly / 2),
-        )
-      );
-    } else if (eccentricity > 1) {
-      // Hyperbolic: tan(f/2) = sqrt((e+1)/(e-1)) * tanh(H/2)
-      return (
-        2 *
-        Math.atan(
-          Math.sqrt((eccentricity + 1) / (eccentricity - 1)) *
-            Math.tanh(anomaly / 2),
-        )
-      );
-    } else {
-      // Parabolic: Barker's equation f = 2 * atan(D) where D is anomaly
-      return 2 * Math.atan(anomaly);
-    }
+    return calculateTrueAnomalyFromMeanAnomaly(meanAnomaly_rad, eccentricity);
   }
 }
