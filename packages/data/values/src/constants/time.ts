@@ -187,3 +187,42 @@ export const TARGET_FPS = 60;
  * ```
  */
 export const MIN_FPS = 30;
+
+/**
+ * J2000 epoch as the standard astronomical reference.
+ * This is the only hard-coded epoch we keep as it's the international standard.
+ *
+ * J2000 represents January 1, 2000 at 12:00:00 UTC (noon).
+ * It is the standard reference epoch used in astronomy for orbital elements
+ * and celestial coordinates.
+ *
+ * @example
+ * ```typescript
+ * // Check if orbital elements are at J2000 epoch
+ * const isJ2000 = orbitalElements.epoch === J2000_EPOCH;
+ *
+ * // Convert orbital elements to J2000
+ * const j2000Elements = convertToEpoch(elements, J2000_EPOCH);
+ * ```
+ */
+export const J2000_EPOCH = "J2000";
+
+/**
+ * Julian Day number for J2000 epoch.
+ *
+ * Julian Day is a continuous count of days since January 1, 4713 BC (Julian calendar).
+ * This value represents the Julian Day number for J2000 (January 1, 2000 12:00:00 UTC).
+ *
+ * Used for converting between different epoch formats and calculating time differences
+ * in astronomical calculations.
+ *
+ * @example
+ * ```typescript
+ * // Calculate years since J2000
+ * const yearsSinceJ2000 = (currentJD - J2000_JULIAN_DAY) / 365.25;
+ *
+ * // Convert J2000 to a different epoch
+ * const j2025JD = J2000_JULIAN_DAY + (25 * 365.25);
+ * ```
+ */
+export const J2000_JULIAN_DAY = 2451545.0;

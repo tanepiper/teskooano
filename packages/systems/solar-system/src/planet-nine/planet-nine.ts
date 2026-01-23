@@ -1,8 +1,4 @@
-import {
-  J2000_EPOCH,
-  createOrbitalElements,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -10,6 +6,7 @@ import {
   GasGiantClass,
   type GasGiantProperties,
 } from "@teskooano/data-types";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 /**
  * Planet Nine configuration object based on Batygin & Brown (2016) analysis.

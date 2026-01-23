@@ -7,7 +7,6 @@ import {
   EARTH_MASS,
   EARTH_RADIUS,
 } from "@teskooano/data-values";
-import { J2000_EPOCH } from "./epoch";
 
 /**
  * Creates orbital elements from human-readable parameters.

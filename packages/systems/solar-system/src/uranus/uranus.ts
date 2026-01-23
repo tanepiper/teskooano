@@ -1,8 +1,4 @@
-import {
-  J2000_EPOCH,
-  createOrbitalElements,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialStatus,
   CelestialType,
@@ -14,6 +10,7 @@ import {
   type RingSystemConfiguration,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 /**
  * Uranus configuration object for modular solar system initialization.

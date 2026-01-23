@@ -1,8 +1,4 @@
-import {
-  createOrbitalElements,
-  J2000_EPOCH,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -11,6 +7,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 const OBERON_REAL_RADIUS_KM = 761.4;
 

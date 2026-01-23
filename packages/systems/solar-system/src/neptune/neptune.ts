@@ -1,8 +1,4 @@
-import {
-  J2000_EPOCH,
-  createOrbitalElements,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -13,6 +9,7 @@ import {
   type RingProperties,
   type RingSystemConfiguration,
 } from "@teskooano/data-types";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 /**
  * Neptune configuration object for modular solar system initialization.

@@ -1,8 +1,4 @@
-import {
-  createOrbitalElements,
-  J2000_EPOCH,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   type CelestialObject,
   CelestialStatus,
@@ -10,6 +6,7 @@ import {
   PlanetProperties,
   PlanetType,
 } from "@teskooano/data-types";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 /**
  * Mercury configuration object for modular solar system initialization.

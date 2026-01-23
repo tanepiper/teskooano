@@ -1,14 +1,11 @@
-import {
-  J2000_EPOCH,
-  createOrbitalElements,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialStatus,
   CelestialType,
   type CelestialObject,
   type PlanetProperties,
 } from "@teskooano/data-types";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 /**
  * Pluto configuration object for modular solar system initialization.

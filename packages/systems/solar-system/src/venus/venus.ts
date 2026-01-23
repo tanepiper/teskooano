@@ -1,8 +1,4 @@
-import {
-  J2000_EPOCH,
-  createOrbitalElements,
-  kmToM,
-} from "@teskooano/core-physics";
+import { createOrbitalElements, kmToM } from "@teskooano/core-physics";
 import {
   CelestialObject,
   CelestialStatus,
@@ -11,6 +7,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 import { SolarSystemBodies } from "../shared/const";
+import { J2000_EPOCH } from "@teskooano/data-values";
 
 const VENUS_MASS_KG = 4.8675e24;
 const VENUS_RADIUS_KM = 6051.8; // Mean radius
