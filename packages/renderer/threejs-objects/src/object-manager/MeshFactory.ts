@@ -20,7 +20,6 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 
-
 /**
  * @internal
  * Configuration for MeshFactory.

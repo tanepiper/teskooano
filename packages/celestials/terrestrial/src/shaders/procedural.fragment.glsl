@@ -10,18 +10,13 @@ varying vec2 vUv;
 varying vec3 vWorldPosition;  // World space position of the fragment
 varying vec3 vWorldNormal;    // Perturbed world normal from vertex shader
 varying vec3 vObjectPosition; // Normalized object-space position for seamless noise
-uniform vec3 uCameraPosition;
+varying vec3 vViewPosition;   // View space position of the fragment
+varying vec3 vViewNormal;     // View space normal of the fragment
+// uniform vec3 uCameraPosition; // Three.js defines cameraPosition automatically
 
 // --- Structs ---
-struct Light {
-  vec3 position;
-  vec3 color;
-  float intensity;
-};
-
-// Multi-Light Uniforms
-uniform int uNumLights;
-uniform Light uLights[MAX_LIGHTS];
+// Multi-Light Uniforms (Standard Three.js)
+#include <lights_pars_begin>
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
 
@@ -74,40 +69,7 @@ uniform float uSpecularStrength;
     #include "../shared/terrain.glsl"
 #endif
 
-// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
-float getShadow(vec3 fragPos, vec3 lightDir) {
-    float finalShadow = 1.0;
-
-    for (int i = 0; i < uNumShadowCasters; i++) {
-        // This check is necessary because the array is padded with empty data
-        if (uShadowCasters[i].radius <= 0.0) continue;
-
-        vec3 oc = fragPos - uShadowCasters[i].position;
-        float b = dot(oc, lightDir);
-        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
-        float discriminant = b * b - c;
-
-        // If the ray is potentially inside the shadow cone
-        if (discriminant > 0.0) {
-            float t = -b - sqrt(discriminant);
-            // Check if the intersection is in front of the fragment
-            if (t > 0.001) {
-                // Penumbra width is proportional to the occluder's radius.
-                // A larger multiplier makes the edge softer.
-                float penumbra = uShadowCasters[i].radius * 0.8;
-                float penumbraSq = penumbra * penumbra;
-                
-                // Calculate a smooth fade from lit to shadow based on how deep the ray is.
-                // 1.0 = lit edge, 0.0 = deep shadow.
-                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
-                
-                // The final shadow is the darkest of all potential shadows.
-                finalShadow = min(finalShadow, currentShadow);
-            }
-        }
-    }
-    return finalShadow;
-}
+// (Removed local getShadow - now in shared/lighting.glsl)
 
 // --- Main Function ---
 void main() {
@@ -132,16 +94,13 @@ void main() {
     vec3 baseNormal = normalize(vWorldNormal);
     
     // Apply procedural normal perturbation for terrain detail
-    // Modulate bump intensity by terrain height:
-    // - Ocean areas (low noiseValue) should be smooth
-    // - Land areas should have texture, increasing with elevation
-    float oceanThreshold = uHeight2; // Water level (typically 0.2)
+    float oceanThreshold = uHeight2;
     float terrainBumpFactor = smoothstep(oceanThreshold - 0.05, oceanThreshold + 0.1, noiseValue);
     float modulatedBumpScale = uBumpScale * terrainBumpFactor;
     
     vec3 perturbedNormal = perturbNormal(baseNormal, vWorldPosition, modulatedBumpScale);
     
-    vec3 viewDir = normalize(uCameraPosition - vWorldPosition);
+    vec3 viewDir = normalize(cameraPosition - vWorldPosition);
 
     // Initialize base color with the lowest level
     vec3 baseColor = uColor1;
@@ -170,23 +129,13 @@ void main() {
         baseColor = mix(baseColor, colors[i], blendFactor);
     }
 
-    // Calculate shadow factor for day side lighting only
-    float shadowFactor = 1.0;
-    if (uNumLights > 0) {
-        vec3 primaryLightDir = normalize(uLights[0].position - vWorldPosition);
-        float dotProduct = dot(perturbedNormal, primaryLightDir);
-        
-        if (dotProduct > 0.0) {
-            // Day side - calculate shadows
-            shadowFactor = getShadow(vWorldPosition, primaryLightDir);
-        } else {
-            // Night side - no shadows needed
-            shadowFactor = 0.0;
-        }
-    }
-
-    // Use perturbed normal for lighting (adds terrain detail)
-    vec3 finalColor = calculateLighting(baseColor, perturbedNormal, viewDir, shadowFactor);
+    // Perform lighting calculation with robust world-space support
+    vec3 finalColor = calculateLighting(
+        baseColor, 
+        perturbedNormal, 
+        vWorldPosition, 
+        viewDir
+    );
 
     // Clamp before gamma correction to prevent artifacts.
     finalColor = clamp(finalColor, 0.0, 1.0);
@@ -198,4 +147,4 @@ void main() {
     gl_FragColor = vec4(finalColor, 1.0);
     
     #include <logdepthbuf_fragment>
-} 
+}

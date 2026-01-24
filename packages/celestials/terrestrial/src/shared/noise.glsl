@@ -111,12 +111,12 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
     // Larger epsilon = smoother gradients = gentler rolling hills
     float epsilon = 0.05;
 
-    // Use LOWER frequency for bump mapping (1.0x instead of 4.0x)
-    // This creates broader, gentler terrain features
-    vec3 noiseCoord = (vObjectPosition + vec3(123.456, 789.012, 345.678)) * uSimplePeriod * 1.0;
+    // Use HIGHER frequency for bump mapping (4.0x instead of 1.0x)
+    // This creates more detailed terrain features
+    vec3 noiseCoord = (vObjectPosition + vec3(123.456, 789.012, 345.678)) * uSimplePeriod * 4.0;
 
-    // Use FEWER octaves (3) for smoother results - less high-frequency detail
-    int bumpOctaves = min(3, uOctaves);
+    // Use MORE octaves (up to 6) for richer detail
+    int bumpOctaves = min(6, uOctaves);
     
     // Sample noise at slightly offset positions to compute gradient
     float noiseX = fbm(noiseCoord + vec3(epsilon, 0.0, 0.0), bumpOctaves, persistence, lacunarity);
@@ -136,8 +136,8 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
     getTangentBasis(baseNormal, tangent, bitangent);
     
     // Project gradient onto tangent plane and scale
-    // Additional smoothing factor to reduce harshness
-    float smoothing = 0.5;
+    // Reduced smoothing factor to allow more dynamic detail
+    float smoothing = 0.9;
     float gradT = dot(gradient, tangent) * bumpScale * smoothing;
     float gradB = dot(gradient, bitangent) * bumpScale * smoothing;
     

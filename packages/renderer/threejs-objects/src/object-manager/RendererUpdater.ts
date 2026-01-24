@@ -135,7 +135,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
     lights.forEach((comp) => {
       const light = comp.light as THREE.PointLight;
       map.set(comp.celestialObject.id, {
-        position: light.position,
+        position: comp.celestialObject.position.clone(),
         color: light.color,
         intensity: light.intensity,
       });

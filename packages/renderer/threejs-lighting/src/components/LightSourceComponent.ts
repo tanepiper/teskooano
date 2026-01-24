@@ -91,7 +91,11 @@ export class LightSourceComponent {
 
     if (freshObject) {
       this.celestialObject = freshObject; // Keep our reference fresh
-      this.light.position.copy(freshObject.position);
+      if (this.light.parent && this.light.parent.type !== "Scene") {
+        this.light.position.set(0, 0, 0);
+      } else {
+        this.light.position.copy(freshObject.position);
+      }
     }
     this.updateLightProperties();
   }

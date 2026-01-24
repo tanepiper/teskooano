@@ -3,22 +3,18 @@ import type { PlanetAtmosphereProperties } from "@teskooano/data-types";
 
 import atmosphereVertexShaderSource from "../shaders/atmosphere.vertex.glsl";
 import atmosphereFragmentShaderSource from "../shaders/atmosphere.fragment.glsl";
-import {
-  LightArrayUtils,
-  LightSourceData,
-} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for atmospheric scattering effect with support for multiple light sources
+ * using Three.js internal lighting system.
  */
 export class AtmosphereMaterial extends THREE.ShaderMaterial {
   private parentId: string;
-  protected currentNumLights: number = 0;
 
   constructor(
     atmosphereProps: PlanetAtmosphereProperties & {
       aberrationIntensity?: number;
-      opacity?: number; // New opacity parameter
+      opacity?: number;
     } = {} as PlanetAtmosphereProperties,
     options: {
       planetRadius?: number;
@@ -31,7 +27,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       power = 2.0,
       thickness = 0.1,
       aberrationIntensity = 1,
-      opacity = 1.0, // Default to fully opaque
+      opacity = 1.0,
     } = atmosphereProps ?? {};
 
     const { planetRadius = 1.0, parentId = "unknown" } = options;
@@ -41,103 +37,78 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
       },
-      uniforms: {
-        // Atmosphere properties
-        glowColor: { value: new THREE.Color(glowColor) },
-        intensity: { value: intensity },
-        power: { value: power },
-        atmosphereThickness: { value: thickness },
-        planetRadius: { value: planetRadius },
-        aberrationIntensity: { value: aberrationIntensity },
-        opacity: { value: opacity }, // New opacity uniform
-
-        // Light properties
-        uNumLights: { value: 0 },
-        uLightPositions: {
-          value: Array(MAX_LIGHTS)
-            .fill(0)
-            .map(() => new THREE.Vector3()),
+      uniforms: THREE.UniformsUtils.merge([
+        THREE.UniformsLib.lights,
+        {
+          glowColor: { value: new THREE.Color(glowColor) },
+          intensity: { value: intensity },
+          power: { value: power },
+          atmosphereThickness: { value: thickness },
+          planetRadius: { value: planetRadius },
+          aberrationIntensity: { value: aberrationIntensity },
+          opacity: { value: opacity },
+          uTime: { value: 0.0 },
+          uNumWorldLights: { value: 0 },
+          uWorldLightPositions: {
+            value: Array(MAX_LIGHTS)
+              .fill(0)
+              .map(() => new THREE.Vector3(0, 0, 0)),
+          },
+          uWorldLightColors: {
+            value: Array(MAX_LIGHTS)
+              .fill(0)
+              .map(() => new THREE.Color(0xffffff)),
+          },
+          uWorldLightIntensities: {
+            value: new Float32Array(MAX_LIGHTS).fill(0),
+          },
         },
-        uLightColors: {
-          value: Array(MAX_LIGHTS)
-            .fill(0)
-            .map(() => new THREE.Color(1, 1, 1)),
-        },
-        uLightIntensities: { value: Array(MAX_LIGHTS).fill(1.0) },
-
-        // Camera
-        uCameraPosition: { value: new THREE.Vector3() },
-        uTime: { value: 0.0 },
-      },
+      ]),
       vertexShader: atmosphereVertexShaderSource,
       fragmentShader: atmosphereFragmentShaderSource,
+      lights: true,
       transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false, // Disable depth write for transparent double-sided materials
+      side: THREE.BackSide,
+      depthWrite: false,
     });
 
     this.parentId = parentId;
-    this.currentNumLights = MAX_LIGHTS;
-  }
-
-  protected resizeLightArrays(newSize: number): void {
-    const defineSize = Math.max(1, newSize);
-    if (this.defines.MAX_LIGHTS !== defineSize) {
-      this.defines.MAX_LIGHTS = defineSize;
-      this.needsUpdate = true;
-    }
-
-    // Since the atmosphere material uses separate arrays for positions, colors, and intensities,
-    // we need to handle each array separately rather than using LightArrayUtils directly
-    const lightPositions = [];
-    const lightColors = [];
-    const lightIntensities = [];
-
-    for (let i = 0; i < defineSize; i++) {
-      lightPositions.push(
-        this.uniforms.uLightPositions.value[i] || new THREE.Vector3(),
-      );
-      lightColors.push(
-        this.uniforms.uLightColors.value[i] || new THREE.Color(1, 1, 1),
-      );
-      lightIntensities.push(this.uniforms.uLightIntensities.value[i] ?? 1.0);
-    }
-
-    this.uniforms.uLightPositions.value = lightPositions;
-    this.uniforms.uLightColors.value = lightColors;
-    this.uniforms.uLightIntensities.value = lightIntensities;
   }
 
   /**
-   * Update the material with the current time, camera position, and light sources
+   * Update the material with the current time
    */
-  update(
+  public update(
     time: number,
-    timeScale: number,
-    camera?: THREE.PerspectiveCamera,
-    lightSources?: Map<string, LightSourceData>,
+    _timeScale: number,
+    _camera?: THREE.PerspectiveCamera,
+    lightSources?: Map<string, any>,
   ): void {
     this.uniforms.uTime.value = time;
 
-    if (camera) {
-      this.uniforms.uCameraPosition.value.copy(camera.position);
-    }
+    if (lightSources && lightSources.size > 0) {
+      const lights = Array.from(lightSources.values());
+      const numLights = Math.min(lights.length, 4); // MAX_LIGHTS is 4
 
-    const numLights = lightSources?.size ?? 0;
-    if (numLights !== this.currentNumLights) {
-      this.resizeLightArrays(numLights);
-      this.currentNumLights = numLights;
-    }
+      this.uniforms.uNumWorldLights.value = numLights;
 
-    this.uniforms.uNumLights.value = numLights;
-    if (lightSources) {
-      let i = 0;
-      for (const lightData of lightSources.values()) {
-        this.uniforms.uLightPositions.value[i].copy(lightData.position);
-        this.uniforms.uLightColors.value[i].copy(lightData.color);
-        this.uniforms.uLightIntensities.value[i] = lightData.intensity ?? 1.0;
-        i++;
+      for (let i = 0; i < 4; i++) {
+        if (i < numLights) {
+          const lightSource = lights[i];
+          this.uniforms.uWorldLightPositions.value[i].copy(
+            lightSource.position,
+          );
+          this.uniforms.uWorldLightColors.value[i].copy(lightSource.color);
+          this.uniforms.uWorldLightIntensities.value[i] = lightSource.intensity;
+        } else {
+          // Zero out unused slots
+          this.uniforms.uWorldLightPositions.value[i].set(0, 0, 0);
+          this.uniforms.uWorldLightColors.value[i].set(0, 0, 0);
+          this.uniforms.uWorldLightIntensities.value[i] = 0;
+        }
       }
+    } else {
+      this.uniforms.uNumWorldLights.value = 0;
     }
   }
 

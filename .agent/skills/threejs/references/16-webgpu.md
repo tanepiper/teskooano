@@ -7,8 +7,8 @@ Modern GPU API for next-generation graphics.
 Next-generation rendering backend:
 
 ```javascript
-import WebGPU from 'three/addons/capabilities/WebGPU.js';
-import WebGPURenderer from 'three/addons/renderers/webgpu/WebGPURenderer.js';
+import WebGPU from "three/addons/capabilities/WebGPU.js";
+import WebGPURenderer from "three/addons/renderers/webgpu/WebGPURenderer.js";
 
 // Check support
 if (WebGPU.isAvailable()) {
@@ -40,8 +40,8 @@ if (WebGPU.isAvailable()) {
 GPU-accelerated computation:
 
 ```javascript
-import { storageBuffer, uniform, Fn } from 'three/nodes';
-import { StorageBufferAttribute } from 'three/addons/renderers/common/StorageBufferAttribute.js';
+import { storageBuffer, uniform, Fn } from "three/nodes";
+import { StorageBufferAttribute } from "three/addons/renderers/common/StorageBufferAttribute.js";
 
 // Create storage buffer
 const particleCount = 10000;
@@ -53,14 +53,14 @@ for (let i = 0; i < particleCount; i++) {
     i,
     Math.random() * 10 - 5,
     Math.random() * 10 - 5,
-    Math.random() * 10 - 5
+    Math.random() * 10 - 5,
   );
 }
 
 // Create compute shader
 const computeParticles = Fn(() => {
   const position = storageBuffer(positionBuffer);
-  const time = uniform('time', 0);
+  const time = uniform("time", 0);
   const index = instanceIndex;
 
   // Update position
@@ -88,14 +88,14 @@ renderer.setAnimationLoop(() => {
 GPU-accessible memory:
 
 ```javascript
-import { storage, Fn, vec3, float } from 'three/nodes';
+import { storage, Fn, vec3, float } from "three/nodes";
 
 // Define storage buffer structure
 const particleData = storage(
   new THREE.StorageBufferAttribute(count * 7, 7), // 7 floats per particle
-  'vec3', // position
-  'vec3', // velocity
-  'float' // life
+  "vec3", // position
+  "vec3", // velocity
+  "float", // life
 );
 
 // Access in compute shader
@@ -116,7 +116,7 @@ const updateParticle = Fn(() => {
 Use TSL (Three Shading Language) with WebGPU:
 
 ```javascript
-import { MeshStandardNodeMaterial, texture, normalMap } from 'three/nodes';
+import { MeshStandardNodeMaterial, texture, normalMap } from "three/nodes";
 
 const material = new MeshStandardNodeMaterial();
 
@@ -134,7 +134,7 @@ material.metalnessNode = float(0.8);
 Efficient rendering with compute-generated draw calls:
 
 ```javascript
-import { IndirectStorageBufferAttribute } from 'three/addons/renderers/common/IndirectStorageBufferAttribute.js';
+import { IndirectStorageBufferAttribute } from "three/addons/renderers/common/IndirectStorageBufferAttribute.js";
 
 // Create indirect buffer
 const indirectBuffer = new IndirectStorageBufferAttribute(count, 5);
@@ -159,11 +159,11 @@ renderer.drawIndirect(mesh, indirectBuffer);
 Render to multiple textures simultaneously:
 
 ```javascript
-import { WebGPURenderTarget } from 'three/addons/renderers/webgpu/WebGPURenderTarget.js';
+import { WebGPURenderTarget } from "three/addons/renderers/webgpu/WebGPURenderTarget.js";
 
 const renderTarget = new WebGPURenderTarget(width, height, {
   count: 3, // number of render targets
-  format: THREE.RGBAFormat
+  format: THREE.RGBAFormat,
 });
 
 // Access individual textures
@@ -217,7 +217,7 @@ const texture = new THREE.CompressedTexture(
   mipmaps,
   width,
   height,
-  THREE.RGBA_BPTC_Format
+  THREE.RGBA_BPTC_Format,
 );
 ```
 
@@ -232,7 +232,7 @@ depthTexture.format = THREE.DepthFormat;
 ### Storage Textures
 
 ```javascript
-import { storageTexture } from 'three/nodes';
+import { storageTexture } from "three/nodes";
 
 // Read-write texture in compute shader
 const writeableTexture = storageTexture(texture);
@@ -285,6 +285,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 ## Browser Support
 
 As of 2025:
+
 - ✅ Chrome 113+
 - ✅ Edge 113+
 - ✅ Safari 18+ (macOS/iOS)

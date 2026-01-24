@@ -307,6 +307,9 @@ export class BaseTerrestrialRenderer<
       const shadowCastersForShader =
         ShadowCasterUtils.toShaderFormat(shadowCasters);
 
+      // Pass the object's position for light direction calculation
+      (bodyMaterial as any).planetPosition = object.position;
+
       bodyMaterial.update(
         time,
         timeScale,

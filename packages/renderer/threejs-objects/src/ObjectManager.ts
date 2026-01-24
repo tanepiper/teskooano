@@ -24,7 +24,10 @@ import {
   ObjectLifecycleManager,
   RendererUpdater,
 } from "./object-manager";
-import type { CelestialRenderer, LODManager } from "@teskooano/renderer-threejs-celestial";
+import type {
+  CelestialRenderer,
+  LODManager,
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * @internal Interface defining the required methods for managing label visibility.

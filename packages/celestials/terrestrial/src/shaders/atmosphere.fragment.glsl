@@ -1,6 +1,7 @@
 #include <common>
 #include <logdepthbuf_pars_fragment>
 
+// Atmosphere properties
 uniform vec3 glowColor;
 uniform float intensity;
 uniform float power;
@@ -10,11 +11,11 @@ uniform float aberrationIntensity;
 uniform float opacity; // New uniform for controlling overall opacity
 
 // Light properties
-uniform int uNumLights;
-uniform vec3 uLightPositions[MAX_LIGHTS];
-uniform vec3 uLightColors[MAX_LIGHTS];
-uniform float uLightIntensities[MAX_LIGHTS];
-uniform vec3 uCameraPosition;
+uniform int uNumWorldLights;
+uniform vec3 uWorldLightPositions[MAX_LIGHTS];
+uniform vec3 uWorldLightColors[MAX_LIGHTS];
+uniform float uWorldLightIntensities[MAX_LIGHTS];
+uniform vec3 uPrimaryLightDirection; // Legacy support if needed
 
 varying vec3 vWorldPosition;
 varying vec3 vPlanetCenter;
@@ -55,7 +56,7 @@ float opticalDepth(vec3 position, vec3 direction) {
 }
 
 void main() {
-  vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
+  vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
   vec3 normalizedPos = normalize(vWorldPosition - vPlanetCenter);
 
   // Handle double-sided rendering - flip normal for back faces
@@ -68,23 +69,33 @@ void main() {
   // Edge glow effect
   float edgeGlow = pow(1.0 - viewAngle, 2.0) * 1.5;
 
-  // Scattering calculations using example's Rayleigh/Mie combination
+  // Initialize scatter variable
   vec3 scatter = vec3(0.0);
 
-  for (int i = 0; i < uNumLights; i++) {
-    vec3 lightDir = normalize(uLightPositions[i] - vWorldPosition);
+  // Rayleigh/Mie scattering for World-Space Light Sources
+  for (int i = 0; i < 4; i++) {
+    if (i >= uNumWorldLights) break;
+
+    vec3 lightPos = uWorldLightPositions[i];
+    vec3 lightColor = uWorldLightColors[i];
+    float lightIntensity = uWorldLightIntensities[i];
+    
+    // Direction FROM fragment TO light source in World Space
+    vec3 lightDir = normalize(lightPos - vWorldPosition);
+    
+    // Attenuation (consistent with planet surface)
+    float dist = distance(lightPos, vWorldPosition);
+    float attenuation = 1.0 / (1.0 + 0.0000001 * dist * dist);
+    
+    // Dot product with View Direction for scattering phase
     float scatterAngle = dot(viewDirection, lightDir) * 0.5 + 0.5;
 
-    // Calculate optical depth for this light (used potentially for alpha, not direct attenuation)
-    float depth = opticalDepth(vWorldPosition, lightDir);
-
-    // Combine Rayleigh and Mie scattering using example's formula
-    vec3 lightScatter = uLightColors[i] * uLightIntensities[i] * (
+    // Combine Rayleigh and Mie scattering
+    vec3 lightScatter = lightColor * lightIntensity * attenuation * (
       rayleighPhase(scatterAngle) * vec3(0.3, 0.5, 1.0) + 
       miePhase(scatterAngle, 0.76) * vec3(1.0)
     );
 
-    // Remove view angle dependency - use consistent scattering regardless of view angle
     scatter += lightScatter;
   }
 

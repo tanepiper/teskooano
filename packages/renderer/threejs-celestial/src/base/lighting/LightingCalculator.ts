@@ -63,8 +63,8 @@ export class LightingCalculator {
    * Ambient light calculation constants
    */
   private static readonly AMBIENT_FALLOFF_FACTOR = 0.000000001; // Stronger falloff for ambient
-  private static readonly BASE_AMBIENT_INTENSITY = 0.5; // Base ambient when very close to a bright star
-  private static readonly MIN_AMBIENT_INTENSITY = 0.05; // Minimum ambient - much darker for better contrast
+  private static readonly BASE_AMBIENT_INTENSITY = 0.3; // Base ambient when very close to a bright star
+  private static readonly MIN_AMBIENT_INTENSITY = 0.02; // Minimum ambient - balanced contrast
 
   private object: RenderableCelestialObject;
   private allObjects?: Record<string, RenderableCelestialObject>;

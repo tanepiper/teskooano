@@ -1,69 +1,87 @@
 #ifndef LIGHTING_FUNCTION_GLSL
 #define LIGHTING_FUNCTION_GLSL
 
-// Function to calculate lighting contribution from a single light source
-vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity, vec3 normal, vec3 viewDir, vec3 worldPos) {
-    vec3 lightDir = normalize(lightPos - worldPos);
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = lightColor * diff * intensity;
+// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
+float getShadow(vec3 fragPos, vec3 lightDir) {
+    float finalShadow = 1.0;
 
-    // Basic Blinn-Phong Specular
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0); // Shininess factor 32
-    vec3 specular = lightColor * spec * intensity * 0.3; // Specular intensity 0.3
+    for (int i = 0; i < uNumShadowCasters; i++) {
+        if (uShadowCasters[i].radius <= 0.0) continue;
 
-    return diffuse + specular;
+        vec3 oc = fragPos - uShadowCasters[i].position;
+        float b = dot(oc, lightDir);
+        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
+        float discriminant = b * b - c;
+
+        if (discriminant > 0.0) {
+            float t = -b - sqrt(discriminant);
+            if (t > 0.001) {
+                float penumbra = uShadowCasters[i].radius * 0.8;
+                float penumbraSq = penumbra * penumbra;
+                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
+                finalShadow = min(finalShadow, currentShadow);
+            }
+        }
+    }
+    return finalShadow;
 }
 
-// Simple lighting calculation (Blinn-Phongish) with proper terminator handling
+// Explicit World-Space Lighting Uniforms
+uniform int uNumWorldLights;
+uniform vec3 uWorldLightPositions[MAX_LIGHTS];
+uniform vec3 uWorldLightColors[MAX_LIGHTS];
+uniform float uWorldLightIntensities[MAX_LIGHTS];
+
+// Updated lighting calculation using World-Space coordinates
 vec3 calculateLighting(
     vec3 albedo, 
-    vec3 normal, 
-    vec3 viewDir, 
-    float shadowFactor
+    vec3 worldNormal, 
+    vec3 worldPos,
+    vec3 viewDir // Still needed for specular (view space or world space?)
 ) {
-    // Start with very low ambient for dark night sides
-    vec3 finalColor = albedo * uAmbientLightColor * (uAmbientLightIntensity * 0.1); // Much darker ambient
+    // Transform viewDir to World Space for consistent specular if needed, 
+    // but for now we'll assume Blinn-Phong in World Space.
+    // vec3 worldViewDir = normalize(cameraPosition - worldPos);
+    vec3 worldViewDir = viewDir; // For simplicity, we'll keep it as passed
 
-    for (int i = 0; i < uNumLights; i++) {
-        vec3 lightPos = uLights[i].position;
-        vec3 lightColor = uLights[i].color;
-        float lightIntensity = uLights[i].intensity;
+    // Start with a subtle ambient base for "just enough" shadow detail
+    vec3 finalColor = albedo * uAmbientLightColor * (uAmbientLightIntensity * 0.05); 
 
-        vec3 lightDir = normalize(lightPos - vWorldPosition);
+    for (int i = 0; i < 4; i++) {
+        if (i >= uNumWorldLights) break;
 
-        // Create a smooth transition around the terminator
-        float dotProduct = dot(normal, lightDir);
+        vec3 lightPos = uWorldLightPositions[i];
+        vec3 lightColor = uWorldLightColors[i];
+        float intensity = uWorldLightIntensities[i];
+
+        // Correct Light Direction: FROM fragment TO light source
+        vec3 lightDir = normalize(lightPos - worldPos);
         
-        // Use a single, smooth transition zone to avoid banding
-        // Wider transition zone: -0.3 to +0.3 (0.6 units wide)
-        float terminatorTransition = smoothstep(-0.3, 0.3, dotProduct);
-        
-        // Calculate diffuse lighting using the raw dot product for accuracy
+        float dotProduct = dot(worldNormal, lightDir);
+        float terminatorTransition = smoothstep(-0.1, 0.6, dotProduct);
         float diff = max(dotProduct, 0.0);
-        vec3 diffuse = lightColor * diff * lightIntensity;
+        
+        // Attenuation for point lights
+        float dist = distance(lightPos, worldPos);
+        // Using a standard falloff for celestial distances
+        float attenuation = 1.0 / (1.0 + 0.0000001 * dist * dist); 
+        
+        vec3 diffuse = lightColor * diff * intensity * attenuation;
 
-        // Specular (Blinn-Phong) with smooth terminator falloff
-        vec3 halfwayDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        
-        // Apply additional smooth falloff to specular near terminator to prevent seams
-        float specularFalloff = smoothstep(-0.1, 0.2, dotProduct); // Tighter falloff for specular
-        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity * specularFalloff;
+        // Basic Blinn-Phong Specular in World Space
+        vec3 halfwayDir = normalize(lightDir + worldViewDir);
+        float spec = pow(max(dot(worldNormal, halfwayDir), 0.0), uShininess);
+        float specularFalloff = smoothstep(0.0, 0.5, dotProduct);
+        vec3 specular = uSpecularStrength * spec * lightColor * intensity * attenuation * specularFalloff;
 
-        // Apply terminator transition to diffuse lighting
-        vec3 diffuseLighting = albedo * diffuse * terminatorTransition;
+        // Per-light shadowing
+        float shadowFactor = getShadow(worldPos, lightDir);
+
+        finalColor += (albedo * diffuse + specular) * terminatorTransition * max(shadowFactor, 0.05);
         
-        // Apply separate, smoother transition to specular to prevent seams
-        vec3 specularLighting = specular * terminatorTransition;
-        
-        // Combine with shadow factor
-        float shadowContribution = max(shadowFactor, 0.05);
-        finalColor += (diffuseLighting + specularLighting) * shadowContribution;
-        
-        // Add subtle night side illumination with smoother falloff
-        float nightLight = 0.01 * smoothstep(1.0, 0.0, terminatorTransition); // Smooth night falloff
-        finalColor += albedo * lightColor * lightIntensity * nightLight;
+        // Subtle atmospheric "night light" glow near the terminator
+        float nightLight = 0.003 * intensity * attenuation * smoothstep(1.0, 0.0, terminatorTransition);
+        finalColor += albedo * lightColor * nightLight;
     }
     
     return finalColor;
