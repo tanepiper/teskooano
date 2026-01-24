@@ -19,13 +19,12 @@ import * as THREE from "three";
 import {
   AccelerationVisualizer,
   DebrisEffectManager,
-  GlobalLODManager,
   GravitationalLensingHandler,
   MeshFactory,
   ObjectLifecycleManager,
   RendererUpdater,
 } from "./object-manager";
-import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
+import type { CelestialRenderer, LODManager } from "@teskooano/renderer-threejs-celestial";
 
 /**
  * @internal Interface defining the required methods for managing label visibility.
@@ -55,7 +54,7 @@ export class ObjectManager extends StateSubscriptionMixin {
   /** @internal Reference to the WebGLRenderer, potentially used by sub-managers (e.g., lensing). */
   private renderer: THREE.WebGLRenderer;
   /** @internal Manages Levels of Detail for objects based on camera distance. */
-  private lodManager: GlobalLODManager;
+  private lodManager: LODManager;
   /** @internal Manages the influence and calculation of the new component-based lighting system. */
   public lightingManager: LightingManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
@@ -144,6 +143,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     css2DManager: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<Record<string, OSVector3>>,
     lightingManager: LightingManager,
+    lodManager: LODManager,
   ) {
     super();
     this.scene = scene;
@@ -154,7 +154,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.acceleration$ = acceleration$;
 
     // Initialize managers
-    this.lodManager = new GlobalLODManager();
+    this.lodManager = lodManager;
     this.lightingManager =
       lightingManager ||
       new LightingManager(this.scene, this.renderableObjects$);

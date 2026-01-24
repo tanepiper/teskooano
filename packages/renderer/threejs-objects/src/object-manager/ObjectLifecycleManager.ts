@@ -17,7 +17,7 @@ import {
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";
-import { GlobalLODManager } from "./GlobalLODManager";
+import { type LODManager } from "@teskooano/renderer-threejs-celestial";
 import { StateAccessor } from "@teskooano/core-state";
 
 /**
@@ -28,7 +28,7 @@ export interface ObjectLifecycleManagerConfig {
   objects: Map<string, THREE.Object3D>;
   scene: THREE.Scene;
   meshFactory: MeshFactory;
-  lodManager: GlobalLODManager;
+  lodManager: LODManager;
   lightingManager: LightingManager;
   lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
@@ -45,7 +45,7 @@ export class ObjectLifecycleManager {
   private objects: Map<string, THREE.Object3D>;
   private scene: THREE.Scene;
   private meshFactory: MeshFactory;
-  private lodManager: GlobalLODManager;
+  private lodManager: LODManager;
   private lightingManager: LightingManager;
   private lensingHandler: GravitationalLensingHandler;
   private renderer: THREE.WebGLRenderer | null;

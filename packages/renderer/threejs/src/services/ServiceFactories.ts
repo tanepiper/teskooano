@@ -145,6 +145,7 @@ export class ServiceFactories {
     renderer: THREE.WebGLRenderer,
     css2DManager: Layer2DManager,
     lightingManager: LightingManager,
+    lodManager: LODManager,
   ): ObjectManager {
     return new ObjectManager(
       scene,
@@ -154,6 +155,7 @@ export class ServiceFactories {
       css2DManager,
       StateAccessor.accelerationVectors$(),
       lightingManager,
+      lodManager,
     );
   }
 
@@ -264,6 +266,7 @@ export class ServiceFactories {
       sceneManager.renderer,
       css2DManager,
       lightingManager,
+      this.createLODManager(),
     );
 
     // Create state adapter for orbits manager

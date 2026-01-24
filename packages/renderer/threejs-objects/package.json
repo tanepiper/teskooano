@@ -35,7 +35,7 @@
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "@teskooano/renderer-threejs-lighting": "file:../threejs-lighting",
     "@teskooano/renderer-threejs-orbits": "file:../threejs-orbits",
-    "@teskooano/renderer-threejs--celestial": "file:../threejs-celestial",
+    "@teskooano/renderer-threejs-celestial": "file:../threejs-celestial",
     "@teskooano/celestials-comet": "file:../../../celestials/comet",
     "@teskooano/celestials-terrestrial": "file:../../../celestials/terrestrial",
     "@teskooano/celestials-gas-giants": "file:../../../celestials/gas-giants",

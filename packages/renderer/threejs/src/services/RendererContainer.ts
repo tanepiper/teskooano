@@ -324,6 +324,7 @@ export class RendererContainer {
         sceneManager: SceneManager,
         lightingManager: LightingManager,
         css2DManager: Layer2DManager,
+        lodManager: LODManager,
         context?: ServiceContext,
       ) =>
         ServiceFactories.createObjectManager(
@@ -332,9 +333,10 @@ export class RendererContainer {
           sceneManager.renderer,
           css2DManager,
           lightingManager,
+          lodManager,
         ),
       ServiceScope.SCOPED,
-      ["SceneManager", "LightingManager", "Layer2DManager"],
+      ["SceneManager", "LightingManager", "Layer2DManager", "LODManager"],
     );
 
     this.register(
