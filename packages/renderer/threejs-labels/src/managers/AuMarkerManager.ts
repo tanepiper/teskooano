@@ -62,7 +62,7 @@ export class AuMarkerManager {
       transparent: true,
       opacity: 0.2,
       toneMapped: false, // Set to false for UI elements to not be affected by scene lighting
-      depthTest: false, // Disable depth test to ensure AU marker rings are always visible
+      depthTest: true, // Respect depth so planets occlude AU markers
       depthWrite: false, // Don't write to depth buffer to avoid interfering with celestial objects
       blending: THREE.NormalBlending, // Use normal blending for proper transparency
     });

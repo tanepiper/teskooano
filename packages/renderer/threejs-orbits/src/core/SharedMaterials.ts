@@ -20,7 +20,7 @@ export const SharedMaterials = {
     linewidth: isMobileWidth ? 2 : 5,
     transparent: true,
     opacity: 1,
-    depthTest: false, // Disable depth test to ensure trail lines are always visible
+    depthTest: true, // Respect depth so planets occlude trail lines
     depthWrite: false, // Trails should not write to depth buffer to avoid occlusion conflicts
     blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
@@ -37,7 +37,7 @@ export const SharedMaterials = {
     precision: "highp",
     transparent: true,
     opacity: 0.7,
-    depthTest: false, // Disable depth test to ensure prediction lines are always visible
+    depthTest: true, // Respect depth so planets occlude prediction lines
     depthWrite: false, // Prediction lines should not write to depth buffer
     blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
@@ -50,7 +50,7 @@ export const SharedMaterials = {
     linewidth: isMobileWidth ? 1 : 3,
     transparent: true,
     opacity: 1,
-    depthTest: false, // Disable depth test to ensure orbit lines are always visible
+    depthTest: true, // Respect depth so planets occlude orbit lines
     depthWrite: false, // Keplerian orbits should not write to depth buffer
     blending: THREE.NormalBlending, // Use normal blending for proper transparency
   }),
@@ -92,7 +92,7 @@ export const SharedMaterials = {
       }
     `,
     transparent: true,
-    depthTest: false,
+    depthTest: true,
     depthWrite: false,
     blending: THREE.NormalBlending,
   }),
