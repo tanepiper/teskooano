@@ -40,8 +40,8 @@ Optimized for space scenes with wide field of view and extended depth range.
 ```typescript
 const camera = CameraHelper.createCamera(CameraPreset.Space, {
   fov: 90,
-  near: CAMERA_DISTANCE_CONFIG.NEAR, // 0.00001 - very close objects
-  far: CAMERA_DISTANCE_CONFIG.FAR, // 20,000,000 units (20,000 AU)
+  near: CAMERA_DISTANCE_CONFIG.NEAR, // ~1.5 km in scene units
+  far: CAMERA_DISTANCE_CONFIG.FAR, // 1,000,000 units (1,000 AU)
   position: [0, 0, 50],
 });
 ```
@@ -90,15 +90,15 @@ import { CAMERA_DISTANCE_CONFIG } from "@teskooano/renderer-threejs-core";
 const camera = new THREE.PerspectiveCamera(
   fov,
   aspect,
-  CAMERA_DISTANCE_CONFIG.NEAR, // 0.00001 - very close objects
-  CAMERA_DISTANCE_CONFIG.FAR, // 20,000,000 units (20,000 AU)
+  CAMERA_DISTANCE_CONFIG.NEAR, // ~1.5 km in scene units
+  CAMERA_DISTANCE_CONFIG.FAR, // 1,000,000 units (1,000 AU)
 );
 ```
 
 **Distance Values:**
 
 - **NEAR**: `0.00001` units (~1.5 km) - allows viewing very close objects
-- **FAR**: `20,000,000` units (20,000 AU) - covers the full outer Oort cloud
+- **FAR**: `1,000,000` units (1,000 AU) - covers deep outer system ranges
 
 This configuration is optimized for logarithmic depth buffer rendering, providing uniform precision across the entire astronomical distance range.
 

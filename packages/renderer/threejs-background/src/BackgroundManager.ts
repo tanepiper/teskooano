@@ -15,7 +15,7 @@ import { SCALE } from "@teskooano/data-values";
 /**
  * Defines the base distance for star field layers, used as a reference
  * for creating parallax and depth effects.
- * Optimized for logarithmic depth buffer with a 20,000 AU far plane.
+ * Optimized for logarithmic depth buffer with a 1,000 AU far plane.
  */
 const BASE_DISTANCE_AU = 900;
 const BASE_DISTANCE = BASE_DISTANCE_AU * SCALE.RENDER_SCALE_AU;

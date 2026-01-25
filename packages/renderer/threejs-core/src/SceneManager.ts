@@ -225,8 +225,8 @@ export class SceneManager {
       name: "Teskooano Space Engine",
       backgroundColor: 0x000011, // Dark blue space background
       fov: this.fov,
-      near: 0.00001, // Logarithmic depth allows aggressive near plane
-      far: 1000000, // Logarithmic depth allows massive far plane
+      near: CAMERA_DISTANCE_CONFIG.NEAR,
+      far: CAMERA_DISTANCE_CONFIG.FAR,
       aspectRatio: this.width / this.height,
       enableShadows: this.options.shadows ?? true,
       antialias: this.options.antialias ?? true,
