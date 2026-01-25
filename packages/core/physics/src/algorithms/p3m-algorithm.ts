@@ -51,14 +51,15 @@ export class P3MAlgorithm implements ForceCalculationAlgorithm {
     }
 
     // Use WASM spatial partitioning to build neighbor graph
-    const positions = this.bodiesToFloat32Array
-      ? this.bodiesToFloat32Array(allBodies)
-      : this.bodiesToFloat32ArrayFallback(allBodies);
     const threshold = config.neighborDistance || 1000 * 1.496e11; // Default 1000 AU
-    const neighborGraph = this.spatialPartitioning.createNearByGraph(
-      positions,
-      threshold,
-    );
+    const neighborGraph =
+      config.neighborGraph ||
+      this.spatialPartitioning.createNearByGraph(
+        this.bodiesToFloat32Array
+          ? this.bodiesToFloat32Array(allBodies)
+          : this.bodiesToFloat32ArrayFallback(allBodies),
+        threshold,
+      );
 
     // Validate that neighbor graph indices are within bounds
     if (neighborGraph.length !== allBodies.length) {
@@ -74,9 +75,6 @@ export class P3MAlgorithm implements ForceCalculationAlgorithm {
         if (neighborIndex >= allBodies.length) {
           console.error(
             `CRITICAL: Neighbor graph contains invalid index ${neighborIndex} for body ${i} (${allBodies[i]?.id}), bodies length: ${allBodies.length}`,
-          );
-          console.error(
-            `Positions array length: ${positions.length / 3}, Bodies count: ${allBodies.length}`,
           );
           break;
         }

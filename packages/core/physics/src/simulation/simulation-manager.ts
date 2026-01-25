@@ -217,31 +217,16 @@ export class SimulationManager {
     targetBodyState: PhysicsStateReal,
     allBodies: PhysicsStateReal[],
     config: SimulationConfiguration,
+    neighborGraph?: number[][],
   ): OSVector3 {
     // Use the algorithm specified in configuration, default to neighbor-based
     const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
     const algorithm = this.getAlgorithmInstance(algorithmType);
 
-    // Create cache key for neighbor graph
-    const bodiesHash = this.createBodiesHash(allBodies);
-    const threshold = config.neighborDistance || 1000 * 1.496e11;
-
-    // Check if we can reuse the neighbor graph
-    if (
-      bodiesHash === this.lastBodiesHash &&
-      threshold === this.lastThreshold
-    ) {
-      // Reuse cached neighbor graph - this avoids expensive WASM calls
-      const cachedGraph = this.neighborGraphCache.get(bodiesHash);
-      if (cachedGraph) {
-        // Pass cached graph to algorithm (if it supports it)
-        // For now, we'll still call the normal method but with optimized data
-      }
-    }
-
     const result = algorithm.calculateAcceleration(targetBodyState, allBodies, {
       neighborDistance: config.neighborDistance,
       barnesHutThreshold: config.neighborDistance, // Use neighborDistance as threshold
+      neighborGraph,
     });
 
     return result;
@@ -253,6 +238,40 @@ export class SimulationManager {
   private createBodiesHash(bodies: PhysicsStateReal[]): string {
     // Simple hash based on body count and IDs
     return `${bodies.length}-${bodies.map((b) => b.id).join(",")}`;
+  }
+
+  /**
+   * Create or reuse a neighbor graph for the current step.
+   */
+  private getOrCreateNeighborGraph(
+    bodies: PhysicsStateReal[],
+    neighborDistance: number,
+  ): number[][] {
+    const bodiesHash = this.createBodiesHash(bodies);
+
+    if (
+      bodiesHash === this.lastBodiesHash &&
+      neighborDistance === this.lastThreshold
+    ) {
+      const cachedGraph = this.neighborGraphCache.get(bodiesHash);
+      if (cachedGraph) {
+        return cachedGraph;
+      }
+    }
+
+    const positions = this.bodiesToFloat32Array(bodies);
+    const neighborGraph = this.spatialPartitioning.createNearByGraph(
+      positions,
+      neighborDistance,
+    );
+
+    // Keep only the latest graph to cap memory usage
+    this.neighborGraphCache.clear();
+    this.neighborGraphCache.set(bodiesHash, neighborGraph);
+    this.lastBodiesHash = bodiesHash;
+    this.lastThreshold = neighborDistance;
+
+    return neighborGraph;
   }
 
   /**
@@ -424,6 +443,18 @@ export class SimulationManager {
       );
     }
 
+    const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
+    const usesNeighborGraph =
+      algorithmType === AlgorithmType.BARNES_HUT ||
+      algorithmType === AlgorithmType.FMM ||
+      algorithmType === AlgorithmType.P3M ||
+      algorithmType === AlgorithmType.TREE_PM;
+    const neighborDistance = config.neighborDistance ?? 1000 * AU_METERS;
+    const neighborGraph =
+      usesNeighborGraph && this.spatialPartitioning.isInitialized()
+        ? this.getOrCreateNeighborGraph(params.bodies, neighborDistance)
+        : undefined;
+
     // Calculate accelerations using WASM spatial partitioning
     const accelerations = new Map<string, OSVector3>();
     params.bodies.forEach((body) => {
@@ -431,6 +462,7 @@ export class SimulationManager {
         body,
         params.bodies,
         params.configuration,
+        neighborGraph,
       );
       accelerations.set(body.id, acc);
     });
@@ -447,6 +479,7 @@ export class SimulationManager {
           stateGuess,
           params.bodies,
           params.configuration,
+          neighborGraph,
         );
       };
 

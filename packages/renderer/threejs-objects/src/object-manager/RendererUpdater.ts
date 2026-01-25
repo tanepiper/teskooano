@@ -88,6 +88,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
     const simulationState = StateAccessor.getSimulationState();
     const time = simulationState.time;
     const timeScale = simulationState.timeScale;
+    const allMeshesObject = Object.fromEntries(this.allMeshes);
 
     const context = {
       time,
@@ -96,6 +97,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
       renderer: this.renderer,
       scene: this.scene,
       allMeshes: this.allMeshes,
+      allMeshesObject,
       allRenderableObjects,
     };
 
@@ -122,6 +124,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
       renderer: renderer || this.renderer,
       scene: scene || this.scene,
       allMeshes,
+      allMeshesObject: Object.fromEntries(allMeshes),
       allRenderableObjects,
     };
 
@@ -150,6 +153,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
       timeScale: number;
       camera: THREE.PerspectiveCamera;
       allMeshes: Map<string, THREE.Object3D>;
+      allMeshesObject: Record<string, THREE.Object3D>;
       renderer?: THREE.WebGLRenderer;
       scene?: THREE.Scene;
       allRenderableObjects: Record<string, RenderableCelestialObject>;
@@ -169,7 +173,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
         camera,
         renderer,
         scene,
-        allMeshes,
+        allMeshesObject,
         allRenderableObjects,
       } = context;
 
@@ -186,7 +190,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
           lightSources,
           camera,
           allRenderableObjects, // Pass the pre-fetched allRenderableObjects
-          Object.fromEntries(allMeshes),
+          allMeshesObject,
         );
       } else {
         // Fallback if no lighting manager is present
@@ -197,7 +201,7 @@ export class RendererUpdater extends StateSubscriptionMixin {
           new Map(), // Pass empty map
           camera,
           allRenderableObjects, // Pass the pre-fetched allRenderableObjects
-          Object.fromEntries(allMeshes),
+          allMeshesObject,
         );
       }
     });

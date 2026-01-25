@@ -10,6 +10,8 @@ export interface AlgorithmConfig {
   neighborDistance?: number;
   /** Barnes-Hut approximation threshold (defaults to neighborDistance) */
   barnesHutThreshold?: number;
+  /** Optional precomputed neighbor graph for the current step */
+  neighborGraph?: number[][];
 }
 
 /**

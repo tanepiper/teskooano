@@ -47,14 +47,15 @@ export class BarnesHutAlgorithm implements ForceCalculationAlgorithm {
     }
 
     // Use WASM spatial partitioning to build neighbor graph
-    const positions = this.bodiesToFloat32Array
-      ? this.bodiesToFloat32Array(allBodies)
-      : this.bodiesToFloat32ArrayFallback(allBodies);
     const threshold = config.barnesHutThreshold || 1000; // Default 1000 AU
-    const neighborGraph = this.spatialPartitioning.createNearByGraph(
-      positions,
-      threshold,
-    );
+    const neighborGraph =
+      config.neighborGraph ||
+      this.spatialPartitioning.createNearByGraph(
+        this.bodiesToFloat32Array
+          ? this.bodiesToFloat32Array(allBodies)
+          : this.bodiesToFloat32ArrayFallback(allBodies),
+        threshold,
+      );
 
     // Find the index of the target body
     const targetIndex = allBodies.findIndex(
