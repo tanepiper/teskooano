@@ -1,7 +1,7 @@
 import { PhysicsStateReal } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import { calculateNewtonianGravitationalForce } from "../forces/gravity";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
+import { AU_METERS, GRAVITATIONAL_CONSTANT } from "@teskooano/data-values";
 import {
   ForceCalculationAlgorithm,
   AlgorithmConfig,
@@ -47,7 +47,7 @@ export class BarnesHutAlgorithm implements ForceCalculationAlgorithm {
     }
 
     // Use WASM spatial partitioning to build neighbor graph
-    const threshold = config.barnesHutThreshold || 1000; // Default 1000 AU
+    const threshold = config.barnesHutThreshold ?? 100 * AU_METERS; // Default 100 AU
     const neighborGraph =
       config.neighborGraph ||
       this.spatialPartitioning.createNearByGraph(

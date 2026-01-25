@@ -23,16 +23,6 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
   // Pre-allocated body map to avoid creating new Map every call
   private bodyMap = new Map<string | number, PhysicsStateReal>();
 
-  // Performance optimization caches
-  private lastNeighborIds: (string | number)[] = [];
-  private lastTargetBodyId: string | number = "";
-  private neighborCache: Map<string | number, (string | number)[]> = new Map();
-
-  // Cache for spatial partitioning updates to reduce WASM calls
-  private lastBodiesHash: string = "";
-  private lastUpdateTime: number = 0;
-  private updateThrottleMs: number = 16; // Only update every 16ms (60fps)
-
   constructor(private spatialPartitioning: SpatialPartitioning) {}
 
   /**
@@ -44,49 +34,14 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
     allBodies: PhysicsStateReal[],
     config: AlgorithmConfig,
   ): OSVector3 {
-    // Create hash of current bodies state for caching
-    const currentBodiesHash = this.createBodiesHash(allBodies);
-    const currentTime = performance.now();
-
-    // Throttle spatial partitioning updates to reduce WASM calls
-    const shouldUpdateSpatialPartitioning =
-      currentBodiesHash !== this.lastBodiesHash ||
-      currentTime - this.lastUpdateTime > this.updateThrottleMs;
-
-    if (shouldUpdateSpatialPartitioning) {
-      // Update spatial partitioning only when necessary
-      if (this.spatialPartitioning.isInitialized()) {
-        this.spatialPartitioning.update(allBodies);
-        this.lastBodiesHash = currentBodiesHash;
-        this.lastUpdateTime = currentTime;
-      }
+    if (!this.spatialPartitioning.isInitialized()) {
+      console.warn(
+        "WASM spatial partitioning not initialized, skipping acceleration calculation",
+      );
+      return new OSVector3(0, 0, 0);
     }
 
-    // Use cached neighbors if available
-    let neighborIds: (string | number)[] = [];
-
-    if (
-      targetBody.id === this.lastTargetBodyId &&
-      this.lastNeighborIds.length > 0 &&
-      currentBodiesHash === this.lastBodiesHash
-    ) {
-      // Reuse cached neighbors
-      neighborIds = this.lastNeighborIds;
-    } else {
-      // Use WASM spatial partitioning for neighbor finding
-      if (this.spatialPartitioning.isInitialized()) {
-        neighborIds = this.spatialPartitioning.findNeighbors(targetBody.id);
-        // Cache the result
-        this.lastNeighborIds = neighborIds;
-        this.lastTargetBodyId = targetBody.id;
-        this.neighborCache.set(targetBody.id, neighborIds);
-      } else {
-        console.warn(
-          "WASM spatial partitioning not initialized, skipping acceleration calculation",
-        );
-        return new OSVector3(0, 0, 0);
-      }
-    }
+    const neighborIds = this.spatialPartitioning.findNeighbors(targetBody.id);
 
     const netForce = new OSVector3(0, 0, 0);
 
@@ -131,13 +86,5 @@ export class NeighborBasedAlgorithm implements ForceCalculationAlgorithm {
     if (this.spatialPartitioning.isInitialized()) {
       this.spatialPartitioning.update(bodies);
     }
-  }
-
-  /**
-   * Create a hash of bodies for caching purposes
-   */
-  private createBodiesHash(bodies: PhysicsStateReal[]): string {
-    // Simple hash based on body count and IDs
-    return `${bodies.length}-${bodies.map((b) => b.id).join(",")}`;
   }
 }

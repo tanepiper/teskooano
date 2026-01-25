@@ -1,5 +1,6 @@
 import { algorithms } from "../simulation/constants";
 import { AlgorithmType } from "@teskooano/data-types";
+import { AU_METERS } from "@teskooano/data-values";
 import {
   ForceCalculationAlgorithm,
   AlgorithmDependencies,
@@ -84,8 +85,8 @@ export class AlgorithmFactory {
       mode,
       algorithm: "barnes-hut",
       integrator: "verlet",
-      neighborDistance: 1000 * 1.496e11, // 1000 AU
-      barnesHutThreshold: 1000 * 1.496e11, // 1000 AU
+      neighborDistance: AU_METERS, // 1 AU
+      barnesHutThreshold: 100 * AU_METERS, // 100 AU
     };
   }
 

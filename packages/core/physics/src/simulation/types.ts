@@ -25,6 +25,8 @@ export interface SimulationConfiguration {
   algorithm?: AlgorithmType;
   /** Distance threshold for neighbor finding (in meters) */
   neighborDistance?: number;
+  /** Barnes-Hut distance threshold for far-field approximations (in meters) */
+  barnesHutThreshold?: number;
   /** Whether to enable collision detection */
   collisionDetection?: boolean;
 }

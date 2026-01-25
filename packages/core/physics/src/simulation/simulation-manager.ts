@@ -73,13 +73,6 @@ export class SimulationManager {
   private tempPositions = new Float32Array(1000 * 3); // Pre-allocate for WASM
 
   /**
-   * Performance optimization caches
-   */
-  private neighborGraphCache: Map<string, number[][]> = new Map();
-  private lastBodiesHash: string = "";
-  private lastThreshold: number = 0;
-
-  /**
    * Whether the SimulationManager is initialized.
    */
   private initialized = false;
@@ -222,22 +215,16 @@ export class SimulationManager {
     // Use the algorithm specified in configuration, default to neighbor-based
     const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
     const algorithm = this.getAlgorithmInstance(algorithmType);
+    const barnesHutThreshold =
+      config.barnesHutThreshold ?? config.neighborDistance;
 
     const result = algorithm.calculateAcceleration(targetBodyState, allBodies, {
       neighborDistance: config.neighborDistance,
-      barnesHutThreshold: config.neighborDistance, // Use neighborDistance as threshold
+      barnesHutThreshold,
       neighborGraph,
     });
 
     return result;
-  }
-
-  /**
-   * Create a hash of bodies for caching purposes
-   */
-  private createBodiesHash(bodies: PhysicsStateReal[]): string {
-    // Simple hash based on body count and IDs
-    return `${bodies.length}-${bodies.map((b) => b.id).join(",")}`;
   }
 
   /**
@@ -247,31 +234,11 @@ export class SimulationManager {
     bodies: PhysicsStateReal[],
     neighborDistance: number,
   ): number[][] {
-    const bodiesHash = this.createBodiesHash(bodies);
-
-    if (
-      bodiesHash === this.lastBodiesHash &&
-      neighborDistance === this.lastThreshold
-    ) {
-      const cachedGraph = this.neighborGraphCache.get(bodiesHash);
-      if (cachedGraph) {
-        return cachedGraph;
-      }
-    }
-
     const positions = this.bodiesToFloat32Array(bodies);
-    const neighborGraph = this.spatialPartitioning.createNearByGraph(
+    return this.spatialPartitioning.createNearByGraph(
       positions,
       neighborDistance,
     );
-
-    // Keep only the latest graph to cap memory usage
-    this.neighborGraphCache.clear();
-    this.neighborGraphCache.set(bodiesHash, neighborGraph);
-    this.lastBodiesHash = bodiesHash;
-    this.lastThreshold = neighborDistance;
-
-    return neighborGraph;
   }
 
   /**
@@ -364,7 +331,8 @@ export class SimulationManager {
       mode: SimulationMode.NBODY,
       integrator: IntegratorType.SYMPLECTIC,
       algorithm: AlgorithmType.NEIGHBOR_BASED,
-      neighborDistance: 1000 * AU_METERS,
+      neighborDistance: AU_METERS,
+      barnesHutThreshold: 100 * AU_METERS,
       collisionDetection: true,
     };
   }
@@ -467,6 +435,20 @@ export class SimulationManager {
       accelerations.set(body.id, acc);
     });
 
+    const predictedStates = params.bodies.map((body) => {
+      const currentAcceleration =
+        accelerations.get(body.id) || new OSVector3(0, 0, 0);
+      const position = body.position_m
+        .clone()
+        .addScaledVector(body.velocity_mps, params.deltaTime)
+        .addScaledVector(currentAcceleration, 0.5 * params.deltaTime ** 2);
+
+      return {
+        ...body,
+        position_m: position,
+      };
+    });
+
     // Integration step using cached integrator
     const integratedStates = params.bodies.map((body) => {
       const currentAcceleration =
@@ -475,9 +457,12 @@ export class SimulationManager {
       const calculateNewAccelerationForAdvanced = (
         stateGuess: PhysicsStateReal,
       ): OSVector3 => {
+        const bodiesForAcceleration = predictedStates.map((predictedBody) =>
+          predictedBody.id === stateGuess.id ? stateGuess : predictedBody,
+        );
         return this.calculateAccelerationForBody_NBody(
           stateGuess,
-          params.bodies,
+          bodiesForAcceleration,
           params.configuration,
           neighborGraph,
         );
