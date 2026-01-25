@@ -34,7 +34,7 @@ export class AlgorithmFactory {
 
     switch (algorithmType) {
       case AlgorithmType.BARNES_HUT:
-        return new BarnesHutAlgorithm(spatialPartitioning, dependencies);
+        return new BarnesHutAlgorithm(spatialPartitioning);
 
       case AlgorithmType.FMM:
         return new FMMAlgorithm(spatialPartitioning, dependencies);
@@ -87,6 +87,7 @@ export class AlgorithmFactory {
       integrator: "verlet",
       neighborDistance: AU_METERS, // 1 AU
       barnesHutThreshold: 100 * AU_METERS, // 100 AU
+      barnesHutTheta: 0.5,
     };
   }
 

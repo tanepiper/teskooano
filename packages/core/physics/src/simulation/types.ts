@@ -27,6 +27,8 @@ export interface SimulationConfiguration {
   neighborDistance?: number;
   /** Barnes-Hut distance threshold for far-field approximations (in meters) */
   barnesHutThreshold?: number;
+  /** Barnes-Hut opening angle (dimensionless theta parameter) */
+  barnesHutTheta?: number;
   /** Whether to enable collision detection */
   collisionDetection?: boolean;
 }

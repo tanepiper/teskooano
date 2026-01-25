@@ -221,6 +221,7 @@ export class SimulationManager {
     const result = algorithm.calculateAcceleration(targetBodyState, allBodies, {
       neighborDistance: config.neighborDistance,
       barnesHutThreshold,
+      barnesHutTheta: config.barnesHutTheta,
       neighborGraph,
     });
 
@@ -330,9 +331,10 @@ export class SimulationManager {
     return {
       mode: SimulationMode.NBODY,
       integrator: IntegratorType.SYMPLECTIC,
-      algorithm: AlgorithmType.NEIGHBOR_BASED,
+      algorithm: AlgorithmType.BARNES_HUT,
       neighborDistance: AU_METERS,
       barnesHutThreshold: 100 * AU_METERS,
+      barnesHutTheta: 0.5,
       collisionDetection: true,
     };
   }
@@ -402,8 +404,13 @@ export class SimulationManager {
       this.updateIntegratorFunction(config.integrator as IntegratorType);
     }
 
+    const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
+    const algorithm = this.getAlgorithmInstance(algorithmType);
+
     // Update WASM spatial partitioning (only if initialized)
-    if (this.spatialPartitioning.isInitialized()) {
+    if (algorithm.update) {
+      algorithm.update(params.bodies);
+    } else if (this.spatialPartitioning.isInitialized()) {
       this.spatialPartitioning.update(params.bodies);
     } else {
       console.warn(
@@ -411,9 +418,7 @@ export class SimulationManager {
       );
     }
 
-    const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
     const usesNeighborGraph =
-      algorithmType === AlgorithmType.BARNES_HUT ||
       algorithmType === AlgorithmType.FMM ||
       algorithmType === AlgorithmType.P3M ||
       algorithmType === AlgorithmType.TREE_PM;
