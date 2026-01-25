@@ -190,8 +190,9 @@ float createParticleDetail(vec2 uv, float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientBoost = max(uAmbientIntensity, 0.08);
-    vec3 ambientLight = uAmbientColor * (ambientBoost * 0.9);
+    float ambientBoost = max(uAmbientIntensity, 0.02);
+    vec3 ambientLight = uAmbientColor * (ambientBoost * 0.6);
+    float shadowOcclusion = 1.0;
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
@@ -220,6 +221,7 @@ void main() {
             if (j >= uNumShadowCasters) break;
             shadow = min(shadow, getShadow(vPosition, lightPosition, uShadowCasters[j].position, uShadowCasters[j].radius));
         }
+        shadowOcclusion = min(shadowOcclusion, shadow);
 
         // *** 3. Apply Lighting Based on Direction ***
         if (dotProduct > 0.0) {
@@ -255,9 +257,11 @@ void main() {
         // *** 4. Add Light Transmission Through Rings (regardless of direction) ***
         // Rings scatter light even when not directly illuminated
         // This simulates light passing through the ring particles
-        float lightTransmission = 0.65;
+        float lightTransmission = 0.2;
         totalLight += lightColor * lightTransmission * lightIntensity * shadow;
     }
+
+    ambientLight *= mix(1.0, 0.15, 1.0 - shadowOcclusion);
 
     // Calculate distance from center for radial patterns
     float distanceFromCenter = length(vUv - vec2(0.5, 0.5)) * 2.0;
@@ -287,7 +291,7 @@ void main() {
     float ringVariation = ringDetail * (0.95 + noiseVal * 0.05) * radialFalloff;
 
     // Bloom-like glow for icy rings (emissive-style lift)
-    float glowStrength = mix(0.12, 0.28, clamp(uAmbientIntensity * 1.5, 0.0, 1.0));
+    float glowStrength = mix(0.06, 0.18, clamp(uAmbientIntensity * 1.2, 0.0, 1.0));
     vec3 glow = uAmbientColor * glowStrength * (0.6 + 0.4 * ringVariation);
 
     // Combine all factors for final color

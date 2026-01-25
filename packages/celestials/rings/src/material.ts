@@ -60,7 +60,7 @@ export class RingMaterial extends ShaderMaterial {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
         uAmbientColor: { value: new Color(0xffffff) },
-        uAmbientIntensity: { value: 0.05 }, // Increased from 0.01 for better visibility
+        uAmbientIntensity: { value: 0.02 }, // Lowered for stronger shadow contrast
 
         // Enhanced Axial Inclination Controls
         uAxialInclination: { value: options.axialInclination ?? 0.0 },
