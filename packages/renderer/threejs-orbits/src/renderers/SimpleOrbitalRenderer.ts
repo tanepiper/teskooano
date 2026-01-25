@@ -23,8 +23,11 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   /** Cache for parent groups to avoid repeated lookups */
   private parentGroupCache: Map<string, THREE.Object3D> = new Map();
 
-  /** Track last history size to avoid redundant geometry updates */
-  private lastHistorySize: Map<string, number> = new Map();
+  /** Track last history snapshot to avoid redundant geometry updates */
+  private lastHistoryState: Map<
+    string,
+    { size: number; timestamp: number }
+  > = new Map();
 
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineHelper;
@@ -121,7 +124,11 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
 
     // Get position history from the manager
     const positionHistory = positionHistoryManager.getPositionHistory();
-    const previousHistorySize = this.lastHistorySize.get(objectId);
+    const previousHistoryState = this.lastHistoryState.get(objectId);
+    const latestSample = positionHistoryManager.getPositionHistoryWithTimestamps(
+      1,
+    );
+    const latestTimestamp = latestSample[0]?.timestamp ?? 0;
 
     // Early exit for insufficient data
     if (positionHistory.length < 2) {
@@ -130,7 +137,11 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     }
 
     // Skip geometry updates if there are no new history points
-    if (previousHistorySize === positionHistory.length) {
+    if (
+      previousHistoryState &&
+      previousHistoryState.size === positionHistory.length &&
+      previousHistoryState.timestamp === latestTimestamp
+    ) {
       return;
     }
 
@@ -161,7 +172,10 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     // Always apply smooth interpolation for consistent visualization
     const interpolatedPoints = this.sampleAndInterpolatePoints(rawPoints);
     this.drawOrbitalLine(objectId, interpolatedPoints);
-    this.lastHistorySize.set(objectId, positionHistory.length);
+    this.lastHistoryState.set(objectId, {
+      size: positionHistory.length,
+      timestamp: latestTimestamp,
+    });
   }
 
   /**
@@ -463,7 +477,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     }
     // Clear the parent group cache for this object
     this.parentGroupCache.delete(objectId);
-    this.lastHistorySize.delete(objectId);
+    this.lastHistoryState.delete(objectId);
   }
 
   /**
@@ -576,7 +590,7 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     });
     this.orbitalLines.clear();
     this.parentGroupCache.clear();
-    this.lastHistorySize.clear();
+    this.lastHistoryState.clear();
   }
 
   /**
