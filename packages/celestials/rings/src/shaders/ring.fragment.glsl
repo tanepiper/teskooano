@@ -190,8 +190,8 @@ float createParticleDetail(vec2 uv, float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientBoost = max(uAmbientIntensity, 0.02);
-    vec3 ambientLight = uAmbientColor * (ambientBoost * 0.6);
+    float ambientBoost = max(uAmbientIntensity, 0.005);
+    vec3 ambientLight = uAmbientColor * (ambientBoost * 0.4);
     float shadowOcclusion = 1.0;
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
@@ -249,7 +249,7 @@ void main() {
 
             float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
-            float diffuse = (diffuseUp + diffuseDown) * 1.0; // Increased from 0.8
+            float diffuse = (diffuseUp + diffuseDown) * 0.5; // Reduce night-side fill for stronger shadow contrast
 
             totalLight += lightColor * diffuse * lightIntensity * shadow;
         }
@@ -257,11 +257,12 @@ void main() {
         // *** 4. Add Light Transmission Through Rings (regardless of direction) ***
         // Rings scatter light even when not directly illuminated
         // This simulates light passing through the ring particles
-        float lightTransmission = 0.2;
+        float lightTransmission = 0.05;
         totalLight += lightColor * lightTransmission * lightIntensity * shadow;
     }
 
-    ambientLight *= mix(1.0, 0.15, 1.0 - shadowOcclusion);
+    float shadowDarken = mix(0.03, 1.0, shadowOcclusion);
+    ambientLight *= shadowDarken;
 
     // Calculate distance from center for radial patterns
     float distanceFromCenter = length(vUv - vec2(0.5, 0.5)) * 2.0;
@@ -292,7 +293,7 @@ void main() {
 
     // Bloom-like glow for icy rings (emissive-style lift)
     float glowStrength = mix(0.06, 0.18, clamp(uAmbientIntensity * 1.2, 0.0, 1.0));
-    vec3 glow = uAmbientColor * glowStrength * (0.6 + 0.4 * ringVariation);
+    vec3 glow = uAmbientColor * glowStrength * (0.6 + 0.4 * ringVariation) * shadowDarken;
 
     // Combine all factors for final color
     vec3 finalColor = color * (totalLight + ambientLight) * ringVariation + glow;

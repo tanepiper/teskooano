@@ -12,6 +12,7 @@ Expert guide for WebGL (Web Graphics Library) API development, covering both Web
 WebGL is a JavaScript API that enables hardware-accelerated 3D graphics rendering within HTML canvas elements without requiring plugins. It closely conforms to OpenGL ES 2.0 (WebGL 1.0) and OpenGL ES 3.0 (WebGL 2.0) standards.
 
 **Key capabilities:**
+
 - Hardware-accelerated 2D and 3D rendering
 - Programmable shader pipeline (GLSL)
 - Texture mapping and advanced materials
@@ -26,11 +27,12 @@ WebGL is a JavaScript API that enables hardware-accelerated 3D graphics renderin
 The foundational interface for WebGL operations, obtained via canvas context:
 
 ```javascript
-const canvas = document.querySelector('canvas');
-const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+const canvas = document.querySelector("canvas");
+const gl =
+  canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
 if (!gl) {
-    console.error('WebGL not supported');
+  console.error("WebGL not supported");
 }
 ```
 
@@ -39,15 +41,16 @@ if (!gl) {
 Enhanced interface with advanced features:
 
 ```javascript
-const gl = canvas.getContext('webgl2');
+const gl = canvas.getContext("webgl2");
 
 if (!gl) {
-    console.log('WebGL 2 not supported, falling back to WebGL 1');
-    gl = canvas.getContext('webgl');
+  console.log("WebGL 2 not supported, falling back to WebGL 1");
+  gl = canvas.getContext("webgl");
 }
 ```
 
 **WebGL 2 exclusive features:**
+
 - 3D textures
 - Sampler objects
 - Uniform Buffer Objects (UBO)
@@ -66,6 +69,7 @@ if (!gl) {
 Shaders are programs written in GLSL (OpenGL Shading Language) that run on the GPU:
 
 **Vertex Shader** - Processes each vertex:
+
 ```glsl
 attribute vec3 aPosition;
 attribute vec2 aTexCoord;
@@ -79,6 +83,7 @@ void main() {
 ```
 
 **Fragment Shader** - Determines pixel colors:
+
 ```glsl
 precision mediump float;
 varying vec2 vTexCoord;
@@ -90,32 +95,33 @@ void main() {
 ```
 
 **JavaScript shader setup:**
+
 ```javascript
 function createShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
 
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-    }
-    return shader;
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error("Shader compilation error:", gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
+  }
+  return shader;
 }
 
 function createProgram(gl, vertexShader, fragmentShader) {
-    const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
+  const program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Program linking error:', gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        return null;
-    }
-    return program;
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error("Program linking error:", gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    return null;
+  }
+  return program;
 }
 ```
 
@@ -130,19 +136,18 @@ gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
 // Upload data
 const positions = new Float32Array([
-    -1.0, -1.0, 0.0,
-     1.0, -1.0, 0.0,
-     0.0,  1.0, 0.0
+  -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
 ]);
 gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
 // Set up attribute pointer
-const positionLocation = gl.getAttribLocation(program, 'aPosition');
+const positionLocation = gl.getAttribLocation(program, "aPosition");
 gl.enableVertexAttribArray(positionLocation);
 gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 ```
 
 **Buffer usage patterns:**
+
 - `gl.STATIC_DRAW` - Data doesn't change
 - `gl.DYNAMIC_DRAW` - Data changes occasionally
 - `gl.STREAM_DRAW` - Data changes every frame
@@ -151,33 +156,42 @@ gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
 
 ```javascript
 function loadTexture(gl, url) {
-    const texture = gl.createTexture();
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Placeholder until image loads
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    1,
+    1,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array([255, 0, 255, 255]),
+  );
+
+  const image = new Image();
+  image.onload = () => {
     gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
-    // Placeholder until image loads
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-                  new Uint8Array([255, 0, 255, 255]));
-
-    const image = new Image();
-    image.onload = () => {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-        // Generate mipmaps if power of 2
-        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-            gl.generateMipmap(gl.TEXTURE_2D);
-        } else {
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        }
-    };
-    image.src = url;
-    return texture;
+    // Generate mipmaps if power of 2
+    if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+      gl.generateMipmap(gl.TEXTURE_2D);
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
+  };
+  image.src = url;
+  return texture;
 }
 
 function isPowerOf2(value) {
-    return (value & (value - 1)) === 0;
+  return (value & (value - 1)) === 0;
 }
 ```
 
@@ -185,39 +199,50 @@ function isPowerOf2(value) {
 
 ```javascript
 function render(gl, program) {
-    // Clear canvas
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // Clear canvas
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // Enable depth testing
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
+  // Enable depth testing
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
 
-    // Use program
-    gl.useProgram(program);
+  // Use program
+  gl.useProgram(program);
 
-    // Set uniforms
-    const projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, Math.PI / 4, canvas.width / canvas.height, 0.1, 100.0);
+  // Set uniforms
+  const projectionMatrix = mat4.create();
+  mat4.perspective(
+    projectionMatrix,
+    Math.PI / 4,
+    canvas.width / canvas.height,
+    0.1,
+    100.0,
+  );
 
-    const uniformLocation = gl.getUniformLocation(program, 'uModelViewProjection');
-    gl.uniformMatrix4fv(uniformLocation, false, projectionMatrix);
+  const uniformLocation = gl.getUniformLocation(
+    program,
+    "uModelViewProjection",
+  );
+  gl.uniformMatrix4fv(uniformLocation, false, projectionMatrix);
 
-    // Draw
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  // Draw
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    // Animation loop
-    requestAnimationFrame(() => render(gl, program));
+  // Animation loop
+  requestAnimationFrame(() => render(gl, program));
 }
 ```
 
 ## Matrix Mathematics
 
 WebGL uses column-major matrices for transformations. Recommended libraries:
+
 - **glMatrix** - Fast matrix/vector operations
 - **three.js** - High-level 3D library with built-in math
 
 **Common transformations:**
+
 ```javascript
 // Model matrix (object transform)
 const modelMatrix = mat4.create();
@@ -257,7 +282,7 @@ mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);
 ### Instanced Rendering (WebGL 2)
 
 ```javascript
-const ext = gl.getExtension('ANGLE_instanced_arrays'); // WebGL 1
+const ext = gl.getExtension("ANGLE_instanced_arrays"); // WebGL 1
 // or use gl.drawArraysInstanced directly in WebGL 2
 
 // Set up per-instance attribute
@@ -265,7 +290,7 @@ const instanceOffsetBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, instanceOffsetBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, offsetData, gl.STATIC_DRAW);
 
-const offsetLocation = gl.getAttribLocation(program, 'aInstanceOffset');
+const offsetLocation = gl.getAttribLocation(program, "aInstanceOffset");
 gl.enableVertexAttribArray(offsetLocation);
 gl.vertexAttribPointer(offsetLocation, 3, gl.FLOAT, false, 0, 0);
 gl.vertexAttribDivisor(offsetLocation, 1); // Advance per instance
@@ -280,22 +305,23 @@ Check for and use extensions to access advanced features:
 
 ```javascript
 function getExtension(gl, name) {
-    const ext = gl.getExtension(name);
-    if (!ext) {
-        console.warn(`Extension ${name} not supported`);
-    }
-    return ext;
+  const ext = gl.getExtension(name);
+  if (!ext) {
+    console.warn(`Extension ${name} not supported`);
+  }
+  return ext;
 }
 
 // Common extensions
-const anisotropic = getExtension(gl, 'EXT_texture_filter_anisotropic');
-const floatTextures = getExtension(gl, 'OES_texture_float');
-const depthTexture = getExtension(gl, 'WEBGL_depth_texture');
-const drawBuffers = getExtension(gl, 'WEBGL_draw_buffers');
-const loseContext = getExtension(gl, 'WEBGL_lose_context'); // for testing
+const anisotropic = getExtension(gl, "EXT_texture_filter_anisotropic");
+const floatTextures = getExtension(gl, "OES_texture_float");
+const depthTexture = getExtension(gl, "WEBGL_depth_texture");
+const drawBuffers = getExtension(gl, "WEBGL_draw_buffers");
+const loseContext = getExtension(gl, "WEBGL_lose_context"); // for testing
 ```
 
 **Important extension categories:**
+
 - **Texture formats:** WEBGL_compressed_texture_s3tc, WEBGL_compressed_texture_etc
 - **Rendering:** WEBGL_draw_buffers, EXT_blend_minmax, EXT_frag_depth
 - **Precision:** OES_texture_float, OES_texture_half_float
@@ -307,31 +333,39 @@ const loseContext = getExtension(gl, 'WEBGL_lose_context'); // for testing
 ### Context Loss Handling
 
 ```javascript
-canvas.addEventListener('webglcontextlost', (event) => {
+canvas.addEventListener(
+  "webglcontextlost",
+  (event) => {
     event.preventDefault();
-    console.log('WebGL context lost');
+    console.log("WebGL context lost");
     cancelAnimationFrame(animationId);
-}, false);
+  },
+  false,
+);
 
-canvas.addEventListener('webglcontextrestored', () => {
-    console.log('WebGL context restored');
+canvas.addEventListener(
+  "webglcontextrestored",
+  () => {
+    console.log("WebGL context restored");
     initWebGL(); // Recreate all resources
     render();
-}, false);
+  },
+  false,
+);
 ```
 
 ### Context Creation Options
 
 ```javascript
-const gl = canvas.getContext('webgl2', {
-    alpha: false,                    // No alpha channel (better performance)
-    antialias: true,                 // Antialiasing (performance cost)
-    depth: true,                     // Depth buffer
-    stencil: false,                  // Stencil buffer
-    premultipliedAlpha: true,        // Alpha premultiplication
-    preserveDrawingBuffer: false,    // Keep buffer after render
-    powerPreference: 'high-performance', // GPU preference
-    failIfMajorPerformanceCaveat: false  // Fallback to software
+const gl = canvas.getContext("webgl2", {
+  alpha: false, // No alpha channel (better performance)
+  antialias: true, // Antialiasing (performance cost)
+  depth: true, // Depth buffer
+  stencil: false, // Stencil buffer
+  premultipliedAlpha: true, // Alpha premultiplication
+  preserveDrawingBuffer: false, // Keep buffer after render
+  powerPreference: "high-performance", // GPU preference
+  failIfMajorPerformanceCaveat: false, // Fallback to software
 });
 ```
 
@@ -345,9 +379,25 @@ gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
 const targetTexture = gl.createTexture();
 gl.bindTexture(gl.TEXTURE_2D, targetTexture);
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+gl.texImage2D(
+  gl.TEXTURE_2D,
+  0,
+  gl.RGBA,
+  width,
+  height,
+  0,
+  gl.RGBA,
+  gl.UNSIGNED_BYTE,
+  null,
+);
 
-gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, targetTexture, 0);
+gl.framebufferTexture2D(
+  gl.FRAMEBUFFER,
+  gl.COLOR_ATTACHMENT0,
+  gl.TEXTURE_2D,
+  targetTexture,
+  0,
+);
 
 // Render to framebuffer
 gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -362,12 +412,12 @@ gl.viewport(0, 0, canvas.width, canvas.height);
 ### Multiple Render Targets (WebGL 2)
 
 ```javascript
-const ext = gl.getExtension('WEBGL_draw_buffers'); // WebGL 1
+const ext = gl.getExtension("WEBGL_draw_buffers"); // WebGL 1
 // Fragment shader outputs to multiple targets
 gl.drawBuffers([
-    gl.COLOR_ATTACHMENT0,
-    gl.COLOR_ATTACHMENT1,
-    gl.COLOR_ATTACHMENT2
+  gl.COLOR_ATTACHMENT0,
+  gl.COLOR_ATTACHMENT1,
+  gl.COLOR_ATTACHMENT2,
 ]);
 ```
 
@@ -396,7 +446,7 @@ gl.drawBuffers([
 // Error checking
 const error = gl.getError();
 if (error !== gl.NO_ERROR) {
-    console.error('WebGL error:', error);
+  console.error("WebGL error:", error);
 }
 ```
 
@@ -422,12 +472,14 @@ if (error !== gl.NO_ERROR) {
 ## Quick Reference
 
 See [reference.md](reference.md) for:
+
 - Complete constant reference
 - All WebGL methods
 - GLSL built-in functions
 - Extension compatibility matrix
 
 See [examples](examples/) for:
+
 - Basic triangle rendering
 - Texture mapping
 - Lighting models
@@ -439,20 +491,21 @@ When supporting both WebGL 1 and 2:
 
 ```javascript
 function initWebGL(canvas) {
-    const gl = canvas.getContext('webgl2');
-    let version = 2;
+  const gl = canvas.getContext("webgl2");
+  let version = 2;
 
-    if (!gl) {
-        gl = canvas.getContext('webgl');
-        version = 1;
-        console.log('Using WebGL 1');
-    }
+  if (!gl) {
+    gl = canvas.getContext("webgl");
+    version = 1;
+    console.log("Using WebGL 1");
+  }
 
-    // Feature detection
-    const hasVAO = version === 2 || gl.getExtension('OES_vertex_array_object');
-    const hasInstancing = version === 2 || gl.getExtension('ANGLE_instanced_arrays');
+  // Feature detection
+  const hasVAO = version === 2 || gl.getExtension("OES_vertex_array_object");
+  const hasInstancing =
+    version === 2 || gl.getExtension("ANGLE_instanced_arrays");
 
-    return { gl, version, hasVAO, hasInstancing };
+  return { gl, version, hasVAO, hasInstancing };
 }
 ```
 
