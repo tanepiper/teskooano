@@ -22,6 +22,7 @@ export interface DebrisEffectManagerConfig {
 
 // Placeholder basic shaders - These will need significant work
 const debrisVertexShader = `
+  #include <common>
   #include <logdepthbuf_pars_vertex>
 
   attribute vec3 instancePositionOffset;

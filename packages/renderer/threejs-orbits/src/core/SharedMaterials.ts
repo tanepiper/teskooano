@@ -76,6 +76,7 @@ export const SharedMaterials = {
       color: { value: new THREE.Color(0xffffff) },
     },
     vertexShader: `
+      #include <common>
       #include <logdepthbuf_pars_vertex>
 
       attribute float alpha;

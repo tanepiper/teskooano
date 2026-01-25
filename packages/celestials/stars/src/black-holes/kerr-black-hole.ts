@@ -29,6 +29,7 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
         rotationSpeed: { value: 0.5 },
       },
       vertexShader: `
+        #include <common>
         #include <logdepthbuf_pars_vertex>
 
         varying vec2 vUv;

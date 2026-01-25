@@ -175,6 +175,7 @@ export class PostAGBRenderer extends BaseStarRenderer<PostAGBMaterial> {
           uNoiseScale: { value: 1.0 + index * 0.3 },
         },
         vertexShader: `
+          #include <common>
           #include <logdepthbuf_pars_vertex>
 
           varying vec2 vUv;

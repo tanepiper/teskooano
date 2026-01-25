@@ -30,6 +30,7 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
         time: { value: 0 },
       },
       vertexShader: `
+        #include <common>
         #include <logdepthbuf_pars_vertex>
 
         varying vec2 vUv;

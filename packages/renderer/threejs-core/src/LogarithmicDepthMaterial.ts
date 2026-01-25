@@ -8,8 +8,8 @@ import * as THREE from "three";
 export const CAMERA_DISTANCE_CONFIG = {
   /** Near plane distance - 1.5 km in scene units */
   NEAR: 1500 * METERS_TO_SCENE_UNITS,
-  /** Far plane distance - 1,000 AU in scene units */
-  FAR: 1000 * SCALE.RENDER_SCALE_AU,
+  /** Far plane distance - 10,000 AU in scene units */
+  FAR: 10000 * SCALE.RENDER_SCALE_AU,
 } as const;
 
 /**

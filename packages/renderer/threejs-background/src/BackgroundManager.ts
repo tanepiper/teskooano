@@ -15,9 +15,9 @@ import { SCALE } from "@teskooano/data-values";
 /**
  * Defines the base distance for star field layers, used as a reference
  * for creating parallax and depth effects.
- * Optimized for logarithmic depth buffer with a 1,000 AU far plane.
+ * Optimized for logarithmic depth buffer with a 10,000 AU far plane.
  */
-const BASE_DISTANCE_AU = 900;
+const BASE_DISTANCE_AU = 10000;
 const BASE_DISTANCE = BASE_DISTANCE_AU * SCALE.RENDER_SCALE_AU;
 const STARFIELD_LAYER_SPREAD_AU = {
   near: 50,
@@ -80,8 +80,8 @@ export class BackgroundManager {
 
     const nebulaOptions: NebulaFieldOptions = {
       name: "deep-space-nebula",
-      baseDistance: BASE_DISTANCE, // 900 AU - safely within background range
-      size: BASE_DISTANCE * 0.5, // 450 AU size - reasonable nebula scale
+      baseDistance: BASE_DISTANCE, // 10,000 AU - safely within background range
+      size: BASE_DISTANCE * 0.5, // 5,000 AU size - reasonable nebula scale
       colors: selectedPalette.map((color) => new THREE.Color(color)),
       ...defaultOptions,
     };

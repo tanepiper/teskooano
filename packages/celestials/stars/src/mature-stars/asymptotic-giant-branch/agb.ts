@@ -181,6 +181,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
           uNoiseScale: { value: 2.0 + index * 0.5 },
         },
         vertexShader: `
+          #include <common>
           #include <logdepthbuf_pars_vertex>
 
           varying vec2 vUv;

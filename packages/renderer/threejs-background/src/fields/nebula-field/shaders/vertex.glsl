@@ -10,6 +10,7 @@
  * 3. Calculate the final clip-space position of the vertex (gl_Position).
  */
 
+#include <common>
 #include <logdepthbuf_pars_vertex>
 
 varying vec2 vUv;

@@ -24,10 +24,8 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
   private parentGroupCache: Map<string, THREE.Object3D> = new Map();
 
   /** Track last history snapshot to avoid redundant geometry updates */
-  private lastHistoryState: Map<
-    string,
-    { size: number; timestamp: number }
-  > = new Map();
+  private lastHistoryState: Map<string, { size: number; timestamp: number }> =
+    new Map();
 
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineHelper;
@@ -125,9 +123,8 @@ export class SimpleOrbitalRenderer extends StateSubscriptionMixin {
     // Get position history from the manager
     const positionHistory = positionHistoryManager.getPositionHistory();
     const previousHistoryState = this.lastHistoryState.get(objectId);
-    const latestSample = positionHistoryManager.getPositionHistoryWithTimestamps(
-      1,
-    );
+    const latestSample =
+      positionHistoryManager.getPositionHistoryWithTimestamps(1);
     const latestTimestamp = latestSample[0]?.timestamp ?? 0;
 
     // Early exit for insufficient data

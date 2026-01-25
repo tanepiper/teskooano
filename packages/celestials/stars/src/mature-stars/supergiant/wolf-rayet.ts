@@ -100,6 +100,7 @@ export class WolfRayetRenderer extends BaseStarRenderer<RealisticStarMaterial> {
         opacity: { value: 0.12 },
       },
       vertexShader: `
+        #include <common>
         #include <logdepthbuf_pars_vertex>
 
         varying vec3 vNormal;
