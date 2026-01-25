@@ -62,6 +62,7 @@ void main() {
     // The final opacity is a combination of the base opacity, the spherical falloff, and the density noise.
     // The lighting is now independent of the camera position.
     float finalOpacity = uOpacity * falloff * densityNoise;
+    finalOpacity = max(finalOpacity, uOpacity * 0.25);
 
     if (finalOpacity < 0.01) discard;
 

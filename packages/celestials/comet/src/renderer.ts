@@ -275,9 +275,13 @@ export class CometRenderer extends BaseCelestialRenderer {
   private createComa(object: RenderableCelestialObject): void {
     const properties = object.properties as CometProperties;
     if (properties.visualComaRadius && properties.visualComaColor) {
+      const comaOpacity = Math.min(
+        1.0,
+        Math.max(0.85, properties.visualComaOpacity ?? 0.85),
+      );
       this.comaMaterial = new CometComaMaterial({
         color: new THREE.Color(properties.visualComaColor),
-        opacity: properties.visualComaOpacity || 0.5,
+        opacity: comaOpacity,
       });
       this.comaMaterial.transparent = true;
       this.registerMaterial(`comet-coma-${object.id}`, this.comaMaterial);
