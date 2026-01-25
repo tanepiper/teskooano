@@ -118,6 +118,7 @@ export async function predictTrajectory(
 
   const accelerations = new Map<string | number, OSVector3>();
   const reusableAccVector = new OSVector3(0, 0, 0);
+  const bodyMap = new Map<string | number, PhysicsStateReal>();
 
   // Simulation loop
   for (let i = 0; i < steps; i++) {
@@ -125,18 +126,17 @@ export async function predictTrajectory(
     accelerations.clear();
 
     if (spatialPartitioning) {
+      bodyMap.clear();
+      for (const body of currentStates) {
+        bodyMap.set(body.id, body);
+      }
+
       // Use WASM spatial partitioning
       spatialPartitioning.update(currentStates);
 
       for (const body of currentStates) {
         const neighborIds = spatialPartitioning.findNeighbors(body.id);
         const netForce = new OSVector3(0, 0, 0);
-
-        // Create a map for fast body lookup
-        const bodyMap = new Map<string | number, PhysicsStateReal>();
-        for (const b of currentStates) {
-          bodyMap.set(b.id, b);
-        }
 
         // Calculate forces from all neighboring bodies
         for (const neighborId of neighborIds) {
@@ -205,12 +205,6 @@ export async function predictTrajectory(
         if (spatialPartitioning) {
           // Use WASM spatial partitioning
           const neighborIds = spatialPartitioning.findNeighbors(stateGuess.id);
-
-          // Create a map for fast body lookup
-          const bodyMap = new Map<string | number, PhysicsStateReal>();
-          for (const b of currentStates) {
-            bodyMap.set(b.id, b);
-          }
 
           // Calculate forces from all neighboring bodies
           for (const neighborId of neighborIds) {
