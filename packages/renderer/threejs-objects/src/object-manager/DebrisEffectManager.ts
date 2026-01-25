@@ -22,6 +22,8 @@ export interface DebrisEffectManagerConfig {
 
 // Placeholder basic shaders - These will need significant work
 const debrisVertexShader = `
+  #include <logdepthbuf_pars_vertex>
+
   attribute vec3 instancePositionOffset;
   attribute vec4 instanceQuaternion;
   attribute vec3 instanceScale;
@@ -44,16 +46,20 @@ const debrisVertexShader = `
     currentPosition += instancePositionOffset + instanceVelocity * elapsedTime;
     vColor = instanceColor;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(currentPosition, 1.0);
+    #include <logdepthbuf_vertex>
   }
 `;
 
 const debrisFragmentShader = `
+  #include <logdepthbuf_pars_fragment>
+
   varying vec4 vColor;
   uniform float uOpacity;
 
   void main() {
     // Basic fragment shader, just uses color and uniform opacity
     gl_FragColor = vec4(vColor.rgb, vColor.a * uOpacity);
+    #include <logdepthbuf_fragment>
   }
 `;
 

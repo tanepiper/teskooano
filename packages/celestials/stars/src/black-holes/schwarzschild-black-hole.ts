@@ -30,6 +30,8 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
         time: { value: 0 },
       },
       vertexShader: `
+        #include <logdepthbuf_pars_vertex>
+
         varying vec2 vUv;
         varying vec3 vNormal;
         
@@ -37,9 +39,12 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
           vUv = uv;
           vNormal = normalize(normalMatrix * normal);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          #include <logdepthbuf_vertex>
         }
       `,
       fragmentShader: `
+        #include <logdepthbuf_pars_fragment>
+
         uniform float time;
         varying vec2 vUv;
         varying vec3 vNormal;
@@ -56,6 +61,7 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
           vec3 finalColor = baseColor + vec3(0.0, 0.05, 0.1) * rimLight;
           
           gl_FragColor = vec4(finalColor, 1.0);
+          #include <logdepthbuf_fragment>
         }
       `,
     };

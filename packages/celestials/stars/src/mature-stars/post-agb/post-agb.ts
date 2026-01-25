@@ -175,6 +175,8 @@ export class PostAGBRenderer extends BaseStarRenderer<PostAGBMaterial> {
           uNoiseScale: { value: 1.0 + index * 0.3 },
         },
         vertexShader: `
+          #include <logdepthbuf_pars_vertex>
+
           varying vec2 vUv;
           varying vec3 vNormal;
           varying vec3 vPosition;
@@ -184,9 +186,12 @@ export class PostAGBRenderer extends BaseStarRenderer<PostAGBMaterial> {
             vNormal = normalize(normalMatrix * normal);
             vPosition = position;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            #include <logdepthbuf_vertex>
           }
         `,
         fragmentShader: `
+          #include <logdepthbuf_pars_fragment>
+
           uniform float uTime;
           uniform vec3 uStarColor;
           uniform float uOpacity;
@@ -236,6 +241,7 @@ export class PostAGBRenderer extends BaseStarRenderer<PostAGBMaterial> {
             vec3 finalColor = mix(innerColor, outerColor, smoothstep(0.0, 1.0, dist));
             
             gl_FragColor = vec4(finalColor, alpha);
+            #include <logdepthbuf_fragment>
           }
         `,
         transparent: true,

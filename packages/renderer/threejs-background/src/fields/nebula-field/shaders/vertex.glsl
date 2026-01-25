@@ -10,6 +10,8 @@
  * 3. Calculate the final clip-space position of the vertex (gl_Position).
  */
 
+#include <logdepthbuf_pars_vertex>
+
 varying vec2 vUv;
 varying vec3 vWorldPosition;
 
@@ -18,4 +20,5 @@ void main() {
     vec4 worldPosition = modelMatrix * vec4(position, 1.0);
     vWorldPosition = worldPosition.xyz;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    #include <logdepthbuf_vertex>
 } 

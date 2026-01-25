@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
 import { CAMERA_DISTANCE_CONFIG } from "@teskooano/renderer-threejs-core";
 
 /**
@@ -684,9 +685,12 @@ export class CameraHelper {
     camera: THREE.PerspectiveCamera,
     celestialType?: string,
   ): void {
+    const metersToSceneUnits = (meters: number): number =>
+      meters * METERS_TO_SCENE_UNITS;
+
     if (!celestialType) {
       // Default settings for general space viewing with logarithmic depth
-      camera.near = 0.00001; // 0.00000001 AU ≈ 1.5 km (ultra-close general viewing with log depth)
+      camera.near = metersToSceneUnits(1500); // ~1.5 km in scene units
       camera.updateProjectionMatrix();
       return;
     }
@@ -694,21 +698,22 @@ export class CameraHelper {
     // Dynamic camera settings optimized for logarithmic depth buffer
     // With log depth, we can use much more aggressive near planes for close viewing
     // while maintaining excellent precision across the entire distance range
-    const nearPlanes: Record<string, number> = {
-      star: 0.0001, // 0.001 AU ≈ 150k km (very close to stellar surfaces with log depth)
-      planet: 0.0001, // 0.00001 AU ≈ 1.5k km (extremely close to planetary surfaces)
-      gas_giant: 0.0001, // 0.0001 AU ≈ 15k km (close to gas giant cloud tops)
-      dwarf_planet: 0.0001, // 0.000005 AU ≈ 750 km (ultra-close dwarf planet viewing)
-      moon: 0.0001, // 0.000001 AU ≈ 150 km (ultra-close moon viewing)
-      asteroid: 0.0000001, // 0.0000001 AU ≈ 15 km (very close individual asteroid inspection)
-      comet: 0.0000001, // 0.000001 AU ≈ 150 km (ultra-close comet viewing)
-      satellite: 0.0000001, // 0.0000001 AU ≈ 15 km (extremely close satellite inspection)
-      oort_cloud: 0.1, // 0.0001 AU ≈ 15k km (close particle field viewing)
-      asteroid_field: 0.01, // 0.00001 AU ≈ 1.5k km (very close asteroid viewing)
+    const nearPlanesMeters: Record<string, number> = {
+      star: 15000,
+      planet: 15000,
+      gas_giant: 15000,
+      dwarf_planet: 15000,
+      moon: 15000,
+      asteroid: 150,
+      comet: 150,
+      satellite: 150,
+      oort_cloud: 15000000,
+      asteroid_field: 1500000,
     };
 
-    const nearPlane = nearPlanes[celestialType.toLowerCase()] ?? 0.00001;
-    camera.near = nearPlane;
+    const nearPlaneMeters =
+      nearPlanesMeters[celestialType.toLowerCase()] ?? 1500;
+    camera.near = metersToSceneUnits(nearPlaneMeters);
     camera.updateProjectionMatrix();
   }
 
@@ -720,22 +725,24 @@ export class CameraHelper {
    */
   static getMinDistanceForCelestialType(celestialType?: string): number {
     if (!celestialType) {
-      return 0.0001; // Default minimum distance
+      return 1500 * METERS_TO_SCENE_UNITS;
     }
 
-    const minDistances: Record<string, number> = {
-      star: 0.1,
-      planet: 0.01,
-      gas_giant: 0.01,
-      dwarf_planet: 0.001,
-      moon: 0.0001,
-      asteroid: 0.0000001, // 150 m minimum - allows very close inspection of small asteroids
-      comet: 0.0000001,
-      satellite: 0.000001,
-      oort_cloud: 0.0001,
-      asteroid_field: 0.0001,
+    const minDistancesMeters: Record<string, number> = {
+      star: 14959000,
+      planet: 1495900,
+      gas_giant: 1495900,
+      dwarf_planet: 149590,
+      moon: 14959,
+      asteroid: 150,
+      comet: 150,
+      satellite: 1500,
+      oort_cloud: 14959,
+      asteroid_field: 14959,
     };
 
-    return minDistances[celestialType.toLowerCase()] ?? 0.0001;
+    return (
+      minDistancesMeters[celestialType.toLowerCase()] * METERS_TO_SCENE_UNITS
+    );
   }
 }

@@ -10,13 +10,20 @@ import { GalaxyField } from "./fields/galaxy-field/GalaxyField";
 import { GalaxyFieldOptions } from "./fields/galaxy-field/types";
 import { createSeededRandomSync } from "@teskooano/core-math";
 import { StateAccessor } from "@teskooano/core-state";
+import { SCALE } from "@teskooano/data-values";
 
 /**
  * Defines the base distance for star field layers, used as a reference
  * for creating parallax and depth effects.
- * Optimized for logarithmic depth buffer with 1000 AU far plane.
+ * Optimized for logarithmic depth buffer with a 20,000 AU far plane.
  */
-const BASE_DISTANCE = 1e9; // 900 AU - well within 1000 AU far plane
+const BASE_DISTANCE_AU = 900;
+const BASE_DISTANCE = BASE_DISTANCE_AU * SCALE.RENDER_SCALE_AU;
+const STARFIELD_LAYER_SPREAD_AU = {
+  near: 50,
+  mid: 40,
+  far: 25,
+} as const;
 
 /**
  * Manages the space background, which is composed of multiple `Field` layers.
@@ -73,8 +80,8 @@ export class BackgroundManager {
 
     const nebulaOptions: NebulaFieldOptions = {
       name: "deep-space-nebula",
-      baseDistance: BASE_DISTANCE, // 720 AU - safely within 1000 AU far plane
-      size: BASE_DISTANCE, // 450 AU size - reasonable nebula scale
+      baseDistance: BASE_DISTANCE, // 900 AU - safely within background range
+      size: BASE_DISTANCE * 0.5, // 450 AU size - reasonable nebula scale
       colors: selectedPalette.map((color) => new THREE.Color(color)),
       ...defaultOptions,
     };
@@ -94,7 +101,8 @@ export class BackgroundManager {
         {
           count: 10000,
           distanceMultiplier: 1,
-          distanceSpread: 50000, // Reduced to keep within 1000 AU far plane
+          distanceSpread:
+            STARFIELD_LAYER_SPREAD_AU.near * SCALE.RENDER_SCALE_AU,
           minBrightness: 0.9,
           maxBrightness: 1.0,
           size: 5.0,
@@ -103,7 +111,7 @@ export class BackgroundManager {
         {
           count: 20000,
           distanceMultiplier: 1, // Slightly closer together
-          distanceSpread: 40000, // Reduced spread
+          distanceSpread: STARFIELD_LAYER_SPREAD_AU.mid * SCALE.RENDER_SCALE_AU,
           minBrightness: 0.7,
           maxBrightness: 0.9,
           size: 4.0,
@@ -111,8 +119,8 @@ export class BackgroundManager {
         },
         {
           count: 50000,
-          distanceMultiplier: 1, // Safe multiplier to stay under 1000 AU
-          distanceSpread: 25000, // Conservative spread
+          distanceMultiplier: 1, // Safe multiplier to stay under background range
+          distanceSpread: STARFIELD_LAYER_SPREAD_AU.far * SCALE.RENDER_SCALE_AU,
           minBrightness: 0.5,
           maxBrightness: 0.7,
           size: 3.0,

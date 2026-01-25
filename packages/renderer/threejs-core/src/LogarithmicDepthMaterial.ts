@@ -1,3 +1,4 @@
+import { METERS_TO_SCENE_UNITS, SCALE } from "@teskooano/data-values";
 import * as THREE from "three";
 
 /**
@@ -5,10 +6,10 @@ import * as THREE from "three";
  * All camera distance settings should use these values for consistency.
  */
 export const CAMERA_DISTANCE_CONFIG = {
-  /** Near plane distance - very close objects (0.01mm) */
-  NEAR: 0.00001,
-  /** Far plane distance - 200 AU (covers entire solar system and beyond) */
-  FAR: 30000000000, // 200 AU in scene units (200 * 149,597,870,700 meters / AU_METERS)
+  /** Near plane distance - 1.5 km in scene units */
+  NEAR: 1500 * METERS_TO_SCENE_UNITS,
+  /** Far plane distance - 20,000 AU (outer Oort cloud) in scene units */
+  FAR: 20000 * SCALE.RENDER_SCALE_AU,
 } as const;
 
 /**

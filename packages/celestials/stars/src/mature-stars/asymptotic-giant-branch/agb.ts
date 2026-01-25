@@ -181,6 +181,8 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
           uNoiseScale: { value: 2.0 + index * 0.5 },
         },
         vertexShader: `
+          #include <logdepthbuf_pars_vertex>
+
           varying vec2 vUv;
           varying vec3 vNormal;
           varying vec3 vPosition;
@@ -190,9 +192,12 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
             vNormal = normalize(normalMatrix * normal);
             vPosition = position;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            #include <logdepthbuf_vertex>
           }
         `,
         fragmentShader: `
+          #include <logdepthbuf_pars_fragment>
+
           uniform float uTime;
           uniform vec3 uStarColor;
           uniform float uOpacity;
@@ -248,6 +253,7 @@ export class AGBRenderer extends BaseStarRenderer<AGBMaterial> {
             finalColor = mix(finalColor, finalColor * (1.0 + streams * 0.4), 0.2);
             
             gl_FragColor = vec4(finalColor, alpha);
+            #include <logdepthbuf_fragment>
           }
         `,
         transparent: true,

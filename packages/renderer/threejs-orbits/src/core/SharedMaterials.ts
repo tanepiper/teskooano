@@ -76,19 +76,27 @@ export const SharedMaterials = {
       color: { value: new THREE.Color(0xffffff) },
     },
     vertexShader: `
+      #include <logdepthbuf_pars_vertex>
+
       attribute float alpha;
       varying float vAlpha;
+
       void main() {
         vAlpha = alpha;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        #include <logdepthbuf_vertex>
       }
     `,
     fragmentShader: `
+      #include <logdepthbuf_pars_fragment>
+
       uniform vec3 color;
       varying float vAlpha;
+
       void main() {
         if (vAlpha <= 0.0) discard;
         gl_FragColor = vec4(color, vAlpha);
+        #include <logdepthbuf_fragment>
       }
     `,
     transparent: true,

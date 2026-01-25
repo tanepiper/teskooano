@@ -29,6 +29,8 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
         rotationSpeed: { value: 0.5 },
       },
       vertexShader: `
+        #include <logdepthbuf_pars_vertex>
+
         varying vec2 vUv;
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -38,9 +40,12 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
           vNormal = normalize(normalMatrix * normal);
           vPosition = position;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          #include <logdepthbuf_vertex>
         }
       `,
       fragmentShader: `
+        #include <logdepthbuf_pars_fragment>
+
         uniform float time;
         uniform float rotationSpeed;
         varying vec2 vUv;
@@ -106,6 +111,7 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
           float alpha = 0.2 + rim * 0.6 + energy * 0.2;
           
           gl_FragColor = vec4(finalColor, alpha * 0.8);
+          #include <logdepthbuf_fragment>
         }
       `,
     };

@@ -100,25 +100,33 @@ export class WolfRayetRenderer extends BaseStarRenderer<RealisticStarMaterial> {
         opacity: { value: 0.12 },
       },
       vertexShader: `
+        #include <logdepthbuf_pars_vertex>
+
         varying vec3 vNormal;
         varying vec3 vPosition;
+
         void main() {
           vNormal = normalize(normalMatrix * normal);
           vPosition = position;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          #include <logdepthbuf_vertex>
         }
       `,
       fragmentShader: `
+        #include <logdepthbuf_pars_fragment>
+
         uniform vec3 color;
         uniform float opacity;
         varying vec3 vNormal;
         varying vec3 vPosition;
+
         void main() {
           // Fade based on view angle
           float intensity = pow(0.6 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
           // Additional fade at the top (narrow end of teardrop)
           float heightFade = smoothstep(1.0, 0.3, vPosition.y / length(vPosition));
           gl_FragColor = vec4(color, intensity * opacity * heightFade);
+          #include <logdepthbuf_fragment>
         }
       `,
     });

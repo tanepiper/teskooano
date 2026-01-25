@@ -14,6 +14,8 @@
  * 5. Calculating a final density value to control the transparency, making some areas opaque and others wispy.
  */
 
+#include <logdepthbuf_pars_fragment>
+
 // An array of 6 colors that define the nebula's palette.
 uniform vec3 uColors[6];
 // A time uniform to drive subtle animation in the noise. Not currently used but available.
@@ -193,4 +195,5 @@ void main() {
 
     // Set the final fragment color, applying the global alpha.
     gl_FragColor = vec4(final_color, density * uAlpha);
+    #include <logdepthbuf_fragment>
 } 
