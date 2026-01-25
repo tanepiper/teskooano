@@ -19,12 +19,14 @@ describe("SatelliteMaterial", () => {
     expect(material.uniforms.baseColor).toBeDefined();
     expect(material.uniforms.metalness).toBeDefined();
     expect(material.uniforms.roughness).toBeDefined();
-    expect(material.uniforms.uLights).toBeDefined();
+    expect(material.uniforms.uLightPositions).toBeDefined();
+    expect(material.uniforms.uLightColors).toBeDefined();
+    expect(material.uniforms.uLightIntensities).toBeDefined();
     expect(material.uniforms.uNumLights).toBeDefined();
-    expect(material.uniforms.uShadowFactor).toBeDefined();
     expect(material.uniforms.uEmissiveIntensity).toBeDefined();
     expect(material.uniforms.uEmissiveColor).toBeDefined();
-    expect(material.uniforms.uDynamicAmbientIntensity).toBeDefined();
+    expect(material.uniforms.uAmbientColor).toBeDefined();
+    expect(material.uniforms.uAmbientIntensity).toBeDefined();
   });
 
   it("should have vertex and fragment shaders", () => {
@@ -49,7 +51,7 @@ describe("SatelliteMaterial", () => {
     }).not.toThrow();
 
     expect(material.uniforms.uNumLights.value).toBe(1);
-    expect(material.uniforms.uLights.value[0].position.x).toBe(1000);
+    expect(material.uniforms.uLightPositions.value[0].x).toBe(1000);
   });
 
   it("should update shadow casters correctly", () => {
@@ -71,8 +73,7 @@ describe("SatelliteMaterial", () => {
       material.update(satellitePosition, lightSources, shadowCasters);
     }).not.toThrow();
 
-    // Should calculate shadow factor based on shadow casters
-    expect(material.uniforms.uShadowFactor.value).toBeLessThan(1.0);
+    expect(material.uniforms.uNumShadowCasters.value).toBe(2);
   });
 
   it("should handle multiple light sources", () => {
@@ -92,8 +93,8 @@ describe("SatelliteMaterial", () => {
     material.update(satellitePosition, lightSources);
 
     expect(material.uniforms.uNumLights.value).toBe(2);
-    expect(material.uniforms.uLights.value[1].color.r).toBe(1);
-    expect(material.uniforms.uLights.value[1].color.g).toBe(0.8);
+    expect(material.uniforms.uLightColors.value[1].r).toBe(1);
+    expect(material.uniforms.uLightColors.value[1].g).toBe(0.8);
   });
 
   it("should calculate emissive intensity based on shadow conditions", () => {

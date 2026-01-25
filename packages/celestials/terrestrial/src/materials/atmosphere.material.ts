@@ -3,6 +3,7 @@ import type { PlanetAtmosphereProperties } from "@teskooano/data-types";
 
 import atmosphereVertexShaderSource from "../shaders/atmosphere.vertex.glsl";
 import atmosphereFragmentShaderSource from "../shaders/atmosphere.fragment.glsl";
+import { LightingUniformPack } from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for atmospheric scattering effect with support for multiple light sources
@@ -33,6 +34,8 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
     const { planetRadius = 1.0, parentId = "unknown" } = options;
     const MAX_LIGHTS = 4;
 
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     super({
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
@@ -48,20 +51,10 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
           aberrationIntensity: { value: aberrationIntensity },
           opacity: { value: opacity },
           uTime: { value: 0.0 },
-          uNumWorldLights: { value: 0 },
-          uWorldLightPositions: {
-            value: Array(MAX_LIGHTS)
-              .fill(0)
-              .map(() => new THREE.Vector3(0, 0, 0)),
-          },
-          uWorldLightColors: {
-            value: Array(MAX_LIGHTS)
-              .fill(0)
-              .map(() => new THREE.Color(0xffffff)),
-          },
-          uWorldLightIntensities: {
-            value: new Float32Array(MAX_LIGHTS).fill(0),
-          },
+          uNumLights: { value: 0 },
+          uLightPositions: { value: lightArrays.positions },
+          uLightColors: { value: lightArrays.colors },
+          uLightIntensities: { value: lightArrays.intensities },
         },
       ]),
       vertexShader: atmosphereVertexShaderSource,
@@ -86,30 +79,16 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
   ): void {
     this.uniforms.uTime.value = time;
 
-    if (lightSources && lightSources.size > 0) {
-      const lights = Array.from(lightSources.values());
-      const numLights = Math.min(lights.length, 4); // MAX_LIGHTS is 4
-
-      this.uniforms.uNumWorldLights.value = numLights;
-
-      for (let i = 0; i < 4; i++) {
-        if (i < numLights) {
-          const lightSource = lights[i];
-          this.uniforms.uWorldLightPositions.value[i].copy(
-            lightSource.position,
-          );
-          this.uniforms.uWorldLightColors.value[i].copy(lightSource.color);
-          this.uniforms.uWorldLightIntensities.value[i] = lightSource.intensity;
-        } else {
-          // Zero out unused slots
-          this.uniforms.uWorldLightPositions.value[i].set(0, 0, 0);
-          this.uniforms.uWorldLightColors.value[i].set(0, 0, 0);
-          this.uniforms.uWorldLightIntensities.value[i] = 0;
-        }
-      }
-    } else {
-      this.uniforms.uNumWorldLights.value = 0;
-    }
+    LightingUniformPack.apply(
+      {
+        uNumLights: this.uniforms.uNumLights,
+        uLightPositions: this.uniforms.uLightPositions,
+        uLightColors: this.uniforms.uLightColors,
+        uLightIntensities: this.uniforms.uLightIntensities,
+      },
+      lightSources,
+      4,
+    );
   }
 
   dispose(): void {

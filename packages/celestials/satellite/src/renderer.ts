@@ -450,8 +450,8 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     // Update the satellite material with lighting information
     if (this.material && attenuatedLightSources.size > 0) {
       // Update dynamic ambient lighting
-      if (this.material.uniforms.uDynamicAmbientIntensity) {
-        this.material.uniforms.uDynamicAmbientIntensity.value =
+      if (this.material.uniforms.uAmbientIntensity) {
+        this.material.uniforms.uAmbientIntensity.value =
           dynamicAmbientIntensity;
       }
 
@@ -469,8 +469,8 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
           // Update our custom satellite materials with lighting information
           if (child.material instanceof SatelliteMaterial) {
             // Update dynamic ambient lighting
-            if (child.material.uniforms.uDynamicAmbientIntensity) {
-              child.material.uniforms.uDynamicAmbientIntensity.value =
+            if (child.material.uniforms.uAmbientIntensity) {
+              child.material.uniforms.uAmbientIntensity.value =
                 dynamicAmbientIntensity;
             }
 

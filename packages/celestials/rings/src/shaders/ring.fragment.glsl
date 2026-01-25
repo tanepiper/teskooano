@@ -5,7 +5,8 @@ uniform vec3 color;
 uniform float opacity;
 uniform vec3 uParentPosition; // World position of the parent body
 uniform float uParentRadius;  // Radius of the parent body (used for shadow calculation)
-uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
+uniform vec3 uAmbientColor; // Dynamic ambient lighting color
+uniform float uAmbientIntensity; // Dynamic ambient lighting intensity
 uniform float time;
 
 // Ring Segmentation Controls
@@ -14,14 +15,10 @@ uniform float uSegmentWidth; // Width of each segment (0.0-1.0)
 uniform float uParticleDetail; // Intensity of particle detail
 uniform float uDensityVariation; // Intensity of density variations
 
-// Unified Light Source structure
-struct LightSource {
-    vec3 position;
-    vec3 color;
-    float intensity;
-};
 uniform int uNumLights;
-uniform LightSource uLightSources[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 
 // Shadow Caster structure (for moons)
 struct ShadowCaster {
@@ -193,16 +190,18 @@ float createParticleDetail(vec2 uv, float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientIntensity = uDynamicAmbientIntensity * 0.3; // Increased from 0.1 for brighter ambient
+    vec3 ambientLight = uAmbientColor * (uAmbientIntensity * 0.3); // Increased from 0.1 for brighter ambient
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
 
-        LightSource light = uLightSources[i];
-        if (light.intensity <= 0.0) continue;
+        vec3 lightPosition = uLightPositions[i];
+        vec3 lightColor = uLightColors[i];
+        float lightIntensity = uLightIntensities[i];
+        if (lightIntensity <= 0.0) continue;
 
         // *** 1. Calculate Lighting ***
-        vec3 lightDir = normalize(light.position - vPosition);
+        vec3 lightDir = normalize(lightPosition - vPosition);
         vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
         vec3 viewDir = normalize(cameraPosition - vPosition);
 
@@ -213,12 +212,12 @@ void main() {
         float shadow = 1.0;
         
         // Shadow from the parent planet
-        shadow = min(shadow, getShadow(vPosition, light.position, uParentPosition, uParentRadius));
+        shadow = min(shadow, getShadow(vPosition, lightPosition, uParentPosition, uParentRadius));
 
         // Shadows from moons
         for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
             if (j >= uNumShadowCasters) break;
-            shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
+            shadow = min(shadow, getShadow(vPosition, lightPosition, uShadowCasters[j].position, uShadowCasters[j].radius));
         }
 
         // *** 3. Apply Lighting Based on Direction ***
@@ -232,12 +231,12 @@ void main() {
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
             float diffuse = (diffuseUp + diffuseDown) * 1.5; // Increased from 1.2 for brighter rings
 
-            totalLight += light.color * diffuse * light.intensity * shadow;
+            totalLight += lightColor * diffuse * lightIntensity * shadow;
             
             // *** Add Specular Highlight for Icy/Reflective Particles ***
             vec3 halfwayDir = normalize(lightDir + viewDir);
             float spec = pow(max(dot(faceNormal, halfwayDir), 0.0), 32.0);
-            totalLight += light.color * spec * light.intensity * shadow * 0.3;
+            totalLight += lightColor * spec * lightIntensity * shadow * 0.3;
         } else {
             // Night side - reduced lighting but not completely dark
             // Use a small amount of back-lighting to simulate light scattering
@@ -249,14 +248,14 @@ void main() {
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
             float diffuse = (diffuseUp + diffuseDown) * 1.0; // Increased from 0.8
 
-            totalLight += light.color * diffuse * light.intensity * shadow;
+            totalLight += lightColor * diffuse * lightIntensity * shadow;
         }
         
         // *** 4. Add Light Transmission Through Rings (regardless of direction) ***
         // Rings scatter light even when not directly illuminated
         // This simulates light passing through the ring particles
         float lightTransmission = 0.4; // Increased from 0.25 for better scattering
-        totalLight += light.color * lightTransmission * light.intensity * shadow;
+        totalLight += lightColor * lightTransmission * lightIntensity * shadow;
     }
 
     // Calculate distance from center for radial patterns
@@ -287,7 +286,7 @@ void main() {
     float ringVariation = ringDetail * (0.95 + noiseVal * 0.05) * radialFalloff;
 
     // Combine all factors for final color
-    vec3 finalColor = color * (totalLight + ambientIntensity) * ringVariation;
+    vec3 finalColor = color * (totalLight + ambientLight) * ringVariation;
 
     // Apply gamma correction
     finalColor = pow(finalColor, vec3(1.0/2.2));

@@ -231,8 +231,8 @@ export abstract class BaseGasGiantRenderer<
 
     if (material) {
       // Update dynamic ambient lighting if the uniform exists
-      if (material.uniforms.uDynamicAmbientIntensity) {
-        material.uniforms.uDynamicAmbientIntensity.value =
+      if (material.uniforms.uAmbientIntensity) {
+        material.uniforms.uAmbientIntensity.value =
           dynamicAmbientIntensity;
       }
 
@@ -252,8 +252,8 @@ export abstract class BaseGasGiantRenderer<
 
     if (mediumMaterial) {
       // Update dynamic ambient lighting if the uniform exists
-      if (mediumMaterial.uniforms.uDynamicAmbientIntensity) {
-        mediumMaterial.uniforms.uDynamicAmbientIntensity.value =
+      if (mediumMaterial.uniforms.uAmbientIntensity) {
+        mediumMaterial.uniforms.uAmbientIntensity.value =
           dynamicAmbientIntensity;
       }
 

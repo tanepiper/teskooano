@@ -10,6 +10,7 @@ import {
   GeometryUtilities,
   type CelestialMeshOptions,
   type LightSourcesMap,
+  LightingUniformPack,
   ShadowCasterUtils,
   LODLevel,
 } from "@teskooano/renderer-threejs-celestial";
@@ -357,24 +358,23 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     if (nucleusMaterial) {
       // Update dynamic ambient lighting
-      if (nucleusMaterial.uniforms.uAmbientStrength) {
-        nucleusMaterial.uniforms.uAmbientStrength.value =
+      if (nucleusMaterial.uniforms.uAmbientIntensity) {
+        nucleusMaterial.uniforms.uAmbientIntensity.value =
           dynamicAmbientIntensity;
       }
 
       // Update lighting
-      nucleusMaterial.uniforms.uNumLights.value =
-        this.lightingManager.getLightSources().size;
-      let i = 0;
-      for (const lightData of this.lightingManager.getLightSources().values()) {
-        nucleusMaterial.uniforms.uLights.value[i].position.copy(
-          lightData.position,
-        );
-        nucleusMaterial.uniforms.uLights.value[i].color.copy(lightData.color);
-        nucleusMaterial.uniforms.uLights.value[i].intensity =
-          lightData.intensity ?? 1.0;
-        i++;
-      }
+      LightingUniformPack.apply(
+        {
+          uNumLights: nucleusMaterial.uniforms.uNumLights,
+          uLightPositions: nucleusMaterial.uniforms.uLightPositions,
+          uLightColors: nucleusMaterial.uniforms.uLightColors,
+          uLightIntensities: nucleusMaterial.uniforms.uLightIntensities,
+          uAmbientColor: nucleusMaterial.uniforms.uAmbientColor,
+        },
+        this.lightingManager.getLightSources(),
+        4,
+      );
       if (nucleusMaterial.uniforms.uCameraPosition) {
         nucleusMaterial.uniforms.uCameraPosition.value.copy(
           this.camera.position,
@@ -468,22 +468,16 @@ export class CometRenderer extends BaseCelestialRenderer {
       }
       this.comaMaterial.uniforms.uOpacity.value = activityFactor;
       this.comaMaterial.uniforms.uTime.value = time;
-      if (attenuatedLightSources) {
-        this.comaMaterial.uniforms.uNumLights.value =
-          attenuatedLightSources.size;
-        let i = 0;
-        for (const lightData of attenuatedLightSources.values()) {
-          this.comaMaterial.uniforms.uLights.value[i].position.copy(
-            lightData.position,
-          );
-          this.comaMaterial.uniforms.uLights.value[i].color.copy(
-            lightData.color,
-          );
-          this.comaMaterial.uniforms.uLights.value[i].intensity =
-            lightData.intensity ?? 1.0;
-          i++;
-        }
-      }
+      LightingUniformPack.apply(
+        {
+          uNumLights: this.comaMaterial.uniforms.uNumLights,
+          uLightPositions: this.comaMaterial.uniforms.uLightPositions,
+          uLightColors: this.comaMaterial.uniforms.uLightColors,
+          uLightIntensities: this.comaMaterial.uniforms.uLightIntensities,
+        },
+        attenuatedLightSources,
+        4,
+      );
     }
 
     if (this.coma) {

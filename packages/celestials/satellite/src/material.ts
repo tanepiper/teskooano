@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {
   LightArrayUtils,
+  LightingUniformPack,
   LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
 
@@ -72,20 +73,23 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
     // Use provided envMap or fall back to original material's envMap
     const finalEnvMap = envMap || originalEnvMap;
 
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     super({
       uniforms: {
         baseColor: { value: baseColor },
         metalness: { value: metalness },
         roughness: { value: roughness },
         maxEmissiveIntensity: { value: maxEmissiveIntensity },
-        uDynamicAmbientIntensity: { value: 1.0 },
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: 1.0 },
         uEmissiveIntensity: { value: 0.0 },
         uEmissiveColor: { value: new THREE.Color(0x111111) },
         // Dynamic lighting and shadow arrays
         uNumLights: { value: 0 },
-        uLightSources: {
-          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
-        },
+        uLightPositions: { value: lightArrays.positions },
+        uLightColors: { value: lightArrays.colors },
+        uLightIntensities: { value: lightArrays.intensities },
         uNumShadowCasters: { value: 0 },
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
@@ -121,15 +125,6 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
     this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
   }
 
-  private resizeLightArrays(newSize: number): void {
-    this.uniforms.uLightSources.value = LightArrayUtils.resizeLightArray(
-      this,
-      newSize,
-      this.uniforms.uLightSources.value,
-    );
-    this.currentNumLights = newSize;
-  }
-
   private resizeShadowCasterArrays(newSize: number): void {
     this.uniforms.uShadowCasters.value =
       LightArrayUtils.resizeShadowCasterArray(
@@ -149,26 +144,17 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
     lightSources: LightSourcesMap,
     shadowCasters?: { position: THREE.Vector3; radius: number }[],
   ): void {
-    const numLights = Math.min(lightSources.size, MAX_LIGHTS);
-
-    // Resize light arrays if needed
-    if (numLights !== this.currentNumLights) {
-      this.resizeLightArrays(numLights);
-    }
-
-    this.uniforms.uNumLights.value = numLights;
-
-    // Update light uniforms
-    let i = 0;
-    for (const lightData of lightSources.values()) {
-      if (i >= MAX_LIGHTS) break; // Max MAX_LIGHTS lights
-
-      this.uniforms.uLightSources.value[i].position.copy(lightData.position);
-      this.uniforms.uLightSources.value[i].color.copy(lightData.color);
-      this.uniforms.uLightSources.value[i].intensity =
-        lightData.intensity ?? 1.0;
-      i++;
-    }
+    LightingUniformPack.apply(
+      {
+        uNumLights: this.uniforms.uNumLights,
+        uLightPositions: this.uniforms.uLightPositions,
+        uLightColors: this.uniforms.uLightColors,
+        uLightIntensities: this.uniforms.uLightIntensities,
+        uAmbientColor: this.uniforms.uAmbientColor,
+      },
+      lightSources,
+      MAX_LIGHTS,
+    );
 
     // Update shadow casters
     const numShadowCasters = shadowCasters?.length ?? 0;

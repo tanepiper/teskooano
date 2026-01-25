@@ -22,12 +22,12 @@ vec3 calculateLighting(
     vec3 viewDir, 
     float shadowFactor
 ) {
-    vec3 finalColor = albedo * uAmbientLightColor * uAmbientLightIntensity;
+    vec3 finalColor = albedo * uAmbientColor * uAmbientIntensity;
 
     for (int i = 0; i < uNumLights; i++) {
-        vec3 lightPos = uLights[i].position;
-        vec3 lightColor = uLights[i].color;
-        float lightIntensity = uLights[i].intensity;
+        vec3 lightPos = uLightPositions[i];
+        vec3 lightColor = uLightColors[i];
+        float lightIntensity = uLightIntensities[i];
 
         vec3 lightDir = normalize(lightPos - vWorldPosition);
 

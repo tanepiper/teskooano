@@ -6,7 +6,7 @@ import proceduralVertexShaderSource from "../shaders/procedural.vertex.glsl";
 import type { ProceduralPlanetUniforms } from "../types/procedural";
 import {
   LightArrayUtils,
-  LightSourceData,
+  LightingUniformPack,
 } from "@teskooano/renderer-threejs-celestial";
 
 const MAX_LIGHTS = 4;
@@ -40,9 +40,11 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 4;
 
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     const uniforms = {
-      uAmbientLightColor: { value: new THREE.Color(0xffffff) },
-      uAmbientLightIntensity: {
+      uAmbientColor: { value: new THREE.Color(0xffffff) },
+      uAmbientIntensity: {
         value: surfaceProps.ambientLightIntensity ?? 0.03, // System-wide minimum ambient for "just enough glow"
       },
       uTime: { value: 0.0 },
@@ -82,20 +84,10 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       uTerrainSharpness: { value: surfaceProps.terrainSharpness ?? 1.0 },
       uTerrainOffset: { value: surfaceProps.terrainOffset ?? 0.0 },
       uPrimaryLightDirection: { value: new THREE.Vector3(1, 0, 0) },
-      uNumWorldLights: { value: 0 },
-      uWorldLightPositions: {
-        value: Array(MAX_LIGHTS)
-          .fill(0)
-          .map(() => new THREE.Vector3(0, 0, 0)),
-      },
-      uWorldLightColors: {
-        value: Array(MAX_LIGHTS)
-          .fill(0)
-          .map(() => new THREE.Color(0xffffff)),
-      },
-      uWorldLightIntensities: {
-        value: new Float32Array(MAX_LIGHTS).fill(0),
-      },
+      uNumLights: { value: 0 },
+      uLightPositions: { value: lightArrays.positions },
+      uLightColors: { value: lightArrays.colors },
+      uLightIntensities: { value: lightArrays.intensities },
     };
 
     super({
@@ -135,38 +127,27 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
   ): void {
     this.uniforms.uTime.value = time;
 
+    const planetPos =
+      (this as any).planetPosition || new THREE.Vector3(0, 0, 0);
+    LightingUniformPack.apply(
+      {
+        uNumLights: this.uniforms.uNumLights,
+        uLightPositions: this.uniforms.uLightPositions,
+        uLightColors: this.uniforms.uLightColors,
+        uLightIntensities: this.uniforms.uLightIntensities,
+        uAmbientColor: this.uniforms.uAmbientColor,
+      },
+      lightSources,
+      MAX_LIGHTS,
+    );
+
     if (lightSources && lightSources.size > 0) {
-      const lights = Array.from(lightSources.values());
-      const planetPos =
-        (this as any).planetPosition || new THREE.Vector3(0, 0, 0);
-      const numLights = Math.min(lights.length, MAX_LIGHTS);
-
-      this.uniforms.uNumWorldLights.value = numLights;
-
-      for (let i = 0; i < MAX_LIGHTS; i++) {
-        if (i < numLights) {
-          const lightSource = lights[i];
-          this.uniforms.uWorldLightPositions.value[i].copy(
-            lightSource.position,
-          );
-          this.uniforms.uWorldLightColors.value[i].copy(lightSource.color);
-          this.uniforms.uWorldLightIntensities.value[i] = lightSource.intensity;
-
-          if (i === 0) {
-            // Legacy/Shadow support: direction from planet to first sun
-            this.uniforms.uPrimaryLightDirection.value
-              .subVectors(lightSource.position, planetPos)
-              .normalize();
-          }
-        } else {
-          // Zero out unused slots
-          this.uniforms.uWorldLightPositions.value[i].set(0, 0, 0);
-          this.uniforms.uWorldLightColors.value[i].set(0, 0, 0);
-          this.uniforms.uWorldLightIntensities.value[i] = 0;
-        }
+      const primaryLight = Array.from(lightSources.values())[0];
+      if (primaryLight) {
+        this.uniforms.uPrimaryLightDirection.value
+          .subVectors(primaryLight.position, planetPos)
+          .normalize();
       }
-    } else {
-      this.uniforms.uNumWorldLights.value = 0;
     }
 
     const numShadowCasters = shadowCasters?.length ?? 0;

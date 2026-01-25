@@ -63,7 +63,7 @@ export class LightingCalculator {
    * Ambient light calculation constants
    */
   private static readonly AMBIENT_FALLOFF_FACTOR = 0.000000001; // Stronger falloff for ambient
-  private static readonly BASE_AMBIENT_INTENSITY = 0.3; // Base ambient when very close to a bright star
+  private static readonly BASE_AMBIENT_INTENSITY = 0.35; // Base ambient when very close to a bright star
   private static readonly MIN_AMBIENT_INTENSITY = 0.02; // Minimum ambient - balanced contrast
 
   private object: RenderableCelestialObject;
@@ -277,7 +277,10 @@ export class LightingCalculator {
 
       // Scale ambient based on star luminosity and distance
       const ambientContribution =
-        LightingCalculator.BASE_AMBIENT_INTENSITY * luminosity * ambientFalloff;
+        LightingCalculator.BASE_AMBIENT_INTENSITY *
+        luminosity *
+        ambientFalloff *
+        (1.0 + (1.0 - ambientFalloff) * 0.5);
 
       totalAmbient += ambientContribution;
     }

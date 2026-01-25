@@ -1,6 +1,7 @@
 uniform vec3 uColor;
 uniform float uLightIntensity;
-uniform float uAmbientStrength;
+uniform vec3 uAmbientColor;
+uniform float uAmbientIntensity;
 
 varying float vAlpha;
 varying float vDepth;
@@ -52,7 +53,7 @@ void main() {
     if (strength < 0.01) discard;
 
     // Simplified, non-directional lighting for glowing gas. Minimal ambient.
-    vec3 finalColor = uColor * (uAmbientStrength + uLightIntensity * 0.5);
+    vec3 finalColor = uColor * (uAmbientColor * (uAmbientIntensity + uLightIntensity * 0.5));
 
     float finalAlpha = vAlpha * strength;
 

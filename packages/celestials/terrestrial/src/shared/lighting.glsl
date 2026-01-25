@@ -27,10 +27,10 @@ float getShadow(vec3 fragPos, vec3 lightDir) {
 }
 
 // Explicit World-Space Lighting Uniforms
-uniform int uNumWorldLights;
-uniform vec3 uWorldLightPositions[MAX_LIGHTS];
-uniform vec3 uWorldLightColors[MAX_LIGHTS];
-uniform float uWorldLightIntensities[MAX_LIGHTS];
+uniform int uNumLights;
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 
 // Updated lighting calculation using World-Space coordinates
 vec3 calculateLighting(
@@ -45,14 +45,14 @@ vec3 calculateLighting(
     vec3 worldViewDir = viewDir; // For simplicity, we'll keep it as passed
 
     // Start with a subtle ambient base for "just enough" shadow detail
-    vec3 finalColor = albedo * uAmbientLightColor * (uAmbientLightIntensity * 0.05); 
+    vec3 finalColor = albedo * uAmbientColor * uAmbientIntensity;
 
     for (int i = 0; i < 4; i++) {
-        if (i >= uNumWorldLights) break;
+        if (i >= uNumLights) break;
 
-        vec3 lightPos = uWorldLightPositions[i];
-        vec3 lightColor = uWorldLightColors[i];
-        float intensity = uWorldLightIntensities[i];
+        vec3 lightPos = uLightPositions[i];
+        vec3 lightColor = uLightColors[i];
+        float intensity = uLightIntensities[i];
 
         // Correct Light Direction: FROM fragment TO light source
         vec3 lightDir = normalize(lightPos - worldPos);
@@ -78,10 +78,6 @@ vec3 calculateLighting(
         float shadowFactor = getShadow(worldPos, lightDir);
 
         finalColor += (albedo * diffuse + specular) * terminatorTransition * max(shadowFactor, 0.05);
-        
-        // Subtle atmospheric "night light" glow near the terminator
-        float nightLight = 0.003 * intensity * attenuation * smoothstep(1.0, 0.0, terminatorTransition);
-        finalColor += albedo * lightColor * nightLight;
     }
     
     return finalColor;

@@ -2,12 +2,6 @@ precision highp float;
 #include <common>
 #include <logdepthbuf_pars_fragment>
 
-struct Light {
-  vec3 position;
-  vec3 color;
-  float intensity;
-};
-
 struct ShadowCaster {
   vec3 position;
   float radius;
@@ -15,11 +9,14 @@ struct ShadowCaster {
 
 uniform vec3 baseColor;
 uniform float time;
-uniform Light uLights[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 uniform int uNumLights;
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
-uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
+uniform vec3 uAmbientColor; // Dynamic ambient lighting color
+uniform float uAmbientIntensity; // Dynamic ambient lighting intensity
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -50,7 +47,7 @@ void main() {
   vec3 normal = normalize(vNormal);
   
   // Much darker ambient for proper night sides  
-  vec3 ambient = baseColor * (uDynamicAmbientIntensity * 0.05); // Even darker ambient
+  vec3 ambient = baseColor * uAmbientColor * (uAmbientIntensity * 0.05); // Even darker ambient
   
   // Diffuse lighting with smooth terminator handling
   vec3 diffuse = vec3(0.0);
@@ -59,7 +56,7 @@ void main() {
     if (i >= uNumLights) break;
     
     // Calculate direction from fragment to light
-    vec3 lightDir = normalize(uLights[i].position - vPosition);
+    vec3 lightDir = normalize(uLightPositions[i] - vPosition);
     
     // Calculate smooth terminator transition 
     float dotProduct = dot(normal, lightDir);
@@ -74,18 +71,14 @@ void main() {
     float shadow = 1.0;
     for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
       if (j >= uNumShadowCasters) break;
-      shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
+      shadow = min(shadow, getShadow(vPosition, uLightPositions[i], 
                                     uShadowCasters[j].position, 
                                     uShadowCasters[j].radius));
     }
     
     // Apply lighting with smooth terminator transition
     float lightContribution = terminatorTransition * shadow;
-    diffuse += diff * uLights[i].color * uLights[i].intensity * lightContribution * 0.3;
-    
-    // Add subtle night side illumination
-    float nightContribution = (1.0 - terminatorTransition) * 0.02; // Very subtle night glow
-    diffuse += nightContribution * uLights[i].color * uLights[i].intensity;
+    diffuse += diff * uLightColors[i] * uLightIntensities[i] * lightContribution * 0.3;
   }
   
   // Final color

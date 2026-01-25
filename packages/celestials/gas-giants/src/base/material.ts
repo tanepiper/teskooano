@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import basicFragmentShader from "../shaders/basic.fragment.glsl";
 import basicVertexShader from "../shaders/basic.vertex.glsl";
-import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
+import {
+  LightArrayUtils,
+  LightingUniformPack,
+} from "@teskooano/renderer-threejs-celestial";
 
 // Remove hard-coded constants - we'll calculate dynamically
 interface CalculatedLight {
@@ -46,28 +49,23 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
       this.uniforms.time.value = time;
     }
 
-    // Update lights dynamically
-    if (this.uniforms.uNumLights && this.uniforms.uLights) {
-      const numLights = lights.length;
-
-      // Resize arrays if needed
-      if (numLights !== this.currentNumLights) {
-        this.resizeLightArrays(numLights);
-        this.currentNumLights = numLights;
-      }
-
-      this.uniforms.uNumLights.value = numLights;
-
-      for (let i = 0; i < numLights; i++) {
-        const light = lights[i];
-        if (light && this.uniforms.uLights.value[i]) {
-          // Simply copy the light position to the shader
-          // The direction will be calculated in the fragment shader
-          this.uniforms.uLights.value[i].position.copy(light.position);
-          this.uniforms.uLights.value[i].color.copy(light.color);
-          this.uniforms.uLights.value[i].intensity = light.intensity;
-        }
-      }
+    if (
+      this.uniforms.uNumLights &&
+      this.uniforms.uLightPositions &&
+      this.uniforms.uLightColors &&
+      this.uniforms.uLightIntensities
+    ) {
+      LightingUniformPack.applyFromArray(
+        {
+          uNumLights: this.uniforms.uNumLights,
+          uLightPositions: this.uniforms.uLightPositions,
+          uLightColors: this.uniforms.uLightColors,
+          uLightIntensities: this.uniforms.uLightIntensities,
+          uAmbientColor: this.uniforms.uAmbientColor,
+        },
+        lights,
+        4,
+      );
     }
 
     // Update shadow casters dynamically
@@ -101,16 +99,6 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
   /**
    * Resize the light arrays to accommodate the new number of lights
    */
-  protected resizeLightArrays(newSize: number): void {
-    if (!this.uniforms.uLights) return;
-
-    this.uniforms.uLights.value = LightArrayUtils.resizeLightArray(
-      this,
-      newSize,
-      this.uniforms.uLights.value,
-    );
-  }
-
   /**
    * Resize the shadow caster arrays to accommodate the new number of shadow casters
    */
@@ -131,12 +119,12 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
 /**
  * Create initial arrays for lights and shadow casters with reasonable starting sizes
  */
-function createInitialLightArray(initialSize: number = 4): Array<{
-  position: THREE.Vector3;
-  color: THREE.Color;
-  intensity: number;
-}> {
-  return LightArrayUtils.createLightSourceArray(initialSize);
+function createLightArrays(initialSize: number = 4): {
+  positions: THREE.Vector3[];
+  colors: THREE.Color[];
+  intensities: Float32Array;
+} {
+  return LightingUniformPack.createLightArrays(initialSize);
 }
 
 /**
@@ -146,7 +134,7 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
   constructor(baseColor: THREE.Color = new THREE.Color(0xffffff)) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 8;
-    const lights = createInitialLightArray(MAX_LIGHTS);
+    const lights = createLightArrays(MAX_LIGHTS);
     const shadowCasters =
       LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS);
 
@@ -158,11 +146,14 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
       uniforms: {
         baseColor: { value: baseColor },
         time: { value: 0 },
-        uLights: { value: lights },
+        uLightPositions: { value: lights.positions },
+        uLightColors: { value: lights.colors },
+        uLightIntensities: { value: lights.intensities },
         uNumLights: { value: 0 },
         uShadowCasters: { value: shadowCasters },
         uNumShadowCasters: { value: 0 },
-        uDynamicAmbientIntensity: { value: 0.03 }, // System-wide minimum ambient for "just enough glow"
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: 0.03 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: basicVertexShader,
       fragmentShader: basicFragmentShader,

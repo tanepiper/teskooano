@@ -491,8 +491,8 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       // Update all ring materials
       this.ringMaterials.forEach((material) => {
         // Update dynamic ambient lighting
-        if (material.uniforms.uDynamicAmbientIntensity) {
-          material.uniforms.uDynamicAmbientIntensity.value =
+        if (material.uniforms.uAmbientIntensity) {
+          material.uniforms.uAmbientIntensity.value =
             dynamicAmbientIntensity;
         }
 

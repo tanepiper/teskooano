@@ -14,11 +14,11 @@ export interface ProceduralPlanetUniforms {
   /** An array of colors for each light source. */
   uLightColors: Uniform<Color[]>;
   /** An array of intensities for each light source. */
-  uLightIntensities: Uniform<number[]>;
+  uLightIntensities: Uniform<Float32Array>;
   /** The color of the ambient light in the scene. */
-  uAmbientLightColor: Uniform<Color>;
+  uAmbientColor: Uniform<Color>;
   /** The intensity of the ambient light. */
-  uAmbientLightIntensity: Uniform<number>;
+  uAmbientIntensity: Uniform<number>;
   /** The world-space position of the camera, used for specular calculations. */
   uCameraPosition: Uniform<Vector3>;
 

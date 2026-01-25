@@ -2,13 +2,6 @@ precision highp float;
 #include <common>
 #include <logdepthbuf_pars_fragment>
 
-// Unified Light Source structure
-struct LightSource {
-  vec3 position;
-  vec3 color;
-  float intensity;
-};
-
 // Shadow Caster structure (for moons and other celestial bodies)
 struct ShadowCaster {
   vec3 position;
@@ -19,7 +12,8 @@ uniform vec3 baseColor;
 uniform float metalness;
 uniform float roughness;
 uniform float maxEmissiveIntensity;
-uniform float uDynamicAmbientIntensity;
+uniform vec3 uAmbientColor;
+uniform float uAmbientIntensity;
 uniform float uEmissiveIntensity; // Calculated emissive intensity
 uniform vec3 uEmissiveColor; // Emissive color
 
@@ -40,7 +34,9 @@ uniform float envMapIntensity; // Environment map reflection intensity
 
 // Dynamic lighting and shadow arrays
 uniform int uNumLights;
-uniform LightSource uLightSources[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 uniform int uNumShadowCasters;
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 
@@ -127,7 +123,7 @@ void main() {
   }
   
   // Start with very low ambient lighting for realistic space conditions
-  vec3 ambient = diffuseColor * (uDynamicAmbientIntensity * 0.02);
+  vec3 ambient = diffuseColor * uAmbientColor * (uAmbientIntensity * 0.02);
   
   // Calculate lighting from all light sources with proper terminator handling
   vec3 totalDiffuse = vec3(0.0);
@@ -136,12 +132,13 @@ void main() {
   for (int i = 0; i < MAX_LIGHTS; i++) {
     if (i >= uNumLights) break;
     
-    LightSource light = uLightSources[i];
+    vec3 lightPosition = uLightPositions[i];
+    vec3 lightColor = uLightColors[i];
     // Clamp light intensity extremely aggressively to prevent flashes
-    float clampedIntensity = clamp(light.intensity, 0.0, 2.0);
+    float clampedIntensity = clamp(uLightIntensities[i], 0.0, 2.0);
     if (clampedIntensity <= 0.0) continue;
     
-    vec3 lightDir = normalize(light.position - vWorldPosition);
+    vec3 lightDir = normalize(lightPosition - vWorldPosition);
     // Validate light direction to prevent NaN
     if (length(lightDir) < 0.1) continue;
     
@@ -158,18 +155,14 @@ void main() {
       
       // Diffuse lighting with reduced strength for better terminator definition
       float diff = max(dotProduct, 0.0);
-      vec3 diffuseContrib = light.color * diff * effectiveIntensity * 0.2 * terminatorTransition; // Further reduced
+      vec3 diffuseContrib = lightColor * diff * effectiveIntensity * 0.2 * terminatorTransition; // Further reduced
       totalDiffuse += clamp(diffuseContrib, vec3(0.0), vec3(0.5)); // Even lower clamp
       
       // Specular lighting (Blinn-Phong)
       vec3 halfwayDir = normalize(lightDir + viewDir);
       float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-      vec3 specularContrib = light.color * spec * effectiveIntensity * 0.1 * terminatorTransition; // Further reduced
+      vec3 specularContrib = lightColor * spec * effectiveIntensity * 0.1 * terminatorTransition; // Further reduced
       totalSpecular += clamp(specularContrib, vec3(0.0), vec3(0.2)); // Even lower clamp
-    } else {
-      // Night side - very low lighting with smooth transition, but also affected by shadows
-      float nightLight = clamp(0.02 * (1.0 - terminatorTransition) * shadowFactor, 0.0, 0.05); // Reduced values
-      totalDiffuse += light.color * nightLight;
     }
   }
   

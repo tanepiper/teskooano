@@ -2,17 +2,12 @@ varying float vDepth;
 varying vec3 vNormal;
 varying vec3 vWorldPosition;
 
-struct Light {
-    vec3 position;
-    vec3 color;
-    float intensity;
-};
-
 uniform vec3 uColor;
 uniform float uOpacity;
 uniform float uTime;
 uniform int uNumLights;
-uniform Light uLights[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 
 // 2D Simplex noise
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -54,7 +49,7 @@ void main() {
     // --- Lighting and Falloff ---
     vec3 totalLightDirection = vec3(0.0);
     for (int i = 0; i < uNumLights; i++) {
-        totalLightDirection += normalize(uLights[i].position - vWorldPosition) * uLights[i].intensity;
+        totalLightDirection += normalize(uLightPositions[i] - vWorldPosition) * uLightIntensities[i];
     }
     totalLightDirection = normalize(totalLightDirection);
 

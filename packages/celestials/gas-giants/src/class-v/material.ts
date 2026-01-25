@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
-import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
+import {
+  LightArrayUtils,
+  LightingUniformPack,
+} from "@teskooano/renderer-threejs-celestial";
 
 import classVFragmentShader from "../shaders/class-v.fragment.glsl";
 import classVVertexShader from "../shaders/class-v.vertex.glsl";
@@ -20,7 +23,7 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
   }) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
-    const lights = LightArrayUtils.createLightSourceArray(MAX_LIGHTS);
+    const lights = LightingUniformPack.createLightArrays(MAX_LIGHTS);
     const shadowCasters =
       LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS);
 
@@ -36,7 +39,9 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
         emissiveIntensity: { value: options.emissiveIntensity },
         time: { value: 0 },
 
-        uLights: { value: lights },
+        uLightPositions: { value: lights.positions },
+        uLightColors: { value: lights.colors },
+        uLightIntensities: { value: lights.intensities },
         uNumLights: { value: 0 },
 
         uShadowCasters: { value: shadowCasters },
@@ -44,7 +49,8 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
 
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },
-        uDynamicAmbientIntensity: { value: 0.08 }, // Increased ambient for better atmospheric visibility
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: 0.08 }, // Increased ambient for better atmospheric visibility
       },
       vertexShader: classVVertexShader,
       fragmentShader: classVFragmentShader,

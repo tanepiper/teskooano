@@ -1,6 +1,7 @@
 import { Color, DoubleSide, ShaderMaterial, Vector3 } from "three";
 import {
   LightArrayUtils,
+  LightingUniformPack,
   LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
 import ringVertexShader from "./shaders/ring.vertex.glsl";
@@ -35,6 +36,10 @@ export class RingMaterial extends ShaderMaterial {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 4;
 
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     super({
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
@@ -49,14 +54,15 @@ export class RingMaterial extends ShaderMaterial {
         uParentPosition: { value: new Vector3(0, 0, 0) },
         uParentRadius: { value: 1.0 },
         uNumLights: { value: 0 },
-        uLightSources: {
-          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
-        },
+        uLightPositions: { value: lightArrays.positions },
+        uLightColors: { value: lightArrays.colors },
+        uLightIntensities: { value: lightArrays.intensities },
         uNumShadowCasters: { value: 0 },
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.05 }, // Increased from 0.01 for better visibility
+        uAmbientColor: { value: new Color(0xffffff) },
+        uAmbientIntensity: { value: 0.05 }, // Increased from 0.01 for better visibility
 
         // Enhanced Axial Inclination Controls
         uAxialInclination: { value: options.axialInclination ?? 0.0 },
@@ -81,15 +87,6 @@ export class RingMaterial extends ShaderMaterial {
 
     this.currentNumLights = MAX_LIGHTS;
     this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
-  }
-
-  private resizeLightArrays(newSize: number): void {
-    this.uniforms.uLightSources.value = LightArrayUtils.resizeLightArray(
-      this,
-      newSize,
-      this.uniforms.uLightSources.value,
-    );
-    this.currentNumLights = newSize;
   }
 
   private resizeShadowCasterArrays(newSize: number): void {
@@ -132,22 +129,17 @@ export class RingMaterial extends ShaderMaterial {
       this.uniforms.uParentAxialTilt.value.copy(parentAxialTilt);
     }
 
-    const numLights = lightSources?.size ?? 0;
-    if (numLights !== this.currentNumLights) {
-      this.resizeLightArrays(numLights);
-    }
-
-    this.uniforms.uNumLights.value = numLights;
-    if (lightSources) {
-      let i = 0;
-      for (const light of lightSources.values()) {
-        const uniformLight = this.uniforms.uLightSources.value[i];
-        uniformLight.position.copy(light.position);
-        uniformLight.color.copy(light.color);
-        uniformLight.intensity = light.intensity;
-        i++;
-      }
-    }
+    LightingUniformPack.apply(
+      {
+        uNumLights: this.uniforms.uNumLights,
+        uLightPositions: this.uniforms.uLightPositions,
+        uLightColors: this.uniforms.uLightColors,
+        uLightIntensities: this.uniforms.uLightIntensities,
+        uAmbientColor: this.uniforms.uAmbientColor,
+      },
+      lightSources,
+      MAX_LIGHTS,
+    );
 
     const numShadowCasters = shadowCasters?.length ?? 0;
     if (numShadowCasters !== this.currentNumShadowCasters) {
@@ -212,14 +204,15 @@ export class AccretionDiskMaterial extends ShaderMaterial {
         uParentPosition: { value: new Vector3(0, 0, 0) },
         uParentRadius: { value: 1.0 },
         uNumLights: { value: 0 },
-        uLightSources: {
-          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
-        },
+        uLightPositions: { value: lightArrays.positions },
+        uLightColors: { value: lightArrays.colors },
+        uLightIntensities: { value: lightArrays.intensities },
         uNumShadowCasters: { value: 0 },
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.01 }, // System-wide minimum ambient for "just enough glow"
+        uAmbientColor: { value: new Color(0xffffff) },
+        uAmbientIntensity: { value: 0.01 }, // System-wide minimum ambient for "just enough glow"
 
         // Accretion Disk Specific Uniforms
         uIsAccretionDisk: { value: true },
@@ -253,15 +246,6 @@ export class AccretionDiskMaterial extends ShaderMaterial {
 
     this.currentNumLights = MAX_LIGHTS;
     this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
-  }
-
-  private resizeLightArrays(newSize: number): void {
-    this.uniforms.uLightSources.value = LightArrayUtils.resizeLightArray(
-      this,
-      newSize,
-      this.uniforms.uLightSources.value,
-    );
-    this.currentNumLights = newSize;
   }
 
   private resizeShadowCasterArrays(newSize: number): void {
@@ -304,22 +288,17 @@ export class AccretionDiskMaterial extends ShaderMaterial {
       this.uniforms.uParentAxialTilt.value.copy(parentAxialTilt);
     }
 
-    const numLights = lightSources?.size ?? 0;
-    if (numLights !== this.currentNumLights) {
-      this.resizeLightArrays(numLights);
-    }
-
-    this.uniforms.uNumLights.value = numLights;
-    if (lightSources) {
-      let i = 0;
-      for (const light of lightSources.values()) {
-        const uniformLight = this.uniforms.uLightSources.value[i];
-        uniformLight.position.copy(light.position);
-        uniformLight.color.copy(light.color);
-        uniformLight.intensity = light.intensity;
-        i++;
-      }
-    }
+    LightingUniformPack.apply(
+      {
+        uNumLights: this.uniforms.uNumLights,
+        uLightPositions: this.uniforms.uLightPositions,
+        uLightColors: this.uniforms.uLightColors,
+        uLightIntensities: this.uniforms.uLightIntensities,
+        uAmbientColor: this.uniforms.uAmbientColor,
+      },
+      lightSources,
+      MAX_LIGHTS,
+    );
 
     const numShadowCasters = shadowCasters?.length ?? 0;
     if (numShadowCasters !== this.currentNumShadowCasters) {

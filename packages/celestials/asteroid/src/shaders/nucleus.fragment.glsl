@@ -9,12 +9,6 @@ varying vec3 vWorldNormal;
 varying vec2 vUv;
 varying vec3 vObjectPosition; // Normalized object-space position
 
-struct Light {
-    vec3 position;
-    vec3 color;
-    float intensity;
-};
-
 struct ShadowCaster {
     vec3 position;
     float radius;
@@ -25,7 +19,11 @@ uniform float uHeights[MAX_COLORS];
 uniform int uNumColors;
 
 uniform int uNumLights;
-uniform Light uLights[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
+uniform vec3 uAmbientColor;
+uniform float uAmbientIntensity;
 
 // Shadow casting uniforms
 uniform int uNumShadowCasters;
@@ -37,7 +35,6 @@ uniform float uCraterScale;
 uniform float uCraterStrength;
 uniform float uSimplePeriod;
 uniform float uUndulation;
-uniform float uAmbientStrength;
 uniform float uMetallicFactor;
 uniform float uRoughness;
 uniform vec3 uSpecularColor;
@@ -192,19 +189,19 @@ void main() {
     float shadowFactor = calculateShadowFactor(vWorldPosition);
 
     // --- Lighting using modular lighting functions ---
-    vec3 lighting = vec3(uAmbientStrength * 0.1); // Much darker ambient
+    vec3 lighting = uAmbientColor * (uAmbientIntensity * 0.1); // Much darker ambient
     vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
 
     for (int i = 0; i < uNumLights; i++) {
-        vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
+        vec3 lightDirection = normalize(uLightPositions[i] - vWorldPosition);
         
         // Only calculate lighting if the surface is facing the light (day side)
         float dotProduct = dot(vWorldNormal, lightDirection);
         if (dotProduct > 0.0) {
             vec3 lightContribution = calculateLightContribution(
-                uLights[i].position,
-                uLights[i].color,
-                uLights[i].intensity,
+                uLightPositions[i],
+                uLightColors[i],
+                uLightIntensities[i],
                 vWorldNormal,
                 viewDirection,
                 vWorldPosition

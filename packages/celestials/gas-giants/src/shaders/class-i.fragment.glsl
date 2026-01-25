@@ -3,12 +3,6 @@ precision highp float;
 #include <common>
 #include <logdepthbuf_pars_fragment>
 
-struct Light {
-  vec3 position;
-  vec3 color;
-  float intensity;
-};
-
 struct ShadowCaster {
     vec3 position;
     float radius;
@@ -32,14 +26,17 @@ uniform int uWarpOctaves;      // LOD-controlled octave count for warping noise
 uniform int uColorOctaves;     // LOD-controlled octave count for color noise
 uniform sampler2D stormMap;
 uniform bool hasStormMap;
-uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
 
 uniform float time;
-uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
+uniform vec3 uAmbientColor; // Dynamic ambient lighting color
+uniform float uAmbientIntensity; // Dynamic ambient lighting intensity
 
 // --- Helper: lerp ---
 vec3 lerp(vec3 v1, vec3 v2, float s) {
@@ -250,13 +247,13 @@ void main() {
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
     // Much darker ambient for proper night sides
-    totalLight += vec3(uDynamicAmbientIntensity * 0.05); // Even darker ambient
+    totalLight += uAmbientColor * (uAmbientIntensity * 0.05); // Even darker ambient
 
     for (int i = 0; i < uNumLights; i++) {
-        if (uLights[i].intensity <= 0.0) continue;
+        if (uLightIntensities[i] <= 0.0) continue;
 
         // Calculate direction from fragment to light
-        vec3 lightDir = normalize(uLights[i].position - vPosition);
+        vec3 lightDir = normalize(uLightPositions[i] - vPosition);
         
         // Create a much wider, smoother transition around the terminator
         float dotProduct = dot(diffuseNormal, lightDir);
@@ -269,11 +266,8 @@ void main() {
         
         // Apply lighting with smooth terminator transition
         float lightContribution = terminatorTransition * shadow;
-        totalLight += uLights[i].color * uLights[i].intensity * diffuse * lightContribution * 0.3;
+        totalLight += uLightColors[i] * uLightIntensities[i] * diffuse * lightContribution * 0.3;
         
-        // Add subtle night side illumination
-        float nightContribution = (1.0 - terminatorTransition) * 0.02; // Very subtle night glow
-        totalLight += uLights[i].color * uLights[i].intensity * nightContribution;
     }
 
     // Final color is a mix based on the noise value

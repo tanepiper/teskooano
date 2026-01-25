@@ -295,8 +295,8 @@ export class BaseTerrestrialRenderer<
       }
 
       // Update dynamic ambient lighting
-      if (bodyMaterial.uniforms.uAmbientLightIntensity) {
-        bodyMaterial.uniforms.uAmbientLightIntensity.value =
+      if (bodyMaterial.uniforms.uAmbientIntensity) {
+        bodyMaterial.uniforms.uAmbientIntensity.value =
           dynamicAmbientIntensity;
       }
 

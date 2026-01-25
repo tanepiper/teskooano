@@ -17,8 +17,8 @@ varying vec3 vViewNormal;     // View space normal of the fragment
 // --- Structs ---
 // Multi-Light Uniforms (Standard Three.js)
 #include <lights_pars_begin>
-uniform vec3 uAmbientLightColor;
-uniform float uAmbientLightIntensity;
+uniform vec3 uAmbientColor;
+uniform float uAmbientIntensity;
 
 // Shadow Caster Uniforms
 struct ShadowCaster {

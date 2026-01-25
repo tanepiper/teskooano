@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
+import { LightingUniformPack } from "@teskooano/renderer-threejs-celestial";
 
 // Import shaders from external files
 import nucleusVertexShader from "./shaders/nucleus.vertex.glsl?raw";
@@ -47,6 +47,8 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
       paddedHeights.push(paddedHeights[paddedHeights.length - 1] ?? 1.0);
     }
 
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     super({
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
@@ -58,16 +60,17 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
         uHeights: { value: paddedHeights },
         uNumColors: { value: options.colors.length },
         uNumLights: { value: 0 },
-        uLights: {
-          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
-        },
+        uLightPositions: { value: lightArrays.positions },
+        uLightColors: { value: lightArrays.colors },
+        uLightIntensities: { value: lightArrays.intensities },
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: options.ambientStrength ?? 0.01 },
         uNoiseScale: { value: options.noiseScale ?? 2.0 },
         uBlendSharpness: { value: options.blendSharpness ?? 1.0 },
         uCraterScale: { value: options.craterScale ?? 12.0 },
         uCraterStrength: { value: options.craterStrength ?? 0.5 },
         uSimplePeriod: { value: options.simplePeriod ?? 1.0 },
         uUndulation: { value: options.undulation ?? 0.1 },
-        uAmbientStrength: { value: options.ambientStrength ?? 0.01 },
         uMetallicFactor: { value: options.metallicFactor ?? 0.0 },
         uRoughness: { value: options.roughness ?? 0.5 },
         uSpecularColor: {
@@ -86,6 +89,8 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
 
 export class CometComaMaterial extends THREE.ShaderMaterial {
   constructor(options: { color: THREE.Color; opacity: number }) {
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     super({
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
@@ -95,9 +100,9 @@ export class CometComaMaterial extends THREE.ShaderMaterial {
         uOpacity: { value: options.opacity },
         uTime: { value: 0.0 },
         uNumLights: { value: 0 },
-        uLights: {
-          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
-        },
+        uLightPositions: { value: lightArrays.positions },
+        uLightColors: { value: lightArrays.colors },
+        uLightIntensities: { value: lightArrays.intensities },
       },
       vertexShader: comaVertexShader,
       fragmentShader: comaFragmentShader,
@@ -115,7 +120,8 @@ export class CometParticleMaterial extends THREE.ShaderMaterial {
       uniforms: {
         uColor: { value: options.color },
         uLightIntensity: { value: 1.0 },
-        uAmbientStrength: { value: 0.01 },
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: 0.01 },
       },
       vertexShader: particleVertexShader,
       fragmentShader: particleFragmentShader,
@@ -135,7 +141,8 @@ export class CometJetMaterial extends THREE.ShaderMaterial {
         uLightPosition: { value: new THREE.Vector3() },
         uLightColor: { value: new THREE.Color(0xffffff) },
         uLightIntensity: { value: 1.0 },
-        uAmbientStrength: { value: 0.01 },
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: 0.01 },
       },
       vertexShader: jetVertexShader,
       fragmentShader: jetFragmentShader,

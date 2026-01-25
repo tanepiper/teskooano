@@ -2,12 +2,6 @@ precision highp float;
 #include <common>
 #include <logdepthbuf_pars_fragment>
 
-struct Light {
-  vec3 position;
-  vec3 color;
-  float intensity;
-};
-
 struct ShadowCaster {
     vec3 position;
     float radius;
@@ -27,12 +21,15 @@ varying vec2 vUv;
 uniform vec3 baseColor;        // The primary azure/blue color
 uniform sampler2D stormMap;    // Storm texture
 uniform bool hasStormMap;      // Whether to apply storm texture
-uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
 uniform float time;
-uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
+uniform vec3 uAmbientColor; // Dynamic ambient lighting color
+uniform float uAmbientIntensity; // Dynamic ambient lighting intensity
 
 // --- Helper: clamp01 ---
 float clamp01(float value) {
@@ -99,15 +96,15 @@ void main() {
     atmosphereColor = mix(baseColor, atmosphereColor, atmosphereIntensity * 0.2); // Much less mixing
 
     // Much darker ambient for proper night sides
-    vec3 ambient = atmosphereColor * (uDynamicAmbientIntensity * 0.05); // Even darker ambient
+    vec3 ambient = atmosphereColor * uAmbientColor * (uAmbientIntensity * 0.05); // Even darker ambient
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
     for (int i = 0; i < uNumLights; i++) {
-        if (uLights[i].intensity <= 0.0) continue;
+        if (uLightIntensities[i] <= 0.0) continue;
         
         // Calculate light direction from position
-        vec3 lightDir = normalize(uLights[i].position - vPosition);
+        vec3 lightDir = normalize(uLightPositions[i] - vPosition);
         
         // Create a much wider, smoother transition around the terminator
         float dotProduct = dot(diffuseNormal, lightDir);
@@ -120,7 +117,7 @@ void main() {
 
         // Apply lighting with smooth terminator transition
         float lightContribution = terminatorTransition * shadow;
-        totalDiffuse += atmosphereColor * diffuse * lightContribution * 0.25 * uLights[i].color * uLights[i].intensity;
+        totalDiffuse += atmosphereColor * diffuse * lightContribution * 0.25 * uLightColors[i] * uLightIntensities[i];
 
         // Specular component (basic Blinn-Phong) with smooth falloff
         vec3 halfAngle = normalize(viewDir + lightDir);
@@ -130,11 +127,8 @@ void main() {
         
         // Apply specular with smoother falloff
         float specularFalloff = smoothstep(-0.2, 0.3, dotProduct); // Tighter falloff for specular
-        totalSpecular += vec3(0.05) * specComp * lightContribution * specularFalloff * uLights[i].color * uLights[i].intensity;
+        totalSpecular += vec3(0.05) * specComp * lightContribution * specularFalloff * uLightColors[i] * uLightIntensities[i];
         
-        // Add subtle night side illumination
-        float nightContribution = (1.0 - terminatorTransition) * 0.02; // Very subtle night glow
-        totalDiffuse += atmosphereColor * nightContribution * uLights[i].color * uLights[i].intensity;
     }
 
     // Rim Lighting (Class III adjustments - potentially less pronounced)

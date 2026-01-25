@@ -7,18 +7,16 @@ varying vec3 vWorldNormal;
 varying vec2 vUv;
 varying vec3 vObjectPosition; // Normalized object-space position
 
-struct Light {
-    vec3 position;
-    vec3 color;
-    float intensity;
-};
-
 uniform vec3 uColors[MAX_COLORS];
 uniform float uHeights[MAX_COLORS];
 uniform int uNumColors;
 
 uniform int uNumLights;
-uniform Light uLights[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
+uniform vec3 uAmbientColor;
+uniform float uAmbientIntensity;
 
 uniform float uNoiseScale;
 uniform float uBlendSharpness;
@@ -26,7 +24,6 @@ uniform float uCraterScale;
 uniform float uCraterStrength;
 uniform float uSimplePeriod;
 uniform float uUndulation;
-uniform float uAmbientStrength;
 uniform float uMetallicFactor;
 uniform float uRoughness;
 uniform vec3 uSpecularColor;
@@ -116,22 +113,22 @@ void main() {
     finalColor *= (1.0 - craters * uCraterStrength);
 
     // --- Lighting ---
-    vec3 lighting = vec3(uAmbientStrength * 0.1); // Much darker ambient
+    vec3 lighting = uAmbientColor * (uAmbientIntensity * 0.1); // Much darker ambient
     vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
 
     for (int i = 0; i < uNumLights; i++) {
-        vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
+        vec3 lightDirection = normalize(uLightPositions[i] - vWorldPosition);
         
         // Only calculate lighting if the surface is facing the light (day side)
         float dotProduct = dot(vWorldNormal, lightDirection);
         if (dotProduct > 0.0) {
             float diffuse = max(dotProduct, 0.0);
-            lighting += uLights[i].color * diffuse * uLights[i].intensity * 0.4; // Reduced diffuse strength
+            lighting += uLightColors[i] * diffuse * uLightIntensities[i] * 0.4; // Reduced diffuse strength
 
             // Specular - only on day side
             vec3 halfwayDir = normalize(lightDirection + viewDirection);
             float spec = pow(max(dot(vWorldNormal, halfwayDir), 0.0), 32.0);
-            lighting += uLights[i].color * spec * uRoughness * uLights[i].intensity;
+            lighting += uLightColors[i] * spec * uRoughness * uLightIntensities[i];
         }
         // Night side gets no direct lighting, only the very low ambient
     }

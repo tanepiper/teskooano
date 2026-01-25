@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
-import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
+import {
+  LightArrayUtils,
+  LightingUniformPack,
+} from "@teskooano/renderer-threejs-celestial";
 
 import classIIFragmentShader from "../shaders/class-ii.fragment.glsl";
 import classIIVertexShader from "../shaders/class-ii.vertex.glsl";
@@ -29,7 +32,7 @@ export class ClassIIMaterial extends BaseGasGiantMaterial {
 
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
-    const lights = LightArrayUtils.createLightSourceArray(MAX_LIGHTS);
+    const lights = LightingUniformPack.createLightArrays(MAX_LIGHTS);
     const shadowCasters =
       LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS);
 
@@ -47,7 +50,9 @@ export class ClassIIMaterial extends BaseGasGiantMaterial {
 
         time: { value: 0 },
 
-        uLights: { value: lights },
+        uLightPositions: { value: lights.positions },
+        uLightColors: { value: lights.colors },
+        uLightIntensities: { value: lights.intensities },
         uNumLights: { value: 0 },
 
         uShadowCasters: { value: shadowCasters },
@@ -58,7 +63,8 @@ export class ClassIIMaterial extends BaseGasGiantMaterial {
 
         stormMap: { value: options.textures?.stormMap },
         hasStormMap: { value: !!options.textures?.stormMap },
-        uDynamicAmbientIntensity: { value: 0.03 }, // System-wide minimum ambient for "just enough glow"
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: 0.03 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: classIIVertexShader,
       fragmentShader: classIIFragmentShader,

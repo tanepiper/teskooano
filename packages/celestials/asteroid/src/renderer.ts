@@ -228,8 +228,8 @@ export class AsteroidRenderer extends BaseCelestialRenderer {
 
     if (nucleusMaterial) {
       // Update dynamic ambient lighting directly
-      if (nucleusMaterial.uniforms.uAmbientStrength) {
-        nucleusMaterial.uniforms.uAmbientStrength.value =
+      if (nucleusMaterial.uniforms.uAmbientIntensity) {
+        nucleusMaterial.uniforms.uAmbientIntensity.value =
           dynamicAmbientIntensity;
       }
 

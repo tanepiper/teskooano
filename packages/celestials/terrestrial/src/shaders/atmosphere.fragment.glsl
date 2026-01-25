@@ -11,10 +11,10 @@ uniform float aberrationIntensity;
 uniform float opacity; // New uniform for controlling overall opacity
 
 // Light properties
-uniform int uNumWorldLights;
-uniform vec3 uWorldLightPositions[MAX_LIGHTS];
-uniform vec3 uWorldLightColors[MAX_LIGHTS];
-uniform float uWorldLightIntensities[MAX_LIGHTS];
+uniform int uNumLights;
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 uniform vec3 uPrimaryLightDirection; // Legacy support if needed
 
 varying vec3 vWorldPosition;
@@ -74,11 +74,11 @@ void main() {
 
   // Rayleigh/Mie scattering for World-Space Light Sources
   for (int i = 0; i < 4; i++) {
-    if (i >= uNumWorldLights) break;
+    if (i >= uNumLights) break;
 
-    vec3 lightPos = uWorldLightPositions[i];
-    vec3 lightColor = uWorldLightColors[i];
-    float lightIntensity = uWorldLightIntensities[i];
+    vec3 lightPos = uLightPositions[i];
+    vec3 lightColor = uLightColors[i];
+    float lightIntensity = uLightIntensities[i];
     
     // Direction FROM fragment TO light source in World Space
     vec3 lightDir = normalize(lightPos - vWorldPosition);
@@ -130,4 +130,3 @@ void main() {
 
   #include <logdepthbuf_fragment>
 }
-

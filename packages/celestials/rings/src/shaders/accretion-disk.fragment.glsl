@@ -5,7 +5,8 @@ uniform vec3 color;
 uniform float opacity;
 uniform vec3 uParentPosition; // World position of the parent body
 uniform float uParentRadius;  // Radius of the parent body (used for shadow calculation)
-uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
+uniform vec3 uAmbientColor; // Dynamic ambient lighting color
+uniform float uAmbientIntensity; // Dynamic ambient lighting intensity
 uniform float time;
 
 // Accretion Disk Specific Uniforms
@@ -16,14 +17,10 @@ uniform int uEmissionType; // 0=thermal, 1=synchrotron, 2=mixed
 uniform bool uIsRelativistic;
 uniform float uInnerEdgeRadius; // Inner edge in gravitational radii
 
-// Unified Light Source structure
-struct LightSource {
-    vec3 position;
-    vec3 color;
-    float intensity;
-};
 uniform int uNumLights;
-uniform LightSource uLightSources[MAX_LIGHTS];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 
 // Shadow Caster structure (for moons)
 struct ShadowCaster {
@@ -129,7 +126,7 @@ float calculateAccretionLuminosity(float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientIntensity = uDynamicAmbientIntensity;
+    vec3 ambientLight = uAmbientColor * uAmbientIntensity;
 
     // Calculate distance from center for accretion disk physics
     float distanceFromCenter = length(vUv - vec2(0.5, 0.5)) * 2.0;
@@ -141,11 +138,13 @@ void main() {
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
 
-        LightSource light = uLightSources[i];
-        if (light.intensity <= 0.0) continue;
+        vec3 lightPosition = uLightPositions[i];
+        vec3 lightColor = uLightColors[i];
+        float lightIntensity = uLightIntensities[i];
+        if (lightIntensity <= 0.0) continue;
 
         // Calculate Lighting
-        vec3 lightDir = normalize(light.position - vPosition);
+        vec3 lightDir = normalize(lightPosition - vPosition);
         vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
 
         // Calculate dot product for lighting direction
@@ -155,12 +154,12 @@ void main() {
         float shadow = 1.0;
         
         // Shadow from the parent body (black hole/star)
-        shadow = min(shadow, getShadow(vPosition, light.position, uParentPosition, uParentRadius));
+        shadow = min(shadow, getShadow(vPosition, lightPosition, uParentPosition, uParentRadius));
 
         // Shadows from other objects
         for (int j = 0; j < MAX_SHADOW_CASTERS; j++) {
             if (j >= uNumShadowCasters) break;
-            shadow = min(shadow, getShadow(vPosition, light.position, uShadowCasters[j].position, uShadowCasters[j].radius));
+            shadow = min(shadow, getShadow(vPosition, lightPosition, uShadowCasters[j].position, uShadowCasters[j].radius));
         }
 
         // Apply lighting based on direction
@@ -174,18 +173,18 @@ void main() {
             float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
             float diffuse = (diffuseUp + diffuseDown) * 1.5;
 
-            totalLight += light.color * diffuse * light.intensity * shadow;
+            totalLight += lightColor * diffuse * lightIntensity * shadow;
         } else {
             // Night side - reduced lighting but not completely dark
             // Use a small amount of back-lighting to simulate light scattering
             float backLighting = abs(dotProduct) * 0.5; // 50% of the light intensity for back-lighting (higher than rings due to hot gas)
-            totalLight += light.color * backLighting * light.intensity * shadow;
+            totalLight += lightColor * backLighting * lightIntensity * shadow;
         }
         
         // Add light transmission through accretion disk (regardless of direction)
         // Hot gas in accretion disks scatters light more effectively than ring particles
         float lightTransmission = 0.4; // 40% of light passes through hot gas (higher than rings)
-        totalLight += light.color * lightTransmission * light.intensity * shadow;
+        totalLight += lightColor * lightTransmission * lightIntensity * shadow;
     }
 
     // For accretion disks, add self-emission
@@ -212,7 +211,7 @@ void main() {
 
     // Final color calculation
     vec3 finalColor = uIsAccretionDisk ? diskColor : color;
-    finalColor *= (totalLight + ambientIntensity) * diskVariation;
+    finalColor *= (totalLight + ambientLight) * diskVariation;
 
     // Apply gamma correction
     finalColor = pow(finalColor, vec3(1.0/2.2));

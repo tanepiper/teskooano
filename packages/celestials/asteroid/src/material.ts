@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {
   LightArrayUtils,
+  LightingUniformPack,
   LightSourceData,
 } from "@teskooano/renderer-threejs-celestial";
 
@@ -46,6 +47,8 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
       paddedHeights.push(paddedHeights[paddedHeights.length - 1] ?? 1.0);
     }
 
+    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
     super({
       defines: {
         MAX_LIGHTS: MAX_LIGHTS,
@@ -58,9 +61,11 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
         uHeights: { value: paddedHeights },
         uNumColors: { value: options.colors.length },
         uNumLights: { value: 0 },
-        uLights: {
-          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
-        },
+        uLightPositions: { value: lightArrays.positions },
+        uLightColors: { value: lightArrays.colors },
+        uLightIntensities: { value: lightArrays.intensities },
+        uAmbientColor: { value: new THREE.Color(0xffffff) },
+        uAmbientIntensity: { value: options.ambientStrength ?? 0.01 },
         // Shadow casting uniforms
         uNumShadowCasters: { value: 0 },
         uShadowCasters: {
@@ -72,7 +77,6 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
         uCraterStrength: { value: options.craterStrength ?? 0.5 },
         uSimplePeriod: { value: options.simplePeriod ?? 1.0 },
         uUndulation: { value: options.undulation ?? 0.1 },
-        uAmbientStrength: { value: options.ambientStrength ?? 0.01 },
         uMetallicFactor: { value: options.metallicFactor ?? 0.0 },
         uRoughness: { value: options.roughness ?? 0.5 },
         uSpecularColor: {
@@ -87,15 +91,6 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
 
     this.currentNumLights = MAX_LIGHTS;
     this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
-  }
-
-  protected resizeLightArrays(newSize: number): void {
-    this.uniforms.uLights.value = LightArrayUtils.resizeLightArray(
-      this,
-      newSize,
-      this.uniforms.uLights.value,
-    );
-    this.currentNumLights = newSize;
   }
 
   protected resizeShadowCasterArrays(newSize: number): void {
@@ -120,21 +115,17 @@ export class AsteroidNucleusMaterial extends THREE.ShaderMaterial {
       this.uniforms.uCameraPosition.value.copy(camera.position);
     }
 
-    const numLights = lightSources?.size ?? 0;
-    if (numLights !== this.currentNumLights) {
-      this.resizeLightArrays(numLights);
-    }
-
-    this.uniforms.uNumLights.value = numLights;
-    if (lightSources) {
-      let i = 0;
-      for (const lightData of lightSources.values()) {
-        this.uniforms.uLights.value[i].position.copy(lightData.position);
-        this.uniforms.uLights.value[i].color.copy(lightData.color);
-        this.uniforms.uLights.value[i].intensity = lightData.intensity ?? 1.0;
-        i++;
-      }
-    }
+    LightingUniformPack.apply(
+      {
+        uNumLights: this.uniforms.uNumLights,
+        uLightPositions: this.uniforms.uLightPositions,
+        uLightColors: this.uniforms.uLightColors,
+        uLightIntensities: this.uniforms.uLightIntensities,
+        uAmbientColor: this.uniforms.uAmbientColor,
+      },
+      lightSources,
+      MAX_LIGHTS,
+    );
 
     const numShadowCasters = shadowCasters?.length ?? 0;
     if (numShadowCasters !== this.currentNumShadowCasters) {
