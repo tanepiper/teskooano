@@ -33,7 +33,11 @@ export class LightingUniformPack {
 
   static applyFromArray(
     uniforms: LightingUniforms,
-    lights: Array<{ position: THREE.Vector3; color: THREE.Color; intensity?: number }>,
+    lights: Array<{
+      position: THREE.Vector3;
+      color: THREE.Color;
+      intensity?: number;
+    }>,
     maxLights: number,
   ): THREE.Color {
     const numLights = Math.min(lights.length, maxLights);
@@ -52,7 +56,8 @@ export class LightingUniformPack {
       }
     }
 
-    const ambientColor = uniforms.uAmbientColor?.value ?? new THREE.Color(1, 1, 1);
+    const ambientColor =
+      uniforms.uAmbientColor?.value ?? new THREE.Color(1, 1, 1);
     this.applyAmbientMix(ambientColor, lights);
     if (uniforms.uAmbientColor) {
       uniforms.uAmbientColor.value.copy(ambientColor);

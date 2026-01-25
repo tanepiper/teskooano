@@ -8,6 +8,11 @@ import ringVertexShader from "./shaders/ring.vertex.glsl";
 import ringFragmentShader from "./shaders/ring.fragment.glsl";
 import accretionDiskFragmentShader from "./shaders/accretion-disk.fragment.glsl";
 
+const MAX_LIGHTS = 4;
+const MAX_SHADOW_CASTERS = 4;
+
+const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
+
 /**
  * Material for celestial object rings
  * Works for all ring types with configuration options
@@ -32,13 +37,6 @@ export class RingMaterial extends ShaderMaterial {
     } = {},
   ) {
     const detailLevel = options.detailLevel || "high";
-
-    const MAX_LIGHTS = 4;
-    const MAX_SHADOW_CASTERS = 4;
-
-    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
-
-    const lightArrays = LightingUniformPack.createLightArrays(MAX_LIGHTS);
 
     super({
       defines: {

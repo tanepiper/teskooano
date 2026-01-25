@@ -190,7 +190,8 @@ float createParticleDetail(vec2 uv, float distanceFromCenter) {
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    vec3 ambientLight = uAmbientColor * (uAmbientIntensity * 0.3); // Increased from 0.1 for brighter ambient
+    float ambientBoost = max(uAmbientIntensity, 0.08);
+    vec3 ambientLight = uAmbientColor * (ambientBoost * 0.9);
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
@@ -254,7 +255,7 @@ void main() {
         // *** 4. Add Light Transmission Through Rings (regardless of direction) ***
         // Rings scatter light even when not directly illuminated
         // This simulates light passing through the ring particles
-        float lightTransmission = 0.4; // Increased from 0.25 for better scattering
+        float lightTransmission = 0.65;
         totalLight += lightColor * lightTransmission * lightIntensity * shadow;
     }
 
@@ -285,8 +286,12 @@ void main() {
     // 7. Combine everything for final ring variation with reduced banding
     float ringVariation = ringDetail * (0.95 + noiseVal * 0.05) * radialFalloff;
 
+    // Bloom-like glow for icy rings (emissive-style lift)
+    float glowStrength = mix(0.12, 0.28, clamp(uAmbientIntensity * 1.5, 0.0, 1.0));
+    vec3 glow = uAmbientColor * glowStrength * (0.6 + 0.4 * ringVariation);
+
     // Combine all factors for final color
-    vec3 finalColor = color * (totalLight + ambientLight) * ringVariation;
+    vec3 finalColor = color * (totalLight + ambientLight) * ringVariation + glow;
 
     // Apply gamma correction
     finalColor = pow(finalColor, vec3(1.0/2.2));

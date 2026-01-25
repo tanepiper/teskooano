@@ -296,8 +296,7 @@ export class BaseTerrestrialRenderer<
 
       // Update dynamic ambient lighting
       if (bodyMaterial.uniforms.uAmbientIntensity) {
-        bodyMaterial.uniforms.uAmbientIntensity.value =
-          dynamicAmbientIntensity;
+        bodyMaterial.uniforms.uAmbientIntensity.value = dynamicAmbientIntensity;
       }
 
       // Find shadow casters using centralized utility
