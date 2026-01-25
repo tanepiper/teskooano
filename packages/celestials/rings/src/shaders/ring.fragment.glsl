@@ -193,6 +193,8 @@ void main() {
     float ambientBoost = max(uAmbientIntensity, 0.005);
     vec3 ambientLight = uAmbientColor * (ambientBoost * 0.4);
     float shadowOcclusion = 1.0;
+    float distanceToParent = length(vPosition - uParentPosition);
+    float umbraBias = smoothstep(uParentRadius * 1.1, uParentRadius * 3.0, distanceToParent);
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
@@ -262,6 +264,7 @@ void main() {
     }
 
     float shadowDarken = mix(0.03, 1.0, shadowOcclusion);
+    shadowDarken = mix(shadowDarken * 0.55, shadowDarken, umbraBias);
     ambientLight *= shadowDarken;
 
     // Calculate distance from center for radial patterns
