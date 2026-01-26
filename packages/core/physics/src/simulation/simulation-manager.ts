@@ -14,11 +14,12 @@ import {
   ForceCalculationAlgorithm,
 } from "../algorithms/force-calculation-algorithm";
 import { CollisionDetectionService } from "../collision/collision-service";
-import { velocityVerletIntegrate } from "../integrators";
+import { VelocityVerletIntegrator } from "../integrators";
 import {
   IdealOrreryStrategy,
   type IdealOrbitParams,
 } from "../modes/ideal/ideal-orrery";
+import { vectorPool } from "../utils/vectorPool";
 import {
   EnhancedSimulationResult,
   IntegratorFunction,
@@ -65,6 +66,21 @@ export class SimulationManager {
   private integratorFunction: IntegratorFunction;
 
   /**
+   * Optimized integrator instance with pre-allocated vectors.
+   */
+  private integratorInstance: VelocityVerletIntegrator;
+
+  /**
+   * Pre-allocated state buffer for integration outputs (avoids allocations).
+   */
+  private stateBuffer: PhysicsStateReal[] = [];
+
+  /**
+   * Pre-allocated zero vector for fallback acceleration values.
+   */
+  private readonly _zeroVector = new OSVector3(0, 0, 0);
+
+  /**
    * Frame counter for tracking simulation steps (used for WASM update caching)
    */
   private frameCounter = 0;
@@ -79,6 +95,21 @@ export class SimulationManager {
     });
 
     this.integratorFunction = this.getIntegratorFunction();
+    this.integratorInstance = new VelocityVerletIntegrator();
+  }
+
+  /**
+   * Ensure state buffer has capacity for the given number of bodies.
+   */
+  private ensureStateBufferCapacity(count: number): void {
+    while (this.stateBuffer.length < count) {
+      this.stateBuffer.push({
+        id: "",
+        mass_kg: 0,
+        position_m: new OSVector3(),
+        velocity_mps: new OSVector3(),
+      });
+    }
   }
 
   /**
@@ -333,34 +364,43 @@ export class SimulationManager {
     }
 
     // Calculate accelerations using WASM spatial partitioning
+    // Note: We clone the vectors here because they're stored in the result
+    // and used later by the state system. Pooling them would risk reuse before they're done.
     const accelerations = new Map<string, OSVector3>();
     params.bodies.forEach((body) => {
-      const acc = this.calculateAccelerationForBody_NBody(
+      const calculatedAcc = this.calculateAccelerationForBody_NBody(
         body,
         params.bodies,
         params.configuration,
       );
-      accelerations.set(body.id, acc);
+      // Clone to ensure independence (vectors are stored in result and used later)
+      accelerations.set(body.id, calculatedAcc.clone());
     });
 
+    // Use vector pool for temporary position calculations
+    const tempPosition = vectorPool.get();
     const predictedStates = params.bodies.map((body) => {
       const currentAcceleration =
-        accelerations.get(body.id) || new OSVector3(0, 0, 0);
-      const position = body.position_m
-        .clone()
+        accelerations.get(body.id) ?? this._zeroVector;
+      tempPosition
+        .copy(body.position_m)
         .addScaledVector(body.velocity_mps, params.deltaTime)
         .addScaledVector(currentAcceleration, 0.5 * params.deltaTime ** 2);
 
       return {
         ...body,
-        position_m: position,
+        position_m: tempPosition.clone(), // Clone for the predicted state
       };
     });
+    vectorPool.release(tempPosition);
 
-    // Integration step using cached integrator
-    const integratedStates = params.bodies.map((body) => {
+    // Ensure state buffer has capacity
+    this.ensureStateBufferCapacity(params.bodies.length);
+
+    // Integration step using optimized integrator with pre-allocated vectors
+    const integratedStates = params.bodies.map((body, index) => {
       const currentAcceleration =
-        accelerations.get(body.id) || new OSVector3(0, 0, 0);
+        accelerations.get(body.id) ?? this._zeroVector;
 
       const calculateNewAccelerationForAdvanced = (
         stateGuess: PhysicsStateReal,
@@ -375,11 +415,14 @@ export class SimulationManager {
         );
       };
 
-      return this.integratorFunction(
+      // Use pre-allocated state buffer entry
+      const outputState = this.stateBuffer[index];
+      return this.integratorInstance.integrate(
         body,
         currentAcceleration,
         calculateNewAccelerationForAdvanced,
         params.deltaTime,
+        outputState,
       );
     });
 

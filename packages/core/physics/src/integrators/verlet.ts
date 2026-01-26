@@ -111,3 +111,100 @@ export const velocityVerletIntegrate = (
     velocity_mps: newVelocity,
   };
 };
+
+/**
+ * Optimized Velocity Verlet integrator with pre-allocated vectors.
+ * Eliminates vector allocations in the hot path for better performance.
+ *
+ * Position update:
+ * x_new = x + v*dt + 0.5*a*dt²
+ *
+ * Velocity update:
+ * v_new = v + 0.5*(a + a_new)*dt
+ *
+ * This requires the acceleration to be recalculated based on the new position.
+ */
+export class VelocityVerletIntegrator {
+  // Pre-allocated working vectors (created once, reused every call)
+  private readonly _pos = new OSVector3();
+  private readonly _vel = new OSVector3();
+  private readonly _acc = new OSVector3();
+  private readonly _newPos = new OSVector3();
+  private readonly _halfVel = new OSVector3();
+  private readonly _newVel = new OSVector3();
+  private readonly _stateGuess: PhysicsStateReal;
+
+  constructor() {
+    // Pre-allocate state guess object with vectors
+    this._stateGuess = {
+      id: "",
+      mass_kg: 0,
+      position_m: new OSVector3(),
+      velocity_mps: new OSVector3(),
+    };
+  }
+
+  /**
+   * Integrate using Velocity Verlet method with zero allocations.
+   *
+   * @param currentState - The current state of the body.
+   * @param acceleration - The current acceleration of the body (m/s^2).
+   * @param calculateNewAcceleration - Function to calculate acceleration at the new state.
+   * @param dt - The time step duration (seconds).
+   * @param out - Output state object to reuse (avoids allocation).
+   * @returns The new REAL state of the body after the time step (same as out parameter).
+   */
+  integrate(
+    currentState: PhysicsStateReal,
+    acceleration: OSVector3,
+    calculateNewAcceleration: (newStateGuess: PhysicsStateReal) => OSVector3,
+    dt: number,
+    out: PhysicsStateReal,
+  ): PhysicsStateReal {
+    if (dt === 0) {
+      out.id = currentState.id;
+      out.mass_kg = currentState.mass_kg;
+      out.position_m.copy(currentState.position_m);
+      out.velocity_mps.copy(currentState.velocity_mps);
+      return out;
+    }
+
+    const halfDt = 0.5 * dt;
+    const halfDtSquared = 0.5 * dt * dt;
+
+    // Copy to working vectors (no allocation)
+    this._pos.copy(currentState.position_m);
+    this._vel.copy(currentState.velocity_mps);
+    this._acc.copy(acceleration);
+
+    // newPos = pos + vel*dt + 0.5*acc*dt²
+    this._newPos
+      .copy(this._pos)
+      .addScaledVector(this._vel, dt)
+      .addScaledVector(this._acc, halfDtSquared);
+
+    // halfVel = vel + 0.5*acc*dt
+    this._halfVel.copy(this._vel).addScaledVector(this._acc, halfDt);
+
+    // Prepare state guess for acceleration calculation
+    this._stateGuess.id = currentState.id;
+    this._stateGuess.mass_kg = currentState.mass_kg;
+    this._stateGuess.position_m.copy(this._newPos);
+    this._stateGuess.velocity_mps.copy(this._halfVel);
+
+    // Calculate new acceleration at predicted position
+    const newAcceleration = calculateNewAcceleration(this._stateGuess);
+    this._acc.copy(newAcceleration);
+
+    // newVel = halfVel + 0.5*newAcc*dt
+    this._newVel.copy(this._halfVel).addScaledVector(this._acc, halfDt);
+
+    // Update output (reuse object)
+    out.id = currentState.id;
+    out.mass_kg = currentState.mass_kg;
+    out.position_m.copy(this._newPos);
+    out.velocity_mps.copy(this._newVel);
+
+    return out;
+  }
+}
