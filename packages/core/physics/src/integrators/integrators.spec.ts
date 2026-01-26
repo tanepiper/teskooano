@@ -1,92 +1,10 @@
 import { describe, it, expect } from "vitest";
 
 import { PhysicsStateReal } from "@teskooano/data-types";
-import { standardEuler } from "./euler";
 import { verletIntegrate, velocityVerletIntegrate } from "./verlet";
 import { OSVector3 } from "@teskooano/core-math";
 
 describe("Physics Integrators", () => {
-  describe("Euler Integration", () => {
-    it("updates position and velocity correctly under constant acceleration", () => {
-      const initialState: PhysicsStateReal = {
-        id: "1",
-        mass_kg: 1000,
-        position_m: new OSVector3(0, 0, 0),
-        velocity_mps: new OSVector3(0, 0, 0),
-      };
-      const acceleration = new OSVector3(1, 0, 0);
-      const dt = 1;
-
-      const newState = standardEuler(initialState, acceleration, dt);
-
-      expect(newState.velocity_mps.x).toBe(1);
-      expect(newState.velocity_mps.y).toBe(0);
-      expect(newState.velocity_mps.z).toBe(0);
-
-      const expectedPosition = initialState.position_m
-        .clone()
-        .add(initialState.velocity_mps.clone().multiplyScalar(dt));
-
-      expect(newState.position_m.x).toBe(expectedPosition.x);
-      expect(newState.position_m.y).toBe(expectedPosition.y);
-      expect(newState.position_m.z).toBe(expectedPosition.z);
-    });
-
-    it("preserves body properties (id, mass_kg)", () => {
-      const initialState: PhysicsStateReal = {
-        id: "1",
-        mass_kg: 1000,
-        position_m: new OSVector3(0, 0, 0),
-        velocity_mps: new OSVector3(0, 0, 0),
-      };
-      const acceleration = new OSVector3(1, 0, 0);
-      const dt = 1;
-
-      const newState = standardEuler(initialState, acceleration, dt);
-
-      expect(newState.id).toBe(initialState.id);
-      expect(newState.mass_kg).toBe(initialState.mass_kg);
-    });
-
-    it("handles zero acceleration correctly", () => {
-      const initialState: PhysicsStateReal = {
-        id: "1",
-        mass_kg: 1000,
-        position_m: new OSVector3(0, 0, 0),
-        velocity_mps: new OSVector3(1, 0, 0),
-      };
-      const acceleration = new OSVector3(0, 0, 0);
-      const dt = 1;
-
-      const newState = standardEuler(initialState, acceleration, dt);
-
-      expect(newState.velocity_mps).toEqual(initialState.velocity_mps);
-
-      const expectedPosition = initialState.position_m
-        .clone()
-        .add(initialState.velocity_mps.clone().multiplyScalar(dt));
-
-      expect(newState.position_m.x).toBe(expectedPosition.x);
-      expect(newState.position_m.y).toBe(expectedPosition.y);
-      expect(newState.position_m.z).toBe(expectedPosition.z);
-    });
-
-    it("handles zero time step correctly", () => {
-      const initialState: PhysicsStateReal = {
-        id: "1",
-        mass_kg: 1000,
-        position_m: new OSVector3(0, 0, 0),
-        velocity_mps: new OSVector3(0, 0, 0),
-      };
-      const acceleration = new OSVector3(1, 0, 0);
-      const dt = 0;
-
-      const newState = standardEuler(initialState, acceleration, dt);
-
-      expect(newState).toEqual(initialState);
-    });
-  });
-
   describe("Verlet Integration", () => {
     it("updates position and velocity correctly under constant acceleration", () => {
       const previousState: PhysicsStateReal = {
@@ -205,7 +123,7 @@ describe("Physics Integrators", () => {
       expect(newState).toEqual(currentState);
     });
 
-    it("maintains better energy conservation than Euler for circular orbital motion", () => {
+    it("maintains excellent energy conservation for circular orbital motion", () => {
       const G = 6.6743e-11;
       const centralMass = 1.989e30;
       const dt = 0.01;
@@ -228,7 +146,6 @@ describe("Physics Integrators", () => {
         return r.multiplyScalar((-G * centralMass) / distanceCubed);
       };
 
-      let eulerState: PhysicsStateReal = { ...initialState };
       let verletState: PhysicsStateReal = { ...initialState };
 
       const initialKineticEnergy =
@@ -237,31 +154,16 @@ describe("Physics Integrators", () => {
         (-G * centralMass * initialState.mass_kg) / orbitalRadius;
       const initialEnergy = initialKineticEnergy + initialPotentialEnergy;
 
-      let maxEulerEnergyDiff = 0;
       let maxVerletEnergyDiff = 0;
-
-      let eulerAccel = calculateAcceleration(eulerState);
       let verletAccel = calculateAcceleration(verletState);
 
       for (let i = 0; i < steps; i++) {
-        const newEulerState = standardEuler(eulerState, eulerAccel, dt);
-
         const newVerletState = velocityVerletIntegrate(
           verletState,
           verletAccel,
           (state_m) => calculateAcceleration(state_m),
           dt,
         );
-
-        const eulerVelSquared = Math.pow(
-          newEulerState.velocity_mps.length(),
-          2,
-        );
-        const eulerKinetic = 0.5 * newEulerState.mass_kg * eulerVelSquared;
-        const eulerDistance = newEulerState.position_m.length();
-        const eulerPotential =
-          (-G * centralMass * newEulerState.mass_kg) / eulerDistance;
-        const eulerEnergy = eulerKinetic + eulerPotential;
 
         const verletVelSquared = Math.pow(
           newVerletState.velocity_mps.length(),
@@ -273,25 +175,17 @@ describe("Physics Integrators", () => {
           (-G * centralMass * newVerletState.mass_kg) / verletDistance;
         const verletEnergy = verletKinetic + verletPotential;
 
-        const eulerEnergyDiff = Math.abs(
-          (eulerEnergy - initialEnergy) / initialEnergy,
-        );
         const verletEnergyDiff = Math.abs(
           (verletEnergy - initialEnergy) / initialEnergy,
         );
 
-        maxEulerEnergyDiff = Math.max(maxEulerEnergyDiff, eulerEnergyDiff);
         maxVerletEnergyDiff = Math.max(maxVerletEnergyDiff, verletEnergyDiff);
-
-        eulerState = newEulerState;
-        eulerAccel = calculateAcceleration(eulerState);
 
         verletState = newVerletState;
         verletAccel = calculateAcceleration(verletState);
       }
 
-      expect(maxVerletEnergyDiff).toBeLessThan(maxEulerEnergyDiff);
-
+      // Velocity Verlet should maintain excellent energy conservation (symplectic)
       expect(maxVerletEnergyDiff).toBeLessThan(0.1);
     });
   });

@@ -18,8 +18,9 @@ The `RenderableCelestialObject` interface defines the structure of a celestial o
 ## Interface Definition
 
 ```typescript
-export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
-  extends CelestialObject<T> {
+export interface RenderableCelestialObject<
+  T = CelestialSpecificPropertiesUnion,
+> extends CelestialObject<T> {
   radius: number;
   mass: number;
   position: THREE.Vector3;

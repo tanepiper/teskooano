@@ -163,7 +163,8 @@ export class SimulationManager {
 
   /**
    * Sets the N-Body algorithm (only valid when in n-body mode).
-   * @param algorithm The N-Body algorithm to use.
+   * Note: Only Barnes-Hut is supported, so this always sets it to Barnes-Hut.
+   * @param algorithm The N-Body algorithm to use (ignored, always uses Barnes-Hut).
    */
   public setNBodyAlgorithm(algorithm: AlgorithmType): void {
     const currentState = simulationStore.getSimulationState();
@@ -173,10 +174,11 @@ export class SimulationManager {
       throw new Error("Cannot set N-Body algorithm when not in N-Body mode");
     }
 
+    // Only Barnes-Hut is supported
     const newConfig: SimulationConfiguration = {
       mode: SimulationMode.NBODY,
-      algorithm,
-      integrator: currentConfig.integrator || IntegratorType.PEFRL,
+      algorithm: AlgorithmType.BARNES_HUT,
+      integrator: currentConfig.integrator || IntegratorType.VERLET,
     };
 
     this.setSimulationConfiguration(newConfig);
@@ -184,7 +186,8 @@ export class SimulationManager {
 
   /**
    * Sets the N-Body integrator (only valid when in n-body mode).
-   * @param integrator The numerical integrator to use.
+   * Note: Only Velocity Verlet is supported, so this always sets it to Verlet.
+   * @param integrator The numerical integrator to use (ignored, always uses Verlet).
    */
   public setNBodyIntegrator(integrator: IntegratorType): void {
     const currentState = simulationStore.getSimulationState();
@@ -194,10 +197,11 @@ export class SimulationManager {
       throw new Error("Cannot set N-Body integrator when not in N-Body mode");
     }
 
+    // Only Velocity Verlet is supported
     const newConfig: SimulationConfiguration = {
       mode: SimulationMode.NBODY,
-      algorithm: currentConfig.algorithm || AlgorithmType.BARNES_HUT,
-      integrator,
+      algorithm: AlgorithmType.BARNES_HUT,
+      integrator: IntegratorType.VERLET,
     };
 
     this.setSimulationConfiguration(newConfig);

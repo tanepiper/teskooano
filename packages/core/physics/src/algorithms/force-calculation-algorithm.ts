@@ -12,8 +12,6 @@ export interface AlgorithmConfig {
   barnesHutThreshold?: number;
   /** Barnes-Hut opening angle (dimensionless theta parameter) */
   barnesHutTheta?: number;
-  /** Optional precomputed neighbor graph for the current step */
-  neighborGraph?: number[][];
 }
 
 /**
@@ -66,6 +64,4 @@ export interface ForceCalculationAlgorithm {
 export interface AlgorithmDependencies {
   /** WASM spatial partitioning service */
   spatialPartitioning: any; // Will be properly typed when we update SpatialPartitioning
-  /** Optional data conversion utility for performance optimization */
-  bodiesToFloat32Array?: (bodies: PhysicsStateReal[]) => Float32Array;
 }

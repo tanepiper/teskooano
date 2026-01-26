@@ -132,8 +132,7 @@ src/
 ```typescript
 export abstract class BaseCelestialRenderer<
   TMaterial extends THREE.Material = THREE.Material,
-> implements CelestialRenderer
-{
+> implements CelestialRenderer {
   constructor(
     objectOrOptions: RenderableCelestialObject | BaseCelestialRendererOptions,
     options?: BaseCelestialRendererOptions,
@@ -386,8 +385,7 @@ moon run threejs-celestial:test:ui
 ```typescript
 export abstract class BaseCelestialRenderer<
   TMaterial extends THREE.Material = THREE.Material,
-> implements CelestialRenderer
-{
+> implements CelestialRenderer {
   constructor(
     objectOrOptions: RenderableCelestialObject | BaseCelestialRendererOptions,
     options: BaseCelestialRendererOptions = {},

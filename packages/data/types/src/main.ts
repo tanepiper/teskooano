@@ -45,28 +45,44 @@ export enum SimulationMode {
 
 /**
  * The numerical integration method used for N-Body simulations.
+ * Simplified to only include symplectic integrators for optimal energy conservation.
  */
 export enum IntegratorType {
-  EULER = "euler", // Simple Euler integration
-  SYMPLECTIC = "symplectic", // Symplectic Euler (energy preserving)
-  VERLET = "verlet", // Velocity Verlet (stable, reversible)
-  RK4 = "rk4", // Runge-Kutta 4th order (high accuracy)
-  ADAPTIVE = "adaptive", // Adaptive step size (auto-optimizing)
-  YOSHIDA4 = "yoshida4", // 4th-order symplectic (Yoshida method)
-  FOREST_RUTH = "forest-ruth", // 4th-order symplectic (Forest-Ruth method)
-  PEFRL = "pefrl", // Optimized 4th-order symplectic (PEFRL)
-  LEAPFROG = "leapfrog", // Classic 2nd-order symplectic
+  /** @deprecated Use VERLET instead */
+  EULER = "euler",
+  /** @deprecated Use VERLET instead */
+  SYMPLECTIC = "symplectic",
+  /** Velocity Verlet - recommended symplectic integrator for N-body simulations */
+  VERLET = "verlet",
+  /** @deprecated Use VERLET instead */
+  RK4 = "rk4",
+  /** @deprecated Use VERLET instead */
+  ADAPTIVE = "adaptive",
+  /** @deprecated Use VERLET instead */
+  YOSHIDA4 = "yoshida4",
+  /** @deprecated Use VERLET instead */
+  FOREST_RUTH = "forest-ruth",
+  /** @deprecated Use VERLET instead */
+  PEFRL = "pefrl",
+  /** Leapfrog - alternative symplectic integrator */
+  LEAPFROG = "leapfrog",
 }
 
 /**
  * The force calculation algorithm used for N-Body simulations.
+ * Simplified to only include Barnes-Hut, which is optimal for planetary N-body simulations.
  */
 export enum AlgorithmType {
-  NEIGHBOR_BASED = "neighbor-based", // Direct N² calculation (for small systems)
-  BARNES_HUT = "barnes-hut", // O(N log N) - tree-based approximation
-  FMM = "fmm", // O(N) - Fast Multipole Method
-  P3M = "p3m", // O(N log N) - Particle-Mesh hybrid
-  TREE_PM = "tree-pm", // O(N log N) - Tree-PM hybrid (recommended)
+  /** @deprecated Use BARNES_HUT instead */
+  NEIGHBOR_BASED = "neighbor-based",
+  /** Barnes-Hut - O(N log N) tree-based approximation, optimal for planetary systems */
+  BARNES_HUT = "barnes-hut",
+  /** @deprecated Removed - use BARNES_HUT instead */
+  FMM = "fmm",
+  /** @deprecated Removed - use BARNES_HUT instead */
+  P3M = "p3m",
+  /** @deprecated Removed - use BARNES_HUT instead */
+  TREE_PM = "tree-pm",
 }
 
 /**

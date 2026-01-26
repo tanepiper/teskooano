@@ -22,9 +22,8 @@ export interface CardConfig {
  * @template T - The specific properties type for this celestial object
  */
 export abstract class BaseCelestialInfoComponent<
-    T extends
-      CelestialSpecificPropertiesUnion = CelestialSpecificPropertiesUnion,
-  >
+  T extends CelestialSpecificPropertiesUnion = CelestialSpecificPropertiesUnion,
+>
   extends HTMLElement
   implements CelestialInfoComponent<T>
 {

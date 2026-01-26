@@ -94,14 +94,6 @@ export interface SimulationManagerParams {
   octreeSize?: number;
   barnesHutTheta?: number;
   ignoreCollisions?: Map<string, boolean>;
-
-  // Optional preferences
-  autoSelectAlgorithm?: boolean;
-  performancePreferences?: {
-    prioritizeAccuracy?: boolean;
-    prioritizeSpeed?: boolean;
-    maxMemoryUsage?: "low" | "medium" | "high";
-  };
 }
 
 /**

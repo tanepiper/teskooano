@@ -18,8 +18,9 @@ The `PlanetProperties` interface defines properties for planets, moons, and dwar
 ## Interface Definition
 
 ```typescript
-export interface PlanetProperties<T = ProceduralSurfaceProperties>
-  extends SpecificPropertiesBase {
+export interface PlanetProperties<
+  T = ProceduralSurfaceProperties,
+> extends SpecificPropertiesBase {
   type: CelestialType.PLANET | CelestialType.MOON | CelestialType.DWARF_PLANET;
   classType?: PlanetType;
   isMoon: boolean;

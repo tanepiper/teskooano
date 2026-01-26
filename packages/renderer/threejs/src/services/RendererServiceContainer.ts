@@ -46,8 +46,7 @@ export interface PanelRendererServices {
  * Complete set of services for a renderer instance.
  */
 export interface RendererServices
-  extends SharedRendererServices,
-    PanelRendererServices {}
+  extends SharedRendererServices, PanelRendererServices {}
 
 /**
  * Options for creating panel-specific services.

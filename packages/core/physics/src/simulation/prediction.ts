@@ -1,6 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { type PhysicsStateReal } from "@teskooano/data-types";
 import { SpatialPartitioning } from "../spatial/spatial-partitioning";
+import { CelestialDistanceService } from "../spatial/celestial-distance-service";
 import { velocityVerletIntegrate } from "../integrators";
 import { CelestialType } from "@teskooano/data-types";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-values";
@@ -60,17 +61,26 @@ export async function predictTrajectory(
   const predictedPoints: PredictedPoint[] = [];
   const relativeObjectPath: OSVector3[] = [];
 
-  // Initialize WASM spatial partitioning with fallback
+  // Use unified WASM spatial partitioning via CelestialDistanceService (single pipeline)
+  // If not available, create a temporary instance for this prediction
   let spatialPartitioning: SpatialPartitioning | null = null;
-  try {
-    spatialPartitioning = new SpatialPartitioning(1e12); // 1 trillion meters
-    await spatialPartitioning.initialize();
-  } catch (error) {
-    console.warn(
-      "WASM spatial partitioning failed to initialize, using traditional method:",
-      error,
-    );
-    spatialPartitioning = null;
+  const celestialDistanceService = CelestialDistanceService.getInstance();
+
+  if (celestialDistanceService.isInitialized()) {
+    // Use the shared WASM instance from the unified pipeline
+    spatialPartitioning = celestialDistanceService.getSpatialPartitioning();
+  } else {
+    // Fallback: create temporary instance for isolated predictions
+    try {
+      spatialPartitioning = new SpatialPartitioning(1e12); // 1 trillion meters
+      await spatialPartitioning.initialize();
+    } catch (error) {
+      console.warn(
+        "[predictTrajectory] WASM spatial partitioning failed to initialize, using traditional method:",
+        error,
+      );
+      spatialPartitioning = null;
+    }
   }
 
   // Make a deep copy of the initial states to avoid modifying the original data

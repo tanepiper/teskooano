@@ -290,10 +290,12 @@ export class HierarchyManager {
       this.CelestialDistanceService.update(allPhysicsStates);
 
       // Use centralized WASM service to find nearby bodies
+      // Pass silent=true since we already checked initialization above
       const searchDistance = this.getSearchDistance(child);
       const nearbyBodies = this.CelestialDistanceService.findBodiesInRange(
         childState.position_m,
         searchDistance,
+        true, // silent - we already checked initialization
       );
 
       let bestParent: CelestialObject | null = null;

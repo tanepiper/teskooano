@@ -25,7 +25,7 @@
     "typescript": "5.9.3",
     "vitest": "4.0.18"
   },
-  "packageManager": "npm@11.8.0",
+  "packageManager": "npm@11.4.2",
   "engines": {
     "node": "24.2.0"
   }

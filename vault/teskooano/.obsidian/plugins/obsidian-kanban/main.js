@@ -2736,7 +2736,6 @@ var ID = wn((pW, FD) => {
     for (
       var o = r, s = n, u = (n + r) >>> 1, l = 2 * e, c = u, d = i[l * u + t];
       o < s;
-
     ) {
       if (s - o < ZO) {
         (QO(e, t, o, s, i, a), (d = i[l * u + t]));
@@ -2875,7 +2874,6 @@ var HD = wn((gW, RD) => {
       ti(l++, 0, 0, n, 0, o, r ? 16 : 0, -1 / 0, 1 / 0),
         r || ti(l++, 0, 0, o, 0, n, 1, -1 / 0, 1 / 0);
       l > 0;
-
     ) {
       l -= 1;
       var m = l * jh,
@@ -10260,7 +10258,6 @@ var HS = wn((Vm, $m) => {
                         return ((C = A.prevNode), (I = A.node), I);
                       };
                     x();
-
                   )
                     (this.iframes &&
                       this.forEachIframe(
@@ -10812,7 +10809,6 @@ var HS = wn((Vm, $m) => {
                     for (
                       var I = void 0;
                       (I = l.exec(D.textContent)) !== null && I[y] !== "";
-
                     )
                       if (d(I[y], D)) {
                         var C = I.index;
@@ -10836,7 +10832,6 @@ var HS = wn((Vm, $m) => {
                   for (
                     var D = void 0;
                     (D = l.exec(v.value)) !== null && D[y] !== "";
-
                   ) {
                     var I = D.index;
                     if (y !== 0) for (var C = 1; C < y; C++) I += D[C].length;
@@ -10891,7 +10886,6 @@ var HS = wn((Vm, $m) => {
                 for (
                   var c = l.parentNode, d = document.createDocumentFragment();
                   l.firstChild;
-
                 )
                   d.appendChild(l.removeChild(l.firstChild));
                 (c.replaceChild(d, l),
@@ -12386,7 +12380,6 @@ Arguments: ` +
             S = Oy(f[p + 1]),
             S = S ? S.split("-") : null;
           w > 0;
-
         ) {
           if (((F = nu(j.slice(0, w).join("-"))), F)) return F;
           if (S && S.length >= w && S1(j, S) >= w - 1) break;
@@ -16282,7 +16275,6 @@ Output:
                 var T = (b > 0 ? "next" : "previous") + "ElementSibling",
                   V = k[T];
                 V;
-
               ) {
                 if (V.matches(_)) return V;
                 V = V[T];
@@ -22296,7 +22288,6 @@ var vw = (function (e) {
         (this.minute +=
           Math.floor((1439 - (this.hour * 60 + this.minute)) / r) * r);
         ;
-
       ) {
         this.minute += r;
         var o = Su(this.minute, 60),
@@ -22317,7 +22308,6 @@ var vw = (function (e) {
             (86399 - (this.hour * 3600 + this.minute * 60 + this.second)) / r,
           ) * r);
         ;
-
       ) {
         this.second += r;
         var s = Su(this.second, 60),
@@ -23778,7 +23768,6 @@ function iA(e, t) {
 `),
       n = 0;
     n < r.length;
-
   ) {
     var i = (r[n] = r[n].replace(/\s+$/g, ""));
     i
@@ -46491,7 +46480,6 @@ var ry = !0,
           for (
             g = (n ? s.children.length : -1) + a, y = l.concat(s);
             g > -1 && g < s.children.length;
-
           ) {
             if (((h = o(s.children[g], g, y)()), h[0] === Qd)) return h;
             g = typeof h[1] == "number" ? h[1] : g + a;
@@ -47605,7 +47593,6 @@ function of(e) {
         a-- &&
         ((o = e[a]),
         o[1].type === "lineEnding" || o[1].type === "lineEndingBlank");
-
       )
         o[0] === "enter" &&
           (i && (e[i][1].type = "lineEndingBlank"),
@@ -47666,7 +47653,6 @@ function w3(e, t) {
       h ? ((h._tokenizer = void 0), (h.previous = void 0)) : v.pop(),
       m = v.length;
     m--;
-
   ) {
     let D = s.slice(v[m], v[m + 1]),
       I = a.pop();
@@ -49226,7 +49212,6 @@ function d_(e, t, r) {
         for (
           te = n._index, n._bufferIndex < 0 && (n._bufferIndex = 0);
           n._index === te && n._bufferIndex < re.length;
-
         )
           C(re.charCodeAt(n._bufferIndex));
       else C(re);
@@ -49500,7 +49485,6 @@ function m_() {
         t = "",
         r && (a.charCodeAt(0) === 65279 && d++, (r = void 0));
       d < a.length;
-
     ) {
       if (
         ((h_.lastIndex = d),
@@ -49751,7 +49735,6 @@ function bB(e) {
       },
         Dt = -1;
       ++Dt < t.transforms.length;
-
     )
       me = t.transforms[Dt](me) || me;
     return me;

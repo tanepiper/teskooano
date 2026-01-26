@@ -209,8 +209,9 @@ export interface RingSystemConfiguration {
 /**
  * Properties specific to Planets (including rocky, terrestrial, ice, etc.). Note: Moons use PlanetProperties.
  */
-export interface PlanetProperties<T = ProceduralSurfaceProperties>
-  extends SpecificPropertiesBase {
+export interface PlanetProperties<
+  T = ProceduralSurfaceProperties,
+> extends SpecificPropertiesBase {
   type: CelestialType.PLANET | CelestialType.MOON | CelestialType.DWARF_PLANET;
   /** The specific type classification of the planet (e.g., ROCKY, TERRESTRIAL). */
   classType?: PlanetType;

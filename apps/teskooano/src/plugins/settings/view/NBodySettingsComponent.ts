@@ -8,21 +8,10 @@ const template = document.createElement("template");
 
 const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [
   { value: AlgorithmType.BARNES_HUT, label: "Barnes-Hut" },
-  { value: AlgorithmType.FMM, label: "Fast Multipole (FMM)" },
-  { value: AlgorithmType.P3M, label: "Particle-Mesh (P3M)" },
-  { value: AlgorithmType.TREE_PM, label: "Tree-Particle-Mesh" },
 ];
 
 const INTEGRATOR_OPTIONS: { value: IntegratorType; label: string }[] = [
-  { value: IntegratorType.EULER, label: "Euler" },
-  { value: IntegratorType.SYMPLECTIC, label: "Symplectic Euler" },
   { value: IntegratorType.VERLET, label: "Velocity Verlet" },
-  { value: IntegratorType.RK4, label: "Runge-Kutta 4 (RK4)" },
-  { value: IntegratorType.ADAPTIVE, label: "Adaptive RK45" },
-  { value: IntegratorType.YOSHIDA4, label: "Yoshida 4th Order" },
-  { value: IntegratorType.FOREST_RUTH, label: "Forest-Ruth 4th" },
-  { value: IntegratorType.PEFRL, label: "PEFRL 4th Order" },
-  { value: IntegratorType.LEAPFROG, label: "Leapfrog" },
 ];
 
 // Generate options HTML
@@ -116,14 +105,15 @@ template.innerHTML = `
     <label for="setting-algorithm">Force Algorithm</label>
     <select id="setting-algorithm">${allAlgorithms}</select>
   </div>
-  <div class="form-group">
+  <!-- Integrator selector hidden - only Velocity Verlet is supported -->
+  <div class="form-group" style="display: none;">
     <label for="setting-integrator">Integrator</label>
     <select id="setting-integrator">${allIntegrators}</select>
   </div>
 </div>
 
 <!-- Dynamic Displays -->
-<div id="config-display">n-body (tree-pm + pefrl)</div>
+<div id="config-display">n-body (barnes-hut + verlet)</div>
 <div id="mode-performance-display">
   <span id="performance-dot"></span>
   <span id="performance-text">Optimal</span>

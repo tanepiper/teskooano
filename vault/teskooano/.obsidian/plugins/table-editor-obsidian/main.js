@@ -438,7 +438,6 @@ var f3 = we((Al, q1) => {
                 : (f = new F(p.toString())),
               E = (o = F.precision) + 3;
             ;
-
           )
             if (
               ((T = f),
@@ -728,7 +727,6 @@ var f3 = we((Al, q1) => {
               E = new I(x),
               g = x;
             o !== -1;
-
           )
             if (
               ((g = g.times(L)),
@@ -880,7 +878,6 @@ var f3 = we((Al, q1) => {
                 u.reverse(),
                 f = p;
               f--;
-
             )
               u.push(0);
             u.reverse();
@@ -996,7 +993,6 @@ var f3 = we((Al, q1) => {
                 g > E && ((g = E), (a.length = 1)),
                 a.reverse();
               g--;
-
             )
               a.push(0);
             a.reverse();
@@ -1007,7 +1003,6 @@ var f3 = we((Al, q1) => {
               E - g < 0 && ((g = E), (a = I), (I = x), (x = a)),
               u = 0;
             g;
-
           )
             ((u = ((x[--g] = x[g] + I[g] + u) / Q) | 0), (x[g] %= Q));
           for (u && (x.unshift(u), ++f), E = x.length; x[--E] == 0; ) x.pop();
@@ -1081,7 +1076,6 @@ var f3 = we((Al, q1) => {
                 : (f = new I(x.toString())),
               a = (L = I.precision) + 3;
             ;
-
           )
             if (
               ((p = f),
@@ -1157,15 +1151,14 @@ var f3 = we((Al, q1) => {
               E = L + x,
               f = E;
             f--;
-
           )
             p.push(0);
           for (f = x; --f >= 0; ) {
             for (u = 0, g = L + f; g > f; )
               ((T = p[g] + ie[f] * z[g - f - 1] + u),
-                (p[g--] = T % Q | 0),
+                (p[g--] = (T % Q) | 0),
                 (u = (T / Q) | 0));
-            p[g] = (p[g] + u) % Q | 0;
+            p[g] = ((p[g] + u) % Q) | 0;
           }
           for (; !p[--E]; ) p.pop();
           return (
@@ -1257,7 +1250,6 @@ var f3 = we((Al, q1) => {
             I = ce.precision,
             ce.precision = p = _e.length * G * 2;
           (F = Ae(T, u, 0, 1, 1)), (g = a.plus(F.times(f))), g.cmp(o) != 1;
-
         )
           ((a = f),
             (f = g),
@@ -1439,7 +1431,7 @@ var f3 = we((Al, q1) => {
           ? ((u += G), (g = 0))
           : ((g = Math.ceil((u + 1) / G)), (u %= G)),
         (p = $(10, G - u)),
-        (T = o[g] % p | 0),
+        (T = (o[g] % p) | 0),
         f == null
           ? u < 3
             ? (u == 0 ? (T = (T / 100) | 0) : u == 1 && (T = (T / 10) | 0),
@@ -1498,7 +1490,7 @@ var f3 = we((Al, q1) => {
           T = 0,
           L = f.length;
         for (f = f.slice(); L--; )
-          ((E = f[L] * g + T), (f[L] = E % p | 0), (T = (E / p) | 0));
+          ((E = f[L] * g + T), (f[L] = (E % p) | 0), (T = (E / p) | 0));
         return (T && f.unshift(T), f);
       }
       function u(f, g, p, E) {
@@ -1579,7 +1571,7 @@ var f3 = we((Al, q1) => {
             for (z = 0, ye = ye[0], At++; (F < nn || z) && At--; F++)
               ((ri = z * L + (Ge[F] || 0)),
                 (Et[F] = (ri / ye) | 0),
-                (z = ri % ye | 0));
+                (z = (ri % ye) | 0));
             _e = z || F < nn;
           } else {
             for (
@@ -1593,7 +1585,6 @@ var f3 = we((Al, q1) => {
                 Re = Ge.slice(0, Tt),
                 Be = Re.length;
               Be < Tt;
-
             )
               Re[Be++] = 0;
             ((Xn = ye.slice()),
@@ -1659,7 +1650,7 @@ var f3 = we((Al, q1) => {
           ((p += G),
             (E = u),
             (I = F[(z = 0)]),
-            (L = (I / $(10, g - E - 1)) % 10 | 0));
+            (L = ((I / $(10, g - E - 1)) % 10) | 0));
         else if (((z = Math.ceil((p + 1) / G)), (T = F.length), z >= T))
           if (f) {
             for (; T++ <= z; ) F.push(0);
@@ -1669,7 +1660,7 @@ var f3 = we((Al, q1) => {
           for (I = T = F[z], g = 1; T >= 10; T /= 10) g++;
           ((p %= G),
             (E = p - G + g),
-            (L = E < 0 ? 0 : (I / $(10, g - E - 1)) % 10 | 0));
+            (L = E < 0 ? 0 : ((I / $(10, g - E - 1)) % 10) | 0));
         }
         if (
           ((f =
@@ -1685,7 +1676,8 @@ var f3 = we((Al, q1) => {
                   (a == 4 ||
                     f ||
                     (a == 6 &&
-                      (p > 0 ? (E > 0 ? I / $(10, g - E) : 0) : F[z - 1]) % 10 &
+                      ((p > 0 ? (E > 0 ? I / $(10, g - E) : 0) : F[z - 1]) %
+                        10) &
                         1) ||
                     a == (o.s < 0 ? 8 : 7)))),
           u < 1 || !F[0])
@@ -1704,7 +1696,7 @@ var f3 = we((Al, q1) => {
             ? ((F.length = z), (T = 1), z--)
             : ((F.length = z + 1),
               (T = $(10, G - p)),
-              (F[z] = E > 0 ? ((I / $(10, g - E)) % $(10, E) | 0) * T : 0)),
+              (F[z] = E > 0 ? (((I / $(10, g - E)) % $(10, E)) | 0) * T : 0)),
           x)
         )
           for (;;)
@@ -1838,7 +1830,6 @@ var f3 = we((Al, q1) => {
       for (
         u == null ? ((S = !1), (L = _e)) : (L = u), T = new z(0.03125);
         o.e > -2;
-
       )
         ((o = o.times(T)), (F += 5));
       for (
@@ -1847,7 +1838,6 @@ var f3 = we((Al, q1) => {
           a = p = E = new z(1),
           z.precision = L;
         ;
-
       ) {
         if (
           ((p = j(p.times(o), L, 1)),
@@ -1912,7 +1902,6 @@ var f3 = we((Al, q1) => {
           z = j(ce.times(ce), I, 1),
           g = 3;
         ;
-
       ) {
         if (
           ((E = j(E.times(z), I, 1)),
@@ -2102,7 +2091,6 @@ var f3 = we((Al, q1) => {
             F = _t(I, 10, g),
             p = L = F.length;
           F[--L] == 0;
-
         )
           F.pop();
         if (!F[0]) I = _e ? "0p+0" : "0";
@@ -2387,7 +2375,6 @@ var f3 = we((Al, q1) => {
           ],
             u = 0;
           u < f.length;
-
         )
           o.hasOwnProperty((a = f[u++])) || (o[a] = this[a]);
       return (g.config(o), g);
@@ -3079,7 +3066,6 @@ var Wr = we((Ir, bi) => {
       for (
         var W = -1, ee = N == null ? 0 : N.length;
         ++W < ee && k(N[W], W, N) !== !1;
-
       );
       return N;
     }
@@ -3096,7 +3082,6 @@ var Wr = we((Ir, bi) => {
       for (
         var W = -1, ee = N == null ? 0 : N.length, fe = 0, Te = [];
         ++W < ee;
-
       ) {
         var ze = N[W];
         k(ze, W, N) && (Te[fe++] = ze);
@@ -3116,7 +3101,6 @@ var Wr = we((Ir, bi) => {
       for (
         var W = -1, ee = N == null ? 0 : N.length, fe = Array(ee);
         ++W < ee;
-
       )
         fe[W] = k(N[W], W, N);
       return fe;
@@ -3876,7 +3860,6 @@ var Wr = we((Ir, bi) => {
               i < 0 && (i += h),
               i = n > i ? 0 : il(i);
             n < i;
-
           )
             e[n++] = t;
           return e;
@@ -3956,7 +3939,6 @@ var Wr = we((Ir, bi) => {
               O = 1 / 0,
               q = [];
             b--;
-
           ) {
             var H = e[b];
             (b && t && (H = Fe(H, xt(t))),
@@ -4236,7 +4218,6 @@ var Wr = we((Ir, bi) => {
             for (
               var O = 0, q = t[v], H = n ? n(q) : q;
               (O = h(R, H, O, i)) > -1;
-
             )
               (R !== e && Xi.call(R, O, 1), Xi.call(e, O, 1));
           return e;
@@ -4282,7 +4263,6 @@ var Wr = we((Ir, bi) => {
           for (
             var h = -1, v = t.length, b = v - 1, R = e;
             R != null && ++h < v;
-
           ) {
             var O = sn(t[h]),
               q = n;
@@ -4358,7 +4338,6 @@ var Wr = we((Ir, bi) => {
           for (
             var b = t !== t, R = t === null, O = Nt(t), q = t === s;
             h < v;
-
           ) {
             var H = e1((h + v) / 2),
               Z = n(e[H]),
@@ -4439,7 +4418,6 @@ var Wr = we((Ir, bi) => {
           for (
             var h = e.length, v = i ? h : -1;
             (i ? v-- : ++v < h) && t(e[v], v, e);
-
           );
           return n
             ? Ht(e, i ? 0 : v, i ? v + 1 : h)
@@ -4554,7 +4532,6 @@ var Wr = we((Ir, bi) => {
               b = h.length,
               R = n.length;
             ++i < b;
-
           ) {
             var O = cs(h[i], v[i]);
             if (O) {
@@ -4576,7 +4553,6 @@ var Wr = we((Ir, bi) => {
               H = W(O + q),
               Z = !i;
             ++R < O;
-
           )
             H[R] = t[R];
           for (; ++h < b; ) (Z || h < v) && (H[n[h]] = e[h]);
@@ -4595,7 +4571,6 @@ var Wr = we((Ir, bi) => {
               Z = W(H + q),
               X = !i;
             ++h < H;
-
           )
             Z[h] = e[h];
           for (var ne = h; ++O < q; ) Z[ne + O] = t[O];
@@ -4642,7 +4617,6 @@ var Wr = we((Ir, bi) => {
                 b && ut(n[0], n[1], b) && ((v = h < 3 ? s : v), (h = 1)),
                 t = Se(t);
               ++i < h;
-
             ) {
               var R = n[i];
               R && e(t, R, i, v);
@@ -4657,7 +4631,6 @@ var Wr = we((Ir, bi) => {
             for (
               var h = n.length, v = t ? h : -1, b = Se(n);
               (t ? v-- : ++v < h) && i(b[v], v, b) !== !1;
-
             );
             return n;
           };
@@ -4864,7 +4837,6 @@ var Wr = we((Ir, bi) => {
                 Z = W(H + O),
                 X = this && this !== Ve && this instanceof b ? v : e;
               ++q < H;
-
             )
               Z[q] = i[q];
             for (; O--; ) Z[q++] = arguments[++R];
@@ -5113,7 +5085,6 @@ var Wr = we((Ir, bi) => {
           for (
             var t = e.name + "", n = Rr[t], i = Ne.call(Rr, t) ? n.length : 0;
             i--;
-
           ) {
             var h = n[i],
               v = h.func;
@@ -5421,7 +5392,6 @@ var Wr = we((Ir, bi) => {
               for (
                 var i = arguments, h = -1, v = $e(i.length - t, 0), b = W(v);
                 ++h < v;
-
               )
                 b[h] = i[t + h];
               h = -1;
@@ -5538,7 +5508,6 @@ var Wr = we((Ir, bi) => {
           for (
             var t = -1, n = e == null ? 0 : e.length, i = 0, h = [];
             ++t < n;
-
           ) {
             var v = e[t];
             v && (h[i++] = v);
@@ -6971,7 +6940,6 @@ function print() { __p += __j.call(arguments, '') }
                 h.global || (h = h2(h.source, xe(qi.exec(h)) + "g")),
                   h.lastIndex = 0;
                 (q = h.exec(H));
-
               )
                 var Z = q.index;
               O = O.slice(0, Z === s ? R : Z);

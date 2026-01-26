@@ -173,8 +173,8 @@ Main orchestrator for terrestrial planet rendering:
 
 ```typescript
 export class BaseTerrestrialRenderer<
-  TTerrestrialMaterial extends
-    ProceduralPlanetMaterial = ProceduralPlanetMaterial,
+  TTerrestrialMaterial extends ProceduralPlanetMaterial =
+    ProceduralPlanetMaterial,
 > extends BaseCelestialRenderer<TTerrestrialMaterial> {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected ringSystemRenderer?: RingSystemRenderer;

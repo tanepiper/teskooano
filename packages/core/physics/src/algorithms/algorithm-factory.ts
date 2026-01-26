@@ -1,15 +1,10 @@
-import { algorithms } from "../simulation/constants";
 import { AlgorithmType } from "@teskooano/data-types";
 import { AU_METERS } from "@teskooano/data-values";
 import {
   ForceCalculationAlgorithm,
   AlgorithmDependencies,
 } from "./force-calculation-algorithm";
-import { NeighborBasedAlgorithm } from "./neighbor-based-algorithm";
 import { BarnesHutAlgorithm } from "./barnes-hut-algorithm";
-import { FMMAlgorithm } from "./fmm-algorithm";
-import { P3MAlgorithm } from "./p3m-algorithm";
-import { TreePMAlgorithm } from "./tree-pm";
 
 /**
  * Factory for creating force calculation algorithms
@@ -29,26 +24,9 @@ export class AlgorithmFactory {
     algorithmType: AlgorithmType,
     dependencies: AlgorithmDependencies,
   ): ForceCalculationAlgorithm {
-    // All algorithms use the same WASM spatial partitioning
+    // Only Barnes-Hut is supported - it's optimal for planetary N-body simulations
     const spatialPartitioning = dependencies.spatialPartitioning;
-
-    switch (algorithmType) {
-      case AlgorithmType.BARNES_HUT:
-        return new BarnesHutAlgorithm(spatialPartitioning);
-
-      case AlgorithmType.FMM:
-        return new FMMAlgorithm(spatialPartitioning, dependencies);
-
-      case AlgorithmType.P3M:
-        return new P3MAlgorithm(spatialPartitioning, dependencies);
-
-      case AlgorithmType.TREE_PM:
-        return new TreePMAlgorithm(spatialPartitioning, dependencies);
-
-      default:
-        // Default to neighbor-based algorithm
-        return new NeighborBasedAlgorithm(spatialPartitioning);
-    }
+    return new BarnesHutAlgorithm(spatialPartitioning);
   }
 
   /**
@@ -57,12 +35,7 @@ export class AlgorithmFactory {
    * @returns Array of algorithm types that are fully implemented
    */
   static getImplementedAlgorithms(): AlgorithmType[] {
-    return [
-      AlgorithmType.BARNES_HUT,
-      AlgorithmType.FMM,
-      AlgorithmType.P3M,
-      AlgorithmType.TREE_PM,
-    ];
+    return [AlgorithmType.BARNES_HUT];
   }
 
   /**
@@ -73,57 +46,5 @@ export class AlgorithmFactory {
    */
   static isAlgorithmImplemented(algorithmType: AlgorithmType): boolean {
     return this.getImplementedAlgorithms().includes(algorithmType);
-  }
-
-  /**
-   * Create optimal configuration for simulation
-   * TODO: Implement proper configuration optimization
-   */
-  static createOptimalConfiguration(bodyCount: number, mode: any): any {
-    // Placeholder implementation
-    return {
-      mode,
-      algorithm: "barnes-hut",
-      integrator: "verlet",
-      neighborDistance: AU_METERS, // 1 AU
-      barnesHutThreshold: 100 * AU_METERS, // 100 AU
-      barnesHutTheta: 0.5,
-    };
-  }
-
-  /**
-   * Get performance estimate for algorithm
-   * TODO: Implement proper performance estimation
-   */
-  static getPerformanceEstimate(algorithm: string, bodyCount: number): any {
-    // Placeholder implementation
-    return {
-      relativeSpeed: 1,
-      memoryUsage: "medium",
-      accuracy: "high",
-      isOptimal: true,
-    };
-  }
-
-  /**
-   * Validate algorithm choice
-   * TODO: Implement proper validation
-   */
-  static validateAlgorithmChoice(algorithm: string, bodyCount: number): any {
-    // Placeholder implementation
-    return {
-      isValid: true,
-      warnings: [],
-      recommendations: [],
-    };
-  }
-
-  /**
-   * Select optimal algorithm
-   * TODO: Implement proper algorithm selection
-   */
-  static selectOptimalAlgorithm(bodyCount: number, preferences?: any): string {
-    // Placeholder implementation
-    return "barnes-hut";
   }
 }

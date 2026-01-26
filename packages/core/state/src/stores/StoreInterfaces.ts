@@ -36,8 +36,10 @@ export interface BaseStore<T> {
  * @template TItem The type of individual items in the collection
  * @template TCollection The type of the collection (typically Record<string, TItem>)
  */
-export interface FilterableStore<TItem, TCollection>
-  extends BaseStore<TCollection> {
+export interface FilterableStore<
+  TItem,
+  TCollection,
+> extends BaseStore<TCollection> {
   /**
    * Creates a filtered observable stream based on one or more predicates.
    * The predicates are composed with AND logic (all must return true).
@@ -76,8 +78,9 @@ export interface FilterableStore<TItem, TCollection>
  *
  * @template TItem The type of individual items (must have an id property)
  */
-export interface KeyedStore<TItem extends { id: string }>
-  extends FilterableStore<TItem, Record<string, TItem>> {
+export interface KeyedStore<
+  TItem extends { id: string },
+> extends FilterableStore<TItem, Record<string, TItem>> {
   /**
    * Gets a single item by its ID.
    *

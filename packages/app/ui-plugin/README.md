@@ -62,9 +62,7 @@ Plugin loading is driven by configuration files, analyzed by the Vite plugin at 
     // virtual:teskooano-loaders (simplified)
     export const pluginLoaders = {
       "core-focus-controls": () =>
-        import(
-          "/path/to/app/src/components/ui-controls/focus/FocusControl.plugin.ts"
-        ),
+        import("/path/to/app/src/components/ui-controls/focus/FocusControl.plugin.ts"),
       // ... other plugin loaders
     };
     ```

@@ -188,26 +188,26 @@ describe("SimulationConfiguration", () => {
         expect(
           getConfigurationShortName({
             mode: "nbody",
-            integrator: "rk4",
-            algorithm: "fmm",
+            integrator: "verlet",
+            algorithm: "barnes-hut",
           }),
-        ).toBe("FMM-Rk4");
+        ).toBe("BH-Ver");
 
         expect(
           getConfigurationShortName({
             mode: "nbody",
-            integrator: "euler",
-            algorithm: "tree-pm",
+            integrator: "leapfrog",
+            algorithm: "barnes-hut",
           }),
-        ).toBe("TPM-Eul");
+        ).toBe("BH-Lea");
 
         expect(
           getConfigurationShortName({
             mode: "nbody",
-            integrator: "adaptive",
-            algorithm: "p3m",
+            integrator: "verlet",
+            algorithm: "barnes-hut",
           }),
-        ).toBe("P3M-Ada");
+        ).toBe("BH-Ver");
 
         expect(
           getConfigurationShortName({
@@ -222,10 +222,10 @@ describe("SimulationConfiguration", () => {
         expect(
           getConfigurationShortName({
             mode: "nbody",
-            algorithm: "fmm",
+            algorithm: "barnes-hut",
             // missing integrator
           }),
-        ).toBe("FMM-Unk");
+        ).toBe("BH-Unk");
       });
     });
   });

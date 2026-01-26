@@ -6281,7 +6281,7 @@ var require_jsbn = __commonJS({
     function bnTestBit(n) {
       var j = Math.floor(n / this.DB);
       if (j >= this.t) return this.s != 0;
-      return (this.data[j] & (1 << n % this.DB)) != 0;
+      return (this.data[j] & (1 << (n % this.DB))) != 0;
     }
     function bnpChangeBit(n, op) {
       var r = BigInteger.ONE.shiftLeft(n);
@@ -38014,9 +38014,9 @@ var require_on_finished = __commonJS({
       if (typeof msg.complete === "boolean") {
         return Boolean(
           msg.upgrade ||
-            !socket ||
-            !socket.readable ||
-            (msg.complete && !msg.readable),
+          !socket ||
+          !socket.readable ||
+          (msg.complete && !msg.readable),
         );
       }
       return void 0;

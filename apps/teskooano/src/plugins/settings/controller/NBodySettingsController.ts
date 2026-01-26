@@ -107,7 +107,7 @@ export class NBodySettingsController extends StateSubscriptionMixin {
       this.elements.algorithmSelectElement.value =
         this.currentConfig.algorithm || "barnes-hut";
       this.elements.integratorSelectElement.value =
-        this.currentConfig.integrator || "pefrl";
+        this.currentConfig.integrator || "verlet";
     }
 
     this.updateConfigurationDisplay();
@@ -155,19 +155,10 @@ export class NBodySettingsController extends StateSubscriptionMixin {
 
       switch (algorithm) {
         case "barnes-hut":
-          text.textContent = "Balanced performance (100-10K bodies)";
-          break;
-        case "fmm":
-          text.textContent = "Optimal for large systems (5K+ bodies)";
-          break;
-        case "p3m":
-          text.textContent = "Good for medium systems (2K-50K bodies)";
-          break;
-        case "tree-pm":
-          text.textContent = "Excellent all-around performance";
+          text.textContent = "Optimal for planetary N-body simulations";
           break;
         default:
-          text.textContent = "Performance varies by system size";
+          text.textContent = "Optimal for planetary N-body simulations";
       }
     }
   }
@@ -209,8 +200,8 @@ export class NBodySettingsController extends StateSubscriptionMixin {
         `Failed to change integrator: ${error instanceof Error ? error.message : String(error)}`,
       );
 
-      // Revert selection
-      target.value = this.currentConfig.integrator || "verlet";
+      // Revert selection (always Velocity Verlet)
+      target.value = IntegratorType.VERLET;
     }
   };
 

@@ -11,8 +11,9 @@ import type { CelestialObject } from "./core.types";
  *
  * @template T - The specific properties type for this celestial object
  */
-export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
-  extends CelestialObject<T> {
+export interface RenderableCelestialObject<
+  T = CelestialSpecificPropertiesUnion,
+> extends CelestialObject<T> {
   /** The scaled radius of the object in renderer units (computed from realRadius_m). */
   radius: number;
 

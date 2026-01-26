@@ -85,10 +85,14 @@ export class ShadowCasterUtils {
         this.object.position.z / METERS_TO_SCENE_UNITS,
       );
 
-      const nearbyBodies = this.spatialService.findBodiesInRange(
-        positionInMeters,
-        searchDistance,
-      );
+      // Only use WASM if initialized, otherwise return empty (graceful degradation)
+      const nearbyBodies = this.spatialService.isInitialized()
+        ? this.spatialService.findBodiesInRange(
+            positionInMeters,
+            searchDistance,
+            true, // silent - we checked initialization
+          )
+        : [];
 
       // Filter for moons of this object
       for (const bodyId of nearbyBodies) {
@@ -153,10 +157,14 @@ export class ShadowCasterUtils {
       this.object.position.z / METERS_TO_SCENE_UNITS,
     );
 
-    const nearbyBodies = this.spatialService.findBodiesInRange(
-      positionInMeters,
-      searchDistance,
-    );
+    // Only use WASM if initialized, otherwise return empty (graceful degradation)
+    const nearbyBodies = this.spatialService.isInitialized()
+      ? this.spatialService.findBodiesInRange(
+          positionInMeters,
+          searchDistance,
+          true, // silent - we checked initialization
+        )
+      : [];
 
     // Filter for moons of this object
     for (const bodyId of nearbyBodies) {

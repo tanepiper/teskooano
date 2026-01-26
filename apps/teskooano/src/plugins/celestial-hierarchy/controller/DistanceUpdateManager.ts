@@ -87,10 +87,12 @@ export class DistanceUpdateManager {
   /**
    * Updates distances by reading the current physics state and calculating
    * distances from each object to its parent (or main star if no parent).
+   *
+   * Note: Distance calculation uses plain math and does NOT depend on WASM
+   * initialization. The WASM update is optional and used for spatial queries
+   * elsewhere in the system.
    */
   private _updateDistancesFromPhysicsState(): void {
-    if (!this._CelestialDistanceService.isInitialized()) return;
-
     try {
       // Get current physics bodies from the state
       const physicsBodies = physicsSystemAdapter.getPhysicsBodies();
@@ -99,8 +101,19 @@ export class DistanceUpdateManager {
       // Get all celestial objects to check parent relationships
       const allObjects = this._getCurrentObjects();
 
-      // Update WASM spatial partitioning with current positions
-      this._CelestialDistanceService.update(physicsBodies);
+      // Update WASM spatial partitioning with current positions (optional)
+      // This keeps spatial queries in sync but isn't required for distance calculation
+      if (this._CelestialDistanceService.isInitialized()) {
+        try {
+          this._CelestialDistanceService.update(physicsBodies);
+        } catch (wasmError) {
+          // WASM update failed - continue with distance calculation anyway
+          console.debug(
+            "[DistanceUpdateManager] WASM update skipped:",
+            wasmError,
+          );
+        }
+      }
 
       // Calculate distances from each object to its parent
       const distances = new Map<string, number>();

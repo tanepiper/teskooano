@@ -87,7 +87,10 @@ export class CelestialDistanceService {
    * Check if the service is initialized and ready to use
    */
   public isInitialized(): boolean {
-    return this.spatialPartitioning?.isInitialized() || false;
+    return (
+      this.spatialPartitioning !== null &&
+      this.spatialPartitioning.isInitialized()
+    );
   }
 
   /**
@@ -125,13 +128,20 @@ export class CelestialDistanceService {
    * Find all bodies within a specific distance of a given point
    * @param point The point to search around
    * @param distance The search distance (meters)
+   * @param silent If true, suppress warning messages (for cases where caller already checked initialization)
    * @returns Array of body IDs within the distance
    */
-  public findBodiesInRange(point: any, distance: number): (string | number)[] {
+  public findBodiesInRange(
+    point: any,
+    distance: number,
+    silent: boolean = false,
+  ): (string | number)[] {
     if (!this.isInitialized()) {
-      console.warn(
-        "[CelestialDistanceService] Attempted to find bodies in range before initialization",
-      );
+      if (!silent) {
+        console.warn(
+          "[CelestialDistanceService] Attempted to find bodies in range before initialization",
+        );
+      }
       return [];
     }
     const bodiesInRange = this.spatialPartitioning!.findBodiesInRange(

@@ -31,8 +31,7 @@ import {
  */
 export abstract class BaseCelestialRenderer<
   TMaterial extends THREE.Material = THREE.Material,
-> implements CelestialRenderer
-{
+> implements CelestialRenderer {
   /**
    * Manager for material lifecycle and operations
    */

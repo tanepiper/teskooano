@@ -42,6 +42,7 @@ export class SpatialPartitioning {
     };
     this.positions = new Float32Array();
     this.bodyIds = [];
+    this.neighborGraph = []; // Ensure neighborGraph is initialized
   }
 
   /**
@@ -67,6 +68,52 @@ export class SpatialPartitioning {
   }
 
   /**
+   * Helper function to convert any array-like value to a regular number array.
+   * Handles typed arrays (Uint32Array, Int32Array, etc.), regular arrays, and array-like objects.
+   */
+  private toNumberArray(value: unknown): number[] {
+    // Already a regular array - filter for valid numbers
+    if (Array.isArray(value)) {
+      return value.filter(
+        (v): v is number => typeof v === "number" && !isNaN(v),
+      );
+    }
+
+    // Handle typed arrays (Uint32Array, Int32Array, Float32Array, etc.)
+    // TypedArrays have a length property and are iterable
+    if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
+      // TypedArray - use spread operator which works with iterables
+      const typedArray = value as unknown as Iterable<number>;
+      try {
+        return [...typedArray].filter(
+          (v): v is number => typeof v === "number" && !isNaN(v),
+        );
+      } catch {
+        return [];
+      }
+    }
+
+    // Handle array-like objects with length property
+    if (
+      value !== null &&
+      typeof value === "object" &&
+      "length" in value &&
+      typeof (value as ArrayLike<unknown>).length === "number"
+    ) {
+      try {
+        return Array.from(value as ArrayLike<number>).filter(
+          (v): v is number => typeof v === "number" && !isNaN(v),
+        );
+      } catch {
+        return [];
+      }
+    }
+
+    // Not convertible to array
+    return [];
+  }
+
+  /**
    * Update the spatial partitioning with new body positions
    * @param bodies Array of physics bodies to partition
    */
@@ -80,6 +127,7 @@ export class SpatialPartitioning {
     const numBodies = bodies.length;
     this.positions = new Float32Array(numBodies * 3);
     this.bodyIds = new Array(numBodies);
+    this.neighborGraph = []; // Reset neighbor graph before updating
 
     // Convert bodies to flat position array
     for (let i = 0; i < numBodies; i++) {
@@ -92,10 +140,52 @@ export class SpatialPartitioning {
     }
 
     // Generate neighbor graph using WASM
-    this.neighborGraph = createNearByGraph(
-      this.positions,
-      this.config.neighborDistance,
-    );
+    try {
+      const graph = createNearByGraph(
+        this.positions,
+        this.config.neighborDistance,
+      );
+
+      // Handle various return types from WASM
+      // The WASM library may return typed arrays, regular arrays, or array-like objects
+      let graphArray: unknown[];
+      if (Array.isArray(graph)) {
+        graphArray = graph;
+      } else if (
+        ArrayBuffer.isView(graph) ||
+        (graph !== null &&
+          typeof graph === "object" &&
+          "length" in graph &&
+          typeof (graph as ArrayLike<unknown>).length === "number")
+      ) {
+        // Convert array-like to regular array
+        try {
+          graphArray = Array.from(graph as ArrayLike<unknown>);
+        } catch {
+          console.error(
+            "[SpatialPartitioning] Failed to convert WASM result to array",
+          );
+          this.neighborGraph = [];
+          return;
+        }
+      } else {
+        console.error(
+          "[SpatialPartitioning] WASM createNearByGraph returned unexpected type:",
+          typeof graph,
+        );
+        this.neighborGraph = [];
+        return;
+      }
+
+      // Convert all entries to regular number arrays, handling typed arrays
+      this.neighborGraph = graphArray.map((entry) => this.toNumberArray(entry));
+    } catch (error) {
+      console.error(
+        "[SpatialPartitioning] Error creating neighbor graph:",
+        error,
+      );
+      this.neighborGraph = [];
+    }
   }
 
   /**
@@ -104,16 +194,28 @@ export class SpatialPartitioning {
    * @returns Array of neighbor body IDs
    */
   findNeighbors(bodyId: string | number): (string | number)[] {
-    const index = this.bodyIds.indexOf(bodyId);
-    if (index === -1) {
+    if (!this.config.initialized) {
       return [];
     }
 
-    return (
-      this.neighborGraph[index]?.map(
-        (neighborIndex) => this.bodyIds[neighborIndex],
-      ) || []
-    );
+    const index = this.bodyIds.indexOf(bodyId);
+    if (index === -1 || index >= this.neighborGraph.length) {
+      return [];
+    }
+
+    const rawNeighbors = this.neighborGraph[index];
+
+    // Convert to regular array if needed (fallback for typed arrays)
+    const neighbors = this.toNumberArray(rawNeighbors);
+
+    // Map neighbor indices to body IDs, filtering out invalid indices
+    return neighbors
+      .filter(
+        (neighborIndex) =>
+          neighborIndex >= 0 && neighborIndex < this.bodyIds.length,
+      )
+      .map((neighborIndex) => this.bodyIds[neighborIndex])
+      .filter((id) => id !== undefined); // Filter out any undefined IDs
   }
 
   /**
@@ -129,7 +231,37 @@ export class SpatialPartitioning {
       );
     }
 
-    return createNearByGraph(positions, distance);
+    const result = createNearByGraph(positions, distance);
+
+    // Handle various return types from WASM
+    let resultArray: unknown[];
+    if (Array.isArray(result)) {
+      resultArray = result;
+    } else if (
+      ArrayBuffer.isView(result) ||
+      (result !== null &&
+        typeof result === "object" &&
+        "length" in result &&
+        typeof (result as ArrayLike<unknown>).length === "number")
+    ) {
+      try {
+        resultArray = Array.from(result as ArrayLike<unknown>);
+      } catch {
+        console.error(
+          "[SpatialPartitioning] Failed to convert WASM result to array",
+        );
+        return [];
+      }
+    } else {
+      console.error(
+        "[SpatialPartitioning] WASM createNearByGraph returned unexpected type:",
+        typeof result,
+      );
+      return [];
+    }
+
+    // Convert all entries to regular number arrays, handling typed arrays
+    return resultArray.map((entry) => this.toNumberArray(entry));
   }
 
   /**
@@ -217,14 +349,24 @@ export class SpatialPartitioning {
     const pairs: [string | number, string | number][] = [];
 
     for (let i = 0; i < this.neighborGraph.length; i++) {
-      const neighbors = this.neighborGraph[i];
+      const rawNeighbors = this.neighborGraph[i];
       const bodyId1 = this.bodyIds[i];
+
+      // Skip if bodyId1 is undefined
+      if (bodyId1 === undefined) {
+        continue;
+      }
+
+      // Convert to regular array if needed (fallback for typed arrays)
+      const neighbors = this.toNumberArray(rawNeighbors);
 
       for (const neighborIndex of neighbors) {
         // Only process pairs where i < neighborIndex to avoid duplicates
-        if (i < neighborIndex) {
+        if (i < neighborIndex && neighborIndex < this.bodyIds.length) {
           const bodyId2 = this.bodyIds[neighborIndex];
-          pairs.push([bodyId1, bodyId2]);
+          if (bodyId2 !== undefined) {
+            pairs.push([bodyId1, bodyId2]);
+          }
         }
       }
     }

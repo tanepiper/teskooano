@@ -23,8 +23,7 @@ export interface CompositePanelParams {
 /**
  * Clean interface for CompositeEnginePanel initialization parameters
  */
-export interface CompositeEnginePanelInitParams
-  extends GroupPanelPartInitParameters {
+export interface CompositeEnginePanelInitParams extends GroupPanelPartInitParameters {
   /**
    * The parameters passed to the panel
    */

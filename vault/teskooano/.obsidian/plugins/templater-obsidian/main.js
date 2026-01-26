@@ -50,7 +50,6 @@ var Ui = (() => {
         o = 0,
         a = 0;
       o < r;
-
     ) {
       var l = n[t.charCodeAt(o++)],
         c = n[t.charCodeAt(o++)],
@@ -4409,7 +4408,6 @@ var Xi = (function () {
           d = pe.BeginComment1,
           m = [];
         d !== pe.Done;
-
       ) {
         if (c >= t.end)
           switch (d) {
@@ -5252,7 +5250,6 @@ var Zi = (function () {
       for (
         var o = e.readToken().toString();
         e.peekTokenKind() === u.AsciiWord;
-
       )
         o += e.readToken().toString();
       if (o === "@") {
@@ -5408,7 +5405,6 @@ var Zi = (function () {
           a = t.createMarker(),
           l = o;
         !l;
-
       )
         switch (t.peekTokenKind()) {
           case u.AsciiWord:
@@ -5802,7 +5798,6 @@ var Zi = (function () {
         for (
           e.readToken(), i = e.extractAccumulatedSequence();
           e.peekTokenKind() !== u.DoubleQuote;
-
         ) {
           if (e.peekTokenKind() === u.EndOfInput) {
             this._parserContext.log.addMessageForTokenSequence(
@@ -5922,7 +5917,6 @@ var Zi = (function () {
       for (
         var a = this._tryReadSpacingAndNewlines(e), l = [];
         e.peekTokenKind() === u.AsciiWord;
-
       ) {
         var c = this._parseHtmlAttribute(e);
         if (hn(c))
@@ -6151,7 +6145,6 @@ var Zi = (function () {
       for (
         var o = e.extractAccumulatedSequence();
         e.peekTokenKind() === u.Spacing;
-
       )
         e.readToken();
       for (var a = e.tryExtractAccumulatedSequence(), l = !1, c = void 0; !l; )
@@ -6217,7 +6210,6 @@ var Zi = (function () {
             for (
               w = e.readToken(), P = e.createMarker();
               e.peekTokenKind() === u.Spacing;
-
             )
               w = e.readToken();
             if (
@@ -11851,7 +11843,6 @@ var Si = class extends Jo.EditorSuggest {
           h.style = p,
           s.lexical.hasOwnProperty("align") || (s.lexical.align = !0);
         ;
-
       ) {
         var z = Y.length ? Y.pop() : a ? W : ee;
         if (z(A, _)) {
@@ -12532,7 +12523,6 @@ var Si = class extends Jo.EditorSuggest {
             ((F = s.cc[s.cc.length - 1]) &&
               (F == nt || F == gt) &&
               !/^[,\.=+\-*:?[\(]/.test(p)));
-
         )
           _ = _.prev;
         i && _.type == ")" && _.prev.type == "stat" && (_ = _.prev);

@@ -71,14 +71,8 @@ export function getConfigurationShortName(
     case AlgorithmType.BARNES_HUT:
       algorithmShort = "BH";
       break;
-    case AlgorithmType.FMM:
-      algorithmShort = "FMM";
-      break;
-    case AlgorithmType.P3M:
-      algorithmShort = "P3M";
-      break;
     default:
-      algorithmShort = "TPM"; // tree-pm is the default
+      algorithmShort = "BH"; // Barnes-Hut is the default
       break;
   }
 

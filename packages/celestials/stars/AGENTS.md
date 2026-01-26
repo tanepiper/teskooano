@@ -222,8 +222,8 @@ Base class for main sequence stars with corona effects:
 
 ```typescript
 export class MainSequenceStarRenderer<
-  TMainSequenceMaterial extends
-    MainSequenceStarMaterial = MainSequenceStarMaterial,
+  TMainSequenceMaterial extends MainSequenceStarMaterial =
+    MainSequenceStarMaterial,
 > extends BaseStarRenderer<TMainSequenceMaterial> {
   private materialCache: Map<string, TMainSequenceMaterial> = new Map();
 

@@ -14,22 +14,11 @@ import {
   ForceCalculationAlgorithm,
 } from "../algorithms/force-calculation-algorithm";
 import { CollisionDetectionService } from "../collision/collision-service";
-import {
-  adaptiveRKIntegrate,
-  forestRuthIntegrate,
-  leapfrogIntegrate,
-  pefrlIntegrate,
-  rk4Integrate,
-  standardEuler,
-  symplecticEuler,
-  velocityVerletIntegrate,
-  yoshida4Integrate,
-} from "../integrators";
+import { velocityVerletIntegrate } from "../integrators";
 import {
   IdealOrreryStrategy,
   type IdealOrbitParams,
 } from "../modes/ideal/ideal-orrery";
-import { SpatialPartitioning } from "../spatial/spatial-partitioning";
 import {
   EnhancedSimulationResult,
   IntegratorFunction,
@@ -39,7 +28,10 @@ import {
 /**
  * Unified WASM-optimized simulation manager
  * Provides high-performance WASM spatial partitioning and collision detection
- * with configurable algorithms and integrators
+ * Uses Barnes-Hut algorithm and Velocity Verlet integrator (optimal for planetary N-body simulations)
+ *
+ * All spatial operations go through a single unified WASM pipeline via CelestialDistanceService
+ * to ensure consistency and optimal performance.
  */
 export class SimulationManager {
   /**
@@ -48,7 +40,7 @@ export class SimulationManager {
   private idealOrreryStrategy: IdealOrreryStrategy;
 
   /**
-   * The WASM spatial service for the SimulationOrchestrator.
+   * The WASM spatial service (singleton, single source of truth for all spatial operations)
    */
   private celestialDistanceService: CelestialDistanceService;
 
@@ -56,21 +48,11 @@ export class SimulationManager {
    * The WASM collision detection for the SimulationManager.
    */
   private collisionDetectionService: CollisionDetectionService;
-  /**
-   * The WASM spatial partitioning for the SimulationManager.
-   */
-  private spatialPartitioning: SpatialPartitioning;
 
   /**
-   * Cache of algorithm instances for reuse
+   * The algorithm instance (always Barnes-Hut)
    */
-  private algorithmInstances: Map<AlgorithmType, ForceCalculationAlgorithm> =
-    new Map();
-
-  /**
-   * Pre-allocated vectors for force calculations to reduce memory allocation
-   */
-  private tempPositions = new Float32Array(1000 * 3); // Pre-allocate for WASM
+  private algorithmInstance?: ForceCalculationAlgorithm;
 
   /**
    * Whether the SimulationManager is initialized.
@@ -85,121 +67,45 @@ export class SimulationManager {
   constructor() {
     this.idealOrreryStrategy = new IdealOrreryStrategy();
 
+    // Use CelestialDistanceService singleton as single source of truth for WASM
     this.celestialDistanceService = CelestialDistanceService.getInstance();
     this.collisionDetectionService = new CollisionDetectionService({
       collisionDistance: 0.1 * AU_METERS,
     });
 
-    this.spatialPartitioning = new SpatialPartitioning(1000 * AU_METERS);
-
-    this.integratorFunction = this.createIntegratorFunction(
-      IntegratorType.PEFRL,
-    );
+    this.integratorFunction = this.getIntegratorFunction();
   }
 
   /**
-   * Initialize the WASM systems
+   * Initialize the WASM systems (single unified pipeline)
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
       return;
     }
 
+    // Initialize WASM spatial partitioning (single source of truth)
     await this.celestialDistanceService.initialize({
       neighborDistance: 1000 * AU_METERS,
     });
 
     await this.collisionDetectionService.initialize();
-    await this.spatialPartitioning.initialize();
 
     this.initialized = true;
   }
 
   /**
-   * Create integrator function based on type
+   * Get the integrator function (always Velocity Verlet)
    */
-  private createIntegratorFunction(
-    integratorType: IntegratorType,
-  ): IntegratorFunction {
-    switch (integratorType) {
-      case IntegratorType.EULER:
-        return (body, currentAcceleration, _, dt) =>
-          standardEuler(body, currentAcceleration, dt);
-      case IntegratorType.SYMPLECTIC:
-        return (body, currentAcceleration, _, dt) =>
-          symplecticEuler(body, currentAcceleration, dt);
-      case IntegratorType.VERLET:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          velocityVerletIntegrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-      case IntegratorType.RK4:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          rk4Integrate(body, currentAcceleration, calculateNewAcceleration, dt);
-      case IntegratorType.ADAPTIVE:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) => {
-          const result = adaptiveRKIntegrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-          return result.newState;
-        };
-      case IntegratorType.YOSHIDA4:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          yoshida4Integrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-      case IntegratorType.FOREST_RUTH:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          forestRuthIntegrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-      case IntegratorType.PEFRL:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          pefrlIntegrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-      case IntegratorType.LEAPFROG:
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          leapfrogIntegrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-      default:
-        console.warn(
-          `Unknown integrator: ${integratorType}, falling back to verlet`,
-        );
-        return (body, currentAcceleration, calculateNewAcceleration, dt) =>
-          velocityVerletIntegrate(
-            body,
-            currentAcceleration,
-            calculateNewAcceleration,
-            dt,
-          );
-    }
-  }
-
-  /**
-   * Update integrator function when configuration changes
-   */
-  private updateIntegratorFunction(integratorType: IntegratorType): void {
-    this.integratorFunction = this.createIntegratorFunction(integratorType);
+  private getIntegratorFunction(): IntegratorFunction {
+    // Only Velocity Verlet is supported - it's optimal for N-body simulations
+    return (body, currentAcceleration, calculateNewAcceleration, dt) =>
+      velocityVerletIntegrate(
+        body,
+        currentAcceleration,
+        calculateNewAcceleration,
+        dt,
+      );
   }
 
   /**
@@ -210,11 +116,9 @@ export class SimulationManager {
     targetBodyState: PhysicsStateReal,
     allBodies: PhysicsStateReal[],
     config: SimulationConfiguration,
-    neighborGraph?: number[][],
   ): OSVector3 {
-    // Use the algorithm specified in configuration, default to neighbor-based
-    const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
-    const algorithm = this.getAlgorithmInstance(algorithmType);
+    // Only Barnes-Hut is supported
+    const algorithm = this.getAlgorithmInstance();
     const barnesHutThreshold =
       config.barnesHutThreshold ?? config.neighborDistance;
 
@@ -222,88 +126,35 @@ export class SimulationManager {
       neighborDistance: config.neighborDistance,
       barnesHutThreshold,
       barnesHutTheta: config.barnesHutTheta,
-      neighborGraph,
     });
 
     return result;
   }
 
   /**
-   * Create or reuse a neighbor graph for the current step.
+   * Get or create the algorithm instance (always Barnes-Hut)
+   * Uses the same WASM spatial partitioning instance as collision detection
    */
-  private getOrCreateNeighborGraph(
-    bodies: PhysicsStateReal[],
-    neighborDistance: number,
-  ): number[][] {
-    const positions = this.bodiesToFloat32Array(bodies);
-    return this.spatialPartitioning.createNearByGraph(
-      positions,
-      neighborDistance,
-    );
-  }
-
-  /**
-   * Debug method to validate neighbor graph indices
-   */
-  private validateNeighborGraph(
-    neighborGraph: number[][],
-    allBodies: PhysicsStateReal[],
-  ): void {
-    for (let i = 0; i < neighborGraph.length; i++) {
-      const neighbors = neighborGraph[i];
-      for (const neighborIndex of neighbors) {
-        if (neighborIndex < 0 || neighborIndex >= allBodies.length) {
-          console.error(
-            `Invalid neighbor graph: index ${neighborIndex} out of bounds for bodies array length ${allBodies.length}`,
-          );
-          console.error(`Body at index ${i}:`, allBodies[i]?.id);
-          console.error(`Neighbor graph for body ${i}:`, neighbors);
-        }
+  private getAlgorithmInstance(): ForceCalculationAlgorithm {
+    if (!this.algorithmInstance) {
+      // Get the shared WASM spatial partitioning instance from CelestialDistanceService
+      const spatialPartitioning =
+        this.celestialDistanceService.getSpatialPartitioning();
+      if (!spatialPartitioning) {
+        throw new Error(
+          "[SimulationManager] WASM spatial partitioning not initialized. Call initialize() first.",
+        );
       }
-    }
-  }
 
-  /**
-   * Get or create an algorithm instance for the specified algorithm type
-   */
-  private getAlgorithmInstance(
-    algorithmType: AlgorithmType = AlgorithmType.NEIGHBOR_BASED,
-  ): ForceCalculationAlgorithm {
-    if (!this.algorithmInstances.has(algorithmType)) {
       const dependencies: AlgorithmDependencies = {
-        spatialPartitioning: this.spatialPartitioning,
-        bodiesToFloat32Array: this.bodiesToFloat32Array.bind(this),
+        spatialPartitioning,
       };
-      const algorithm = AlgorithmFactory.createAlgorithm(
-        algorithmType,
+      this.algorithmInstance = AlgorithmFactory.createAlgorithm(
+        AlgorithmType.BARNES_HUT,
         dependencies,
       );
-      this.algorithmInstances.set(algorithmType, algorithm);
     }
-    return this.algorithmInstances.get(algorithmType)!;
-  }
-
-  /**
-   * Efficiently convert bodies to Float32Array for WASM library
-   * Optimized to avoid unnecessary slicing and reduce allocations
-   */
-  private bodiesToFloat32Array(bodies: PhysicsStateReal[]): Float32Array {
-    const requiredLength = bodies.length * 3;
-
-    // Always create a new array with exact size to avoid WASM index confusion
-    const positions = new Float32Array(requiredLength);
-
-    // Fill the array with body positions
-    for (let i = 0; i < bodies.length; i++) {
-      const body = bodies[i];
-      const idx = i * 3;
-      positions[idx] = body.position_m.x;
-      positions[idx + 1] = body.position_m.y;
-      positions[idx + 2] = body.position_m.z;
-    }
-
-    // Return exact-sized array to prevent WASM index mismatches
-    return positions;
+    return this.algorithmInstance;
   }
 
   /**
@@ -330,7 +181,7 @@ export class SimulationManager {
   createDefaultConfiguration(): SimulationConfiguration {
     return {
       mode: SimulationMode.NBODY,
-      integrator: IntegratorType.SYMPLECTIC,
+      integrator: IntegratorType.VERLET,
       algorithm: AlgorithmType.BARNES_HUT,
       neighborDistance: AU_METERS,
       barnesHutThreshold: 100 * AU_METERS,
@@ -399,34 +250,26 @@ export class SimulationManager {
 
     const config = params.configuration;
 
-    // Update integrator if needed
-    if (config.integrator) {
-      this.updateIntegratorFunction(config.integrator as IntegratorType);
-    }
+    // Only Barnes-Hut + Velocity Verlet is supported
+    const algorithm = this.getAlgorithmInstance();
 
-    const algorithmType = config.algorithm || AlgorithmType.NEIGHBOR_BASED;
-    const algorithm = this.getAlgorithmInstance(algorithmType);
-
-    // Update WASM spatial partitioning (only if initialized)
+    // Update WASM spatial partitioning through algorithm (single unified pipeline)
+    // This ensures WASM is the single source of truth for all spatial operations
     if (algorithm.update) {
       algorithm.update(params.bodies);
-    } else if (this.spatialPartitioning.isInitialized()) {
-      this.spatialPartitioning.update(params.bodies);
     } else {
       console.warn(
-        "WASM spatial partitioning not initialized, skipping update",
+        "[SimulationManager] Algorithm does not support update(), falling back to direct WASM update",
       );
+      // Use CelestialDistanceService singleton for unified pipeline
+      if (this.celestialDistanceService.isInitialized()) {
+        this.celestialDistanceService.update(params.bodies);
+      } else {
+        console.warn(
+          "[SimulationManager] WASM spatial partitioning not initialized",
+        );
+      }
     }
-
-    const usesNeighborGraph =
-      algorithmType === AlgorithmType.FMM ||
-      algorithmType === AlgorithmType.P3M ||
-      algorithmType === AlgorithmType.TREE_PM;
-    const neighborDistance = config.neighborDistance ?? 1000 * AU_METERS;
-    const neighborGraph =
-      usesNeighborGraph && this.spatialPartitioning.isInitialized()
-        ? this.getOrCreateNeighborGraph(params.bodies, neighborDistance)
-        : undefined;
 
     // Calculate accelerations using WASM spatial partitioning
     const accelerations = new Map<string, OSVector3>();
@@ -435,7 +278,6 @@ export class SimulationManager {
         body,
         params.bodies,
         params.configuration,
-        neighborGraph,
       );
       accelerations.set(body.id, acc);
     });
@@ -469,7 +311,6 @@ export class SimulationManager {
           stateGuess,
           bodiesForAcceleration,
           params.configuration,
-          neighborGraph,
         );
       };
 
@@ -506,8 +347,8 @@ export class SimulationManager {
       destructionEvents: Array.from(result.destroyedIds),
       metadata: {
         mode: SimulationMode.NBODY,
-        algorithm: config.algorithm,
-        integrator: config.integrator,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
         executionTime: endTime - startTime,
         bodyCount: params.bodies.length,
       },
@@ -518,8 +359,12 @@ export class SimulationManager {
    * Clean up resources
    */
   dispose(): void {
+    if (this.algorithmInstance?.dispose) {
+      this.algorithmInstance.dispose();
+    }
+    this.algorithmInstance = undefined;
     this.collisionDetectionService.dispose();
-    this.spatialPartitioning.dispose();
+    this.celestialDistanceService.dispose();
     this.initialized = false;
   }
 }

@@ -18,7 +18,7 @@ import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 /**
  * Enum defining the available modes for orbit visualization.
  * - `Ideal`: Perfect Keplerian orbits (stable, precise)
- * - `NBody`: Real-time N-Body physics with spatial optimization (Barnes-Hut, FMM, P3M, Tree-PM)
+ * - `NBody`: Real-time N-Body physics with Barnes-Hut algorithm and Velocity Verlet integrator
  */
 export enum OrbitDisplayMode {
   Ideal = "IDEAL",

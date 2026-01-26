@@ -38,8 +38,8 @@ const MAX_SHADOW_CASTERS = 4;
  * @template TTerrestrialMaterial The specific terrestrial material type this renderer works with
  */
 export class BaseTerrestrialRenderer<
-  TTerrestrialMaterial extends
-    ProceduralPlanetMaterial = ProceduralPlanetMaterial,
+  TTerrestrialMaterial extends ProceduralPlanetMaterial =
+    ProceduralPlanetMaterial,
 > extends BaseCelestialRenderer<TTerrestrialMaterial> {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;

@@ -194,8 +194,9 @@ export interface StarProperties extends SpecificPropertiesBase {
   // ... extensive star-specific properties
 }
 
-export interface PlanetProperties<T = ProceduralSurfaceProperties>
-  extends SpecificPropertiesBase {
+export interface PlanetProperties<
+  T = ProceduralSurfaceProperties,
+> extends SpecificPropertiesBase {
   type: CelestialType.PLANET | CelestialType.MOON | CelestialType.DWARF_PLANET;
   classType?: PlanetType;
   isMoon: boolean;
@@ -235,8 +236,9 @@ export interface OrbitalParameters {
 Renderer-specific extensions:
 
 ```typescript
-export interface RenderableCelestialObject<T = CelestialSpecificPropertiesUnion>
-  extends CelestialObject<T> {
+export interface RenderableCelestialObject<
+  T = CelestialSpecificPropertiesUnion,
+> extends CelestialObject<T> {
   radius: number;
   mass: number;
   position: THREE.Vector3;
