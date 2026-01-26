@@ -7,6 +7,12 @@ import * as THREE from "three";
 
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
+import { TextureBasedPlanetMaterial } from "./materials/texture-based-planet.material";
+import type { GeneratedPlanetTextures } from "./texture-generation/types";
+import {
+  TerrainTextureGenerator,
+  type TextureGenerationOptions,
+} from "./texture-generation/TerrainTextureGenerator";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import {
@@ -26,20 +32,41 @@ import {
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 import { createCubeSphereGeometry } from "./geometry/cube-sphere";
 
+/**
+ * Dependencies for terrestrial renderer initialization.
+ */
 export interface TerrestrialRendererDeps {
+  /** Map of renderer instances for caching */
   renderers: Map<string, CelestialRenderer>;
+  /**
+   * Whether to use texture-based rendering (default: true).
+   * When true, generates textures with craters, erosion, etc.
+   * Set to false to use legacy procedural shader-based generation.
+   */
+  useGeneratedTextures?: boolean;
+  /** Options for texture generation */
+  textureGenerationOptions?: TextureGenerationOptions;
+  /** Pre-generated textures (skip generation if provided) */
+  preGeneratedTextures?: GeneratedPlanetTextures;
 }
 
 const MAX_LIGHTS = 4;
 const MAX_SHADOW_CASTERS = 4;
 
+/** Type for planet materials (procedural or texture-based) */
+type PlanetMaterialType = ProceduralPlanetMaterial | TextureBasedPlanetMaterial;
+
 /**
- * Base renderer for terrestrial planets and moons
+ * Base renderer for terrestrial planets and moons.
+ *
+ * Supports two rendering modes:
+ * 1. Procedural (default): Real-time shader-based terrain generation
+ * 2. Texture-based: Pre-generated textures with craters, erosion, etc.
+ *
  * @template TTerrestrialMaterial The specific terrestrial material type this renderer works with
  */
 export class BaseTerrestrialRenderer<
-  TTerrestrialMaterial extends ProceduralPlanetMaterial =
-    ProceduralPlanetMaterial,
+  TTerrestrialMaterial extends PlanetMaterialType = ProceduralPlanetMaterial,
 > extends BaseCelestialRenderer<TTerrestrialMaterial> {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;
@@ -50,9 +77,22 @@ export class BaseTerrestrialRenderer<
     { color: THREE.Texture | null; normal: THREE.Texture | null }
   > = new Map();
 
-  protected material: ProceduralPlanetMaterial | null = null;
+  protected material: PlanetMaterialType | null = null;
   protected materialService: PlanetMaterialService;
   protected atmosphereService: AtmosphereService;
+
+  /** Whether to use texture-based rendering */
+  protected useGeneratedTextures: boolean;
+  /** Options for texture generation */
+  protected textureGenerationOptions?: TextureGenerationOptions;
+  /** Pre-generated textures (if provided) */
+  protected generatedTextures?: GeneratedPlanetTextures;
+  /** Promise for texture generation (if in progress) */
+  private textureGenerationPromise?: Promise<GeneratedPlanetTextures | null>;
+  /** Whether textures are currently being generated */
+  private isGeneratingTextures: boolean = false;
+  /** Frame counter for upgrade checks (check every 60 frames) */
+  private frameCount: number = 0;
 
   constructor(
     object: RenderableCelestialObject,
@@ -62,18 +102,347 @@ export class BaseTerrestrialRenderer<
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
+    this.useGeneratedTextures = deps.useGeneratedTextures ?? true;
+    this.textureGenerationOptions = deps.textureGenerationOptions;
+    this.generatedTextures = deps.preGeneratedTextures;
     deps.renderers.set(object.id, this);
+
+    // Start texture generation asynchronously if needed
+    if (this.useGeneratedTextures && !this.generatedTextures) {
+      this.startTextureGeneration(object);
+    }
+  }
+
+  /**
+   * Starts asynchronous texture generation in the background.
+   * The renderer will use procedural material until textures are ready.
+   */
+  private startTextureGeneration(object: RenderableCelestialObject): void {
+    if (this.isGeneratingTextures) return;
+
+    console.log(
+      `[BaseTerrestrialRenderer] Starting texture generation for ${object.id}`,
+      {
+        hasSurface: !!(object as { surface?: unknown }).surface,
+        options: this.textureGenerationOptions,
+      },
+    );
+
+    this.isGeneratingTextures = true;
+    const startTime = performance.now();
+
+    // Wrap in try-catch to prevent hard crashes
+    try {
+      this.textureGenerationPromise = TerrainTextureGenerator.generateTextures(
+        object,
+        this.textureGenerationOptions,
+      )
+        .then((textures) => {
+          const duration = performance.now() - startTime;
+          console.log(
+            `[BaseTerrestrialRenderer] Texture generation completed for ${object.id} in ${duration.toFixed(0)}ms`,
+            {
+              hasHeightMap: !!textures?.heightMap,
+              hasColorMap: !!textures?.colorMap,
+              hasNormalMap: !!textures?.normalMap,
+              hasRoughnessMap: !!textures?.roughnessMap,
+            },
+          );
+
+          if (!textures) {
+            console.error(
+              `[BaseTerrestrialRenderer] Texture generation returned null for ${object.id}`,
+            );
+            this.isGeneratingTextures = false;
+            return null;
+          }
+
+          this.generatedTextures = textures;
+          this.isGeneratingTextures = false;
+
+          // Immediately try to upgrade material when textures are ready
+          // Use setTimeout to avoid blocking the promise chain
+          setTimeout(() => {
+            this.upgradeToTextureMaterialIfReady(object)
+              .then((upgraded) => {
+                if (upgraded) {
+                  console.log(
+                    `[BaseTerrestrialRenderer] Successfully upgraded ${object.id} to texture-based material`,
+                  );
+                }
+              })
+              .catch((error) => {
+                console.warn(
+                  `[BaseTerrestrialRenderer] Failed to upgrade material immediately for ${object.id}:`,
+                  error,
+                );
+              });
+          }, 0);
+
+          return textures;
+        })
+        .catch((error) => {
+          // Check if error is due to context loss
+          const isContextError =
+            error instanceof Error &&
+            (error.message.includes("context") ||
+              error.message.includes("Context Lost"));
+
+          if (isContextError) {
+            console.error(
+              `[BaseTerrestrialRenderer] WebGL context lost during texture generation for ${object.id}. Disabling texture generation for this planet.`,
+            );
+            // Permanently disable texture generation for this planet
+            this.useGeneratedTextures = false;
+          } else {
+            console.warn(
+              `[BaseTerrestrialRenderer] Failed to generate textures for ${object.id}, using procedural material:`,
+              error,
+            );
+          }
+
+          this.isGeneratingTextures = false;
+          // Return null to indicate failure, but don't throw
+          return null;
+        })
+        .catch((outerError) => {
+          // Catch any errors in the promise chain itself
+          console.error(
+            `[BaseTerrestrialRenderer] Unhandled error in texture generation promise for ${object.id}:`,
+            outerError,
+          );
+          this.isGeneratingTextures = false;
+          return null;
+        });
+    } catch (syncError) {
+      // Catch synchronous errors during promise creation
+      console.error(
+        `[BaseTerrestrialRenderer] Synchronous error starting texture generation for ${object.id}:`,
+        syncError,
+      );
+      this.isGeneratingTextures = false;
+      this.textureGenerationPromise = Promise.resolve(null);
+    }
   }
 
   /**
    * Creates the appropriate material for this terrestrial object.
-   * This implementation creates a ProceduralPlanetMaterial.
+   *
+   * Returns either a ProceduralPlanetMaterial (real-time generation) or
+   * a TextureBasedPlanetMaterial (pre-generated textures).
+   *
+   * If textures are being generated but not ready yet, uses procedural material
+   * as a fallback. The material can be updated later when textures are ready.
    */
   protected createMaterial(
     object: RenderableCelestialObject,
   ): TTerrestrialMaterial {
+    // Use texture-based material if textures are available
+    if (this.useGeneratedTextures && this.generatedTextures) {
+      const texturedMaterial = new TextureBasedPlanetMaterial({
+        textures: this.generatedTextures,
+        displacementScale: 0.05, // Match other texture material creation for consistency
+      });
+      return texturedMaterial as TTerrestrialMaterial;
+    }
+
+    // Fallback to procedural material (either disabled textures or still generating)
     const bodyMaterial = this.materialService.createMaterial(object);
     return bodyMaterial as TTerrestrialMaterial;
+  }
+
+  /**
+   * Gets the texture generation promise if textures are being generated.
+   * Can be used to wait for textures before rendering.
+   */
+  public getTextureGenerationPromise():
+    | Promise<GeneratedPlanetTextures | null>
+    | undefined {
+    return this.textureGenerationPromise;
+  }
+
+  /**
+   * Gets the current texture generation status for debugging.
+   */
+  public getTextureGenerationStatus(): {
+    useGeneratedTextures: boolean;
+    isGenerating: boolean;
+    hasTextures: boolean;
+    generationPromise: boolean;
+  } {
+    return {
+      useGeneratedTextures: this.useGeneratedTextures,
+      isGenerating: this.isGeneratingTextures,
+      hasTextures: !!this.generatedTextures,
+      generationPromise: !!this.textureGenerationPromise,
+    };
+  }
+
+  /**
+   * Checks if textures are ready and updates material if needed.
+   * Call this periodically to upgrade from procedural to texture-based material.
+   */
+  public async upgradeToTextureMaterialIfReady(
+    object: RenderableCelestialObject,
+  ): Promise<boolean> {
+    if (!this.useGeneratedTextures) {
+      return false;
+    }
+
+    // Get existing material first to check if upgrade is needed
+    const existingMaterial = this.getMaterial(object.id);
+    if (!existingMaterial) {
+      console.warn(
+        `[BaseTerrestrialRenderer] No existing material found for ${object.id} to upgrade`,
+      );
+      return false;
+    }
+
+    // Check if it's already a texture-based material
+    const isTextureBased =
+      existingMaterial instanceof TextureBasedPlanetMaterial;
+    if (isTextureBased) {
+      // Already using texture-based material
+      return false;
+    }
+
+    // Check if it's a procedural material that needs upgrading
+    const isProcedural = existingMaterial instanceof ProceduralPlanetMaterial;
+    if (!isProcedural) {
+      // Different material type, can't upgrade
+      return false;
+    }
+
+    // Get textures (either from cache or promise)
+    let textures: GeneratedPlanetTextures | null | undefined =
+      this.generatedTextures;
+
+    if (!textures) {
+      if (!this.textureGenerationPromise) {
+        return false;
+      }
+
+      try {
+        // Check if promise is already resolved
+        const promiseResult = await Promise.resolve(
+          this.textureGenerationPromise,
+        );
+
+        if (!promiseResult) {
+          // Generation failed, already using procedural
+          return false;
+        }
+
+        textures = promiseResult;
+        this.generatedTextures = promiseResult || undefined;
+      } catch (error) {
+        console.warn(
+          `[BaseTerrestrialRenderer] Error getting textures for ${object.id}:`,
+          error,
+        );
+        return false;
+      }
+    }
+
+    // At this point, textures must be defined
+    if (!textures) {
+      return false;
+    }
+
+    try {
+      console.log(
+        `[BaseTerrestrialRenderer] Upgrading ${object.id} from procedural to texture-based material`,
+        {
+          hasTextures: !!textures,
+          textureResolution: textures?.resolution,
+        },
+      );
+
+      // Create new texture-based material
+      const newMaterial = new TextureBasedPlanetMaterial({
+        textures,
+        displacementScale: 0.05, // Increased from 0.02 for better visibility
+      });
+
+      // Replace material in registered materials
+      this.registerMaterial(object.id, newMaterial);
+
+      // Update mesh material in all LOD levels
+      const lod = this.getLOD(object);
+      if (lod) {
+        let upgradedCount = 0;
+        lod.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            // Check if this mesh uses the old material
+            if (child.material === existingMaterial) {
+              child.material = newMaterial;
+              upgradedCount++;
+            } else if (
+              Array.isArray(child.material) &&
+              child.material.includes(existingMaterial)
+            ) {
+              // Handle material arrays
+              const index = child.material.indexOf(existingMaterial);
+              if (index !== -1) {
+                child.material[index] = newMaterial;
+                upgradedCount++;
+              }
+            }
+          }
+        });
+
+        if (upgradedCount > 0) {
+          console.log(
+            `[BaseTerrestrialRenderer] Upgraded ${upgradedCount} mesh(es) for ${object.id}`,
+          );
+        } else {
+          console.warn(
+            `[BaseTerrestrialRenderer] No meshes found to upgrade for ${object.id}`,
+          );
+        }
+      } else {
+        console.warn(
+          `[BaseTerrestrialRenderer] No LOD found for ${object.id} to upgrade materials`,
+        );
+      }
+
+      // Dispose old material
+      existingMaterial.dispose();
+
+      return true;
+    } catch (error) {
+      // Already handled in startTextureGeneration
+      console.warn(
+        `[BaseTerrestrialRenderer] Error upgrading material for ${object.id}:`,
+        error,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Generates textures for this object if needed.
+   * Called lazily when textures are first needed.
+   */
+  protected async generateTexturesIfNeeded(
+    object: RenderableCelestialObject,
+  ): Promise<void> {
+    if (!this.useGeneratedTextures || this.generatedTextures) {
+      return;
+    }
+
+    try {
+      this.generatedTextures = await TerrainTextureGenerator.generateTextures(
+        object,
+        this.textureGenerationOptions,
+      );
+    } catch (error) {
+      console.warn(
+        `[BaseTerrestrialRenderer] Failed to generate textures for ${object.id}, falling back to procedural:`,
+        error,
+      );
+      this.useGeneratedTextures = false;
+    }
   }
 
   /**
@@ -135,6 +504,30 @@ export class BaseTerrestrialRenderer<
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const baseRadius = object.radius ?? 1;
+
+    // If textures are already ready, use them immediately
+    if (
+      this.useGeneratedTextures &&
+      this.generatedTextures &&
+      !this.isGeneratingTextures
+    ) {
+      // Textures are ready, create material with them
+      const existingMaterial = this.getMaterial(object.id);
+      if (
+        !existingMaterial ||
+        existingMaterial instanceof ProceduralPlanetMaterial
+      ) {
+        // Upgrade to texture material before creating mesh
+        const newMaterial = new TextureBasedPlanetMaterial({
+          textures: this.generatedTextures,
+          displacementScale: 0.05, // Match the upgrade function for consistency
+        });
+        this.registerMaterial(object.id, newMaterial);
+        if (existingMaterial) {
+          existingMaterial.dispose();
+        }
+      }
+    }
 
     const highDetailGroup = this._createHighDetailGroup(
       object,
@@ -269,6 +662,30 @@ export class BaseTerrestrialRenderer<
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 
+    // Check if textures are ready and upgrade material
+    // Check more frequently initially (every 5 frames for first 2 seconds), then every 30 frames
+    this.frameCount++;
+    const checkInterval = this.frameCount < 120 ? 5 : 30;
+
+    if (
+      this.frameCount % checkInterval === 0 &&
+      this.textureGenerationPromise &&
+      !this.generatedTextures &&
+      !this.isGeneratingTextures
+    ) {
+      // Promise should be resolved by now if generation completed
+      // Try to upgrade (this will await the promise if needed)
+      this.upgradeToTextureMaterialIfReady(object).catch((error) => {
+        // Silently fail - already using procedural material as fallback
+        if (error && !error.message?.includes("No existing material")) {
+          console.debug(
+            `[BaseTerrestrialRenderer] Upgrade check for ${object.id}:`,
+            error.message || error,
+          );
+        }
+      });
+    }
+
     // Update lighting manager with current light sources
     this.updateLightSources(lightSources);
 
@@ -280,7 +697,25 @@ export class BaseTerrestrialRenderer<
       this.lightingManager.calculateDynamicAmbientLight();
 
     const bodyMaterial = this.getMaterial(object.id);
-    if (
+
+    // Handle texture-based material
+    if (bodyMaterial && bodyMaterial instanceof TextureBasedPlanetMaterial) {
+      // Update ambient lighting
+      bodyMaterial.updateAmbientLight(
+        new THREE.Color(0.1, 0.1, 0.15),
+        dynamicAmbientIntensity,
+      );
+
+      // Find and apply shadow casters
+      const shadowCasters = this.findShadowCasters();
+      const shadowCastersForMaterial = shadowCasters.map((sc) => ({
+        position: sc.position,
+        radius: sc.radius,
+      }));
+      bodyMaterial.updateShadowCasters(shadowCastersForMaterial);
+    }
+    // Handle procedural material
+    else if (
       bodyMaterial &&
       bodyMaterial instanceof ProceduralPlanetMaterial &&
       "update" in bodyMaterial &&
@@ -357,6 +792,12 @@ export class BaseTerrestrialRenderer<
       textures.normal?.dispose();
     });
     this.loadedTextures.clear();
+
+    // Dispose generated textures
+    if (this.generatedTextures) {
+      this.generatedTextures.dispose();
+      this.generatedTextures = undefined;
+    }
   }
 
   private _updateUniformIfDefined(
