@@ -150,11 +150,11 @@ export class SimulationManager {
     if (mode === SimulationMode.IDEAL) {
       newConfig = { mode: SimulationMode.IDEAL };
     } else {
-      // For n-body mode, preserve existing algorithm/integrator or use defaults
+      // For n-body mode, use Barnes-Hut with Velocity Verlet (optimal for N-body)
       newConfig = {
         mode: SimulationMode.NBODY,
-        algorithm: currentConfig.algorithm || AlgorithmType.BARNES_HUT,
-        integrator: currentConfig.integrator || IntegratorType.PEFRL,
+        algorithm: AlgorithmType.BARNES_HUT,
+        integrator: IntegratorType.VERLET,
       };
     }
 

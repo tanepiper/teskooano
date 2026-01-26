@@ -48,8 +48,9 @@ export interface ForceCalculationAlgorithm {
    * Called each simulation step
    *
    * @param bodies - All bodies in the simulation
+   * @param frameNumber - Optional frame number for update caching (prevents redundant WASM updates)
    */
-  update?(bodies: PhysicsStateReal[]): void;
+  update?(bodies: PhysicsStateReal[], frameNumber?: number): void;
 
   /**
    * Clean up resources

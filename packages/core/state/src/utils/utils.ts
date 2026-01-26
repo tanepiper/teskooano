@@ -24,17 +24,19 @@ export function isValidConfiguration(config: SimulationConfiguration): boolean {
 
 /**
  * Returns the default simulation configuration.
+ * Uses Barnes-Hut algorithm with Velocity Verlet integrator (optimal for N-body simulations).
  */
 export function getDefaultConfiguration(): SimulationConfiguration {
   return {
     mode: SimulationMode.NBODY,
-    integrator: IntegratorType.PEFRL,
+    integrator: IntegratorType.VERLET,
     algorithm: AlgorithmType.BARNES_HUT,
   };
 }
 
 /**
  * Gets a user-friendly display name for a configuration.
+ * Simplified since we only use Barnes-Hut + Velocity Verlet for N-body simulations.
  */
 export function getConfigurationDisplayName(
   config: SimulationConfiguration,
@@ -43,21 +45,12 @@ export function getConfigurationDisplayName(
     return "Ideal Orrery";
   }
 
-  const integrator = config.integrator
-    ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1)
-    : "Unknown";
-  const algorithm = config.algorithm
-    ? config.algorithm
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join("-")
-    : "Unknown";
-
-  return `N-Body (${algorithm} + ${integrator})`;
+  return "N-Body Simulation";
 }
 
 /**
  * Gets a short name for display in constrained UI spaces.
+ * Simplified since we only use Barnes-Hut + Velocity Verlet for N-body simulations.
  */
 export function getConfigurationShortName(
   config: SimulationConfiguration,
@@ -66,19 +59,5 @@ export function getConfigurationShortName(
     return "Ideal";
   }
 
-  let algorithmShort: string;
-  switch (config.algorithm) {
-    case AlgorithmType.BARNES_HUT:
-      algorithmShort = "BH";
-      break;
-    default:
-      algorithmShort = "BH"; // Barnes-Hut is the default
-      break;
-  }
-
-  const integratorShort = config.integrator
-    ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3)
-    : "Unk";
-
-  return `${algorithmShort}-${integratorShort}`;
+  return "N-Body";
 }

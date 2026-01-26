@@ -45,12 +45,14 @@ export class CollisionDetectionService {
    * @param radii Map of body IDs to radii
    * @param isStar Map of body IDs to star flags
    * @param bodyTypes Map of body IDs to celestial types
+   * @param frameNumber Optional frame number for WASM update caching
    */
   update(
     bodies: PhysicsStateReal[],
     radii: Map<string | number, number>,
     isStar: Map<string | number, boolean>,
     bodyTypes: Map<string | number, CelestialType>,
+    frameNumber?: number,
   ): void {
     // Update internal maps
     this.bodiesMap.clear();
@@ -68,8 +70,13 @@ export class CollisionDetectionService {
       );
     });
 
-    // Update spatial partitioning
-    this.spatialService.update(bodies);
+    // Update spatial partitioning with frame-based caching
+    if (frameNumber !== undefined) {
+      this.spatialService.updateIfNeeded(bodies, frameNumber);
+    } else {
+      // Fallback to direct update (backward compatibility)
+      this.spatialService.update(bodies);
+    }
   }
 
   /**

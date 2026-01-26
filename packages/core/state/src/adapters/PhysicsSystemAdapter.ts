@@ -7,6 +7,7 @@ import { Observable } from "rxjs";
 import { celestialStore } from "../stores/CelestialStore";
 import { physicsStore } from "../stores/PhysicsStore";
 import { PhysicsStateProvider } from "../services/PhysicsStateProvider";
+import { PhysicsStateCalculator } from "../services/PhysicsStateCalculator";
 import type { OrbitalParameters } from "@teskooano/data-types";
 import { filterActiveCelestialObjects } from "../utils";
 
@@ -103,6 +104,11 @@ export class PhysicsSystemAdapter {
     );
     const updatedObjectsMap =
       celestialStore.processDestructionEvents(destroyedIds);
+
+    // Clean up physics state cache for destroyed objects
+    destroyedIds.forEach((id) => {
+      PhysicsStateProvider.removeFromCache(id);
+    });
 
     celestialStore.setAllObjects(updatedObjectsMap);
     physicsStore.updateAccelerationVectors(result.accelerations);

@@ -64,6 +64,11 @@ export class SimulationManager {
    */
   private integratorFunction: IntegratorFunction;
 
+  /**
+   * Frame counter for tracking simulation steps (used for WASM update caching)
+   */
+  private frameCounter = 0;
+
   constructor() {
     this.idealOrreryStrategy = new IdealOrreryStrategy();
 
@@ -85,9 +90,17 @@ export class SimulationManager {
     }
 
     // Initialize WASM spatial partitioning (single source of truth)
-    await this.celestialDistanceService.initialize({
+    const wasmInitialized = await this.celestialDistanceService.initialize({
       neighborDistance: 1000 * AU_METERS,
     });
+
+    if (!wasmInitialized) {
+      console.error(
+        "[SimulationManager] Failed to initialize WASM spatial partitioning",
+      );
+      // Don't set initialized = true if WASM failed
+      return;
+    }
 
     await this.collisionDetectionService.initialize();
 
@@ -163,6 +176,47 @@ export class SimulationManager {
   simulate(params: SimulationManagerParams): EnhancedSimulationResult {
     const startTime = performance.now();
     const { bodies, deltaTime, configuration } = params;
+
+    // Verify initialization before proceeding
+    if (!this.initialized) {
+      console.warn(
+        "[SimulationManager] simulate() called before initialization",
+      );
+      return {
+        states: bodies,
+        accelerations: new Map(),
+        destroyedIds: new Set(),
+        destructionEvents: [],
+        metadata: {
+          mode: configuration.mode,
+          executionTime: performance.now() - startTime,
+          bodyCount: bodies.length,
+          warnings: ["SimulationManager not initialized"],
+        },
+      };
+    }
+
+    // For N-body mode, verify WASM is actually initialized
+    if (
+      configuration.mode === SimulationMode.NBODY &&
+      !this.celestialDistanceService.isInitialized()
+    ) {
+      console.warn(
+        "[SimulationManager] WASM spatial partitioning not initialized for N-body mode",
+      );
+      return {
+        states: bodies,
+        accelerations: new Map(),
+        destroyedIds: new Set(),
+        destructionEvents: [],
+        metadata: {
+          mode: configuration.mode,
+          executionTime: performance.now() - startTime,
+          bodyCount: bodies.length,
+          warnings: ["WASM spatial partitioning not initialized"],
+        },
+      };
+    }
 
     let result: EnhancedSimulationResult;
 
@@ -248,6 +302,9 @@ export class SimulationManager {
       };
     }
 
+    // Increment frame counter for WASM update caching
+    this.frameCounter++;
+
     const config = params.configuration;
 
     // Only Barnes-Hut + Velocity Verlet is supported
@@ -255,15 +312,19 @@ export class SimulationManager {
 
     // Update WASM spatial partitioning through algorithm (single unified pipeline)
     // This ensures WASM is the single source of truth for all spatial operations
+    // Use updateIfNeeded() to prevent redundant updates within the same frame
     if (algorithm.update) {
-      algorithm.update(params.bodies);
+      algorithm.update(params.bodies, this.frameCounter);
     } else {
       console.warn(
         "[SimulationManager] Algorithm does not support update(), falling back to direct WASM update",
       );
       // Use CelestialDistanceService singleton for unified pipeline
       if (this.celestialDistanceService.isInitialized()) {
-        this.celestialDistanceService.update(params.bodies);
+        this.celestialDistanceService.updateIfNeeded(
+          params.bodies,
+          this.frameCounter,
+        );
       } else {
         console.warn(
           "[SimulationManager] WASM spatial partitioning not initialized",
@@ -328,6 +389,7 @@ export class SimulationManager {
       params.radii || new Map(),
       params.isStar || new Map(),
       params.bodyTypes || new Map(),
+      this.frameCounter,
     );
     const [finalStates, destroyedIds] =
       this.collisionDetectionService.handleCollisions(params.ignoreCollisions);

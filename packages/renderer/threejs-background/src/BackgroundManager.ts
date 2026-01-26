@@ -99,7 +99,7 @@ export class BackgroundManager {
       baseDistance: BASE_DISTANCE,
       layers: [
         {
-          count: 10000,
+          count: 2000,
           distanceMultiplier: 1,
           distanceSpread:
             STARFIELD_LAYER_SPREAD_AU.near * SCALE.RENDER_SCALE_AU,
@@ -109,7 +109,7 @@ export class BackgroundManager {
           colorTint: new THREE.Color("#FFE4B5").multiplyScalar(0.3),
         },
         {
-          count: 20000,
+          count: 5000,
           distanceMultiplier: 1, // Slightly closer together
           distanceSpread: STARFIELD_LAYER_SPREAD_AU.mid * SCALE.RENDER_SCALE_AU,
           minBrightness: 0.7,
@@ -118,7 +118,7 @@ export class BackgroundManager {
           colorTint: new THREE.Color("#B0C4DE").multiplyScalar(0.2),
         },
         {
-          count: 50000,
+          count: 6000,
           distanceMultiplier: 1, // Safe multiplier to stay under background range
           distanceSpread: STARFIELD_LAYER_SPREAD_AU.far * SCALE.RENDER_SCALE_AU,
           minBrightness: 0.5,

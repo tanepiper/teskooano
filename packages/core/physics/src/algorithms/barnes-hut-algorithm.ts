@@ -6,6 +6,7 @@ import {
   AlgorithmConfig,
 } from "./force-calculation-algorithm";
 import { SpatialPartitioning } from "../spatial/spatial-partitioning";
+import { CelestialDistanceService } from "../spatial/celestial-distance-service";
 import { Octree } from "../spatial/octree";
 
 /**
@@ -65,17 +66,29 @@ export class BarnesHutAlgorithm implements ForceCalculationAlgorithm {
   /**
    * Update the WASM spatial partitioning with new body positions.
    * This is the single entry point for updating spatial data in the N-body pipeline.
+   * Uses frame-based caching to prevent redundant WASM updates.
    */
-  update(bodies: PhysicsStateReal[]): void {
-    if (!this.spatialPartitioning.isInitialized()) {
+  update(bodies: PhysicsStateReal[], frameNumber?: number): void {
+    // Use CelestialDistanceService for frame-based update caching
+    // This prevents redundant WASM updates when multiple components request updates
+    const celestialDistanceService = CelestialDistanceService.getInstance();
+
+    // Check service initialization (more reliable than checking spatialPartitioning directly)
+    if (!celestialDistanceService.isInitialized()) {
       console.warn(
         "[BarnesHutAlgorithm] Cannot update: WASM spatial partitioning not initialized",
       );
       return;
     }
 
-    // Update WASM spatial partitioning (single source of truth)
-    this.spatialPartitioning.update(bodies);
+    if (frameNumber !== undefined) {
+      // Use frame-based caching
+      celestialDistanceService.updateIfNeeded(bodies, frameNumber);
+    } else {
+      // Fallback to direct update (backward compatibility)
+      // Use the service's update method to ensure consistency
+      celestialDistanceService.update(bodies);
+    }
 
     // Invalidate octree cache so it rebuilds on next force calculation
     this.lastBodiesHash = undefined;

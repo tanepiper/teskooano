@@ -13,10 +13,9 @@ export * from "./utils";
 
 export { velocityVerletIntegrate as verlet } from "./integrators/verlet";
 
-export * from "./spatial/octree";
 export * from "./spatial/spatial-partitioning";
 export * from "./spatial/celestial-distance-service";
-export * from "./spatial/wasm-test";
+export { testWasmLibrary } from "./spatial/wasm-test";
 export * from "./collision/collision-service";
 
 export * from "./utils/vectorPool";

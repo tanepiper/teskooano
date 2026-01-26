@@ -14,6 +14,7 @@ import {
 } from "../utils";
 import { CelestialType } from "@teskooano/data-types";
 import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
+import { PhysicsStateCalculator } from "../services/PhysicsStateCalculator";
 import type {
   KeyedStore,
   InspectableStore,
@@ -439,6 +440,8 @@ export class CelestialStore
    * ```
    */
   public setAllObjects(objects: Record<string, CelestialObject>): void {
+    // Invalidate barycenter cache when objects change (stars may have been added/removed)
+    PhysicsStateCalculator.clearBarycenterCache();
     this._objects.next(objects);
   }
 

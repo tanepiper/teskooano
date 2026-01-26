@@ -1,8 +1,4 @@
-import {
-  IntegratorType,
-  AlgorithmType,
-  SimulationMode,
-} from "@teskooano/data-types";
+import { SimulationMode } from "@teskooano/data-types";
 
 /**
  * Formats a time value in seconds into a human-readable string.
@@ -118,9 +114,10 @@ export function getEngineShortName(engineName: string | undefined): string {
 
 /**
  * Gets a display-friendly short name for a simulation configuration.
+ * Simplified to show "N-Body" or "Ideal" since we only use Barnes-Hut + Verlet.
  *
  * @param config - The simulation configuration object
- * @returns Short display name (e.g., "BH-Ver", "TPM-Y4")
+ * @returns Short display name ("N-Body" or "Ideal")
  */
 export function getConfigurationShortName(config?: {
   mode: string;
@@ -133,70 +130,17 @@ export function getConfigurationShortName(config?: {
     return "Ideal";
   }
 
-  let algorithmShort: string;
-  switch (config.algorithm) {
-    case AlgorithmType.BARNES_HUT:
-      algorithmShort = "BH";
-      break;
-    case AlgorithmType.FMM:
-      algorithmShort = "FMM";
-      break;
-    case AlgorithmType.P3M:
-      algorithmShort = "P3M";
-      break;
-    case AlgorithmType.TREE_PM:
-      algorithmShort = "TPM";
-      break;
-    case AlgorithmType.DIRECT:
-      algorithmShort = "Dir";
-      break;
-    default:
-      algorithmShort = "Dir";
-      break;
-  }
-
-  let integratorShort: string;
-  switch (config.integrator) {
-    case IntegratorType.EULER:
-      integratorShort = "Eul";
-      break;
-    case IntegratorType.SYMPLECTIC:
-      integratorShort = "Sym";
-      break;
-    case IntegratorType.VERLET:
-      integratorShort = "Ver";
-      break;
-    case IntegratorType.RK4:
-      integratorShort = "RK4";
-      break;
-    case IntegratorType.ADAPTIVE:
-      integratorShort = "Adp";
-      break;
-    case IntegratorType.YOSHIDA4:
-      integratorShort = "Y4";
-      break;
-    case IntegratorType.FOREST_RUTH:
-      integratorShort = "FR";
-      break;
-    case IntegratorType.PEFRL:
-      integratorShort = "PEFRL";
-      break;
-    case IntegratorType.LEAPFROG:
-      integratorShort = "LF";
-      break;
-    default:
-      integratorShort = "?";
-      break;
-  }
-
-  return `${algorithmShort}-${integratorShort}`;
+  // Simplified: Always show "N-Body" for N-body mode
+  // (internally uses Barnes-Hut + Velocity Verlet)
+  return "N-Body";
 }
 
 /**
  * Gets a full display-friendly name for a simulation configuration.
+ * Simplified since we only use Barnes-Hut + Velocity Verlet for N-body simulations.
  *
  * @param config - The simulation configuration object
- * @returns Full display name (e.g., "N-Body (Barnes-Hut + Verlet)")
+ * @returns Full display name ("N-Body Simulation" or "Ideal Orrery")
  */
 export function getConfigurationDisplayName(config?: {
   mode: string;
@@ -209,61 +153,6 @@ export function getConfigurationDisplayName(config?: {
     return "Ideal Orrery";
   }
 
-  let algorithmName: string;
-  switch (config.algorithm) {
-    case AlgorithmType.BARNES_HUT:
-      algorithmName = "Barnes-Hut";
-      break;
-    case AlgorithmType.FMM:
-      algorithmName = "Fast Multipole";
-      break;
-    case AlgorithmType.P3M:
-      algorithmName = "Particle-Mesh";
-      break;
-    case AlgorithmType.TREE_PM:
-      algorithmName = "Tree-PM";
-      break;
-    case AlgorithmType.DIRECT:
-      algorithmName = "Direct";
-      break;
-    default:
-      algorithmName = "Unknown";
-      break;
-  }
-
-  let integratorName: string;
-  switch (config.integrator) {
-    case IntegratorType.EULER:
-      integratorName = "Euler";
-      break;
-    case IntegratorType.SYMPLECTIC:
-      integratorName = "Symplectic";
-      break;
-    case IntegratorType.VERLET:
-      integratorName = "Verlet";
-      break;
-    case IntegratorType.RK4:
-      integratorName = "RK4";
-      break;
-    case IntegratorType.ADAPTIVE:
-      integratorName = "Adaptive RK";
-      break;
-    case IntegratorType.YOSHIDA4:
-      integratorName = "Yoshida 4th";
-      break;
-    case IntegratorType.FOREST_RUTH:
-      integratorName = "Forest-Ruth";
-      break;
-    case IntegratorType.PEFRL:
-      integratorName = "PEFRL";
-      break;
-    case IntegratorType.LEAPFROG:
-      integratorName = "Leapfrog";
-      break;
-    default:
-      integratorName = "Unknown";
-      break;
-  }
-
-  return `N-Body (${algorithmName} + ${integratorName})`;
+  // Simplified: N-body always uses Barnes-Hut + Velocity Verlet
+  return "N-Body Simulation";
 }

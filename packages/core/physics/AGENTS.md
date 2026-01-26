@@ -4,16 +4,16 @@ A comprehensive guide for AI coding agents working on the Teskooano Core Physics
 
 ## Package Overview
 
-The **`@teskooano/core-physics`** package is the comprehensive physics simulation engine for celestial mechanics, featuring dual simulation modes, multiple force calculation algorithms, and advanced numerical integrators. It provides the mathematical foundation for accurate N-body simulations, orbital mechanics, and collision detection in the Teskooano engine.
+The **`@teskooano/core-physics`** package is the unified physics simulation engine for celestial mechanics, featuring dual simulation modes with a simplified, optimized architecture. It provides the mathematical foundation for accurate N-body simulations, orbital mechanics, and collision detection in the Teskooano engine.
 
 ### Purpose
 
 - **Dual Simulation Modes**: Perfect Keplerian orbits (ideal) and full N-body dynamics
-- **Multiple Algorithms**: Direct, Barnes-Hut, FMM, P3M, and Tree-PM hybrid force calculation
-- **Advanced Integrators**: Velocity Verlet, RK4, adaptive methods, and symplectic integrators
-- **Intelligent Selection**: Automatic algorithm and integrator optimization
+- **Unified Algorithm**: Barnes-Hut algorithm (O(N log N)) for force calculation
+- **Single Integrator**: Velocity Verlet (optimal symplectic integrator for N-body simulations)
+- **WASM Optimization**: Unified WASM spatial partitioning pipeline for O(N log N) spatial operations
+- **Frame-Based Caching**: Prevents redundant WASM updates within the same simulation frame
 - **Real SI Units**: All calculations in meters, kilograms, and seconds
-- **Performance Analysis**: Built-in profiling and optimization recommendations
 
 ## Setup Commands
 
@@ -45,30 +45,20 @@ npm run lint
 ```
 src/
 ├── algorithms/                 # Force calculation algorithms
-│   ├── algorithm-factory.ts   # Intelligent algorithm selection
-│   ├── barnes-hut-algorithm.ts # Barnes-Hut octree implementation
-│   ├── fmm-algorithm.ts       # Fast Multipole Method
-│   ├── p3m-algorithm.ts       # Particle-Mesh method
-│   ├── tree-pm.ts            # Tree-PM hybrid implementation
-│   └── neighbor-based-algorithm.ts # Neighbor-based force calculation
+│   ├── algorithm-factory.ts   # Algorithm factory (creates Barnes-Hut)
+│   ├── barnes-hut-algorithm.ts # Barnes-Hut implementation (only active algorithm)
+│   └── force-calculation-algorithm.ts # Algorithm interface
 ├── collision/                 # Collision detection and resolution
-│   ├── collision.ts          # Comprehensive collision handling
-│   └── collision-service.ts  # WASM-enhanced collision detection
+│   ├── collision.ts          # Collision detection utilities (detectSphereCollision)
+│   └── collision-service.ts  # WASM-enhanced collision detection service
 ├── forces/                    # Force calculation methods
 │   ├── gravity.ts            # Newtonian gravity
 │   ├── relativistic.ts       # Relativistic corrections
 │   ├── non-gravitational.ts  # Thrust, drag, etc.
 │   └── index.ts              # Force calculation utilities
 ├── integrators/               # Numerical integration methods
-│   ├── euler.ts              # Basic Euler methods
-│   ├── verlet.ts             # Velocity Verlet (default)
-│   ├── rk4.ts                # Runge-Kutta 4th order
-│   ├── adaptive.ts           # Adaptive timestep (Dormand-Prince)
-│   ├── yoshida.ts            # Symplectic integrators
-│   └── ideal.ts              # Analytical Keplerian orbits
-├── interfaces/                # Strategy pattern interfaces
-│   ├── algorithm-strategy.ts  # Algorithm interface
-│   └── simulation-strategy.ts # Simulation interface
+│   ├── verlet.ts             # Velocity Verlet (only active integrator)
+│   └── ideal.ts              # Analytical Keplerian orbits (for ideal mode)
 ├── modes/                     # Simulation mode implementations
 │   └── ideal/                # Ideal mode (Keplerian orbits)
 │       └── ideal-orrery.ts   # Perfect orbital mechanics
@@ -84,9 +74,10 @@ src/
 │   ├── prediction.ts         # Trajectory prediction
 │   └── types.ts              # Simulation interfaces
 ├── spatial/                   # Spatial data structures
-│   ├── octree.ts             # Barnes-Hut octree
-│   ├── spatial-partitioning.ts # WASM spatial partitioning
-│   └── celestial-distance-service.ts # Distance calculation service
+│   ├── octree.ts             # Barnes-Hut octree (used by algorithm)
+│   ├── spatial-partitioning.ts # WASM spatial partitioning wrapper
+│   ├── celestial-distance-service.ts # Singleton WASM service (unified pipeline)
+│   └── types.ts              # Spatial partitioning types
 ├── units/                     # Unit constants and conversions
 │   ├── constants.ts          # Physical constants
 │   └── units.ts              # Unit conversion utilities
@@ -115,25 +106,46 @@ interface SimulationConfiguration {
 }
 ```
 
-#### 2. Strategy Pattern Implementation
+#### 2. Unified WASM Pipeline
 
-Different algorithms and integrators are implemented as strategies, allowing runtime selection:
+All spatial operations go through a single unified WASM pipeline via `CelestialDistanceService`:
 
-- **Algorithm Strategies**: Direct, Barnes-Hut, FMM, P3M, Tree-PM
-- **Integration Strategies**: Euler variants, Verlet, RK4, Adaptive, Symplectic methods
+- **Single Source of Truth**: `CelestialDistanceService` singleton manages all WASM spatial operations
+- **Frame-Based Caching**: `updateIfNeeded()` prevents redundant WASM updates within the same frame
+- **Shared Spatial Data**: Barnes-Hut algorithm and collision detection use the same WASM spatial partitioning
 
-#### 3. Intelligent Selection
+#### 3. Simplified Architecture
 
-The `AlgorithmFactory` and `SimulationManager` automatically select optimal configurations based on:
+The system has been simplified to use only optimal algorithms:
 
-- Body count
-- Performance preferences (accuracy vs speed)
-- Memory constraints
-- System characteristics
+- **Single Algorithm**: Barnes-Hut (O(N log N)) - optimal for planetary N-body simulations
+- **Single Integrator**: Velocity Verlet - optimal symplectic integrator for energy conservation
+- **No Runtime Selection**: Fixed optimal configuration eliminates complexity and ensures consistency
 
 #### 4. Real SI Units
 
 All internal calculations use SI units (meters, kg, seconds) for physical accuracy and simplicity.
+
+## Important Naming Notes
+
+### SimulationManager Naming
+
+There are two classes named `SimulationManager` in the codebase:
+
+1. **`@teskooano/core-physics` SimulationManager**: The physics engine that executes simulation steps
+   - Location: `packages/core/physics/src/simulation/simulation-manager.ts`
+   - Purpose: Low-level physics calculations (force calculation, integration, collision detection)
+
+2. **`@teskooano/core-state` SimulationManager**: The state manager for simulation configuration
+   - Location: `packages/core/state/src/managers/SimulationManager.ts`
+   - Purpose: High-level state management (time, pause, timeScale, configuration)
+
+When importing, use aliases to avoid confusion:
+
+```typescript
+import { SimulationManager } from "@teskooano/core-physics";
+import { simulationManager as coreSimulationManager } from "@teskooano/core-state";
+```
 
 ## Code Style & Conventions
 

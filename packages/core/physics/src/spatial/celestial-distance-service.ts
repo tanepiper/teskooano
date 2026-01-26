@@ -11,6 +11,8 @@ export class CelestialDistanceService {
   private spatialPartitioning: SpatialPartitioning | null = null;
   private isInitializing = false;
   private initializationPromise: Promise<boolean> | null = null;
+  private lastUpdateFrame: number = -1;
+  private lastBodiesHash: string | null = null;
 
   private constructor() {}
 
@@ -106,6 +108,67 @@ export class CelestialDistanceService {
     }
     // console.log(`[CelestialDistanceService] Updating with ${bodies.length} bodies`);
     this.spatialPartitioning!.update(bodies);
+  }
+
+  /**
+   * Update the spatial partitioning only if needed (frame-based caching).
+   * This prevents redundant WASM updates when multiple components request updates in the same frame.
+   * @param bodies Array of physics bodies
+   * @param frameNumber Current simulation frame number (increments each simulation step)
+   * @returns true if update was performed, false if skipped (cached)
+   */
+  public updateIfNeeded(
+    bodies: PhysicsStateReal[],
+    frameNumber: number,
+  ): boolean {
+    if (!this.isInitialized()) {
+      console.warn(
+        "[CelestialDistanceService] Attempted to update before initialization",
+      );
+      return false;
+    }
+
+    // Calculate hash of bodies (IDs + positions) to detect changes
+    const bodiesHash = this.calculateBodiesHash(bodies);
+
+    // Skip update if same frame and same bodies
+    if (
+      frameNumber === this.lastUpdateFrame &&
+      bodiesHash === this.lastBodiesHash
+    ) {
+      return false;
+    }
+
+    // Perform update
+    this.spatialPartitioning!.update(bodies);
+    this.lastUpdateFrame = frameNumber;
+    this.lastBodiesHash = bodiesHash;
+    return true;
+  }
+
+  /**
+   * Calculate a hash of body IDs and positions to detect changes
+   * @private
+   */
+  private calculateBodiesHash(bodies: PhysicsStateReal[]): string {
+    // Simple hash: body count + first few positions
+    // This is fast and sufficient for detecting when bodies change
+    if (bodies.length === 0) return "0";
+    const hashParts: string[] = [bodies.length.toString()];
+    // Include first body's position and last body's position for change detection
+    if (bodies.length > 0) {
+      const first = bodies[0];
+      hashParts.push(
+        `${first.id}:${first.position_m.x.toFixed(2)}:${first.position_m.y.toFixed(2)}:${first.position_m.z.toFixed(2)}`,
+      );
+    }
+    if (bodies.length > 1) {
+      const last = bodies[bodies.length - 1];
+      hashParts.push(
+        `${last.id}:${last.position_m.x.toFixed(2)}:${last.position_m.y.toFixed(2)}:${last.position_m.z.toFixed(2)}`,
+      );
+    }
+    return hashParts.join("|");
   }
 
   /**
@@ -210,13 +273,32 @@ export class CelestialDistanceService {
   }
 
   /**
-   * Dispose of the service and clean up resources
+   * Dispose of the service and clean up resources.
+   * NOTE: This does NOT reset the singleton instance. The service can be re-initialized
+   * after disposal by calling initialize() again. This prevents race conditions where
+   * different parts of the codebase hold references to different instances.
    */
   public dispose(): void {
     if (this.spatialPartitioning) {
       this.spatialPartitioning.dispose();
       this.spatialPartitioning = null;
     }
-    CelestialDistanceService.instance = null;
+    // Reset frame tracking so next update will run
+    this.lastUpdateFrame = -1;
+    this.lastBodiesHash = null;
+    // NOTE: We intentionally do NOT reset CelestialDistanceService.instance = null
+    // This ensures all code using getInstance() gets the same instance that can be re-initialized
+  }
+
+  /**
+   * Fully destroy the singleton instance.
+   * This should only be called during application shutdown or testing.
+   * After calling this, getInstance() will create a new instance.
+   */
+  public static destroyInstance(): void {
+    if (CelestialDistanceService.instance) {
+      CelestialDistanceService.instance.dispose();
+      CelestialDistanceService.instance = null;
+    }
   }
 }
