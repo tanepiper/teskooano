@@ -20,17 +20,17 @@
     "@teskooano/core-math": "file:../../../core/math",
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/renderer-threejs-celestial": "file:../../../renderer/threejs-celestial",
-    "three": "0.180.0"
+    "three": "0.182.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.55.0",
-    "@types/node": "24.5.2",
-    "@vitest/browser": "3.2.4",
-    "@vitest/ui": "3.2.4",
-    "eslint": "9.35.0",
-    "happy-dom": "18.0.1",
-    "playwright": "1.55.0",
-    "typescript": "5.9.2",
-    "vitest": "3.2.4"
+    "@playwright/test": "1.58.0",
+    "@types/node": "25.0.10",
+    "@vitest/browser": "4.0.18",
+    "@vitest/ui": "4.0.18",
+    "eslint": "9.39.2",
+    "happy-dom": "20.3.9",
+    "playwright": "1.58.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
   }
 }

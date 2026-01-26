@@ -21,21 +21,21 @@
     "@teskooano/systems-solar-system": "file:../../packages/systems/solar-system",
     "@teskooano/data-values": "file:../../packages/data/values",
     "@teskooano/data-types": "file:../../packages/data/types",
-    "dockview-core": "4.7.1",
-    "driver.js": "1.3.6",
-    "three": "0.180.0",
+    "dockview-core": "4.13.1",
+    "driver.js": "1.4.0",
+    "three": "0.182.0",
     "rxjs": "7.8.2",
-    "@fluentui/svg-icons": "1.1.310",
+    "@fluentui/svg-icons": "1.1.317",
     "@teskooano/ui-plugin": "file:../../packages/app/ui-plugin"
   },
   "devDependencies": {
-    "typescript": "5.9.2",
-    "vite": "7.1.6",
-    "vite-plugin-glsl": "1.5.1",
-    "vite-plugin-pwa": "1.0.3",
-    "vitest": "3.2.4",
-    "@vitest/browser": "3.2.4",
-    "@playwright/test": "1.55.0",
-    "jsdom": "27.0.0"
+    "typescript": "5.9.3",
+    "vite": "7.3.1",
+    "vite-plugin-glsl": "1.5.5",
+    "vite-plugin-pwa": "1.2.0",
+    "vitest": "4.0.18",
+    "@vitest/browser": "4.0.18",
+    "@playwright/test": "1.58.0",
+    "jsdom": "27.4.0"
   }
 }

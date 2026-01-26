@@ -20,12 +20,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "three": "0.180.0"
+    "three": "0.182.0"
   },
   "devDependencies": {
-    "typescript": "5.9.2",
-    "@types/node": "24.5.2",
-    "@types/three": "0.180.0",
-    "vitest": "3.2.4"
+    "typescript": "5.9.3",
+    "@types/node": "25.0.10",
+    "@types/three": "0.182.0",
+    "vitest": "4.0.18"
   }
 }

@@ -22,15 +22,15 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/data-values": "file:../../data/values",
     "rxjs": "7.8.2",
-    "three": "0.180.0"
+    "three": "0.182.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.55.0",
-    "@vitest/ui": "3.2.4",
-    "eslint": "9.35.0",
-    "jsdom": "27.0.0",
-    "typescript": "5.9.2",
-    "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.2.4"
+    "@playwright/test": "1.58.0",
+    "@vitest/ui": "4.0.18",
+    "eslint": "9.39.2",
+    "jsdom": "27.4.0",
+    "typescript": "5.9.3",
+    "vite-tsconfig-paths": "6.0.5",
+    "vitest": "4.0.18"
   }
 }

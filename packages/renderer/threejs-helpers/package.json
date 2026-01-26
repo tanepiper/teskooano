@@ -14,10 +14,10 @@
     "src"
   ],
   "dependencies": {
-    "three": "0.180.0",
-    "gsap": "3.13.0"
+    "three": "0.182.0",
+    "gsap": "3.14.2"
   },
   "devDependencies": {
-    "@types/three": "0.180.0"
+    "@types/three": "0.182.0"
   }
 }
