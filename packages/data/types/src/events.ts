@@ -58,4 +58,5 @@ export const CustomEvents = {
 
 export interface SliderValueChangePayload {
   value: number;
+  panelId: string; // REQUIRED - panel ID where event originated
 }

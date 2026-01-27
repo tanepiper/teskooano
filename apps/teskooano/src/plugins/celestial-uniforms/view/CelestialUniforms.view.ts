@@ -34,8 +34,18 @@ export class CelestialUniformsEditor
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
+    // REQUIRE panel API ID - no fallback
+    if (!parameters.api?.id) {
+      throw new Error(
+        "[CelestialUniforms] Panel ID is required but not provided",
+      );
+    }
+
     // Store the panel ID for use in the controller
     this._panelId = parameters.api.id;
+
+    // Set data-panel-id attribute for declarative access
+    this.setAttribute("data-panel-id", parameters.api.id);
 
     const params = (parameters.params as { focusedObjectId?: string }) || {};
     this._controller?.handleInitialSelection(params.focusedObjectId ?? null);

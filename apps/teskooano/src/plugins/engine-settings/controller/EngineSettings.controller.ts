@@ -32,7 +32,6 @@ export class EngineSettingsController extends StateSubscriptionMixin {
   private _cameraOptions: CameraOptionRegistration[];
   private _errorMessageElement: HTMLElement;
   private _parentPanel: CompositeEnginePanel | null = null;
-  private _panelId: string = "";
   private _eventHandlerMap: Map<string, EventListenerOrEventListenerObject> =
     new Map();
 
@@ -60,14 +59,19 @@ export class EngineSettingsController extends StateSubscriptionMixin {
     this.bindHandlers();
   }
 
-  /** Sets the panel ID for panel-specific camera operations */
-  public setPanelId(panelId: string): void {
-    this._panelId = panelId;
-    // Initialize FOV slider value from per-panel camera state if present
+  /**
+   * Initializes FOV slider value from parent panel's camera state.
+   * Called after parent panel is set.
+   */
+  private initializeFovSlider(): void {
+    if (!this._parentPanel?.panelId) return;
+
     const fovControl = this._cameraOptions[0];
-    if (fovControl && this._panelId) {
+    if (fovControl) {
       try {
-        const cameraManager = StateAccessor.getCameraManager(this._panelId);
+        const cameraManager = StateAccessor.getCameraManager(
+          this._parentPanel.panelId,
+        );
         const fov = cameraManager.getCameraFov();
         const slider = fovControl.element as TeskooanoSlider;
         if (typeof fov === "number") {
@@ -115,6 +119,7 @@ export class EngineSettingsController extends StateSubscriptionMixin {
       return;
     }
     this._parentPanel = panel;
+    this.initializeFovSlider();
     this.syncWithParentPanelState();
   }
 
@@ -223,30 +228,28 @@ export class EngineSettingsController extends StateSubscriptionMixin {
       // Handle camera FOV via core-state (single source of truth)
       // The renderer will sync automatically via PanelCameraCoordinator subscription
       if (key === "fov") {
-        if (this._panelId) {
-          try {
-            const cameraManager = StateAccessor.getCameraManager(this._panelId);
-            const currentFov = cameraManager.getCameraFov();
-            console.debug(
-              `[EngineSettings] Updating FOV: ${currentFov} -> ${newValue} (panelId: ${this._panelId})`,
-            );
-            cameraManager.setCameraFov(newValue);
-            const updatedFov = cameraManager.getCameraFov();
-            console.debug(
-              `[EngineSettings] FOV updated in store: ${updatedFov}`,
-            );
-            this.clearError();
-          } catch (error) {
-            console.error(
-              `[EngineSettings] Error updating FOV:`,
-              error,
-            );
-            // Ignore; core camera may not yet be available
-          }
-        } else {
-          console.warn(
-            `[EngineSettings] Cannot update FOV: panelId not set`,
+        // REQUIRED - panel ID comes from event payload, no fallback
+        const panelId = event.detail?.panelId;
+        if (!panelId) {
+          console.error(
+            "[EngineSettings] Cannot handle slider change: panel ID missing from event",
           );
+          return;
+        }
+
+        try {
+          const cameraManager = StateAccessor.getCameraManager(panelId);
+          const currentFov = cameraManager.getCameraFov();
+          console.debug(
+            `[EngineSettings] Updating FOV: ${currentFov} -> ${newValue} (panelId: ${panelId})`,
+          );
+          cameraManager.setCameraFov(newValue);
+          const updatedFov = cameraManager.getCameraFov();
+          console.debug(`[EngineSettings] FOV updated in store: ${updatedFov}`);
+          this.clearError();
+        } catch (error) {
+          console.error(`[EngineSettings] Error updating FOV:`, error);
+          // Ignore; core camera may not yet be available
         }
       }
     } catch (error) {

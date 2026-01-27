@@ -215,24 +215,26 @@ export class EngineUISettingsPanel
    * @param parameters Initialization parameters provided by Dockview.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
+    // REQUIRE panel API ID
+    if (!parameters.api?.id) {
+      throw new Error(
+        "[EngineUISettingsPanel] Panel ID is required but not provided",
+      );
+    }
+
     const parent = (parameters.params as any)
       ?.parentInstance as CompositeEnginePanel;
 
-    // Provide panelId to controller for per-panel camera state
-    // Use the parent panel's ID (the composite engine panel) instead of this settings panel's ID
-    // This ensures we're updating the same camera state that the renderer is subscribed to
-    if (parent?.panelId) {
-      this._controller.setPanelId(parent.panelId);
-      console.debug(
-        `[EngineUISettingsPanel] Using parent panel ID for camera state: ${parent.panelId}`,
+    // REQUIRE parent panel connection - no fallback
+    if (!parent?.panelId) {
+      throw new Error(
+        "[EngineUISettingsPanel] Must be connected to a CompositeEnginePanel",
       );
-    } else if (parameters.api?.id) {
-      // Fallback to this panel's ID if parent is not available (shouldn't happen in normal flow)
-      console.warn(
-        `[EngineUISettingsPanel] Parent panel ID not available, using settings panel ID: ${parameters.api.id}`,
-      );
-      this._controller.setPanelId(parameters.api.id);
     }
+
+    // Set data-panel-id to parent panel ID (for event extraction in nested components)
+    // Child panels use parent ID so nested components can find the engine panel context
+    this.setAttribute("data-panel-id", parent.panelId);
 
     if (
       parent &&

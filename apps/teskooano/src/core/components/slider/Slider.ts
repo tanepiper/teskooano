@@ -233,13 +233,61 @@ export class TeskooanoSlider extends HTMLElement {
   }
 
   private emitChangeEvent(): void {
+    // Extract panel ID from DOM context using existing DOM APIs
+    const panelId = this.getPanelIdFromContext();
+
+    if (!panelId) {
+      console.error(
+        "[Slider] Cannot emit event: panel ID not found in context",
+      );
+      return;
+    }
+
+    const payload: SliderValueChangePayload = {
+      value: this._value,
+      panelId: panelId,
+    };
+
     this.dispatchEvent(
       new CustomEvent<SliderValueChangePayload>(CustomEvents.SLIDER_CHANGE, {
-        detail: { value: this._value },
+        detail: payload,
         bubbles: true,
         composed: true,
       }),
     );
+  }
+
+  /**
+   * Gets the panel ID from DOM context by traversing up the tree.
+   * Uses existing DOM APIs - no new utility needed.
+   */
+  private getPanelIdFromContext(): string | null {
+    let element: HTMLElement | null = this;
+
+    // Traverse up DOM tree (including shadow DOM boundaries)
+    while (element) {
+      // Check data-panel-id attribute (existing pattern)
+      const panelId = element.getAttribute("data-panel-id");
+      if (panelId) return panelId;
+
+      // Check if element is a panel component with panelId getter
+      if (
+        "panelId" in element &&
+        typeof (element as any).panelId === "string"
+      ) {
+        return (element as any).panelId;
+      }
+
+      // Move to parent (handles shadow DOM via getRootNode)
+      const root = element.getRootNode();
+      if (root instanceof ShadowRoot) {
+        element = root.host as HTMLElement;
+      } else {
+        element = element.parentElement;
+      }
+    }
+
+    return null;
   }
 
   private calculatePrecision(step: number): number {

@@ -134,11 +134,8 @@ export class GroupManager {
     if (groupNameToRemove) {
       this._groupNameToIdMap.delete(groupNameToRemove);
       this._groupCache.delete(groupId);
-    } else {
-      console.warn(
-        `GroupManager: No tracking cleanup needed for untracked group ID: ${groupId}.`,
-      );
     }
+    // If groupNameToRemove is null, the group wasn't tracked, so no cleanup needed (silent)
   }
 
   /**

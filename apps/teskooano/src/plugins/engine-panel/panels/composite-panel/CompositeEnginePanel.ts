@@ -158,6 +158,17 @@ export class CompositeEnginePanel
 
     this._api = parameters.api;
     this._params = parameters;
+
+    // REQUIRE panel ID - no fallback
+    if (!this._api?.id) {
+      throw new Error(
+        "[CompositeEnginePanel] Panel ID is required but not provided",
+      );
+    }
+
+    // Set data-panel-id attribute for declarative access
+    this.setAttribute("data-panel-id", this._api.id);
+
     if (!this.id) this.id = `composite-engine-view-${this._api.id}`;
 
     this._subscriptionCoordinator.setupSubscriptions();

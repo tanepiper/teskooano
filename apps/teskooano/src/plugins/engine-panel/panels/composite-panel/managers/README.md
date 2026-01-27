@@ -7,11 +7,11 @@ This directory contains manager and coordinator classes responsible for handling
 ### `PanelCameraCoordinator`
 
 - **Responsibility**: Orchestrates the setup and state synchronization of all camera-related components.
-- **Mechanism**: 
+- **Mechanism**:
   - Creates and initializes the renderer-level `CameraManager` (which handles the Three.js camera's position, target, and controls) with initial state from core-state.
   - **Subscribes to core-state camera changes** and automatically syncs FOV changes to the renderer. Core-state is the single source of truth for camera FOV.
   - Ensures that the panel's internal view state is kept in sync with the camera's state (e.g., position, FOV, focused object) and vice-versa.
-- **State Synchronization Pattern**: 
+- **State Synchronization Pattern**:
   - UI components should **only update core-state** (via `StateAccessor.getCameraManager(panelId)`).
   - The coordinator automatically syncs core-state FOV changes to the renderer CameraManager.
   - This eliminates the need for UI to update both core-state and renderer directly, preventing synchronization issues.

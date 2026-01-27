@@ -44,8 +44,19 @@ export class DebugPanel extends HTMLElement implements IContentRenderer {
 
   // Dockview API
   init(params: GroupPanelPartInitParameters): void {
+    // REQUIRE panel API ID - no fallback
+    if (!params.api?.id) {
+      throw new Error("[DebugPanel] Panel ID is required but not provided");
+    }
+
     const parentPanel = (params.params as any)
       ?.parentInstance as CompositeEnginePanel;
+
+    // Set data-panel-id attribute for declarative access
+    // For child panels, use parent panel ID if available, otherwise use own ID
+    const panelId = parentPanel?.panelId || params.api.id;
+    this.setAttribute("data-panel-id", panelId);
+
     this.controller = new DebugPanelController(this, parentPanel);
   }
 

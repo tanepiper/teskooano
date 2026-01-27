@@ -33,8 +33,15 @@ export class AboutPanel extends HTMLElement implements IContentRenderer {
    * Dockview initialization function.
    * @param params
    */
-  init(_: GroupPanelPartInitParameters): void {
-    // No specific parameters needed for this simple panel.
+  init(params: GroupPanelPartInitParameters): void {
+    // REQUIRE panel API ID - no fallback
+    if (!params.api?.id) {
+      throw new Error("[AboutPanel] Panel ID is required but not provided");
+    }
+
+    // Set data-panel-id attribute for declarative access
+    // About panel is standalone, so use its own ID
+    this.setAttribute("data-panel-id", params.api.id);
   }
 
   connectedCallback() {

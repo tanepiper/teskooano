@@ -18,7 +18,6 @@ export class CelestialInfoController extends StateSubscriptionMixin {
   private _viewManager: CelestialInfoViewManager;
   private _currentSelectedId: string | null = null;
   private _parentPanel: CompositeEnginePanel | null = null;
-  private _panelId: string;
 
   /**
    * Creates an instance of CelestialInfoController.
@@ -34,7 +33,6 @@ export class CelestialInfoController extends StateSubscriptionMixin {
     super();
     this._view = view;
     this._viewManager = new CelestialInfoViewManager(container, placeholder);
-    this._panelId = "";
   }
 
   /**
@@ -59,14 +57,6 @@ export class CelestialInfoController extends StateSubscriptionMixin {
   public setParentPanel(panel: CompositeEnginePanel): void {
     this._parentPanel = panel;
     this._viewManager.setParentPanel(panel);
-  }
-
-  /**
-   * Sets the panel ID for this controller.
-   * @param panelId Unique identifier for the panel this controller belongs to.
-   */
-  public setPanelId(panelId: string): void {
-    this._panelId = panelId;
   }
 
   /**
@@ -165,13 +155,19 @@ export class CelestialInfoController extends StateSubscriptionMixin {
    * @returns The ID of the currently focused/followed object, or null if none.
    */
   private _getCurrentFocusedObjectId(): string | null {
-    // Try to get from the panel-specific camera manager
+    // Try to get from the panel-specific camera manager using parent panel ID
+    if (!this._parentPanel?.panelId) {
+      return null;
+    }
+
     try {
-      const cameraManager = StateAccessor.getCameraManager(this._panelId);
+      const cameraManager = StateAccessor.getCameraManager(
+        this._parentPanel.panelId,
+      );
       return cameraManager.getFocusedObject();
     } catch (error) {
       console.warn(
-        `[CelestialInfoController] Could not access camera state for panel ${this._panelId}:`,
+        `[CelestialInfoController] Could not access camera state for panel ${this._parentPanel.panelId}:`,
         error,
       );
     }

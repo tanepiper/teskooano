@@ -48,10 +48,12 @@ export class SystemGenerator {
     const eventBus = EventBus.getInstance();
 
     // Emit EventBus event to signal generation start
+    // Use "system" as panelId for global/system-level events
     eventBus.emit(Events.INFO_DISPLAYED, {
       message: "Generating new star system...",
       severity: "info",
       source: "system-generator",
+      panelId: "system",
     } as any);
 
     seed.updateSeed(inputSeed);
@@ -116,6 +118,7 @@ export class SystemGenerator {
               generatedAt: Date.now(),
             },
             source: "system-generator",
+            panelId: "system", // Global/system-level event
           } as SystemEventPayload);
         }),
       );
@@ -139,6 +142,7 @@ export class SystemGenerator {
         severity: "error",
         error: error instanceof Error ? error : new Error(String(error)),
         source: "system-generator",
+        panelId: "system", // Global/system-level event
       } as any);
 
       return false;

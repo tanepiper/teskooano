@@ -132,7 +132,8 @@ export class PanelCameraCoordinator extends StateSubscriptionMixin {
           `[PanelCameraCoordinator ${this._panelApiId}] Subscription callback fired with FOV: ${newFov}`,
         );
         // Get the scene manager to update the actual Three.js camera
-        const sceneManager = this._renderer?.renderingOrchestrator?.sceneManager;
+        const sceneManager =
+          this._renderer?.renderingOrchestrator?.sceneManager;
         if (!sceneManager) {
           console.warn(
             `[PanelCameraCoordinator ${this._panelApiId}] Cannot sync FOV: SceneManager not available`,

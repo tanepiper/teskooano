@@ -244,6 +244,8 @@ export interface BaseEventPayload {
   source?: string;
   /** Optional additional metadata */
   metadata?: Record<string, any>;
+  /** Panel ID where event originated - REQUIRED */
+  panelId: string;
 }
 
 /**

@@ -99,7 +99,24 @@ export class RendererInfoDisplay
    * @param parameters - Initialization parameters from Dockview.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
+    // REQUIRE panel API ID - no fallback
+    if (!parameters.api?.id) {
+      throw new Error(
+        "[RendererInfoDisplay] Panel ID is required but not provided",
+      );
+    }
+
     const params = parameters.params as RendererInfoParams;
+
+    // REQUIRE parent panel connection - no fallback
+    if (!params.parentInstance?.panelId) {
+      throw new Error(
+        "[RendererInfoDisplay] Must be connected to a CompositeEnginePanel",
+      );
+    }
+
+    // Set data-panel-id to parent panel ID (for event extraction in nested components)
+    this.setAttribute("data-panel-id", params.parentInstance.panelId);
 
     if (
       params.parentInstance &&

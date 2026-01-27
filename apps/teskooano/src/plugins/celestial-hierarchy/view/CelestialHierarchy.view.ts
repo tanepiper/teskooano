@@ -83,11 +83,28 @@ export class CelestialHierarchy
    * @param parameters The initialization parameters from Dockview.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
+    // REQUIRE panel API ID - no fallback
+    if (!parameters.api?.id) {
+      throw new Error(
+        "[CelestialHierarchy] Panel ID is required but not provided",
+      );
+    }
+
     // Store the panel API for updating the title
     this.panelApi = parameters.api;
 
     const parent = (parameters.params as any)
       ?.parentInstance as CompositeEnginePanel;
+
+    // REQUIRE parent panel connection - no fallback
+    if (!parent?.panelId) {
+      throw new Error(
+        "[CelestialHierarchy] Must be connected to a CompositeEnginePanel",
+      );
+    }
+
+    // Set data-panel-id to parent panel ID (for event extraction in nested components)
+    this.setAttribute("data-panel-id", parent.panelId);
 
     if (
       parent &&
