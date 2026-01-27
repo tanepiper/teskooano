@@ -220,20 +220,33 @@ export class EngineSettingsController extends StateSubscriptionMixin {
         return;
       }
 
-      // Handle camera FOV via per-panel camera manager and engine manager
+      // Handle camera FOV via core-state (single source of truth)
+      // The renderer will sync automatically via PanelCameraCoordinator subscription
       if (key === "fov") {
         if (this._panelId) {
           try {
             const cameraManager = StateAccessor.getCameraManager(this._panelId);
+            const currentFov = cameraManager.getCameraFov();
+            console.debug(
+              `[EngineSettings] Updating FOV: ${currentFov} -> ${newValue} (panelId: ${this._panelId})`,
+            );
             cameraManager.setCameraFov(newValue);
-          } catch {
+            const updatedFov = cameraManager.getCameraFov();
+            console.debug(
+              `[EngineSettings] FOV updated in store: ${updatedFov}`,
+            );
+            this.clearError();
+          } catch (error) {
+            console.error(
+              `[EngineSettings] Error updating FOV:`,
+              error,
+            );
             // Ignore; core camera may not yet be available
           }
-        }
-
-        if (this._parentPanel?.cameraManager) {
-          this._parentPanel.cameraManager.setFov(newValue);
-          this.clearError();
+        } else {
+          console.warn(
+            `[EngineSettings] Cannot update FOV: panelId not set`,
+          );
         }
       }
     } catch (error) {

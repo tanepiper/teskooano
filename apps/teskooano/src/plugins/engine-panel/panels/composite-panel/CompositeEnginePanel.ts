@@ -64,6 +64,14 @@ export class CompositeEnginePanel
     return this;
   }
 
+  /**
+   * Gets the panel's API ID, which is used as the panel identifier for camera state and other panel-specific operations.
+   * @returns The panel API ID, or undefined if not yet initialized.
+   */
+  get panelId(): string | undefined {
+    return this._api?.id;
+  }
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });

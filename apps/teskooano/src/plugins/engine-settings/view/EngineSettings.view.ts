@@ -219,7 +219,18 @@ export class EngineUISettingsPanel
       ?.parentInstance as CompositeEnginePanel;
 
     // Provide panelId to controller for per-panel camera state
-    if (parameters.api?.id) {
+    // Use the parent panel's ID (the composite engine panel) instead of this settings panel's ID
+    // This ensures we're updating the same camera state that the renderer is subscribed to
+    if (parent?.panelId) {
+      this._controller.setPanelId(parent.panelId);
+      console.debug(
+        `[EngineUISettingsPanel] Using parent panel ID for camera state: ${parent.panelId}`,
+      );
+    } else if (parameters.api?.id) {
+      // Fallback to this panel's ID if parent is not available (shouldn't happen in normal flow)
+      console.warn(
+        `[EngineUISettingsPanel] Parent panel ID not available, using settings panel ID: ${parameters.api.id}`,
+      );
       this._controller.setPanelId(parameters.api.id);
     }
 
