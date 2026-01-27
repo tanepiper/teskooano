@@ -25,17 +25,18 @@ const systemControlsComponent: ComponentConfig = {
  *    functions from the `SystemFunctionsManager` (e.g., `system:clear`, `system:export`).
  * This pattern ensures that the services are only created when needed and that
  * their dependencies are properly injected.
+ *
+ * Note: System generation services are UI-framework-agnostic and do not require
+ * any Dockview dependencies.
  */
 const initializeSystemControls: FunctionConfig = {
   id: "system-controls:initialize",
-  dependencies: {
-    dockView: { api: true },
-  },
+  dependencies: {},
   execute: (context: PluginExecutionContext) => {
-    const { pluginManager, dockviewApi } = context;
+    const { pluginManager } = context;
 
     // 1. Instantiate services with their required context/dependencies.
-    const generator = new SystemGenerator(dockviewApi);
+    const generator = new SystemGenerator();
     const functionsManager = new SystemFunctionsManager(context, generator);
 
     // 2. Register a dynamic, in-memory plugin containing the functions.

@@ -4,40 +4,29 @@ import {
   seed,
   StateAccessor,
 } from "@teskooano/core-state";
+import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import {
-  CelestialType,
-  CustomEvents,
-  type CelestialObject,
-} from "@teskooano/data-types";
+  EventBus,
+  Events,
+  type SystemEventPayload,
+} from "@teskooano/ui-plugin/patterns";
 import { generateSystem as generateSystemObservable } from "@teskooano/systems-procedural-generation";
-import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
 
 /**
  * A service dedicated to the complex process of procedurally generating a
  * new star system. It orchestrates the flow from getting a seed to processing
  * the stream of generated celestial objects and updating the application state.
+ *
+ * This service is UI-framework-agnostic and does not depend on any UI-specific
+ * APIs. It uses EventBus for semantic UI communication and does not require
+ * any UI framework dependencies.
  */
 export class SystemGenerator {
-  private dockviewApi: DockviewApi | null;
-
   /**
    * Constructs the SystemGenerator service.
-   * @param {DockviewApi | null} dockviewApi - The Dockview API instance, used
-   * for dispatching global UI events (though currently marked for refactoring).
    */
-  constructor(dockviewApi: DockviewApi | null) {
-    this.dockviewApi = dockviewApi;
-  }
-
-  /**
-   * Dispatches a global event to signal that the simulation's timer should be reset.
-   * @private
-   */
-  private static dispatchSimulationTimeReset() {
-    const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
-    window.dispatchEvent(event);
-  }
+  constructor() {}
 
   /**
    * Generates a new solar system based on a seed, updates the state,
@@ -45,31 +34,25 @@ export class SystemGenerator {
    * entry point for creating a new system.
    *
    * The process involves:
-   * 1. Dispatching a `SYSTEM_GENERATION_START` event.
+   * 1. Emitting EventBus events to signal generation start.
    * 2. Clearing the current state.
    * 3. Calling the procedural generation library (`@teskooano/procedural-generation`).
    * 4. Processing the resulting stream of `CelestialObject`s, adding them to the state.
-   * 5. Finalizing the process by dispatching `SYSTEM_GENERATION_COMPLETE` and other cleanup events.
+   * 5. Finalizing the process by emitting EventBus events with system metadata.
    *
    * @param {string} inputSeed - The seed string to use for generation.
    * @returns {Promise<boolean>} A promise that resolves to `true` if generation
    * and state update succeeded, or `false` otherwise.
    */
   public async generateAndLoadSystem(inputSeed: string): Promise<boolean> {
-    // This check for dockviewApi is noted as a candidate for refactoring.
-    // The generator service should ideally not be aware of UI-specific APIs.
-    if (!this.dockviewApi) {
-      console.error("Dockview API not provided to generateAndLoadSystem!");
-      window.dispatchEvent(
-        new CustomEvent(CustomEvents.SYSTEM_GENERATION_START),
-      );
-      window.dispatchEvent(
-        new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-      );
-      return false;
-    }
+    const eventBus = EventBus.getInstance();
 
-    window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
+    // Emit EventBus event to signal generation start
+    eventBus.emit(Events.INFO_DISPLAYED, {
+      message: "Generating new star system...",
+      severity: "info",
+      source: "system-generator",
+    } as any);
 
     seed.updateSeed(inputSeed);
     const finalSeed = StateAccessor.getCurrentSeed();
@@ -77,7 +60,6 @@ export class SystemGenerator {
     // Reset the application state before generating a new system.
     celestialManager.clearState();
     actions.resetTime();
-    SystemGenerator.dispatchSimulationTimeReset();
 
     try {
       // Invoke the core procedural generation function.
@@ -120,10 +102,21 @@ export class SystemGenerator {
         }),
         finalize(() => {
           actions.resetTime();
-          SystemGenerator.dispatchSimulationTimeReset();
-          window.dispatchEvent(
-            new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-          );
+
+          // Emit EventBus event with system metadata
+          const finalEventBus = EventBus.getInstance();
+          const objects = StateAccessor.getCelestialObjects();
+          const objectCount = Object.keys(objects).length;
+          const currentSeed = StateAccessor.getCurrentSeed();
+
+          finalEventBus.emit(Events.SYSTEM_GENERATED, {
+            metadata: {
+              seed: currentSeed || undefined,
+              objectCount,
+              generatedAt: Date.now(),
+            },
+            source: "system-generator",
+          } as SystemEventPayload);
         }),
       );
 
@@ -135,9 +128,19 @@ export class SystemGenerator {
         "[SystemGenerator] Overall error in generateAndLoadSystem:",
         error,
       );
-      window.dispatchEvent(
-        new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-      );
+
+      // Emit EventBus error event
+      const errorEventBus = EventBus.getInstance();
+      errorEventBus.emit(Events.ERROR_OCCURRED, {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate star system",
+        severity: "error",
+        error: error instanceof Error ? error : new Error(String(error)),
+        source: "system-generator",
+      } as any);
+
       return false;
     }
   }

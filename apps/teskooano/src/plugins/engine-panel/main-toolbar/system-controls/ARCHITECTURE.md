@@ -8,7 +8,7 @@ The `system-controls` plugin follows a modern, reactive, **Model-View-Controller
 
 1.  **View (`./view/`)**: A "dumb" custom element (`<teskooano-system-controls>`) that is only responsible for rendering the UI. It owns the DOM, displays data, and captures raw user input, but contains no business logic.
 2.  **Controller (`./controller/`)**: A dedicated controller layer that encapsulates all the business logic directly related to the view. It listens for events from the View, executes side effects, manages component-level state (e.g., `isGenerating$$`), and orchestrates the overall flow.
-3.  **Services (`./services/`)**: A set of standalone, injectable classes that handle the core, reusable business logic. For example, `SystemFunctionsManager` contains the logic for exporting a system, while `SystemGenerator` handles the complex process of procedural generation. These services are unaware of the View.
+3.  **Services (`./services/`)**: A set of standalone, injectable classes that handle the core, reusable business logic. For example, `SystemFunctionsManager` contains the logic for exporting a system, while `SystemGenerator` handles the complex process of procedural generation. These services are unaware of the View and are UI-framework-agnostic (they do not depend on Dockview or other UI-specific APIs).
 4.  **Plugin Entry Point (`index.ts`)**: This file defines the `TeskooanoPlugin`. It registers the custom element and exposes a single `system-controls:initialize` function. This initializer acts as a factory, instantiating the necessary services and dynamically registering their methods with the `PluginManager`.
 5.  **Unidirectional Data Flow**: The architecture strongly adheres to a UDF pattern for state management.
     - **State -> View**: Global state (from `@teskooano/core-state`) flows down into the View for rendering.
@@ -79,4 +79,4 @@ graph TD
 
 - **`/services/`**
   - `system-functions.manager.ts`: A class that defines the concrete implementations for system-level actions (`system:clear`, `system:export`, etc.). These are exposed as `FunctionConfig` objects, making them discoverable and executable by the `pluginManager`.
-  - `system-generator.service.ts`: A class that contains the complex logic for procedurally generating a system from a seed. It uses an RxJS pipeline to process the generated objects and update the state.
+  - `system-generator.service.ts`: A class that contains the complex logic for procedurally generating a system from a seed. It uses an RxJS pipeline to process the generated objects and update the state. This service is UI-framework-agnostic and does not depend on any UI-specific APIs (such as Dockview).

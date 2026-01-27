@@ -386,7 +386,7 @@ export class SystemFunctionsManager {
     return [
       {
         id: "system:generate_random",
-        dependencies: { dockView: { api: true } },
+        dependencies: {},
         execute: this.generateRandomSystem.bind(this),
       },
       {
@@ -401,12 +401,12 @@ export class SystemFunctionsManager {
       },
       {
         id: "system:trigger_import_dialog",
-        dependencies: { dockView: { api: true } },
+        dependencies: {},
         execute: this.triggerImportDialog.bind(this),
       },
       {
         id: "system:create_blank",
-        dependencies: { dockView: { api: true } },
+        dependencies: {},
         execute: this.createBlankSystem.bind(this),
       },
       {

@@ -29,9 +29,7 @@ export class ManagerInitializer {
 
       // Initialize system controls (critical)
       console.debug("[ManagerInit] Initializing system controls...");
-      await pluginManagerInstance.execute("system-controls:initialize", {
-        dockviewController,
-      });
+      await pluginManagerInstance.execute("system-controls:initialize", {});
 
       // Note: DockView modal manager is automatically initialized when the modal plugin is loaded
       // No explicit initialization needed
