@@ -1,6 +1,7 @@
 import { defineConfig, PluginOption } from "vite";
 import glsl from "vite-plugin-glsl";
 import { VitePWA } from "vite-plugin-pwa";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
@@ -44,6 +45,7 @@ export default defineConfig({
         path.resolve(__dirname, "src/config/pluginRegistry.ts"),
       ],
     }),
+    svelte(),
     glsl({
       include: [
         "**/*.glsl",

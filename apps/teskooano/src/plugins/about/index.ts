@@ -1,17 +1,17 @@
 import { createPanelPlugin } from "@teskooano/ui-plugin";
-import { AboutPanel } from "./view/AboutPanel.view.js";
 import QuestionIcon from "@fluentui/svg-icons/icons/question_circle_24_regular.svg?raw";
+import AboutPanelSvelte from "./view/AboutPanel.svelte";
 
 /**
  * Plugin definition for the About panel.
- * ✅ Refactored to use createPanelPlugin factory - reduced from 68 lines to 15 lines
+ * Migrated to Svelte 5 — uses svelteComponent instead of panelClass.
  */
 export const plugin = createPanelPlugin({
   id: "teskooano-about",
   name: "About Panel",
   description: "Provides the About panel and toolbar button.",
-  componentName: AboutPanel.componentName,
-  panelClass: AboutPanel,
+  componentName: "teskooano-about-panel",
+  svelteComponent: AboutPanelSvelte,
   defaultTitle: "About Teskooano",
   iconSvg: QuestionIcon,
   target: "main-toolbar",

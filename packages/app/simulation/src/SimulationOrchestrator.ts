@@ -305,11 +305,7 @@ export class SimulationOrchestrator {
    */
   public resetSystem(skipStateClear: boolean = false): void {
     if (!skipStateClear) {
-      celestialManager.clearState({
-        resetCamera: false, // Camera reset is usually handled by UI/camera manager
-        resetTime: true,
-        resetSelection: true,
-      });
+      celestialManager.clearState();
     } else {
       // Even if skipping full state clear, internal time and resetTime$ event might be relevant.
       if (simulationStore.getSimulationState().time !== 0) {

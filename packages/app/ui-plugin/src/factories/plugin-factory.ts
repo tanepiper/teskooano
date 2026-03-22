@@ -57,10 +57,18 @@ interface PanelPluginConfig {
   name: string;
   /** Brief description of the plugin's purpose */
   description: string;
-  /** HTML tag name for the panel component */
+  /** HTML tag name for the panel component (used as the DockView component name) */
   componentName: string;
-  /** The custom element class that implements the panel */
-  panelClass: any;
+  /**
+   * The custom element class that implements the panel.
+   * Mutually exclusive with `svelteComponent`.
+   */
+  panelClass?: any;
+  /**
+   * A Svelte 5 component to use as the panel content.
+   * Mutually exclusive with `panelClass`.
+   */
+  svelteComponent?: any;
   /** Default title shown in the panel header */
   defaultTitle: string;
   /** SVG icon for the toolbar button */
@@ -179,8 +187,10 @@ interface InterfacePluginConfig {
 export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
   const panelConfig: PanelConfig = {
     componentName: config.componentName,
-    panelClass: config.panelClass,
     defaultTitle: config.defaultTitle,
+    ...(config.svelteComponent
+      ? { svelteComponent: config.svelteComponent }
+      : { panelClass: config.panelClass }),
   };
 
   // Only create toolbar registration if target is specified (not undefined)
@@ -210,14 +220,17 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
     });
   }
 
-  // Always include the main component
-  const components: ComponentConfig[] = [
-    {
-      tagName: config.componentName,
-      componentClass: config.panelClass,
-    },
-    ...(config.additionalComponents || []),
-  ];
+  // For web-component panels include the main element in the component registry.
+  // Svelte panels don't register custom elements.
+  const components: ComponentConfig[] = config.svelteComponent
+    ? (config.additionalComponents || [])
+    : [
+        {
+          tagName: config.componentName,
+          componentClass: config.panelClass,
+        },
+        ...(config.additionalComponents || []),
+      ];
 
   return {
     id: config.id,

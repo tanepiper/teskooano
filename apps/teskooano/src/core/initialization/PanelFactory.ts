@@ -1,5 +1,6 @@
 import { IContentRenderer, PanelInitParameters } from "dockview-core";
 import type { PanelConfig } from "@teskooano/ui-plugin";
+import { createSveltePanelConstructor } from "./SveltePanelWrapper.js";
 
 /**
  * A factory class responsible for creating panel component constructors
@@ -21,7 +22,12 @@ export class PanelFactory {
     panelConfig: PanelConfig,
     pluginId: string,
   ): new () => IContentRenderer {
-    const { componentName, panelClass } = panelConfig;
+    const { componentName, panelClass, svelteComponent } = panelConfig;
+
+    // Svelte 5 component — use SveltePanelWrapper to mount it into DockView
+    if (svelteComponent) {
+      return createSveltePanelConstructor(svelteComponent);
+    }
 
     if (!panelClass) {
       throw new Error(

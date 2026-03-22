@@ -65,6 +65,11 @@ export class RegistrationManager {
         });
       }
 
+      // Svelte panels don't use custom elements — skip registration.
+      if (panelConfig.svelteComponent) {
+        return;
+      }
+
       const PanelClass = panelConfig.panelClass as any;
       const componentName = panelConfig.componentName;
 

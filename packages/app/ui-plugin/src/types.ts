@@ -108,10 +108,18 @@ export interface PanelConfig {
    * The class implementing the Dockview panel's content.
    * Can be a standard class implementing IContentRenderer,
    * OR a Custom Element constructor that also implements IContentRenderer.
+   * Mutually exclusive with `svelteComponent`.
    */
-  panelClass:
+  panelClass?:
     | ({ new (): IContentRenderer } & Partial<CustomElementConstructor>)
     | CustomElementConstructor;
+  /**
+   * A Svelte 5 component to mount as the panel content.
+   * Mutually exclusive with `panelClass`. When provided, the PanelFactory
+   * wraps it in a SveltePanelWrapper for DockView compatibility.
+   * The component receives a `params` prop of type PanelInitParameters.
+   */
+  svelteComponent?: any;
   /** Default title for the panel (can be overridden). */
   defaultTitle: string;
   /** Optional default parameters to pass to the panel on creation. */
