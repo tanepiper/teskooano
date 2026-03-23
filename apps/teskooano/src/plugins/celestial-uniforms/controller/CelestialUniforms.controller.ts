@@ -4,8 +4,18 @@ import {
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import { type CelestialObject, CelestialStatus } from "@teskooano/data-types";
-import type { CelestialUniformsEditor } from "../view/CelestialUniforms.view";
 import { UniformsRendererFactory } from "./uniform-renderers/UniformsRendererFactory";
+
+/**
+ * Minimal view interface required by the CelestialUniformsController.
+ * Both the legacy HTMLElement view and the Svelte panel adapter implement this.
+ */
+export interface CelestialUniformsView {
+  clearContainer(): void;
+  showPlaceholder(message: string): void;
+  hidePlaceholder(): void;
+  setTitle(title: string): void;
+}
 
 /**
  * Controller for the CelestialUniformsEditor view.
@@ -15,7 +25,7 @@ import { UniformsRendererFactory } from "./uniform-renderers/UniformsRendererFac
  * the rendering of UI controls by delegating to specialized renderer classes.
  */
 export class CelestialUniformsController extends StateSubscriptionMixin {
-  private _view: CelestialUniformsEditor;
+  private _view: CelestialUniformsView;
   private _container: HTMLElement;
 
   private _panelId: string;
@@ -37,7 +47,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
    * @param panelId Unique identifier for the panel this controller belongs to.
    */
   constructor(
-    view: CelestialUniformsEditor,
+    view: CelestialUniformsView,
     container: HTMLElement,
     panelId: string,
   ) {

@@ -1,43 +1,50 @@
 import { PluginExecutionContext } from "@teskooano/ui-plugin";
-import { NotificationsPanel } from "../view/notifications.panel";
+import { mount, unmount } from "svelte";
+import NotificationsPanelSvelte from "../view/NotificationsPanel.svelte";
 
 /**
- * Manages the UI for notifications, creating and attaching the container
- * to the DOM.
+ * Manages the UI for notifications, creating and attaching the Svelte-based
+ * overlay component to the DOM.
  */
 export class NotificationUIManager {
   private context: PluginExecutionContext;
-  private container: NotificationsPanel | null = null;
+  private _mountTarget: HTMLDivElement | null = null;
+  private _instance: Record<string, any> | undefined;
 
   constructor(context: PluginExecutionContext) {
     this.context = context;
   }
 
   /**
-   * Creates the notification container and appends it to a parent element.
-   * If a container already exists, this method does nothing.
-   * @param parentElement The element to attach the notification container to.
+   * Mounts the notifications panel Svelte component into the given parent element.
+   * If already mounted, this method does nothing.
    */
   public createContainer(parentElement: HTMLElement): void {
-    if (this.container) {
+    if (this._instance) {
       return;
     }
 
-    // The 'teskooano-notifications-panel' custom element is registered
-    // by this same plugin, so it should be available.
-    this.container = document.createElement(
-      "teskooano-notifications-panel",
-    ) as NotificationsPanel;
-    parentElement.appendChild(this.container);
+    this._mountTarget = document.createElement("div");
+    this._mountTarget.style.cssText =
+      "position:fixed;top:0;left:0;width:100%;height:0;z-index:10000;pointer-events:none;";
+    parentElement.appendChild(this._mountTarget);
+
+    this._instance = mount(NotificationsPanelSvelte, {
+      target: this._mountTarget,
+    });
   }
 
   /**
-   * Removes the notification container from the DOM.
+   * Unmounts the Svelte component and removes the container from the DOM.
    */
   public dispose(): void {
-    if (this.container) {
-      this.container.remove();
-      this.container = null;
+    if (this._instance) {
+      unmount(this._instance);
+      this._instance = undefined;
+    }
+    if (this._mountTarget) {
+      this._mountTarget.remove();
+      this._mountTarget = null;
     }
   }
 }

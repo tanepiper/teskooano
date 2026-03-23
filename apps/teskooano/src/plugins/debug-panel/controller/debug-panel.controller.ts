@@ -1,6 +1,16 @@
 import { celestialDebugger } from "@teskooano/core-debug";
+import type { SystemHierarchyNode } from "@teskooano/core-debug";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
-import type { DebugPanel } from "../view/debug-panel.view";
+
+/**
+ * Minimal view interface required by DebugPanelController.
+ * Both the legacy HTMLElement view and the Svelte panel adapter implement this.
+ */
+export interface DebugPanelView {
+  renderStats(stats: { drawCalls: number; triangles: number }): void;
+  renderHierarchy(nodes: SystemHierarchyNode[]): void;
+  getHierarchyStatsComponent(): { updateStats?: () => void } | null;
+}
 
 /**
  * Controller for the Debug Panel.
@@ -12,10 +22,10 @@ import type { DebugPanel } from "../view/debug-panel.view";
  * - Updating the view with new data.
  */
 export class DebugPanelController {
-  private view: DebugPanel;
+  private view: DebugPanelView;
   private parentPanel: CompositeEnginePanel | null;
 
-  constructor(view: DebugPanel, parentPanel: CompositeEnginePanel | null) {
+  constructor(view: DebugPanelView, parentPanel: CompositeEnginePanel | null) {
     this.view = view;
     this.parentPanel = parentPanel;
     this.initialize();
@@ -26,7 +36,7 @@ export class DebugPanelController {
   }
 
   public dispose(): void {
-    // No-op, interval is now managed by the view
+    // No-op, interval is now managed by the view/panel
   }
 
   public updateData(): void {
@@ -50,9 +60,7 @@ export class DebugPanelController {
   }
 
   public renderHierarchyStats(): void {
-    const hierarchyStatsComponent = this.view.shadowRoot?.querySelector(
-      "hierarchy-stats",
-    ) as any;
+    const hierarchyStatsComponent = this.view.getHierarchyStatsComponent();
     if (
       hierarchyStatsComponent &&
       typeof hierarchyStatsComponent.updateStats === "function"

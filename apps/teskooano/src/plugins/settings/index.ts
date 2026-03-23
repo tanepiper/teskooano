@@ -1,18 +1,18 @@
 import { createPanelPlugin } from "@teskooano/ui-plugin";
-import { SettingsPanel } from "./view/SettingsPanel";
+import SettingsPanelSvelte from "./view/SettingsPanel.svelte";
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
 /**
  * Plugin definition for the main application Settings panel.
- * ✅ Refactored to use createPanelPlugin factory - reduced from 55 lines to 15 lines
+ * Migrated to Svelte — no custom elements registered.
  */
 export const plugin = createPanelPlugin({
   id: "teskooano-settings",
   name: "Application Settings Panel",
   description:
     "Registers the main application settings panel and its toolbar toggle button.",
-  componentName: SettingsPanel.componentName,
-  panelClass: SettingsPanel,
+  componentName: "teskooano-settings-panel",
+  svelteComponent: SettingsPanelSvelte,
   defaultTitle: "Settings",
   iconSvg: SettingsIcon,
   target: "main-toolbar",
@@ -21,5 +21,3 @@ export const plugin = createPanelPlugin({
   tooltipTitle: "Settings",
   tooltipIconSvg: SettingsIcon,
 });
-
-export { SettingsPanel };

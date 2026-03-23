@@ -5,7 +5,6 @@ import {
 } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
-import type { CelestialInfo } from "../view/CelestialInfo.view";
 import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
 
 /**
@@ -14,24 +13,20 @@ import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
  * state subscriptions, event handling, and managing the view manager.
  */
 export class CelestialInfoController extends StateSubscriptionMixin {
-  private _view: CelestialInfo;
   private _viewManager: CelestialInfoViewManager;
   private _currentSelectedId: string | null = null;
   private _parentPanel: CompositeEnginePanel | null = null;
 
   /**
    * Creates an instance of CelestialInfoController.
-   * @param view The CelestialInfo view instance.
    * @param container The HTML element that will contain the info components.
    * @param placeholder The HTML element used for placeholder messages.
    */
   constructor(
-    view: CelestialInfo,
     container: HTMLElement,
     placeholder: HTMLElement,
   ) {
     super();
-    this._view = view;
     this._viewManager = new CelestialInfoViewManager(container, placeholder);
   }
 

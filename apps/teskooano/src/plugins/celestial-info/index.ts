@@ -1,5 +1,5 @@
 import { createPanelPlugin } from "@teskooano/ui-plugin";
-import { CelestialInfo } from "./view/CelestialInfo.view.js";
+import CelestialInfoPanelSvelte from "./view/CelestialInfoPanel.svelte";
 
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import { AsteroidFieldInfoComponent } from "./bodies/AsteroidFieldInfo.js";
@@ -82,15 +82,15 @@ const additionalComponents = [
 
 /**
  * Plugin definition for the Celestial Info display panel.
- * ✅ Refactored to use createPanelPlugin factory - reduced from 75 lines to 25 lines
+ * ✅ Migrated to Svelte 5
  */
 export const plugin = createPanelPlugin({
   id: "teskooano-celestial-info",
   name: "Celestial Info Display",
   description:
     "Provides the celestial information display panel and toolbar button.",
-  componentName: CelestialInfo.componentName,
-  panelClass: CelestialInfo,
+  componentName: "celestial-info",
+  svelteComponent: CelestialInfoPanelSvelte,
   defaultTitle: "Celestial Info",
   iconSvg: InfoIcon,
   order: 35,
@@ -98,4 +98,3 @@ export const plugin = createPanelPlugin({
   target: "engine-toolbar",
 });
 
-export { CelestialInfo };

@@ -8,7 +8,6 @@ import {
   DeviceMemoryAPI,
 } from "@teskooano/web-apis";
 import { formatVector } from "../utils/formatters";
-import type { RendererInfoDisplay } from "../view/RendererInfoDisplay.view.js";
 import { WebGLCapabilitiesDisplay } from "../view/WebGLCapabilitiesDisplay.view.js";
 
 const UPDATE_INTERVAL_MS = 1000;
@@ -21,7 +20,7 @@ const UPDATE_INTERVAL_MS = 1000;
  * and updates the view with the formatted data.
  */
 export class RendererInfoDisplayController {
-  private _view: RendererInfoDisplay;
+  private _view: HTMLElement;
   private _camPosValue: HTMLElement;
   private _fovValue: HTMLElement;
   private _devicePerformanceElement?: HTMLElement;
@@ -45,7 +44,7 @@ export class RendererInfoDisplayController {
    * @param elements A record of the HTML elements from the view's shadow DOM.
    */
   constructor(
-    view: RendererInfoDisplay,
+    view: HTMLElement,
     elements: {
       camPosValue: HTMLElement;
       fovValue: HTMLElement;

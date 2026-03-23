@@ -1,3 +1,4 @@
+import { mount, unmount } from "svelte";
 import {
   CelestialObject,
   CelestialStatus,
@@ -6,6 +7,7 @@ import {
 import { generateIconConfig } from "../../celestial-icons";
 import { formatDetailedType } from "../utils/type-formatter";
 import { StateAccessor, FlatHierarchyService } from "@teskooano/core-state";
+import CelestialRowSvelte from "../components/celestial-row/CelestialRow.svelte";
 
 /**
  * Manages the DOM representation of the celestial object list.
@@ -16,6 +18,8 @@ export class FocusListManager {
   private _rootUlElement: HTMLElement;
   private _destroyedUlElement: HTMLElement;
   private _flatHierarchyService: FlatHierarchyService;
+  private _activeRowInstances: ReturnType<typeof mount>[] = [];
+  private _destroyedRowInstances: ReturnType<typeof mount>[] = [];
 
   /**
    * Creates an instance of FocusListManager.
@@ -50,6 +54,8 @@ export class FocusListManager {
    * @param destroyedObjects An array of celestial objects that are destroyed or annihilated.
    */
   private populateDestroyedList(destroyedObjects: CelestialObject[]): void {
+    for (const instance of this._destroyedRowInstances) unmount(instance);
+    this._destroyedRowInstances = [];
     this._destroyedUlElement.innerHTML = "";
     if (destroyedObjects.length === 0) {
       this._destroyedUlElement.innerHTML =
@@ -60,20 +66,25 @@ export class FocusListManager {
     // Sort by name
     destroyedObjects.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
 
+    for (const instance of this._destroyedRowInstances) unmount(instance);
+    this._destroyedRowInstances = [];
+
     destroyedObjects.forEach((obj) => {
       const listItem = document.createElement("li");
       listItem.dataset.id = obj.id;
 
-      const row = document.createElement("celestial-row");
-      row.setAttribute("object-id", obj.id);
-      row.setAttribute("object-name", obj.name);
-      row.setAttribute("object-type", formatDetailedType(obj));
+      const instance = mount(CelestialRowSvelte, {
+        target: listItem,
+        props: {
+          objectId: obj.id,
+          objectName: obj.name,
+          objectType: formatDetailedType(obj),
+          config: JSON.stringify(generateIconConfig(obj)),
+          inactive: true,
+        },
+      });
+      this._destroyedRowInstances.push(instance);
 
-      const iconConfig = generateIconConfig(obj);
-      row.setAttribute("config", JSON.stringify(iconConfig));
-      row.setAttribute("inactive", ""); // Always inactive
-
-      listItem.appendChild(row);
       this._destroyedUlElement.appendChild(listItem);
     });
   }
@@ -88,6 +99,8 @@ export class FocusListManager {
     objects: Record<string, CelestialObject>,
     currentFocusedId: string | null,
   ): void {
+    for (const instance of this._activeRowInstances) unmount(instance);
+    this._activeRowInstances = [];
     this._rootUlElement.innerHTML = "";
 
     const hierarchyState = this._flatHierarchyService.getHierarchyState();
@@ -126,17 +139,7 @@ export class FocusListManager {
         const listItem = document.createElement("li");
         listItem.dataset.id = obj.id;
 
-        const row = document.createElement("celestial-row");
-        row.setAttribute("object-id", obj.id);
-        row.setAttribute("object-name", obj.name);
-        row.setAttribute("object-type", formatDetailedType(obj));
-
-        const iconConfig = generateIconConfig(obj);
-        row.setAttribute("config", JSON.stringify(iconConfig));
-
-        if (isFocused) row.setAttribute("focused", "");
-
-        row.classList.add("focus-row-item");
+        if (isFocused) listItem.classList.add("focused-item");
 
         const contentDiv = document.createElement("div");
         contentDiv.classList.add("list-item-content");
@@ -154,7 +157,17 @@ export class FocusListManager {
           }
 
           contentDiv.appendChild(caretSpan);
-          contentDiv.appendChild(row);
+          const rowInstance = mount(CelestialRowSvelte, {
+            target: contentDiv,
+            props: {
+              objectId: obj.id,
+              objectName: obj.name,
+              objectType: formatDetailedType(obj),
+              config: JSON.stringify(generateIconConfig(obj)),
+              inactive: false,
+            },
+          });
+          this._activeRowInstances.push(rowInstance);
           listItem.appendChild(contentDiv);
 
           const nestedUl = document.createElement("ul");
@@ -175,7 +188,17 @@ export class FocusListManager {
           listItem.appendChild(nestedUl);
         } else {
           contentDiv.classList.add("leaf-node");
-          contentDiv.appendChild(row);
+          const leafInstance = mount(CelestialRowSvelte, {
+            target: contentDiv,
+            props: {
+              objectId: obj.id,
+              objectName: obj.name,
+              objectType: formatDetailedType(obj),
+              config: JSON.stringify(generateIconConfig(obj)),
+              inactive: false,
+            },
+          });
+          this._activeRowInstances.push(leafInstance);
           listItem.appendChild(contentDiv);
         }
 
@@ -194,24 +217,21 @@ export class FocusListManager {
    * @param focusedId The ID of the object to highlight, or null.
    */
   public updateHighlight(focusedId: string | null): void {
-    const currentlyFocused = this._rootUlElement.querySelector(
-      "celestial-row[focused]",
+    const currentlyFocused = this._rootUlElement.querySelector<HTMLElement>(
+      "li.focused-item",
     );
-    currentlyFocused?.removeAttribute("focused");
+    currentlyFocused?.classList.remove("focused-item");
 
     if (focusedId) {
-      const targetLi = this._rootUlElement.querySelector(
+      const targetLi = this._rootUlElement.querySelector<HTMLElement>(
         `li[data-id="${focusedId}"]`,
-      );
-      const targetRow = targetLi?.querySelector<HTMLElement>(
-        "celestial-row.focus-row-item",
       );
       const isInactive =
         targetLi?.classList.contains("destroyed") ||
         targetLi?.classList.contains("annihilated");
 
-      if (targetRow && !isInactive) {
-        targetRow.setAttribute("focused", "");
+      if (targetLi && !isInactive) {
+        targetLi.classList.add("focused-item");
       }
     }
   }

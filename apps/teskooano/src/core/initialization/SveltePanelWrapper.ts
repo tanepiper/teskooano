@@ -32,6 +32,13 @@ export function createSveltePanelConstructor(
     }
 
     init(params: PanelInitParameters): void {
+      // Set data-panel-id so child components (e.g. teskooano-slider) can
+      // find their panel context by traversing the DOM.
+      const panelId = (params as any)?.api?.id;
+      if (panelId) {
+        this._element.setAttribute("data-panel-id", panelId);
+      }
+
       this._instance = mount(svelteComponent, {
         target: this._element,
         props: { params },

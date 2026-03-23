@@ -1,5 +1,4 @@
-import { CelestialStatus, CustomEvents } from "@teskooano/data-types";
-import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
+import { CustomEvents } from "@teskooano/data-types";
 
 export interface TreeInteractionHandlers {
   onFocusRequest: (objectId: string) => void;
@@ -39,10 +38,9 @@ export class TreeInteractionManager {
   }
 
   public expandTreeToReveal(focusedId: string): void {
-    const elementToReveal = this._treeListContainer.querySelector<HTMLElement>(
-      `celestial-row[object-id="${focusedId}"]`,
+    let parentLi = this._treeListContainer.querySelector<HTMLElement>(
+      `li[data-id="${focusedId}"]`,
     );
-    let parentLi = elementToReveal?.closest("li");
     while (parentLi) {
       const parentUl = parentLi.parentElement;
       if (
@@ -60,7 +58,7 @@ export class TreeInteractionManager {
           caret.setAttribute("aria-expanded", "true");
         }
       }
-      parentLi = parentUl?.closest("li");
+      parentLi = (parentUl?.closest("li") as HTMLElement | null) ?? null;
     }
   }
 
