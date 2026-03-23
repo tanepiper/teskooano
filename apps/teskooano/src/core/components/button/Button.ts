@@ -30,6 +30,21 @@ export class TeskooanoButton extends HTMLElement {
 
   connectedCallback() {
     this._syncPropsFromAttributes();
+
+    // Extract icon SVG from slotted content (used by web-component templates and
+    // createToolbarButton which set innerHTML to `<span slot="icon">…</span>`).
+    // Button.svelte uses the `iconSvg` prop rather than native <slot>, so we pull
+    // the content out here and remove the stray span to prevent double-rendering.
+    if (!this._props.iconSvg) {
+      const iconSpan = this.querySelector<HTMLElement>(
+        ':scope > span[slot="icon"]',
+      );
+      if (iconSpan) {
+        this._props.iconSvg = iconSpan.innerHTML;
+        iconSpan.remove();
+      }
+    }
+
     this._instance = mount(ButtonSvelte, {
       target: this,
       props: this._props,

@@ -391,15 +391,15 @@ export class EngineToolbar {
   public updateExpansionUI(isExpanded: boolean): void {
     if (!this._toggleButton || !this._collapsibleContainer) return;
 
-    const iconSpan = this._toggleButton.querySelector("span[slot='icon']");
-
     this._collapsibleContainer.classList.toggle("expanded", isExpanded);
 
-    if (iconSpan) {
-      // Use the stored SVG strings directly
-      iconSpan.innerHTML = isExpanded
+    // The icon is rendered by Button.svelte inside a `.icon-slot` span.
+    // The original `span[slot="icon"]` is consumed by Button.ts on connect.
+    const iconSlot = this._toggleButton.querySelector<HTMLElement>(".icon-slot");
+    if (iconSlot) {
+      iconSlot.innerHTML = isExpanded
         ? BoxMultipleArrowLeftFilled
-        : BoxMultipleArrowRightFilled; // Use the imported SVG
+        : BoxMultipleArrowRightFilled;
     }
     this._toggleButton.title = isExpanded ? "Hide Tools" : "Show Tools";
   }
