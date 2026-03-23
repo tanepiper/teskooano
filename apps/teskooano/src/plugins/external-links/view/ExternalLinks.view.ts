@@ -1,46 +1,25 @@
-import { ExternalLinksController } from "../controller/ExternalLinks.controller.js";
-import { template } from "./external-links.template.js";
+import { mount, unmount } from "svelte";
+import ExternalLinksWidgetSvelte from "./ExternalLinksWidget.svelte";
 
 /**
  * @element teskooano-external-links-component
  * @summary Displays a set of icon buttons linking to external project resources.
  *
- * This component renders a list of predefined external links (e.g., GitHub, social media)
- * as `teskooano-button` elements with icons. It's designed to be used as a toolbar widget.
- * It delegates all rendering logic to the `ExternalLinksController`.
- *
- * @csspart container - The main container `div` holding the link buttons.
+ * Thin custom-element shell that mounts the Svelte `ExternalLinksWidget`
+ * component. The element must remain a custom element so the toolbar system
+ * can create it via `document.createElement()`.
  */
 export class ExternalLinksComponent extends HTMLElement {
-  private controller!: ExternalLinksController;
+  private _instance: ReturnType<typeof mount> | undefined;
 
-  /**
-   * Constructs the ExternalLinksComponent.
-   * Attaches the shadow DOM and instantiates the controller.
-   */
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    this.shadowRoot!.appendChild(template.content.cloneNode(true));
-
-    const container = this.shadowRoot!.querySelector(
-      ".external-links-component-container",
-    );
-    if (!container) {
-      console.error(
-        "[ExternalLinksComponent] Container not found in template.",
-      );
-      return;
-    }
-
-    this.controller = new ExternalLinksController(container as HTMLElement);
+  connectedCallback() {
+    this._instance = mount(ExternalLinksWidgetSvelte, { target: this });
   }
 
-  /**
-   * Standard connectedCallback lifecycle method.
-   * Initializes the controller to render the component's content.
-   */
-  connectedCallback() {
-    this.controller?.initialize();
+  disconnectedCallback() {
+    if (this._instance) {
+      unmount(this._instance);
+      this._instance = undefined;
+    }
   }
 }

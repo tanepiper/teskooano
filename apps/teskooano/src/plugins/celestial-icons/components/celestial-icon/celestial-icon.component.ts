@@ -1,466 +1,76 @@
+import { mount, unmount } from "svelte";
 import type { CelestialIconConfig } from "../../types.js";
-import { template } from "./celestial-icon.template.js";
+import CelestialIconSvelte from "./CelestialIcon.svelte";
 
-const SVG_NS = "http://www.w3.org/2000/svg";
+/** Minimal interface for the Svelte 4 compatibility shim exposed by `mount()`. */
+interface SvelteInstanceWithSet {
+  $set(props: Record<string, unknown>): void;
+}
 
+/**
+ * `<celestial-icon>` custom element.
+ *
+ * Thin wrapper that mounts the Svelte `CelestialIcon` component. Kept as a
+ * custom element so it can be used via:
+ *  - Svelte templates: `<celestial-icon {config} />`
+ *  - innerHTML strings:  `<celestial-icon config='...'></celestial-icon>`
+ *
+ * Accepts either:
+ *  - a `config` HTML attribute (JSON string), parsed automatically, or
+ *  - the `setConfig(config)` method for programmatic usage.
+ */
 export class CelestialIconComponent extends HTMLElement {
   private _config: CelestialIconConfig | null = null;
-  private layers: SVGGElement | null = null;
-  private radialGradient: SVGRadialGradientElement | null = null;
-  private proceduralGradient: SVGLinearGradientElement | null = null;
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    this.layers = this.shadowRoot!.querySelector(".icon-layers");
-    this.radialGradient = this.shadowRoot!.querySelector("#planet-gradient");
-    this.proceduralGradient = this.shadowRoot!.querySelector(
-      "#procedural-gradient",
-    );
-  }
+  private _instance: ReturnType<typeof mount> | undefined;
 
   static get observedAttributes(): string[] {
     return ["config"];
   }
 
+  connectedCallback(): void {
+    this._instance = mount(CelestialIconSvelte, {
+      target: this,
+      props: { config: this._config },
+    });
+  }
+
+  disconnectedCallback(): void {
+    if (this._instance) {
+      unmount(this._instance);
+      this._instance = undefined;
+    }
+  }
+
   attributeChangedCallback(
     name: string,
-    oldValue: string | null,
+    _oldValue: string | null,
     newValue: string | null,
   ): void {
     if (name === "config" && newValue) {
       try {
-        const parsedConfig = JSON.parse(newValue);
-        this.setConfig(parsedConfig);
+        this.setConfig(JSON.parse(newValue));
       } catch (e) {
-        console.error("Failed to parse celestial-icon config:", e);
-        this.clear();
+        console.error("[CelestialIconComponent] Failed to parse config:", e);
       }
     }
   }
 
   public setConfig(config: CelestialIconConfig): void {
     this._config = config;
-    this.renderIcon();
-  }
-
-  private clear(): void {
-    if (this.layers) {
-      this.layers.innerHTML = "";
-    }
-  }
-
-  /**
-   * Generates color stops for the procedural gradient based on surface properties.
-   */
-  private generateProceduralGradient(): void {
-    if (!this.proceduralGradient || !this._config?.procedural) return;
-
-    // Clear previous stops
-    this.proceduralGradient.innerHTML = "";
-
-    const { procedural } = this._config;
-    const stops = [
-      { color: procedural.color1, offset: procedural.height1 },
-      { color: procedural.color2, offset: procedural.height2 },
-      { color: procedural.color3, offset: procedural.height3 },
-      { color: procedural.color4, offset: procedural.height4 },
-      { color: procedural.color5, offset: procedural.height5 },
-    ];
-
-    // Ensure stops are sorted by offset and clamped between 0 and 1
-    const sortedStops = stops
-      .map((s) => ({ ...s, offset: Math.max(0, Math.min(1, s.offset)) }))
-      .sort((a, b) => a.offset - b.offset);
-
-    for (const stop of sortedStops) {
-      const stopEl = document.createElementNS(SVG_NS, "stop");
-      stopEl.setAttribute("offset", `${stop.offset * 100}%`);
-      stopEl.setAttribute("stop-color", stop.color);
-      this.proceduralGradient.appendChild(stopEl);
-    }
-  }
-
-  /**
-   * Creates a pulsar effect with animated beams
-   */
-  private createPulsarEffect(): void {
-    if (!this.layers) return;
-
-    // Create pulsar beams
-    for (let i = 0; i < 4; i++) {
-      const beam = document.createElementNS(SVG_NS, "line");
-      beam.setAttribute("class", "pulsar-beam");
-      beam.setAttribute("x1", "12");
-      beam.setAttribute("y1", "12");
-      beam.setAttribute("x2", "12");
-      beam.setAttribute("y2", "2");
-      beam.setAttribute("stroke", "#FFFFFF");
-      beam.setAttribute("stroke-width", "1");
-      beam.setAttribute("opacity", "0.8");
-      beam.setAttribute("transform", `rotate(${i * 90} 12 12)`);
-      this.layers.appendChild(beam);
-    }
-  }
-
-  /**
-   * Creates a black hole effect with accretion disk
-   */
-  private createBlackHoleEffect(): void {
-    if (!this.layers) return;
-
-    // Create accretion disk
-    const disk = document.createElementNS(SVG_NS, "ellipse");
-    disk.setAttribute("class", "black-hole-disk");
-    disk.setAttribute("cx", "12");
-    disk.setAttribute("cy", "12");
-    disk.setAttribute("rx", "10");
-    disk.setAttribute("ry", "3");
-    disk.setAttribute("fill", "none");
-    disk.setAttribute("stroke", "#FF6B6B");
-    disk.setAttribute("stroke-width", "1");
-    disk.setAttribute("opacity", "0.6");
-    this.layers.appendChild(disk);
-
-    // Create inner event horizon
-    const horizon = document.createElementNS(SVG_NS, "circle");
-    horizon.setAttribute("class", "black-hole-horizon");
-    horizon.setAttribute("cx", "12");
-    horizon.setAttribute("cy", "12");
-    horizon.setAttribute("r", "2");
-    horizon.setAttribute("fill", "#000000");
-    horizon.setAttribute("stroke", "#333333");
-    horizon.setAttribute("stroke-width", "0.5");
-    this.layers.appendChild(horizon);
-  }
-
-  /**
-   * Creates a white dwarf effect with subtle glow
-   */
-  private createWhiteDwarfEffect(): void {
-    if (!this.layers) return;
-
-    // Create inner core glow
-    const core = document.createElementNS(SVG_NS, "circle");
-    core.setAttribute("class", "white-dwarf-core");
-    core.setAttribute("cx", "12");
-    core.setAttribute("cy", "12");
-    core.setAttribute("r", "2");
-    core.setAttribute("fill", "#FFFFFF");
-    core.setAttribute("opacity", "0.9");
-    this.layers.appendChild(core);
-  }
-
-  /**
-   * Creates a protostar effect with irregular shape
-   */
-  private createProtostarEffect(): void {
-    if (!this.layers) return;
-
-    // Create irregular protostar shape
-    const protostar = document.createElementNS(SVG_NS, "path");
-    protostar.setAttribute("class", "protostar-shape");
-    protostar.setAttribute(
-      "d",
-      "M 12,8 Q 14,10 12,12 Q 10,14 12,16 Q 14,14 12,12 Q 14,10 12,8",
-    );
-    protostar.setAttribute("fill", "#FF8A4A");
-    protostar.setAttribute("opacity", "0.8");
-    this.layers.appendChild(protostar);
-  }
-
-  /**
-   * Creates a satellite icon with solar panels and antenna
-   */
-  private createSatelliteIcon(): void {
-    if (!this.layers) return;
-
-    // Main satellite body (rectangular)
-    const body = document.createElementNS(SVG_NS, "rect");
-    body.setAttribute("class", "satellite-body");
-    body.setAttribute("x", "9");
-    body.setAttribute("y", "9");
-    body.setAttribute("width", "6");
-    body.setAttribute("height", "6");
-    body.setAttribute("fill", "#C0C0C0");
-    body.setAttribute("stroke", "#808080");
-    body.setAttribute("stroke-width", "0.5");
-    this.layers.appendChild(body);
-
-    // Left solar panel
-    const leftPanel = document.createElementNS(SVG_NS, "rect");
-    leftPanel.setAttribute("class", "satellite-panel");
-    leftPanel.setAttribute("x", "4");
-    leftPanel.setAttribute("y", "10.5");
-    leftPanel.setAttribute("width", "4");
-    leftPanel.setAttribute("height", "3");
-    leftPanel.setAttribute("fill", "#1E3A8A");
-    leftPanel.setAttribute("stroke", "#1E40AF");
-    leftPanel.setAttribute("stroke-width", "0.5");
-    this.layers.appendChild(leftPanel);
-
-    // Right solar panel
-    const rightPanel = document.createElementNS(SVG_NS, "rect");
-    rightPanel.setAttribute("class", "satellite-panel");
-    rightPanel.setAttribute("x", "16");
-    rightPanel.setAttribute("y", "10.5");
-    rightPanel.setAttribute("width", "4");
-    rightPanel.setAttribute("height", "3");
-    rightPanel.setAttribute("fill", "#1E3A8A");
-    rightPanel.setAttribute("stroke", "#1E40AF");
-    rightPanel.setAttribute("stroke-width", "0.5");
-    this.layers.appendChild(rightPanel);
-
-    // Solar panel grid lines (left)
-    for (let i = 1; i <= 2; i++) {
-      const line = document.createElementNS(SVG_NS, "line");
-      line.setAttribute("x1", String(4 + i * 1.2));
-      line.setAttribute("y1", "10.5");
-      line.setAttribute("x2", String(4 + i * 1.2));
-      line.setAttribute("y2", "13.5");
-      line.setAttribute("stroke", "#3B82F6");
-      line.setAttribute("stroke-width", "0.3");
-      line.setAttribute("opacity", "0.7");
-      this.layers.appendChild(line);
-    }
-
-    // Solar panel grid lines (right)
-    for (let i = 1; i <= 2; i++) {
-      const line = document.createElementNS(SVG_NS, "line");
-      line.setAttribute("x1", String(16 + i * 1.2));
-      line.setAttribute("y1", "10.5");
-      line.setAttribute("x2", String(16 + i * 1.2));
-      line.setAttribute("y2", "13.5");
-      line.setAttribute("stroke", "#3B82F6");
-      line.setAttribute("stroke-width", "0.3");
-      line.setAttribute("opacity", "0.7");
-      this.layers.appendChild(line);
-    }
-
-    // Communication antenna
-    const antenna = document.createElementNS(SVG_NS, "line");
-    antenna.setAttribute("class", "satellite-antenna");
-    antenna.setAttribute("x1", "12");
-    antenna.setAttribute("y1", "9");
-    antenna.setAttribute("x2", "12");
-    antenna.setAttribute("y2", "6");
-    antenna.setAttribute("stroke", "#FFD700");
-    antenna.setAttribute("stroke-width", "1");
-    antenna.setAttribute("stroke-linecap", "round");
-    this.layers.appendChild(antenna);
-
-    // Antenna dish (small circle at top)
-    const dish = document.createElementNS(SVG_NS, "circle");
-    dish.setAttribute("class", "satellite-dish");
-    dish.setAttribute("cx", "12");
-    dish.setAttribute("cy", "6");
-    dish.setAttribute("r", "1");
-    dish.setAttribute("fill", "none");
-    dish.setAttribute("stroke", "#FFD700");
-    dish.setAttribute("stroke-width", "0.8");
-    this.layers.appendChild(dish);
-
-    // Small details on body (windows/sensors)
-    const detail1 = document.createElementNS(SVG_NS, "circle");
-    detail1.setAttribute("cx", "10.5");
-    detail1.setAttribute("cy", "10.5");
-    detail1.setAttribute("r", "0.5");
-    detail1.setAttribute("fill", "#4ADE80");
-    detail1.setAttribute("opacity", "0.8");
-    this.layers.appendChild(detail1);
-
-    const detail2 = document.createElementNS(SVG_NS, "circle");
-    detail2.setAttribute("cx", "13.5");
-    detail2.setAttribute("cy", "13.5");
-    detail2.setAttribute("r", "0.5");
-    detail2.setAttribute("fill", "#EF4444");
-    detail2.setAttribute("opacity", "0.8");
-    this.layers.appendChild(detail2);
-  }
-
-  /**
-   * Creates a static starburst (JWST-style) effect for stars
-   */
-  private createStarburstEffect(color: string = "#fff"): void {
-    if (!this.layers) return;
-    const numSpikes = 6;
-    const length = 12;
-    const center = 12;
-    const strokeWidth = 1.2;
-    const opacity = 0.7;
-    for (let i = 0; i < numSpikes; i++) {
-      const angle = (i * 360) / numSpikes;
-      const rad = (angle * Math.PI) / 180;
-      const x2 = center + length * Math.cos(rad);
-      const y2 = center + length * Math.sin(rad);
-      const spike = document.createElementNS(SVG_NS, "line");
-      spike.setAttribute("class", "starburst-spike");
-      spike.setAttribute("x1", String(center));
-      spike.setAttribute("y1", String(center));
-      spike.setAttribute("x2", String(x2));
-      spike.setAttribute("y2", String(y2));
-      spike.setAttribute("stroke", color);
-      spike.setAttribute("stroke-width", String(strokeWidth));
-      spike.setAttribute("opacity", String(opacity));
-      spike.setAttribute("stroke-linecap", "round");
-      this.layers.appendChild(spike);
-    }
-  }
-
-  private renderIcon(): void {
-    this.clear();
-    if (!this._config || !this.layers) return;
-
-    const { base, rings, atmosphere, procedural, tail, special } = this._config;
-
-    // If there is a glow effect, we need to scale down the entire group
-    // to ensure the final rendered icon is the same size as others.
-    if (atmosphere) {
-      // The glow is a stroke on a circle of radius 11. The stroke is centered,
-      // so half its width extends outwards. Total visual radius = 11 + (size / 2).
-      // We scale it down so the final visual radius is ~11.5 (to fit in the 24x24 box).
-      const visualRadius = 11 + atmosphere.size / 2;
-      const targetRadius = 11.5;
-      const scale = targetRadius / visualRadius;
-
-      // When scaling from the center, we need to translate to keep it centered.
-      const translate = 12 - 12 * scale;
-      this.layers.setAttribute(
-        "transform",
-        `translate(${translate}, ${translate}) scale(${scale})`,
-      );
-    } else {
-      this.layers.removeAttribute("transform");
-    }
-
-    if (procedural) {
-      this.generateProceduralGradient();
-    }
-
-    // 1. Render atmosphere (bottom layer)
-    if (atmosphere) {
-      const atmo = document.createElementNS(SVG_NS, "circle");
-      atmo.setAttribute("class", "atmosphere");
-      atmo.setAttribute("cx", "12");
-      atmo.setAttribute("cy", "12");
-      // Make star atmospheres smaller
-      if (base.type === "star") {
-        atmo.setAttribute("r", "6");
-        atmo.style.stroke = atmosphere.color;
-        atmo.style.strokeWidth = `${Math.max(1, atmosphere.size * 0.7)}px`;
+    if (this._instance) {
+      // Svelte 5 mount() exposes a Svelte 4 compatibility `$set` shim for
+      // updating props on an already-mounted component.
+      const inst = this._instance as unknown as SvelteInstanceWithSet;
+      if (typeof inst.$set === "function") {
+        inst.$set({ config });
       } else {
-        atmo.setAttribute("r", "11");
-        atmo.style.stroke = atmosphere.color;
-        atmo.style.strokeWidth = `${atmosphere.size}px`;
+        // Fallback: remount with fresh props (e.g., if $set is unavailable).
+        unmount(this._instance);
+        this._instance = mount(CelestialIconSvelte, {
+          target: this,
+          props: { config },
+        });
       }
-      this.layers.appendChild(atmo);
-    }
-
-    // 2. Render comet tail
-    if (tail) {
-      const tailPath = document.createElementNS(SVG_NS, "path");
-      tailPath.setAttribute("class", "comet-tail");
-
-      // Create a teardrop/triangle shape for the tail
-      const tailLength = tail.length || 10;
-      const tailWidth = 5;
-      const d = `M 12,12 L ${12 + tailLength},${12 - tailWidth / 2} L ${
-        12 + tailLength
-      },${12 + tailWidth / 2} Z`;
-
-      tailPath.setAttribute("d", d);
-      tailPath.setAttribute("fill", tail.color);
-      tailPath.setAttribute("transform", `rotate(${tail.angle} 12 12)`);
-      this.layers.appendChild(tailPath);
-    }
-
-    // 3. Render special effects for exotic stars
-    if (special) {
-      switch (special) {
-        case "pulsar":
-          this.createPulsarEffect();
-          break;
-        case "black-hole":
-          this.createBlackHoleEffect();
-          break;
-        case "white-dwarf":
-          this.createWhiteDwarfEffect();
-          break;
-        case "protostar":
-          this.createProtostarEffect();
-          break;
-      }
-    }
-    // 3.5. Render starburst for all stars except black holes
-    if (base.type === "star" && special !== "black-hole") {
-      // Use gradient start color if available, else base.color
-      let color = base.color;
-      if (base.gradient && Array.isArray(base.gradient)) {
-        color = base.gradient[0];
-      }
-      this.createStarburstEffect(color);
-    }
-
-    // 5. Render thick ring behind the planet/star
-    if (rings) {
-      const ring = document.createElementNS(SVG_NS, "ellipse");
-      ring.setAttribute("class", "rings back-ring");
-      ring.setAttribute("cx", "12");
-      ring.setAttribute("cy", "12");
-      ring.setAttribute("rx", "10");
-      ring.setAttribute("ry", "4");
-      ring.setAttribute("transform", `rotate(${rings.angle} 12 12)`);
-      ring.setAttribute("fill", "none");
-      ring.setAttribute("stroke", rings.color);
-      ring.setAttribute("stroke-width", "3");
-      ring.setAttribute("opacity", "0.8");
-      this.layers.appendChild(ring);
-    }
-
-    // 4. Render base planet/star/satellite (middle layer - this masks the center of the ring)
-    if (base.type === "satellite") {
-      // Render satellite icon instead of circular body
-      this.createSatelliteIcon();
-    } else {
-      // Render circular body for planets/stars
-      const body = document.createElementNS(SVG_NS, "circle");
-      body.setAttribute("class", "planet-base");
-      body.setAttribute("cx", "12");
-      body.setAttribute("cy", "12");
-
-      // Make star bodies smaller
-      let radius = base.radius ?? 8;
-      if (base.type === "star") {
-        radius = 6;
-      }
-      body.setAttribute("r", String(radius));
-
-      if (procedural) {
-        body.setAttribute("fill", "url(#procedural-gradient)");
-      } else if (base.gradient && this.radialGradient) {
-        const [start, end] = base.gradient;
-        const stops = this.radialGradient.querySelectorAll("stop");
-        stops[0].setAttribute("stop-color", start);
-        stops[1].setAttribute("stop-color", end);
-        body.setAttribute("fill", "url(#planet-gradient)");
-      } else {
-        body.setAttribute("fill", base.color);
-      }
-      this.layers.appendChild(body);
-    }
-
-    // 6. Render simple front ring highlight (top portion only for 3D effect)
-    if (rings) {
-      const frontArc = document.createElementNS(SVG_NS, "path");
-      frontArc.setAttribute("class", "rings front-arc");
-      frontArc.setAttribute("d", "M 4,10 A 10,4 0 0 1 20,10");
-      frontArc.setAttribute("fill", "none");
-      frontArc.setAttribute("stroke", rings.color);
-      frontArc.setAttribute("stroke-width", "2");
-      frontArc.setAttribute("opacity", "0.9");
-      frontArc.setAttribute("transform", `rotate(${rings.angle} 12 12)`);
-      this.layers.appendChild(frontArc);
     }
   }
 }

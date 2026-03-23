@@ -1,12 +1,14 @@
-import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
+import { createWidgetPlugin } from "@teskooano/ui-plugin";
 import { ExternalLinksComponent } from "./view/ExternalLinks.view.js";
 
 export * from "./types.js";
 
 /**
  * Plugin definition for the External Links widget.
+ * ✅ Migrated to Svelte 5 — ExternalLinksComponent is now a thin wrapper that
+ * mounts ExternalLinksWidget.svelte internally.
  */
-export const plugin: TeskooanoPlugin = {
+export const plugin = createWidgetPlugin({
   id: "teskooano-external-links",
   name: "External Links Widget",
   description:
@@ -25,6 +27,6 @@ export const plugin: TeskooanoPlugin = {
       order: 100,
     },
   ],
-};
+});
 
 export { ExternalLinksComponent };
