@@ -18,4 +18,3 @@ export const plugin = createPanelPlugin({
   target: "engine-toolbar",
   order: 30,
 });
-

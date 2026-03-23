@@ -23,4 +23,3 @@ export const plugin = createPanelPlugin({
     height: 750,
   },
 });
-

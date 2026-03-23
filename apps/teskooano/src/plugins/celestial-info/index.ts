@@ -97,4 +97,3 @@ export const plugin = createPanelPlugin({
   additionalComponents,
   target: "engine-toolbar",
 });
-

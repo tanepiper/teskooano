@@ -217,9 +217,8 @@ export class FocusListManager {
    * @param focusedId The ID of the object to highlight, or null.
    */
   public updateHighlight(focusedId: string | null): void {
-    const currentlyFocused = this._rootUlElement.querySelector<HTMLElement>(
-      "li.focused-item",
-    );
+    const currentlyFocused =
+      this._rootUlElement.querySelector<HTMLElement>("li.focused-item");
     currentlyFocused?.classList.remove("focused-item");
 
     if (focusedId) {

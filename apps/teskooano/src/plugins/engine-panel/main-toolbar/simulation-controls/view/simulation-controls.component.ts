@@ -27,7 +27,9 @@ export class SimulationControls extends HTMLElement {
 
   // --- Public API used by external callers ---
   public resetStartDate(): void {
-    this.dispatchEvent(new CustomEvent("simulation-reset-date", { bubbles: false }));
+    this.dispatchEvent(
+      new CustomEvent("simulation-reset-date", { bubbles: false }),
+    );
   }
 
   public setStartDate(startDate: Date): void {

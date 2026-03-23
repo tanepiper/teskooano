@@ -223,7 +223,7 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
   // For web-component panels include the main element in the component registry.
   // Svelte panels don't register custom elements.
   const components: ComponentConfig[] = config.svelteComponent
-    ? (config.additionalComponents || [])
+    ? config.additionalComponents || []
     : [
         {
           tagName: config.componentName,

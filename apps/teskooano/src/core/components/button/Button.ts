@@ -78,7 +78,10 @@ export class TeskooanoButton extends HTMLElement {
       (this._instance as any).$set(this._props);
     } else {
       unmount(this._instance!);
-      this._instance = mount(ButtonSvelte, { target: this, props: this._props });
+      this._instance = mount(ButtonSvelte, {
+        target: this,
+        props: this._props,
+      });
     }
   }
 

@@ -126,7 +126,7 @@
     isGenerating = true;
     try {
       const result: any = await context.pluginManager.execute(
-        "system:loadSolarSystem",
+        "system:load_solar_system",
       );
       const ok = result?.success !== false;
       showFeedback("loadSolar", ok ? "☀️" : "❌", !ok);

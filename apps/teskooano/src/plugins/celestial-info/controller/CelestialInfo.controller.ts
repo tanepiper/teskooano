@@ -22,10 +22,7 @@ export class CelestialInfoController extends StateSubscriptionMixin {
    * @param container The HTML element that will contain the info components.
    * @param placeholder The HTML element used for placeholder messages.
    */
-  constructor(
-    container: HTMLElement,
-    placeholder: HTMLElement,
-  ) {
+  constructor(container: HTMLElement, placeholder: HTMLElement) {
     super();
     this._viewManager = new CelestialInfoViewManager(container, placeholder);
   }

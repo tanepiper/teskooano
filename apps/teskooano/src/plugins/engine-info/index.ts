@@ -27,4 +27,3 @@ export const plugin = createPanelPlugin({
 });
 
 export { WebGLCapabilitiesDisplay };
-
