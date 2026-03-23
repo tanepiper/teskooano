@@ -9,6 +9,10 @@ import ButtonSvelte from "./Button.svelte";
 export class TeskooanoButton extends HTMLElement {
   private _instance: ReturnType<typeof mount> | undefined;
   private _props: Record<string, unknown> = {};
+  /** SVG string extracted once from a `<span slot="icon">` light-DOM child. Persisted
+   *  so that `_syncPropsFromAttributes` can always include it, even after attribute
+   *  changes cause `_updateProps` to re-run. */
+  private _slottedIconSvg: string | null = null;
 
   static get observedAttributes() {
     return [
@@ -29,22 +33,22 @@ export class TeskooanoButton extends HTMLElement {
   }
 
   connectedCallback() {
-    this._syncPropsFromAttributes();
-
     // Extract icon SVG from slotted content (used by web-component templates and
     // createToolbarButton which set innerHTML to `<span slot="icon">…</span>`).
     // Button.svelte uses the `iconSvg` prop rather than native <slot>, so we pull
-    // the content out here and remove the stray span to prevent double-rendering.
-    if (!this._props.iconSvg) {
+    // the content out here and store it in _slottedIconSvg so it survives all
+    // subsequent _syncPropsFromAttributes calls (e.g. triggered by attribute changes).
+    if (!this._slottedIconSvg) {
       const iconSpan = this.querySelector<HTMLElement>(
         ':scope > span[slot="icon"]',
       );
       if (iconSpan) {
-        this._props.iconSvg = iconSpan.innerHTML;
+        this._slottedIconSvg = iconSpan.innerHTML;
         iconSpan.remove();
       }
     }
 
+    this._syncPropsFromAttributes();
     this._instance = mount(ButtonSvelte, {
       target: this,
       props: this._props,
@@ -56,6 +60,7 @@ export class TeskooanoButton extends HTMLElement {
       unmount(this._instance);
       this._instance = undefined;
     }
+    this._slottedIconSvg = null;
   }
 
   attributeChangedCallback(
@@ -85,6 +90,8 @@ export class TeskooanoButton extends HTMLElement {
       tooltipHorizontalAlign:
         this.getAttribute("tooltip-horizontal-align") ?? "center",
       "aria-label": this.getAttribute("aria-label") ?? undefined,
+      // Preserve any icon SVG extracted from a slotted <span slot="icon"> child.
+      iconSvg: this._slottedIconSvg ?? undefined,
     };
   }
 
