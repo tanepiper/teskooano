@@ -264,8 +264,8 @@
     filter: brightness(0) invert(1);
   }
 
-  :global(li.focused-item teskooano-button) {
-    --button-icon-color: var(--color-text-on-primary, white);
+  :global(li.focused-item .button-host button) {
+    color: var(--color-text-on-primary, white);
   }
 
   :global(.empty-message) {

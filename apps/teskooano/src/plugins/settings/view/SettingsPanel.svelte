@@ -36,7 +36,6 @@
   );
   const profile = $derived(simState.value.performanceProfile ?? "high");
 
-  let sliderRef: any = $state(null);
   let nbodyRef: any = $state(null);
   let keplerianRef: any = $state(null);
 
@@ -157,7 +156,6 @@
         max={300}
         value={trailLength}
         step={10}
-        bind:this={sliderRef}
         onchange={(value) => {
           if (typeof value === "number" && !isNaN(value)) {
             simulationManager.setTrailLengthMultiplier(Math.max(0, value));

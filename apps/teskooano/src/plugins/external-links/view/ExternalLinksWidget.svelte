@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from "@core/components/button/Button.svelte";
   import { links } from "../data/links.js";
 
   function openLink(url: string): void {
@@ -8,20 +9,17 @@
 
 <div class="external-links-container">
   {#each links as link}
-    <!-- svelte-ignore element_invalid_self_closing_tag -->
-    <teskooano-button
-      role="button"
-      tabindex="0"
+    <Button
       variant="icon"
       aria-label={link.label}
-      tooltip-text={link.tooltipText ?? link.label}
-      tooltip-title={link.tooltipTitle ?? link.label}
-      tooltip-icon-svg={link.tooltipIconSvg ?? link.iconSvg}
+      tooltipText={link.tooltipText ?? link.label}
+      tooltipTitle={link.tooltipTitle ?? link.label}
+      tooltipIconSvg={link.tooltipIconSvg ?? link.iconSvg}
       onclick={() => openLink(link.url)}
       onkeydown={(e: KeyboardEvent) => e.key === "Enter" && openLink(link.url)}
     >
-      <span slot="icon">{@html link.iconSvg}</span>
-    </teskooano-button>
+      {#snippet icon()}{@html link.iconSvg}{/snippet}
+    </Button>
   {/each}
 </div>
 

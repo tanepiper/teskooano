@@ -2,6 +2,8 @@
   import { CustomEvents } from "@teskooano/data-types";
   import { FormatUtils } from "../../../celestial-info/utils/formatters.js";
   import { DistanceStateService } from "../../services/DistanceStateService.js";
+  import Button from "@core/components/button/Button.svelte";
+  import ActionMenu from "@core/components/action-menu/ActionMenu.svelte";
   import EyeIcon from "@fluentui/svg-icons/icons/eye_20_regular.svg?raw";
   import ArrowStepOverRegular from "@fluentui/svg-icons/icons/arrow_step_over_20_regular.svg?raw";
 
@@ -82,33 +84,24 @@
   </div>
   {#if !inactive}
     <div class="action-buttons">
-      <!-- svelte-ignore element_invalid_self_closing_tag -->
-      <teskooano-button
+      <Button
         size="sm"
-        role="button"
-        tabindex="0"
+        variant="stealth"
         title="Follow {objectName}"
-        appearance="stealth"
+        iconSvg={ArrowStepOverRegular}
         onclick={handleFollowClick}
         onkeydown={handleFollowClick}
-      >
-        <span slot="icon">{@html ArrowStepOverRegular}</span>
-      </teskooano-button>
-      <!-- svelte-ignore element_invalid_self_closing_tag -->
-      <teskooano-action-menu direction="left">
-        <!-- svelte-ignore element_invalid_self_closing_tag -->
-        <teskooano-button
+      />
+      <ActionMenu direction="left">
+        <Button
           size="sm"
-          role="button"
-          tabindex="0"
+          variant="stealth"
           title="Focus {objectName}"
-          appearance="stealth"
+          iconSvg={EyeIcon}
           onclick={handleFocusClick}
           onkeydown={handleFocusClick}
-        >
-          <span slot="icon">{@html EyeIcon}</span>
-        </teskooano-button>
-      </teskooano-action-menu>
+        />
+      </ActionMenu>
     </div>
   {/if}
 </div>
@@ -175,10 +168,8 @@
     flex-shrink: 0;
   }
 
-  :global(.celestial-row-root teskooano-button) {
-    --button-padding: 2px;
-    --button-min-height: 18px;
-    --button-icon-size: 14px;
-    --button-icon-color: currentColor;
+  :global(.celestial-row-root .button-host button) {
+    padding: 2px;
+    min-height: 18px;
   }
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PanelInitParameters } from "dockview-core";
+  import Card from "@core/components/card/Card.svelte";
 
   let { options }: { options?: PanelInitParameters } = $props();
 
@@ -11,8 +12,8 @@
 </script>
 
 <div class="about-panel-container" data-testid="about-panel" id={options?.params?.id || "about-panel"}>
-  <teskooano-card variant="fluid">
-    <span slot="title">🔭 Teskooano</span>
+  <Card variant="fluid">
+    {#snippet title()}🔭 Teskooano{/snippet}
     <p>
       Teskooano: An ambitious N-Body simulation engine with real physics and
       orbital mechanics.
@@ -23,7 +24,7 @@
       Developed by: <a href="https://tane.dev" target="_blank" rel="noopener noreferrer">Tane Piper</a><br />
       Powered by: ThreeJS, Dockview, RxJS, and more!
     </p>
-  </teskooano-card>
+  </Card>
 </div>
 
 <style>
