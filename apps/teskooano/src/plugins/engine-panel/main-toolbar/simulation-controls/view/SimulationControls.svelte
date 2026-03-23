@@ -206,7 +206,7 @@
       class="display-value scale-select"
       title="Select Time Scale"
       onchange={applyScaleSelect}
-      onblur={() => { setTimeout(() => { if (document.activeElement !== scaleSelectEl) cancelScaleSelect(); }, 100); }}
+      onblur={(e) => { if (!e.relatedTarget || e.relatedTarget !== scaleSelectEl) cancelScaleSelect(); }}
       onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyScaleSelect(); } else if (e.key === 'Escape') { e.preventDefault(); cancelScaleSelect(); } }}
     >
       {#each scaleOptions as opt}
