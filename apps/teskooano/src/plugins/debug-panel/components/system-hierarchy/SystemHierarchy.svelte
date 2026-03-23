@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { SystemHierarchyNode } from "@teskooano/core-debug";
+  import Card from "@core/components/card/Card.svelte";
 
   let { nodes = [] }: { nodes: SystemHierarchyNode[] } = $props();
 </script>
@@ -17,8 +18,8 @@
   </ul>
 {/snippet}
 
-<teskooano-card>
-  <span slot="title">System Hierarchy</span>
+<Card>
+  {#snippet title()}System Hierarchy{/snippet}
   <div id="hierarchy-content">
     {#if nodes.length === 0}
       <p>No celestial objects loaded.</p>
@@ -26,7 +27,7 @@
       {@render hierarchyList(nodes)}
     {/if}
   </div>
-</teskooano-card>
+</Card>
 
 <style>
   :global(#hierarchy-content ul) {

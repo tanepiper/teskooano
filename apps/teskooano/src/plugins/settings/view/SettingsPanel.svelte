@@ -7,6 +7,7 @@
   import type { DeviceTier, SimulationMode } from "@teskooano/data-types";
   import { SimulationMode as SimMode } from "@teskooano/data-types";
   import { fromObservable } from "@core/utils/svelte-rxjs.svelte.js";
+  import Slider from "@core/components/slider/Slider.svelte";
 
   // Import sub-components so they self-register via customElements.define()
   import "./NBodySettingsComponent";
@@ -35,7 +36,7 @@
   );
   const profile = $derived(simState.value.performanceProfile ?? "high");
 
-  let sliderRef: HTMLElement | null = $state(null);
+  let sliderRef: any = $state(null);
   let nbodyRef: any = $state(null);
   let keplerianRef: any = $state(null);
 
@@ -60,19 +61,6 @@
       validationTimeout = null;
     }
   }
-
-  // Attach slider's custom event listener
-  $effect(() => {
-    if (!sliderRef) return;
-    const handler = (e: Event) => {
-      const value = (e as CustomEvent<{ value: number }>).detail?.value;
-      if (typeof value === "number" && !isNaN(value)) {
-        simulationManager.setTrailLengthMultiplier(Math.max(0, value));
-      }
-    };
-    sliderRef.addEventListener("slider:change", handler);
-    return () => sliderRef?.removeEventListener("slider:change", handler);
-  });
 
   // Initialize N-Body sub-component and keep it in sync with state
   $effect(() => {
@@ -163,20 +151,21 @@
     <h3>Visuals &amp; Performance</h3>
     <div class="form-group">
       <label for="setting-trail-length">Trail Length Multiplier</label>
-      <teskooano-slider
+      <Slider
         id="setting-trail-length"
-        min="0"
-        max="300"
+        min={0}
+        max={300}
         value={trailLength}
-        step="10"
+        step={10}
         bind:this={sliderRef}
+        onchange={(value) => {
+          if (typeof value === "number" && !isNaN(value)) {
+            simulationManager.setTrailLengthMultiplier(Math.max(0, value));
+          }
+        }}
       >
-        <span slot="help-text"
-          >Sets the multiplier for the length of orbital trails behind moving
-          objects (the base length is 10000 points). Set to 0 to disable
-          trails.</span
-        >
-      </teskooano-slider>
+        {#snippet helpText()}Sets the multiplier for the length of orbital trails behind moving objects (the base length is 10000 points). Set to 0 to disable trails.{/snippet}
+      </Slider>
     </div>
     <div class="form-group">
       <label for="setting-performance-profile">Performance Profile</label>

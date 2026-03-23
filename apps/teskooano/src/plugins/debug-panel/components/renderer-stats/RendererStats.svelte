@@ -1,10 +1,10 @@
 <script lang="ts">
+  import Card from "@core/components/card/Card.svelte";
   let { drawCalls = 0, triangles = 0 }: { drawCalls: number; triangles: number } = $props();
 </script>
 
-<!-- svelte-ignore element_invalid_self_closing_tag -->
-<teskooano-card variant="fluid">
-  <span slot="title">Renderer Stats</span>
+<Card variant="fluid">
+  {#snippet title()}Renderer Stats{/snippet}
   <table>
     <thead>
       <tr>
@@ -23,7 +23,7 @@
       </tr>
     </tbody>
   </table>
-</teskooano-card>
+</Card>
 
 <style>
   table {

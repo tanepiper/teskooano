@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
+  import Card from "@core/components/card/Card.svelte";
 
   let { plugin }: { plugin: TeskooanoPlugin } = $props();
 
@@ -10,9 +11,9 @@
   );
 </script>
 
-<teskooano-card variant="fluid">
-  <span slot="title">{plugin.name ?? "Unnamed Plugin"}</span>
-  <div class="plugin-id" slot="header-actions">ID: {plugin.id}</div>
+<Card variant="fluid">
+  {#snippet title()}{plugin.name ?? "Unnamed Plugin"}{/snippet}
+  <div class="plugin-id">ID: {plugin.id}</div>
   <div class="plugin-description">
     {plugin.description ?? "No description provided."}
   </div>
@@ -48,7 +49,7 @@
       </div>
     {/if}
   </div>
-</teskooano-card>
+</Card>
 
 <style>
   .plugin-id {

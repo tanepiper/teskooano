@@ -1,5 +1,6 @@
 <script lang="ts">
   import { celestialDebugger } from "@teskooano/core-debug";
+  import Card from "@core/components/card/Card.svelte";
 
   let { tick = 0 }: { tick: number } = $props();
 
@@ -44,8 +45,8 @@
   }
 </script>
 
-<teskooano-card>
-  <span slot="title">Hierarchy Statistics</span>
+<Card>
+  {#snippet title()}Hierarchy Statistics{/snippet}
   <div class="stats-grid">
     <div class="stat-item">
       <div class="stat-value">{stats.totalObjects}</div>
@@ -96,7 +97,7 @@
       </tbody>
     </table>
   {/if}
-</teskooano-card>
+</Card>
 
 <style>
   .stats-grid {
