@@ -148,20 +148,44 @@
 
 <style>
   .button-host {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     box-sizing: border-box;
     position: relative;
-    --icon-size: var(--font-size-base);
+    /* Icon size — overridden per size class below */
+    --icon-size: 20px;
     --icon-gap: var(--space-2);
   }
 
   .button-host.fullwidth {
-    display: block;
+    display: flex;
     width: 100%;
   }
 
   .button-host.fullwidth button {
     width: 100%;
+  }
+
+  /* --- Icon sizes per button size --- */
+  .size-xs {
+    --icon-size: 14px;
+    --icon-gap: var(--space-1);
+  }
+
+  .size-sm {
+    --icon-size: 20px;
+    --icon-gap: var(--space-1);
+  }
+
+  .size-lg {
+    --icon-size: 24px;
+    --icon-gap: var(--space-3);
+  }
+
+  .size-xl {
+    --icon-size: 28px;
+    --icon-gap: var(--space-4);
   }
 
   button {
@@ -266,28 +290,28 @@
 
   /* --- Sizes --- */
   .size-xs button {
-    min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 0.5em);
+    min-height: calc(var(--space-1) * 2 + 14px);
     padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-small);
     border-radius: var(--radius-sm);
   }
 
   .size-sm button {
-    min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 1em);
+    min-height: calc(var(--space-1) * 2 + 20px);
     padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-small);
     border-radius: var(--radius-sm);
   }
 
   .size-lg button {
-    min-height: calc(var(--space-3) * 2 + var(--line-height-base) * 1em);
+    min-height: calc(var(--space-3) * 2 + 24px);
     padding: var(--space-3) var(--space-5);
     font-size: var(--font-size-large);
     border-radius: var(--radius-lg);
   }
 
   .size-xl button {
-    min-height: calc(var(--space-4) * 2 + var(--line-height-base) * 1em);
+    min-height: calc(var(--space-4) * 2 + 28px);
     padding: var(--space-4) var(--space-6);
     font-size: var(--font-size-xlarge);
     border-radius: var(--radius-xl);

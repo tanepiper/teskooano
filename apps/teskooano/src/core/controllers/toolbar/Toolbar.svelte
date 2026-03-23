@@ -86,7 +86,6 @@
     <Button
       id="toolbar-logo"
       variant="image"
-      size="sm"
       title="Visit Teskooano Website"
       tooltipText="Visit Teskooano Website"
       tooltipTitle="Teskooano"
@@ -130,7 +129,7 @@
     justify-content: space-between;
     padding: var(--space-sm) var(--space-md);
     background-color: var(--color-surface-2);
-    border-bottom: var(--border-width-thin) solid var(--color-border-neutral);
+    border-bottom: var(--border-width-thin, 1px) solid var(--color-border-subtle);
     gap: var(--space-md);
     box-sizing: border-box;
     height: 60px;

@@ -18,7 +18,7 @@ template.innerHTML = `
       justify-content: space-between;
       padding: var(--space-sm) var(--space-md); /* Use tokens */
       background-color: var(--color-surface-2); /* Use token */
-      border-bottom: var(--border-width-thin) solid var(--color-border-neutral); /* Use tokens */
+      border-bottom: var(--border-width-thin) solid var(--color-border-subtle); /* Use tokens */
       gap: var(--space-md); /* Default gap, adjust in controller for mobile */
       box-sizing: border-box;
       height: 60px; /* Or use a token if defined */
