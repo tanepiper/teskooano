@@ -72,7 +72,8 @@
   function emit(newValue: number) {
     const panelId = getPanelId();
     if (!panelId) {
-      // Slider is outside a panel context — skip event dispatch.
+      // Slider is outside a panel context — skip SLIDER_CHANGE event.
+      // Use the `onchange` prop instead for non-panel consumers.
       return;
     }
     const payload: SliderChangePayload = { value: newValue, panelId };

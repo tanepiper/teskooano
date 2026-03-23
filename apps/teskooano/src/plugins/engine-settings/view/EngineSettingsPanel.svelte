@@ -1,24 +1,21 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import type { PanelInitParameters } from "dockview-core";
-  import {
-    EngineSettingsController,
-    type ControlRegistration,
-  } from "../controller/EngineSettings.controller.js";
+  import { StateAccessor } from "@teskooano/core-state";
   import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
+  import type { CompositeEngineState } from "../../engine-panel/panels/types.js";
+  import Slider from "@core/components/slider/Slider.svelte";
 
   let { params }: { params: PanelInitParameters } = $props();
 
   const parentPanel = $derived(
-    ((params as any)?.params as any)?.parentInstance as CompositeEnginePanel | undefined
+    ((params as any)?.params as any)?.parentInstance as CompositeEnginePanel | undefined,
   );
 
-  // Use parent panel ID so nested components resolve the engine panel context.
   const dataPanelId = $derived(
-    parentPanel?.panelId ?? (params as any)?.api?.id ?? ""
+    parentPanel?.panelId ?? (params as any)?.api?.id ?? "",
   );
 
-  // Toggle settings config
+  // Toggle config — drives the rendered list
   const toggleConfig = [
     { key: "showGrid", label: "Show Grid" },
     { key: "showCelestialLabels", label: "Show Celestial Labels" },
@@ -29,63 +26,70 @@
     { key: "isDebugMode", label: "Debug Mode" },
   ] as const;
 
-  // DOM refs
-  let errorMsgEl: HTMLElement | null = $state(null);
-  // Individual toggle input refs — keyed by config index
-  let toggleRefs: (HTMLInputElement | null)[] = $state(
-    new Array(toggleConfig.length).fill(null),
-  );
-  let fovSliderRef: HTMLElement | null = $state(null);
-
-  let controller: EngineSettingsController | null = null;
+  // Reactive view state — synced directly from the parent panel
+  let viewState = $state<CompositeEngineState>({});
+  let fovValue = $state(75);
+  let errorMsg = $state("");
 
   $effect(() => {
-    // Wait until all toggle refs AND the slider AND the error element are bound
-    const allTogglesReady = toggleRefs.every((r) => r !== null);
-    if (!allTogglesReady || !fovSliderRef || !errorMsgEl) return;
+    const panel = parentPanel;
+    if (!panel) return;
 
-    const controls: ControlRegistration[] = [
-      ...toggleConfig.map((cfg, i) => ({
-        key: cfg.key as any,
-        type: "toggle" as const,
-        element: toggleRefs[i] as HTMLInputElement,
-      })),
-      {
-        key: "fov" as const,
-        type: "slider" as const,
-        element: fovSliderRef,
-      },
-    ];
-
-    controller = new EngineSettingsController(controls, errorMsgEl);
-
-    if (
-      parentPanel &&
-      typeof parentPanel.getViewState === "function" &&
-      typeof parentPanel.subscribeToViewState === "function"
-    ) {
-      controller.setParentPanel(parentPanel);
+    try {
+      viewState = panel.getViewState();
+    } catch {
+      errorMsg = "Could not read initial panel state.";
     }
 
-    controller.initialize();
+    // Sync FOV from core-state camera manager
+    if (panel.panelId) {
+      try {
+        const cm = StateAccessor.getCameraManager(panel.panelId);
+        fovValue = cm.getCameraFov() ?? 75;
+      } catch {
+        // camera not ready yet
+      }
+    }
 
-    return () => {
-      controller?.dispose();
-      controller = null;
-    };
+    // Subscribe to view state changes
+    const sub = panel.viewState$.subscribe((newState: CompositeEngineState) => {
+      viewState = newState;
+      // Also refresh FOV when view state updates
+      if (panel.panelId) {
+        try {
+          const cm = StateAccessor.getCameraManager(panel.panelId);
+          const fov = cm.getCameraFov();
+          if (typeof fov === "number") fovValue = fov;
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    return () => sub.unsubscribe();
   });
 
-  onDestroy(() => {
-    controller?.dispose();
-    controller = null;
-  });
+  function handleToggle(key: keyof CompositeEngineState, checked: boolean) {
+    if (!parentPanel) return;
+    parentPanel.updateViewState({ [key]: checked } as Partial<CompositeEngineState>);
+  }
+
+  function handleFovChange(value: number) {
+    if (!dataPanelId) return;
+    try {
+      const cm = StateAccessor.getCameraManager(dataPanelId);
+      cm.setCameraFov(value);
+    } catch {
+      errorMsg = "Failed to update FOV.";
+    }
+  }
 </script>
 
 <div class="panel" data-panel-id={dataPanelId}>
   <div id="engine-section" class="section">
     <div class="section-title">Engine Settings</div>
 
-    {#each toggleConfig as cfg, i}
+    {#each toggleConfig as cfg}
       <div class="setting-row">
         <label for={cfg.key}>{cfg.label}</label>
         <label class="toggle-switch">
@@ -93,7 +97,8 @@
             type="checkbox"
             id={cfg.key}
             name={cfg.key}
-            bind:this={toggleRefs[i]}
+            checked={viewState[cfg.key] ?? false}
+            onchange={(e) => handleToggle(cfg.key, (e.target as HTMLInputElement).checked)}
           />
           <span class="slider-knob"></span>
         </label>
@@ -105,29 +110,25 @@
     <div class="section-title">Camera Settings</div>
 
     <div class="setting-row-full">
-      <!-- svelte-ignore element_invalid_self_closing_tag -->
-      <teskooano-slider
+      <Slider
         id="fov"
         name="fov"
-        min="30"
-        max="140"
-        step="1"
-        value="75"
-        editable-value
-        bind:this={fovSliderRef}
+        min={30}
+        max={140}
+        step={1}
+        value={fovValue}
+        editableValue={true}
+        onchange={handleFovChange}
       >
-        <span slot="label">FOV</span>
-        <span slot="help-text">Adjust the camera Field of View (degrees)</span>
-      </teskooano-slider>
+        {#snippet label()}FOV{/snippet}
+        {#snippet helpText()}Adjust the camera Field of View (degrees){/snippet}
+      </Slider>
     </div>
   </div>
 
-  <div
-    id="error-message"
-    class="error-message"
-    style="display: none;"
-    bind:this={errorMsgEl}
-  ></div>
+  {#if errorMsg}
+    <div class="error-message">{errorMsg}</div>
+  {/if}
 </div>
 
 <style>

@@ -46,7 +46,10 @@
     "aria-label"?: string;
     /** Allows mobile-compact mode. */
     mobile?: boolean;
-    /** Forwarded appearance alias (maps to variant). */
+    /**
+     * Alias for `variant`. Retained for backward compatibility with web component
+     * consumers that set `appearance` on `<teskooano-button>`. Prefer `variant`.
+     */
     appearance?: ButtonVariant;
   }
 

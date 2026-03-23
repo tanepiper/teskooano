@@ -35,8 +35,6 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   constructor(
     treeListContainer: HTMLUListElement,
     destroyedListContainer: HTMLUListElement,
-    resetButton: HTMLElement,
-    clearButton: HTMLElement,
   ) {
     super();
 
@@ -48,8 +46,8 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
 
     this._eventManager = new EventManager(
       treeListContainer,
-      resetButton,
-      clearButton,
+      null, // buttons are now handled directly by Svelte view
+      null,
       this._createEventHandlers(),
     );
 
@@ -106,6 +104,22 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this._eventManager.setParentPanel(panel);
     this._cameraManager.setParentPanel(panel);
     this._distanceManager.setParentPanel(panel);
+  }
+
+  /**
+   * Resets camera view and clears focus.
+   * Called directly by the Svelte view without DOM element refs.
+   */
+  public resetView(): void {
+    this._cameraManager.getParentPanel()?.cameraManager?.resetCameraView();
+  }
+
+  /**
+   * Clears camera focus.
+   * Called directly by the Svelte view without DOM element refs.
+   */
+  public clearFocus(): void {
+    this._cameraManager.getParentPanel()?.cameraManager?.clearFocus();
   }
 
   /**

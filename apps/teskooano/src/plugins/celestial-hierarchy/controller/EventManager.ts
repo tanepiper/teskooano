@@ -15,15 +15,15 @@ export interface EventHandlers {
  */
 export class EventManager {
   private _treeListContainer: HTMLUListElement;
-  private _resetButton: HTMLElement;
-  private _clearButton: HTMLElement;
+  private _resetButton: HTMLElement | null;
+  private _clearButton: HTMLElement | null;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _handlers: EventHandlers;
 
   constructor(
     treeListContainer: HTMLUListElement,
-    resetButton: HTMLElement,
-    clearButton: HTMLElement,
+    resetButton: HTMLElement | null,
+    clearButton: HTMLElement | null,
     handlers: EventHandlers,
   ) {
     this._treeListContainer = treeListContainer;

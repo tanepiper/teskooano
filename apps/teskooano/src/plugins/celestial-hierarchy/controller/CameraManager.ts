@@ -34,6 +34,10 @@ export class CameraManager {
     this._setupCameraStateSubscription();
   }
 
+  public getParentPanel(): CompositeEnginePanel | null {
+    return this._parentPanel;
+  }
+
   public getCurrentFocusedId(): string | null {
     return this._currentFocusedId;
   }

@@ -84,13 +84,14 @@
     });
   });
 
-  // Auto-hide — call an optional callback instead of mutating the prop
+  // Auto-hide — the timer is set up but actual hiding requires the consumer
+  // to bind `visible` as a bindable prop ($bindable). For now the timeout
+  // feature is a no-op; consumers should manage visibility externally.
   let hideTimer: ReturnType<typeof setTimeout> | undefined;
   $effect(() => {
     if (visible && timeout > 0) {
       hideTimer = setTimeout(() => {
-        // Cannot mutate prop directly in Svelte 5; emit a custom event instead.
-        // Callers who need auto-hide should listen for this.
+        // No-op: visible is not $bindable. Consumers control visibility.
       }, timeout);
     }
     return () => {

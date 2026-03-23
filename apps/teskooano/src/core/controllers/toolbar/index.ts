@@ -3,8 +3,8 @@ import type {
   FunctionConfig,
   PluginExecutionContext,
 } from "@teskooano/ui-plugin";
-
-import { ToolbarController } from "./ToolbarController.js";
+import { mount, unmount } from "svelte";
+import ToolbarSvelte from "./Toolbar.svelte";
 
 /**
  * Options required to initialize the toolbar.
@@ -15,10 +15,8 @@ export interface ToolbarInitOptions {
 }
 
 /**
- * A plugin function that initializes the main application toolbar.
- *
- * This function creates and configures the `ToolbarController` which is
- * responsible for rendering and managing the toolbar's lifecycle.
+ * A plugin function that mounts the Svelte Toolbar component into the
+ * provided target element.
  */
 const initializeToolbar: FunctionConfig = {
   id: "toolbar:initialize",
@@ -40,16 +38,21 @@ const initializeToolbar: FunctionConfig = {
     }
 
     try {
-      const controller = new ToolbarController(args.targetElement, context);
-      return controller;
+      const instance = mount(ToolbarSvelte, {
+        target: args.targetElement,
+        props: { context },
+      });
+
+      // Return a dispose handle for cleanup
+      return {
+        destroy: () => unmount(instance),
+      };
     } catch (error) {
       console.error("[core-toolbar] Failed to initialize:", error);
       throw error;
     }
   },
 };
-
-export const functions = [initializeToolbar];
 
 export const plugin = createControllerPlugin({
   id: "core-toolbar",
@@ -58,5 +61,4 @@ export const plugin = createControllerPlugin({
   functions: [initializeToolbar],
 });
 
-export * from "./ToolbarController";
-export * from "./ToolbarController.utils";
+export * from "./Toolbar.svelte";

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import type { PanelInitParameters } from "dockview-core";
   import { CelestialHierarchyController } from "../controller/CelestialHierarchy.controller.js";
   import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
+  import Button from "@core/components/button/Button.svelte";
 
   import ArrowSyncCircleIcon from "@fluentui/svg-icons/icons/arrow_sync_circle_24_regular.svg?raw";
   import DismissCircleIcon from "@fluentui/svg-icons/icons/dismiss_circle_24_regular.svg?raw";
@@ -14,38 +14,26 @@
       ?.parentInstance as CompositeEnginePanel | undefined,
   );
 
-  // Use the parent panel's ID so nested components (e.g. celestial-row) find
-  // the engine panel context via data-panel-id traversal.
   const dataPanelId = $derived(
     parentPanel?.panelId ?? (params as any)?.api?.id ?? "",
   );
 
-  // Connected window display text
   const connectedWindowText = $derived(
     parentPanel
       ? `For: ${(parentPanel as any)._api?.title ?? parentPanel.id ?? "Engine Window"}`
       : "Not connected to any Teskooano window",
   );
 
-  // DOM element refs
+  // DOM element refs — only what's needed for the controller
   let treeListEl: HTMLUListElement | null = $state(null);
   let destroyedListEl: HTMLUListElement | null = $state(null);
-  let resetButtonEl: HTMLElement | null = $state(null);
-  let clearButtonEl: HTMLElement | null = $state(null);
 
   let controller: CelestialHierarchyController | null = null;
 
   $effect(() => {
-    if (!treeListEl || !destroyedListEl || !resetButtonEl || !clearButtonEl) {
-      return;
-    }
+    if (!treeListEl || !destroyedListEl) return;
 
-    controller = new CelestialHierarchyController(
-      treeListEl as HTMLUListElement,
-      destroyedListEl as HTMLUListElement,
-      resetButtonEl,
-      clearButtonEl,
-    );
+    controller = new CelestialHierarchyController(treeListEl, destroyedListEl);
 
     if (parentPanel?.getRenderer && parentPanel?.cameraManager) {
       controller.setParentPanel(parentPanel);
@@ -59,10 +47,13 @@
     };
   });
 
-  onDestroy(() => {
-    controller?.dispose();
-    controller = null;
-  });
+  function handleReset() {
+    controller?.resetView();
+  }
+
+  function handleClearFocus() {
+    controller?.clearFocus();
+  }
 </script>
 
 <!-- data-panel-id set to parent panel's ID so celestial-row children resolve the engine panel -->
@@ -73,20 +64,16 @@
 
   <div class="control-section">
     <div class="button-row">
-      <!-- svelte-ignore element_invalid_self_closing_tag -->
-      <teskooano-button
-        id="reset-view"
+      <Button
         title="Reset Camera View & Clear Focus"
-        icon-svg={ArrowSyncCircleIcon}
-        bind:this={resetButtonEl}
-      >Reset</teskooano-button>
-      <!-- svelte-ignore element_invalid_self_closing_tag -->
-      <teskooano-button
-        id="clear-focus"
+        iconSvg={ArrowSyncCircleIcon}
+        onclick={handleReset}
+      >Reset</Button>
+      <Button
         title="Clear Camera Focus"
-        icon-svg={DismissCircleIcon}
-        bind:this={clearButtonEl}
-      >Clear</teskooano-button>
+        iconSvg={DismissCircleIcon}
+        onclick={handleClearFocus}
+      >Clear</Button>
     </div>
   </div>
 
