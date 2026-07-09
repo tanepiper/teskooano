@@ -14,8 +14,9 @@ vi.mock("three", async () => {
   const actual = await vi.importActual("three");
   return {
     ...actual,
-    TextureLoader: vi.fn().mockImplementation(() => ({
-      load: vi.fn().mockImplementation((url, onLoad, onError) => {
+    TextureLoader: vi.fn().mockImplementation(function () {
+      return {
+        load: vi.fn().mockImplementation((url, onLoad, onError) => {
         // Create a mock texture
         const mockTexture = {
           uuid: Math.random().toString(),
@@ -29,7 +30,8 @@ vi.mock("three", async () => {
           setTimeout(() => onLoad(mockTexture), 0);
         }
       }),
-    })),
+      };
+    }),
   };
 });
 
