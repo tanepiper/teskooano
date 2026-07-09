@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
 import { resolve } from "path";
 
 export default defineConfig({
@@ -7,7 +8,7 @@ export default defineConfig({
     exclude: ["node_modules/**", "dist/**"],
     browser: {
       enabled: true,
-      provider: "playwright",
+      provider: playwright(),
       instances: [
         {
           browser: "chromium",
