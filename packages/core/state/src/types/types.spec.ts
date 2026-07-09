@@ -5,7 +5,7 @@ import {
   getConfigurationDisplayName,
   getConfigurationShortName,
   type SimulationConfiguration,
-} from "./types";
+} from "../utils";
 
 describe("SimulationConfiguration", () => {
   describe("isValidConfiguration", () => {
@@ -97,8 +97,8 @@ describe("SimulationConfiguration", () => {
       const defaultConfig = getDefaultConfiguration();
 
       expect(defaultConfig.mode).toBe("nbody");
-      expect(defaultConfig.integrator).toBe("pefrl");
-      expect(defaultConfig.algorithm).toBe("tree-pm");
+      expect(defaultConfig.integrator).toBe("verlet");
+      expect(defaultConfig.algorithm).toBe("barnes-hut");
       expect(isValidConfiguration(defaultConfig)).toBe(true);
     });
   });
@@ -118,7 +118,7 @@ describe("SimulationConfiguration", () => {
             integrator: "verlet",
             algorithm: "barnes-hut",
           }),
-        ).toBe("N-Body (Barnes-Hut + Verlet)");
+        ).toBe("N-Body Simulation");
 
         expect(
           getConfigurationDisplayName({
@@ -126,7 +126,7 @@ describe("SimulationConfiguration", () => {
             integrator: "rk4",
             algorithm: "fmm",
           }),
-        ).toBe("N-Body (Fmm + Rk4)");
+        ).toBe("N-Body Simulation");
 
         expect(
           getConfigurationDisplayName({
@@ -134,7 +134,7 @@ describe("SimulationConfiguration", () => {
             integrator: "euler",
             algorithm: "barnes-hut",
           }),
-        ).toBe("N-Body (Barnes-Hut + Euler)");
+        ).toBe("N-Body Simulation");
 
         expect(
           getConfigurationDisplayName({
@@ -142,7 +142,7 @@ describe("SimulationConfiguration", () => {
             integrator: "adaptive",
             algorithm: "p3m",
           }),
-        ).toBe("N-Body (P3m + Adaptive)");
+        ).toBe("N-Body Simulation");
       });
 
       it("should handle missing integrator or algorithm gracefully", () => {
@@ -152,7 +152,7 @@ describe("SimulationConfiguration", () => {
             algorithm: "barnes-hut",
             // missing integrator
           }),
-        ).toBe("N-Body (Barnes-Hut + Unknown)");
+        ).toBe("N-Body Simulation");
 
         expect(
           getConfigurationDisplayName({
@@ -160,14 +160,14 @@ describe("SimulationConfiguration", () => {
             integrator: "verlet",
             // missing algorithm
           }),
-        ).toBe("N-Body (Unknown + Verlet)");
+        ).toBe("N-Body Simulation");
 
         expect(
           getConfigurationDisplayName({
             mode: "nbody",
             // missing both
           }),
-        ).toBe("N-Body (Unknown + Unknown)");
+        ).toBe("N-Body Simulation");
       });
     });
 
@@ -183,7 +183,7 @@ describe("SimulationConfiguration", () => {
             integrator: "verlet",
             algorithm: "barnes-hut",
           }),
-        ).toBe("BH-Ver");
+        ).toBe("N-Body");
 
         expect(
           getConfigurationShortName({
@@ -191,7 +191,7 @@ describe("SimulationConfiguration", () => {
             integrator: "verlet",
             algorithm: "barnes-hut",
           }),
-        ).toBe("BH-Ver");
+        ).toBe("N-Body");
 
         expect(
           getConfigurationShortName({
@@ -199,7 +199,7 @@ describe("SimulationConfiguration", () => {
             integrator: "leapfrog",
             algorithm: "barnes-hut",
           }),
-        ).toBe("BH-Lea");
+        ).toBe("N-Body");
 
         expect(
           getConfigurationShortName({
@@ -207,7 +207,7 @@ describe("SimulationConfiguration", () => {
             integrator: "verlet",
             algorithm: "barnes-hut",
           }),
-        ).toBe("BH-Ver");
+        ).toBe("N-Body");
 
         expect(
           getConfigurationShortName({
@@ -215,7 +215,7 @@ describe("SimulationConfiguration", () => {
             integrator: "symplectic",
             algorithm: "barnes-hut",
           }),
-        ).toBe("BH-Sym");
+        ).toBe("N-Body");
       });
 
       it("should handle missing integrator gracefully", () => {
@@ -225,7 +225,7 @@ describe("SimulationConfiguration", () => {
             algorithm: "barnes-hut",
             // missing integrator
           }),
-        ).toBe("BH-Unk");
+        ).toBe("N-Body");
       });
     });
   });

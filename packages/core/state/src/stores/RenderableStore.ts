@@ -8,7 +8,7 @@ import {
   filterActiveRenderableObjects$,
   filterPhysicsActiveRenderableObjects$,
   type FilterPredicate,
-} from "../utils";
+} from "../utils/StoreFilters";
 import type {
   KeyedStore,
   InspectableStore,

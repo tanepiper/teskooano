@@ -399,8 +399,8 @@ describe("FlatHierarchyService", () => {
       const result1 = service.updateParent("moon", "sun");
       expect(result1.success).toBe(true);
 
-      // Move earth to be a child of moon (creating a cycle would be prevented)
-      const result2 = service.updateParent("earth", "moon");
+      // Move sun to be a child of moon (moon is a descendant of sun → cycle, must be prevented)
+      const result2 = service.updateParent("sun", "moon");
       expect(result2.success).toBe(false); // Should fail due to cycle
 
       // Verify the state is still consistent

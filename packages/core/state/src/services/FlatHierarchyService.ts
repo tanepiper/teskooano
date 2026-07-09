@@ -231,8 +231,10 @@ export class FlatHierarchyService {
       const currentEntry = newEntries[objectId];
       const oldParentId = currentEntry.parentId;
 
-      // Validate no cycles
-      if (options.validate && newParentId) {
+      // Validate no cycles. Cycle detection is ON by default; pass
+      // `validate: false` to opt out (e.g. when the caller has already
+      // guaranteed acyclicity).
+      if (newParentId && options.validate !== false) {
         if (this.wouldCreateCycle(newEntries, objectId, newParentId)) {
           return {
             success: false,

@@ -16,9 +16,9 @@ export default defineConfig({
       ),
       "@teskooano/core-physics": resolve(
         __dirname,
-        "../../physics/src/index.ts",
+        "../physics/src/index.ts",
       ),
-      "@teskooano/core-math": resolve(__dirname, "../../math/src/index.ts"),
+      "@teskooano/core-math": resolve(__dirname, "../math/src/index.ts"),
     },
   },
   optimizeDeps: {

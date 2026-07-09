@@ -15,7 +15,7 @@ describe("PhysicsStateCalculator", () => {
 
   it("should be a static class", async () => {
     expect(PhysicsStateCalculator).toBeDefined();
-    expect(typeof PhysicsStateCalculator).toBe("object");
+    expect(typeof PhysicsStateCalculator).toBe("function");
     expect(PhysicsStateCalculator.constructor).toBeDefined();
   });
 });

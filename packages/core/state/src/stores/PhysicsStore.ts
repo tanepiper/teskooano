@@ -4,7 +4,7 @@ import {
   filterNonZeroAccelerationVectors,
   filterNonZeroAccelerationVectors$,
   type FilterPredicate,
-} from "../utils";
+} from "../utils/StoreFilters";
 import type {
   KeyedStore,
   InspectableStore,

@@ -11,7 +11,7 @@ import {
   filterPhysicsActiveCelestialObjects$,
   filterVisibleCelestialObjects$,
   type FilterPredicate,
-} from "../utils";
+} from "../utils/StoreFilters";
 import { CelestialType } from "@teskooano/data-types";
 import { dispatchObjectDestroyedEvent } from "../utils/CelestialUtils";
 import { PhysicsStateCalculator } from "../services/PhysicsStateCalculator";
