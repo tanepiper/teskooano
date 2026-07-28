@@ -18,7 +18,7 @@ A guide for AI coding agents working on the Teskooano N-Body simulation engine.
 
 ### Prerequisites
 
-- Install [moon](https://moonrepo.dev/) and [proto](https://moonrepo.dev/proto) for task running and dependency management
+- Install [moon](https://moonrepo.dev/) for task running and dependency management
 - Node.js 24.2.0 (specified in package.json engines)
 
 ### Installation & Development
@@ -29,19 +29,32 @@ git clone https://github.com/tanepiper/teskooano.git
 cd teskooano
 
 # Install dependencies and start the main app
-proto use
-moon run teskooano:dev
+npm install
+npm run dev
 ```
 
 The application will be available at `http://localhost:3000`.
 
 ### Key Commands
 
-- **Start dev server**: `moon run teskooano:dev`
-- **Build**: `moon run teskooano:build`
-- **Run tests**: `moon run :test` (runs all package tests)
-- **Run specific package tests**: `moon run <package-name>:test`
+**Application Commands** (run from apps/teskooano/):
+- **Start dev server**: `npm run dev`
+- **Build**: `npm run build`
+- **Run tests**: `npm run test`
+
+**Monorepo Commands** (run from root):
 - **Format code**: `npm run format` (prettier)
+- **Run all tests**: `moon run :test` (runs all package tests)
+- **Run specific package tests**: `moon run <package-id>:test` (e.g., `moon run core-math:test`)
+- **Build specific package**: `moon run <package-id>:build`
+
+**Package IDs for Moon Commands:**
+- Core: `core-math`, `core-physics`, `core-state`, `core-debug`
+- Data: `data-types`, `data-values`
+- Renderer: `renderer-threejs`, `renderer-threejs-core`, `renderer-threejs-celestial`, etc.
+- Systems: `systems-procedural-generation`, `systems-solar-system`
+- Celestials: `celestials-terrestrial`, `celestials-stars`, etc.
+- App: `app-simulation`, `app-ui-plugin`, `design-system`
 
 ## Code Style & Conventions
 
@@ -76,21 +89,33 @@ The application will be available at `http://localhost:3000`.
 - **Dependencies**: No UI-specific dependencies (no DockView, ThreeJS, etc.)
 - **Examples**: `core-math`, `core-physics`, `core-state`, `core-debug`
 
+### Data Packages (`@teskooano/data-*`)
+
+- **Purpose**: Shared type definitions and constant values used across the application
+- **Dependencies**: Minimal dependencies, often only core packages
+- **Examples**: `data-types` (shared TypeScript interfaces), `data-values` (physical constants, enums)
+
 ### Renderer Packages (`@teskooano/renderer-*`)
 
 - **Purpose**: Three.js rendering modules with specific responsibilities
 - **Pattern**: Compositional architecture with LOD management
-- **Examples**: `renderer-threejs-core`, `renderer-threejs-celestial`, `renderer-threejs-orbits`
+- **Examples**: `renderer-threejs-core`, `renderer-threejs-celestial`, `renderer-threejs-orbits`, `renderer-threejs-background`, `renderer-threejs-camera`, `renderer-threejs-controls`, `renderer-threejs-helpers`, `renderer-threejs-labels`, `renderer-threejs-lighting`, `renderer-threejs-objects`
 
-### System Packages (`@teskooano/systems-*`)
+### Systems Packages (`@teskooano/systems-*`)
 
-- **Purpose**: Domain-specific logic for celestial systems
+- **Purpose**: Domain-specific logic for celestial systems and procedural generation
 - **Examples**: `systems-procedural-generation`, `systems-solar-system`
+
+### Celestials Packages (`@teskooano/celestials-*`)
+
+- **Purpose**: Specialized rendering logic for different types of celestial objects
+- **Pattern**: Individual packages for each celestial body type (planets, stars, etc.)
+- **Examples**: `celestials-terrestrial` (planets and moons), `celestials-stars`, `celestials-gas-giants`, `celestials-rings`, `celestials-asteroid-field`, `celestials-comet`, `celestials-oort-cloud`, `celestials-satellite`
 
 ### App Packages (`@teskooano/app-*`)
 
-- **Purpose**: Application-specific functionality
-- **Examples**: `app-simulation`, `app-ui-plugin`, `design-system`
+- **Purpose**: Application-specific functionality and UI components
+- **Examples**: `app-simulation`, `app-ui-plugin`, `design-system`, `notifications`, `web-apis`
 
 ## Plugin Development Patterns
 
@@ -101,20 +126,42 @@ All UI plugins follow a strict **Model-View-Controller (MVC)** pattern:
 ```
 plugin-name/
 ├── controller/
-│   └── PluginName.controller.ts    # Business logic
+│   └── PluginName.controller.ts    # Business logic and state management
 ├── view/
 │   ├── PluginName.view.ts          # Custom element (dumb view)
-│   └── PluginName.template.ts      # HTML/CSS template
-├── services/                       # Reusable business logic
-├── index.ts                        # Plugin registration
+│   └── PluginName.template.ts      # HTML template
+├── bodies/                         # Specialized components for different celestial types
+├── cards/                          # Reusable card components for displaying data
+├── utils/                          # Utility functions (formatters, helpers)
+├── index.ts                        # Plugin registration and component exports
 └── README.md                       # Architecture documentation
 ```
 
 ### Plugin Registration
 
-- **Custom Elements**: Define as `ComponentConfig` objects in plugin definition
-- **No Manual Registration**: Don't call `customElements.define()` manually
-- **Plugin Manager**: Handles registration automatically during plugin loading
+Teskooano uses a centralized plugin registry system for managing UI plugins:
+
+**Plugin Registry Pattern:**
+- **Registry Configuration**: Plugins are registered in `apps/teskooano/src/config/pluginRegistry.ts`
+- **Plugin Definition**: Each plugin exports a `plugin` constant that defines the plugin configuration
+- **Automatic Registration**: The `PluginManager` handles component registration automatically
+- **No Manual Registration**: Never call `customElements.define()` manually in plugin code
+
+**Plugin Definition Structure:**
+```typescript
+export const plugin = createPanelPlugin({
+  id: "plugin-id",
+  name: "Plugin Name",
+  description: "Plugin description",
+  componentName: ComponentClass.componentName,
+  panelClass: ComponentClass,
+  defaultTitle: "Panel Title",
+  iconSvg: IconSvg,
+  order: 35,
+  additionalComponents: [/* additional component configs */],
+  target: "engine-toolbar",
+});
+```
 
 ### Component Organization
 
@@ -167,9 +214,10 @@ plugin-name/
 ### Key Patterns
 
 - **View**: "Dumb" custom elements that only manage DOM and delegate to controllers
-- **Controller**: Contains all business logic, subscribes to state, handles events
-- **Services**: Reusable, injectable classes for complex business logic
+- **Controller**: Contains all business logic, uses `StateSubscriptionMixin` for reactive state management, handles events
+- **Services**: Reusable, injectable classes for complex business logic (e.g., `CelestialInfoViewManager`)
 - **Dependency Injection**: Pass dependencies through constructors, not global state
+- **State Management**: Controllers use `StateSubscriptionMixin` for automatic RxJS subscription cleanup
 
 ### Subscription Management
 
@@ -285,8 +333,9 @@ button.addEventListener("click", () => this.handleClick());
 
 ### Test Commands
 
-- **All tests**: `moon run :test`
-- **Specific package**: `moon run <package-name>:test`
+- **All tests**: `moon run :test` (runs all package tests)
+- **Specific package**: `moon run <package-id>:test` (e.g., `moon run core-math:test`)
+- **Application tests**: `npm run test` from `apps/teskooano/` directory
 - **Interactive mode**: Tests run in interactive mode by default
 - **Browser tests**: Use `@vitest/browser` for UI component testing
 
@@ -336,8 +385,9 @@ button.addEventListener("click", () => this.handleClick());
 
 - **Respect boundaries**: Don't create tight dependencies between packages
 - **Use file: dependencies**: Inter-package references use `file:` paths
-- **Build dependencies**: Use `^:build` for build task dependencies
+- **Build system**: Each package has its own `moon.yml` with build/test tasks
 - **Documentation**: Each package needs README.md and ARCHITECTURE.md
+- **Testing**: Use `moon run <package-id>:test` to run package-specific tests
 
 ## Common Patterns & Anti-Patterns
 
@@ -748,8 +798,9 @@ if (dx * dx + dy * dy + dz * dz < MIN_DISTANCE_SQ_TO_ADD) {
 
 ## Large Monorepo Tips
 
-- **Use moon commands**: `moon run <package>:<task>` for specific operations
+- **Use moon commands**: `moon run <package-id>:<task>` for specific operations (e.g., `moon run core-math:test`)
 - **Path aliases**: Use `@teskooano/*` aliases for clean imports
 - **Package boundaries**: Respect package boundaries and dependencies
-- **Build order**: Dependencies are handled automatically by moon
+- **Build system**: Each package has individual `moon.yml` configuration
 - **Hot reloading**: Development server supports HMR for plugins
+- **Development workflow**: Run `npm run dev` from `apps/teskooano/` for development
